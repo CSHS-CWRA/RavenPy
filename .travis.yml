@@ -40,8 +40,8 @@ jobs:
         - conda config --set always_yes yes --set changeps1 no
         - conda install setuptools
         - conda update -q conda
-        - conda create -n ravenpy -c conda-forge python=$DESIRED_PYTHON
-        - source activate ravenpy
+        - conda create -n RavenPy -c conda-forge python=$DESIRED_PYTHON
+        - source activate RavenPy
     - python: 3.6
     - python: 3.7
     - python: 3.8
@@ -73,5 +73,5 @@ deploy:
     secure: PLEASE_REPLACE_ME
   on:
     tags: true
-    repo: CSHS-CWRA/ravenpy
+    repo: CSHS-CWRA/RavenPy
     python: 3.8

@@ -37,7 +37,7 @@ setup(
     description="A Python wrapper to setup and run the hydrologic modelling framework Raven.",
     entry_points={
         'console_scripts': [
-            'ravenpy=ravenpy.cli:main',
+            'RavenPy=RavenPy.cli:main',
         ],
     },
     install_requires=requirements,
@@ -45,9 +45,9 @@ setup(
     long_description=readme + '\n\n' + history,
     long_description_content_type="text/x-rst",
     include_package_data=True,
-    keywords='ravenpy',
-    name='ravenpy',
-    packages=find_packages(include=['ravenpy', 'ravenpy.*']),
+    keywords='RavenPy',
+    name='RavenPy',
+    packages=find_packages(include=['RavenPy', 'RavenPy.*']),
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,

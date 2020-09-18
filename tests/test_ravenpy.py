@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 
-"""Tests for `ravenpy` package."""
+"""Tests for `RavenPy` package."""
 
 import pytest
 
 from click.testing import CliRunner
 
-from ravenpy import ravenpy
-from ravenpy import cli
+from RavenPy import ravenpy
+from RavenPy import cli
 
 
 @pytest.fixture
@@ -31,7 +31,7 @@ def test_command_line_interface():
     runner = CliRunner()
     result = runner.invoke(cli.main)
     assert result.exit_code == 0
-    assert 'ravenpy.cli.main' in result.output
+    assert 'RavenPy.cli.main' in result.output
     help_result = runner.invoke(cli.main, ['--help'])
     assert help_result.exit_code == 0
     assert '--help  Show this message and exit.' in help_result.output

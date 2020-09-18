@@ -64,9 +64,9 @@ coverage: ## check code coverage quickly with the default Python
 	$(BROWSER) htmlcov/index.html
 
 docs: ## generate Sphinx HTML documentation, including API docs
-	rm -f docs/ravenpy.rst
+	rm -f docs/RavenPy.rst
 	rm -f docs/modules.rst
-	sphinx-apidoc -o docs/ ravenpy
+	sphinx-apidoc -o docs/ RavenPy
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
 	$(BROWSER) docs/_build/html/index.html
