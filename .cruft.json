@@ -18,7 +18,7 @@
             "command_line_interface": "Click",
             "create_author_file": "y",
             "open_source_license": "MIT license",
-            "_template": "/home/tjs/git/cookiecutter-pypackage"
+            "_template": "https://github.com/Ouranosinc/cookiecutter-pypackage"
         }
     },
     "directory": null
