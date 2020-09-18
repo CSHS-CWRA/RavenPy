@@ -1,13 +1,13 @@
-"""Console script for RavenPy."""
+"""Console script for ravenpy."""
 import sys
 import click
 
 
 @click.command()
 def main(args=None):
-    """Console script for RavenPy."""
+    """Console script for ravenpy."""
     click.echo("Replace this message by putting your code into "
-               "RavenPy.cli.main")
+               "ravenpy.cli.main")
     click.echo("See click documentation at https://click.palletsprojects.com/")
     return 0
 

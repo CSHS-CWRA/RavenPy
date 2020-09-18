@@ -1,1 +1,1 @@
-"""Unit test package for RavenPy."""
+"""Unit test package for ravenpy."""
