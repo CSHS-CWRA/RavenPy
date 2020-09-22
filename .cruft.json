@@ -18,6 +18,7 @@
             "command_line_interface": "Click",
             "create_author_file": "y",
             "open_source_license": "MIT license",
+            "generated_with_cruft": "y",
             "_template": "https://github.com/Ouranosinc/cookiecutter-pypackage"
         }
     },
