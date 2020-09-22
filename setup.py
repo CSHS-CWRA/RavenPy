@@ -14,7 +14,7 @@ requirements = ['Click>=7.0', ]
 
 setup_requirements = ['pytest-runner', ]
 
-test_requirements = ['pytest>=3',]
+test_requirements = ['pytest>=3', ]
 
 docs_requirements = [dependency for dependency in open("requirements_docs.txt").readlines()]
 
