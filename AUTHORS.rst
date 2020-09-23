@@ -5,9 +5,9 @@ Credits
 Development Lead
 ----------------
 
-* David Huard <huard.david@ouranos.ca>
+* David Huard <huard.david@ouranos.ca> `@huard <https://github.com/huard>`_
 
 Contributors
 ------------
 
-None yet. Why not be the first?
+* Trevor James Smith <smith.trevorj@ouranos.ca> `@Zeitsperre <https://github.com/Zeitsperre>`_
