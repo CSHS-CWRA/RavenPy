@@ -10,5 +10,5 @@ Development Lead
 Contributors
 ------------
 
-* Christian Jauvin <jauvin.christian@ouranos.ca> _`@cjauvin <https://github.com/cjauvin>`_
+* Christian Jauvin <jauvin.christian@ouranos.ca> `@cjauvin <https://github.com/cjauvin>`_
 * Trevor James Smith <smith.trevorj@ouranos.ca> `@Zeitsperre <https://github.com/Zeitsperre>`_
