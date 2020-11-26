@@ -38,3 +38,13 @@ This package was created with Cookiecutter_ and the `Ouranosinc/cookiecutter-pyp
 
 .. _Cookiecutter: https://github.com/audreyfeldroy/cookiecutter-pypackage
 .. _`Ouranosinc/cookiecutter-pypackage`: https://github.com/Ouranosinc/cookiecutter-pypackage
+
+Install
+-------
+
+.. code-block:: bash
+
+    sudo apt install libnetcdf-dev libspatialindex-dev libgdal-dev
+    python -m venv ./venv
+    source ./venv/bin/activate
+    python setup.py install
