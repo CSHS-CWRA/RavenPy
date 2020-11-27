@@ -216,6 +216,7 @@ class RavenNcData(RV):
                  :StationIdx      {index}
                  {time_shift}
                  {linear_transform}
+                 {deaccumulate}
               :EndReadFromNetCDF
           :End{kind}
           """
@@ -254,11 +255,11 @@ class RavenNcData(RV):
         self._dimensions = None
         self._index = None
         self._linear_transform = None
-        self._site = None
         self._kind = None
         self._runits = None
         self._raven_name = None
         self._site = None
+        self._deaccumulate = None
 
         super().__init__(**kwargs)
 
@@ -351,6 +352,15 @@ class RavenNcData(RV):
             )
 
         self._linear_transform = value
+
+    @property
+    def deaccumulate(self):
+        """Convert cumulative precipitation to precipitation rate (mm/d)."""
+        return ":Deaccumulate" if self._deaccumulate is True else ""
+
+    @deaccumulate.setter
+    def deaccumulate(self, value):
+        self._deaccumulate = value
 
     def _check_units(self):
         import warnings
