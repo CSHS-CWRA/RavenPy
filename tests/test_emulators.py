@@ -4,6 +4,7 @@ import tempfile
 import zipfile
 
 import numpy as np
+
 import pytest
 import xarray as xr
 from ravenpy.models import (GR4JCN, GR4JCN_OST, HBVEC, HBVEC_OST, HMETS,
@@ -115,7 +116,7 @@ class TestGR4JCN:
     # @pytest.mark.skip
     def test_overwrite(self):
         ts = TESTDATA["raven-gr4j-cemaneige-nc-ts"]
-        model = GR4JCN(workdir="/tmp/toto_raven3")
+        model = GR4JCN()
         model(
             ts,
             start_date=dt.datetime(2000, 1, 1),
@@ -126,45 +127,32 @@ class TestGR4JCN:
             longitude=-123.3659,
             params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
         )
-        print(model.workdir)
         assert model.rvi.suppress_output == ""
 
         qsim1 = model.q_sim.copy(deep=True)
         m1 = qsim1.mean()
 
-        # model(ts, params=(0.5289, -3.397, 407.3, 1.071, 16.89, 0.948), overwrite=True)
-
-        # model = GR4JCN()
-        model(
-            ts,
-            start_date=dt.datetime(2000, 1, 1),
-            end_date=dt.datetime(2002, 1, 1),
-            area=4250.6,
-            elevation=8430.0,
-            latitude=54.4848,
-            longitude=-123.3659,
-            params=(10.529, -3.396, 407.29, 1.072, 16.9, 0.947),
-        )
-        print(model.workdir)
+        model(ts, params=(0.5289, -3.397, 407.3, 1.071, 16.89, 0.948), overwrite=True)
 
         qsim2 = model.q_sim.copy(deep=True)
         m2 = qsim2.mean()
+
         assert m1 != m2
 
-        # np.testing.assert_almost_equal(m1, m2, 1)
+        np.testing.assert_almost_equal(m1, m2, 1)
 
-        # d = model.diagnostics
+        d = model.diagnostics
 
-        # np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.117315, 2)
+        np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.117315, 2)
 
-        # # Set initial conditions explicitly
-        # model(
-        #     ts,
-        #     end_date=dt.datetime(2001, 2, 1),
-        #     hru_state=HRUStateVariables(soil0=0),
-        #     overwrite=True,
-        # )
-        # assert model.q_sim.isel(time=1).values[0] < qsim2.isel(time=1).values[0]
+        # Set initial conditions explicitly
+        model(
+            ts,
+            end_date=dt.datetime(2001, 2, 1),
+            hru_state=HRUStateVariables(soil0=0),
+            overwrite=True,
+        )
+        assert model.q_sim.isel(time=1).values[0] < qsim2.isel(time=1).values[0]
 
     def test_resume(self):
         ts = TESTDATA["raven-gr4j-cemaneige-nc-ts"]
