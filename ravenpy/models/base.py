@@ -685,22 +685,30 @@ class Raven:
         This view will be overwritten by successive calls to `run`. To make a copy of this DataArray that will
         persist in memory, use `q_sim.copy(deep=True)`.
         """
-        if isinstance(self.hydrograph, list):
-            return [h.q_sim for h in self.hydrograph]
+        q_sims = [h.q_sim for h in self.hydrographs]
 
-        return self.hydrograph.q_sim
+        return q_sims[0] if len(q_sims) == 1 else q_sims
 
     @property
     def hydrograph(self):
+        """Assumes a single hydrograph is present.
+        """
+        return next(self.hydrographs)
+
+    @property
+    def hydrographs(self):
         """Return a view of the current output file.
 
         If the model is run multiple times, hydrograph will point to the latest version. To store the results of
         multiple runs, either create different model instances or explicitly copy the file to another disk location.
         """
         if self.outputs["hydrograph"].suffix == ".nc":
-            return xr.open_dataset(self.outputs["hydrograph"])
+            with xr.open_dataset(self.outputs["hydrograph"]) as hg:
+                yield hg
         elif self.outputs["hydrograph"].suffix == ".zip":
-            return [xr.open_dataset(fn) for fn in self.ind_outputs["hydrograph"]]
+            for fn in self.ind_outputs["hydrograph"]:
+                with xr.open_dataset(fn) as hg:
+                    yield hg
         else:
             raise ValueError
 
