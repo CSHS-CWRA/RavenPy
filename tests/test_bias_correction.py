@@ -3,7 +3,7 @@ import xclim.sdba as sdba
 from xclim import subset
 
 
-class _TestBiasCorrect:
+class TestBiasCorrect:
     def test_bias_correction(self):
 
         fut_data = (
