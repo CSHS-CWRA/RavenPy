@@ -5,9 +5,10 @@ from pathlib import Path
 import six
 
 import cftime
+import geopandas
 from xclim.core.units import units, units2pint
 
-from .state import BasinStateVariables, HRUStateVariables
+from .state import BasinStateVariables, HRUStateVariables, SubBasinRecord
 
 # Can be removed when xclim is pinned above 0.14
 units.define("deg_C = degC")
@@ -710,6 +711,87 @@ class RVC(RV):
                 )
             )
         return "\n".join(txt).replace("[", "").replace("]", "")
+
+
+class RVH(RV):
+    def __init__(self, **kwargs):
+        self._subbasins = []
+        self._hrus = []
+        self._reservoirs = []
+        self._subbasin_groups = []
+
+        # self._txt_hru_state = ""
+        # self._txt_basin_state = ""
+
+        super().__init__(**kwargs)
+
+    pat = """
+          :SubBasins
+              :Attributes ID  NAME  DOWNSTREAM_ID PROFILE REACH_LENGTH  GAUGED
+              :Units    none  none           none    none           km    none
+          :EndSubBasins
+
+          :HRUs
+            :Attributes      AREA  ELEVATION       LATITUDE      LONGITUDE BASIN_ID                 LAND_USE_CLASS                      VEG_CLASS      SOIL_PROFILE  AQUIFER_PROFILE TERRAIN_CLASS      SLOPE     ASPECT
+            :Units            km2          m            deg            deg     none                           none                           none                           none     none     none        deg       degN
+          :EndHRUs
+
+          """
+
+    def _extract_from_shapefile(self):
+        # df = geopandas.read_file(
+        #     "/home/christian/ouranos/raven/tutorial/Lievre/maps/LievreHRUs.shp"
+        # )
+        self._df = geopandas.read_file(
+            "/home/christian/ouranos/raven/From Ming/inputs/finalcat_hru_info.shp"
+        )
+        # df.drop_duplicates("SubId", inplace=True)
+
+        print()
+        # :SubBasins block
+
+    def _extract_subbasins(self):
+
+        # MIN_RIVER_LENGTH_IN_KMS = 1
+        MAX_RIVER_SLOPE = 0.00001
+        USE_LAKE_AS_GAUGE = False
+
+        # Collect all subbasin_ids for fast lookup in next loop
+        subbasin_ids = {int(row["SubId"]) for _, row in df.iterrows()}
+
+        # Here we only consider records with unique SubIds
+        for _, row in self._df.drop_duplicates("SubId", keep="first").iterrows():
+            subbasin_id = int(row["SubId"])
+
+            if row["IsLake"] >= 0:
+                river_length_in_kms = "ZERO-"
+            else:
+                river_length_in_kms = row["Rivlen"] / 1000
+
+            river_slope = max(row["RivSlope"], MAX_RIVER_SLOPE)
+
+            # downstream_id
+            downstream_id = int(row["DowSubId"])
+            if downstream_id == subbasin_id:
+                downstream_id = -1
+            elif downstream_id not in subbasin_ids:
+                downstream_id = -1
+
+            gauged = row["IsObs"] > 0 or (row["IsLake"] >= 0 and USE_LAKE_AS_GAUGE)
+
+            rec = SubBasinRecord(
+                subbasin_id=subbasin_id,
+                name=f"sub{subbasin_id}",
+                downstream_id=downstream_id,
+                profile=f"chn_{subbasin_id}",
+                reach_length=river_length_in_kms,
+                gauged=gauged,
+            )
+            self._subbasins.append(rec)
+
+    def _extract_HRUs(self):
+        for _, row in self._df.iterrows():
+            pass
 
 
 class Ost(RV):

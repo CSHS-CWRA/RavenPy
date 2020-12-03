@@ -15,6 +15,7 @@ from typing import NamedTuple
 
 class HRUStateVariables(NamedTuple):
     """Initial condition for a given HRU."""
+
     surface_water: float = 0
     atmosphere: float = 0
     atmos_precip: float = 0
@@ -133,6 +134,7 @@ class HRUStateVariables(NamedTuple):
 
 class BasinStateVariables(NamedTuple):
     """Initial conditions for a flow segment."""
+
     index: int = 1
     name: str = "watershed"
     channelstorage: float = 0
@@ -142,3 +144,22 @@ class BasinStateVariables(NamedTuple):
     qlat: tuple = (0, 0, 0)
     qlatlast: float = 0
     qin: tuple = 20 * (0,)
+
+
+class SubbasinRecord(NamedTuple):
+    subbasin_id: int = 0
+    name: str = "subXXX"
+    downstream_id: int = 0
+    profile: str = "chn_XXX"
+    reach_length: str = "0"  # float or "ZERO-", in kilometers
+    gauged: bool = False
+
+
+class HRURecord(NamedTuple):
+    # :Attributes AREA ELEVATION  LATITUDE  LONGITUDE   BASIN_ID  LAND_USE_CLASS  VEG_CLASS   SOIL_PROFILE  AQUIFER_PROFILE   TERRAIN_CLASS   SLOPE   ASPECT
+    # :Units       km2         m       deg        deg       none            none       none           none             none            none     deg      deg
+    hru_id: int = 0
+    area: float = 0  # km^2
+    elevation: float = 0  # meters
+    latitude: float = 0
+    longitude: float = 0

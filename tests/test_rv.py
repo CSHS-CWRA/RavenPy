@@ -3,9 +3,10 @@ from collections import namedtuple
 from io import StringIO
 from pathlib import Path
 
+import geopandas
 import pytest
 import ravenpy
-from ravenpy.models.rv import (RV, RVC, RVI, RVT, MonthlyAverage, Ost,
+from ravenpy.models.rv import (RV, RVC, RVH, RVI, RVT, MonthlyAverage, Ost,
                                RavenNcData, RVFile, isinstance_namedtuple)
 
 from .common import TESTDATA
@@ -208,6 +209,29 @@ class TestRVC:
         rvc_template = Path(ravenpy.models.__file__).parent / "global" / "global.rvc"
         params = dict(self.r.items())
         rvc_template.read_text().format(**params)
+
+
+class TestRVH:
+    @classmethod
+    def setup_class(self):
+        pass
+        # rvc = TESTDATA["solution.rvc"].read_text()
+        # df = geopandas.read_file(
+        #     "/home/christian/ouranos/raven/tutorial/Lievre/maps/LievreHRUs.shp"
+        # )
+        # self.r = RVC()
+        # self.r.parse(rvc)
+
+    def test_bla(self):
+
+        rvh = RVH()
+        rvh.extract_from_shapefile()
+
+        # assert self.r.hru_state.atmosphere == 821.98274
+        # assert self.r.basin_state.qout == [
+        #     13.21660,
+        # ]
+        # assert self.r.basin_state.qoutlast == 13.29232
 
 
 def test_isinstance_namedtuple():
