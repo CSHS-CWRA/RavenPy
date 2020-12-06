@@ -147,19 +147,41 @@ class BasinStateVariables(NamedTuple):
 
 
 class SubbasinRecord(NamedTuple):
+    """Record to populate RVH :SubBasins table."""
+
     subbasin_id: int = 0
     name: str = "subXXX"
     downstream_id: int = 0
     profile: str = "chn_XXX"
-    reach_length: str = "0"  # float or "ZERO-", in kilometers
+    reach_length: float = 0
     gauged: bool = False
 
 
+class SubbasinLakeRecord(NamedTuple):
+    """Record to populate RVH :Reservoir block."""
+
+    subbasin_id: int = 0
+    hru_id: int = 0
+    name: str = "Lake_XXX"
+    weir_coefficient: float = 0
+    crest_width: float = 0
+    max_depth: float = 0
+    lake_area: float = 0
+
+
 class HRURecord(NamedTuple):
-    # :Attributes AREA ELEVATION  LATITUDE  LONGITUDE   BASIN_ID  LAND_USE_CLASS  VEG_CLASS   SOIL_PROFILE  AQUIFER_PROFILE   TERRAIN_CLASS   SLOPE   ASPECT
-    # :Units       km2         m       deg        deg       none            none       none           none             none            none     deg      deg
+    """Record to populate RVH :HRUs table."""
+
     hru_id: int = 0
     area: float = 0  # km^2
     elevation: float = 0  # meters
     latitude: float = 0
     longitude: float = 0
+    subbasin_id: int = 0
+    land_use_class: str = ""
+    veg_class: str = ""
+    soil_profile: str = ""
+    aquifer_profile: str = ""
+    terrain_class: str = ""
+    slope: float = 0.0
+    aspect: float = 0.0

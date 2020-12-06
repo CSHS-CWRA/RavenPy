@@ -2,13 +2,12 @@ import collections
 import datetime as dt
 from pathlib import Path
 
-import six
-
 import cftime
 import geopandas
+import six
 from xclim.core.units import units, units2pint
 
-from .state import BasinStateVariables, HRUStateVariables, SubBasinRecord
+from .state import BasinStateVariables, HRUStateVariables
 
 # Can be removed when xclim is pinned above 0.14
 units.define("deg_C = degC")
@@ -714,84 +713,90 @@ class RVC(RV):
 
 
 class RVH(RV):
-    def __init__(self, **kwargs):
-        self._subbasins = []
-        self._hrus = []
-        self._reservoirs = []
-        self._subbasin_groups = []
+    def __init__(self, importer, **kwargs):
+        sbs, groups, lakes, hrus = importer.extract()
+        self._importer = importer
+        self._subbasins = sbs
+        self._land_subbasin_group_ids = groups["land"]
+        self._lake_subbasin_group_ids = groups["lake"]
+        self._lakes = lakes
+        self._hrus = hrus
 
-        # self._txt_hru_state = ""
-        # self._txt_basin_state = ""
+        # This is a hack to make sure the txt_* properties are picked up to fill the rv templates.
+        self._txt_subbasins = ""
+        self._txt_land_subbasin_group_ids = ""
+        self._txt_lake_subbasin_group_ids = ""
+        self._txt_lakes = ""
+        self._txt_hrus = ""
 
         super().__init__(**kwargs)
 
-    pat = """
-          :SubBasins
-              :Attributes ID  NAME  DOWNSTREAM_ID PROFILE REACH_LENGTH  GAUGED
-              :Units    none  none           none    none           km    none
-          :EndSubBasins
+    @property
+    def importer(self):
+        return self._importer
 
-          :HRUs
-            :Attributes      AREA  ELEVATION       LATITUDE      LONGITUDE BASIN_ID                 LAND_USE_CLASS                      VEG_CLASS      SOIL_PROFILE  AQUIFER_PROFILE TERRAIN_CLASS      SLOPE     ASPECT
-            :Units            km2          m            deg            deg     none                           none                           none                           none     none     none        deg       degN
-          :EndHRUs
+    @property
+    def subbasins(self):
+        return self._subbasins
 
-          """
+    @property
+    def land_subbasin_group_ids(self):
+        return self._land_subbasin_group_ids
 
-    def _extract_from_shapefile(self):
-        # df = geopandas.read_file(
-        #     "/home/christian/ouranos/raven/tutorial/Lievre/maps/LievreHRUs.shp"
-        # )
-        self._df = geopandas.read_file(
-            "/home/christian/ouranos/raven/From Ming/inputs/finalcat_hru_info.shp"
-        )
-        # df.drop_duplicates("SubId", inplace=True)
+    @property
+    def lake_subbasin_group_ids(self):
+        return self._lake_subbasin_group_ids
 
-        print()
-        # :SubBasins block
+    @property
+    def lakes(self):
+        return self._lakes
 
-    def _extract_subbasins(self):
+    @property
+    def hrus(self):
+        return self._hrus
 
-        # MIN_RIVER_LENGTH_IN_KMS = 1
-        MAX_RIVER_SLOPE = 0.00001
-        USE_LAKE_AS_GAUGE = False
+    @property
+    def txt_subbasins(self):
+        txt = []
+        for sb in self._subbasins:
+            s = self._importer.format_subbasin_record_for_raven(sb)
+            txt.append(f"\t{s}")
+        return "\n".join(txt)
 
-        # Collect all subbasin_ids for fast lookup in next loop
-        subbasin_ids = {int(row["SubId"]) for _, row in df.iterrows()}
+    @property
+    def txt_land_subbasin_group_ids(self):
+        return " ".join(map(str, self._land_subbasin_group_ids))
 
-        # Here we only consider records with unique SubIds
-        for _, row in self._df.drop_duplicates("SubId", keep="first").iterrows():
-            subbasin_id = int(row["SubId"])
+    @property
+    def txt_lake_subbasin_group_ids(self):
+        return " ".join(map(str, self._lake_subbasin_group_ids))
 
-            if row["IsLake"] >= 0:
-                river_length_in_kms = "ZERO-"
-            else:
-                river_length_in_kms = row["Rivlen"] / 1000
+    @property
+    def txt_lakes(self):
+        pat = """
+:Reservoir {name}
+  :SubBasinID {subbasin_id}
+  :HRUID {hru_id}
+  :Type RESROUTE_STANDARD
+  :WeirCoefficient {weir_coefficient}
+  :CrestWidth {crest_width}
+  :MaxDepth {max_depth}
+  :LakeArea {lake_area}
+:EndReservoir
+        """
+        txt = []
+        for lake in self._lakes:
+            s = self._importer.format_subbasin_lake_record_for_raven(lake, pat)
+            txt.append(f"\t{s}")
+        return "\n\n".join(txt)
 
-            river_slope = max(row["RivSlope"], MAX_RIVER_SLOPE)
-
-            # downstream_id
-            downstream_id = int(row["DowSubId"])
-            if downstream_id == subbasin_id:
-                downstream_id = -1
-            elif downstream_id not in subbasin_ids:
-                downstream_id = -1
-
-            gauged = row["IsObs"] > 0 or (row["IsLake"] >= 0 and USE_LAKE_AS_GAUGE)
-
-            rec = SubBasinRecord(
-                subbasin_id=subbasin_id,
-                name=f"sub{subbasin_id}",
-                downstream_id=downstream_id,
-                profile=f"chn_{subbasin_id}",
-                reach_length=river_length_in_kms,
-                gauged=gauged,
-            )
-            self._subbasins.append(rec)
-
-    def _extract_HRUs(self):
-        for _, row in self._df.iterrows():
-            pass
+    @property
+    def txt_hrus(self):
+        txt = []
+        for hru in self._hrus:
+            s = self._importer.format_hru_record_for_raven(hru)
+            txt.append(f"\t{s}")
+        return "\n".join(txt)
 
 
 class Ost(RV):
