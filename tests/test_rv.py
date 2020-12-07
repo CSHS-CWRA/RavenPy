@@ -1,12 +1,26 @@
 import datetime as dt
+import re
 from collections import namedtuple
 from io import StringIO
 from pathlib import Path
 
+import geopandas
 import pytest
+
 import ravenpy
-from ravenpy.models.rv import (RV, RVC, RVI, RVT, MonthlyAverage, Ost,
-                               RavenNcData, RVFile, isinstance_namedtuple)
+from ravenpy.models.importers import RoutingProductShapefileImporter
+from ravenpy.models.rv import (
+    RV,
+    RVC,
+    RVH,
+    RVI,
+    RVT,
+    MonthlyAverage,
+    Ost,
+    RavenNcData,
+    RVFile,
+    isinstance_namedtuple,
+)
 
 from .common import TESTDATA
 
@@ -208,6 +222,47 @@ class TestRVC:
         rvc_template = Path(ravenpy.models.__file__).parent / "global" / "global.rvc"
         params = dict(self.r.items())
         rvc_template.read_text().format(**params)
+
+
+class TestRVH:
+    @classmethod
+    def setup_class(self):
+        importer = RoutingProductShapefileImporter(
+            f"zip://{TESTDATA['routing-sample']}"
+        )
+        self.rvh = RVH(importer)
+
+    def test_import_process(self):
+        assert len(self.rvh._subbasins) == 46
+        assert len(self.rvh._land_subbasin_group_ids) == 41
+        assert len(self.rvh._lake_subbasin_group_ids) == 5
+        assert len(self.rvh._lakes) == 5
+        assert len(self.rvh._hrus) == 51
+
+    def test_format(self):
+        rvh_template = Path(ravenpy.models.__file__).parent / "global" / "global.rvh"
+        params = dict(self.rvh.items())
+        res = rvh_template.read_text().format(**params)
+
+        sbs = (
+            re.search(":SubBasins(.+):EndSubBasins", res, re.MULTILINE | re.DOTALL)
+            .group(1)
+            .split("\n")
+        )
+        sbs = list(filter(None, sbs))  # remove whitespaces
+        assert len(sbs) == len(self.rvh._subbasins) + 2
+
+        assert res.count("ZERO-") == len(self.rvh._lakes)
+
+        hrus = (
+            re.search(":HRUs(.+):EndHRUs", res, re.MULTILINE | re.DOTALL)
+            .group(1)
+            .split("\n")
+        )
+        hrus = list(filter(None, hrus))  # remove whitespaces
+        assert len(hrus) == len(self.rvh._hrus) + 2
+
+        assert res.count(":Reservoir") == len(self.rvh._lakes)
 
 
 def test_isinstance_namedtuple():

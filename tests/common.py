@@ -110,6 +110,8 @@ TESTDATA["XSS_obs"] = TD / "XSS_forecast_data" / "XSS_obs.nc"
 TESTDATA["XSS_fcst_det"] = TD / "XSS_forecast_data" / "XSS_fcst_det.nc"
 TESTDATA["XSS_fcst_ensemble"] = TD / "XSS_forecast_data" / "XSS_fcst_ens.nc"
 
+TESTDATA["routing-sample"] = TD / "routing-sample" / "finalcat_hru_info.zip"
+
 
 def count_pixels(stats, numeric_categories=False):
     category_counts = 0

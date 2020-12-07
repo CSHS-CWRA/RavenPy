@@ -1,0 +1,21 @@
+:SubBasins
+  :Attributes ID  NAME  DOWNSTREAM_ID PROFILE REACH_LENGTH  GAUGED
+  :Units    none  none           none    none           km    none
+  {txt_subbasins}
+:EndSubBasins
+
+:HRUs
+  :Attributes      AREA  ELEVATION       LATITUDE      LONGITUDE BASIN_ID       LAND_USE_CLASS           VEG_CLASS      SOIL_PROFILE  AQUIFER_PROFILE TERRAIN_CLASS      SLOPE     ASPECT
+  :Units            km2          m            deg            deg     none                  none               none              none             none          none        deg       degN
+  {txt_hrus}
+:EndHRUs
+
+:SubBasinGroup    land_subbasin_group
+  {txt_land_subbasin_group_ids}
+:EndSubBasinGroup
+
+:SubBasinGroup    lake_subbasin_group
+  {txt_lake_subbasin_group_ids}
+:EndSubBasinGroup
+
+{txt_lakes}

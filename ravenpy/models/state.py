@@ -15,6 +15,7 @@ from typing import NamedTuple
 
 class HRUStateVariables(NamedTuple):
     """Initial condition for a given HRU."""
+
     surface_water: float = 0
     atmosphere: float = 0
     atmos_precip: float = 0
@@ -133,6 +134,7 @@ class HRUStateVariables(NamedTuple):
 
 class BasinStateVariables(NamedTuple):
     """Initial conditions for a flow segment."""
+
     index: int = 1
     name: str = "watershed"
     channelstorage: float = 0
@@ -142,3 +144,58 @@ class BasinStateVariables(NamedTuple):
     qlat: tuple = (0, 0, 0)
     qlatlast: float = 0
     qin: tuple = 20 * (0,)
+
+
+class SubbasinRecord(NamedTuple):
+    """Record to populate RVH :SubBasins table."""
+
+    subbasin_id: int = 0
+    name: str = "subXXX"
+    downstream_id: int = 0
+    profile: str = "chn_XXX"
+    reach_length: float = 0
+    gauged: bool = False
+
+    def to_rv(self):
+        d = self._asdict()
+        d["reach_length"] = d["reach_length"] if d["reach_length"] else "ZERO-"
+        d["gauged"] = int(d["gauged"])
+        return " ".join(map(str, d.values()))
+
+
+class SubbasinLakeRecord(NamedTuple):
+    """Record to populate RVH :Reservoir block."""
+
+    subbasin_id: int = 0
+    hru_id: int = 0
+    name: str = "Lake_XXX"
+    weir_coefficient: float = 0
+    crest_width: float = 0
+    max_depth: float = 0
+    lake_area: float = 0
+
+    def to_rv(self, pat):
+        d = self._asdict()
+        return pat.format(**d)
+
+
+class HRURecord(NamedTuple):
+    """Record to populate RVH :HRUs table."""
+
+    hru_id: int = 0
+    area: float = 0  # km^2
+    elevation: float = 0  # meters
+    latitude: float = 0
+    longitude: float = 0
+    subbasin_id: int = 0
+    land_use_class: str = ""
+    veg_class: str = ""
+    soil_profile: str = ""
+    aquifer_profile: str = ""
+    terrain_class: str = ""
+    slope: float = 0.0
+    aspect: float = 0.0
+
+    def to_rv(self):
+        d = self._asdict()
+        return " ".join(map(str, d.values()))

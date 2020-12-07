@@ -2,9 +2,9 @@ import collections
 import datetime as dt
 from pathlib import Path
 
-import six
-
 import cftime
+import geopandas
+import six
 from xclim.core.units import units, units2pint
 
 from .state import BasinStateVariables, HRUStateVariables
@@ -710,6 +710,90 @@ class RVC(RV):
                 )
             )
         return "\n".join(txt).replace("[", "").replace("]", "")
+
+
+class RVH(RV):
+    def __init__(self, importer, **kwargs):
+        sbs, groups, lakes, hrus = importer.extract()
+        self._importer = importer
+        self._subbasins = sbs
+        self._land_subbasin_group_ids = groups["land"]
+        self._lake_subbasin_group_ids = groups["lake"]
+        self._lakes = lakes
+        self._hrus = hrus
+
+        # This is a hack to make sure the txt_* properties are picked up to fill the rv templates.
+        self._txt_subbasins = ""
+        self._txt_land_subbasin_group_ids = ""
+        self._txt_lake_subbasin_group_ids = ""
+        self._txt_lakes = ""
+        self._txt_hrus = ""
+
+        super().__init__(**kwargs)
+
+    @property
+    def importer(self):
+        return self._importer
+
+    @property
+    def subbasins(self):
+        return self._subbasins
+
+    @property
+    def land_subbasin_group_ids(self):
+        return self._land_subbasin_group_ids
+
+    @property
+    def lake_subbasin_group_ids(self):
+        return self._lake_subbasin_group_ids
+
+    @property
+    def lakes(self):
+        return self._lakes
+
+    @property
+    def hrus(self):
+        return self._hrus
+
+    @property
+    def txt_subbasins(self):
+        txt = []
+        for sb in self._subbasins:
+            txt.append("\t" + sb.to_rv())
+        return "\n".join(txt)
+
+    @property
+    def txt_land_subbasin_group_ids(self):
+        return " ".join(map(str, self._land_subbasin_group_ids))
+
+    @property
+    def txt_lake_subbasin_group_ids(self):
+        return " ".join(map(str, self._lake_subbasin_group_ids))
+
+    @property
+    def txt_lakes(self):
+        pat = """
+:Reservoir {name}
+  :SubBasinID {subbasin_id}
+  :HRUID {hru_id}
+  :Type RESROUTE_STANDARD
+  :WeirCoefficient {weir_coefficient}
+  :CrestWidth {crest_width}
+  :MaxDepth {max_depth}
+  :LakeArea {lake_area}
+:EndReservoir
+        """
+        txt = []
+        for lake in self._lakes:
+            txt.append("\t" + lake.to_rv(pat))
+        return "\n\n".join(txt)
+
+    @property
+    def txt_hrus(self):
+        txt = []
+        for hru in self._hrus:
+            txt.append("\t" + hru.to_rv())
+        return "\n".join(txt)
 
 
 class Ost(RV):
