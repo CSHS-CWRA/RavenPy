@@ -199,3 +199,20 @@ class HRURecord(NamedTuple):
     def to_rv(self):
         d = self._asdict()
         return " ".join(map(str, d.values()))
+
+
+class ChannelProfileRecord(NamedTuple):
+    """Record to populate RVP :ChannelProfile block."""
+
+    name: str = "chn_XXX"
+    bed_slope: float = 0
+    survey_points: list = []
+    roughness_zones: list = []
+
+    def to_rv(self, pat):
+        d = self._asdict()
+        d["survey_points"] = "\n".join(f"\t\t{p[0]} {p[1]}" for p in d["survey_points"])
+        d["roughness_zones"] = "\n".join(
+            f"\t\t{z[0]} {z[1]}" for z in d["roughness_zones"]
+        )
+        return pat.format(**d)

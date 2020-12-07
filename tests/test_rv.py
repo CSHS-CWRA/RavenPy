@@ -14,6 +14,7 @@ from ravenpy.models.rv import (
     RVC,
     RVH,
     RVI,
+    RVP,
     RVT,
     MonthlyAverage,
     Ost,
@@ -135,7 +136,9 @@ class TestRavenNcData:
             path="/path/tasmin.nc",
             var_name="tn",
             unit="deg_C",
-            dimensions=["time",],
+            dimensions=[
+                "time",
+            ],
         )
         tmp = str(v)
 
@@ -157,7 +160,9 @@ class TestRavenNcData:
             path="/path/tasmin.nc",
             var_name="tn",
             unit="deg_C",
-            dimensions=["time",],
+            dimensions=[
+                "time",
+            ],
             linear_transform=(24000.0, 0.0),
         )
 
@@ -169,7 +174,9 @@ class TestRavenNcData:
             path="/path/tasmin.nc",
             var_name="tn",
             unit="deg_C",
-            dimensions=["time",],
+            dimensions=[
+                "time",
+            ],
             deaccumulate=True,
         )
 
@@ -230,7 +237,8 @@ class TestRVH:
         importer = RoutingProductShapefileImporter(
             f"zip://{TESTDATA['routing-sample']}"
         )
-        self.rvh = RVH(importer)
+        self.rvh = RVH()
+        self.rvh.importer = importer
 
     def test_import_process(self):
         assert len(self.rvh._subbasins) == 46
@@ -263,6 +271,25 @@ class TestRVH:
         assert len(hrus) == len(self.rvh._hrus) + 2
 
         assert res.count(":Reservoir") == len(self.rvh._lakes)
+
+
+class TestRVP:
+    @classmethod
+    def setup_class(self):
+        importer = RoutingProductShapefileImporter(
+            f"zip://{TESTDATA['routing-sample']}"
+        )
+        self.rvp = RVP()
+        self.rvp.importer = importer
+
+    def test_import_process(self):
+        assert len(self.rvp._channel_profiles) == 46
+
+    def test_format(self):
+        res = self.rvp.render_to_rv()
+
+        assert res.count(":ChannelProfile") == 46
+        assert res.count(":EndChannelProfile") == 46
 
 
 def test_isinstance_namedtuple():

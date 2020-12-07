@@ -568,8 +568,7 @@ class RVI(RV):
 
     @property
     def rain_snow_fraction(self):
-        """Rain snow partitioning.
-        """
+        """Rain snow partitioning."""
         return self._rain_snow_fraction
 
     @rain_snow_fraction.setter
@@ -713,14 +712,13 @@ class RVC(RV):
 
 
 class RVH(RV):
-    def __init__(self, importer, **kwargs):
-        sbs, groups, lakes, hrus = importer.extract()
-        self._importer = importer
-        self._subbasins = sbs
-        self._land_subbasin_group_ids = groups["land"]
-        self._lake_subbasin_group_ids = groups["lake"]
-        self._lakes = lakes
-        self._hrus = hrus
+    def __init__(self, **kwargs):
+        self._importer = None
+        self._subbasins = []
+        self._land_subbasin_group_ids = []
+        self._lake_subbasin_group_ids = []
+        self._lakes = []
+        self._hrus = []
 
         # This is a hack to make sure the txt_* properties are picked up to fill the rv templates.
         self._txt_subbasins = ""
@@ -734,6 +732,16 @@ class RVH(RV):
     @property
     def importer(self):
         return self._importer
+
+    @importer.setter
+    def importer(self, importer_):
+        self._importer = importer_
+        sbs, groups, lakes, _, hrus = self._importer.extract()
+        self._subbasins = sbs
+        self._land_subbasin_group_ids = groups["land"]
+        self._lake_subbasin_group_ids = groups["lake"]
+        self._lakes = lakes
+        self._hrus = hrus
 
     @property
     def subbasins(self):
@@ -774,13 +782,13 @@ class RVH(RV):
     def txt_lakes(self):
         pat = """
 :Reservoir {name}
-  :SubBasinID {subbasin_id}
-  :HRUID {hru_id}
-  :Type RESROUTE_STANDARD
-  :WeirCoefficient {weir_coefficient}
-  :CrestWidth {crest_width}
-  :MaxDepth {max_depth}
-  :LakeArea {lake_area}
+\t:SubBasinID {subbasin_id}
+\t:HRUID {hru_id}
+\t:Type RESROUTE_STANDARD
+\t:WeirCoefficient {weir_coefficient}
+\t:CrestWidth {crest_width}
+\t:MaxDepth {max_depth}
+\t:LakeArea {lake_area}
 :EndReservoir
         """
         txt = []
@@ -794,6 +802,42 @@ class RVH(RV):
         for hru in self._hrus:
             txt.append("\t" + hru.to_rv())
         return "\n".join(txt)
+
+
+class RVP(RV):
+    def __init__(self, **kwargs):
+        self._importer = None
+        self._channel_profiles = []
+
+        super().__init__(**kwargs)
+
+    @property
+    def importer(self):
+        return self._importer
+
+    @importer.setter
+    def importer(self, importer_):
+        self._importer = importer_
+        _, _, _, channel_profiles, _ = self._importer.extract()
+        self._channel_profiles = channel_profiles
+
+    @property
+    def channel_profiles(self):
+        return self._channel_profiles
+
+    def render_to_rv(self):
+        pat = """
+:ChannelProfile	{name}
+\t:Bedslope {bed_slope}
+\t:SurveyPoints
+{survey_points}
+\t:EndSurveyPoints
+\t:RoughnessZones
+{roughness_zones}
+\t:EndRoughnessZones
+:EndChannelProfile
+        """
+        return "\n\n".join(cp.to_rv(pat) for cp in self._channel_profiles)
 
 
 class Ost(RV):
@@ -869,8 +913,8 @@ def parse_solution(rvc):
 
 
 def _parser(lines, indent="", fmt=str):
-    import re
     import itertools
+    import re
 
     header_pat = re.compile(r"(\s*):(\w+)\s?,?\s*(.*)")
 
@@ -881,7 +925,15 @@ def _parser(lines, indent="", fmt=str):
         if header:
             new_indent, key, value = header.groups()
             if new_indent > indent:
-                out[old_key] = _parser(itertools.chain([line,], lines), new_indent)
+                out[old_key] = _parser(
+                    itertools.chain(
+                        [
+                            line,
+                        ],
+                        lines,
+                    ),
+                    new_indent,
+                )
             elif new_indent < indent:
                 return out
             else:

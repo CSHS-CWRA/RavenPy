@@ -1,6 +1,11 @@
 import geopandas
 
-from ravenpy.models.state import HRURecord, SubbasinLakeRecord, SubbasinRecord
+from ravenpy.models.state import (
+    ChannelProfileRecord,
+    HRURecord,
+    SubbasinLakeRecord,
+    SubbasinRecord,
+)
 
 
 class RoutingProductShapefileImporter:
@@ -15,6 +20,8 @@ class RoutingProductShapefileImporter:
     USE_LAKE_AS_GAUGE = False
     WEIR_COEFFICIENT = 0.6
     USE_LAND_AS_GAUGE = False
+    USE_MANNING_COEFF = False
+    MANNING_DEFAULT = 0.035
 
     def __init__(self, path):
         self._df = geopandas.read_file(path)
@@ -31,6 +38,7 @@ class RoutingProductShapefileImporter:
           'land': list of IDs,
           'lake': list of IDs,
         lakes: list of `state.SubbasinLakeRecord`
+        channel_profiles: list of `state.ChannelProfileRecord`
         hrus: list of `state.HRURecord`
 
         """
@@ -41,6 +49,7 @@ class RoutingProductShapefileImporter:
             "lake": [],
         }
         lakes = []
+        channel_profiles = []
         hrus = []
 
         # Collect all subbasin_ids for fast lookup in next loop
@@ -49,6 +58,7 @@ class RoutingProductShapefileImporter:
 
         for _, row in self._df.iterrows():
 
+            # HRU
             hrus.append(self._extract_hru(row))
 
             subbasin_id = int(row["SubId"])
@@ -58,16 +68,21 @@ class RoutingProductShapefileImporter:
                 continue
             subbasin_id_accum.add(subbasin_id)
 
+            # Subbasin
             sb, is_lake = self._extract_subbasin(row, subbasin_ids)
             subbasins.append(sb)
 
             if is_lake:
                 subbasin_groups["lake"].append(subbasin_id)
+                # Lake
                 lakes.append(self._extract_lake(row))
             else:
                 subbasin_groups["land"].append(subbasin_id)
 
-        return subbasins, subbasin_groups, lakes, hrus
+            # ChannelProfile
+            channel_profiles.append(self._extract_channel_profile(row))
+
+        return subbasins, subbasin_groups, lakes, channel_profiles, hrus
 
     def _extract_subbasin(self, row, subbasin_ids):
         subbasin_id = int(row["SubId"])
@@ -107,6 +122,57 @@ class RoutingProductShapefileImporter:
             crest_width=row["BkfWidth"],
             max_depth=row["LakeDepth"],
             lake_area=row["HRU_Area"],
+        )
+
+    def _extract_channel_profile(self, row):
+        subbasin_id = int(row["SubId"])
+        slope = max(row["RivSlope"], RoutingProductShapefileImporter.MAX_RIVER_SLOPE)
+
+        channel_width = row["BkfWidth"]
+        channel_depth = row["BkfDepth"]
+        channel_elev = row["MeanElev"]
+        floodn = row["FloodP_n"]
+        channeln = row["Ch_n"]
+
+        zch = 2
+        sidwd = zch * channel_depth  # river side width
+        botwd = channel_width - 2 * sidwd  # river
+        if botwd < 0:
+            botwd = 0.5 * channel_width
+            sidwd = 0.5 * 0.5 * channel_width
+            zch = (channel_width - botwd) / 2 / channel_depth
+
+        zfld = 4 + channel_elev
+        zbot = channel_elev - channel_depth
+        sidwdfp = 4 / 0.25
+
+        survey_points = [
+            (0, zfld),
+            (sidwdfp, channel_elev),
+            (sidwdfp + 2 * channel_width, channel_elev),
+            (sidwdfp + 2 * channel_width + sidwd, zbot),
+            (sidwdfp + 2 * channel_width + sidwd + botwd, zbot),
+            (sidwdfp + 2 * channel_width + 2 * sidwd + botwd, channel_elev),
+            (sidwdfp + 4 * channel_width + 2 * sidwd + botwd, channel_elev),
+            (2 * sidwdfp + 4 * channel_width + 2 * sidwd + botwd, zfld),
+        ]
+
+        if RoutingProductShapefileImporter.USE_MANNING_COEFF:
+            mann = channeln
+        else:
+            mann = RoutingProductShapefileImporter.MANNING_DEFAULT
+
+        roughness_zones = [
+            (0, floodn),
+            (sidwdfp + 2 * channel_width, mann),
+            (sidwdfp + 2 * channel_width + 2 * sidwd + botwd, floodn),
+        ]
+
+        return ChannelProfileRecord(
+            name=f"chn_{subbasin_id}",
+            bed_slope=slope,
+            survey_points=survey_points,
+            roughness_zones=roughness_zones,
         )
 
     def _extract_hru(self, row):
