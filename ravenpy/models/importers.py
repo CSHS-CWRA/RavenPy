@@ -9,7 +9,6 @@ class RoutingProductShapefileImporter:
     This is a class to encapsulate the logic of converting the Routing
     Product into the required data structures to generate the RVH file
     format.
-
     """
 
     MAX_RIVER_SLOPE = 0.00001
@@ -21,6 +20,20 @@ class RoutingProductShapefileImporter:
         self._df = geopandas.read_file(path)
 
     def extract(self):
+        """
+        This will extract the data from the Routing Product shapefile and
+        return it as containers of relevant records.
+
+        Returns
+        -------
+        sbs: list of `state.SubbasinRecord`
+        groups: {
+          'land': list of IDs,
+          'lake': list of IDs,
+        lakes: list of `state.SubbasinLakeRecord`
+        hrus: list of `state.HRURecord`
+
+        """
         sbs, groups, lakes = self._extract_subbasins_and_lakes()
         hrus = self._extract_hrus()
 
