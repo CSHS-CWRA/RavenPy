@@ -34,10 +34,67 @@ class RoutingProductShapefileImporter:
         hrus: list of `state.HRURecord`
 
         """
-        sbs, groups, lakes = self._extract_subbasins_and_lakes()
-        hrus = self._extract_hrus()
 
-        return sbs, groups, lakes, hrus
+        subbasins = []
+        subbasin_groups = {
+            "land": [],
+            "lake": [],
+        }
+        lakes = []
+        hrus = []
+
+        # Collect all subbasin_ids for fast lookup in next loop
+        subbasin_ids = {int(row["SubId"]) for _, row in self._df.iterrows()}
+        subbasin_id_accum = set()
+
+        for _, row in self._df.iterrows():
+
+            hrus.append(self._extract_hru(row))
+
+            subbasin_id = int(row["SubId"])
+
+            # We only want to process the first row with a given SubId (we ignore the other ones)
+            if subbasin_id in subbasin_id_accum:
+                continue
+            subbasin_id_accum.add(subbasin_id)
+
+            sb, is_lake = self._extract_subbasin(row, subbasin_ids)
+            subbasins.append(sb)
+
+            if is_lake:
+                subbasin_groups["lake"].append(subbasin_id)
+                lakes.append(self._extract_lake(row))
+            else:
+                subbasin_groups["land"].append(subbasin_id)
+
+        return subbasins, subbasin_groups, lakes, hrus
+
+    def _extract_subbasin(self, row, subbasin_ids):
+        subbasin_id = int(row["SubId"])
+        is_lake = row["IsLake"] >= 0
+        river_length_in_kms = 0 if is_lake else row["Rivlen"] / 1000
+        river_slope = max(
+            row["RivSlope"], RoutingProductShapefileImporter.MAX_RIVER_SLOPE
+        )
+        # downstream_id
+        downstream_id = int(row["DowSubId"])
+        if downstream_id == subbasin_id:
+            downstream_id = -1
+        elif downstream_id not in subbasin_ids:
+            downstream_id = -1
+        gauged = row["IsObs"] > 0 or (
+            row["IsLake"] >= 0 and RoutingProductShapefileImporter.USE_LAKE_AS_GAUGE
+        )
+        rec = SubbasinRecord(
+            subbasin_id=subbasin_id,
+            name=f"sub{subbasin_id}",
+            downstream_id=downstream_id,
+            profile=f"chn_{subbasin_id}",
+            reach_length=river_length_in_kms,
+            gauged=gauged,
+        )
+
+        return rec, is_lake
 
     def _extract_lake(self, row):
         lake_id = int(row["HyLakeId"])
@@ -52,74 +109,19 @@ class RoutingProductShapefileImporter:
             lake_area=row["HRU_Area"],
         )
 
-    def _extract_subbasins_and_lakes(self):
-        # Collect all subbasin_ids for fast lookup in next loop
-        subbasin_ids = {int(row["SubId"]) for _, row in self._df.iterrows()}
-
-        subbasins = []
-        subbasin_groups = {
-            "land": [],
-            "lake": [],
-        }
-        lakes = []
-
-        # Here we only consider records with unique SubIds
-        for _, row in self._df.drop_duplicates("SubId", keep="first").iterrows():
-            subbasin_id = int(row["SubId"])
-
-            if row["IsLake"] >= 0:
-                river_length_in_kms = 0
-                subbasin_groups["lake"].append(subbasin_id)
-                lakes.append(self._extract_lake(row))
-            else:
-                river_length_in_kms = row["Rivlen"] / 1000
-                subbasin_groups["land"].append(subbasin_id)
-
-            river_slope = max(
-                row["RivSlope"], RoutingProductShapefileImporter.MAX_RIVER_SLOPE
-            )
-
-            # downstream_id
-            downstream_id = int(row["DowSubId"])
-            if downstream_id == subbasin_id:
-                downstream_id = -1
-            elif downstream_id not in subbasin_ids:
-                downstream_id = -1
-
-            gauged = row["IsObs"] > 0 or (
-                row["IsLake"] >= 0 and RoutingProductShapefileImporter.USE_LAKE_AS_GAUGE
-            )
-
-            rec = SubbasinRecord(
-                subbasin_id=subbasin_id,
-                name=f"sub{subbasin_id}",
-                downstream_id=downstream_id,
-                profile=f"chn_{subbasin_id}",
-                reach_length=river_length_in_kms,
-                gauged=gauged,
-            )
-            subbasins.append(rec)
-
-        return subbasins, subbasin_groups, lakes
-
-    def _extract_hrus(self):
-        hrus = []
-        for _, row in self._df.iterrows():
-            hru = HRURecord(
-                hru_id=int(row["HRU_ID"]),
-                area=row["HRU_Area"],
-                elevation=row["HRU_E_mean"],
-                latitude=row["HRU_CenY"],
-                longitude=row["HRU_CenX"],
-                subbasin_id=int(row["SubId"]),
-                land_use_class=row["LAND_USE_C"],
-                veg_class=row["VEG_C"],
-                soil_profile=row["SOIL_PROF"],
-                aquifer_profile="[NONE]",
-                terrain_class="[NONE]",
-                slope=row["HRU_S_mean"],
-                aspect=row["HRU_A_mean"],
-            )
-            hrus.append(hru)
-
-        return hrus
+    def _extract_hru(self, row):
+        return HRURecord(
+            hru_id=int(row["HRU_ID"]),
+            area=row["HRU_Area"],
+            elevation=row["HRU_E_mean"],
+            latitude=row["HRU_CenY"],
+            longitude=row["HRU_CenX"],
+            subbasin_id=int(row["SubId"]),
+            land_use_class=row["LAND_USE_C"],
+            veg_class=row["VEG_C"],
+            soil_profile=row["SOIL_PROF"],
+            aquifer_profile="[NONE]",
+            terrain_class="[NONE]",
+            slope=row["HRU_S_mean"],
+            aspect=row["HRU_A_mean"],
+        )
