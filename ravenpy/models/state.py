@@ -156,7 +156,7 @@ class SubbasinRecord(NamedTuple):
     reach_length: float = 0
     gauged: bool = False
 
-    def render_for_raven(self):
+    def to_rv(self):
         d = self._asdict()
         d["reach_length"] = d["reach_length"] if d["reach_length"] else "ZERO-"
         d["gauged"] = int(d["gauged"])
@@ -174,7 +174,7 @@ class SubbasinLakeRecord(NamedTuple):
     max_depth: float = 0
     lake_area: float = 0
 
-    def render_for_raven(self, pat):
+    def to_rv(self, pat):
         d = self._asdict()
         return pat.format(**d)
 
@@ -196,6 +196,6 @@ class HRURecord(NamedTuple):
     slope: float = 0.0
     aspect: float = 0.0
 
-    def render_for_raven(self):
+    def to_rv(self):
         d = self._asdict()
         return " ".join(map(str, d.values()))

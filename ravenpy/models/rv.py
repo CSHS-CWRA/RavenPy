@@ -759,7 +759,7 @@ class RVH(RV):
     def txt_subbasins(self):
         txt = []
         for sb in self._subbasins:
-            txt.append("\t" + sb.render_for_raven())
+            txt.append("\t" + sb.to_rv())
         return "\n".join(txt)
 
     @property
@@ -785,14 +785,14 @@ class RVH(RV):
         """
         txt = []
         for lake in self._lakes:
-            txt.append("\t" + lake.render_for_raven(pat))
+            txt.append("\t" + lake.to_rv(pat))
         return "\n\n".join(txt)
 
     @property
     def txt_hrus(self):
         txt = []
         for hru in self._hrus:
-            txt.append("\t" + hru.render_for_raven())
+            txt.append("\t" + hru.to_rv())
         return "\n".join(txt)
 
 
