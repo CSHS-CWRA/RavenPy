@@ -156,6 +156,12 @@ class SubbasinRecord(NamedTuple):
     reach_length: float = 0
     gauged: bool = False
 
+    def render_for_raven(self):
+        d = self._asdict()
+        d["reach_length"] = d["reach_length"] if d["reach_length"] else "ZERO-"
+        d["gauged"] = int(d["gauged"])
+        return " ".join(map(str, d.values()))
+
 
 class SubbasinLakeRecord(NamedTuple):
     """Record to populate RVH :Reservoir block."""
@@ -167,6 +173,10 @@ class SubbasinLakeRecord(NamedTuple):
     crest_width: float = 0
     max_depth: float = 0
     lake_area: float = 0
+
+    def render_for_raven(self, pat):
+        d = self._asdict()
+        return pat.format(**d)
 
 
 class HRURecord(NamedTuple):
@@ -185,3 +195,7 @@ class HRURecord(NamedTuple):
     terrain_class: str = ""
     slope: float = 0.0
     aspect: float = 0.0
+
+    def render_for_raven(self):
+        d = self._asdict()
+        return " ".join(map(str, d.values()))

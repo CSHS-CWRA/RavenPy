@@ -110,20 +110,3 @@ class RoutingProductShapefileImporter:
             hrus.append(hru)
 
         return hrus
-
-    @staticmethod
-    def format_subbasin_record_for_raven(subbasin_rec):
-        d = subbasin_rec._asdict()
-        d["reach_length"] = d["reach_length"] if d["reach_length"] else "ZERO-"
-        d["gauged"] = int(d["gauged"])
-        return " ".join(map(str, d.values()))
-
-    @staticmethod
-    def format_subbasin_lake_record_for_raven(subbasin_lake_rec, pat):
-        d = subbasin_lake_rec._asdict()
-        return pat.format(**d)
-
-    @staticmethod
-    def format_hru_record_for_raven(hru_rec):
-        d = hru_rec._asdict()
-        return " ".join(map(str, d.values()))
