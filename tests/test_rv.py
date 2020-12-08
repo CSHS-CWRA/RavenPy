@@ -286,7 +286,7 @@ class TestRVP:
         assert len(self.rvp._channel_profiles) == 46
 
     def test_format(self):
-        res = self.rvp.render_to_rv()
+        res = self.rvp.txt_channel_profiles
 
         assert res.count(":ChannelProfile") == 46
         assert res.count(":EndChannelProfile") == 46

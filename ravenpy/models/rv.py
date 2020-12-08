@@ -798,7 +798,8 @@ class RVP(RV):
     def channel_profiles(self):
         return self._channel_profiles
 
-    def render_to_rv(self):
+    @property
+    def txt_channel_profiles(self):
         pat = """
 :ChannelProfile	{name}
 \t:Bedslope {bed_slope}
