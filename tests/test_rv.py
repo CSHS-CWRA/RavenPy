@@ -136,9 +136,7 @@ class TestRavenNcData:
             path="/path/tasmin.nc",
             var_name="tn",
             unit="deg_C",
-            dimensions=[
-                "time",
-            ],
+            dimensions=["time"],
         )
         tmp = str(v)
 
@@ -160,9 +158,7 @@ class TestRavenNcData:
             path="/path/tasmin.nc",
             var_name="tn",
             unit="deg_C",
-            dimensions=[
-                "time",
-            ],
+            dimensions=["time"],
             linear_transform=(24000.0, 0.0),
         )
 
@@ -174,9 +170,7 @@ class TestRavenNcData:
             path="/path/tasmin.nc",
             var_name="tn",
             unit="deg_C",
-            dimensions=[
-                "time",
-            ],
+            dimensions=["time"],
             deaccumulate=True,
         )
 
