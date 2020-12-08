@@ -237,8 +237,8 @@ class TestRVH:
         importer = RoutingProductShapefileImporter(
             f"zip://{TESTDATA['routing-sample']}"
         )
-        self.rvh = RVH()
-        self.rvh.importer = importer
+        sbs, groups, lakes, _, hrus = importer.extract()
+        self.rvh = RVH(sbs, groups, lakes, hrus)
 
     def test_import_process(self):
         assert len(self.rvh._subbasins) == 46
@@ -279,8 +279,8 @@ class TestRVP:
         importer = RoutingProductShapefileImporter(
             f"zip://{TESTDATA['routing-sample']}"
         )
-        self.rvp = RVP()
-        self.rvp.importer = importer
+        _, _, _, cps, _ = importer.extract()
+        self.rvp = RVP(cps)
 
     def test_import_process(self):
         assert len(self.rvp._channel_profiles) == 46

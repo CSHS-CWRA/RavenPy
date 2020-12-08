@@ -712,13 +712,12 @@ class RVC(RV):
 
 
 class RVH(RV):
-    def __init__(self, **kwargs):
-        self._importer = None
-        self._subbasins = []
-        self._land_subbasin_group_ids = []
-        self._lake_subbasin_group_ids = []
-        self._lakes = []
-        self._hrus = []
+    def __init__(self, subbasins, subbasin_groups, lakes, hrus, **kwargs):
+        self._subbasins = subbasins
+        self._land_subbasin_group_ids = subbasin_groups["land"]
+        self._lake_subbasin_group_ids = subbasin_groups["lake"]
+        self._lakes = lakes
+        self._hrus = hrus
 
         # This is a hack to make sure the txt_* properties are picked up to fill the rv templates.
         self._txt_subbasins = ""
@@ -728,20 +727,6 @@ class RVH(RV):
         self._txt_hrus = ""
 
         super().__init__(**kwargs)
-
-    @property
-    def importer(self):
-        return self._importer
-
-    @importer.setter
-    def importer(self, importer_):
-        self._importer = importer_
-        sbs, groups, lakes, _, hrus = self._importer.extract()
-        self._subbasins = sbs
-        self._land_subbasin_group_ids = groups["land"]
-        self._lake_subbasin_group_ids = groups["lake"]
-        self._lakes = lakes
-        self._hrus = hrus
 
     @property
     def subbasins(self):
@@ -805,21 +790,9 @@ class RVH(RV):
 
 
 class RVP(RV):
-    def __init__(self, **kwargs):
-        self._importer = None
-        self._channel_profiles = []
-
-        super().__init__(**kwargs)
-
-    @property
-    def importer(self):
-        return self._importer
-
-    @importer.setter
-    def importer(self, importer_):
-        self._importer = importer_
-        _, _, _, channel_profiles, _ = self._importer.extract()
+    def __init__(self, channel_profiles, **kwargs):
         self._channel_profiles = channel_profiles
+        super().__init__(**kwargs)
 
     @property
     def channel_profiles(self):
