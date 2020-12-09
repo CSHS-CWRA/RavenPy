@@ -7,7 +7,7 @@ import geopandas
 import six
 from xclim.core.units import units, units2pint
 
-from .state import BasinStateVariables, HRUStateVariables
+from .state import BasinStateVariables, HRUStateVariables, HRUStateVariablesTable
 
 # Can be removed when xclim is pinned above 0.14
 units.define("deg_C = degC")
@@ -634,6 +634,8 @@ class RVI(RV):
 
 
 class RVC(RV):
+    hru_state_variable_table: HRUStateVariablesTable
+
     def __init__(self, **kwargs):
         self._hru_state = {}
         self._basin_state = {}
@@ -679,14 +681,6 @@ class RVC(RV):
     def basin_state(self, value):
         self._basin_state[1] = value
 
-    @property
-    def txt_hru_state(self):
-        """Return HRU state values."""
-        txt = []
-        for index, data in self._hru_state.items():
-            txt.append(f"{index}," + ",".join(map(repr, data)))
-
-        return "\n".join(txt)
 
     @property
     def txt_basin_state(self):

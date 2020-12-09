@@ -10,7 +10,8 @@ Implemented using typing.NamedTuple
 Use _replace to update individual values.
 
 """
-from typing import NamedTuple
+from dataclasses import dataclass
+from typing import NamedTuple, List, Dict, Any
 
 
 class HRUStateVariables(NamedTuple):
@@ -130,6 +131,22 @@ class HRUStateVariables(NamedTuple):
     conv_stor97: float = 0
     conv_stor98: float = 0
     conv_stor99: float = 0
+
+
+class Table():
+    value: Dict[Any]
+    directive: str
+
+    def to_rv(self):
+        items = [f"{index}, {data.to_rv()}" for index, data in self.value.items()]
+        content = "\n".join(items)
+        return f":{self.directive}\n{content}\n:End{self.directive}\n"
+
+
+@dataclass
+class HRUStateVariablesTable(Table):
+    value: Dict[HRUStateVariables]
+    directive = "HRUStateVariableTable"
 
 
 class BasinStateVariables(NamedTuple):

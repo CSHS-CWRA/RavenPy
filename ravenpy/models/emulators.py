@@ -61,11 +61,11 @@ class GR4JCN(Raven):
         self.rvd.one_minus_CEMANEIGE_X2 = 1.0 - self.rvp.params.CEMANEIGE_X2
 
         # Default initial conditions if none are given
-        if self.rvc.hru_state is None:
+        if self.rvc.hru_state_variable_table is None:
             soil0 = self.rvd.GR4J_X1_hlf if self.rvc.soil0 is None else self.rvc.soil0
             soil1 = self.rvc.soil1
 
-            self.rvc.hru_state = HRUStateVariables(soil0=soil0, soil1=soil1)
+            self.rvc.hru_state_variable_table = {1: HRUStateVariables(soil0=soil0, soil1=soil1)}
 
 
 class GR4JCN_OST(Ostrich, GR4JCN):
