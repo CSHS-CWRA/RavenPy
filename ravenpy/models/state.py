@@ -10,7 +10,7 @@ Implemented using typing.NamedTuple
 Use _replace to update individual values.
 
 """
-from typing import NamedTuple
+from typing import List, NamedTuple, Tuple
 
 
 class HRUStateVariables(NamedTuple):
@@ -217,8 +217,8 @@ class ChannelProfileRecord(NamedTuple):
 
     name: str = "chn_XXX"
     bed_slope: float = 0
-    survey_points: list = []
-    roughness_zones: list = []
+    survey_points: List[Tuple[float, float]] = []
+    roughness_zones: List[Tuple[float, float]] = []
 
     def to_rv(self):
         pat = """
@@ -238,3 +238,12 @@ class ChannelProfileRecord(NamedTuple):
             f"\t\t{z[0]} {z[1]}" for z in d["roughness_zones"]
         )
         return pat.format(**d)
+
+
+class GriddedForcingRecord(NamedTuple):
+    """Record to populate RVT :GriddedForcing block."""
+
+    forcing_type: str = ""
+    file_name_nc: str = ""
+    var_name_nc: str = ""
+    dim_names_nc: Tuple[str, str, str] = ("x", "y", "t")
