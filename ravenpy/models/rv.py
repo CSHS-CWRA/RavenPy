@@ -765,20 +765,9 @@ class RVH(RV):
 
     @property
     def txt_lakes(self):
-        pat = """
-:Reservoir {name}
-\t:SubBasinID {subbasin_id}
-\t:HRUID {hru_id}
-\t:Type RESROUTE_STANDARD
-\t:WeirCoefficient {weir_coefficient}
-\t:CrestWidth {crest_width}
-\t:MaxDepth {max_depth}
-\t:LakeArea {lake_area}
-:EndReservoir
-        """
         txt = []
         for lake in self._lakes:
-            txt.append("\t" + lake.to_rv(pat))
+            txt.append("\t" + lake.to_rv())
         return "\n\n".join(txt)
 
     @property
@@ -800,18 +789,7 @@ class RVP(RV):
 
     @property
     def txt_channel_profiles(self):
-        pat = """
-:ChannelProfile	{name}
-\t:Bedslope {bed_slope}
-\t:SurveyPoints
-{survey_points}
-\t:EndSurveyPoints
-\t:RoughnessZones
-{roughness_zones}
-\t:EndRoughnessZones
-:EndChannelProfile
-        """
-        return "\n\n".join(cp.to_rv(pat) for cp in self._channel_profiles)
+        return "\n\n".join(cp.to_rv() for cp in self._channel_profiles)
 
 
 class Ost(RV):

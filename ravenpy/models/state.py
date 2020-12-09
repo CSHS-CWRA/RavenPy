@@ -174,7 +174,18 @@ class SubbasinLakeRecord(NamedTuple):
     max_depth: float = 0
     lake_area: float = 0
 
-    def to_rv(self, pat):
+    def to_rv(self):
+        pat = """
+:Reservoir {name}
+\t:SubBasinID {subbasin_id}
+\t:HRUID {hru_id}
+\t:Type RESROUTE_STANDARD
+\t:WeirCoefficient {weir_coefficient}
+\t:CrestWidth {crest_width}
+\t:MaxDepth {max_depth}
+\t:LakeArea {lake_area}
+:EndReservoir
+        """
         d = self._asdict()
         return pat.format(**d)
 
@@ -209,7 +220,18 @@ class ChannelProfileRecord(NamedTuple):
     survey_points: list = []
     roughness_zones: list = []
 
-    def to_rv(self, pat):
+    def to_rv(self):
+        pat = """
+:ChannelProfile	{name}
+\t:Bedslope {bed_slope}
+\t:SurveyPoints
+{survey_points}
+\t:EndSurveyPoints
+\t:RoughnessZones
+{roughness_zones}
+\t:EndRoughnessZones
+:EndChannelProfile
+        """
         d = self._asdict()
         d["survey_points"] = "\n".join(f"\t\t{p[0]} {p[1]}" for p in d["survey_points"])
         d["roughness_zones"] = "\n".join(
