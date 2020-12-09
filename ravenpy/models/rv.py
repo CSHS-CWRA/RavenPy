@@ -8,6 +8,7 @@ import six
 from xclim.core.units import units, units2pint
 
 from .state import BasinStateVariables, HRUStateVariables, HRUStateVariablesTable
+from . import options
 
 # Can be removed when xclim is pinned above 0.14
 units.define("deg_C = degC")
@@ -430,6 +431,8 @@ class RVT(RV):
 
 
 class RVI(RV):
+    suppress_output: options.SuppressOutput
+
     def __init__(self, **kwargs):
         self.name = None
         self.area = None
@@ -449,7 +452,6 @@ class RVI(RV):
         self._duration = 1
         self._time_step = 1.0
         self._evaluation_metrics = "NASH_SUTCLIFFE RMSE"
-        self._suppress_output = False
         self._calendar = "standard"
 
         super(RVI, self).__init__(**kwargs)
@@ -554,17 +556,6 @@ class RVI(RV):
     @property
     def now(self):
         return dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    @property
-    def suppress_output(self):
-        tag = ":SuppressOutput\n:DontWriteWatershedStorage"
-        return tag if self._suppress_output else ""
-
-    @suppress_output.setter
-    def suppress_output(self, value):
-        if not isinstance(value, bool):
-            raise ValueError
-        self._suppress_output = value
 
     @property
     def rain_snow_fraction(self):
