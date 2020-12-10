@@ -65,6 +65,10 @@ class TestQueryFolder:
     git_url = "https://github.com/Ouranosinc/raven-testdata"
     branch = "master"
 
+    def test_get_files_with_testdata_folder(self):
+        rvs = get_file(TESTDATA["raven-gr4j-cemaneige-nc-rv"], branch="master")
+        assert len(rvs) == 5
+
     def test_query_folder(self):
         all_files = query_folder()
         assert len(all_files) == 129

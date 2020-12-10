@@ -14,15 +14,8 @@ has_singularity = ravenpy.raven_simg.exists()
 
 
 class TestRaven:
+
     def test_gr4j(self):
-        rvs = TESTDATA["raven-gr4j-cemaneige-nc-rv"]
-        ts = TESTDATA["raven-gr4j-cemaneige-nc-ts"]
-
-        model = Raven()
-        model.configure(rvs)
-        model(ts)
-
-    def test_gr4j_getfile(self):
         rvs = get_file(TESTDATA["raven-gr4j-cemaneige-nc-rv"], branch="master")
         ts = get_file(TESTDATA["raven-gr4j-cemaneige-nc-ts"], branch="master")
 
