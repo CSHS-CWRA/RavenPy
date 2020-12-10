@@ -1,10 +1,13 @@
 import geopandas
 
-from ravenpy.models.state import (
-    ChannelProfileRecord,
-    HRURecord,
-    SubbasinLakeRecord,
-    SubbasinRecord,
+from .commands import (
+    ChannelProfileCommand,
+    HRUsCommand,
+    HRUsCommandRecord,
+    ReservoirCommand,
+    SubBasinGroupCommand,
+    SubBasinsCommand,
+    SubBasinsCommandRecord,
 )
 
 
@@ -29,28 +32,25 @@ class RoutingProductShapefileImporter:
     def extract(self):
         """
         This will extract the data from the Routing Product shapefile and
-        return it as containers of relevant records.
+        return it as relevant commands.
 
         Returns
         -------
-        sbs: list of `state.SubbasinRecord`
-        groups: {
-          'land': list of IDs,
-          'lake': list of IDs,
-        lakes: list of `state.SubbasinLakeRecord`
-        channel_profiles: list of `state.ChannelProfileRecord`
-        hrus: list of `state.HRURecord`
+        `commands.SubBasinsCommand`
+        `commands.SubBasinGroup`
+        `commands.SubBasinGroup`
+        list of `commands.ReservoirCommand`
+        list of `commands.ChannelProfileCommand`
+        `commands.HRUsCommand`
 
         """
 
-        subbasins = []
-        subbasin_groups = {
-            "land": [],
-            "lake": [],
-        }
-        lakes = []
-        channel_profiles = []
-        hrus = []
+        subbasin_recs = []
+        land_sb_ids = []
+        lake_sb_ids = []
+        reservoir_cmds = []  # those are meant to be injected inline in the RVH
+        channel_profile_cmds = []  # those are meant to be injected inline in the RVH
+        hru_recs = []
 
         # Collect all subbasin_ids for fast lookup in next loop
         subbasin_ids = {int(row["SubId"]) for _, row in self._df.iterrows()}
@@ -59,7 +59,7 @@ class RoutingProductShapefileImporter:
         for _, row in self._df.iterrows():
 
             # HRU
-            hrus.append(self._extract_hru(row))
+            hru_recs.append(self._extract_hru(row))
 
             subbasin_id = int(row["SubId"])
 
@@ -70,21 +70,27 @@ class RoutingProductShapefileImporter:
 
             # Subbasin
             sb, is_lake = self._extract_subbasin(row, subbasin_ids)
-            subbasins.append(sb)
+            subbasin_recs.append(sb)
 
             if is_lake:
-                subbasin_groups["lake"].append(subbasin_id)
-                # Lake
-                lakes.append(self._extract_lake(row))
+                lake_sb_ids.append(subbasin_id)
+                reservoir_cmds.append(self._extract_reservoir(row))
             else:
-                subbasin_groups["land"].append(subbasin_id)
+                land_sb_ids.append(subbasin_id)
 
             # ChannelProfile
-            channel_profiles.append(self._extract_channel_profile(row))
+            channel_profile_cmds.append(self._extract_channel_profile(row))
 
-        return subbasins, subbasin_groups, lakes, channel_profiles, hrus
+        return (
+            SubBasinsCommand(subbasin_recs),
+            SubBasinGroupCommand("land", land_sb_ids),
+            SubBasinGroupCommand("lake", lake_sb_ids),
+            reservoir_cmds,
+            channel_profile_cmds,
+            HRUsCommand(hru_recs),
+        )
 
-    def _extract_subbasin(self, row, subbasin_ids):
+    def _extract_subbasin(self, row, subbasin_ids) -> SubBasinsCommandRecord:
         subbasin_id = int(row["SubId"])
         is_lake = row["IsLake"] >= 0
         river_length_in_kms = 0 if is_lake else row["Rivlen"] / 1000
@@ -100,9 +106,9 @@ class RoutingProductShapefileImporter:
         gauged = row["IsObs"] > 0 or (
             row["IsLake"] >= 0 and RoutingProductShapefileImporter.USE_LAKE_AS_GAUGE
         )
-        rec = SubbasinRecord(
+        rec = SubBasinsCommandRecord(
             subbasin_id=subbasin_id,
-            name=f"sub{subbasin_id}",
+            name=f"sub_{subbasin_id}",
             downstream_id=downstream_id,
             profile=f"chn_{subbasin_id}",
             reach_length=river_length_in_kms,
@@ -111,10 +117,10 @@ class RoutingProductShapefileImporter:
 
         return rec, is_lake
 
-    def _extract_lake(self, row):
+    def _extract_reservoir(self, row) -> ReservoirCommand:
         lake_id = int(row["HyLakeId"])
 
-        return SubbasinLakeRecord(
+        return ReservoirCommand(
             subbasin_id=int(row["SubId"]),
             hru_id=int(row["HRU_ID"]),
             name=f"Lake_{lake_id}",
@@ -124,7 +130,7 @@ class RoutingProductShapefileImporter:
             lake_area=row["HRU_Area"],
         )
 
-    def _extract_channel_profile(self, row):
+    def _extract_channel_profile(self, row) -> ChannelProfileCommand:
         subbasin_id = int(row["SubId"])
         slope = max(row["RivSlope"], RoutingProductShapefileImporter.MAX_RIVER_SLOPE)
 
@@ -168,15 +174,15 @@ class RoutingProductShapefileImporter:
             (sidwdfp + 2 * channel_width + 2 * sidwd + botwd, floodn),
         ]
 
-        return ChannelProfileRecord(
+        return ChannelProfileCommand(
             name=f"chn_{subbasin_id}",
             bed_slope=slope,
             survey_points=survey_points,
             roughness_zones=roughness_zones,
         )
 
-    def _extract_hru(self, row):
-        return HRURecord(
+    def _extract_hru(self, row) -> HRUsCommandRecord:
+        return HRUsCommandRecord(
             hru_id=int(row["HRU_ID"]),
             area=row["HRU_Area"],
             elevation=row["HRU_E_mean"],
