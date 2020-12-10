@@ -731,7 +731,7 @@ class RVH(RV):
 
     @property
     def subbasins(self):
-        return self._subbasins_cmd.subbasins
+        return self._subbasins_cmd.subbasins  # return internal list
 
     @property
     def land_subbasin_group(self):
@@ -743,11 +743,11 @@ class RVH(RV):
 
     @property
     def reservoirs(self):
-        return self._reservoir_cmds
+        return self._reservoir_cmds  # return list directly
 
     @property
     def hrus(self):
-        return self._hrus_cmd.hrus
+        return self._hrus_cmd.hrus  # return internal list
 
     def to_rv(self):
         return """
