@@ -118,13 +118,13 @@ def query_folder(
     branch: str = "master",
 ) -> List[str]:
     """
-    Return a file from an online GitHub-like repository.
-    If a local copy is found then always use that to avoid network traffic.
+    Lists the files available for retrieval from a remote git repository with get_file.
+    If provided a folder name, will perform a globbing-like filtering operation for parent folders.
 
     Parameters
     ----------
     name : str, optional
-        Relative pathname of the subfolder from the top-level.
+        Relative pathname of the sub-folder from the top-level.
     github_url : str
         URL to Github repository where the data is stored.
     branch : str, optional
