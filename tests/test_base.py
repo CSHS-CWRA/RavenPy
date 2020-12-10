@@ -6,6 +6,7 @@ import pytest
 import ravenpy
 from ravenpy.models import Ostrich, Raven
 from ravenpy.models.base import get_diff_level
+from ravenpy.tutorial import get_file
 
 from .common import TESTDATA
 
@@ -16,6 +17,14 @@ class TestRaven:
     def test_gr4j(self):
         rvs = TESTDATA["raven-gr4j-cemaneige-nc-rv"]
         ts = TESTDATA["raven-gr4j-cemaneige-nc-ts"]
+
+        model = Raven()
+        model.configure(rvs)
+        model(ts)
+
+    def test_gr4j_getfile(self):
+        rvs = get_file(TESTDATA["raven-gr4j-cemaneige-nc-rv"], branch="master")
+        ts = get_file(TESTDATA["raven-gr4j-cemaneige-nc-ts"], branch="master")
 
         model = Raven()
         model.configure(rvs)
