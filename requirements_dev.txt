@@ -9,7 +9,7 @@ coveralls
 Sphinx
 twine
 setuptools
-Click>=7.0
+Click~=7.0
 pytest>=6.0.0
 pytest-runner
 pytest-cov
