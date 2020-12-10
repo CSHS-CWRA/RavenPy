@@ -145,6 +145,7 @@ def query_folder(
 
     md5_files = [f["path"] for f in res["tree"] if f["path"].endswith(".md5")]
     if folder:
+        folder = "/".join("/".split(folder)) if "/" in folder else folder
         md5_files = [f for f in md5_files if folder in Path(f).parent.as_posix()]
     files = [re.sub(".md5$", "", f) for f in md5_files]
 

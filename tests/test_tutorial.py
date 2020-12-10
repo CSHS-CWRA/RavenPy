@@ -2,7 +2,8 @@ from pathlib import Path
 
 import xarray
 
-from ravenpy.tutorial import _default_cache_dir, get_file, open_dataset
+from .common import TESTDATA
+from ravenpy.tutorial import _default_cache_dir, get_file, open_dataset, query_folder
 
 
 class TestRemoteFileAccess:
@@ -58,3 +59,27 @@ class TestRemoteFileAccess:
         )
 
         assert isinstance(ds, xarray.Dataset)
+
+
+class TestQueryFolder:
+    git_url = "https://github.com/Ouranosinc/raven-testdata"
+    branch = "master"
+
+    def test_query_folder(self):
+        all_files = query_folder()
+        assert len(all_files) == 129
+
+    def test_query_specific_folder(self):
+        folder = query_folder(folder="raven-gr4j-cemaneige", branch=self.branch)
+        print(folder)
+        assert len(folder) == 8
+
+    def test_query_folder_patterns(self):
+        mohyse = query_folder(folder="/regionalisation_data/tests/", pattern="MOHYSE", branch=self.branch)
+        assert len(mohyse) == 1
+        assert mohyse[0] == str(Path("regionalisation_data", "tests", "MOHYSE_parameters.csv"))
+
+    def test_query_folder_patterns_excessive_slashes(self):
+        mohyse = query_folder(folder="///regionalisation_data/////tests///", pattern="MOHYSE", branch=self.branch)
+        assert len(mohyse) == 1
+        assert mohyse[0] == str(Path("regionalisation_data", "tests", "MOHYSE_parameters.csv"))
