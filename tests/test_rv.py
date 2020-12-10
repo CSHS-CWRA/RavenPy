@@ -14,6 +14,7 @@ from ravenpy.models.rv import (
     RVC,
     RVH,
     RVI,
+    RVP,
     RVT,
     MonthlyAverage,
     Ost,
@@ -135,7 +136,7 @@ class TestRavenNcData:
             path="/path/tasmin.nc",
             var_name="tn",
             unit="deg_C",
-            dimensions=["time",],
+            dimensions=["time"],
         )
         tmp = str(v)
 
@@ -157,7 +158,7 @@ class TestRavenNcData:
             path="/path/tasmin.nc",
             var_name="tn",
             unit="deg_C",
-            dimensions=["time",],
+            dimensions=["time"],
             linear_transform=(24000.0, 0.0),
         )
 
@@ -169,7 +170,7 @@ class TestRavenNcData:
             path="/path/tasmin.nc",
             var_name="tn",
             unit="deg_C",
-            dimensions=["time",],
+            dimensions=["time"],
             deaccumulate=True,
         )
 
@@ -230,19 +231,18 @@ class TestRVH:
         importer = RoutingProductShapefileImporter(
             f"zip://{TESTDATA['routing-sample']}"
         )
-        self.rvh = RVH(importer)
+        sbs, land_group, lake_group, reservoirs, _, hrus = importer.extract()
+        self.rvh = RVH(sbs, land_group, lake_group, reservoirs, hrus)
 
     def test_import_process(self):
-        assert len(self.rvh._subbasins) == 46
-        assert len(self.rvh._land_subbasin_group_ids) == 41
-        assert len(self.rvh._lake_subbasin_group_ids) == 5
-        assert len(self.rvh._lakes) == 5
-        assert len(self.rvh._hrus) == 51
+        assert len(self.rvh.subbasins) == 46
+        assert len(self.rvh.land_subbasin_group) == 41
+        assert len(self.rvh.lake_subbasin_group) == 5
+        assert len(self.rvh.reservoirs) == 5
+        assert len(self.rvh.hrus) == 51
 
     def test_format(self):
-        rvh_template = Path(ravenpy.models.__file__).parent / "global" / "global.rvh"
-        params = dict(self.rvh.items())
-        res = rvh_template.read_text().format(**params)
+        res = self.rvh.to_rv()
 
         sbs = (
             re.search(":SubBasins(.+):EndSubBasins", res, re.MULTILINE | re.DOTALL)
@@ -250,9 +250,9 @@ class TestRVH:
             .split("\n")
         )
         sbs = list(filter(None, sbs))  # remove whitespaces
-        assert len(sbs) == len(self.rvh._subbasins) + 2
+        assert len(sbs) == len(self.rvh.subbasins) + 2
 
-        assert res.count("ZERO-") == len(self.rvh._lakes)
+        assert res.count("ZERO-") == len(self.rvh.reservoirs)
 
         hrus = (
             re.search(":HRUs(.+):EndHRUs", res, re.MULTILINE | re.DOTALL)
@@ -260,9 +260,28 @@ class TestRVH:
             .split("\n")
         )
         hrus = list(filter(None, hrus))  # remove whitespaces
-        assert len(hrus) == len(self.rvh._hrus) + 2
+        assert len(hrus) == len(self.rvh.hrus) + 2
 
-        assert res.count(":Reservoir") == len(self.rvh._lakes)
+        assert res.count(":Reservoir") == len(self.rvh.reservoirs)
+
+
+class TestRVP:
+    @classmethod
+    def setup_class(self):
+        importer = RoutingProductShapefileImporter(
+            f"zip://{TESTDATA['routing-sample']}"
+        )
+        _, _, _, _, cps, _ = importer.extract()
+        self.rvp = RVP(cps)
+
+    def test_import_process(self):
+        assert len(self.rvp.channel_profiles) == 46
+
+    def test_format(self):
+        res = self.rvp.to_rv()
+
+        assert res.count(":ChannelProfile") == 46
+        assert res.count(":EndChannelProfile") == 46
 
 
 def test_isinstance_namedtuple():

@@ -568,8 +568,7 @@ class RVI(RV):
 
     @property
     def rain_snow_fraction(self):
-        """Rain snow partitioning.
-        """
+        """Rain snow partitioning."""
         return self._rain_snow_fraction
 
     @rain_snow_fraction.setter
@@ -713,87 +712,80 @@ class RVC(RV):
 
 
 class RVH(RV):
-    def __init__(self, importer, **kwargs):
-        sbs, groups, lakes, hrus = importer.extract()
-        self._importer = importer
-        self._subbasins = sbs
-        self._land_subbasin_group_ids = groups["land"]
-        self._lake_subbasin_group_ids = groups["lake"]
-        self._lakes = lakes
-        self._hrus = hrus
-
-        # This is a hack to make sure the txt_* properties are picked up to fill the rv templates.
-        self._txt_subbasins = ""
-        self._txt_land_subbasin_group_ids = ""
-        self._txt_lake_subbasin_group_ids = ""
-        self._txt_lakes = ""
-        self._txt_hrus = ""
+    def __init__(
+        self,
+        subbasins_cmd,
+        land_subbasin_group_cmd,
+        lake_subbasin_group_cmd,
+        reservoir_cmds,
+        hrus_cmd,
+        **kwargs,
+    ):
+        self._subbasins_cmd = subbasins_cmd
+        self._land_subbasin_group_cmd = land_subbasin_group_cmd
+        self._lake_subbasin_group_cmd = lake_subbasin_group_cmd
+        self._reservoir_cmds = reservoir_cmds
+        self._hrus_cmd = hrus_cmd
 
         super().__init__(**kwargs)
 
     @property
-    def importer(self):
-        return self._importer
-
-    @property
     def subbasins(self):
-        return self._subbasins
+        return self._subbasins_cmd.subbasins
 
     @property
-    def land_subbasin_group_ids(self):
-        return self._land_subbasin_group_ids
+    def land_subbasin_group(self):
+        return self._land_subbasin_group_cmd.subbasin_ids  # return internal list
 
     @property
-    def lake_subbasin_group_ids(self):
-        return self._lake_subbasin_group_ids
+    def lake_subbasin_group(self):
+        return self._lake_subbasin_group_cmd.subbasin_ids  # return internal list
 
     @property
-    def lakes(self):
-        return self._lakes
+    def reservoirs(self):
+        return self._reservoir_cmds
 
     @property
     def hrus(self):
-        return self._hrus
+        return self._hrus_cmd.hrus
+
+    def to_rv(self):
+        return """
+{subbasins_cmd}
+
+{hrus_cmd}
+
+{land_subbasin_group_cmd}
+
+{lake_subbasin_group_cmd}
+
+{reservoir_cmds}
+        """.format(
+            subbasins_cmd=self._subbasins_cmd.to_rv(),
+            hrus_cmd=self._hrus_cmd.to_rv(),
+            land_subbasin_group_cmd=self._land_subbasin_group_cmd.to_rv(),
+            lake_subbasin_group_cmd=self._lake_subbasin_group_cmd.to_rv(),
+            reservoir_cmds="\n\n".join([r.to_rv() for r in self._reservoir_cmds]),
+        )
+
+
+class RVP(RV):
+    def __init__(self, channel_profile_cmds, **kwargs):
+        self._channel_profile_cmds = channel_profile_cmds
+        super().__init__(**kwargs)
 
     @property
-    def txt_subbasins(self):
-        txt = []
-        for sb in self._subbasins:
-            txt.append("\t" + sb.to_rv())
-        return "\n".join(txt)
+    def channel_profiles(self):
+        return self._channel_profile_cmds
 
-    @property
-    def txt_land_subbasin_group_ids(self):
-        return " ".join(map(str, self._land_subbasin_group_ids))
-
-    @property
-    def txt_lake_subbasin_group_ids(self):
-        return " ".join(map(str, self._lake_subbasin_group_ids))
-
-    @property
-    def txt_lakes(self):
-        pat = """
-:Reservoir {name}
-  :SubBasinID {subbasin_id}
-  :HRUID {hru_id}
-  :Type RESROUTE_STANDARD
-  :WeirCoefficient {weir_coefficient}
-  :CrestWidth {crest_width}
-  :MaxDepth {max_depth}
-  :LakeArea {lake_area}
-:EndReservoir
-        """
-        txt = []
-        for lake in self._lakes:
-            txt.append("\t" + lake.to_rv(pat))
-        return "\n\n".join(txt)
-
-    @property
-    def txt_hrus(self):
-        txt = []
-        for hru in self._hrus:
-            txt.append("\t" + hru.to_rv())
-        return "\n".join(txt)
+    def to_rv(self):
+        return """
+{channel_profile_cmds}
+        """.format(
+            channel_profile_cmds="\n\n".join(
+                [cp.to_rv() for cp in self._channel_profile_cmds]
+            ),
+        )
 
 
 class Ost(RV):
@@ -869,8 +861,8 @@ def parse_solution(rvc):
 
 
 def _parser(lines, indent="", fmt=str):
-    import re
     import itertools
+    import re
 
     header_pat = re.compile(r"(\s*):(\w+)\s?,?\s*(.*)")
 
@@ -881,7 +873,7 @@ def _parser(lines, indent="", fmt=str):
         if header:
             new_indent, key, value = header.groups()
             if new_indent > indent:
-                out[old_key] = _parser(itertools.chain([line,], lines), new_indent)
+                out[old_key] = _parser(itertools.chain([line], lines), new_indent)
             elif new_indent < indent:
                 return out
             else:
