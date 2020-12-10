@@ -1,9 +1,10 @@
 from pathlib import Path
-from urllib.request import urlretrieve
 
 import numpy as np
 import pandas as pd
 import xarray as xr
+
+from ravenpy.tutorial import query_folder
 
 VERSION = "1.0.0"
 
@@ -24,13 +25,15 @@ TESTDATA["solution.rvc"] = TD / "solution.rvc"
 TESTDATA[
     "raven-gr4j-cemaneige-nc-ts"
 ] = "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
-TESTDATA["raven-gr4j-cemaneige-nc-rv"] = (
-    "raven-gr4j-cemaneige/raven-gr4j-salmon.rvc",
-    "raven-gr4j-cemaneige/raven-gr4j-salmon.rvh",
-    "raven-gr4j-cemaneige/raven-gr4j-salmon.rvi",
-    "raven-gr4j-cemaneige/raven-gr4j-salmon.rvp",
-    "raven-gr4j-cemaneige/raven-gr4j-salmon.rvt",
-)
+TESTDATA["raven-gr4j-cemaneige-nc-rv"] = query_folder("raven-gr4j-cemaneige", pattern=".rv")
+
+# (
+#     "raven-gr4j-cemaneige/raven-gr4j-salmon.rvc",
+#     "raven-gr4j-cemaneige/raven-gr4j-salmon.rvh",
+#     "raven-gr4j-cemaneige/raven-gr4j-salmon.rvi",
+#     "raven-gr4j-cemaneige/raven-gr4j-salmon.rvp",
+#     "raven-gr4j-cemaneige/raven-gr4j-salmon.rvt",
+# )
 
 TESTDATA["raven-mohyse-nc-ts"] = TESTDATA["raven-gr4j-cemaneige-nc-ts"]
 TESTDATA["raven-mohyse"] = TD / "raven-mohyse"

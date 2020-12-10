@@ -113,7 +113,8 @@ def get_file(
 
 # Credits to Anselme  https://stackoverflow.com/a/62003257/7322852 (CC-BY-SA 4.0)
 def query_folder(
-    name: Optional[str] = None,
+    folder: Optional[str] = None,
+    pattern: Optional[str] = None,
     github_url: str = "https://github.com/Ouranosinc/raven-testdata",
     branch: str = "master",
 ) -> List[str]:
@@ -123,8 +124,10 @@ def query_folder(
 
     Parameters
     ----------
-    name : str, optional
+    folder : str, optional
         Relative pathname of the sub-folder from the top-level.
+    pattern : str, optional
+        Regex pattern to identify a file.
     github_url : str
         URL to Github repository where the data is stored.
     branch : str, optional
@@ -141,10 +144,15 @@ def query_folder(
     res = r.json()
 
     md5_files = [f["path"] for f in res["tree"] if f["path"].endswith(".md5")]
-    if name:
-        md5_files = [f for f in md5_files if name in Path(f).parent.as_posix()]
+    if folder:
+        md5_files = [f for f in md5_files if folder in Path(f).parent.as_posix()]
+    files = [re.sub(".md5$", "", f) for f in md5_files]
 
-    return [re.sub(".md5$", "", f) for f in md5_files]
+    if pattern:
+        regex = re.compile(pattern)
+        files = [string for string in files if re.search(regex, string)]
+
+    return files
 
 
 # idea copied from xclim that borrowed it from xarray that was borrowed from Seaborn
