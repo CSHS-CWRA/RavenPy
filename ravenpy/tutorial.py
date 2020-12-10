@@ -1,14 +1,16 @@
 """Testing and tutorial utilities module."""
 # Most of this code copied and adapted from xarray and xclim
 import logging
-from typing import List, Optional, Sequence, Union
+import re
 from pathlib import Path
-from urllib.request import urlretrieve
-from urllib.parse import urljoin
+from typing import List, Optional, Sequence, Union
 from urllib.error import HTTPError
+from urllib.parse import urljoin
+from urllib.request import urlretrieve
 
-from xarray import open_dataset as _open_dataset
+import requests
 from xarray import Dataset
+from xarray import open_dataset as _open_dataset
 from xarray.tutorial import file_md5_checksum
 
 _default_cache_dir = Path.home() / ".raven_testing_data"
@@ -19,7 +21,11 @@ __all__ = ["get_file", "open_dataset"]
 
 
 def _get(
-    fullname: Path, github_url: str, branch: str, suffix: str, cache_dir: Path,
+    fullname: Path,
+    github_url: str,
+    branch: str,
+    suffix: str,
+    cache_dir: Path,
 ) -> Path:
     cache_dir = cache_dir.absolute()
     local_file = cache_dir / branch / fullname
@@ -83,35 +89,62 @@ def get_file(
     Returns
     -------
     Union[Path, List[Path]]
-
-    See Also
-    --------
-    xarray.open_dataset
     """
     if isinstance(name, str):
-        fullname = Path(name)
-        suffix = fullname.suffix
+        name = [name]
 
-        return _get(
-            fullname=fullname,
-            github_url=github_url,
-            branch=branch,
-            suffix=suffix,
-            cache_dir=cache_dir,
-        )
-    elif isinstance(name, (list, tuple)):
-        files = list()
-        for n in name:
-            fullname = Path(n)
-            suffix = fullname.suffix
-            files.append(_get(
+    files = list()
+    for n in name:
+        fullname = Path(n)
+        suffix = fullname.suffix
+        files.append(
+            _get(
                 fullname=fullname,
                 github_url=github_url,
                 branch=branch,
                 suffix=suffix,
                 cache_dir=cache_dir,
-            ))
-        return files
+            )
+        )
+    if len(files) == 1:
+        return files[0]
+    return files
+
+
+# Credits to Anselme  https://stackoverflow.com/a/62003257/7322852 (CC-BY-SA 4.0)
+def query_folder(
+    name: Optional[str] = None,
+    github_url: str = "https://github.com/Ouranosinc/raven-testdata",
+    branch: str = "master",
+) -> List[str]:
+    """
+    Return a file from an online GitHub-like repository.
+    If a local copy is found then always use that to avoid network traffic.
+
+    Parameters
+    ----------
+    name : str, optional
+        Relative pathname of the subfolder from the top-level.
+    github_url : str
+        URL to Github repository where the data is stored.
+    branch : str, optional
+        For GitHub-hosted files, the branch to download from.
+
+    Returns
+    -------
+    List[str]
+    """
+    repo_name = github_url.strip("https://github.com/")
+
+    url = f"https://api.github.com/repos/{repo_name}/git/trees/{branch}?recursive=1"
+    r = requests.get(url)
+    res = r.json()
+
+    md5_files = [f["path"] for f in res["tree"] if f["path"].endswith(".md5")]
+    if name:
+        md5_files = [f for f in md5_files if name in Path(f).parent.as_posix()]
+
+    return [re.sub(".md5$", "", f) for f in md5_files]
 
 
 # idea copied from xclim that borrowed it from xarray that was borrowed from Seaborn
