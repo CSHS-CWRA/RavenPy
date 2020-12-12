@@ -47,15 +47,15 @@ dev_requirements = [
 
 class InstallBinaryDeps(install):
     """
-       Custom handler for the 'install' command, to download, extract and compile
-       the source code of Raven and OSTRICH and copy the resulting binaries in the
-       "bin" folder of the current venv.
+    Custom handler for the 'install' command, to download, extract and compile
+    the source code of Raven and OSTRICH and copy the resulting binaries in the
+    "bin" folder of the current venv.
     """
 
     def install_binary_dep(self, url, name, rev_name, binary_name, make_target=""):
         print(f"Downloading {name} source code..")
         urllib.request.urlretrieve(
-            f"{url}/{rev_name}.zip", self.external_deps_path / f"{name}.zip",
+            f"{url}/{rev_name}.zip", self.external_deps_path / f"{name}.zip"
         )
 
         print(f"Extracting {name} source code..")
@@ -87,7 +87,7 @@ class InstallBinaryDeps(install):
         self.external_deps_path.mkdir(exist_ok=True)
 
         url = "http://www.civil.uwaterloo.ca/jmai/raven/"
-        self.install_binary_dep(url, "raven", "Raven-rev275", "Raven.exe")
+        self.install_binary_dep(url, "raven", "Raven-rev288", "Raven.exe")
         self.install_binary_dep(
             url, "ostrich", "Ostrich_2017-12-19_plus_progressJSON", f"OstrichGCC", "GCC"
         )
@@ -110,7 +110,11 @@ setup(
         "Programming Language :: Python :: 3.8",
     ],
     description="A Python wrapper to setup and run the hydrologic modelling framework Raven.",
-    entry_points={"console_scripts": ["ravenpy=ravenpy.cli:main",],},
+    entry_points={
+        "console_scripts": [
+            "ravenpy=ravenpy.cli:main",
+        ],
+    },
     install_requires=requirements,
     license="MIT license",
     long_description=readme + "\n\n" + history,
@@ -118,11 +122,19 @@ setup(
     include_package_data=True,
     keywords="ravenpy",
     name="ravenpy",
-    packages=find_packages(include=["ravenpy", "ravenpy.*"]),
+    packages=find_packages(
+        include=[
+            "ravenpy",
+            "ravenpy.*",
+        ],
+    ),
     setup_requires=setup_requirements,
     test_suite="tests",
     tests_require=test_requirements,
-    extras_require={"docs": docs_requirements, "dev": dev_requirements,},
+    extras_require={
+        "docs": docs_requirements,
+        "dev": dev_requirements,
+    },
     url="https://github.com/CSHS-CWRA/ravenpy",
     version="0.1.0",
     zip_safe=False,
