@@ -8,7 +8,7 @@ import geopandas
 import pytest
 
 import ravenpy
-from ravenpy.models.importers import RoutingProductShapefileImporter
+from ravenpy.models.importers import GridWeights, RoutingProductShapefileImporter
 from ravenpy.models.rv import (
     RV,
     RVC,
@@ -282,6 +282,20 @@ class TestRVP:
 
         assert res.count(":ChannelProfile") == 46
         assert res.count(":EndChannelProfile") == 46
+
+
+class TestRVT:
+    @classmethod
+    def setup_class(self):
+        # importer = RoutingProductShapefileImporter(
+        #     f"zip://{TESTDATA['routing-sample']}"
+        # )
+        # _, _, _, _, cps, _ = importer.extract()
+        # self.rvp = RVP(cps)
+        gw = GridWeights()
+
+    def test_import_process(self):
+        assert True
 
 
 def test_isinstance_namedtuple():
