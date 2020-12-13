@@ -2,6 +2,7 @@
 
 """The setup script."""
 
+import os
 import shutil
 import subprocess
 import sys
@@ -80,7 +81,7 @@ class InstallBinaryDeps(install):
         )
 
     def run(self):
-        if sys.base_prefix == sys.prefix:
+        if sys.base_prefix == sys.prefix and not os.getenv("CONDA_PREFIX"):
             exit("Error: Please install RavenPy in a virtual environment!")
 
         self.external_deps_path = Path("./external_deps")
