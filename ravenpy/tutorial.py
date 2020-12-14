@@ -17,7 +17,7 @@ _default_cache_dir = Path.home() / ".raven_testing_data"
 
 LOGGER = logging.getLogger("RAVEN")
 
-__all__ = ["get_file", "open_dataset"]
+__all__ = ["get_file", "open_dataset", "query_folder"]
 
 
 def _get(
