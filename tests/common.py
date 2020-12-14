@@ -25,7 +25,9 @@ TESTDATA["solution.rvc"] = TD / "solution.rvc"
 TESTDATA[
     "raven-gr4j-cemaneige-nc-ts"
 ] = "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
-TESTDATA["raven-gr4j-cemaneige-nc-rv"] = query_folder("raven-gr4j-cemaneige", pattern=".rv")
+TESTDATA["raven-gr4j-cemaneige-nc-rv"] = query_folder(
+    "raven-gr4j-cemaneige", pattern=".rv"
+)
 
 # (
 #     "raven-gr4j-cemaneige/raven-gr4j-salmon.rvc",
@@ -198,13 +200,7 @@ def _convert_2d(fn):
 
     # Add geometry feature variables
     for key, val in features.items():
-        ds[key] = xr.DataArray(
-            name=key,
-            data=[
-                val,
-            ],
-            dims=("region",),
-        )
+        ds[key] = xr.DataArray(name=key, data=[val], dims=("region"))
 
     return ds
 
@@ -223,21 +219,7 @@ def _convert_3d(fn):
     ds = xr.open_dataset(fn).rename({"nstations": "lat"})
 
     out = xr.Dataset(
-        coords={
-            "lon": (
-                [
-                    "lon",
-                ],
-                lon,
-            ),
-            "lat": (
-                [
-                    "lat",
-                ],
-                lat,
-            ),
-            "time": ds.time,
-        }
+        coords={"lon": (["lon"], lon), "lat": (["lat"], lat), "time": ds.time}
     )
     for v in ds.data_vars:
         if v not in ["lon", "lat"]:
