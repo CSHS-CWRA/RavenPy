@@ -229,7 +229,7 @@ class TestRVH:
     @classmethod
     def setup_class(self):
         importer = RoutingProductShapefileImporter(
-            f"zip://{TESTDATA['routing-sample']}"
+            f"zip://{TESTDATA['raven-routing-sample']}"
         )
         sbs, land_group, lake_group, reservoirs, _, hrus = importer.extract()
         self.rvh = RVH(sbs, land_group, lake_group, reservoirs, hrus)
@@ -269,7 +269,7 @@ class TestRVP:
     @classmethod
     def setup_class(self):
         importer = RoutingProductShapefileImporter(
-            f"zip://{TESTDATA['routing-sample']}"
+            f"zip://{TESTDATA['raven-routing-sample']}"
         )
         _, _, _, _, cps, _ = importer.extract()
         self.rvp = RVP(cps)

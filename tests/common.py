@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-from ravenpy.tutorial import query_folder
+from ravenpy.tutorial import get_file, query_folder
 
 VERSION = "1.0.0"
 
@@ -119,7 +119,9 @@ TESTDATA["XSS_obs"] = TD / "XSS_forecast_data" / "XSS_obs.nc"
 TESTDATA["XSS_fcst_det"] = TD / "XSS_forecast_data" / "XSS_fcst_det.nc"
 TESTDATA["XSS_fcst_ensemble"] = TD / "XSS_forecast_data" / "XSS_fcst_ens.nc"
 
-TESTDATA["routing-sample"] = TD / "routing-sample" / "finalcat_hru_info.zip"
+TESTDATA["raven-routing-sample"] = get_file(
+    "raven-routing-sample/finalcat_hru_info.zip"
+)
 
 
 def count_pixels(stats, numeric_categories=False):
