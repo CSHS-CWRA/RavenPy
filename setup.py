@@ -19,7 +19,7 @@ with open("HISTORY.rst") as history_file:
     history = history_file.read()
 
 requirements = [
-    "Click>=7.0",
+    "Click~=7.0",
     "gdal==3.0.4",
     "rasterio",
     "statsmodels",
