@@ -8,7 +8,11 @@ import geopandas
 import pytest
 
 import ravenpy
-from ravenpy.models.importers import GridWeights, RoutingProductShapefileImporter
+from ravenpy.models.commands import GriddedForcingCommand
+from ravenpy.models.importers import (
+    RoutingProductGridWeightImporter,
+    RoutingProductShapefileImporter,
+)
 from ravenpy.models.rv import (
     RV,
     RVC,
@@ -229,7 +233,7 @@ class TestRVH:
     @classmethod
     def setup_class(self):
         importer = RoutingProductShapefileImporter(
-            f"zip://{TESTDATA['raven-routing-sample']}"
+            f"zip://{TESTDATA['raven-routing-sample-HRUs']}"
         )
         sbs, land_group, lake_group, reservoirs, _, hrus = importer.extract()
         self.rvh = RVH(sbs, land_group, lake_group, reservoirs, hrus)
@@ -269,7 +273,7 @@ class TestRVP:
     @classmethod
     def setup_class(self):
         importer = RoutingProductShapefileImporter(
-            f"zip://{TESTDATA['raven-routing-sample']}"
+            f"zip://{TESTDATA['raven-routing-sample-HRUs']}"
         )
         _, _, _, _, cps, _ = importer.extract()
         self.rvp = RVP(cps)
@@ -287,15 +291,20 @@ class TestRVP:
 class TestRVT:
     @classmethod
     def setup_class(self):
-        # importer = RoutingProductShapefileImporter(
-        #     f"zip://{TESTDATA['routing-sample']}"
-        # )
-        # _, _, _, _, cps, _ = importer.extract()
-        # self.rvp = RVP(cps)
-        gw = GridWeights()
+        importer = RoutingProductGridWeightImporter(
+            f"zip://{TESTDATA['raven-routing-sample-HRUs']}",
+            TESTDATA["raven-routing-sample-VIC-streaminputs"],
+        )
+        gws = importer.extract()
+        gfc = GriddedForcingCommand(grid_weights=gws)
+        self.rvt = RVT([gfc])
 
     def test_import_process(self):
-        assert True
+        res = self.rvt.to_rv()
+
+        assert ":NumberHRUs 51" in res
+        assert ":NumberGridWeights 100" in res
+        assert len(res.split("\n")) == 227
 
 
 def test_isinstance_namedtuple():

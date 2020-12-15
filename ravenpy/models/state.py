@@ -144,12 +144,3 @@ class BasinStateVariables(NamedTuple):
     qlat: tuple = (0, 0, 0)
     qlatlast: float = 0
     qin: tuple = 20 * (0,)
-
-
-class GriddedForcingRecord(NamedTuple):
-    """Record to populate RVT :GriddedForcing block."""
-
-    forcing_type: str = ""
-    file_name_nc: str = ""
-    var_name_nc: str = ""
-    dim_names_nc: Tuple[str, str, str] = ("x", "y", "t")

@@ -7,6 +7,8 @@ from osgeo import ogr, osr
 
 from .commands import (
     ChannelProfileCommand,
+    GriddedForcingCommand,
+    GridWeightsCommand,
     HRUsCommand,
     HRUsCommandRecord,
     ReservoirCommand,
@@ -204,37 +206,25 @@ class RoutingProductShapefileImporter:
         )
 
 
-class GridWeights:
+class RoutingProductGridWeightImporter:
+
+    """
+    The original version of this algorithm can be found at: https://github.com/julemai/GridWeightsGenerator
+    """
 
     CRS_LLDEG = 4326  # EPSG id of lat/lon (deg) coordinate referenence system (CRS)
     CRS_CAEA = 3573  # EPSG id of equal-area    coordinate referenence system (CRS)
+    HRU_FIELD = "HRU_ID"
+    DIM_NAMES = ("lon", "lat")
+    VAR_NAMES = ("lon", "lat")
 
-    def __init__(self):
-        dimname = ["lon", "lat"]
-        varname = ["lon", "lat"]
+    def __init__(self, shapefile_path, nc_data_path):
+        self._shapes = geopandas.read_file(shapefile_path)
+        # Note that we cannot use xarray because it complains about variables and dimensions
+        # having the same name.
+        self._data = nc4.Dataset(nc_data_path)
 
-        routinginfo = "/home/christian/ouranos/raven/doc/Lievre/maps/LievreHRUs.shp"
-
-        key_colname = "HRU_ID"
-
-        doall = True
-
-        # basin = "OLE XX"
-        # basin = None
-        # SubId = ["7202"]
-
-        nc_in = nc4.Dataset(
-            "/home/christian/ouranos/raven/doc/Lievre/input/VIC_streaminputs.nc"
-        )
-
-        output_file = "/tmp/grid_weights.txt"
-
-        lon = nc_in.variables[varname[0]][:]
-        lon_dims = nc_in.variables[varname[0]].dimensions
-        lat = nc_in.variables[varname[1]][:]
-        lat_dims = nc_in.variables[varname[1]].dimensions
-        nc_in.close()
-
+    def extract(self) -> GridWeightsCommand:
         # Raven numbering is:
         #
         #      [      1      2      3   ...     1*nlon
@@ -244,35 +234,28 @@ class GridWeights:
         #
         # --> Making sure shape of lat/lon fields is like that
         #
-        if np.all(np.array(lon_dims) == dimname[::1]):
-            lon = np.transpose(lon)
-        elif np.all(np.array(lon_dims) == dimname[::-1]):
-            pass
-        else:
-            raise ValueError("STOP")
+        lon_var = self._data.variables[RoutingProductGridWeightImporter.VAR_NAMES[0]]
+        if lon_var.dimensions == RoutingProductGridWeightImporter.DIM_NAMES:
+            lon_var = np.transpose(lon_var)
 
-        if np.all(np.array(lat_dims) == dimname[::1]):
-            lat = np.transpose(lat)
-        elif np.all(np.array(lat_dims) == dimname[::-1]):
-            pass
-        else:
-            raise ValueError("STOP")
+        lat_var = self._data.variables[RoutingProductGridWeightImporter.VAR_NAMES[1]]
+        if lat_var.dimensions == RoutingProductGridWeightImporter.DIM_NAMES:
+            lat_var = np.transpose(lat_var)
 
-        lath, lonh = self.create_gridcells_from_centers(lat, lon)
+        lath, lonh = self._create_gridcells_from_centers(lat_var, lon_var)
 
-        nlon = np.shape(lon)[1]
-        nlat = np.shape(lat)[0]
+        nlon = np.shape(lon_var)[1]
+        nlat = np.shape(lat_var)[0]
 
-        # -------------------------------
-        # Read Basin shapes and all subbasin-shapes
-        # -------------------------------
-
-        shape = geopandas.read_file(routinginfo)
         # shape     = shape.to_crs(epsg=crs_lldeg)        # this is lat/lon in degree
         # WGS 84 / North Pole LAEA Canada
-        shape = shape.to_crs(epsg=GridWeights.CRS_CAEA)
+        self._shapes = self._shapes.to_crs(
+            epsg=RoutingProductGridWeightImporter.CRS_CAEA
+        )
 
-        shape = shape.drop_duplicates(key_colname)
+        self._shapes = self._shapes.drop_duplicates(
+            RoutingProductGridWeightImporter.HRU_FIELD
+        )
 
         # -------------------------------
         # construct all grid cell polygons
@@ -292,7 +275,7 @@ class GridWeights:
                 #                    [lath[ilat+1,ilon+1], lonh[ilat+1,ilon+1]  ],
                 #                    [lath[ilat,ilon+1]  , lonh[ilat,  ilon+1]  ]]
 
-                # tmp = shape_to_geometry(gridcell_edges, epsg=crs_caea)
+                # tmp = self._shapes_to_geometry(gridcell_edges, epsg=crs_caea)
                 # tmp.SwapXY()              # switch lat/lon back
                 # grid_cell_geom_gpd_wkt[ilat][ilon] = tmp
 
@@ -327,24 +310,18 @@ class GridWeights:
                         [lath[ilat, ilon + 1], lonh[ilat, ilon + 1]],
                     ]
 
-                tmp = self.shape_to_geometry(gridcell_edges, epsg=GridWeights.CRS_CAEA)
+                tmp = self._shape_to_geometry(
+                    gridcell_edges, epsg=RoutingProductGridWeightImporter.CRS_CAEA
+                )
                 grid_cell_geom_gpd_wkt[ilat][ilon] = tmp
 
         # -------------------------------
         # Derive overlay and calculate weights
         # -------------------------------
 
-        filename = output_file
-        ff = open(filename, "w")
-        ff.write(":GridWeights                     \n")
-        ff.write("   #                                \n")
-        ff.write("   # [# HRUs]                       \n")
-        ff.write("   :NumberHRUs       {0}            \n".format(shape.shape[0]))
-        ff.write("   :NumberGridCells  {0}            \n".format(nlon * nlat))
-        ff.write("   #                                \n")
-        ff.write("   # [HRU ID] [Cell #] [w_kl]       \n")
+        grid_weights = []
 
-        for _, row in shape.iterrows():
+        for _, row in self._shapes.iterrows():
 
             poly = ogr.CreateGeometryFromWkt(row.geometry.to_wkt())
 
@@ -357,7 +334,8 @@ class GridWeights:
 
                     # bounding box around grid-cell (for easy check of proximity)
                     enve_gridcell = grid_cell_geom_gpd_wkt[ilat][ilon].GetEnvelope()
-                    grid_is_close = self.check_proximity_of_envelops(
+
+                    grid_is_close = self._check_proximity_of_envelops(
                         enve_gridcell, enve_basin
                     )
 
@@ -371,21 +349,22 @@ class GridWeights:
                     inter = grid_cell_geom_gpd_wkt[ilat][ilon].Intersection(
                         poly.Buffer(0.0)
                     )
+
                     area_intersect = inter.Area()
 
                     if area_intersect > 0:
-                        ff.write(
-                            "   {0}   {1}   {2}\n".format(
-                                int(row[key_colname]),
-                                ilat * nlon + ilon,
-                                area_intersect / area_basin,
-                            )
-                        )
+                        hru_id = int(row[RoutingProductGridWeightImporter.HRU_FIELD])
+                        cell_id = ilat * nlon + ilon
+                        weight = area_intersect / area_basin
+                        grid_weights.append((hru_id, cell_id, weight))
 
-        ff.write(":EndGridWeights \n")
-        ff.close()
+        return GridWeightsCommand(
+            number_hrus=len(self._shapes),
+            number_grid_cells=nlon * nlat,
+            data=grid_weights,
+        )
 
-    def create_gridcells_from_centers(self, lat, lon):
+    def _create_gridcells_from_centers(self, lat, lon):
 
         # create array of edges where (x,y) are always center cells
         nlon = np.shape(lon)[1]
@@ -429,7 +408,7 @@ class GridWeights:
 
         return [lath, lonh]
 
-    def shape_to_geometry(self, shape_from_jsonfile, epsg=None):
+    def _shape_to_geometry(self, shape_from_jsonfile, epsg=None):
 
         # converts shape read from shapefile to geometry
         # epsg :: integer EPSG code
@@ -446,7 +425,8 @@ class GridWeights:
 
         if epsg:
             source = osr.SpatialReference()
-            source.ImportFromEPSG(GridWeights.CRS_LLDEG)  # usual lat/lon projection
+            # usual lat/lon projection
+            source.ImportFromEPSG(RoutingProductGridWeightImporter.CRS_LLDEG)
 
             target = osr.SpatialReference()
             target.ImportFromEPSG(epsg)  # any projection to convert to
@@ -456,7 +436,7 @@ class GridWeights:
 
         return poly_shape
 
-    def check_proximity_of_envelops(self, gridcell_envelop, shape_envelop):
+    def _check_proximity_of_envelops(self, gridcell_envelop, shape_envelop):
 
         # checks if two envelops are in proximity (intersect)
 
@@ -472,7 +452,9 @@ class GridWeights:
             and gridcell_envelop[3] >= shape_envelop[2]
         )
 
-    def check_gridcell_in_proximity_of_shape(self, gridcell_edges, shape_from_jsonfile):
+    def _check_gridcell_in_proximity_of_shape(
+        self, gridcell_edges, shape_from_jsonfile
+    ):
 
         # checks if a grid cell falls into the bounding box of the shape
         # does not mean it intersects but it is a quick and cheap way to

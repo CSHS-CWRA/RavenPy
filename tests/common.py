@@ -119,8 +119,11 @@ TESTDATA["XSS_obs"] = TD / "XSS_forecast_data" / "XSS_obs.nc"
 TESTDATA["XSS_fcst_det"] = TD / "XSS_forecast_data" / "XSS_fcst_det.nc"
 TESTDATA["XSS_fcst_ensemble"] = TD / "XSS_forecast_data" / "XSS_fcst_ens.nc"
 
-TESTDATA["raven-routing-sample"] = get_file(
+TESTDATA["raven-routing-sample-HRUs"] = get_file(
     "raven-routing-sample/finalcat_hru_info.zip"
+)
+TESTDATA["raven-routing-sample-VIC-streaminputs"] = get_file(
+    "raven-routing-sample/VIC_streaminputs.nc"
 )
 
 
