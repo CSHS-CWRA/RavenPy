@@ -126,6 +126,19 @@ TESTDATA["raven-routing-sample-VIC-streaminputs"] = get_file(
     "raven-routing-sample/VIC_streaminputs.nc"
 )
 
+# This will need to be parametrized for the user somehow, or we can perhaps use a git submodule?
+TESTDATA_PATH = Path("/home/christian/gh/raven-testdata")
+
+
+def get_test_data(folder: str, patterns: Union[str, Sequence[str]]):
+    patterns = [patterns] if isinstance(patterns, str) else patterns
+    return [
+        p
+        for pat in patterns
+        for p in (TESTDATA_PATH / folder).glob(pat)
+        if p.suffix != ".md5"
+    ]
+
 
 def count_pixels(stats, numeric_categories=False):
     category_counts = 0
