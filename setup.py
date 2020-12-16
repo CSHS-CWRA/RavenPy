@@ -26,6 +26,8 @@ requirements = [
     "xarray==0.16",
     "xclim==0.18",
     "wheel",
+    "xskillscore",
+    "climpred>=2.1"
 ]
 
 setup_requirements = [
