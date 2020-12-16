@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Sequence, Union
 
 import numpy as np
 import pandas as pd
