@@ -52,7 +52,7 @@ Install
 Grid Weight Generation Script
 -----------------------------
 
-To run the grid weight generation script (written and maintained by `Julie Mai <https://github.com/julemai/GridWeightsGenerator>`_ you can do:
+To run the grid weight generation script (written and maintained by `Julie Mai <https://github.com/julemai/GridWeightsGenerator>`_) you can do:
 
 .. code-block:: bash
 

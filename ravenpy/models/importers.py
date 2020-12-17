@@ -218,15 +218,26 @@ class RoutingProductGridWeightImporter:
 
     CRS_LLDEG = 4326  # EPSG id of lat/lon (deg) coordinate referenence system (CRS)
     CRS_CAEA = 3573  # EPSG id of equal-area    coordinate referenence system (CRS)
-    HRU_FIELD = "HRU_ID"
+    HRU_ID_FIELD = "HRU_ID"
     DIM_NAMES = ("lon", "lat")
     VAR_NAMES = ("lon", "lat")
 
     def __init__(
-        self, shapefile_path, nc_data_path, dim_names=DIM_NAMES, var_names=VAR_NAMES
+        self,
+        shapefile_path,
+        nc_data_path,
+        dim_names=DIM_NAMES,
+        var_names=VAR_NAMES,
+        hru_id_field=HRU_ID_FIELD,
+        gauge_ids=None,
+        sub_ids=None,
     ):
         self._dim_names = tuple(dim_names)
         self._var_names = tuple(var_names)
+        self._hru_id_field = hru_id_field
+        self._gauge_ids = gauge_ids
+        self._sub_ids = sub_ids
+
         if Path(shapefile_path).suffix == ".zip":
             shapefile_path = f"zip://{shapefile_path}"
         self._shapes = geopandas.read_file(shapefile_path)
@@ -263,9 +274,14 @@ class RoutingProductGridWeightImporter:
             epsg=RoutingProductGridWeightImporter.CRS_CAEA
         )
 
-        self._shapes = self._shapes.drop_duplicates(
-            RoutingProductGridWeightImporter.HRU_FIELD
-        )
+        self._shapes = self._shapes.drop_duplicates(self._hru_id_field)
+
+        if self._gauge_ids:
+            self._shapes = self._shapes.loc[self._shapes.Obs_NM.isin(self._gauge_ids)]
+
+        elif self._sub_ids:
+            # Not sure how to implement this: https://github.com/julemai/GridWeightsGenerator/blob/main/derive_grid_weights.py#L330-L349
+            pass
 
         # -------------------------------
         # construct all grid cell polygons
@@ -363,7 +379,7 @@ class RoutingProductGridWeightImporter:
                     area_intersect = inter.Area()
 
                     if area_intersect > 0:
-                        hru_id = int(row[RoutingProductGridWeightImporter.HRU_FIELD])
+                        hru_id = int(row[self._hru_id_field])
                         cell_id = ilat * nlon + ilon
                         weight = area_intersect / area_basin
                         grid_weights.append((hru_id, cell_id, weight))

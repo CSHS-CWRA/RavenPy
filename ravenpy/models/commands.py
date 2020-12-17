@@ -161,7 +161,7 @@ class GridWeightsCommand(NamedTuple):
         pat = """
 {indent}:GridWeights
 {indent}\t:NumberHRUs {number_hrus}
-{indent}\t:NumberGridWeights {number_grid_cells}
+{indent}\t:NumberGridCells {number_grid_cells}
 {data}
 {indent}:EndGridWeights
         """.strip()
