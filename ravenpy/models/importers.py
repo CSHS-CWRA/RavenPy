@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import geopandas
 import netCDF4 as nc4
 import numpy as np
@@ -33,8 +35,10 @@ class RoutingProductShapefileImporter:
     USE_MANNING_COEFF = False
     MANNING_DEFAULT = 0.035
 
-    def __init__(self, path):
-        self._df = geopandas.read_file(path)
+    def __init__(self, shapefile_path):
+        if Path(shapefile_path).suffix == ".zip":
+            shapefile_path = f"zip://{shapefile_path}"
+        self._df = geopandas.read_file(shapefile_path)
 
     def extract(self):
         """
@@ -218,7 +222,13 @@ class RoutingProductGridWeightImporter:
     DIM_NAMES = ("lon", "lat")
     VAR_NAMES = ("lon", "lat")
 
-    def __init__(self, shapefile_path, nc_data_path):
+    def __init__(
+        self, shapefile_path, nc_data_path, dim_names=DIM_NAMES, var_names=VAR_NAMES
+    ):
+        self._dim_names = tuple(dim_names)
+        self._var_names = tuple(var_names)
+        if Path(shapefile_path).suffix == ".zip":
+            shapefile_path = f"zip://{shapefile_path}"
         self._shapes = geopandas.read_file(shapefile_path)
         # Note that we cannot use xarray because it complains about variables and dimensions
         # having the same name.
@@ -234,12 +244,12 @@ class RoutingProductGridWeightImporter:
         #
         # --> Making sure shape of lat/lon fields is like that
         #
-        lon_var = self._data.variables[RoutingProductGridWeightImporter.VAR_NAMES[0]]
-        if lon_var.dimensions == RoutingProductGridWeightImporter.DIM_NAMES:
+        lon_var = self._data.variables[self._var_names[0]]
+        if lon_var.dimensions == self._dim_names:
             lon_var = np.transpose(lon_var)
 
-        lat_var = self._data.variables[RoutingProductGridWeightImporter.VAR_NAMES[1]]
-        if lat_var.dimensions == RoutingProductGridWeightImporter.DIM_NAMES:
+        lat_var = self._data.variables[self._var_names[1]]
+        if lat_var.dimensions == self._dim_names:
             lat_var = np.transpose(lat_var)
 
         lath, lonh = self._create_gridcells_from_centers(lat_var, lon_var)

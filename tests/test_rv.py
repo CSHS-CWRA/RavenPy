@@ -233,7 +233,7 @@ class TestRVH:
     @classmethod
     def setup_class(self):
         importer = RoutingProductShapefileImporter(
-            f"zip://{TESTDATA['raven-routing-sample-HRUs']}"
+            TESTDATA["raven-routing-sample-HRUs"]
         )
         sbs, land_group, lake_group, reservoirs, _, hrus = importer.extract()
         self.rvh = RVH(sbs, land_group, lake_group, reservoirs, hrus)
@@ -273,7 +273,7 @@ class TestRVP:
     @classmethod
     def setup_class(self):
         importer = RoutingProductShapefileImporter(
-            f"zip://{TESTDATA['raven-routing-sample-HRUs']}"
+            TESTDATA["raven-routing-sample-HRUs"]
         )
         _, _, _, _, cps, _ = importer.extract()
         self.rvp = RVP(cps)
@@ -292,7 +292,7 @@ class TestRVT:
     @classmethod
     def setup_class(self):
         importer = RoutingProductGridWeightImporter(
-            f"zip://{TESTDATA['raven-routing-sample-HRUs']}",
+            TESTDATA["raven-routing-sample-HRUs"],
             TESTDATA["raven-routing-sample-VIC-streaminputs"],
         )
         gws = importer.extract()
@@ -304,7 +304,7 @@ class TestRVT:
 
         assert ":NumberHRUs 51" in res
         assert ":NumberGridWeights 100" in res
-        assert len(res.split("\n")) == 227
+        assert len(res.split("\n")) == 225
 
 
 def test_isinstance_namedtuple():

@@ -156,16 +156,18 @@ class GridWeightsCommand(NamedTuple):
     number_grid_cells: int = 0
     data: List[Tuple[int, int, float]] = []
 
-    def to_rv(self):
+    def to_rv(self, indent_level=0):
+        indent = "\t" * indent_level
         pat = """
-\t:GridWeights
-\t\t:NumberHRUs {number_hrus}
-\t\t:NumberGridWeights {number_grid_cells}
+{indent}:GridWeights
+{indent}\t:NumberHRUs {number_hrus}
+{indent}\t:NumberGridWeights {number_grid_cells}
 {data}
-\t:EndGridWeights
-        """
+{indent}:EndGridWeights
+        """.strip()
         d = self._asdict()
-        d["data"] = "\n".join(f"\t\t{p[0]} {p[1]} {p[2]}" for p in self.data)
+        d["indent"] = indent
+        d["data"] = "\n".join(f"{indent}\t{p[0]} {p[1]} {p[2]}" for p in self.data)
         return pat.format(**d)
 
 
