@@ -303,7 +303,7 @@ class TestRVT:
         res = self.rvt.to_rv()
 
         assert ":NumberHRUs 51" in res
-        assert ":NumberGridWeights 100" in res
+        assert ":NumberGridCells 100" in res
         assert len(res.split("\n")) == 225
 
 
