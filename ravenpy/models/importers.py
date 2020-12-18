@@ -301,16 +301,17 @@ class RoutingProductGridWeightImporter:
             subid_to_downsubid = {
                 r.SubId: r.DowSubId for _, r in self._shapes.iterrows()
             }
-            sub_ids = set(self._sub_ids)
+            expanded_sub_ids = set(self._sub_ids)
             for sid in self._sub_ids:
                 # For every subbasin in the initial list, go dowstream until the end
-                while sid != -1:
+                while True:
                     did = subid_to_downsubid[sid]
-                    if did != -1:
-                        sub_ids.add(did)
+                    if did == -1 or did in expanded_sub_ids:
+                        break
+                    expanded_sub_ids.add(did)
                     sid = did
 
-            self._sub_ids = sub_ids
+            self._sub_ids = expanded_sub_ids
 
         # Reduce the initial dataset with the target Sub IDs
         if self._sub_ids:
