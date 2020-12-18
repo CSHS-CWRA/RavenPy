@@ -1,3 +1,4 @@
+from collections import defaultdict
 from pathlib import Path
 
 import geopandas
@@ -235,8 +236,8 @@ class RoutingProductGridWeightImporter:
         self._dim_names = tuple(dim_names)
         self._var_names = tuple(var_names)
         self._hru_id_field = hru_id_field
-        self._gauge_ids = gauge_ids
-        self._sub_ids = sub_ids
+        self._gauge_ids = gauge_ids or []
+        self._sub_ids = sub_ids or []
 
         assert not (
             self._gauge_ids and self._sub_ids
@@ -259,12 +260,12 @@ class RoutingProductGridWeightImporter:
         #
         # --> Making sure shape of lat/lon fields is like that
         #
-        lon_var = self._data.variables[self._var_names[0]]
-        if lon_var.dimensions == self._dim_names:
+        lon_var = self._data.variables[self._var_names[0]][:]
+        if self._data.variables[self._var_names[0]].dimensions == self._dim_names:
             lon_var = np.transpose(lon_var)
 
-        lat_var = self._data.variables[self._var_names[1]]
-        if lat_var.dimensions == self._dim_names:
+        lat_var = self._data.variables[self._var_names[1]][:]
+        if self._data.variables[self._var_names[1]].dimensions == self._dim_names:
             lat_var = np.transpose(lat_var)
 
         lath, lonh = self._create_gridcells_from_centers(lat_var, lon_var)
@@ -278,7 +279,9 @@ class RoutingProductGridWeightImporter:
             epsg=RoutingProductGridWeightImporter.CRS_CAEA
         )
 
-        self._shapes = self._shapes.drop_duplicates(self._hru_id_field)
+        self._shapes = self._shapes.drop_duplicates(self._hru_id_field).sort_values(
+            self._hru_id_field
+        )
 
         # Make sure those are ints
         self._shapes.SubId = self._shapes.SubId.astype(int)
@@ -286,30 +289,35 @@ class RoutingProductGridWeightImporter:
 
         if self._gauge_ids:
             # Extract the SubIDs of the gauges that were specified at input
-            self._sub_ids = self._shapes.loc[
-                self._shapes.Obs_NM.isin(self._gauge_ids)
-            ].SubId.unique()
+            self._sub_ids = (
+                self._shapes.loc[self._shapes.Obs_NM.isin(self._gauge_ids)]
+                .SubId.unique()
+                .tolist()
+            )
             if not self._sub_ids:
                 raise ValueError(
                     f"No shapes were found with gauge ID (Obs_NM) in {self._gauge_ids}"
                 )
 
         if self._sub_ids:
-            # Here we want to extract the network of subbasins connected via their DowSubIds, starting
-            # from the list supplied by the user (either directly, or via their gauge IDs).. We first build
-            # a map of subID -> downSubID for effficient lookup
-            subid_to_downsubid = {
-                r.SubId: r.DowSubId for _, r in self._shapes.iterrows()
-            }
+            # Here we want to extract the network of connected subbasins by going upstream via their DowSubId,
+            # starting from the list supplied by the user (either directly, or via their gauge IDs).. We first
+            # build a map of downSubID -> subID for effficient lookup
+            downsubid_to_subids = defaultdict(set)
+            for _, r in self._shapes.iterrows():
+                downsubid_to_subids[r.DowSubId].add(r.SubId)
+
             expanded_sub_ids = set(self._sub_ids)
-            for sid in self._sub_ids:
-                # For every subbasin in the initial list, go dowstream until the end
-                while True:
-                    did = subid_to_downsubid[sid]
-                    if did == -1 or did in expanded_sub_ids:
-                        break
-                    expanded_sub_ids.add(did)
-                    sid = did
+            prev = expanded_sub_ids.copy()
+            while True:
+                curr = set()
+                for did in prev:
+                    curr |= downsubid_to_subids[did]
+                if curr:
+                    expanded_sub_ids |= curr
+                    prev = curr
+                else:
+                    break
 
             self._sub_ids = expanded_sub_ids
 
