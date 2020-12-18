@@ -238,6 +238,10 @@ class RoutingProductGridWeightImporter:
         self._gauge_ids = gauge_ids
         self._sub_ids = sub_ids
 
+        assert not (
+            self._gauge_ids and self._sub_ids
+        ), "Only one of gauge_ids or sub_ids can be specified"
+
         if Path(shapefile_path).suffix == ".zip":
             shapefile_path = f"zip://{shapefile_path}"
         self._shapes = geopandas.read_file(shapefile_path)
@@ -285,11 +289,15 @@ class RoutingProductGridWeightImporter:
             self._sub_ids = self._shapes.loc[
                 self._shapes.Obs_NM.isin(self._gauge_ids)
             ].SubId.unique()
+            if not self._sub_ids:
+                raise ValueError(
+                    f"No shapes were found with gauge ID (Obs_NM) in {self._gauge_ids}"
+                )
 
         if self._sub_ids:
             # Here we want to extract the network of subbasins connected via their DowSubIds, starting
             # from the list supplied by the user (either directly, or via their gauge IDs).. We first build
-            # a map of subID -> downSubID for effficient search
+            # a map of subID -> downSubID for effficient lookup
             subid_to_downsubid = {
                 r.SubId: r.DowSubId for _, r in self._shapes.iterrows()
             }
