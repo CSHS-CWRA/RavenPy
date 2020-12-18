@@ -51,7 +51,7 @@ def cli():
     "-s",
     "--sub-id",
     multiple=True,
-    type=str,
+    type=int,
     show_default=True,
     help="Sub IDs of most downstream subbasins (containing usually a gauge station, corresponds to 'SubId' in the shapefile).",
 )

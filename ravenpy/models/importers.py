@@ -276,12 +276,42 @@ class RoutingProductGridWeightImporter:
 
         self._shapes = self._shapes.drop_duplicates(self._hru_id_field)
 
-        if self._gauge_ids:
-            self._shapes = self._shapes.loc[self._shapes.Obs_NM.isin(self._gauge_ids)]
+        # Make sure those are ints
+        self._shapes.SubId = self._shapes.SubId.astype(int)
+        self._shapes.DowSubId = self._shapes.DowSubId.astype(int)
 
-        elif self._sub_ids:
-            # Not sure how to implement this: https://github.com/julemai/GridWeightsGenerator/blob/main/derive_grid_weights.py#L330-L349
-            pass
+        if self._gauge_ids:
+            # Extract the SubIDs of the gauges that were specified at input
+            self._sub_ids = self._shapes.loc[
+                self._shapes.Obs_NM.isin(self._gauge_ids)
+            ].SubId.unique()
+
+        if self._sub_ids:
+            # Here we want to extract the network of subbasins connected via their DowSubIds, starting
+            # from the list supplied by the user (either directly, or via their gauge IDs).. We first build
+            # a map of subID -> downSubID for effficient search
+            subid_to_downsubid = {
+                r.SubId: r.DowSubId for _, r in self._shapes.iterrows()
+            }
+            # Initial condition
+            sub_ids = set(self._sub_ids)
+            prev = sub_ids.copy()
+            while True:
+                curr = set()
+                for sid in prev:
+                    did = subid_to_downsubid[sid]
+                    if did != -1:
+                        curr.add(did)
+                if curr:
+                    sub_ids |= curr
+                    prev = curr
+                else:
+                    break
+            self._sub_ids = sub_ids
+
+        # Reduce the initial dataset with the target Sub IDs
+        if self._sub_ids:
+            self._shapes = self._shapes[self._shapes.SubId.isin(self._sub_ids)]
 
         # -------------------------------
         # construct all grid cell polygons
