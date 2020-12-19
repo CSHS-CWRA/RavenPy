@@ -53,6 +53,22 @@ class InstallBinaryDeps(install):
     "bin" folder of the current venv.
     """
 
+    user_options = install.user_options + [
+        # The format is (long option, short option, description).
+        ("with-raven", None, "Download Raven and OSTRICH sources and compile them."),
+        ("with-testdata", None, "Download RavenPy test data used for unit tests."),
+    ]
+
+    def initialize_options(self):
+        """Set default values for options."""
+        # Each user option must be listed here with their default value.
+        install.initialize_options(self)
+        self.with_raven = False
+        self.with_testdata = False
+
+    def finalize_options(self):
+        install.finalize_options(self)
+
     def install_binary_dep(self, url, name, rev_name, binary_name, make_target=""):
         print(f"Downloading {name} source code..")
         urllib.request.urlretrieve(
@@ -84,16 +100,25 @@ class InstallBinaryDeps(install):
         if sys.base_prefix == sys.prefix and not os.getenv("CONDA_PREFIX"):
             exit("Error: Please install RavenPy in a virtual environment!")
 
-        self.external_deps_path = Path("./external_deps")
-        self.external_deps_path.mkdir(exist_ok=True)
+        if self.with_raven:
+            self.external_deps_path = Path("./external_deps")
+            self.external_deps_path.mkdir(exist_ok=True)
 
-        url = "http://www.civil.uwaterloo.ca/jmai/raven/"
-        self.install_binary_dep(url, "raven", "Raven-rev288", "Raven.exe")
-        self.install_binary_dep(
-            url, "ostrich", "Ostrich_2017-12-19_plus_progressJSON", f"OstrichGCC", "GCC"
-        )
+            url = "http://www.civil.uwaterloo.ca/jmai/raven/"
+            self.install_binary_dep(url, "raven", "Raven-rev288", "Raven.exe")
+            self.install_binary_dep(
+                url,
+                "ostrich",
+                "Ostrich_2017-12-19_plus_progressJSON",
+                f"OstrichGCC",
+                "GCC",
+            )
 
-        super().do_egg_install()
+        # this works with python setup.py install
+        # super().do_egg_install()
+
+        # this works with pip install:
+        install.run(self)
 
 
 setup(
