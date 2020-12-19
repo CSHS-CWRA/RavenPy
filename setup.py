@@ -56,7 +56,6 @@ class InstallBinaryDeps(install):
     user_options = install.user_options + [
         # The format is (long option, short option, description).
         ("with-raven", None, "Download Raven and OSTRICH sources and compile them."),
-        ("with-testdata", None, "Download RavenPy test data used for unit tests."),
     ]
 
     def initialize_options(self):
@@ -64,7 +63,6 @@ class InstallBinaryDeps(install):
         # Each user option must be listed here with their default value.
         install.initialize_options(self)
         self.with_raven = False
-        self.with_testdata = False
 
     def finalize_options(self):
         install.finalize_options(self)
