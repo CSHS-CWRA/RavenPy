@@ -114,10 +114,13 @@ class InstallBinaryDeps(install):
                 "GCC",
             )
 
-        # this works with python setup.py install
+        # This works with python setup.py install, but produces this error with pip install:
+        # ERROR: ravenpy==0.1.0 did not indicate that it installed an .egg-info directory. Only setup.py projects generating .egg-info directories are supported.
         # super().do_egg_install()
 
-        # this works with pip install:
+        # This works with pip install, but has the problem that it ignores install_requires
+        # when running with `python setup.py install`:
+        # https://stackoverflow.com/questions/21915469/python-setuptools-install-requires-is-ignored-when-overriding-cmdclass
         install.run(self)
 
 
