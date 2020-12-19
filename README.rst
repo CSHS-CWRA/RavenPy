@@ -47,4 +47,13 @@ Install
     sudo apt install libnetcdf-dev libspatialindex-dev libgdal-dev
     python -m venv ./venv
     source ./venv/bin/activate
-    python setup.py install
+    pip install . --install-option="--with-raven"
+
+Grid Weight Generation Script
+-----------------------------
+
+To run the grid weight generation script (written and maintained by `Julie Mai <https://github.com/julemai/GridWeightsGenerator>`_) you can do:
+
+.. code-block:: bash
+
+    ravenpy generate-grid-weights /path/to/HRU/shapefile /path/to/NC/file --var-names lon lat --output raven

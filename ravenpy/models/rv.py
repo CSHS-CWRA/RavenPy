@@ -397,8 +397,9 @@ class MonthlyAverage(RV):
 
 
 class RVT(RV):
-    def __init__(self, **kwargs):
+    def __init__(self, gridded_forcing_cmds, **kwargs):
         self._nc_index = None
+        self._gridded_forcing_cmds = gridded_forcing_cmds
         super(RVT, self).__init__(**kwargs)
 
     @property
@@ -410,6 +411,10 @@ class RVT(RV):
         for key, val in self.items():
             if isinstance(val, RavenNcData):
                 setattr(val, "index", value)
+
+    @property
+    def gridded_forcings(self):
+        return self._gridded_forcing_cmds
 
     def update(self, items, force=False):
         """Update values from dictionary items.
@@ -427,6 +432,15 @@ class RVT(RV):
             for key, val in items.items():
                 if isinstance(val, dict):
                     self[key].update(val, force=True)
+
+    def to_rv(self):
+        return """
+{gridded_forcing_cmds}
+        """.format(
+            gridded_forcing_cmds="\n\n".join(
+                [gf.to_rv() for gf in self._gridded_forcing_cmds]
+            ),
+        )
 
 
 class RVI(RV):
@@ -731,7 +745,7 @@ class RVH(RV):
 
     @property
     def subbasins(self):
-        return self._subbasins_cmd.subbasins
+        return self._subbasins_cmd.subbasins  # return internal list
 
     @property
     def land_subbasin_group(self):
@@ -743,11 +757,11 @@ class RVH(RV):
 
     @property
     def reservoirs(self):
-        return self._reservoir_cmds
+        return self._reservoir_cmds  # return list directly
 
     @property
     def hrus(self):
-        return self._hrus_cmd.hrus
+        return self._hrus_cmd.hrus  # return internal list
 
     def to_rv(self):
         return """
