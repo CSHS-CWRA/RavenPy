@@ -47,7 +47,7 @@ Install
     sudo apt install libnetcdf-dev libspatialindex-dev libgdal-dev
     python -m venv ./venv
     source ./venv/bin/activate
-    pip install . --verbose --install-option="--with-raven"
+    pip install . --verbose --install-option="--with-raven" --install-option="--with-testdata"
 
 Grid Weight Generation Script
 -----------------------------

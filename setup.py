@@ -56,6 +56,7 @@ class InstallBinaryDeps(install):
     user_options = install.user_options + [
         # The format is (long option, short option, description).
         ("with-raven", None, "Download Raven and OSTRICH sources and compile them."),
+        ("with-testdata", None, "Download RavenPy test data used for unit tests."),
     ]
 
     def initialize_options(self):
@@ -115,7 +116,6 @@ class InstallBinaryDeps(install):
             self.external_deps_path.mkdir(exist_ok=True)
 
             url = "http://www.civil.uwaterloo.ca/jmai/raven/"
-            self.install_binary_dep(url, "raven", "Raven-rev288", "Raven.exe")
             self.install_binary_dep(
                 url, "raven", "Raven-rev288", "Raven.exe", venv_path
             )
@@ -127,6 +127,19 @@ class InstallBinaryDeps(install):
                 venv_path,
                 "GCC",
             )
+
+        if self.with_testdata:
+            local_zip_path = venv_path / "raven-testdata-master.zip"
+
+            print(f"Downloading raven-tesdata..")
+            urllib.request.urlretrieve(
+                "https://github.com/Ouranosinc/raven-testdata/archive/master.zip",
+                local_zip_path,
+            )
+
+            print(f"Extracting raven-testdata to {venv_path}..")
+            with zipfile.ZipFile(local_zip_path) as zip_ref:
+                zip_ref.extractall(venv_path)
 
         # This works with python setup.py install, but produces this error with pip install:
         # ERROR: ravenpy==0.1.0 did not indicate that it installed an .egg-info directory. Only setup.py projects generating .egg-info directories are supported.
