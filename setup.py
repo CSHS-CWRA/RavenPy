@@ -46,6 +46,17 @@ requirements = [
 # ]
 
 
+def get_version():
+    here = os.path.abspath(os.path.dirname(__file__))
+    with open(os.path.join(here, "ravenpy/__version__.py"), "r") as f:
+        for line in f:
+            if line.startswith("__version__"):
+                delim = '"' if '"' in line else "'"
+                return line.split(delim)[1]
+        else:
+            raise RuntimeError("Unable to find version string.")
+
+
 class InstallExternalDeps(install):
     """
     Custom handler for the 'install' command, to download, extract and compile
@@ -90,7 +101,7 @@ class InstallExternalDeps(install):
             )
         except subprocess.CalledProcessError as e:
             print(e)
-            exit(f"There was an error while compiling {name}")
+            raise RuntimeError(f"There was an error while compiling {name}")
 
         #  Copy binary into venv bin folder (so it should be in the path when the venv is active)
         target_bin_path = venv_path / "bin" / name
@@ -109,7 +120,7 @@ class InstallExternalDeps(install):
             # Regular venv
             venv_path = Path(sys.prefix)
         else:
-            exit("Error: Please install RavenPy in a virtual environment!")
+            raise RuntimeError("Please install RavenPy in a virtual environment!")
 
         if self.with_raven:
             self.external_deps_path = Path("./external_deps")
@@ -192,7 +203,7 @@ setup(
     #     "dev": dev_requirements,
     # },
     url="https://github.com/CSHS-CWRA/ravenpy",
-    version="0.1.1",
+    version=get_version(),
     zip_safe=False,
     cmdclass={"install": InstallExternalDeps},
 )

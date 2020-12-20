@@ -17,7 +17,7 @@ if os.getenv("CONDA_PREFIX"):
 elif sys.base_prefix != sys.prefix:
     VENV_PATH = Path(sys.prefix)
 else:
-    raise IOError("Please run RavenPy in a virtual environment!")
+    raise RuntimeError("Please run RavenPy in a virtual environment!")
 
 
 RAVEN_EXEC_PATH = VENV_PATH / "bin" / "raven"

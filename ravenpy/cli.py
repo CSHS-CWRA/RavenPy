@@ -5,10 +5,12 @@ import sys
 
 import click
 
+from ravenpy import __version__
 from ravenpy.models.importers import RoutingProductGridWeightImporter
 
 
 @click.group()
+@click.version_option(__version__)
 def cli():
     pass
 
