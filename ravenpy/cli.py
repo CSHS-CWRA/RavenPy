@@ -104,6 +104,7 @@ def generate_grid_weights(
         sub_ids,
     )
     cmd = importer.extract()
+
     if output == "raven":
         print(cmd.to_rv())
     elif output == "text":
