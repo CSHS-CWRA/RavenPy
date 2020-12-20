@@ -397,9 +397,9 @@ class MonthlyAverage(RV):
 
 
 class RVT(RV):
-    def __init__(self, gridded_forcing_cmds, **kwargs):
+    def __init__(self, gridded_forcing_cmds=None, **kwargs):
         self._nc_index = None
-        self._gridded_forcing_cmds = gridded_forcing_cmds
+        self._gridded_forcings = gridded_forcing_cmds or []
         super(RVT, self).__init__(**kwargs)
 
     @property
@@ -414,7 +414,7 @@ class RVT(RV):
 
     @property
     def gridded_forcings(self):
-        return self._gridded_forcing_cmds
+        return self._gridded_forcings
 
     def update(self, items, force=False):
         """Update values from dictionary items.
@@ -438,7 +438,7 @@ class RVT(RV):
 {gridded_forcing_cmds}
         """.format(
             gridded_forcing_cmds="\n\n".join(
-                [gf.to_rv() for gf in self._gridded_forcing_cmds]
+                [gf.to_rv() for gf in self._gridded_forcings]
             ),
         )
 
