@@ -11,7 +11,7 @@ from ravenpy.tutorial import get_file
 
 from .common import get_test_data
 
-has_singularity = ravenpy.raven_simg.exists()
+has_singularity = False  # ravenpy.raven_simg.exists()
 
 
 class TestRaven:

@@ -114,9 +114,9 @@ class Raven:
         self.ind_outputs = {}  # Individual files for all simulations
         self.outputs = {}  # Aggregated files
         self.singularity = False  # Set to True to launch Raven with singularity.
-        self.raven_exec = ravenpy.raven_exec
-        self.raven_simg = ravenpy.raven_simg
-        self.ostrich_exec = ravenpy.ostrich_exec
+        self.raven_exec = ravenpy.RAVEN_EXEC_PATH
+        self.raven_simg = None  # ravenpy.raven_simg
+        self.ostrich_exec = ravenpy.OSTRICH_EXEC_PATH
         self._name = None
         self._defaults = {}
         self.rvfiles = {}
