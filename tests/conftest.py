@@ -1,9 +1,10 @@
 import pytest
 import xarray as xr
-from ravenpy.models import Raven
 from xclim.indicators.land._streamflow import fit, stats
 
-from .common import TESTDATA
+from ravenpy.models import Raven
+
+from .common import get_test_data
 
 SALMON_coords = (-123.3659, 54.4848)  # (lon, lat)
 RAVEN = Raven
@@ -13,7 +14,9 @@ RAVEN = Raven
 def q_sim_1(tmp_path):
     """A file storing a Raven streamflow simulation over one basin."""
 
-    return TESTDATA["simfile_single"]
+    return get_test_data(
+        "hydro_simulations", "raven-gr4j-cemaneige-sim_hmets-0_Hydrographs.nc"
+    )[0]
 
 
 @pytest.fixture

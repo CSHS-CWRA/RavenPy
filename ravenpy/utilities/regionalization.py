@@ -9,6 +9,8 @@ import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 import xarray as xr
+
+from ravenpy import VENV_PATH
 from ravenpy.models import get_model
 
 from . import coords
@@ -16,9 +18,7 @@ from . import coords
 LOGGER = logging.getLogger("PYWPS")
 
 # Added directory for test data (smaller database wth only 10 donor catchments)
-DATA_DIR = (
-    Path(__file__).parent.parent.parent / "tests" / "testdata" / "regionalisation_data"
-)
+DATA_DIR = VENV_PATH / "raven-testdata-master" / "regionalisation_data"
 
 
 def regionalize(

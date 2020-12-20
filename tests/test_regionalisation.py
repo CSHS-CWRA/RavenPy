@@ -2,10 +2,13 @@ import datetime as dt
 
 from ravenpy.utilities import regionalization as reg
 
-from .common import TESTDATA
+from .common import get_test_data
 
 
 def test_regionalization():
+    ts = get_test_data(
+        "raven-gr4j-cemaneige", "Salmon-River-Near-Prince-George_meteo_daily.nc"
+    )
     model = "GR4JCN"
     nash, params = reg.read_gauged_params(model)
     variables = ["latitude", "longitude", "area", "forest"]
@@ -34,7 +37,7 @@ def test_regionalization():
         longitude=-103.3659,
         min_NSE=0.6,
         size=2,
-        ts=TESTDATA["raven-hmets-nc-ts"],
+        ts=ts,
     )
 
     assert qsim.max() > 1

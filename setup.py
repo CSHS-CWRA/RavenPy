@@ -56,6 +56,7 @@ class InstallBinaryDeps(install):
     user_options = install.user_options + [
         # The format is (long option, short option, description).
         ("with-raven", None, "Download Raven and OSTRICH sources and compile them."),
+        ("with-testdata", None, "Download RavenPy test data used for unit tests."),
     ]
 
     def initialize_options(self):
@@ -63,11 +64,14 @@ class InstallBinaryDeps(install):
         # Each user option must be listed here with their default value.
         install.initialize_options(self)
         self.with_raven = False
+        self.with_testdata = False
 
     def finalize_options(self):
         install.finalize_options(self)
 
-    def install_binary_dep(self, url, name, rev_name, binary_name, make_target=""):
+    def install_binary_dep(
+        self, url, name, rev_name, binary_name, venv_path, make_target=""
+    ):
         print(f"Downloading {name} source code..")
         urllib.request.urlretrieve(
             f"{url}/{rev_name}.zip", self.external_deps_path / f"{name}.zip"
@@ -89,13 +93,22 @@ class InstallBinaryDeps(install):
             exit(f"There was an error while compiling {name}")
 
         #  Copy binary into venv bin folder (so it should be in the path when the venv is active)
+        target_bin_path = venv_path / "bin" / name
+        print(f"Copying binary to {target_bin_path}")
         shutil.copy(
             self.external_deps_path / rev_name / binary_name,
-            Path(sys.prefix) / "bin" / name,
+            target_bin_path,
         )
 
     def run(self):
-        if sys.base_prefix == sys.prefix and not os.getenv("CONDA_PREFIX"):
+        venv_path = None
+        if os.getenv("CONDA_PREFIX"):
+            # Conda env
+            venv_path = Path(os.getenv("CONDA_PREFIX"))
+        elif sys.base_prefix != sys.prefix:
+            # Regular venv
+            venv_path = Path(sys.prefix)
+        else:
             exit("Error: Please install RavenPy in a virtual environment!")
 
         if self.with_raven:
@@ -103,14 +116,30 @@ class InstallBinaryDeps(install):
             self.external_deps_path.mkdir(exist_ok=True)
 
             url = "http://www.civil.uwaterloo.ca/jmai/raven/"
-            self.install_binary_dep(url, "raven", "Raven-rev288", "Raven.exe")
+            self.install_binary_dep(
+                url, "raven", "Raven-rev288", "Raven.exe", venv_path
+            )
             self.install_binary_dep(
                 url,
                 "ostrich",
                 "Ostrich_2017-12-19_plus_progressJSON",
                 f"OstrichGCC",
+                venv_path,
                 "GCC",
             )
+
+        if self.with_testdata:
+            local_zip_path = venv_path / "raven-testdata-master.zip"
+
+            print(f"Downloading raven-tesdata..")
+            urllib.request.urlretrieve(
+                "https://github.com/Ouranosinc/raven-testdata/archive/master.zip",
+                local_zip_path,
+            )
+
+            print(f"Extracting raven-testdata to {venv_path}..")
+            with zipfile.ZipFile(local_zip_path) as zip_ref:
+                zip_ref.extractall(venv_path)
 
         # This works with python setup.py install, but produces this error with pip install:
         # ERROR: ravenpy==0.1.0 did not indicate that it installed an .egg-info directory. Only setup.py projects generating .egg-info directories are supported.
