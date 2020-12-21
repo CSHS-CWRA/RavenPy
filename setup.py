@@ -58,15 +58,15 @@ else:
     raise RuntimeError("Please install RavenPy in a virtual environment!")
 
 
-def get_version():
-    here = os.path.abspath(os.path.dirname(__file__))
-    with open(os.path.join(here, "ravenpy/__version__.py"), "r") as f:
-        for line in f:
-            if line.startswith("__version__"):
-                delim = '"' if '"' in line else "'"
-                return line.split(delim)[1]
-        else:
-            raise RuntimeError("Unable to find version string.")
+# def get_version():
+#     here = os.path.abspath(os.path.dirname(__file__))
+#     with open(os.path.join(here, "ravenpy/__version__.py"), "r") as f:
+#         for line in f:
+#             if line.startswith("__version__"):
+#                 delim = '"' if '"' in line else "'"
+#                 return line.split(delim)[1]
+#         else:
+#             raise RuntimeError("Unable to find version string.")
 
 
 class InstallExternalDeps(install):
@@ -200,7 +200,7 @@ setup(
     #     "dev": dev_requirements,
     # },
     url="https://github.com/CSHS-CWRA/ravenpy",
-    version=get_version(),
+    version="0.1.3",
     zip_safe=False,
     cmdclass={"install": InstallExternalDeps},
 )
