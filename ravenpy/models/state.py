@@ -10,11 +10,12 @@ Implemented using typing.NamedTuple
 Use _replace to update individual values.
 
 """
-from typing import NamedTuple
+from typing import List, NamedTuple, Tuple
 
 
 class HRUStateVariables(NamedTuple):
     """Initial condition for a given HRU."""
+
     surface_water: float = 0
     atmosphere: float = 0
     atmos_precip: float = 0
@@ -133,6 +134,7 @@ class HRUStateVariables(NamedTuple):
 
 class BasinStateVariables(NamedTuple):
     """Initial conditions for a flow segment."""
+
     index: int = 1
     name: str = "watershed"
     channelstorage: float = 0

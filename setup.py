@@ -2,6 +2,7 @@
 
 """The setup script."""
 
+import os
 import shutil
 import subprocess
 import sys
@@ -19,7 +20,7 @@ with open("HISTORY.rst") as history_file:
     history = history_file.read()
 
 requirements = [
-    "Click>=7.0",
+    "Click~=7.0",
     "gdal==3.0.4",
     "rasterio",
     "statsmodels",
@@ -28,34 +29,73 @@ requirements = [
     "wheel",
 ]
 
-setup_requirements = [
-    "pytest-runner",
-]
+# setup_requirements = [
+#     "pytest-runner",
+# ]
 
-test_requirements = [
-    "pytest>=3",
-]
+# test_requirements = [
+#     "pytest>=3",
+# ]
 
-docs_requirements = [
-    dependency for dependency in open("requirements_docs.txt").readlines()
-]
+# docs_requirements = [
+#     dependency for dependency in open("requirements_docs.txt").readlines()
+# ]
 
-dev_requirements = [
-    dependency for dependency in open("requirements_dev.txt").readlines()
-]
+# dev_requirements = [
+#     dependency for dependency in open("requirements_dev.txt").readlines()
+# ]
 
 
-class InstallBinaryDeps(install):
+# Make sure that we are in a venv because the package manipulates binaries
+# which are easier to handle in the venv's PATH.
+if os.getenv("CONDA_PREFIX"):
+    # Conda env
+    VENV_PATH = Path(os.getenv("CONDA_PREFIX"))
+elif sys.base_prefix != sys.prefix:
+    # Regular venv
+    VENV_PATH = Path(sys.prefix)
+else:
+    raise RuntimeError("Please install RavenPy in a virtual environment!")
+
+
+def get_version():
+    here = os.path.abspath(os.path.dirname(__file__))
+    with open(os.path.join(here, "ravenpy/__version__.py"), "r") as f:
+        for line in f:
+            if line.startswith("__version__"):
+                delim = '"' if '"' in line else "'"
+                return line.split(delim)[1]
+        else:
+            raise RuntimeError("Unable to find version string.")
+
+
+class InstallExternalDeps(install):
     """
-       Custom handler for the 'install' command, to download, extract and compile
-       the source code of Raven and OSTRICH and copy the resulting binaries in the
-       "bin" folder of the current venv.
+    Custom handler for the 'install' command, to download, extract and compile
+    the source code of Raven and OSTRICH and copy the resulting binaries in the
+    "bin" folder of the current venv.
     """
+
+    user_options = install.user_options + [
+        # The format is (long option, short option, description).
+        ("with-raven", None, "Download Raven and OSTRICH sources and compile them."),
+        ("with-testdata", None, "Download RavenPy test data used for unit tests."),
+    ]
+
+    def initialize_options(self):
+        """Set default values for options."""
+        # Each user option must be listed here with their default value.
+        install.initialize_options(self)
+        self.with_raven = False
+        self.with_testdata = False
+
+    def finalize_options(self):
+        install.finalize_options(self)
 
     def install_binary_dep(self, url, name, rev_name, binary_name, make_target=""):
         print(f"Downloading {name} source code..")
         urllib.request.urlretrieve(
-            f"{url}/{rev_name}.zip", self.external_deps_path / f"{name}.zip",
+            f"{url}/{rev_name}.zip", self.external_deps_path / f"{name}.zip"
         )
 
         print(f"Extracting {name} source code..")
@@ -71,28 +111,52 @@ class InstallBinaryDeps(install):
             )
         except subprocess.CalledProcessError as e:
             print(e)
-            exit(f"There was an error while compiling {name}")
+            raise RuntimeError(f"There was an error while compiling {name}")
 
         #  Copy binary into venv bin folder (so it should be in the path when the venv is active)
+        target_bin_path = VENV_PATH / "bin" / name
+        print(f"Copying binary to {target_bin_path}")
         shutil.copy(
             self.external_deps_path / rev_name / binary_name,
-            Path(sys.prefix) / "bin" / name,
+            target_bin_path,
         )
 
     def run(self):
-        if sys.base_prefix == sys.prefix:
-            exit("Error: Please install RavenPy in a virtual environment!")
+        if self.with_raven:
+            self.external_deps_path = Path("./external_deps")
+            self.external_deps_path.mkdir(exist_ok=True)
 
-        self.external_deps_path = Path("./external_deps")
-        self.external_deps_path.mkdir(exist_ok=True)
+            url = "http://www.civil.uwaterloo.ca/jmai/raven/"
+            self.install_binary_dep(url, "raven", "Raven-rev288", "Raven.exe")
+            self.install_binary_dep(
+                url,
+                "ostrich",
+                "Ostrich_2017-12-19_plus_progressJSON",
+                f"OstrichGCC",
+                "GCC",
+            )
 
-        url = "http://www.civil.uwaterloo.ca/jmai/raven/"
-        self.install_binary_dep(url, "raven", "Raven-rev275", "Raven.exe")
-        self.install_binary_dep(
-            url, "ostrich", "Ostrich_2017-12-19_plus_progressJSON", f"OstrichGCC", "GCC"
-        )
+        if self.with_testdata:
+            local_zip_path = VENV_PATH / "raven-testdata-master.zip"
 
-        super().do_egg_install()
+            print(f"Downloading raven-tesdata..")
+            urllib.request.urlretrieve(
+                "https://github.com/Ouranosinc/raven-testdata/archive/master.zip",
+                local_zip_path,
+            )
+
+            print(f"Extracting raven-testdata to {VENV_PATH}..")
+            with zipfile.ZipFile(local_zip_path) as zip_ref:
+                zip_ref.extractall(VENV_PATH)
+
+        # This works with python setup.py install, but produces this error with pip install:
+        # ERROR: ravenpy==0.1.0 did not indicate that it installed an .egg-info directory. Only setup.py projects generating .egg-info directories are supported.
+        # super().do_egg_install()
+
+        # This works with pip install, but has the problem that it ignores install_requires
+        # when running with `python setup.py install`:
+        # https://stackoverflow.com/questions/21915469/python-setuptools-install-requires-is-ignored-when-overriding-cmdclass
+        install.run(self)
 
 
 setup(
@@ -110,7 +174,11 @@ setup(
         "Programming Language :: Python :: 3.8",
     ],
     description="A Python wrapper to setup and run the hydrologic modelling framework Raven.",
-    entry_points={"console_scripts": ["ravenpy=ravenpy.cli:main",],},
+    entry_points={
+        "console_scripts": [
+            "ravenpy=ravenpy.cli:cli",
+        ],
+    },
     install_requires=requirements,
     license="MIT license",
     long_description=readme + "\n\n" + history,
@@ -118,13 +186,21 @@ setup(
     include_package_data=True,
     keywords="ravenpy",
     name="ravenpy",
-    packages=find_packages(include=["ravenpy", "ravenpy.*"]),
-    setup_requires=setup_requirements,
+    packages=find_packages(
+        include=[
+            "ravenpy",
+            "ravenpy.*",
+        ],
+    ),
+    # setup_requires=setup_requirements,
     test_suite="tests",
-    tests_require=test_requirements,
-    extras_require={"docs": docs_requirements, "dev": dev_requirements,},
+    # tests_require=test_requirements,
+    # extras_require={
+    #     "docs": docs_requirements,
+    #     "dev": dev_requirements,
+    # },
     url="https://github.com/CSHS-CWRA/ravenpy",
-    version="0.1.0",
+    version=get_version(),
     zip_safe=False,
-    cmdclass={"install": InstallBinaryDeps},
+    cmdclass={"install": InstallExternalDeps},
 )

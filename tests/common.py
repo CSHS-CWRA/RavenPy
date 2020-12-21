@@ -1,114 +1,31 @@
 from pathlib import Path
-from urllib.request import urlretrieve
+from typing import Sequence, Union
 
 import numpy as np
 import pandas as pd
 import xarray as xr
 
-VERSION = "1.0.0"
+from ravenpy import VENV_PATH
+from ravenpy.tutorial import get_file, query_folder
 
-TESTS_HOME = Path(__file__).parent
-TD = TESTS_HOME / "testdata"
-CFG_FILE = [
-    str(TESTS_HOME / "test.cfg"),
-]
+TESTDATA_BASE_FOLDER_IN_VENV = "raven-testdata-master"
 
-TESTDATA = dict()
-TESTDATA["gr4j-cemaneige"] = {
-    "pr": TD / "gr4j_cemaneige" / "pr.nc",
-    "tas": TD / "gr4j_cemaneige" / "tas.nc",
-    "evap": TD / "gr4j_cemaneige" / "evap.nc",
-}
 
-TESTDATA["solution.rvc"] = TD / "solution.rvc"
-TESTDATA["raven-gr4j-cemaneige-nc-ts"] = (
-    TD / "raven-gr4j-cemaneige" / "Salmon-River-Near-Prince-George_meteo_daily.nc"
-)
-TESTDATA["raven-gr4j-cemaneige-nc-rv"] = tuple(
-    (TD / "raven-gr4j-cemaneige").glob("raven-gr4j-salmon.rv?")
-)
-
-TESTDATA["raven-mohyse-nc-ts"] = TESTDATA["raven-gr4j-cemaneige-nc-ts"]
-TESTDATA["raven-mohyse"] = TD / "raven-mohyse"
-TESTDATA["raven-mohyse-rv"] = tuple(
-    (TD / "raven-mohyse").glob("raven-mohyse-salmon.rv?")
-)
-TESTDATA["raven-mohyse-ts"] = tuple(
-    (TD / "raven-mohyse").glob("Salmon-River-Near-Prince-George_*.rvt")
-)
-
-TESTDATA["raven-hmets-nc-ts"] = TESTDATA["raven-gr4j-cemaneige-nc-ts"]
-TESTDATA["raven-hmets"] = TD / "raven-hmets"
-TESTDATA["raven-hmets-rv"] = tuple((TD / "raven-hmets").glob("raven-hmets-salmon.rv?"))
-TESTDATA["raven-hmets-ts"] = tuple(
-    (TD / "raven-hmets").glob("Salmon-River-Near-Prince-George_*.rvt")
-)
-
-TESTDATA["raven-hbv-ec-nc-ts"] = TESTDATA["raven-gr4j-cemaneige-nc-ts"]
-TESTDATA["raven-hbv-ec"] = TD / "raven-hbv-ec"
-TESTDATA["raven-hbv-ec-rv"] = tuple(
-    (TD / "raven-hbv-ec").glob("raven-hbv-ec-salmon.rv?")
-)
-TESTDATA["raven-hbv-ec-ts"] = tuple(
-    (TD / "raven-hbv-ec").glob("Salmon-River-Near-Prince-George_*.rvt")
-)
-
-TESTDATA["ostrich-gr4j-cemaneige"] = TD / "ostrich-gr4j-cemaneige"
-TESTDATA["ostrich-gr4j-cemaneige-rv"] = tuple(
-    TESTDATA["ostrich-gr4j-cemaneige"].glob("*.rv?")
-) + tuple(TESTDATA["ostrich-gr4j-cemaneige"].glob("*.t??"))
-TESTDATA["ostrich-gr4j-cemaneige-nc-ts"] = TESTDATA["raven-gr4j-cemaneige-nc-ts"]
-
-TESTDATA["ostrich-mohyse"] = TD / "ostrich-mohyse"
-TESTDATA["ostrich-mohyse-rv"] = tuple(TESTDATA["ostrich-mohyse"].glob("*.rv?")) + tuple(
-    TESTDATA["ostrich-mohyse"].glob("*.t??")
-)
-TESTDATA["ostrich-mohyse-nc-ts"] = TESTDATA["raven-mohyse-nc-ts"]
-
-TESTDATA["ostrich-hmets"] = TD / "ostrich-hmets"
-TESTDATA["ostrich-hmets-rv"] = tuple(TESTDATA["ostrich-hmets"].glob("*.rv?")) + tuple(
-    TESTDATA["ostrich-hmets"].glob("*.t??")
-)
-TESTDATA["ostrich-hmets-nc-ts"] = TESTDATA["raven-hmets-nc-ts"]
-
-TESTDATA["ostrich-hbv-ec"] = TD / "ostrich-hbv-ec"
-TESTDATA["ostrich-hbv-ec-rv"] = tuple(TESTDATA["ostrich-hbv-ec"].glob("*.rv?")) + tuple(
-    TESTDATA["ostrich-hbv-ec"].glob("*.t??")
-)
-TESTDATA["ostrich-hbv-ec-nc-ts"] = TESTDATA["raven-hbv-ec-nc-ts"]
-
-TESTDATA["donnees_quebec_mrc_poly"] = (
-    TD / "donneesqc_mrc_poly" / "donnees_quebec_mrc_polygones.gml"
-)
-TESTDATA["watershed_vector"] = TD / "watershed_vector" / "LSJ_LL.zip"
-TESTDATA["mrc_subset"] = TD / "donneesqc_mrc_poly" / "mrc_subset.gml"
-TESTDATA["mrc_subset_zipped"] = TD / "donneesqc_mrc_poly" / "mrc_subset.zip"
-TESTDATA["melcc_water"] = (
-    TD / "melcc_water_management" / "zone_gestion_leau_saintlaurent.gpkg"
-)
-
-# TODO: Replace the following files with subsets and set originals as production data
-TESTDATA["earthenv_dem_90m"] = (
-    TD / "earthenv_dem_90m" / "earthenv_dem90_southernQuebec.tiff"
-)
-TESTDATA["hydrobasins_lake_na_lev12"] = (
-    TD / "usgs_hydrobasins" / "hybas_lake_na_lev12_v1c.zip"
-)
-TESTDATA["cec_nalcms_2010"] = TD / "cec_nalcms2010_30m" / "cec_nalcms_subQC.tiff"
-TESTDATA["simfile_single"] = (
-    TD / "hydro_simulations" / "raven-gr4j-cemaneige-sim_hmets-0_Hydrographs.nc"
-)
-TESTDATA["basin_test"] = TD / "watershed_vector" / "Basin_test.zip"
-TESTDATA["tsstats"] = TD / "ts_stats_outputs" / "out.nc"
-TESTDATA["polygon"] = TD / "polygons" / "Basin_10.zip"
-TESTDATA["climatologyESP"] = (
-    TD / "raven-gr4j-cemaneige" / "Salmon-River-Near-Prince-George_meteo_daily.nc"
-)
-
-# XSkillScore test data
-TESTDATA["XSS_obs"] = TD / "XSS_forecast_data" / "XSS_obs.nc"
-TESTDATA["XSS_fcst_det"] = TD / "XSS_forecast_data" / "XSS_fcst_det.nc"
-TESTDATA["XSS_fcst_ensemble"] = TD / "XSS_forecast_data" / "XSS_fcst_ens.nc"
+def get_test_data(folder: str, patterns: Union[str, Sequence[str]]):
+    testdata_path = VENV_PATH / TESTDATA_BASE_FOLDER_IN_VENV
+    if not testdata_path.exists():
+        raise RuntimeError(
+            f"""Cannot find testdata in the expected location: {testdata_path}
+Please make sure that RavenPy was pip installed with the `--install-option="--with-testdata"` option, or see README for more information.
+"""
+        )
+    patterns = [patterns] if isinstance(patterns, str) else patterns
+    return [
+        p
+        for pat in patterns
+        for p in (testdata_path / folder).glob(pat)
+        if p.suffix != ".md5"
+    ]
 
 
 def count_pixels(stats, numeric_categories=False):
@@ -189,7 +106,7 @@ def _convert_2d(fn):
 
     # Add geometry feature variables
     for key, val in features.items():
-        ds[key] = xr.DataArray(name=key, data=[val,], dims=("region",),)
+        ds[key] = xr.DataArray(name=key, data=[val], dims=("region"))
 
     return ds
 
@@ -208,7 +125,7 @@ def _convert_3d(fn):
     ds = xr.open_dataset(fn).rename({"nstations": "lat"})
 
     out = xr.Dataset(
-        coords={"lon": (["lon",], lon), "lat": (["lat",], lat), "time": ds.time}
+        coords={"lon": (["lon"], lon), "lat": (["lat"], lat), "time": ds.time}
     )
     for v in ds.data_vars:
         if v not in ["lon", "lat"]:

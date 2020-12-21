@@ -14,7 +14,7 @@ import xarray as xr
 from matplotlib import pyplot as plt
 from scipy import stats
 
-from raven.utilities.mk_test import mk_test_calc
+from ravenpy.utilities.mk_test import mk_test_calc
 from xclim.core.units import units2pint
 
 

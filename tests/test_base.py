@@ -3,43 +3,47 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+
 import ravenpy
 from ravenpy.models import Ostrich, Raven
 from ravenpy.models.base import get_diff_level
+from ravenpy.tutorial import get_file
 
-from .common import TESTDATA
+from .common import get_test_data
 
-has_singularity = ravenpy.raven_simg.exists()
+has_singularity = False  # ravenpy.raven_simg.exists()
 
 
 class TestRaven:
     def test_gr4j(self):
-        rvs = TESTDATA["raven-gr4j-cemaneige-nc-rv"]
-        ts = TESTDATA["raven-gr4j-cemaneige-nc-ts"]
+        rvs = get_test_data("raven-gr4j-cemaneige", "raven-gr4j-salmon.rv?")
+        ts = get_test_data(
+            "raven-gr4j-cemaneige", "Salmon-River-Near-Prince-George_meteo_daily.nc"
+        )
 
         model = Raven()
         model.configure(rvs)
         model(ts)
 
     def test_mohyse(self):
-        rvs = TESTDATA["raven-mohyse-rv"]
-        ts = list(TESTDATA["raven-mohyse-ts"])
+        rvs = get_test_data("raven-mohyse", "raven-mohyse-salmon.rv?")
+        ts = get_test_data("raven-mohyse", "Salmon-River-Near-Prince-George_*.rvt")
 
         model = Raven(tempfile.mkdtemp())
         model.configure(rvs)
         model(ts)
 
     def test_hmets(self):
-        rvs = TESTDATA["raven-hmets-rv"]
-        ts = TESTDATA["raven-hmets-ts"]
+        rvs = get_test_data("raven-hmets", "raven-hmets-salmon.rv?")
+        ts = get_test_data("raven-hmets", "Salmon-River-Near-Prince-George_*.rvt")
 
         model = Raven(tempfile.mkdtemp())
         model.configure(rvs)
         model(ts)
 
     def test_hbvec(self):
-        rvs = TESTDATA["raven-hbv-ec-rv"]
-        ts = TESTDATA["raven-hbv-ec-ts"]
+        rvs = get_test_data("raven-hbv-ec", "raven-hbv-ec-salmon.rv?")
+        ts = get_test_data("raven-hbv-ec", "Salmon-River-Near-Prince-George_*.rvt")
 
         model = Raven(tempfile.mkdtemp())
         model.configure(rvs)
@@ -47,8 +51,10 @@ class TestRaven:
 
     @pytest.mark.skipif(not has_singularity, reason="Singularity is not available.")
     def test_singularity(self):
-        rvs = TESTDATA["raven-gr4j-cemaneige-nc-rv"]
-        ts = TESTDATA["raven-gr4j-cemaneige-nc-ts"]
+        rvs = get_test_data("raven-gr4j-cemaneige", "raven-gr4j-salmon.rv?")
+        ts = get_test_data(
+            "raven-gr4j-cemaneige", "Salmon-River-Near-Prince-George_meteo_daily.nc"
+        )
 
         model = Raven()
         model.singularity = True
@@ -58,8 +64,10 @@ class TestRaven:
 
 class TestOstrich:
     def test_gr4j_with_no_tags(self):
-        ts = TESTDATA["raven-gr4j-cemaneige-nc-ts"]
-        ost = TESTDATA["ostrich-gr4j-cemaneige-rv"]
+        ts = get_test_data(
+            "raven-gr4j-cemaneige", "Salmon-River-Near-Prince-George_meteo_daily.nc"
+        )
+        ost = get_test_data("ostrich-gr4j-cemaneige", ("*.rv?", "*.t??"))
 
         model = Ostrich()
         model.configure(ost)
@@ -102,8 +110,10 @@ class TestOstrich:
         assert Path(model.outputs["calibration"]).exists()
 
     def test_mohyse_with_no_tags(self):
-        ts = TESTDATA["raven-mohyse-nc-ts"]
-        ost = TESTDATA["ostrich-mohyse-rv"]
+        ts = get_test_data(
+            "raven-gr4j-cemaneige", "Salmon-River-Near-Prince-George_meteo_daily.nc"
+        )
+        ost = get_test_data("ostrich-mohyse", ("*.rv?", "*.t??"))
 
         model = Ostrich()
         model.configure(ost)
@@ -159,8 +169,10 @@ class TestOstrich:
         assert Path(model.outputs["calibration"]).exists()
 
     def test_hmets_with_no_tags(self):
-        ts = TESTDATA["raven-hmets-nc-ts"]
-        ost = TESTDATA["ostrich-hmets-rv"]
+        ts = get_test_data(
+            "raven-gr4j-cemaneige", "Salmon-River-Near-Prince-George_meteo_daily.nc"
+        )
+        ost = get_test_data("ostrich-hmets", ("*.rv?", "*.t??"))
 
         model = Ostrich()
         model.configure(ost)
@@ -233,8 +245,10 @@ class TestOstrich:
         assert Path(model.outputs["calibration"]).exists()
 
     def test_hbvec_with_no_tags(self):
-        ts = TESTDATA["raven-hbv-ec-nc-ts"]
-        ost = TESTDATA["ostrich-hbv-ec-rv"]
+        ts = get_test_data(
+            "raven-gr4j-cemaneige", "Salmon-River-Near-Prince-George_meteo_daily.nc"
+        )
+        ost = get_test_data("ostrich-hbv-ec", ("*.rv?", "*.t??"))
 
         model = Ostrich()
         model.configure(ost)

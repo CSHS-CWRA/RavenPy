@@ -18,14 +18,13 @@ import tempfile
 from collections import OrderedDict
 from pathlib import Path
 
-import six
-
 import numpy as np
-import ravenpy
+import six
 import xarray as xr
 
-from .rv import (RV, RVI, Ost, RavenNcData, RVFile, isinstance_namedtuple,
-                 parse_solution)
+import ravenpy
+
+from .rv import RV, RVI, Ost, RavenNcData, RVFile, isinstance_namedtuple, parse_solution
 
 
 class Raven:
@@ -115,9 +114,9 @@ class Raven:
         self.ind_outputs = {}  # Individual files for all simulations
         self.outputs = {}  # Aggregated files
         self.singularity = False  # Set to True to launch Raven with singularity.
-        self.raven_exec = ravenpy.raven_exec
-        self.raven_simg = ravenpy.raven_simg
-        self.ostrich_exec = ravenpy.ostrich_exec
+        self.raven_exec = ravenpy.RAVEN_EXEC_PATH
+        self.raven_simg = None  # ravenpy.raven_simg
+        self.ostrich_exec = ravenpy.OSTRICH_EXEC_PATH
         self._name = None
         self._defaults = {}
         self.rvfiles = {}
@@ -157,7 +156,12 @@ class Raven:
     def version(self):
         import re
 
-        out = subprocess.check_output([self.raven_exec,], input=b"\n")
+        out = subprocess.check_output(
+            [
+                self.raven_exec,
+            ],
+            input=b"\n",
+        )
         match = re.search(r"Version (\S+) ", out.decode("utf-8"))
         if match:
             return match.groups()[0]
@@ -304,17 +308,7 @@ class Raven:
            output/
 
         """
-
-        print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        print(self.exec_path)
-        print(self.model_path)
-        print(self.final_path)
-        print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-
         if overwrite:
-            # print(self.model_path)
-            # print(self.final_path)
-
             if self.model_path.exists():
                 shutil.rmtree(str(self.exec_path))
             if self.final_path.exists():
@@ -452,16 +446,8 @@ class Raven:
                     self.assign(key, val[self.psim])
 
             cmd = self.setup_model_run(tuple(map(Path, ts)))
-            print(">>>>>>>>>>>>>>>>>>>>>>>>>>>")
-            # cmd[0] = "raven2"
-            print(cmd)
-            print(self.cmd_path)
-            cmd = " ".join(map(str, cmd))
-            print(">>>>>>>>>>>>>>>>>>>>>>>>>>>")
             procs.append(
-                subprocess.Popen(
-                    cmd, cwd=self.cmd_path, stdout=subprocess.PIPE, shell=True
-                )
+                subprocess.Popen(cmd, cwd=self.cmd_path, stdout=subprocess.PIPE)
             )
 
         return procs
@@ -538,8 +524,7 @@ class Raven:
         self.outputs["rv_config"] = self._merge_output(self.rvs, "rv.zip")
 
     def _merge_output(self, files, name):
-        """Merge multiple output files into one if possible, otherwise return a list of files.
-        """
+        """Merge multiple output files into one if possible, otherwise return a list of files."""
         import zipfile
 
         # If there is only one file, return its name directly.
@@ -615,7 +600,10 @@ class Raven:
                                     dimensions=ds[alt_name].dims,
                                     units=ds[alt_name].attrs.get("units"),
                                 )
-
+                                if "GRIB_stepType" in ds[alt_name].attrs:
+                                    ncvars[var]["deaccumulate"] = (
+                                        ds[alt_name].attrs["GRIB_stepType"] == "accum"
+                                    )
                                 break
         return ncvars
 

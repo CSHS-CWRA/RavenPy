@@ -3,12 +3,14 @@ import zipfile
 
 from ravenpy.models import RavenMultiModel
 
-from .common import TESTDATA
+from .common import get_test_data
 
 
 class TestRavenMultiModel:
     def test_simple(self):
-        ts = TESTDATA["raven-hmets-nc-ts"]
+        ts = get_test_data(
+            "raven-gr4j-cemaneige", "Salmon-River-Near-Prince-George_meteo_daily.nc"
+        )
         model = RavenMultiModel(models=["gr4jcn", "hmets"])
         gr4jcn = (0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
         hmets = (

@@ -7,17 +7,31 @@ import numpy as np
 
 import pytest
 import xarray as xr
-from ravenpy.models import (GR4JCN, GR4JCN_OST, HBVEC, HBVEC_OST, HMETS,
-                            HMETS_OST, MOHYSE, MOHYSE_OST, Raven)
+
+from ravenpy.models import (
+    GR4JCN,
+    GR4JCN_OST,
+    HBVEC,
+    HBVEC_OST,
+    HMETS,
+    HMETS_OST,
+    MOHYSE,
+    MOHYSE_OST,
+    Raven,
+)
 from ravenpy.models.state import HRUStateVariables
 
-from .common import TESTDATA, _convert_2d
+from .common import _convert_2d, get_test_data
+
+TS = get_test_data(
+    "raven-gr4j-cemaneige", "Salmon-River-Near-Prince-George_meteo_daily.nc"
+)
 
 
 @pytest.fixture
 def input2d(tmpdir):
     """Convert 1D input to 2D output by copying all the time series along a new region dimension."""
-    ds = _convert_2d(TESTDATA["raven-gr4j-cemaneige-nc-ts"])
+    ds = _convert_2d(TS[0])
     fn_out = os.path.join(tmpdir, "input2d.nc")
     ds.to_netcdf(fn_out)
     return fn_out
@@ -36,8 +50,6 @@ def test_race():
 
 class TestGR4JCN:
     def test_simple(self):
-        ts = TESTDATA["raven-gr4j-cemaneige-nc-ts"]
-
         model = GR4JCN(tempfile.mkdtemp())
 
         model.rvi.start_date = dt.datetime(2000, 1, 1)
@@ -50,11 +62,11 @@ class TestGR4JCN:
         model.rvh.latitude = 54.4848
         model.rvh.longitude = -123.3659
 
+        model.rvt.pr.deaccumulate = False
+
         model.rvp.params = model.params(0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
         assert model.rvi.suppress_output == ""
-        model(
-            [ts,]
-        )
+        model(TS)
 
         d = model.diagnostics
         # yields NSE=0.???? for full period 1954-2010
@@ -96,10 +108,9 @@ class TestGR4JCN:
         assert model.rvp.params.GR4J_X1 == 0.529
 
     def test_run(self):
-        ts = TESTDATA["raven-gr4j-cemaneige-nc-ts"]
         model = GR4JCN()
         model(
-            ts,
+            TS,
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2002, 1, 1),
             area=4250.6,
@@ -115,10 +126,9 @@ class TestGR4JCN:
 
     # @pytest.mark.skip
     def test_overwrite(self):
-        ts = TESTDATA["raven-gr4j-cemaneige-nc-ts"]
         model = GR4JCN()
         model(
-            ts,
+            TS,
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2002, 1, 1),
             area=4250.6,
@@ -131,6 +141,7 @@ class TestGR4JCN:
 
         qsim1 = model.q_sim.copy(deep=True)
         m1 = qsim1.mean()
+
 
         model(ts, params=(0.5289, -3.397, 407.3, 1.071, 16.89, 0.948), overwrite=True)
 
@@ -147,7 +158,7 @@ class TestGR4JCN:
 
         # Set initial conditions explicitly
         model(
-            ts,
+            TS,
             end_date=dt.datetime(2001, 2, 1),
             hru_state=HRUStateVariables(soil0=0),
             overwrite=True,
@@ -155,7 +166,6 @@ class TestGR4JCN:
         assert model.q_sim.isel(time=1).values[0] < qsim2.isel(time=1).values[0]
 
     def test_resume(self):
-        ts = TESTDATA["raven-gr4j-cemaneige-nc-ts"]
         model_ab = GR4JCN()
         kwargs = dict(
             area=4250.6,
@@ -166,7 +176,7 @@ class TestGR4JCN:
         )
         # Reference run
         model_ab(
-            ts,
+            TS,
             run_name="run_ab",
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2001, 1, 1),
@@ -175,7 +185,7 @@ class TestGR4JCN:
 
         model_a = GR4JCN()
         model_a(
-            ts,
+            TS,
             run_name="run_a",
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2000, 7, 1),
@@ -190,7 +200,7 @@ class TestGR4JCN:
         assert model_a.rvfiles["rvc"].content.startswith(":")
 
         model_a(
-            ts,
+            TS,
             run_name="run_2",
             start_date=dt.datetime(2000, 7, 1),
             end_date=dt.datetime(2001, 1, 1),
@@ -208,7 +218,7 @@ class TestGR4JCN:
             rvc
         )  # <--------- And this is how you feed it to a brand new model.
         model_b(
-            ts,
+            TS,
             run_name="run_2",
             start_date=dt.datetime(2000, 7, 1),
             end_date=dt.datetime(2001, 1, 1),
@@ -228,7 +238,6 @@ class TestGR4JCN:
     def test_resume_earlier(self):
         """Check that we can resume a run with the start date set at another date than the time stamp in the
         solution."""
-        ts = TESTDATA["raven-gr4j-cemaneige-nc-ts"]
         kwargs = dict(
             area=4250.6,
             elevation=843.0,
@@ -239,7 +248,7 @@ class TestGR4JCN:
         # Reference run
         model = GR4JCN()
         model(
-            ts,
+            TS,
             run_name="run_a",
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2000, 2, 1),
@@ -260,7 +269,7 @@ class TestGR4JCN:
         model.rvc.parse(rvc.read_text())
 
         model(
-            ts,
+            TS,
             run_name="run_b",
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2000, 2, 1),
@@ -271,7 +280,6 @@ class TestGR4JCN:
         assert s_a != s_b
 
     def test_update_soil_water(self):
-        ts = TESTDATA["raven-gr4j-cemaneige-nc-ts"]
         kwargs = dict(
             area=4250.6,
             elevation=843.0,
@@ -282,7 +290,7 @@ class TestGR4JCN:
         # Reference run
         model = GR4JCN()
         model(
-            ts,
+            TS,
             run_name="run_a",
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2000, 2, 1),
@@ -295,7 +303,7 @@ class TestGR4JCN:
         hru_state = model.rvc.hru_state._replace(soil0=s_0, soil1=s_1)
 
         model(
-            ts,
+            TS,
             run_name="run_b",
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2000, 2, 1),
@@ -314,10 +322,9 @@ class TestGR4JCN:
         assert model.version == "3.0.1"
 
     def test_parallel_params(self):
-        ts = TESTDATA["raven-gr4j-cemaneige-nc-ts"]
         model = GR4JCN()
         model(
-            ts,
+            TS,
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2002, 1, 1),
             area=4250.6,
@@ -364,14 +371,13 @@ class TestGR4JCN:
 
 class TestGR4JCN_OST:
     def test_simple(self):
-        ts = TESTDATA["ostrich-gr4j-cemaneige-nc-ts"]
         model = GR4JCN_OST()
         params = (0.529, -3.396, 407.29, 1.072, 16.9, 0.053)
         low = (0.01, -15.0, 10.0, 0.0, 1.0, 0.0)
         high = (2.5, 10.0, 700.0, 7.0, 30.0, 1.0)
 
         model(
-            ts,
+            TS,
             start_date=dt.datetime(1954, 1, 1),
             duration=208,
             area=4250.6,
@@ -422,7 +428,7 @@ class TestGR4JCN_OST:
         #                                 err_msg='calibrated NSE is not matching expected value')
         gr4j = GR4JCN()
         gr4j(
-            ts,
+            TS,
             start_date=dt.datetime(1954, 1, 1),
             duration=208,
             area=4250.6,
@@ -438,7 +444,6 @@ class TestGR4JCN_OST:
 
 class TestHMETS:
     def test_simple(self):
-        ts = TESTDATA["raven-hmets-nc-ts"]
         model = HMETS()
         params = (
             9.5019,
@@ -465,7 +470,7 @@ class TestHMETS:
         )
 
         model(
-            ts,
+            TS,
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2002, 1, 1),
             area=4250.6,
@@ -483,7 +488,6 @@ class TestHMETS:
 
 class TestHMETS_OST:
     def test_simple(self):
-        ts = TESTDATA["raven-hmets-nc-ts"]
         model = HMETS_OST()
         params = (
             9.5019,
@@ -556,7 +560,7 @@ class TestHMETS_OST:
         )
 
         model(
-            ts,
+            TS,
             start_date=dt.datetime(1954, 1, 1),
             duration=208,
             area=4250.6,
@@ -647,7 +651,7 @@ class TestHMETS_OST:
         #                                err_msg='calibrated NSE is not matching expected value')
         hmets = HMETS()
         hmets(
-            ts,
+            TS,
             start_date=dt.datetime(1954, 1, 1),
             duration=208,
             area=4250.6,
@@ -664,7 +668,6 @@ class TestHMETS_OST:
 
 class TestMOHYSE:
     def test_simple(self):
-        ts = TESTDATA["raven-mohyse-nc-ts"]
         model = MOHYSE()
         params = (
             1.0,
@@ -680,7 +683,7 @@ class TestMOHYSE:
         )
 
         model(
-            ts,
+            TS,
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2002, 1, 1),
             area=4250.6,
@@ -697,7 +700,6 @@ class TestMOHYSE:
 
 class TestMOHYSE_OST:
     def test_simple(self):
-        ts = TESTDATA["ostrich-mohyse-nc-ts"]
         model = MOHYSE_OST()
         params = (
             1.0,
@@ -716,7 +718,7 @@ class TestMOHYSE_OST:
         high_p = (20.0, 1.0, 20.0, 5.0, 0.5, 1.0, 1.0, 1.0, 15.0, 15.0)
 
         model(
-            ts,
+            TS,
             start_date=dt.datetime(1954, 1, 1),
             duration=208,
             area=4250.6,
@@ -789,7 +791,7 @@ class TestMOHYSE_OST:
         #                                err_msg='calibrated NSE is not matching expected value')
         mohyse = MOHYSE()
         mohyse(
-            ts,
+            TS,
             start_date=dt.datetime(1954, 1, 1),
             duration=208,
             area=4250.6,
@@ -806,7 +808,6 @@ class TestMOHYSE_OST:
 
 class TestHBVEC:
     def test_simple(self):
-        ts = TESTDATA["raven-hbv-ec-nc-ts"]
         model = HBVEC()
         params = (
             0.05984519,
@@ -833,7 +834,7 @@ class TestHBVEC:
         )
 
         model(
-            ts,
+            TS,
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2002, 1, 1),
             area=4250.6,
@@ -848,7 +849,6 @@ class TestHBVEC:
         np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], 0.0186633, 4)
 
     def test_evap(self):
-        ts = TESTDATA["raven-hbv-ec-nc-ts"]
         model = HBVEC()
         params = (
             0.05984519,
@@ -875,7 +875,7 @@ class TestHBVEC:
         )
 
         model(
-            ts,
+            TS,
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2002, 1, 1),
             area=4250.6,
@@ -891,7 +891,6 @@ class TestHBVEC:
 
 class TestHBVEC_OST:
     def test_simple(self):
-        ts = TESTDATA["ostrich-hbv-ec-nc-ts"]
         model = HBVEC_OST()
         params = (
             0.05984519,
@@ -965,7 +964,7 @@ class TestHBVEC_OST:
         )
 
         model(
-            ts,
+            TS,
             start_date=dt.datetime(1954, 1, 1),
             duration=208,
             area=4250.6,
@@ -1042,7 +1041,7 @@ class TestHBVEC_OST:
         #                                err_msg='calibrated NSE is not matching expected value')
         hbvec = HBVEC()
         hbvec(
-            ts,
+            TS,
             start_date=dt.datetime(1954, 1, 1),
             duration=208,
             area=4250.6,

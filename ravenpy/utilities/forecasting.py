@@ -10,7 +10,7 @@ Created on Fri Jul 17 09:11:58 2020
 Tools for hydrological forecasting
 """
 
-from raven.models import get_model
+from ravenpy.models import get_model
 import logging
 import xarray as xr
 import numpy as np

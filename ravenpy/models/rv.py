@@ -2,9 +2,9 @@ import collections
 import datetime as dt
 from pathlib import Path
 
-import six
-
 import cftime
+import geopandas
+import six
 from xclim.core.units import units, units2pint
 
 from .state import BasinStateVariables, HRUStateVariables
@@ -216,6 +216,7 @@ class RavenNcData(RV):
                  :StationIdx      {index}
                  {time_shift}
                  {linear_transform}
+                 {deaccumulate}
               :EndReadFromNetCDF
           :End{kind}
           """
@@ -254,11 +255,11 @@ class RavenNcData(RV):
         self._dimensions = None
         self._index = None
         self._linear_transform = None
-        self._site = None
         self._kind = None
         self._runits = None
         self._raven_name = None
         self._site = None
+        self._deaccumulate = None
 
         super().__init__(**kwargs)
 
@@ -352,6 +353,15 @@ class RavenNcData(RV):
 
         self._linear_transform = value
 
+    @property
+    def deaccumulate(self):
+        """Convert cumulative precipitation to precipitation rate (mm/d)."""
+        return ":Deaccumulate" if self._deaccumulate is True else ""
+
+    @deaccumulate.setter
+    def deaccumulate(self, value):
+        self._deaccumulate = value
+
     def _check_units(self):
         import warnings
 
@@ -387,8 +397,9 @@ class MonthlyAverage(RV):
 
 
 class RVT(RV):
-    def __init__(self, **kwargs):
+    def __init__(self, gridded_forcing_cmds=None, **kwargs):
         self._nc_index = None
+        self._gridded_forcings = gridded_forcing_cmds or []
         super(RVT, self).__init__(**kwargs)
 
     @property
@@ -400,6 +411,10 @@ class RVT(RV):
         for key, val in self.items():
             if isinstance(val, RavenNcData):
                 setattr(val, "index", value)
+
+    @property
+    def gridded_forcings(self):
+        return self._gridded_forcings
 
     def update(self, items, force=False):
         """Update values from dictionary items.
@@ -417,6 +432,15 @@ class RVT(RV):
             for key, val in items.items():
                 if isinstance(val, dict):
                     self[key].update(val, force=True)
+
+    def to_rv(self):
+        return """
+{gridded_forcing_cmds}
+        """.format(
+            gridded_forcing_cmds="\n\n".join(
+                [gf.to_rv() for gf in self._gridded_forcings]
+            ),
+        )
 
 
 class RVI(RV):
@@ -558,8 +582,7 @@ class RVI(RV):
 
     @property
     def rain_snow_fraction(self):
-        """Rain snow partitioning.
-        """
+        """Rain snow partitioning."""
         return self._rain_snow_fraction
 
     @rain_snow_fraction.setter
@@ -702,6 +725,83 @@ class RVC(RV):
         return "\n".join(txt).replace("[", "").replace("]", "")
 
 
+class RVH(RV):
+    def __init__(
+        self,
+        subbasins_cmd,
+        land_subbasin_group_cmd,
+        lake_subbasin_group_cmd,
+        reservoir_cmds,
+        hrus_cmd,
+        **kwargs,
+    ):
+        self._subbasins_cmd = subbasins_cmd
+        self._land_subbasin_group_cmd = land_subbasin_group_cmd
+        self._lake_subbasin_group_cmd = lake_subbasin_group_cmd
+        self._reservoir_cmds = reservoir_cmds
+        self._hrus_cmd = hrus_cmd
+
+        super().__init__(**kwargs)
+
+    @property
+    def subbasins(self):
+        return self._subbasins_cmd.subbasins  # return internal list
+
+    @property
+    def land_subbasin_group(self):
+        return self._land_subbasin_group_cmd.subbasin_ids  # return internal list
+
+    @property
+    def lake_subbasin_group(self):
+        return self._lake_subbasin_group_cmd.subbasin_ids  # return internal list
+
+    @property
+    def reservoirs(self):
+        return self._reservoir_cmds  # return list directly
+
+    @property
+    def hrus(self):
+        return self._hrus_cmd.hrus  # return internal list
+
+    def to_rv(self):
+        return """
+{subbasins_cmd}
+
+{hrus_cmd}
+
+{land_subbasin_group_cmd}
+
+{lake_subbasin_group_cmd}
+
+{reservoir_cmds}
+        """.format(
+            subbasins_cmd=self._subbasins_cmd.to_rv(),
+            hrus_cmd=self._hrus_cmd.to_rv(),
+            land_subbasin_group_cmd=self._land_subbasin_group_cmd.to_rv(),
+            lake_subbasin_group_cmd=self._lake_subbasin_group_cmd.to_rv(),
+            reservoir_cmds="\n\n".join([r.to_rv() for r in self._reservoir_cmds]),
+        )
+
+
+class RVP(RV):
+    def __init__(self, channel_profile_cmds, **kwargs):
+        self._channel_profile_cmds = channel_profile_cmds
+        super().__init__(**kwargs)
+
+    @property
+    def channel_profiles(self):
+        return self._channel_profile_cmds
+
+    def to_rv(self):
+        return """
+{channel_profile_cmds}
+        """.format(
+            channel_profile_cmds="\n\n".join(
+                [cp.to_rv() for cp in self._channel_profile_cmds]
+            ),
+        )
+
+
 class Ost(RV):
     def __init__(self, **kwargs):
         self._max_iterations = None
@@ -775,8 +875,8 @@ def parse_solution(rvc):
 
 
 def _parser(lines, indent="", fmt=str):
-    import re
     import itertools
+    import re
 
     header_pat = re.compile(r"(\s*):(\w+)\s?,?\s*(.*)")
 
@@ -787,7 +887,7 @@ def _parser(lines, indent="", fmt=str):
         if header:
             new_indent, key, value = header.groups()
             if new_indent > indent:
-                out[old_key] = _parser(itertools.chain([line,], lines), new_indent)
+                out[old_key] = _parser(itertools.chain([line], lines), new_indent)
             elif new_indent < indent:
                 return out
             else:
