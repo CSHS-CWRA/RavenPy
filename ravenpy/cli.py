@@ -99,11 +99,12 @@ def generate_grid_weights(
     Generate grid weights in various formats.
 
     INPUT_FILE_PATH: Either (A) Example NetCDF file containing at least 1D or 2D latitudes and 1D or 2D longitudes where grid
-    needs to be representative of model outputs that are then required to be routed. Or (B) a shapefile that contains shapes
-    of subbasins and one attribute that is defining its index in the NetCDF model output file (numbering needs to be [0 ... N-1]).
+    needs to be representative of model outputs that are then required to be routed. Or (B) a shapefile (either a .shp or a .zip)
+    that contains shapes of subbasins and one attribute that is defining its index in the NetCDF model output file (numbering
+    needs to be [0 ... N-1]).
 
-    ROUTING_FILE_PATH: Shapefile that contains all information of the routing toolbox for the catchment of interest (and maybe some
-    more catchments).
+    ROUTING_FILE_PATH: Shapefile (either a .shp or a .zip) that contains all information of the routing toolbox for the catchment
+    of interest (and maybe some more catchments).
 
     The script outputs the results (in the chosen format) on STDOUT, so they can be redirected to a file using the `>` shell operator.
     """
