@@ -303,9 +303,9 @@ class TestRVP:
 class TestRVT:
     @classmethod
     def setup_class(self):
-        shp = get_test_data("raven-routing-sample", "finalcat_hru_info.zip")[0]
-        nc = get_test_data("raven-routing-sample", "VIC_streaminputs.nc")[0]
-        importer = RoutingProductGridWeightImporter(shp, nc)
+        input_file = get_test_data("raven-routing-sample", "VIC_streaminputs.nc")[0]
+        routing_file = get_test_data("raven-routing-sample", "finalcat_hru_info.zip")[0]
+        importer = RoutingProductGridWeightImporter(input_file, routing_file)
         gws = importer.extract()
         gfc = GriddedForcingCommand(grid_weights=gws)
         self.rvt = RVT([gfc])
