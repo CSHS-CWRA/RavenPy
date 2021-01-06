@@ -16,8 +16,8 @@ def cli():
 
 
 @cli.command()
-@click.argument("shp-file-path", type=click.Path(exists=True))
-@click.argument("nc-file-path", type=click.Path(exists=True))
+@click.argument("input-file", type=click.Path(exists=True))
+@click.argument("routing-file", type=click.Path(exists=True))
 @click.option(
     "-d",
     "--dim-names",
@@ -25,7 +25,7 @@ def cli():
     type=click.Tuple([str, str]),
     default=RoutingProductGridWeightImporter.DIM_NAMES,
     show_default=True,
-    help="Ordered dimension names of longitude (x) and latitude (y) in the NetCDF file.",
+    help="Ordered dimension names of longitude (x) and latitude (y) in the NetCDF INPUT_FILE.",
 )
 @click.option(
     "-v",
@@ -34,13 +34,23 @@ def cli():
     type=click.Tuple([str, str]),
     default=RoutingProductGridWeightImporter.VAR_NAMES,
     show_default=True,
-    help="Ordered variable names of longitude (x) and latitude (y) in the NetCDF file.",
+    help="Variable name of 1D or 2D longitude and latitude variables in the NetCDF INPUT_FILE (in this order).",
 )
 @click.option(
-    "--hru-id-field",
+    "-c",  # legacy script short option
+    "--routing-id-field",
     type=str,
-    default=RoutingProductGridWeightImporter.HRU_ID_FIELD,
+    default=RoutingProductGridWeightImporter.ROUTING_ID_FIELD,
     show_default=True,
+    help="Name of column in routing information shapefile (ROUTING_FILE) containing a unique key for each dataset.",
+)
+@click.option(
+    "-f",  # legacy script short option
+    "--netcdf-input-field",
+    type=str,
+    default=RoutingProductGridWeightImporter.NETCDF_INPUT_FIELD,
+    show_default=True,
+    help="Attribute name in INPUT_FILE shapefile that defines the index of the shape in NetCDF model output file (numbering needs to be [0 ... N-1]).",
 )
 @click.option(
     "-g",
@@ -48,7 +58,7 @@ def cli():
     multiple=True,
     type=str,
     show_default=True,
-    help="Basins of interest (corresponds to 'Gauge-ID' in the shapefile).",
+    help="Streamflow gauge IDs of interest (corresponds to 'Gauge_ID' in the ROUTING_FILE shapefile). Either format is valid: -g 02LB005,02LB008 or -g 02LB005 -g 02LB008.",
 )
 @click.option(
     "-s",
@@ -56,7 +66,15 @@ def cli():
     multiple=True,
     type=str,  # to support alternate "-s 123,456" legacy syntax
     show_default=True,
-    help="Sub IDs of most downstream subbasins (containing usually a gauge station, corresponds to 'SubId' in the shapefile).",
+    help="IDs of subbasins of interest (containing usually a gauge station, corresponds to 'SubId' in the ROUTING_FILE shapefile). Either format is valid: -s 7399,7400 or -s 7399 -s 7400.",
+)
+@click.option(
+    "-e",  # legacy script short option
+    "--area-error-threshold",
+    type=float,
+    default=RoutingProductGridWeightImporter.AREA_ERROR_THRESHOLD,
+    show_default=True,
+    help="Threshold (as fraction) of allowed mismatch in areas between subbasins from routing information (ROUTING_FILE) and overlay with grid-cells or subbasins (INPUT_FILE). If error is smaller than this threshold the weights will be adjusted such that they sum up to exactly 1. Raven will exit gracefully in case weights do not sum up to at least 0.95.",
 )
 @click.option(
     "-o",
@@ -66,21 +84,35 @@ def cli():
     show_default=True,
 )
 def generate_grid_weights(
-    shp_file_path,
-    nc_file_path,
+    input_file,
+    routing_file,
     dim_names,
     var_names,
-    hru_id_field,
+    routing_id_field,
+    netcdf_input_field,
     gauge_id,
     sub_id,
+    area_error_threshold,
     output,
 ):
     """
     Generate grid weights in various formats.
 
-    SHP_FILE_PATH: Shapefile that contains all information of the routing toolbox for the catchment of interest (and maybe some more catchments).
+    INPUT_FILE: File containing model discretization. Can be either:
 
-    NC_FILE_PATH: NetCDF file containing at least 2D latitudes and 2D longitudes. Grid needs to be representative of model outputs that are then required to be routed.
+    (A) NetCDF file containing at least 1D or 2D latitudes and 1D or 2D longitudes where this
+    grid needs to be representative of model outputs that are then required to be routed. The names of the dimensions
+    and the variables holding the lat/lon information should be specified with options --dim-names (-d) and --var-names (-v).
+
+    (B) Shapefile (either a .shp or a .zip) that contains shapes of subbasins and one attribute in this
+    shapefile that is defining its index in the NetCDF model output file (numbering needs to be [0 ... N-1]). The name of
+    this attribute should be specified via option --netcdf-input-field (-f).
+
+    ROUTING_FILE: Shapefile (either a .shp or a .zip) that contains all information of the routing toolbox for the catchment
+    of interest (and maybe some more catchments). This file should contain an attribute with a unique identifier for the HRUs:
+    the default is "HRU_ID", but it can be set with --routing-id-field (-c).
+
+    The script outputs the results (in the chosen format) on STDOUT, so they can be redirected to a file using the `>` shell operator.
     """
 
     # Although Click does not support it, we want to support legacy syntax (e.g. "-s 123,456") for both gauge and sub IDs.
@@ -97,13 +129,15 @@ def generate_grid_weights(
         sub_ids = list(map(int, sub_id))
 
     importer = RoutingProductGridWeightImporter(
-        shp_file_path,
-        nc_file_path,
+        input_file,
+        routing_file,
         dim_names,
         var_names,
-        hru_id_field,
+        routing_id_field,
+        netcdf_input_field,
         gauge_ids,
         sub_ids,
+        area_error_threshold,
     )
     cmd = importer.extract()
 
