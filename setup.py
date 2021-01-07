@@ -23,6 +23,7 @@ requirements = [
     "Click~=7.0",
     "gdal==3.0.4",
     "rasterio",
+    "rioxarray",
     "statsmodels",
     "xarray==0.16",
     "xclim==0.18",

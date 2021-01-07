@@ -66,18 +66,6 @@ class Raven:
         ],
     }
 
-    # Expected units (pint-compatible)
-    _units = {
-        "tasmin": "degC",
-        "tasmax": "degC",
-        "tas": "degC",
-        "pr": "mm/d",
-        "rainfall": "mm/d",
-        "prsn": "mm/d",
-        "evspsbl": "mm/d",
-        "water_volume_transport_in_river_channel": "m**3/s",
-    }
-
     _parallel_parameters = [
         "params",
         "hru_state",
@@ -484,17 +472,13 @@ class Raven:
         ----------
         solution : str, Path
           Path to solution file. If None, will use solution from last model run if any.
-
-        Note that the starting date of the next run should be identical to the end date of the previous run.
         """
         if solution is None:
             fn = self.outputs["solution"]
         else:
             fn = solution
 
-        rvc = RVFile(fn)
-        rvc.rename(self.name)
-        self.rvfiles["rvc"] = rvc
+        self.rvc.parse(Path(fn).read_text())
 
     def parse_results(self, path=None):
         """Store output files in the self.outputs dictionary."""
@@ -658,9 +642,8 @@ class Raven:
         if rvi.start_date in [None, dt.datetime(1, 1, 1)]:
             rvi.start_date = start
 
-        else:
-            if rvi.end_date in [None, dt.datetime(1, 1, 1)]:
-                rvi.end_date = end
+        if rvi.end_date in [None, dt.datetime(1, 1, 1)]:
+            rvi.end_date = end
 
     @property
     def rvs(self):

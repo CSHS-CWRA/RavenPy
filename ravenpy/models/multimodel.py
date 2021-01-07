@@ -1,12 +1,19 @@
-from . base import Raven
-from . emulators import GR4JCN, HBVEC, HMETS, MOHYSE, get_model
-from . rv import RV, RVI
+from .base import Raven
+from .emulators import GR4JCN, HBVEC, HMETS, MOHYSE, get_model
+from .rv import RV, RVI
 
 
 class RavenMultiModel(Raven):
-    identifier = 'raven-multi-model'
+    identifier = "raven-multi-model"
 
-    rvt = RV(pr=None, prsn=None, tasmin=None, tasmax=None, evspsbl=None, water_volume_transport_in_river_channel=None)
+    rvt = RV(
+        pr=None,
+        prsn=None,
+        tasmin=None,
+        tasmax=None,
+        evspsbl=None,
+        water_volume_transport_in_river_channel=None,
+    )
     rvi = RVI()
     rvh = RV(name=None, area=None, elevation=None, latitude=None, longitude=None)
 
@@ -36,16 +43,22 @@ class RavenMultiModel(Raven):
         if (run_name is not None) or (len(rns) < len(self._models)):
             for m in self._models:
                 rn = run_name or m.rvi.run_name
-                m.rvi.run_name = rn + '_' + m.identifier
+                m.rvi.run_name = rn + "_" + m.identifier
 
     def assign(self, key, value):
         """Assign key to all models, unless it's model parameters."""
+        # Model parameter case
         if key in self._names:
             m = self._models[self._names.index(key)]
-            m.assign('params', value)
+            m.assign("params", value)
         else:
             for m in self._models:
                 m.assign(key, value)
+
+    def resume(self, solution=None):
+        # TODO: Add support for model dependent solutions.
+        for m in self._models:
+            m.resume(solution)
 
     @property
     def rvs(self):
@@ -66,7 +79,7 @@ class RavenMultiModel(Raven):
         if overwrite:
             self.setup(overwrite)
 
-        self._rename_run_name(kwds.pop('run_name', None))
+        self._rename_run_name(kwds.pop("run_name", None))
 
         p = {}
         for m in self._models:
@@ -77,7 +90,7 @@ class RavenMultiModel(Raven):
             # Add params to kwds if passed in run.
             kw = kwds.copy()
             if p[m.identifier]:
-                kw['params'] = p[m.identifier]
+                kw["params"] = p[m.identifier]
 
             procs.extend(m.run(ts, **kw))
 

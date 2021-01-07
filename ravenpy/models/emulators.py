@@ -2,6 +2,7 @@ from collections import namedtuple
 from pathlib import Path
 
 import xarray as xr
+
 from ravenpy.models import Ostrich, Raven
 
 from .rv import RV, RVC, RVI, RVT, MonthlyAverage, Ost, RavenNcData
@@ -76,7 +77,7 @@ class GR4JCN_OST(Ostrich, GR4JCN):
         super().__init__(*args, **kwds)
         self.rvi.suppress_output = True
         self.txt = Ost(
-            algorithm="DSS",
+            algorithm="DDS",
             max_iterations=50,
             lowerBounds=GR4JCN.params(None, None, None, None, None, None),
             upperBounds=GR4JCN.params(None, None, None, None, None, None),
@@ -118,7 +119,7 @@ class MOHYSE_OST(Ostrich, MOHYSE):
         super().__init__(*args, **kwds)
         self.rvi.suppress_output = True
         self.txt = Ost(
-            algorithm="DSS",
+            algorithm="DDS",
             max_iterations=50,
             lowerBounds=MOHYSE.params(
                 None, None, None, None, None, None, None, None, None, None
@@ -210,7 +211,7 @@ class HMETS_OST(Ostrich, HMETS):
         super().__init__(*args, **kwds)
         self.rvi.suppress_output = True
         self.txt = Ost(
-            algorithm="DSS",
+            algorithm="DDS",
             max_iterations=50,
             lowerBounds=HMETS.params(
                 None,
@@ -364,7 +365,7 @@ class HBVEC_OST(Ostrich, HBVEC):
         self.low = HBVEC.params
         self.high = HBVEC.params
         self.txt = Ost(
-            algorithm="DSS",
+            algorithm="DDS",
             max_iterations=50,
             lowerBounds=self.low(
                 None,
