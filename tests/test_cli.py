@@ -35,8 +35,10 @@ def test_generate_grid_weights_with_multiple_subids():
     params = [
         get_test_data("raven-routing-sample", "VIC_streaminputs.nc")[0],
         get_test_data("raven-routing-sample", "finalcat_hru_info.zip")[0],
-        "--sub-id",
-        "7202,6248",
+        "-s",
+        "7202",
+        "-s",
+        "6248",
     ]
     params = map(str, params)
 

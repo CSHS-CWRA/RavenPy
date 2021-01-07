@@ -55,18 +55,20 @@ def cli():
 @click.option(
     "-g",
     "--gauge-id",
+    "gauge_ids",  # rename arg to put emphasis on the fact that it's a list
     multiple=True,
     type=str,
     show_default=True,
-    help="Streamflow gauge IDs of interest (corresponds to 'Gauge_ID' in the ROUTING_FILE shapefile). Either format is valid: -g 02LB005,02LB008 or -g 02LB005 -g 02LB008.",
+    help="Streamflow gauge IDs of interest (corresponds to 'Gauge_ID' in the ROUTING_FILE shapefile).",
 )
 @click.option(
     "-s",
     "--sub-id",
+    "sub_ids",  # rename arg to put emphasis on the fact that it's a list
     multiple=True,
-    type=str,  # to support alternate "-s 123,456" legacy syntax
+    type=int,
     show_default=True,
-    help="IDs of subbasins of interest (containing usually a gauge station, corresponds to 'SubId' in the ROUTING_FILE shapefile). Either format is valid: -s 7399,7400 or -s 7399 -s 7400.",
+    help="IDs of subbasins of interest (containing usually a gauge station, corresponds to 'SubId' in the ROUTING_FILE shapefile).",
 )
 @click.option(
     "-e",  # legacy script short option
@@ -90,8 +92,8 @@ def generate_grid_weights(
     var_names,
     routing_id_field,
     netcdf_input_field,
-    gauge_id,
-    sub_id,
+    gauge_ids,
+    sub_ids,
     area_error_threshold,
     output,
 ):
@@ -114,19 +116,6 @@ def generate_grid_weights(
 
     The script outputs the results (in the chosen format) on STDOUT, so they can be redirected to a file using the `>` shell operator.
     """
-
-    # Although Click does not support it, we want to support legacy syntax (e.g. "-s 123,456") for both gauge and sub IDs.
-    # The Click way for `multiple` options would be: "-s 123 -s 456"
-
-    if len(gauge_id) == 1:
-        gauge_ids = list(filter(None, re.split("\W+", gauge_id[0])))
-    else:
-        gauge_ids = gauge_id
-
-    if len(sub_id) == 1:
-        sub_ids = list(map(int, filter(None, re.split("\W+", sub_id[0]))))
-    else:
-        sub_ids = list(map(int, sub_id))
 
     importer = RoutingProductGridWeightImporter(
         input_file,
