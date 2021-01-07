@@ -139,14 +139,14 @@ class TestRavenNcData:
             var="tasmin",
             path="/path/tasmin.nc",
             var_name="tn",
-            unit="deg_C",
+            unit="degC",
             dimensions=["time"],
         )
         tmp = str(v)
 
         assert compare(
             tmp,
-            """:Data TEMP_MIN deg_C
+            """:Data TEMP_MIN degC
                                   :ReadFromNetCDF
                                      :FileNameNC      /path/tasmin.nc
                                      :VarNameNC       tn
@@ -161,7 +161,7 @@ class TestRavenNcData:
             var="tasmin",
             path="/path/tasmin.nc",
             var_name="tn",
-            unit="deg_C",
+            unit="degC",
             dimensions=["time"],
             linear_transform=(24000.0, 0.0),
         )
@@ -173,7 +173,7 @@ class TestRavenNcData:
             var="tasmin",
             path="/path/tasmin.nc",
             var_name="tn",
-            unit="deg_C",
+            unit="degC",
             dimensions=["time"],
             deaccumulate=True,
         )
