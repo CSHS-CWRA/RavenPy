@@ -1,11 +1,12 @@
 import collections
 from pathlib import Path
-from typing import List, Sequence, Tuple, Union
+from typing import Iterable, List, Sequence, Tuple, Union
 
 import fiona
 import pandas as pd
-from ravenpy.utils import crs_sniffer, single_file_check
 from shapely.geometry import Point, shape
+
+from ravenpy.utils import crs_sniffer, single_file_check
 
 GEO_URL = "http://boreas.ouranos.ca/geoserver/wfs"
 
@@ -64,9 +65,7 @@ def feature_contains(
         pass
     else:
         raise ValueError(
-            "point should be shapely.Point or tuple of coordinates, got : {} of type({})".format(
-                point, type(point)
-            )
+            f"point should be shapely.Point or tuple of coordinates, got : {point} of type({type(point)})"
         )
 
     shape_crs = crs_sniffer(single_file_check(shp))
@@ -173,7 +172,7 @@ def get_bbox(vector: str, all_features: bool = True) -> list:
 
 
 def get_raster_wcs(
-    coordinates: Sequence[Union[int, float, str]],
+    coordinates: Union[Iterable, Sequence[Union[float, str]]],
     geographic: bool = True,
     layer: str = None,
 ) -> bytes:
@@ -197,8 +196,8 @@ def get_raster_wcs(
       A GeoTIFF array.
 
     """
-    from owslib.wcs import WebCoverageService
     from lxml import etree
+    from owslib.wcs import WebCoverageService
 
     (left, down, right, up) = coordinates
 
@@ -258,7 +257,7 @@ def select_hybas_domain(
             for _ in coll.filter(bbox=bbox):
                 return dom
 
-    raise LookupError("Could not find feature containing bbox {}.".format(bbox))
+    raise LookupError(f"Could not find feature containing bbox {bbox}.")
 
 
 def get_hydrobasins_location_wfs(
@@ -347,9 +346,9 @@ def get_hydrobasins_attributes_wfs(
       URL to the GeoJSON-encoded WFS response.
 
     """
-    from requests import Request
-    from owslib.fes import PropertyIsLike
     from lxml import etree
+    from owslib.fes import PropertyIsLike
+    from requests import Request
 
     layer = "public:USGS_HydroBASINS_{}{}_lev{}".format(
         "lake_" if lakes else "", domain, level
