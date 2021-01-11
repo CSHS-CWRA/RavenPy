@@ -1,3 +1,15 @@
+"""
+Working assumptions for this module
+-----------------------------------
+
+* Point coordinates are passed as shapely.geometry.Point instances.
+* BBox coordinates are passed as (lon1, lat1, lon2, lat2)
+* Shapes (polygons) are passed as ?
+* All functions that require a CRS have a CRS argument with a default set to WSG84 (?)
+*
+
+"""
+
 import collections
 from pathlib import Path
 from typing import Iterable, List, Sequence, Tuple, Union
@@ -18,19 +30,6 @@ hybas_pat = "hybas_lake_{}_lev01_v1c.zip"
 hybas_regions = ["na", "ar"]
 
 hybas_domains = {dom: hybas_dir / hybas_pat.format(dom) for dom in hybas_regions}
-
-
-"""
-Working assumptions for this module
------------------------------------
-
-* Point coordinates are passed as shapely.geometry.Point instances.
-* BBox coordinates are passed as (lon1, lat1, lon2, lat2)
-* Shapes (polygons) are passed as ?
-* All functions that require a CRS have a CRS argument with a default set to WSG84 (?)
-*
-
-"""
 
 
 def feature_contains(
