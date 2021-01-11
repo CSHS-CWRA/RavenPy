@@ -26,8 +26,7 @@ from ravenpy.models.rv import (
     RVFile,
     isinstance_namedtuple,
 )
-
-from .common import get_test_data
+from ravenpy.utilities.testdata import get_test_data
 
 
 class TestRVFile:

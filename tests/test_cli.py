@@ -3,8 +3,7 @@ import re
 from click.testing import CliRunner
 
 from ravenpy.cli import generate_grid_weights
-
-from .common import get_test_data
+from ravenpy.utilities.testdata import get_test_data
 
 
 def test_generate_grid_weights_with_nc_input_and_2d_coords():

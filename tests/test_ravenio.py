@@ -1,8 +1,7 @@
 from pathlib import Path
 
 from ravenpy.utilities import ravenio
-
-from .common import get_test_data
+from ravenpy.utilities.testdata import get_test_data
 
 # from ravenpy.models import raven_templates
 

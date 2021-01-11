@@ -8,8 +8,7 @@ import ravenpy
 from ravenpy.models import Ostrich, Raven
 from ravenpy.models.base import get_diff_level
 from ravenpy.tutorial import get_file
-
-from .common import get_test_data
+from ravenpy.utilities.testdata import get_test_data
 
 has_singularity = False  # ravenpy.raven_simg.exists()
 

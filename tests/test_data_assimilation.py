@@ -14,8 +14,7 @@ from ravenpy.models import GR4JCN
 from ravenpy.models.rv import RVC
 from ravenpy.models.state import BasinStateVariables
 from ravenpy.utilities.data_assimilation import assimilate, perturbation
-
-from .common import get_test_data
+from ravenpy.utilities.testdata import get_test_data
 
 
 def test_perturbation():

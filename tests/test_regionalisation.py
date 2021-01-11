@@ -1,8 +1,7 @@
 import datetime as dt
 
 from ravenpy.utilities import regionalization as reg
-
-from .common import get_test_data
+from ravenpy.utilities.testdata import get_test_data
 
 
 def test_regionalization():

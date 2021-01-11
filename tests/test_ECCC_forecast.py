@@ -6,8 +6,7 @@ from fiona.io import ZipMemoryFile
 
 from ravenpy.models import GR4JCN
 from ravenpy.utilities import forecasting
-
-from .common import get_test_data
+from ravenpy.utilities.testdata import get_test_data
 
 """
 Test to perform a hindcast using auto-queried ECCC data aggregated on THREDDS.

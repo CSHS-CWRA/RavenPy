@@ -4,12 +4,8 @@ import tempfile
 
 import xarray as xr
 
-# from pywps import Service
-# from pywps.tests import assert_response_success
-# from raven.processes import RavenHMETSProcess
 from ravenpy.models import HMETS
-
-from .common import get_test_data
+from ravenpy.utilities.testdata import get_test_data
 
 # Get path to ncml file for NRCan data.
 NRCAN_path = "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/datasets/gridded_obs/nrcan_v2.ncml"

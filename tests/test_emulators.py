@@ -19,8 +19,9 @@ from ravenpy.models import (
     Raven,
 )
 from ravenpy.models.state import HRUStateVariables
+from ravenpy.utilities.testdata import get_test_data
 
-from .common import _convert_2d, get_test_data
+from .common import _convert_2d
 
 TS = get_test_data(
     "raven-gr4j-cemaneige", "Salmon-River-Near-Prince-George_meteo_daily.nc"

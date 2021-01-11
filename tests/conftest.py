@@ -2,7 +2,7 @@ import pytest
 import xarray as xr
 from xclim.indicators.land._streamflow import fit, stats
 
-from .common import get_test_data
+from ravenpy.utilities.testdata import get_test_data
 
 
 @pytest.fixture

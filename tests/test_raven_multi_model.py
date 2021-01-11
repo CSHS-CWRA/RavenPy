@@ -2,8 +2,7 @@ import datetime as dt
 import zipfile
 
 from ravenpy.models import RavenMultiModel
-
-from .common import get_test_data
+from ravenpy.utilities.testdata import get_test_data
 
 
 class TestRavenMultiModel:

@@ -1,8 +1,7 @@
 import datetime as dt
 
 from ravenpy.models import HMETS
-
-from .common import get_test_data
+from ravenpy.utilities.testdata import get_test_data
 
 SALMON_coords = (-123.3659, 54.4848)  # (lon, lat)
 
