@@ -13,9 +13,9 @@ import pandas as pd
 import xarray as xr
 from matplotlib import pyplot as plt
 from scipy import stats
+from xclim.core.units import units2pint
 
 from ravenpy.utilities.mk_test import mk_test_calc
-from xclim.core.units import units2pint
 
 
 def hydrograph(file_list):
@@ -32,36 +32,32 @@ def hydrograph(file_list):
 
     # Get time data for the plot
     dates = pd.DatetimeIndex(ds[0].time.values)
-    first_date = dates.min().strftime('%Y/%m/%d')
-    last_date = dates.max().strftime('%Y/%m/%d')
+    first_date = dates.min().strftime("%Y/%m/%d")
+    last_date = dates.max().strftime("%Y/%m/%d")
 
     basin_name = ds[0].basin_name.values[0]  # selected basin name
 
     fig, ax = plt.subplots()  # initialize figure
 
     # Plot the observed streamflows if available
-    if hasattr(ds[0], 'q_obs'):
+    if hasattr(ds[0], "q_obs"):
         q_obs = ds[0].q_obs
-        plt.plot(
-            dates,
-            q_obs,
-            linewidth=2,
-            label='obs')
+        plt.plot(dates, q_obs, linewidth=2, label="obs")
 
     # Plot the simulated streamflows for each hydrological model
     q_sim = [h.q_sim for h in ds]
     for sim in q_sim:
-        plt.plot(
-            dates,
-            sim,
-            linewidth=2,
-            label='sim: ' + basin_name)
+        plt.plot(dates, sim, linewidth=2, label="sim: " + basin_name)
 
     # plt.xlim([first_date, last_date])
     plt.ylim(bottom=0, top=None)
-    ax.set_xlabel('Time')
-    ax.set_ylabel(r'$Streamflow [m^3s^{{-1}}]$')
-    ax.set_title('Hydrograph between {} and {}\nSelected basin: {} basin.'.format(first_date, last_date, basin_name))
+    ax.set_xlabel("Time")
+    ax.set_ylabel(r"$Streamflow [m^3s^{{-1}}]$")
+    ax.set_title(
+        "Hydrograph between {} and {}\nSelected basin: {} basin.".format(
+            first_date, last_date, basin_name
+        )
+    )
     ax.legend()
     ax.grid()
 
@@ -86,47 +82,54 @@ def mean_annual_hydrograph(file_list):
 
     # Get time data for the plot
     dates = pd.DatetimeIndex(ds[0].time.values)
-    first_date = dates.min().strftime('%Y/%m/%d')
-    last_date = dates.max().strftime('%Y/%m/%d')
+    first_date = dates.min().strftime("%Y/%m/%d")
+    last_date = dates.max().strftime("%Y/%m/%d")
 
     basin_name = ds[0].basin_name.values[0]  # selected basin name
 
     fig, ax = plt.subplots()  # initialize figure
 
     # Plot the observed streamflows if available
-    if hasattr(ds[0], 'q_obs'):
+    if hasattr(ds[0], "q_obs"):
         q_obs = ds[0].q_obs
-        mah_obs = q_obs.groupby('time.dayofyear').mean()
+        mah_obs = q_obs.groupby("time.dayofyear").mean()
 
-        plt.plot(
-            mah_obs.dayofyear,
-            mah_obs,
-            linewidth=2,
-            label='obs')
+        plt.plot(mah_obs.dayofyear, mah_obs, linewidth=2, label="obs")
 
     # Plot the simulated streamflows for each hydrological model
     q_sim = [h.q_sim for h in ds]
-    mahs_sim = [q.groupby('time.dayofyear').mean() for q in q_sim]
+    mahs_sim = [q.groupby("time.dayofyear").mean() for q in q_sim]
 
     for mah in mahs_sim:
-        plt.plot(
-            mah.dayofyear,
-            mah,
-            linewidth=2,
-            label='sim: ' + basin_name)
+        plt.plot(mah.dayofyear, mah, linewidth=2, label="sim: " + basin_name)
 
     plt.xticks(
-        np.linspace(0, 365, 13)[:-1], (
-            'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+        np.linspace(0, 365, 13)[:-1],
+        (
+            "Jan",
+            "Feb",
+            "Mar",
+            "Apr",
+            "May",
+            "Jun",
+            "Jul",
+            "Aug",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Dec",
         ),
     )
 
     plt.xlim(0, mah_obs.shape[0])
     plt.ylim(bottom=0, top=None)
-    ax.set_xlabel('Time')
-    ax.set_ylabel(r'$Streamflow [m^3s^{{-1}}]$')
-    ax.set_title('Hydrograph between {} and {}\nSelected basin: {} basin.'.format(first_date, last_date, basin_name))
+    ax.set_xlabel("Time")
+    ax.set_ylabel(r"$Streamflow [m^3s^{{-1}}]$")
+    ax.set_title(
+        "Hydrograph between {} and {}\nSelected basin: {} basin.".format(
+            first_date, last_date, basin_name
+        )
+    )
     ax.legend()
     ax.grid()
 
@@ -151,65 +154,78 @@ def spaghetti_annual_hydrograph(file):
 
     # Get time data for the plot
     dates = pd.DatetimeIndex(ds.time.values)
-    first_date = dates.min().strftime('%Y/%m/%d')
-    last_date = dates.max().strftime('%Y/%m/%d')
+    first_date = dates.min().strftime("%Y/%m/%d")
+    last_date = dates.max().strftime("%Y/%m/%d")
 
     basin_name = ds.basin_name.values[0]  # selected basin name
 
     fig, ax = plt.subplots()  # initialize figure
 
     # Plot the observed streamflows if available
-    if hasattr(ds, 'q_obs'):
+    if hasattr(ds, "q_obs"):
         q_obs = ds.q_obs
-        mah_obs = q_obs.groupby('time.year')
-        mah_obs_mean = q_obs.groupby('time.dayofyear').mean()
+        mah_obs = q_obs.groupby("time.year")
+        mah_obs_mean = q_obs.groupby("time.dayofyear").mean()
 
         for year in mah_obs.groups.keys():
             plt.plot(
                 np.arange(1, q_obs.values[mah_obs.groups[year]].shape[0] + 1, 1),
                 q_obs.values[mah_obs.groups[year]],
                 linewidth=1,
-                color='C0')
+                color="C0",
+            )
 
         plt.plot(
-            mah_obs_mean.dayofyear,
-            mah_obs_mean,
-            linewidth=2,
-            color='C0',
-            label='obs')
+            mah_obs_mean.dayofyear, mah_obs_mean, linewidth=2, color="C0", label="obs"
+        )
 
     # Plot the simulated streamflows for each hydrological model
     q_sim = ds.q_sim
-    mah_sim = q_sim.groupby('time.year')
-    mah_sim_mean = q_sim.groupby('time.dayofyear').mean()
+    mah_sim = q_sim.groupby("time.year")
+    mah_sim_mean = q_sim.groupby("time.dayofyear").mean()
 
     for year in mah_sim.groups.keys():
         plt.plot(
             np.arange(1, q_sim.values[mah_sim.groups[year]].shape[0] + 1, 1),
             q_sim.values[mah_sim.groups[year]],
             linewidth=1,
-            color='C1')
+            color="C1",
+        )
 
     plt.plot(
         mah_sim_mean.dayofyear,
         mah_sim_mean,
         linewidth=2,
-        color='C1',
-        label='sim: ' + '<model_name>')
+        color="C1",
+        label="sim: " + "<model_name>",
+    )
 
     plt.xticks(
-        np.linspace(0, 365, 13)[:-1], (
-            'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+        np.linspace(0, 365, 13)[:-1],
+        (
+            "Jan",
+            "Feb",
+            "Mar",
+            "Apr",
+            "May",
+            "Jun",
+            "Jul",
+            "Aug",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Dec",
         ),
     )
 
     plt.xlim(0, mah_sim_mean.shape[0])
     plt.ylim(bottom=0, top=None)
-    ax.set_xlabel('Time')
-    ax.set_ylabel(r'$Streamflow [m^3s^{{-1}}]$')
-    ax.set_title('Spaghetti annual hydrograph between {} and {}'
-                 '\n Selected basin: {} basin.'.format(first_date, last_date, basin_name))
+    ax.set_xlabel("Time")
+    ax.set_ylabel(r"$Streamflow [m^3s^{{-1}}]$")
+    ax.set_title(
+        "Spaghetti annual hydrograph between {} and {}"
+        "\n Selected basin: {} basin.".format(first_date, last_date, basin_name)
+    )
     ax.legend()
     ax.grid()
 
@@ -230,8 +246,8 @@ def ts_graphs(file, trend=True, alpha=0.05):
 
     # Time series for the plot
     ds = xr.open_dataset(file)
-    titlename = ds['ts_stats'].description
-    values = ds['ts_stats'].values[:]
+    titlename = ds["ts_stats"].description
+    values = ds["ts_stats"].values[:]
 
     values[0] = 2
     values[1] = 1
@@ -253,14 +269,20 @@ def ts_graphs(file, trend=True, alpha=0.05):
     if trend:
         res = stats.theilslopes(values, dates)
         trd, h, p, z = mk_test_calc(values, alpha=alpha)
-        titlename = titlename + ", Mann-Kendall h=" + str(h) + ", p-value=" + str(np.round(p, 4))
+        titlename = (
+            titlename
+            + ", Mann-Kendall h="
+            + str(h)
+            + ", p-value="
+            + str(np.round(p, 4))
+        )
 
     fig, ax = plt.subplots()
-    ax.plot(dates, values, label='time-series index')
+    ax.plot(dates, values, label="time-series index")
 
     # plt.xlim([first_date, last_date])
-    ax.set_xlabel('Time')
-    ax.set_ylabel(r'$Streamflow [m^3s^{{-1}}]$')
+    ax.set_xlabel("Time")
+    ax.set_ylabel(r"$Streamflow [m^3s^{{-1}}]$")
 
     ax.set_title(titlename)
 
@@ -269,10 +291,13 @@ def ts_graphs(file, trend=True, alpha=0.05):
 
     if trend:
         # TODO: This does not work yet, trying to compute the y-value of a datetime x-axis value * a slope...
-        ax.plot(dates, res[1] + res[0] * dates,
-                linestyle='--',
-                linewidth=2,
-                label='Sen\'s Slope')
+        ax.plot(
+            dates,
+            res[1] + res[0] * dates,
+            linestyle="--",
+            linewidth=2,
+            label="Sen's Slope",
+        )
 
     ax.legend()
 
@@ -296,7 +321,7 @@ def ts_fit_graph(ts, params):
     from xclim.indices.generic import get_dist
 
     n = ts.nbasins.size
-    dist = params.attrs['scipy_dist']
+    dist = params.attrs["scipy_dist"]
 
     fig, axes = plt.subplots(n, figsize=(10, 6), squeeze=False)
 
@@ -306,20 +331,29 @@ def ts_fit_graph(ts, params):
         p = params.isel(nbasins=i)
 
         # Plot histogram of time series as density then as a normal count.
-        density, bins, patches = ax.hist(ts.isel(nbasins=i).dropna(dim='time'),
-                                         alpha=.5, density=True, bins='auto',
-                                         label="__nolabel__")
-        ax2.hist(ts.isel(nbasins=i).dropna(dim='time'), bins=bins, facecolor=(1, 1, 1, 0.01), edgecolor='gray',
-                 linewidth=1, )
+        density, bins, patches = ax.hist(
+            ts.isel(nbasins=i).dropna(dim="time"),
+            alpha=0.5,
+            density=True,
+            bins="auto",
+            label="__nolabel__",
+        )
+        ax2.hist(
+            ts.isel(nbasins=i).dropna(dim="time"),
+            bins=bins,
+            facecolor=(1, 1, 1, 0.01),
+            edgecolor="gray",
+            linewidth=1,
+        )
 
         # Plot pdf of distribution
         dc = get_dist(dist)(*params.isel(nbasins=i))
-        mn = dc.ppf(.01)
-        mx = dc.ppf(.99)
+        mn = dc.ppf(0.01)
+        mx = dc.ppf(0.99)
         q = np.linspace(mn, mx, 200)
         pdf = dc.pdf(q)
-        ps = ', '.join(["{:.1f}".format(x) for x in p.values])
-        ax.plot(q, pdf, '-', label="{}({})".format(params.attrs['scipy_dist'], ps))
+        ps = ", ".join(["{:.1f}".format(x) for x in p.values])
+        ax.plot(q, pdf, "-", label="{}({})".format(params.attrs["scipy_dist"], ps))
 
         # Labels
         ax.set_xlabel("{} (${:~P}$)".format(ts.long_name, units2pint(ts.units)))
@@ -329,4 +363,84 @@ def ts_fit_graph(ts, params):
         ax.legend(frameon=False)
 
     plt.tight_layout()
+    return fig
+
+
+def forecast(file, fcst_var="q_sim"):
+    """Return forecast graphic.
+    Create a graphic of the hydrograph for each member
+    Parameters
+    ----------
+    file : str, Path
+      Raven output file containing simulated streamflows.
+    fcst_var : str
+      Name of the streamflow variable.
+    """
+
+    ds = xr.open_dataset(file)
+
+    # Get time data for the plot
+    dates = pd.DatetimeIndex(ds.time.values)
+    start = dates.min()
+    end = dates.max()
+
+    fig, ax = plt.subplots()  # initialize figure
+
+    # Plot the simulated streamflows for each hydrological model
+    ds[fcst_var].plot.line("b", x="time", add_legend=False)
+
+    # plt.xlim([first_date, last_date])
+    ax.set_xlabel("Time")
+    ax.set_ylabel("Streamflow (m³/s)")
+    ax.set_title(f"Forecasted hydrograph between {start:%Y/%m/%d} and {end:%Y/%m/%d}.")
+    ax.grid()
+
+    plt.xticks(rotation=90)
+    plt.tight_layout()
+
+    return fig
+
+
+def hindcast(file, fcst_var, qobs, qobs_var):
+    """Return forecast graphic.
+    Create a graphic of the hydrograph for each member
+    Parameters
+    ----------
+    file : str, Path
+      Raven output file containing simulated streamflows.
+    fcst_var : str
+      Name of the streamflow variable.
+    qobs : str, Path
+      Streamflow observation file, with times matching the hindcast
+    qobs_var : str
+      Nname of the streamflow observation variable.
+    """
+
+    ds = xr.open_dataset(file)
+    ds2 = xr.open_dataset(qobs)
+
+    # Get time data for the plot
+    dates = pd.DatetimeIndex(ds.time.values)
+    start = dates.min()
+    end = dates.max()
+
+    fig, ax = plt.subplots()  # initialize figure
+
+    # Plot the simulated streamflows for each hydrological model
+    hh = ds[fcst_var].plot.line("b", x="time", label="Hindcasts")
+    ho = ds2[qobs_var].plot.line("r", label="Observations")
+
+    # plt.xlim([first_date, last_date])
+    ax.set_xlabel("Time")
+    ax.set_ylabel("Streamflow (m³/s)")
+    ax.set_title(f"Hindcasted hydrograph between {start:%Y/%m/%d} and {end:%Y/%m/%d}.")
+
+    # Add legend
+    handles = hh[:1] + ho
+    ax.legend(handles, [h.get_label() for h in handles])
+    ax.grid()
+
+    plt.xticks(rotation=90)
+    plt.tight_layout()
+
     return fig
