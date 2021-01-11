@@ -173,7 +173,7 @@ setup(
     license="MIT license",
     long_description=readme + "\n\n" + history,
     long_description_content_type="text/x-rst",
-    include_package_data=True,
+    include_package_data=True,  # This needs to be True for the files in ravenpy/data to be included
     keywords="ravenpy",
     name="ravenpy",
     packages=find_packages(
