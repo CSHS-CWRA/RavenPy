@@ -1,0 +1,14 @@
+name: RavenPy
+channels:
+- conda-forge
+- defaults
+dependencies:
+- Click>=7.0
+- gdal==3.0.4
+- rasterio
+- statsmodels
+- xarray==0.16
+- xclim==0.18
+- wheel
+- xskillscore
+- climpred>=2.1

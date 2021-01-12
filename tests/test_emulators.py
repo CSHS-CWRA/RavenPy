@@ -4,6 +4,7 @@ import tempfile
 import zipfile
 
 import numpy as np
+
 import pytest
 import xarray as xr
 
@@ -142,18 +143,11 @@ class TestGR4JCN:
         qsim1 = model.q_sim.copy(deep=True)
         m1 = qsim1.mean()
 
-        # This is only needed temporarily while we fix this: https://github.com/CSHS-CWRA/RavenPy/issues/4
-        # Please remove when fixed!
-        model.hydrograph.close()  # Needed with xarray 0.16.1
 
-        model(TS, params=(0.5289, -3.397, 407.3, 1.071, 16.89, 0.948), overwrite=True)
+        model(ts, params=(0.5289, -3.397, 407.3, 1.071, 16.89, 0.948), overwrite=True)
 
         qsim2 = model.q_sim.copy(deep=True)
         m2 = qsim2.mean()
-
-        # This is only needed temporarily while we fix this: https://github.com/CSHS-CWRA/RavenPy/issues/4
-        # Please remove when fixed!
-        model.hydrograph.close()  # Needed with xarray 0.16.1
 
         assert m1 != m2
 
