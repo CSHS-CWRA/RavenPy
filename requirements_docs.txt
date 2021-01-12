@@ -5,3 +5,5 @@ pandoc
 ipython
 ipykernel
 jupyter_client
+sphinx-click
+numpydoc

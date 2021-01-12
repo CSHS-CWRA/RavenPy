@@ -21,7 +21,8 @@ with open("HISTORY.rst") as history_file:
 
 requirements = [
     "Click~=7.0",
-    "gdal==3.0.4",
+    "gdal==2.4",
+    "matplotlib",
     "rasterio",
     "rioxarray",
     "statsmodels",
@@ -49,8 +50,11 @@ requirements = [
 
 # Make sure that we are in a venv because the package manipulates binaries
 # which are easier to handle in the venv's PATH.
-if os.getenv("CONDA_PREFIX"):
-    # Conda env
+if os.getenv("CONDA_DEFAULT_ENV"):
+    if os.getenv("CONDA_DEFAULT_ENV") == "base":
+        raise RuntimeError(
+            f"Please install RavenPy in a Conda environment different than 'base'!"
+        )
     VENV_PATH = Path(os.getenv("CONDA_PREFIX"))
 elif sys.base_prefix != sys.prefix:
     # Regular venv

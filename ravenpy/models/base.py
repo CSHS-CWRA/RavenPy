@@ -1,11 +1,9 @@
 """
-Raven model definition
+Base classes
+------------
 
-Classes
--------
-
-Raven : A generic class that knows how to launch the model from completed rv files.
-Ostrich:
+The `Raven` class is the base class that implements model setup, execution and output retrieval, while the `Ostrich`
+class is the base class adapting `Raven` to work with the Ostrich calibration tool.
 
 """
 import csv
@@ -43,8 +41,8 @@ class Raven:
     This class is used to run the RAVEN model from user-provided configuration files. It can also be subclassed with
     configuration templates for emulated models, allowing direct calls to the models.
 
-    Usage
-    -----
+    Examples
+    --------
     >>> r = Raven('/tmp/testdir')
     >>> r.configure()
 
@@ -255,6 +253,7 @@ class Raven:
 
     def assign(self, key, value):
         """Assign parameter to rv object that has a key with the same name."""
+
         assigned = False
         for ext, obj in self.rvobjs.items():
             if hasattr(obj, key):
@@ -376,8 +375,8 @@ class Raven:
         launch the Raven executable. If the configuration files are templates, values can be formatted by passing
         dictionaries keyed by their extension.
 
-        Example
-        -------
+        Examples
+        --------
         >>> r = Raven()
         >>> r.configure(rvi='path to template', rvp='...'}
         >>> r.run(ts, start_date=dt.datetime(2000, 1, 1), area=1000, X1=67)
@@ -797,11 +796,10 @@ class Ostrich(Raven):
     """Wrapper for OSTRICH calibration of RAVEN hydrological model
 
     This class is used to calibrate RAVEN model using OSTRICH from user-provided configuration files. It can also be
-    subclassed with
-    configuration templates for emulated models, allowing direct calls to the models.
+    subclassed with configuration templates for emulated models, allowing direct calls to the models.
 
-    Usage
-    -----
+    Examples
+    --------
     >>> r = Ostrich('/tmp/testdir')
     >>> r.configure()
 
@@ -938,8 +936,8 @@ class Ostrich(Raven):
     def ost2raven(self, ops):
         """Return model parameters.
 
-        Note
-        ----
+        Notes
+        -----
         This method should be subclassed by emulators for which Ostrich has different parameters than the original
         Raven model.
         """
