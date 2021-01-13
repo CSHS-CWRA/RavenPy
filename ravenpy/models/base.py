@@ -34,6 +34,19 @@ from .rv import (
     parse_solution,
 )
 
+RAVEN_EXEC_PATH = os.getenv("RAVENPY_RAVEN_BINARY_PATH") or shutil.which("raven")
+OSTRICH_EXEC_PATH = os.getenv("RAVENPY_OSTRICH_BINARY_PATH") or shutil.which("ostrich")
+
+if not RAVEN_EXEC_PATH:
+    raise RuntimeError(
+        "Could not find raven binary in PATH, and RAVENPY_RAVEN_BINARY_PATH env variable is not set"
+    )
+
+if not OSTRICH_EXEC_PATH:
+    raise RuntimeError(
+        "Could not find ostrich binary in PATH, and RAVENPY_OSTRICH_BINARY_PATH env variable is not set"
+    )
+
 
 class Raven:
     """RAVEN hydrological model wrapper
@@ -110,9 +123,9 @@ class Raven:
         self.ind_outputs = {}  # Individual files for all simulations
         self.outputs = {}  # Aggregated files
         self.singularity = False  # Set to True to launch Raven with singularity.
-        self.raven_exec = ravenpy.RAVEN_EXEC_PATH
+        self.raven_exec = RAVEN_EXEC_PATH
         self.raven_simg = None  # ravenpy.raven_simg
-        self.ostrich_exec = ravenpy.OSTRICH_EXEC_PATH
+        self.ostrich_exec = OSTRICH_EXEC_PATH
         self._name = None
         self._defaults = {}
         self.rvfiles = {}
