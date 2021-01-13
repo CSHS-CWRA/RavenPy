@@ -35,17 +35,17 @@ requirements = [
 #     "pytest-runner",
 # ]
 
-# test_requirements = [
-#     "pytest>=3",
-# ]
+test_requirements = [
+    "pytest>=3",
+]
 
-# docs_requirements = [
-#     dependency for dependency in open("requirements_docs.txt").readlines()
-# ]
+docs_requirements = [
+    dependency for dependency in open("requirements_docs.txt").readlines()
+]
 
-# dev_requirements = [
-#     dependency for dependency in open("requirements_dev.txt").readlines()
-# ]
+dev_requirements = [
+    dependency for dependency in open("requirements_dev.txt").readlines()
+]
 
 
 class InstallExternalDeps(install):
@@ -160,11 +160,11 @@ setup(
     ),
     # setup_requires=setup_requirements,
     test_suite="tests",
-    # tests_require=test_requirements,
-    # extras_require={
-    #     "docs": docs_requirements,
-    #     "dev": dev_requirements,
-    # },
+    tests_require=test_requirements,
+    extras_require={
+        "docs": docs_requirements,
+        "dev": dev_requirements,
+    },
     url="https://github.com/CSHS-CWRA/ravenpy",
     version="0.1.4-beta",
     zip_safe=False,
