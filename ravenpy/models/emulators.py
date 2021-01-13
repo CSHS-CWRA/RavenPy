@@ -56,6 +56,7 @@ class GR4JCN(Raven):
         )
 
         # Initialize the stores to 1/2 full. Declare the parameters that can be user-modified
+        # TODO: Is this really setting soil0 and soil1 ? I think it needs to be set inside HRUStateVariable.
         self.rvc = RVC(soil0=None, soil1=15, basin_state=BasinStateVariables())
         self.rvd = RV(one_minus_CEMANEIGE_X2=None, GR4J_X1_hlf=None)
 
@@ -420,6 +421,38 @@ class HBVEC_OST(Ostrich, HBVEC):
     # TODO: Support index specification and unit changes.
     def derived_parameters(self):
         self._monthly_average()
+
+
+class Routing(Raven):
+    """Routing model - no hydrological modeling
+    """
+
+    identifier = "routing"
+    templates = tuple((Path(__file__).parent / "raven-routing").glob("*.rv?"))
+
+    params = namedtuple("RoutingParams", ())
+
+    def __init__(self, *args, **kwds):
+        super().__init__(*args, **kwds)
+
+        self.rvp = RV(params=Routing.params())
+        self.rvt = RVT(water_volume_transport_in_river_channel=nc())
+        self.rvi = RVI()
+        self.rvh = RV(
+            name=None, area=None, elevation=None, latitude=None, longitude=None
+        )
+
+        # Declare the parameters that can be user-modified.
+        self.rvc = RVC(soil0=15, basin_state=BasinStateVariables())
+        self.rvd = RV(avg_annual_runoff=500)
+
+    def derived_parameters(self):
+        # Default initial conditions if none are given
+        if self.rvc.hru_state is None:
+            self.rvc.hru_state = HRUStateVariables(soil0=self.rvc.soil0)
+
+        # TODO: Compute this from the input file
+        # self.rvd["avg_annual_runoff"] = ?
 
 
 def get_model(name):
