@@ -23,6 +23,7 @@ requirements = [
     "Click~=7.0",
     "gdal==2.4",
     "matplotlib",
+    "numpydoc",
     "rasterio",
     "rioxarray",
     "statsmodels",
