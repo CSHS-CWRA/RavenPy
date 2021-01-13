@@ -1,0 +1,25 @@
+name: ravenpy-and-docs
+channels:
+- conda-forge
+- defaults
+dependencies:
+  - click
+  - gdal
+  - matplotlib
+  - pip:
+    - .
+  - rasterio
+  - rioxarray
+  - statsmodels
+  - xarray
+  - xclim
+  - wheel
+  - sphinx
+  - sphinx-rtd-theme
+  - nbsphinx
+  - pandoc
+  - ipython
+  - ipykernel
+  - jupyter_client
+  - sphinx-click
+  - numpydoc

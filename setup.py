@@ -20,14 +20,14 @@ with open("HISTORY.rst") as history_file:
     history = history_file.read()
 
 requirements = [
-    "Click~=7.0",
-    "gdal==2.4",
+    "click",
+    "gdal",
     "matplotlib",
     "rasterio",
     "rioxarray",
     "statsmodels",
-    "xarray==0.16",
-    "xclim==0.18",
+    "xarray",
+    "xclim",
     "wheel",
 ]
 
