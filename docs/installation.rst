@@ -82,13 +82,15 @@ by doing:
 
 You can then install RavenPy with:
 
+.. code-block:: console
+
    (ravenpy-env) $ pip install --editable ".[dev]"
 
 Then clone the Raven Test Data repo somewhere on your disk:
 
 .. code-block:: console
 
-    (ravenpy-env) $ git clone git@github.com:Ouranosinc/raven-testdata.git
+   (ravenpy-env) $ git clone git@github.com:Ouranosinc/raven-testdata.git
 
 You can then run the test suite by doing:
 

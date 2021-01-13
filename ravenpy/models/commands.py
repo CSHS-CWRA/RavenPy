@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from typing import List, NamedTuple, Tuple
 
 
-# @dataclass
 class SubBasinsCommandRecord(NamedTuple):
     """Record to populate RVH :SubBasins command internal table."""
 
@@ -20,7 +19,6 @@ class SubBasinsCommandRecord(NamedTuple):
         return " ".join(map(str, d.values()))
 
 
-# @dataclass
 class SubBasinsCommand(NamedTuple):
     """:SubBasins command (RVH)."""
 
