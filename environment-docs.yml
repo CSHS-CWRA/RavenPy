@@ -8,6 +8,7 @@ dependencies:
   - matplotlib
   - pip:
     - .
+    - sphinx-rtd-theme
   - rasterio
   - rioxarray
   - statsmodels
@@ -15,7 +16,6 @@ dependencies:
   - xclim
   - wheel
   - sphinx
-  - sphinx-rtd-theme
   - nbsphinx
   - pandoc
   - ipython
