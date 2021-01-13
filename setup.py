@@ -20,14 +20,14 @@ with open("HISTORY.rst") as history_file:
     history = history_file.read()
 
 requirements = [
-    "Click~=7.0",
-    "gdal==2.4",
+    "click",
+    "gdal",
     "matplotlib",
     "rasterio",
     "rioxarray",
     "statsmodels",
-    "xarray==0.16",
-    "xclim==0.18",
+    "xarray",
+    "xclim",
     "wheel",
 ]
 
@@ -35,53 +35,36 @@ requirements = [
 #     "pytest-runner",
 # ]
 
-# test_requirements = [
-#     "pytest>=3",
-# ]
+test_requirements = [
+    "pytest>=3",
+]
 
-# docs_requirements = [
-#     dependency for dependency in open("requirements_docs.txt").readlines()
-# ]
+docs_requirements = [
+    dependency for dependency in open("requirements_docs.txt").readlines()
+]
 
-# dev_requirements = [
-#     dependency for dependency in open("requirements_dev.txt").readlines()
-# ]
-
-
-# Make sure that we are in a venv because the package manipulates binaries
-# which are easier to handle in the venv's PATH.
-if os.getenv("CONDA_DEFAULT_ENV"):
-    if os.getenv("CONDA_DEFAULT_ENV") == "base":
-        raise RuntimeError(
-            f"Please install RavenPy in a Conda environment different than 'base'!"
-        )
-    VENV_PATH = Path(os.getenv("CONDA_PREFIX"))
-elif sys.base_prefix != sys.prefix:
-    # Regular venv
-    VENV_PATH = Path(sys.prefix)
-else:
-    raise RuntimeError("Please install RavenPy in a virtual environment!")
+dev_requirements = [
+    dependency for dependency in open("requirements_dev.txt").readlines()
+]
 
 
 class InstallExternalDeps(install):
     """
     Custom handler for the 'install' command, to download, extract and compile
-    the source code of Raven and OSTRICH and copy the resulting binaries in the
-    "bin" folder of the current venv.
+    the source code of Raven and OSTRICH and copy the resulting binaries in a location
+    available on the PATH.
     """
 
     user_options = install.user_options + [
         # The format is (long option, short option, description).
-        ("with-raven", None, "Download Raven and OSTRICH sources and compile them."),
-        ("with-testdata", None, "Download RavenPy test data used for unit tests."),
+        ("with-binaries", None, "Download Raven and OSTRICH sources and compile them."),
     ]
 
     def initialize_options(self):
         """Set default values for options."""
         # Each user option must be listed here with their default value.
         install.initialize_options(self)
-        self.with_raven = False
-        self.with_testdata = False
+        self.with_binaries = False
 
     def finalize_options(self):
         install.finalize_options(self)
@@ -107,8 +90,10 @@ class InstallExternalDeps(install):
             print(e)
             raise RuntimeError(f"There was an error while compiling {name}")
 
-        #  Copy binary into venv bin folder (so it should be in the path when the venv is active)
-        target_bin_path = VENV_PATH / "bin" / name
+        # Copy binary binary in a location which should be available on the PATH
+        # Note that self.install_scripts should correspond to <venv>/bin or ~/.local/bin,
+        # depending on the install context (this is to be validated)
+        target_bin_path = Path(self.install_scripts) / name
         print(f"Copying binary to {target_bin_path}")
         shutil.copy(
             self.external_deps_path / rev_name / binary_name,
@@ -116,7 +101,7 @@ class InstallExternalDeps(install):
         )
 
     def run(self):
-        if self.with_raven:
+        if self.with_binaries:
             self.external_deps_path = Path("./external_deps")
             self.external_deps_path.mkdir(exist_ok=True)
 
@@ -129,19 +114,6 @@ class InstallExternalDeps(install):
                 f"OstrichGCC",
                 "GCC",
             )
-
-        if self.with_testdata:
-            local_zip_path = VENV_PATH / "raven-testdata-master.zip"
-
-            print(f"Downloading raven-tesdata..")
-            urllib.request.urlretrieve(
-                "https://github.com/Ouranosinc/raven-testdata/archive/master.zip",
-                local_zip_path,
-            )
-
-            print(f"Extracting raven-testdata to {VENV_PATH}..")
-            with zipfile.ZipFile(local_zip_path) as zip_ref:
-                zip_ref.extractall(VENV_PATH)
 
         # This works with python setup.py install, but produces this error with pip install:
         # ERROR: ravenpy==0.1.0 did not indicate that it installed an .egg-info directory. Only setup.py projects generating .egg-info directories are supported.
@@ -188,11 +160,11 @@ setup(
     ),
     # setup_requires=setup_requirements,
     test_suite="tests",
-    # tests_require=test_requirements,
-    # extras_require={
-    #     "docs": docs_requirements,
-    #     "dev": dev_requirements,
-    # },
+    tests_require=test_requirements,
+    extras_require={
+        "docs": docs_requirements,
+        "dev": dev_requirements,
+    },
     url="https://github.com/CSHS-CWRA/ravenpy",
     version="0.1.4-beta",
     zip_safe=False,

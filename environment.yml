@@ -1,0 +1,15 @@
+name: ravenpy-env
+channels:
+- conda-forge
+- defaults
+dependencies:
+  - click
+  - gdal
+  - matplotlib
+  - pip
+  - rasterio
+  - rioxarray
+  - statsmodels
+  - xarray
+  - xclim
+  - wheel
