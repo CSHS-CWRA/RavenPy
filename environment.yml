@@ -1,4 +1,4 @@
-name: ravenpy
+name: ravenpy-env
 channels:
 - conda-forge
 - defaults

@@ -8,43 +8,51 @@ Installation
 Stable release
 --------------
 
-Because RavenPy relies on the `Raven <http://raven.uwaterloo.ca>`_ binary (which is downloaded and
-compiled during the setup), it is preferable to install it in a virtual
-environment (either a classic `Python venv
-<https://docs.python.org/3/tutorial/venv.html>`_ or a `Conda
-environment
-<https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_.
-
-As the ``GDAL`` Python library requires some system-level dependencies
-to be properly compiled, you will probably have to do:
+For many reasons it is quite easier to work with RavenPy using a
+`Conda environment
+<https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_,
+so this is the tool that we will recommend here.
 
 .. code-block:: console
 
-   $ sudo apt update && sudo apt install libgdal-dev
+   $ conda create -c conda-forge --name ravenpy-env click gdal matplotlib pip rasterio rioxarray statsmodels xarray xclim
 
-Once your virtual has been activated, it will not hurt to do:
-
-.. code-block:: console
-
-   $ pip install -U pip setuptools wheel
-
-Next you can do:
+The newly created environment must then be activated:
 
 .. code-block:: console
 
-   $ pip install ravenpy --verbose --install-option="--with-raven"
+   $ conda activate ravenpy-env
 
-If successful, this should install a ``raven`` binary in the ``bin``
-folder of your venv, which should then be already available in your
+RavenPy relies for its runtime usage on the `Raven
+<http://raven.uwaterloo.ca>`_ and `OSTRICH
+<http://www.civil.uwaterloo.ca/envmodelling/Ostrich.html>`_ binaries,
+which can be conveniently downloaded, compiled, and placed in the
+`bin` folder of your environment, with this commmand:
+
+.. code-block:: console
+
+   (ravenpy-env) $ pip install ravenpy --verbose --install-option="--with-binaries"
+
+If successful, this should install ``raven`` and ``ostrich`` binaries in the ``bin``
+folder of your environment, which should then be already available in your
 path, and that you can verify by doing:
 
 .. code-block:: console
 
-   $ which raven
+   (ravenpy-env) $ which raven
+   (ravenpy-env) $ which ostrich
 
-If you don't use the ``--install-option="--with-raven"`` option or if
-there's a problem with it, you can also manage the necessary binaries
-yourself (see the next section).
+If for any reason you prefer to install without the binaries, you can
+simply omit the option:
+
+.. code-block:: console
+
+   (ravenpy-env) $ pip install ravenpy
+
+But then you will be in charge of providing either ``raven`` and
+``ostrich`` binaries on your PATH, or values for
+``RAVENPY_RAVEN_BINARY_PATH`` and ``RAVENPY_OSTRICH_BINARY_PATH``
+environment variables (both as absolute paths) at runtime.
 
 
 From sources (for development and testing)
@@ -59,30 +67,31 @@ The sources for RavenPy can be obtained from the GitHub repo:
 You must download and install `Raven <http://raven.uwaterloo.ca>`_ and
 `OSTRICH <http://www.civil.uwaterloo.ca/envmodelling/Ostrich.html>`_
 and they must be available on your PATH. Alternatively, you can supply
-``RAVENPY_RAVEN_BINARY_PATH`` and ``RAVENPY_OSTRICH_BINARY_PATH`` env
-variables to your Python interpreter.
+``RAVENPY_RAVEN_BINARY_PATH`` and ``RAVENPY_OSTRICH_BINARY_PATH``
+environment variables to your Python interpreter.
 
-Once you have created and activated your venv, you can do:
+You can then create and activate your `Conda environment
+<https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_
+by doing:
 
 .. code-block:: console
 
    $ cd /path/to/ravenpy
-   $ pip install --verbose --editable .
+   $ conda env create -f environment.yml
+   $ conda activate ravenpy-env
 
-If you want to run the tests, install the requirements:
+You can then install RavenPy with:
 
-.. code-block:: console
-
-   $ pip install -r requirements_dev
+   (ravenpy-env) $ pip install --editable ".[dev]"
 
 Then clone the Raven Test Data repo somewhere on your disk:
 
 .. code-block:: console
 
-    $ git clone git@github.com:Ouranosinc/raven-testdata.git
+    (ravenpy-env) $ git clone git@github.com:Ouranosinc/raven-testdata.git
 
 You can then run the test suite by doing:
 
 .. code-block:: console
 
-   $ RAVENPY_TESTDATA_PATH=/path/to/raven-testdata pytest
+   (ravenpy-env) $ RAVENPY_TESTDATA_PATH=/path/to/raven-testdata pytest

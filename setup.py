@@ -57,14 +57,14 @@ class InstallExternalDeps(install):
 
     user_options = install.user_options + [
         # The format is (long option, short option, description).
-        ("with-raven", None, "Download Raven and OSTRICH sources and compile them."),
+        ("with-binaries", None, "Download Raven and OSTRICH sources and compile them."),
     ]
 
     def initialize_options(self):
         """Set default values for options."""
         # Each user option must be listed here with their default value.
         install.initialize_options(self)
-        self.with_raven = False
+        self.with_binaries = False
 
     def finalize_options(self):
         install.finalize_options(self)
@@ -101,7 +101,7 @@ class InstallExternalDeps(install):
         )
 
     def run(self):
-        if self.with_raven:
+        if self.with_binaries:
             self.external_deps_path = Path("./external_deps")
             self.external_deps_path.mkdir(exist_ok=True)
 

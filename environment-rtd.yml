@@ -1,14 +1,14 @@
-name: ravenpy-and-docs
+name: ravenpy-rtd
 channels:
 - conda-forge
 - defaults
 dependencies:
-  - click
-  - gdal
-  - matplotlib
   - pip:
     - .
     - sphinx-rtd-theme
+  - click
+  - gdal
+  - matplotlib
   - rasterio
   - rioxarray
   - statsmodels
