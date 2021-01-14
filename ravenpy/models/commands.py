@@ -1,9 +1,14 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from typing import List, NamedTuple, Tuple
 
 
-# @dataclass
-class SubBasinsCommandRecord(NamedTuple):
+class Command:
+    def __format__(self, format_spec):
+        return self.to_rv()
+
+
+@dataclass
+class SubBasinsCommandRecord(Command):
     """Record to populate RVH :SubBasins command internal table."""
 
     subbasin_id: int = 0
@@ -14,17 +19,17 @@ class SubBasinsCommandRecord(NamedTuple):
     gauged: bool = False
 
     def to_rv(self):
-        d = self._asdict()
+        d = asdict(self)
         d["reach_length"] = d["reach_length"] if d["reach_length"] else "ZERO-"
         d["gauged"] = int(d["gauged"])
         return " ".join(map(str, d.values()))
 
 
-# @dataclass
-class SubBasinsCommand(NamedTuple):
+@dataclass
+class SubBasinsCommand(Command):
     """:SubBasins command (RVH)."""
 
-    subbasins: List[SubBasinsCommandRecord] = []
+    subbasins: Tuple[SubBasinsCommandRecord] = ()
 
     def to_rv(self):
         pat = """
@@ -34,11 +39,12 @@ class SubBasinsCommand(NamedTuple):
   {subbasin_records}
 :EndSubBasins
         """
-        recs = [f"\t{sb.to_rv()}" for sb in self.subbasins]
+        recs = [f"\t{sb}" for sb in self.subbasins]
         return pat.format(subbasin_records="\n".join(recs))
 
 
-class HRUsCommandRecord(NamedTuple):
+@dataclass
+class HRUsCommandRecord(Command):
     """Record to populate :HRUs command internal table (RVH)."""
 
     hru_id: int = 0
@@ -56,14 +62,15 @@ class HRUsCommandRecord(NamedTuple):
     aspect: float = 0.0
 
     def to_rv(self):
-        d = self._asdict()
+        d = asdict(self)
         return " ".join(map(str, d.values()))
 
 
-class HRUsCommand(NamedTuple):
+@dataclass
+class HRUsCommand(Command):
     """:HRUs command (RVH)."""
 
-    hrus: List[HRUsCommandRecord] = []
+    hrus: Tuple[HRUsCommandRecord] = ()
 
     def to_rv(self):
         pat = """
@@ -73,11 +80,12 @@ class HRUsCommand(NamedTuple):
   {hru_records}
 :EndHRUs
         """
-        recs = [f"\t{hru.to_rv()}" for hru in self.hrus]
+        recs = [f"\t{hru}" for hru in self.hrus]
         return pat.format(hru_records="\n".join(recs))
 
 
-class ReservoirCommand(NamedTuple):
+@dataclass
+class ReservoirCommand(Command):
     """:Reservoir command (RVH)."""
 
     subbasin_id: int = 0
@@ -100,15 +108,26 @@ class ReservoirCommand(NamedTuple):
 \t:LakeArea {lake_area}
 :EndReservoir
         """
-        d = self._asdict()
+        d = asdict(self)
         return pat.format(**d)
 
 
-class SubBasinGroupCommand(NamedTuple):
+@dataclass
+class ReservoirList(Command):
+    """Sequence of :Reservoir commands."""
+
+    reservoirs: Tuple[ReservoirCommand] = ()
+
+    def to_rv(self):
+        return "\n\n".join([r.to_rv() for r in self.reservoirs])
+
+
+@dataclass
+class SubBasinGroupCommand(Command):
     """:SubBasinGroup command (RVH)."""
 
     name: str = ""
-    subbasin_ids: List[int] = []
+    subbasin_ids: Tuple[int] = ()
 
     def to_rv(self):
         pat = """
@@ -116,18 +135,19 @@ class SubBasinGroupCommand(NamedTuple):
 \t{subbasin_ids}
 :EndSubBasinGroup
         """
-        d = self._asdict()
+        d = asdict(self)
         d["subbasin_ids"] = map(str, self.subbasin_ids)
         return pat.format(**d)
 
 
-class ChannelProfileCommand(NamedTuple):
+@dataclass
+class ChannelProfileCommand(Command):
     """:ChannelProfile command (RVP)."""
 
     name: str = "chn_XXX"
     bed_slope: float = 0
-    survey_points: List[Tuple[float, float]] = []
-    roughness_zones: List[Tuple[float, float]] = []
+    survey_points: Tuple[Tuple[float, float]] = ()
+    roughness_zones: Tuple[Tuple[float, float]] = ()
 
     def to_rv(self):
         pat = """
@@ -141,7 +161,7 @@ class ChannelProfileCommand(NamedTuple):
 \t:EndRoughnessZones
 :EndChannelProfile
         """
-        d = self._asdict()
+        d = asdict(self)
         d["survey_points"] = "\n".join(f"\t\t{p[0]} {p[1]}" for p in d["survey_points"])
         d["roughness_zones"] = "\n".join(
             f"\t\t{z[0]} {z[1]}" for z in d["roughness_zones"]
@@ -149,12 +169,21 @@ class ChannelProfileCommand(NamedTuple):
         return pat.format(**d)
 
 
-class GridWeightsCommand(NamedTuple):
+@dataclass
+class ChannelProfileList(Command):
+    channel_profiles: Tuple[ChannelProfileCommand] = ()
+
+    def to_rv(self):
+        return "\n\n".join([cp.to_rv() for cp in self.channel_profiles])
+
+
+@dataclass
+class GridWeightsCommand(Command):
     """:GridWeights command."""
 
     number_hrus: int = 0
     number_grid_cells: int = 0
-    data: List[Tuple[int, int, float]] = []
+    data: Tuple[Tuple[int, int, float]] = ()
 
     def to_rv(self, indent_level=0):
         indent = "\t" * indent_level
@@ -165,13 +194,14 @@ class GridWeightsCommand(NamedTuple):
 {data}
 {indent}:EndGridWeights
         """.strip()
-        d = self._asdict()
+        d = asdict(self)
         d["indent"] = indent
         d["data"] = "\n".join(f"{indent}\t{p[0]} {p[1]} {p[2]}" for p in self.data)
         return pat.format(**d)
 
 
-class GriddedForcingCommand(NamedTuple):
+@dataclass
+class GriddedForcingCommand(Command):
     """:GriddedForcing command (RVT)."""
 
     name: str = ""
@@ -191,7 +221,7 @@ class GriddedForcingCommand(NamedTuple):
 {grid_weights}
 :EndGriddedForcing
         """
-        d = self._asdict()
+        d = asdict(self)
         d["dim_names_nc"] = " ".join(self.dim_names_nc)
         d["grid_weights"] = self.grid_weights.to_rv()
         return pat.format(**d)
