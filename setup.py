@@ -31,10 +31,6 @@ requirements = [
     "wheel",
 ]
 
-# setup_requirements = [
-#     "pytest-runner",
-# ]
-
 test_requirements = [
     "pytest>=3",
 ]
@@ -158,7 +154,6 @@ setup(
             "ravenpy.*",
         ],
     ),
-    # setup_requires=setup_requirements,
     test_suite="tests",
     tests_require=test_requirements,
     extras_require={
