@@ -404,9 +404,8 @@ class MonthlyAverage(RV):
 
 
 class RVT(RV):
-    def __init__(self, gridded_forcing_cmds=None, **kwargs):
+    def __init__(self, **kwargs):
         self._nc_index = None
-        self._gridded_forcings = gridded_forcing_cmds or []
         super(RVT, self).__init__(**kwargs)
 
     @property
@@ -418,10 +417,6 @@ class RVT(RV):
         for key, val in self.items():
             if isinstance(val, RavenNcData):
                 setattr(val, "index", value)
-
-    @property
-    def gridded_forcings(self):
-        return self._gridded_forcings
 
     def update(self, items, force=False):
         """Update values from dictionary items.
@@ -659,12 +654,9 @@ class RVI(RV):
 
 
 class RVC(RV):
-    def __init__(self,
-                 hru_states: Dict[int, HRUStateVariables] = None,
-                 bassin_states: Dict[int, BasinStateVariables] = None,
-                **kwds):
-        self.hru_states = hru_states or {}
-        self.basin_states = bassin_states or {}
+    def __init__(self, **kwds):
+        self.hru_states = {}
+        self.basin_states = {}
         super().__init__(**kwds)
 
     def parse(self, rvc):
@@ -705,13 +697,14 @@ class RVC(RV):
         return BasinStateVariablesCommand(self.basin_states)
 
 
-@dataclass
 class RVH(RV):
-    subbasins: Tuple[SubBasinsCommandRecord] = (SubBasinsCommandRecord(),)
-    land_subbasins: Tuple[int] = ()
-    lake_subbasins: Tuple[int] = ()
-    reservoirs: Tuple[ReservoirCommand] = ()
-    hrus: Tuple[HRUsCommandRecord] = ()
+    def __init__(self, **kwds):
+        self.subbasins = (SubBasinsCommandRecord(),)
+        self.land_subbasins = ()
+        self.lake_subbasins = ()
+        self.reservoirs = ()
+        self.hrus = ()
+        super().__init__(**kwds)
 
     template = """
 {subbasins_cmd}
@@ -750,9 +743,10 @@ class RVH(RV):
         return self.template.format(**dict(self.items()))
 
 
-@dataclass
 class RVP(RV):
-    channel_profiles: Tuple[ChannelProfileCommand] = ()
+    def __init__(self, **kwds):
+        self.channel_profiles = ()
+        super().__init__(**kwds)
 
     @property
     def channel_profile_list(self):

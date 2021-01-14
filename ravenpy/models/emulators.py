@@ -5,10 +5,11 @@ import xarray as xr
 
 from ravenpy.models import Ostrich, Raven
 
-from .rv import RV, RVC, RVI, RVT, MonthlyAverage, Ost, RavenNcData
+from .rv import RV, RVC, RVI, RVT, RVH, MonthlyAverage, Ost, RavenNcData
 from .state import BasinStateVariables, HRUStateVariables
 
-__all__ = ["GR4JCN", "MOHYSE", "HMETS", "HBVEC", "GR4JCN_OST", "MOHYSE_OST", "HMETS_OST", "HBVEC_OST", "get_model"]
+__all__ = ["GR4JCN", "MOHYSE", "HMETS", "HBVEC", "GR4JCN_OST", "MOHYSE_OST", "HMETS_OST", "HBVEC_OST",
+           "Routing", "get_model"]
 
 nc = RavenNcData
 std_vars = (
@@ -438,9 +439,7 @@ class Routing(Raven):
         self.rvp = RV(params=Routing.params())
         self.rvt = RVT(water_volume_transport_in_river_channel=nc())
         self.rvi = RVI()
-        self.rvh = RV(
-            name=None, area=None, elevation=None, latitude=None, longitude=None
-        )
+        self.rvh = RVH()
 
         # Declare the parameters that can be user-modified.
         self.rvc = RVC(soil0=15, basin_state=BasinStateVariables())
@@ -448,8 +447,10 @@ class Routing(Raven):
 
     def derived_parameters(self):
         # Default initial conditions if none are given
-        if self.rvc.hru_state is None:
-            self.rvc.hru_state = HRUStateVariables(soil0=self.rvc.soil0)
+        for hru in self.rvc.hrus:
+            i = hru.hru_id
+            if i not in self.rvc_hru_states:
+                self.rvc.hru_states[i] = HRUStateVariables(index=i, soil0=self.rvc.soil0)
 
         # TODO: Compute this from the input file
         # self.rvd["avg_annual_runoff"] = ?

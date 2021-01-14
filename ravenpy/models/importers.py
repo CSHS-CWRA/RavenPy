@@ -48,12 +48,19 @@ class RoutingProductShapefileImporter:
 
         Returns
         -------
-        `commands.SubBasinsCommand`
-        `commands.SubBasinGroup`
-        `commands.SubBasinGroup`
-        list of `commands.ReservoirCommand`
-        list of `commands.ChannelProfileCommand`
-        `commands.HRUsCommand`
+        dict
+            "subbasins"
+               Sequence of `commands.SubBasinsCommandRecord` objects
+            "land_subbasins"
+               Sequence of land subbasins ids
+            "lake_subbasins"
+               Sequence of lake subbasins ids
+            "reservoirs"
+               Sequence of `commands.ReservoirCommand` objects
+            "channel_profiles"
+               Sequence of `commands.ChannelProfileCommand` objects
+            "hrus"
+               Sequence of `commands.HRUsCommand` objects
 
         """
 
@@ -92,6 +99,13 @@ class RoutingProductShapefileImporter:
 
             # ChannelProfile
             channel_profile_cmds.append(self._extract_channel_profile(row))
+
+        return dict(subbasins=subbasin_recs,
+                    land_subbasins=land_sb_ids,
+                    lake_subbasins=lake_sb_ids,
+                    reservoirs=reservoir_cmds,
+                    channel_profiles=channel_profile_cmds,
+                    hrus=hru_recs)
 
         return (subbasin_recs,
             land_sb_ids,

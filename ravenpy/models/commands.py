@@ -1,5 +1,5 @@
-from dataclasses import dataclass, asdict
-from typing import List, NamedTuple, Tuple
+from dataclasses import dataclass, asdict, make_dataclass
+from typing import List, NamedTuple, Tuple, Any
 
 
 class Command:
@@ -217,11 +217,78 @@ class GriddedForcingCommand(Command):
 \t:ForcingType {forcing_type}
 \t:FileNameNC {file_name_nc}
 \t:VarNameNC {var_name_nc}
-\t:DimNamesNC {dim_names_nc}
+\t:DimNamesNC {dim_names_nc_str}
 {grid_weights}
 :EndGriddedForcing
         """
         d = asdict(self)
-        d["dim_names_nc"] = " ".join(self.dim_names_nc)
-        d["grid_weights"] = self.grid_weights.to_rv()
+        d["dim_names_nc_str"] = " ".join(self.dim_names_nc)
+        d["grid_weights"] = self.grid_weights.to_rv()  # asdict seems to recurse... bummer
         return pat.format(**d)
+
+
+@dataclass
+class BaseValueCommand(Command):
+    tag : str = ""
+    value : Any = None
+
+    def to_rv(self):
+        pat = ":{tag} {value}"
+        return pat.format(**asdict(self))
+
+
+@dataclass
+class BaseBooleanCommand(Command):
+    tag: str = ""
+    value: bool = False
+
+    def to_rv(self):
+        pat = ":{tag}"
+        return pat.format(tag=self.tag) if self.value else ""
+
+
+@dataclass
+class LinearTransform(Command):
+    scale: float = 1
+    offset: float = 0
+
+    def to_rv(self):
+        pat = ":LinearTransform {slope:.15f} {intercept:.15f}"
+        return pat.format(**asdict(self))
+
+
+@dataclass
+class DataCommand(Command):
+    var = None
+    path = None
+    var_name = None
+    units = None
+    scale_factor = None
+    add_offset = None
+    time_shift = None
+    dimensions = None
+    index = None
+    linear_transform = None
+
+    runits = None
+    raven_name = None
+    site = None
+    deaccumulate = None
+
+    def to_rv(self):
+        pat = """
+:{kind} {raven_name} {site} {runits}
+  :ReadFromNetCDF
+     :FileNameNC      {path}
+     :VarNameNC       {var_name}
+     :DimNamesNC      {dimensions}
+     :StationIdx      {index}
+     {time_shift}
+     {linear_transform}
+     {deaccumulate}
+  :EndReadFromNetCDF
+:End{kind}"""
+        d = asdict(self)
+        d["kind"] = "ObservationData" if self.var == "water_volume_transport_in_river_channel" else "Data"
+
+

@@ -6,6 +6,10 @@ from dataclasses import replace
 import numpy as np
 import pytest
 import xarray as xr
+from ravenpy.models.importers import (
+    RoutingProductGridWeightImporter,
+    RoutingProductShapefileImporter,
+)
 
 from ravenpy.models import (
     GR4JCN,
@@ -17,6 +21,7 @@ from ravenpy.models import (
     MOHYSE,
     MOHYSE_OST,
     Raven,
+    Routing,
 )
 from ravenpy.models.state import HRUStateVariables
 from ravenpy.utilities.testdata import get_test_data
@@ -1060,3 +1065,15 @@ class TestHBVEC_OST:
         np.testing.assert_almost_equal(
             hbvec.diagnostics["DIAG_NASH_SUTCLIFFE"], d["DIAG_NASH_SUTCLIFFE"], 4
         )
+
+
+class TestRouting:
+    @pytest.mark.xfail
+    def test_tutorial(self):
+        shp = get_test_data("raven-routing-sample", "finalcat_hru_info.zip")[0]
+        model = Routing()
+        importer = RoutingProductShapefileImporter(shp)
+        config = importer.extract()
+        model(**config)
+
+
