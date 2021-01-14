@@ -93,13 +93,12 @@ class RoutingProductShapefileImporter:
             # ChannelProfile
             channel_profile_cmds.append(self._extract_channel_profile(row))
 
-        return (
-            SubBasinsCommand(subbasin_recs),
-            SubBasinGroupCommand("land", land_sb_ids),
-            SubBasinGroupCommand("lake", lake_sb_ids),
+        return (subbasin_recs,
+            land_sb_ids,
+            lake_sb_ids,
             reservoir_cmds,
             channel_profile_cmds,
-            HRUsCommand(hru_recs),
+            hru_recs,
         )
 
     def _extract_subbasin(self, row, subbasin_ids) -> SubBasinsCommandRecord:

@@ -392,7 +392,7 @@ class Raven:
         for p in self._parallel_parameters:
             a = kwds.pop(p, None)
 
-            if a is not None and p in ["params", "basin_state", "hru_state"]:
+            if a is not None and p in ["params",]:
                 pdict[p] = np.atleast_2d(a)
             else:
                 pdict[p] = np.atleast_1d(a)
@@ -620,7 +620,8 @@ class Raven:
 
         # TODO: Fix this. Raven won't have rvi.suppress_output is initialized with existing configuration files.
         if len(files) == 0 and not self.rvi.suppress_output:
-            raise UserWarning("No output files for {} in {}.".format(pattern, path))
+            errors = self.parse_errors()
+            raise UserWarning(f"No output files for {pattern} in {path}.\n\n{errors}")
 
         return [f.absolute() for f in files]
 

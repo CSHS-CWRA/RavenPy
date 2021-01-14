@@ -1,13 +1,17 @@
 import collections
 import datetime as dt
 from pathlib import Path
+from dataclasses import dataclass, field
 
 import cftime
 import geopandas
 import six
 from xclim.core.units import units, units2pint
+from typing import List, Tuple, Dict
 
-from .state import BasinStateVariables, HRUStateVariables
+from .state import BasinStateVariables, HRUStateVariables, HRUStateVariableTableCommand, BasinStateVariablesCommand
+from .commands import SubBasinsCommandRecord, SubBasinsCommand, SubBasinGroupCommand, ReservoirCommand, HRUsCommand, \
+    HRUsCommandRecord, ReservoirList, ChannelProfileCommand, ChannelProfileList
 
 """
 Raven configuration
@@ -179,7 +183,12 @@ class RV(collections.abc.Mapping):
         return iter(self.keys())
 
     def keys(self):
-        return (key[1:] if key.startswith("_") else key for key in self.__dict__)
+        # Attributes
+        a = list(filter(lambda x: not x.startswith("_"), self.__dict__))
+
+        # Properties
+        p = list(filter(lambda x: isinstance(getattr(self.__class__, x, None), property), dir(self)))
+        return a + p
 
     def items(self):
         for attribute in self.keys():
@@ -650,15 +659,13 @@ class RVI(RV):
 
 
 class RVC(RV):
-    def __init__(self, **kwargs):
-        self._hru_state = {}
-        self._basin_state = {}
-
-        # This is a hack to make sure the txt_hru_state and txt_basin_state are picked up to fill the rv templates.
-        self._txt_hru_state = ""
-        self._txt_basin_state = ""
-
-        super().__init__(**kwargs)
+    def __init__(self,
+                 hru_states: Dict[int, HRUStateVariables] = None,
+                 bassin_states: Dict[int, BasinStateVariables] = None,
+                **kwds):
+        self.hru_states = hru_states or {}
+        self.basin_states = bassin_states or {}
+        super().__init__(**kwds)
 
     def parse(self, rvc):
         """Set initial conditions based on *solution* output file.
@@ -669,99 +676,44 @@ class RVC(RV):
           `solution.rvc` content.
         """
         objs = parse_solution(rvc)
-        hru, basin = get_states(objs)
-        self._hru_state.update(hru)
-        self._basin_state.update(basin)
+        self.hru_states, self.basin_states = get_states(objs)
 
     @property
     def hru_state(self):
-        return self._hru_state.get(1)
+        return self.hru_states.get(1, None)
 
     @hru_state.setter
     def hru_state(self, value):
-        self._hru_state[1] = value
+        self.hru_states[1] = value
 
     @property
     def basin_state(self):
-        return self._basin_state.get(1)
+        return self.basin_states.get(1, None)
 
     @basin_state.setter
     def basin_state(self, value):
-        self._basin_state[1] = value
+        self.basin_states[1] = value
 
     @property
-    def txt_hru_state(self):
+    def hru_states_cmd(self):
         """Return HRU state values."""
-        txt = []
-        for index, data in self._hru_state.items():
-            txt.append(f"{index}," + ",".join(map(repr, data)))
-
-        return "\n".join(txt)
+        return HRUStateVariableTableCommand(self.hru_states)
 
     @property
-    def txt_basin_state(self):
+    def basin_states_cmd(self):
         """Return basin state variables."""
-        pat = """
-              :BasinIndex {index},{name}
-                :ChannelStorage, {channelstorage}
-                :RivuletStorage, {rivuletstorage}
-                :Qout,{nsegs},{qout},{qoutlast}
-                :Qlat,{nQlatHist},{qlat},{qlatlast}
-                :Qin ,{nQinHist}, {qin}
-            """
-        txt = []
-        for index, data in self._basin_state.items():
-            txt.append(
-                pat.format(
-                    **data._asdict(),
-                    nsegs=len(data.qout),
-                    nQlatHist=len(data.qlat),
-                    nQinHist=len(data.qin),
-                )
-            )
-        return "\n".join(txt).replace("[", "").replace("]", "")
+        return BasinStateVariablesCommand(self.basin_states)
 
 
+@dataclass
 class RVH(RV):
-    def __init__(
-        self,
-        subbasins_cmd,
-        land_subbasin_group_cmd,
-        lake_subbasin_group_cmd,
-        reservoir_cmds,
-        hrus_cmd,
-        **kwargs,
-    ):
-        self._subbasins_cmd = subbasins_cmd
-        self._land_subbasin_group_cmd = land_subbasin_group_cmd
-        self._lake_subbasin_group_cmd = lake_subbasin_group_cmd
-        self._reservoir_cmds = reservoir_cmds
-        self._hrus_cmd = hrus_cmd
+    subbasins: Tuple[SubBasinsCommandRecord] = (SubBasinsCommandRecord(),)
+    land_subbasins: Tuple[int] = ()
+    lake_subbasins: Tuple[int] = ()
+    reservoirs: Tuple[ReservoirCommand] = ()
+    hrus: Tuple[HRUsCommandRecord] = ()
 
-        super().__init__(**kwargs)
-
-    @property
-    def subbasins(self):
-        return self._subbasins_cmd.subbasins  # return internal list
-
-    @property
-    def land_subbasin_group(self):
-        return self._land_subbasin_group_cmd.subbasin_ids  # return internal list
-
-    @property
-    def lake_subbasin_group(self):
-        return self._lake_subbasin_group_cmd.subbasin_ids  # return internal list
-
-    @property
-    def reservoirs(self):
-        return self._reservoir_cmds  # return list directly
-
-    @property
-    def hrus(self):
-        return self._hrus_cmd.hrus  # return internal list
-
-    def to_rv(self):
-        return """
+    template = """
 {subbasins_cmd}
 
 {hrus_cmd}
@@ -770,33 +722,41 @@ class RVH(RV):
 
 {lake_subbasin_group_cmd}
 
-{reservoir_cmds}
-        """.format(
-            subbasins_cmd=self._subbasins_cmd.to_rv(),
-            hrus_cmd=self._hrus_cmd.to_rv(),
-            land_subbasin_group_cmd=self._land_subbasin_group_cmd.to_rv(),
-            lake_subbasin_group_cmd=self._lake_subbasin_group_cmd.to_rv(),
-            reservoir_cmds="\n\n".join([r.to_rv() for r in self._reservoir_cmds]),
-        )
-
-
-class RVP(RV):
-    def __init__(self, channel_profile_cmds, **kwargs):
-        self._channel_profile_cmds = channel_profile_cmds
-        super().__init__(**kwargs)
+{reservoir_list_cmd}
+        """
 
     @property
-    def channel_profiles(self):
-        return self._channel_profile_cmds
+    def subbasins_cmd(self):
+        return SubBasinsCommand(self.subbasins)
+
+    @property
+    def land_subbasin_group_cmd(self):
+        return SubBasinGroupCommand("Land", self.land_subbasins)
+
+    @property
+    def lake_subbasin_group_cmd(self):
+        return SubBasinGroupCommand("Lakes", self.lake_subbasins)
+
+    @property
+    def reservoir_list_cmd(self):
+        return ReservoirList(self.reservoirs)  # return list directly
+
+    @property
+    def hrus_cmd(self):
+        return HRUsCommand(self.hrus)
 
     def to_rv(self):
-        return """
-{channel_profile_cmds}
-        """.format(
-            channel_profile_cmds="\n\n".join(
-                [cp.to_rv() for cp in self._channel_profile_cmds]
-            ),
-        )
+        params = self.items()
+        return self.template.format(**dict(self.items()))
+
+
+@dataclass
+class RVP(RV):
+    channel_profiles: Tuple[ChannelProfileCommand] = ()
+
+    @property
+    def channel_profile_list(self):
+        return ChannelProfileList(self.channel_profiles)
 
 
 class Ost(RV):
@@ -937,6 +897,6 @@ def _parser(lines, indent="", fmt=str):
         else:
             data = line.split(",")
             i = int(data.pop(0))
-            out["data"][i] = list(map(float, data))
+            out["data"][i] = [i, ] + list(map(float, data))
 
     return out

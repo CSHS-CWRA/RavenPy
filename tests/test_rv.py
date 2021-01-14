@@ -233,8 +233,8 @@ class TestRVC:
         assert self.r.basin_state.qoutlast == 13.29232
 
     def test_write(self):
-        assert self.r.txt_hru_state.startswith("1,")
-        assert self.r.txt_basin_state.strip().startswith(":BasinIndex 1,watershed")
+        assert "1,0.0,821.98274" in self.r.hru_states_cmd.to_rv()
+        assert ":BasinIndex 1,watershed" in self.r.basin_states_cmd.to_rv()
 
     def test_format(self):
         rvc_template = Path(ravenpy.models.__file__).parent / "global" / "global.rvc"
@@ -252,8 +252,8 @@ class TestRVH:
 
     def test_import_process(self):
         assert len(self.rvh.subbasins) == 46
-        assert len(self.rvh.land_subbasin_group) == 41
-        assert len(self.rvh.lake_subbasin_group) == 5
+        assert len(self.rvh.land_subbasins) == 41
+        assert len(self.rvh.lake_subbasins) == 5
         assert len(self.rvh.reservoirs) == 5
         assert len(self.rvh.hrus) == 51
 
@@ -293,7 +293,7 @@ class TestRVP:
         assert len(self.rvp.channel_profiles) == 46
 
     def test_format(self):
-        res = self.rvp.to_rv()
+        res = self.rvp.channel_profile_list.to_rv()
 
         assert res.count(":ChannelProfile") == 46
         assert res.count(":EndChannelProfile") == 46

@@ -2,7 +2,7 @@ import datetime as dt
 import os
 import tempfile
 import zipfile
-
+from dataclasses import replace
 import numpy as np
 import pytest
 import xarray as xr
@@ -306,7 +306,7 @@ class TestGR4JCN:
         s_0 = float(model.storage["Soil Water[0]"].isel(time=-1).values)
         s_1 = float(model.storage["Soil Water[1]"].isel(time=-1).values)
 
-        hru_state = model.rvc.hru_state._replace(soil0=s_0, soil1=s_1)
+        hru_state = replace(model.rvc.hru_state, soil0=s_0, soil1=s_1)
 
         model(
             TS,

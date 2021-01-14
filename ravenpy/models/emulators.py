@@ -69,7 +69,7 @@ class GR4JCN(Raven):
             soil0 = self.rvd.GR4J_X1_hlf if self.rvc.soil0 is None else self.rvc.soil0
             soil1 = self.rvc.soil1
 
-            self.rvc.hru_state = HRUStateVariables(soil0=soil0, soil1=soil1)
+            self.rvc.hru_state = HRUStateVariables(index=1, soil0=soil0, soil1=soil1)
 
 
 class GR4JCN_OST(Ostrich, GR4JCN):
