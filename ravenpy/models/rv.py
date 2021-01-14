@@ -680,7 +680,7 @@ class RVC(RV):
 
     @property
     def hru_state(self):
-        return self.hru_states.get(1)
+        return self.hru_states.get(1, None)
 
     @hru_state.setter
     def hru_state(self, value):
@@ -688,7 +688,7 @@ class RVC(RV):
 
     @property
     def basin_state(self):
-        return self.basin_states.get(1)
+        return self.basin_states.get(1, None)
 
     @basin_state.setter
     def basin_state(self, value):
