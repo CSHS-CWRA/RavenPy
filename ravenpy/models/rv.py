@@ -660,11 +660,11 @@ class RVI(RV):
 
 class RVC(RV):
     def __init__(self,
-                 hru_states: Dict[int, HRUStateVariables] = {},
-                 bassin_states: Dict[int, BasinStateVariables] = {},
+                 hru_states: Dict[int, HRUStateVariables] = None,
+                 bassin_states: Dict[int, BasinStateVariables] = None,
                 **kwds):
-        self.hru_states = hru_states
-        self.basin_states = bassin_states
+        self.hru_states = hru_states or {}
+        self.basin_states = bassin_states or {}
         super().__init__(**kwds)
 
     def parse(self, rvc):
