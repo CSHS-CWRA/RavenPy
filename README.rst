@@ -24,7 +24,7 @@ A Python wrapper to setup and run the hydrologic modelling framework Raven_.
 
 
 * Free software: MIT license
-* Documentation: https://ravenpy.readthedocs.io.
+* Documentation: https://ravenpy.readthedocs.io
 
 
 Features
@@ -42,24 +42,7 @@ Features
 Install
 -------
 
-RavenPy can only be installed in a virtual environment, see `installation docs`_ .
-
-.. code-block:: bash
-
-    sudo apt install libnetcdf-dev libspatialindex-dev libgdal-dev
-    python -m venv ./venv
-    source ./venv/bin/activate
-    pip install . --verbose --install-option="--with-raven" --install-option="--with-testdata"
-
-
-Grid Weight Generation Script
------------------------------
-
-To run the grid weight generation script (written and maintained by `Julie Mai <https://github.com/julemai/GridWeightsGenerator>`_):
-
-.. code-block:: bash
-
-    ravenpy generate-grid-weights /path/to/HRU/shapefile /path/to/NC/file --var-names lon lat --output raven
+Please see the detailed `installation docs`_.
 
 
 Credits
@@ -70,7 +53,7 @@ RavenPy's development has been funded by CANARIE_.
 This package was created with Cookiecutter_ and the `Ouranosinc/cookiecutter-pypackage`_ project template.
 
 
-.. _`installation docs`: https://ravenpy.readthedocs.io/installation
+.. _`installation docs`: https://ravenpy.readthedocs.io/en/latest/installation.html
 .. _Raven: http://raven.uwaterloo.ca
 .. _Cookiecutter: https://github.com/audreyfeldroy/cookiecutter-pypackage
 .. _`Ouranosinc/cookiecutter-pypackage`: https://github.com/Ouranosinc/cookiecutter-pypackage

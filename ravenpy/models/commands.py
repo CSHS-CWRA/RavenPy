@@ -1,5 +1,5 @@
-from dataclasses import dataclass, asdict, make_dataclass
-from typing import List, NamedTuple, Tuple, Any
+from dataclasses import asdict, dataclass, make_dataclass
+from typing import Any, List, NamedTuple, Tuple
 
 
 class Command:
@@ -223,14 +223,16 @@ class GriddedForcingCommand(Command):
         """
         d = asdict(self)
         d["dim_names_nc_str"] = " ".join(self.dim_names_nc)
-        d["grid_weights"] = self.grid_weights.to_rv()  # asdict seems to recurse... bummer
+        d[
+            "grid_weights"
+        ] = self.grid_weights.to_rv()  # asdict seems to recurse... bummer
         return pat.format(**d)
 
 
 @dataclass
 class BaseValueCommand(Command):
-    tag : str = ""
-    value : Any = None
+    tag: str = ""
+    value: Any = None
 
     def to_rv(self):
         pat = ":{tag} {value}"
@@ -289,6 +291,8 @@ class DataCommand(Command):
   :EndReadFromNetCDF
 :End{kind}"""
         d = asdict(self)
-        d["kind"] = "ObservationData" if self.var == "water_volume_transport_in_river_channel" else "Data"
-
-
+        d["kind"] = (
+            "ObservationData"
+            if self.var == "water_volume_transport_in_river_channel"
+            else "Data"
+        )

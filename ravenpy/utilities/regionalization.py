@@ -10,15 +10,12 @@ import pandas as pd
 import statsmodels.api as sm
 import xarray as xr
 
-from ravenpy import VENV_PATH
 from ravenpy.models import get_model
 
 from . import coords
+from .testdata import get_test_data
 
 LOGGER = logging.getLogger("PYWPS")
-
-# Added directory for test data (smaller database wth only 10 donor catchments)
-DATA_DIR = VENV_PATH / "raven-testdata-master" / "regionalisation_data"
 
 
 def regionalize(
@@ -30,7 +27,7 @@ def regionalize(
     target_props=None,
     size=5,
     min_NSE=0.6,
-    **kwds
+    **kwds,
 ):
     """Perform regionalization for catchment whose outlet is defined by coordinates.
 
@@ -174,9 +171,8 @@ def read_gauged_properties(properties):
     pd.DataFrame
       Catchment properties keyed by catchment ID.
     """
-    proptable = pd.read_csv(
-        DATA_DIR / "gauged_catchment_properties.csv", index_col="ID"
-    )
+    f = get_test_data("regionalisation_data", "gauged_catchment_properties.csv")[0]
+    proptable = pd.read_csv(f, index_col="ID")
 
     return proptable[properties]
 
@@ -191,8 +187,8 @@ def read_gauged_params(model):
     pd.DataFrame
       Model parameters keyed by catchment ID.
     """
-
-    params = pd.read_csv(DATA_DIR / "{}_parameters.csv".format(model), index_col="ID")
+    f = get_test_data("regionalisation_data", f"{model}_parameters.csv")[0]
+    params = pd.read_csv(f, index_col="ID")
 
     return params["NASH"], params.iloc[:, 1:]
 
