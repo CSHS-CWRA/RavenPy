@@ -1,5 +1,8 @@
 from dataclasses import asdict, dataclass, make_dataclass
+from textwrap import dedent
 from typing import Any, List, NamedTuple, Tuple
+
+INDENT = " " * 4
 
 
 class Command:
@@ -33,14 +36,14 @@ class SubBasinsCommand(Command):
 
     def to_rv(self):
         pat = """
-:SubBasins
-  :Attributes   ID NAME DOWNSTREAM_ID PROFILE REACH_LENGTH  GAUGED
-  :Units      none none          none    none           km    none
-  {subbasin_records}
-:EndSubBasins
+        :SubBasins
+            :Attributes   ID NAME DOWNSTREAM_ID PROFILE REACH_LENGTH  GAUGED
+            :Units      none none          none    none           km    none
+            {subbasin_records}
+        :EndSubBasins
         """
         recs = [f"\t{sb}" for sb in self.subbasins]
-        return pat.format(subbasin_records="\n".join(recs))
+        return dedent(pat).format(subbasin_records="\n".join(recs))
 
 
 @dataclass
@@ -74,14 +77,14 @@ class HRUsCommand(Command):
 
     def to_rv(self):
         pat = """
-:HRUs
-  :Attributes      AREA  ELEVATION       LATITUDE      LONGITUDE BASIN_ID       LAND_USE_CLASS           VEG_CLASS      SOIL_PROFILE  AQUIFER_PROFILE TERRAIN_CLASS      SLOPE     ASPECT
-  :Units            km2          m            deg            deg     none                  none               none              none             none          none        deg       degN
-  {hru_records}
-:EndHRUs
+        :HRUs
+            :Attributes      AREA  ELEVATION       LATITUDE      LONGITUDE BASIN_ID       LAND_USE_CLASS           VEG_CLASS      SOIL_PROFILE  AQUIFER_PROFILE TERRAIN_CLASS      SLOPE     ASPECT
+            :Units            km2          m            deg            deg     none                  none               none              none             none          none        deg       degN
+            {hru_records}
+        :EndHRUs
         """
-        recs = [f"\t{hru}" for hru in self.hrus]
-        return pat.format(hru_records="\n".join(recs))
+        recs = [f"{INDENT}{hru}" for hru in self.hrus]
+        return dedent(pat).format(hru_records="\n".join(recs))
 
 
 @dataclass
@@ -98,18 +101,18 @@ class ReservoirCommand(Command):
 
     def to_rv(self):
         pat = """
-:Reservoir {name}
-\t:SubBasinID {subbasin_id}
-\t:HRUID {hru_id}
-\t:Type RESROUTE_STANDARD
-\t:WeirCoefficient {weir_coefficient}
-\t:CrestWidth {crest_width}
-\t:MaxDepth {max_depth}
-\t:LakeArea {lake_area}
-:EndReservoir
+        :Reservoir {name}
+            :SubBasinID {subbasin_id}
+            :HRUID {hru_id}
+            :Type RESROUTE_STANDARD
+            :WeirCoefficient {weir_coefficient}
+            :CrestWidth {crest_width}
+            :MaxDepth {max_depth}
+            :LakeArea {lake_area}
+        :EndReservoir
         """
         d = asdict(self)
-        return pat.format(**d)
+        return dedent(pat).format(**d)
 
 
 @dataclass
@@ -131,13 +134,13 @@ class SubBasinGroupCommand(Command):
 
     def to_rv(self):
         pat = """
-:SubBasinGroup {name}
-\t{subbasin_ids}
-:EndSubBasinGroup
+        :SubBasinGroup {name}
+            {subbasin_ids}
+        :EndSubBasinGroup
         """
         d = asdict(self)
         d["subbasin_ids"] = map(str, self.subbasin_ids)
-        return pat.format(**d)
+        return dedent(pat).format(**d)
 
 
 @dataclass
@@ -151,22 +154,24 @@ class ChannelProfileCommand(Command):
 
     def to_rv(self):
         pat = """
-:ChannelProfile {name}
-\t:Bedslope {bed_slope}
-\t:SurveyPoints
-{survey_points}
-\t:EndSurveyPoints
-\t:RoughnessZones
-{roughness_zones}
-\t:EndRoughnessZones
-:EndChannelProfile
+        :ChannelProfile {name}
+            :Bedslope {bed_slope}
+            :SurveyPoints
+            {survey_points}
+            :EndSurveyPoints
+            :RoughnessZones
+            {roughness_zones}
+            :EndRoughnessZones
+        :EndChannelProfile
         """
         d = asdict(self)
-        d["survey_points"] = "\n".join(f"\t\t{p[0]} {p[1]}" for p in d["survey_points"])
-        d["roughness_zones"] = "\n".join(
-            f"\t\t{z[0]} {z[1]}" for z in d["roughness_zones"]
+        d["survey_points"] = "\n".join(
+            f"{INDENT}{INDENT}{p[0]} {p[1]}" for p in d["survey_points"]
         )
-        return pat.format(**d)
+        d["roughness_zones"] = "\n".join(
+            f"{INDENT}{INDENT}{z[0]} {z[1]}" for z in d["roughness_zones"]
+        )
+        return dedent(pat).format(**d)
 
 
 @dataclass
@@ -186,18 +191,20 @@ class GridWeightsCommand(Command):
     data: Tuple[Tuple[int, int, float]] = ()
 
     def to_rv(self, indent_level=0):
-        indent = "\t" * indent_level
+        indent = INDENT * indent_level
         pat = """
-{indent}:GridWeights
-{indent}\t:NumberHRUs {number_hrus}
-{indent}\t:NumberGridCells {number_grid_cells}
-{data}
-{indent}:EndGridWeights
-        """.strip()
+        {indent}:GridWeights
+        {indent}    :NumberHRUs {number_hrus}
+        {indent}    :NumberGridCells {number_grid_cells}
+        {data}
+        {indent}:EndGridWeights
+        """
         d = asdict(self)
         d["indent"] = indent
-        d["data"] = "\n".join(f"{indent}\t{p[0]} {p[1]} {p[2]}" for p in self.data)
-        return pat.format(**d)
+        d["data"] = "\n".join(
+            f"{indent}{INDENT}{p[0]} {p[1]} {p[2]}" for p in self.data
+        )
+        return dedent(pat).format(**d)
 
 
 @dataclass
@@ -213,20 +220,19 @@ class GriddedForcingCommand(Command):
 
     def to_rv(self):
         pat = """
-:GriddedForcing {name}
-\t:ForcingType {forcing_type}
-\t:FileNameNC {file_name_nc}
-\t:VarNameNC {var_name_nc}
-\t:DimNamesNC {dim_names_nc_str}
-{grid_weights}
-:EndGriddedForcing
+        :GriddedForcing {name}
+            :ForcingType {forcing_type}
+            :FileNameNC {file_name_nc}
+            :VarNameNC {var_name_nc}
+            :DimNamesNC {dim_names_nc_str}
+            {grid_weights}
+        :EndGriddedForcing
         """
         d = asdict(self)
         d["dim_names_nc_str"] = " ".join(self.dim_names_nc)
-        d[
-            "grid_weights"
-        ] = self.grid_weights.to_rv()  # asdict seems to recurse... bummer
-        return pat.format(**d)
+        # asdict seems to recurse... bummer
+        d["grid_weights"] = self.grid_weights.to_rv()
+        return dedent(pat).format(**d)
 
 
 @dataclass
@@ -279,17 +285,18 @@ class DataCommand(Command):
 
     def to_rv(self):
         pat = """
-:{kind} {raven_name} {site} {runits}
-  :ReadFromNetCDF
-     :FileNameNC      {path}
-     :VarNameNC       {var_name}
-     :DimNamesNC      {dimensions}
-     :StationIdx      {index}
-     {time_shift}
-     {linear_transform}
-     {deaccumulate}
-  :EndReadFromNetCDF
-:End{kind}"""
+        :{kind} {raven_name} {site} {runits}
+            :ReadFromNetCDF
+                :FileNameNC      {path}
+                :VarNameNC       {var_name}
+                :DimNamesNC      {dimensions}
+                :StationIdx      {index}
+                {time_shift}
+                {linear_transform}
+                {deaccumulate}
+            :EndReadFromNetCDF
+        :End{kind}
+        """
         d = asdict(self)
         d["kind"] = (
             "ObservationData"
