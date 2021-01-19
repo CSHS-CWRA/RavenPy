@@ -8,6 +8,8 @@ def get_test_data(folder: str, patterns: Union[str, Sequence[str]]):
     if not testdata_path:
         raise RuntimeError("RAVENPY_TESTDATA_PATH env variable is not set")
     testdata_path = Path(testdata_path)
+    if not testdata_path.exists():
+        raise RuntimeError(f"{testdata_path} does not exists")
     patterns = [patterns] if isinstance(patterns, str) else patterns
     return [
         p
