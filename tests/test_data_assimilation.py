@@ -184,7 +184,7 @@ class TestAssimilationGR4JCN:
             model.q_sim, "g", label="Simulated"
         )  # plot the open_loop (simulation with no assimilation)
         # plt.legend()
-        plt.show()
+        # plt.show()
 
         assert q_assim.shape[0] == n_members
         assert q_assim.shape[1] == sum(assim_days)
