@@ -47,7 +47,6 @@ def get_raven_states(model, workdir=None, **kwds):
     """
     # Run the model and get the rvc file for future hotstart.
     m = get_model(model)(workdir=workdir)
-    print("aha:", kwds)
     m(overwrite=True, **kwds)
     rvc = m.outputs["solution"]
 
