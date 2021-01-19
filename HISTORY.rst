@@ -2,6 +2,13 @@
 History
 =======
 
+
+0.1.7
+-----
+
+* Fixed xarray caching bug affecting climatological ESP  forecasts (#33)
+
+
 0.1.6 (2021-01-15)
 ------------------
 
@@ -11,6 +18,7 @@ History
 ------------------
 
 * Release with docs.
+
 
 0.1.0 (2020-12-20)
 ------------------
