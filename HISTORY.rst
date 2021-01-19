@@ -6,8 +6,8 @@ History
 0.1.7
 -----
 
-* Fixed xarray caching bug affecting climatological ESP  forecasts (#33)
-
+* Fix xarray caching bug affecting climatological ESP forecasts (#33)
+* Fix deprecation issue with Fiona
 
 0.1.6 (2021-01-15)
 ------------------
