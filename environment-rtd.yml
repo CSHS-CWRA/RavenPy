@@ -1,0 +1,25 @@
+name: ravenpy-rtd
+channels:
+- conda-forge
+- defaults
+dependencies:
+  - pip:
+    - .
+    - sphinx-rtd-theme
+  - click
+  - gdal
+  - matplotlib
+  - rasterio
+  - rioxarray
+  - statsmodels
+  - xarray
+  - xclim
+  - wheel
+  - sphinx
+  - nbsphinx
+  - pandoc
+  - ipython
+  - ipykernel
+  - jupyter_client
+  - sphinx-click
+  - numpydoc
