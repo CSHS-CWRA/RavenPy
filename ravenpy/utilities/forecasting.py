@@ -71,7 +71,9 @@ def perform_forecasting_step(rvc, model, workdir=None, **kwds):
     return m.q_sim
 
 
-def perform_climatology_esp(model_name, forecast_date, forecast_duration, workdir=None, **kwds):
+def perform_climatology_esp(
+    model_name, forecast_date, forecast_duration, workdir=None, **kwds
+):
     """
     This function takes the model setup and name as well as forecast data and duration and returns
     an ESP forecast netcdf. The data comes from the climatology data and thus there is a mechanism
@@ -331,7 +333,7 @@ def get_subsetted_forecast(region_coll, ds, times, is_caspar):
         ds.rio.set_spatial_dims("rlon", "rlat")
         ds["rlon"] = ds["rlon"] - 360
         # clip the netcdf and average across space.
-        shdf = [region_coll.next()["geometry"]]
+        shdf = [next(iter(region_coll))["geometry"]]
         forecast = ds.rio.clip(shdf, crs=crs)
         forecast = forecast.mean(dim={"rlat", "rlon"}, keep_attrs=True)
 
@@ -339,7 +341,7 @@ def get_subsetted_forecast(region_coll, ds, times, is_caspar):
         ds.rio.set_spatial_dims("lon", "lat")
         ds["lon"] = ds["lon"] - 360
         # clip the netcdf and average across space.
-        shdf = [region_coll.next()["geometry"]]
+        shdf = [next(iter(region_coll))["geometry"]]
         forecast = ds.rio.clip(shdf, crs=crs)
         forecast = forecast.mean(dim={"lat", "lon"}, keep_attrs=True)
 
