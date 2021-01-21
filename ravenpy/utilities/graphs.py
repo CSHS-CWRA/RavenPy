@@ -320,7 +320,7 @@ def ts_fit_graph(ts, params):
     -------
     fig
     """
-    from xclim.indices.generic import get_dist
+    from xclim.indices.stats import get_dist
 
     n = ts.nbasins.size
     dist = params.attrs["scipy_dist"]
