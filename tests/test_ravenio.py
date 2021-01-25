@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from ravenpy.utilities import ravenio
-from ravenpy.utilities.testdata import get_test_data
+from ravenpy.utilities.testdata import get_local_testdata
 
 # from ravenpy.models import raven_templates
 
@@ -64,7 +64,7 @@ class TestReadDiagnostics:
 
 class TestParseConfiguration:
     def test_simple(self):
-        rvi = get_test_data("raven-hmets", "*.rvi")[0]
+        rvi = get_local_testdata("raven-hmets/*.rvi")
 
         out = ravenio.parse_configuration(rvi)
         assert out["Duration"] == "2081"

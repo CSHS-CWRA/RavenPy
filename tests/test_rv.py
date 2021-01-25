@@ -26,12 +26,12 @@ from ravenpy.models.rv import (
     RVFile,
     isinstance_namedtuple,
 )
-from ravenpy.utilities.testdata import get_test_data
+from ravenpy.utilities.testdata import get_local_testdata
 
 
 class TestRVFile:
     def test_simple_rv(self):
-        fn = get_test_data("raven-hmets", "*.rvp")[0]
+        fn = get_local_testdata("raven-hmets/*.rvp")
         rvf = RVFile(fn)
 
         assert rvf.ext == "rvp"
@@ -39,7 +39,7 @@ class TestRVFile:
         assert not rvf.is_tpl
 
     def test_simple_tpl(self):
-        fn = get_test_data("ostrich-gr4j-cemaneige", "*.rvp.tpl")[0]
+        fn = get_local_testdata("ostrich-gr4j-cemaneige/*.rvp.tpl")
         rvf = RVFile(fn)
 
         assert rvf.ext == "rvp"
@@ -47,7 +47,7 @@ class TestRVFile:
         assert rvf.is_tpl
 
     def test_ostIn(self):
-        fn = get_test_data("ostrich-gr4j-cemaneige", "ostIn.txt")[0]
+        fn = get_local_testdata("ostrich-gr4j-cemaneige/ostIn.txt")
         rvf = RVFile(fn)
 
         assert rvf.ext == "txt"
@@ -207,7 +207,7 @@ class TestRVI:
 class TestRVC:
     @classmethod
     def setup_class(self):
-        rvc = open(get_test_data("gr4j_cemaneige", "solution.rvc")[0]).read()
+        rvc = open(get_local_testdata("gr4j_cemaneige/solution.rvc")).read()
         self.r = RVC()
         self.r.parse(rvc)
 
@@ -231,7 +231,7 @@ class TestRVC:
 class TestRVH:
     @classmethod
     def setup_class(self):
-        shp = get_test_data("raven-routing-sample", "finalcat_hru_info.zip")[0]
+        shp = get_local_testdata("raven-routing-sample/finalcat_hru_info.zip")
         importer = RoutingProductShapefileImporter(shp)
         sbs, land_group, lake_group, reservoirs, _, hrus = importer.extract()
         self.rvh = RVH(sbs, land_group, lake_group, reservoirs, hrus)
@@ -270,7 +270,7 @@ class TestRVH:
 class TestRVP:
     @classmethod
     def setup_class(self):
-        shp = get_test_data("raven-routing-sample", "finalcat_hru_info.zip")[0]
+        shp = get_local_testdata("raven-routing-sample/finalcat_hru_info.zip")
         importer = RoutingProductShapefileImporter(shp)
         _, _, _, _, cps, _ = importer.extract()
         self.rvp = RVP(cps)
@@ -288,8 +288,8 @@ class TestRVP:
 class TestRVT:
     @classmethod
     def setup_class(self):
-        input_file = get_test_data("raven-routing-sample", "VIC_streaminputs.nc")[0]
-        routing_file = get_test_data("raven-routing-sample", "finalcat_hru_info.zip")[0]
+        input_file = get_local_testdata("raven-routing-sample/VIC_streaminputs.nc")
+        routing_file = get_local_testdata("raven-routing-sample/finalcat_hru_info.zip")
         importer = RoutingProductGridWeightImporter(input_file, routing_file)
         gws = importer.extract()
         gfc = GriddedForcingCommand(grid_weights=gws)

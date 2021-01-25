@@ -2,7 +2,7 @@ from pathlib import Path
 
 import xarray
 
-from ravenpy.tutorial import _default_cache_dir, get_file, open_dataset, query_folder
+from ravenpy.utilities.testdata import _default_cache_dir, get_file, open_dataset, query_folder
 
 
 class TestRemoteFileAccess:

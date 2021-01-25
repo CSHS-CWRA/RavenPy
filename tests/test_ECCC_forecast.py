@@ -6,7 +6,7 @@ from fiona.io import ZipMemoryFile
 
 from ravenpy.models import GR4JCN
 from ravenpy.utilities import forecasting
-from ravenpy.utilities.testdata import get_test_data
+from ravenpy.utilities.testdata import get_local_testdata
 
 """
 Test to perform a hindcast using auto-queried ECCC data aggregated on THREDDS.
@@ -21,8 +21,8 @@ class TestECCCForecast:
         # Prepare a RAVEN model run using historical data, GR4JCN in this case.
         # This is a dummy run to get initial states. In a real forecast situation,
         # this run would end on the day before the forecast, but process is the same.
-        ts = get_test_data(
-            "raven-gr4j-cemaneige", "Salmon-River-Near-Prince-George_meteo_daily.nc"
+        ts = get_local_testdata(
+            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
         )
         model = GR4JCN(workdir=tmpdir)
         model(
@@ -41,7 +41,7 @@ class TestECCCForecast:
 
         # Collect the most recent forecast data for location and climate model.
         # Limited to GEPS for now
-        with open(get_test_data("watershed_vector", "LSJ_LL.zip")[0], "rb") as f:
+        with open(get_local_testdata("watershed_vector/LSJ_LL.zip"), "rb") as f:
             with ZipMemoryFile(f.read()) as z:
                 region_coll = z.open("LSJ_LL.shp")
                 fcst = forecasting.get_recent_ECCC_forecast(
