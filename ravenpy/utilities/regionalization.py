@@ -13,7 +13,7 @@ import xarray as xr
 from ravenpy.models import get_model
 
 from . import coords
-from .testdata import get_test_data
+from .testdata import get_local_testdata
 
 LOGGER = logging.getLogger("PYWPS")
 
@@ -171,7 +171,7 @@ def read_gauged_properties(properties):
     pd.DataFrame
       Catchment properties keyed by catchment ID.
     """
-    f = get_test_data("regionalisation_data", "gauged_catchment_properties.csv")[0]
+    f = get_local_testdata("regionalisation_data/gauged_catchment_properties.csv")
     proptable = pd.read_csv(f, index_col="ID")
 
     return proptable[properties]
@@ -187,7 +187,7 @@ def read_gauged_params(model):
     pd.DataFrame
       Model parameters keyed by catchment ID.
     """
-    f = get_test_data("regionalisation_data", f"{model}_parameters.csv")[0]
+    f = get_local_testdata(f"regionalisation_data/{model}_parameters.csv")
     params = pd.read_csv(f, index_col="ID")
 
     return params["NASH"], params.iloc[:, 1:]

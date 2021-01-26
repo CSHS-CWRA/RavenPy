@@ -25,7 +25,7 @@ requirements = [
     "rioxarray",
     "statsmodels",
     "xarray",
-    "xclim>=0.22",
+    "xclim[gis]>=0.23",
     "wheel",
 ]
 

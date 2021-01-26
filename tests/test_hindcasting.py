@@ -5,7 +5,7 @@ from fiona.io import ZipMemoryFile
 
 from ravenpy.models import GR4JCN
 from ravenpy.utilities import forecasting
-from ravenpy.utilities.testdata import get_test_data
+from ravenpy.utilities.testdata import get_local_testdata
 
 """
 Test to perform a hindcast using Caspar data on THREDDS.
@@ -24,8 +24,8 @@ class TestHindcasting:
         # Prepare a RAVEN model run using historical data, GR4JCN in this case.
         # This is a dummy run to get initial states. In a real forecast situation,
         # this run would end on the day before the forecast, but process is the same.
-        ts = get_test_data(
-            "raven-gr4j-cemaneige", "Salmon-River-Near-Prince-George_meteo_daily.nc"
+        ts = get_local_testdata(
+            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
         )
         model = GR4JCN(workdir=tmpdir)
         model(
@@ -44,7 +44,7 @@ class TestHindcasting:
 
         # Collect the hindcast data for the date, location and climate model.
         # Limited to GEPS for now, for a restricted period (2017-06-01 to 2018-08-31)
-        with open(get_test_data("watershed_vector", "LSJ_LL.zip")[0], "rb") as f:
+        with open(get_local_testdata("watershed_vector/LSJ_LL.zip"), "rb") as f:
             with ZipMemoryFile(f.read()) as z:
                 region_coll = z.open("LSJ_LL.shp")
                 fcst = forecasting.get_hindcast_day(

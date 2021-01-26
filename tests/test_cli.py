@@ -3,14 +3,14 @@ import re
 from click.testing import CliRunner
 
 from ravenpy.cli import generate_grid_weights
-from ravenpy.utilities.testdata import get_test_data
+from ravenpy.utilities.testdata import get_local_testdata
 
 
 def test_generate_grid_weights_with_nc_input_and_2d_coords():
     runner = CliRunner()
     params = [
-        get_test_data("raven-routing-sample", "VIC_streaminputs.nc")[0],
-        get_test_data("raven-routing-sample", "finalcat_hru_info.zip")[0],
+        get_local_testdata("raven-routing-sample/VIC_streaminputs.nc"),
+        get_local_testdata("raven-routing-sample/finalcat_hru_info.zip"),
     ]
     params = map(str, params)
 
@@ -32,8 +32,8 @@ def test_generate_grid_weights_with_multiple_subids():
     # needs a "routing-file-path" with multiple gauges
     runner = CliRunner()
     params = [
-        get_test_data("raven-routing-sample", "VIC_streaminputs.nc")[0],
-        get_test_data("raven-routing-sample", "finalcat_hru_info.zip")[0],
+        get_local_testdata("raven-routing-sample/VIC_streaminputs.nc"),
+        get_local_testdata("raven-routing-sample/finalcat_hru_info.zip"),
         "-s",
         "7202",
         "-s",
@@ -57,8 +57,8 @@ def test_generate_grid_weights_with_multiple_subids():
 def test_generate_grid_weights_with_nc_input_and_1d_coords():
     runner = CliRunner()
     params = [
-        get_test_data("raven-routing-sample", "era5-test-dataset-crop.nc")[0],
-        get_test_data("raven-routing-sample", "finalcat_hru_info.zip")[0],
+        get_local_testdata("raven-routing-sample/era5-test-dataset-crop.nc"),
+        get_local_testdata("raven-routing-sample/finalcat_hru_info.zip"),
         "--var-names",
         "longitude",
         "latitude",
@@ -81,8 +81,8 @@ def test_generate_grid_weights_with_nc_input_and_1d_coords():
 def test_generate_grid_weights_with_shp_input():
     runner = CliRunner()
     params = [
-        get_test_data("raven-routing-sample", "OTT_sub.zip")[0],
-        get_test_data("raven-routing-sample", "finalcat_hru_info.zip")[0],
+        get_local_testdata("raven-routing-sample/OTT_sub.zip"),
+        get_local_testdata("raven-routing-sample/finalcat_hru_info.zip"),
     ]
     params = map(str, params)
 
@@ -102,8 +102,8 @@ def test_generate_grid_weights_with_shp_input():
 def test_generate_grid_weights_with_weight_rescaling():
     runner = CliRunner()
     params = [
-        get_test_data("raven-routing-sample", "OTT_sub.zip")[0],
-        get_test_data("raven-routing-sample", "finalcat_hru_info.zip")[0],
+        get_local_testdata("raven-routing-sample/OTT_sub.zip"),
+        get_local_testdata("raven-routing-sample/finalcat_hru_info.zip"),
         "--area-error-threshold",
         "0.42",
     ]

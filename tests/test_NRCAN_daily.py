@@ -5,7 +5,7 @@ import tempfile
 import xarray as xr
 
 from ravenpy.models import HMETS
-from ravenpy.utilities.testdata import get_test_data
+from ravenpy.utilities.testdata import get_local_testdata
 
 # Get path to ncml file for NRCan data.
 NRCAN_path = "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/datasets/gridded_obs/nrcan_v2.ncml"
@@ -14,9 +14,9 @@ NRCAN_path = "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/dataset
 filepath = tempfile.mkdtemp() + "/NRCAN_ts.nc"
 
 # Get information for given catchment, could be passed in parameter to the function
-ts = get_test_data(
-    "raven-gr4j-cemaneige", "Salmon-River-Near-Prince-George_meteo_daily.nc"
-)[0]
+ts = get_local_testdata(
+    "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
+)
 salmon = xr.open_dataset(ts)
 lat = salmon.lat.values[0]
 lon = salmon.lon.values[0]
