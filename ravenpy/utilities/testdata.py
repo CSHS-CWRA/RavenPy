@@ -19,7 +19,21 @@ LOGGER = logging.getLogger("RAVEN")
 __all__ = ["get_local_testdata", "get_file", "open_dataset", "query_folder"]
 
 
-def get_local_testdata(pattern: str) -> Union[Path, Sequence[Path]]:
+def get_local_testdata(pattern: str) -> Union[Path, List[Path]]:
+    """
+    Return files matching `pattern` in the local test data repo
+    located at `RAVENPY_TESTDATA_PATH` (which must be set).
+
+    Parameters
+    ----------
+    pattern: str
+        Glob pattern, which must include the folder.
+
+    Returns
+    -------
+    Union[Path, List[Path]]
+
+    """
     testdata_path = os.getenv("RAVENPY_TESTDATA_PATH")
     if not testdata_path:
         raise RuntimeError("RAVENPY_TESTDATA_PATH env variable is not set")
