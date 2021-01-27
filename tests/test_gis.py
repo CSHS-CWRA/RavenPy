@@ -3,9 +3,10 @@ from ravenpy.utilities import gis
 
 
 @pytest.mark.skip(
-    reason="The hydrobasins_domains dataset associated to these tests will be made eventually available through a `raven-testdata` repository."
+    reason="The hydrobasins_domains dataset associated to these tests will be made eventually available through a "
+           "`raven-testdata` repository."
 )
-class TestSelect_hybas_domain:
+class TestSelectHybasDomain:
     def test_na(self):
         bbox = (-68.0, 50.0, -68.0, 50.0)
         dom = gis.select_hybas_domain(bbox)

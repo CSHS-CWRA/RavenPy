@@ -4,13 +4,19 @@ channels:
 - defaults
 dependencies:
   - click
+  - clisops>=0.5.1
+  - fiona
   - gdal
+  - lxml
   - matplotlib
+  - owslib
+  - pandas
   - pip
   - rasterio
+  - requests
   - rioxarray
+  - shapely
   - statsmodels
   - xarray
   - xclim>=0.23
   - wheel
-  - clisops>=0.5.1

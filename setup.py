@@ -19,13 +19,19 @@ with open("HISTORY.rst") as history_file:
 
 requirements = [
     "click",
+    "fiona",
     "gdal",
+    "lxml",
     "matplotlib",
+    "owslib",
+    "pandas",
     "rasterio",
     "rioxarray",
+    "shapely",
     "statsmodels",
     "xarray",
     "xclim[gis]>=0.23",
+    "requests",
     "wheel",
 ]
 
