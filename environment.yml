@@ -11,5 +11,6 @@ dependencies:
   - rioxarray
   - statsmodels
   - xarray
-  - xclim>=0.22
+  - xclim>=0.23
   - wheel
+  - clisops>=0.5.1
