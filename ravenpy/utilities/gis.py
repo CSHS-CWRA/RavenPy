@@ -3,24 +3,27 @@ Working assumptions for this module
 -----------------------------------
 
 * Point coordinates are passed as shapely.geometry.Point instances.
-* BBox coordinates are passed as (lon1, lat1, lon2, lat2)
+* BBox coordinates are passed as (lon1, lat1, lon2, lat2).
 * Shapes (polygons) are passed as ?
-* All functions that require a CRS have a CRS argument with a default set to WSG84 (?)
-*
+* All functions that require a CRS have a CRS argument with a default set to WSG84.
+* GEO_URL points to the GeoSever hosting all files.
 
 """
-
 import collections
 from pathlib import Path
 from typing import Iterable, List, Sequence, Tuple, Union
 
 import fiona
 import pandas as pd
+from lxml import etree
+from owslib.fes import PropertyIsLike
+from owslib.wfs import WebFeatureService
+from requests import Request
 from shapely.geometry import Point, shape
 
 from ravenpy.utils import crs_sniffer, single_file_check
 
-GEO_URL = "http://boreas.ouranos.ca/geoserver/wfs"
+GEO_URL = "http://boreas.ouranos.ca/geoserver/"
 
 # We store the contour of different hydrobasins domains
 hybas_dir = Path(__file__).parent.parent / "data" / "hydrobasins_domains"
@@ -28,8 +31,116 @@ hybas_pat = "hybas_lake_{}_lev01_v1c.zip"
 
 # This could be inferred from existing files in hybas_dir
 hybas_regions = ["na", "ar"]
-
 hybas_domains = {dom: hybas_dir / hybas_pat.format(dom) for dom in hybas_regions}
+
+
+def _get_location_wfs(
+    coordinates: Tuple[
+        Union[int, float, str],
+        Union[str, float, int],
+        Union[str, float, int],
+        Union[str, float, int],
+    ] = None,
+    level: int = None,
+    layer: str = True,
+) -> str:
+    """Return leveled features from a hosted data set using bounding box coordinates and WFS 1.1.0 protocol.
+
+    For geographic rasters, subsetting is based on WGS84 (Long, Lat) boundaries. If not geographic, subsetting based
+    on projected coordinate system (Easting, Northing) boundaries.
+
+    Parameters
+    ----------
+    coordinates : Tuple[Union[str, float, int], Union[str, float, int], Union[str, float, int], Union[str, float, int]]
+      Geographic coordinates of the bounding box (left, down, right, up).
+    level : int
+      Level of granularity requested for the lakes vector.
+    layer : str
+      The WFS/WMS layer name requested.
+
+    Returns
+    -------
+    str
+      A GML-encoded vector feature.
+
+    """
+    layer = f"{layer}{level}"
+
+    if coordinates is not None:
+        wfs = WebFeatureService(f"{GEO_URL}/wfs", version="1.1.0", timeout=30)
+        try:
+            resp = wfs.getfeature(
+                typename=layer, bbox=coordinates, srsname="urn:x-ogc:def:crs:EPSG:4326"
+            )
+        except Exception as e:
+            raise Exception(e)
+    else:
+        raise NotImplementedError
+
+    data = resp.read()
+    return data
+
+
+def _get_feature_attributes_wfs(
+    attribute: str = None,
+    value: Union[str, float, int] = None,
+    level: int = 12,
+    layer: str = None,
+) -> str:
+    """Return a URL that formats and returns remote GetFeatures request from a hosted WFS dataset.
+
+    For geographic rasters, subsetting is based on WGS84 (Long, Lat) boundaries. If not geographic, subsetting based
+    on projected coordinate system (Easting, Northing) boundaries.
+
+    Parameters
+    ----------
+    attribute : str
+      Attribute/field to be queried.
+    value: Union[str, float, int]
+      Value for attribute queried.
+    level : int
+      Level of granularity requested for the lakes vector.
+
+    Returns
+    -------
+    str
+      URL to the GeoJSON-encoded WFS response.
+
+    """
+    layer = f"{layer}{level}"
+
+    if attribute is not None and value is not None:
+
+        try:
+            attribute = str(attribute)
+            value = str(value)
+
+        except ValueError:
+            raise Exception("Unable to cast attribute/filter to string")
+
+        try:
+            filter_request = PropertyIsLike(
+                propertyname=attribute, literal=value, wildCard="*"
+            )
+            filterxml = etree.tostring(filter_request.toXML()).decode("utf-8")
+            params = dict(
+                service="WFS",
+                version="1.1.0",
+                request="GetFeature",
+                typename=layer,
+                outputFormat="json",
+                filter=filterxml,
+            )
+
+            q = Request("GET", f"{GEO_URL}/wfs", params=params).prepare().url
+
+        except Exception as e:
+            raise Exception(e)
+
+    else:
+        raise NotImplementedError
+
+    return q
 
 
 def feature_contains(
@@ -80,6 +191,95 @@ def feature_contains(
     return False
 
 
+def get_bbox(vector: str, all_features: bool = True) -> list:
+    """Return bounding box of all features or the first feature in file.
+
+    Parameters
+    ----------
+    vector : str
+      Path to file storing vector features.
+    all_features : bool
+      Return the bounding box for all features. Default: True.
+
+    Returns
+    -------
+    list
+      Geographic coordinates of the bounding box (lon0, lat0, lon1, lat1).
+
+    """
+
+    if not all_features:
+        with fiona.open(vector, "r") as src:
+            for feature in src:
+                geom = shape(feature["geometry"])
+                return geom.bounds
+
+    with fiona.open(vector, "r") as src:
+        return src.bounds
+
+
+def get_raster_wcs(
+    coordinates: Union[Iterable, Sequence[Union[float, str]]],
+    geographic: bool = True,
+    layer: str = None,
+) -> bytes:
+    """Return a subset of a raster image from the local GeoServer via WCS 2.0.1 protocol.
+
+    For geographic rasters, subsetting is based on WGS84 (Long, Lat) boundaries. If not geographic, subsetting based
+    on projected coordinate system (Easting, Northing) boundaries.
+
+    Parameters
+    ----------
+    coordinates : Sequence[Union[int, float, str]]
+      Geographic coordinates of the bounding box (left, down, right, up)
+    geographic : bool
+      If True, uses "Long" and "Lat" in WCS call. Otherwise uses "E" and "N".
+    layer : str
+      Layer name of raster exposed on GeoServer instance. E.g. 'public:CEC_NALCMS_LandUse_2010'
+
+    Returns
+    -------
+    bytes
+      A GeoTIFF array.
+
+    """
+    from lxml import etree
+    from owslib.wcs import WebCoverageService
+
+    (left, down, right, up) = coordinates
+
+    if geographic:
+        x, y = "Long", "Lat"
+    else:
+        x, y = "E", "N"
+
+    wcs = WebCoverageService(f"{GEO_URL}/ows", version="2.0.1")
+
+    try:
+        resp = wcs.getCoverage(
+            identifier=[layer],
+            format="image/tiff",
+            subsets=[(x, left, right), (y, down, up)],
+        )
+
+    except Exception as e:
+        raise Exception(e)
+
+    data = resp.read()
+
+    try:
+        etree.fromstring(data)
+        # The response is an XML file describing the server error.
+        raise ChildProcessError(data)
+
+    except etree.XMLSyntaxError:
+        # The response is the DEM array.
+        return data
+
+
+# ~~~~ HydroBASINS functions ~~~~ #
+
+
 def hydrobasins_upstream_ids(fid: str, df: pd.DataFrame) -> pd.Series:
     """Return a list of hydrobasins features located upstream.
 
@@ -128,7 +328,7 @@ def hydrobasins_aggregate(gdf: pd.DataFrame = None) -> pd.Series:
     pd.Series
     """
 
-    # TODO: Review. Not sure it all makes sense.
+    # TODO: Review. Not sure it all makes sense. --> Looks fine to me? (TJS)
     def aggfunc(x):
         if x.name in ["COAST", "DIST_MAIN", "DIST_SINK"]:
             return x.min()
@@ -141,92 +341,6 @@ def hydrobasins_aggregate(gdf: pd.DataFrame = None) -> pd.Series:
     gdf["geometry"] = gdf.buffer(0)
 
     return gdf.dissolve(by="MAIN_BAS", aggfunc=aggfunc)
-
-
-def get_bbox(vector: str, all_features: bool = True) -> list:
-    """Return bounding box of all features or the first feature in file.
-
-    Parameters
-    ----------
-    vector : str
-      Path to file storing vector features.
-    all_features : bool
-      Return the bounding box for all features. Default: True.
-
-    Returns
-    -------
-    list
-      Geographic coordinates of the bounding box (lon0, lat0, lon1, lat1).
-
-    """
-
-    if not all_features:
-        with fiona.open(vector, "r") as src:
-            for feature in src:
-                geom = shape(feature["geometry"])
-                return geom.bounds
-
-    with fiona.open(vector, "r") as src:
-        return src.bounds
-
-
-def get_raster_wcs(
-    coordinates: Union[Iterable, Sequence[Union[float, str]]],
-    geographic: bool = True,
-    layer: str = None,
-) -> bytes:
-    """Return a subset of a raster image from the local GeoServer via WCS 2.0.1 protocol.
-
-    For geoggraphic rasters, subsetting is based on WGS84 (Long, Lat) boundaries. If not geographic, subsetting based
-    on projected coordinate system (Easting, Northing) boundries.
-
-    Parameters
-    ----------
-    coordinates : Sequence[Union[int, float, str]]
-      Geographic coordinates of the bounding box (left, down, right, up)
-    geographic : bool
-      If True, uses "Long" and "Lat" in WCS call. Otherwise uses "E" and "N".
-    layer : str
-      Layer name of raster exposed on GeoServer instance. E.g. 'public:CEC_NALCMS_LandUse_2010'
-
-    Returns
-    -------
-    bytes
-      A GeoTIFF array.
-
-    """
-    from lxml import etree
-    from owslib.wcs import WebCoverageService
-
-    (left, down, right, up) = coordinates
-
-    if geographic:
-        x, y = "Long", "Lat"
-    else:
-        x, y = "E", "N"
-
-    wcs = WebCoverageService("http://boreas.ouranos.ca/geoserver/ows", version="2.0.1")
-
-    try:
-        resp = wcs.getCoverage(
-            identifier=[layer],
-            format="image/tiff",
-            subsets=[(x, left, right), (y, down, up)],
-        )
-
-    except Exception as e:
-        raise Exception(e)
-
-    data = resp.read()
-
-    try:
-        etree.fromstring(data)
-        # The response is an XML file describing the server error.
-        raise ChildProcessError(data)
-
-    except etree.XMLSyntaxError:
-        # The response is the DEM array.
-        return data
 
 
 def select_hybas_domain(
@@ -259,6 +373,45 @@ def select_hybas_domain(
     raise LookupError(f"Could not find feature containing bbox {bbox}.")
 
 
+def get_hydrobasins_attributes_wfs(
+    attribute: str = None,
+    value: Union[str, float, int] = None,
+    level: int = 12,
+    lakes: bool = True,
+    domain: str = None,
+) -> str:
+    """Return a URL that formats and returns a remote GetFeatures request from the USGS HydroBASINS dataset.
+
+    For geographic rasters, subsetting is based on WGS84 (Long, Lat) boundaries. If not geographic, subsetting based
+    on projected coordinate system (Easting, Northing) boundaries.
+
+    Parameters
+    ----------
+    attribute : str
+      Attribute/field to be queried.
+    value: Union[str, float, int]
+      Value for attribute queried.
+    level : int
+      Level of granularity requested for the lakes vector (range(1,13)). Default: 12.
+    lakes : bool
+      Whether or not the vector should include the delimitation of lakes.
+    domain : str
+      The domain of the HydroBASINS data. Possible values:"na", "ar".
+
+    Returns
+    -------
+    str
+      URL to the GeoJSON-encoded WFS response.
+
+    """
+    layer = f"public:USGS_HydroBASINS_{'lake_' if lakes else ''}{domain}_lev"
+    q = _get_feature_attributes_wfs(
+        attribute=attribute, value=value, level=level, layer=layer
+    )
+
+    return q
+
+
 def get_hydrobasins_location_wfs(
     coordinates: Tuple[
         Union[int, float, str],
@@ -270,7 +423,7 @@ def get_hydrobasins_location_wfs(
     lakes: bool = True,
     domain: str = None,
 ) -> str:
-    """Return features from the USGS HydroBASINS data set using bounding box coordinates and WFS 1.1.0 protocol.
+    """Return features from the USGS HydroBASINS data set using bounding box coordinates.
 
     For geographic rasters, subsetting is based on WGS84 (Long, Lat) boundaries. If not geographic, subsetting based
     on projected coordinate system (Easting, Northing) boundaries.
@@ -292,36 +445,22 @@ def get_hydrobasins_location_wfs(
       A GML-encoded vector feature.
 
     """
-    from owslib.wfs import WebFeatureService
+    layer = f"public:USGS_HydroBASINS_{'lake_' if lakes else ''}{domain}_lev"
+    data = _get_location_wfs(coordinates, level=level, layer=layer)
 
-    layer = "public:USGS_HydroBASINS_{}{}_lev{}".format(
-        "lake_" if lakes else "", domain, level
-    )
-
-    if coordinates is not None:
-        wfs = WebFeatureService(GEO_URL, version="1.1.0", timeout=30)
-        try:
-            resp = wfs.getfeature(
-                typename=layer, bbox=coordinates, srsname="urn:x-ogc:def:crs:EPSG:4326"
-            )
-        except Exception as e:
-            raise Exception(e)
-    else:
-        raise NotImplementedError
-
-    data = resp.read()
     return data
 
 
-# TODO: Fix docstring. This does not return features, but a URL which will trigger a remote service returning features.
-def get_hydrobasins_attributes_wfs(
+# ~~~~ Hydro Routing ~~~~ #
+
+
+def get_hydro_routing_attributes_wfs(
     attribute: str = None,
     value: Union[str, float, int] = None,
     level: int = 12,
-    lakes: bool = True,
-    domain: str = None,
+    lakes: str = None,
 ) -> str:
-    """Return features from the USGS HydroBASINS data set using attribute value selection and WFS 1.1.0 protocol.
+    """Return a URL that formats and returns a remote GetFeatures request from hydro routing dataset.
 
     For geographic rasters, subsetting is based on WGS84 (Long, Lat) boundaries. If not geographic, subsetting based
     on projected coordinate system (Easting, Northing) boundaries.
@@ -333,11 +472,9 @@ def get_hydrobasins_attributes_wfs(
     value: Union[str, float, int]
       Value for attribute queried.
     level : int
-      Level of granularity requested for the lakes vector (1:12). Default: 12.
+      Level of granularity requested for the lakes vector (range(7,13)). Default: 12.
     lakes : bool
-      Whether or not the vector should include the delimitation of lakes.
-    domain : str
-      The domain of teh HydroBASINS data. Possible values:"na", "ar".
+      Query the version of dataset with lakes under 1km in width removed ("1km") or return all lakes ("all").
 
     Returns
     -------
@@ -345,43 +482,45 @@ def get_hydrobasins_attributes_wfs(
       URL to the GeoJSON-encoded WFS response.
 
     """
-    from lxml import etree
-    from owslib.fes import PropertyIsLike
-    from requests import Request
-
-    layer = "public:USGS_HydroBASINS_{}{}_lev{}".format(
-        "lake_" if lakes else "", domain, level
+    layer = f"public:routing_{lakes}Lake_"
+    q = _get_feature_attributes_wfs(
+        attribute=attribute, value=value, level=level, layer=layer
     )
 
-    if attribute is not None and value is not None:
-
-        try:
-            attribute = str(attribute)
-            value = str(value)
-
-        except ValueError:
-            raise Exception("Unable to cast attribute/filter to string")
-
-        try:
-            filter_request = PropertyIsLike(
-                propertyname=attribute, literal=value, wildCard="*"
-            )
-            filterxml = etree.tostring(filter_request.toXML()).decode("utf-8")
-            params = dict(
-                service="WFS",
-                version="1.1.0",
-                request="GetFeature",
-                typename=layer,
-                outputFormat="json",
-                filter=filterxml,
-            )
-
-            q = Request("GET", GEO_URL, params=params).prepare().url
-
-        except Exception as e:
-            raise Exception(e)
-
-    else:
-        raise NotImplementedError
-
     return q
+
+
+def get_hydro_routing_location_wfs(
+    coordinates: Tuple[
+        Union[int, float, str],
+        Union[str, float, int],
+        Union[str, float, int],
+        Union[str, float, int],
+    ] = None,
+    level: int = 12,
+    lakes: str = None,
+) -> str:
+    """Return features from the hydro routing data set using bounding box coordinates.
+
+    For geographic rasters, subsetting is based on WGS84 (Long, Lat) boundaries. If not geographic, subsetting based
+    on projected coordinate system (Easting, Northing) boundaries.
+
+    Parameters
+    ----------
+    coordinates : Tuple[Union[str, float, int], Union[str, float, int], Union[str, float, int], Union[str, float, int]]
+      Geographic coordinates of the bounding box (left, down, right, up).
+    level : int
+      Level of granularity requested for the lakes vector (range(7,13)). Default: 12.
+    lakes : {"1km", "all"}
+      Query the version of dataset with lakes under 1km in width removed ("1km") or return all lakes ("all").
+
+    Returns
+    -------
+    str
+      A GML-encoded vector feature.
+
+    """
+    layer = f"public:routing_{lakes}Lakes_"
+    data = _get_location_wfs(coordinates, level=level, layer=layer)
+
+    return data
