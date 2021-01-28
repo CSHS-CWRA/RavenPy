@@ -2,6 +2,10 @@
 History
 =======
 
+0.2.1
+-----
+Fix xarray caching but in regionalization.
+
 0.2.0
 -----
 
