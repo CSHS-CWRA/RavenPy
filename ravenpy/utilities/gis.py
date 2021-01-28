@@ -11,7 +11,7 @@ Working assumptions for this module
 """
 import collections
 from pathlib import Path
-from typing import Iterable, List, Sequence, Tuple, Union
+from typing import Iterable, List, Optional, Sequence, Tuple, Union
 from urllib.parse import urljoin
 
 import fiona
@@ -66,8 +66,10 @@ def _get_location_wfs(
       A GML-encoded vector feature.
 
     """
-    wfs = WebFeatureService(url=urljoin(geoserver, 'wfs'), version="1.1.0", timeout=30)
-    resp = wfs.getfeature(typename=layer, bbox=coordinates, srsname="urn:x-ogc:def:crs:EPSG:4326")
+    wfs = WebFeatureService(url=urljoin(geoserver, "wfs"), version="1.1.0", timeout=30)
+    resp = wfs.getfeature(
+        typename=layer, bbox=coordinates, srsname="urn:x-ogc:def:crs:EPSG:4326"
+    )
 
     data = resp.read()
     return data
@@ -109,9 +111,7 @@ def _get_feature_attributes_wfs(
     except ValueError:
         raise Exception("Unable to cast attribute/filter to string")
 
-    filter_request = PropertyIsLike(
-        propertyname=attribute, literal=value, wildCard="*"
-    )
+    filter_request = PropertyIsLike(propertyname=attribute, literal=value, wildCard="*")
     filterxml = etree.tostring(filter_request.toXML()).decode("utf-8")
     params = dict(
         service="WFS",
@@ -122,9 +122,57 @@ def _get_feature_attributes_wfs(
         filter=filterxml,
     )
 
-    q = Request("GET", url=urljoin(geoserver, 'wfs'), params=params).prepare().url
+    q = Request("GET", url=urljoin(geoserver, "wfs"), params=params).prepare().url
 
     return q
+
+
+def _determine_upstream_ids(
+    fid: str,
+    df: pd.DataFrame,
+    basin_field: str = None,
+    downstream_field: str = None,
+    basin_family: Optional[str] = None,
+) -> pd.Series:
+    """Return a list of upstream features by evaluating the downstream networks.
+
+    Parameters
+    ----------
+    fid : str
+      feature ID of the downstream feature of interest.
+    df : pd.DataFrame
+      Dataframe comprising the watershed attributes.
+    basin_field: str
+      The field used to determine the id of the basin according to hydro project.
+    downstream_field: str
+      The field identifying the downstream sub-basin for the hydro project.
+    basin_family: str, optional
+      Regional watershed code (For HydroBASINS dataset).
+
+    Returns
+    -------
+    pd.Series
+      Basins ids including `fid` and its upstream contributors.
+    """
+
+    def upstream_ids(bdf, bid):
+        return bdf[bdf[downstream_field] == bid][basin_field]
+
+    sub = None
+    # Locate the downstream feature
+    ds = df.set_index(basin_field).loc[fid]
+    if basin_family is not None:
+        # Do a first selection on the main basin ID of the downstream feature.
+        sub = df[df[basin_family] == ds[basin_family]]
+
+    # Find upstream basins
+    up = [fid]
+    for b in up:
+        tmp = upstream_ids(sub if sub is not None else df, b)
+        if len(tmp):
+            up.extend(tmp)
+
+    return sub[sub[basin_field].isin(up)]
 
 
 def feature_contains(
@@ -206,7 +254,7 @@ def get_raster_wcs(
     coordinates: Union[Iterable, Sequence[Union[float, str]]],
     geographic: bool = True,
     layer: str = None,
-    geoserver: str = GEO_URL
+    geoserver: str = GEO_URL,
 ) -> bytes:
     """Return a subset of a raster image from the local GeoServer via WCS 2.0.1 protocol.
 
@@ -237,7 +285,7 @@ def get_raster_wcs(
     else:
         x, y = "E", "N"
 
-    wcs = WebCoverageService(url=urljoin(geoserver, 'ows'), version="2.0.1")
+    wcs = WebCoverageService(url=urljoin(geoserver, "ows"), version="2.0.1")
 
     try:
         resp = wcs.getCoverage(
@@ -264,39 +312,42 @@ def get_raster_wcs(
 # ~~~~ HydroBASINS functions ~~~~ #
 
 
-def hydrobasins_upstream_ids(fid: str, df: pd.DataFrame) -> pd.Series:
+def hydrobasins_upstream_ids(
+    fid: str,
+    df: pd.DataFrame,
+    basin_field="HYBAS_ID",
+    downstream_field="NEXT_DOWN",
+    basin_family="MAIN_BAS",
+) -> pd.Series:
     """Return a list of hydrobasins features located upstream.
 
     Parameters
     ----------
     fid : str
-      HYBAS_ID of the downstream feature.
+      Basin feature ID code of the downstream feature.
     df : pd.DataFrame
       Watershed attributes.
+    basin_field: str
+      The field used to determine the id of the basin. Default: "HYBAS_ID".
+    downstream_field: str
+      The field identifying the downstream sub-basin. Default: "NEXT_DOWN".
+    basin_family: str, optional
+      Regional watershed code. Default: "MAIN_BAS".
 
     Returns
     -------
     pd.Series
       Basins ids including `fid` and its upstream contributors.
     """
+    df_upstream = _determine_upstream_ids(
+        fid=fid,
+        df=df,
+        basin_field=basin_field,
+        downstream_field=downstream_field,
+        basin_family=basin_family,
+    )
 
-    def upstream_ids(bdf, bid):
-        return bdf[bdf["NEXT_DOWN"] == bid]["HYBAS_ID"]
-
-    # Locate the downstream feature
-    ds = df.set_index("HYBAS_ID").loc[fid]
-
-    # Do a first selection on the main basin ID of the downstream feature.
-    sub = df[df["MAIN_BAS"] == ds["MAIN_BAS"]]
-
-    # Find upstream basins
-    up = [fid]
-    for b in up:
-        tmp = upstream_ids(sub, b)
-        if len(tmp):
-            up.extend(tmp)
-
-    return sub[sub["HYBAS_ID"].isin(up)]
+    return df_upstream
 
 
 def hydrobasins_aggregate(gdf: pd.DataFrame = None) -> pd.Series:
@@ -442,6 +493,40 @@ def get_hydrobasins_location_wfs(
 
 
 # ~~~~ Hydro Routing ~~~~ #
+
+
+def hydro_routing_upstream_ids(
+    fid: str,
+    df: pd.DataFrame,
+    basin_field="SubId",
+    downstream_field="DowSubId",
+) -> pd.Series:
+    """Return a list of hydrobasins features located upstream.
+
+    Parameters
+    ----------
+    fid : str
+      Basin feature ID code of the downstream feature.
+    df : pd.DataFrame
+      Watershed attributes.
+    basin_field: str
+      The field used to determine the id of the basin. Default: "SubId".
+    downstream_field: str
+      The field identifying the downstream sub-basin. Default: "DowSubId".
+
+    Returns
+    -------
+    pd.Series
+      Basins ids including `fid` and its upstream contributors.
+    """
+    df_upstream = _determine_upstream_ids(
+        fid=fid,
+        df=df,
+        basin_field=basin_field,
+        downstream_field=downstream_field,
+    )
+
+    return df_upstream
 
 
 def get_hydro_routing_attributes_wfs(
