@@ -12,18 +12,20 @@ Working assumptions for this module
 import collections
 from pathlib import Path
 from typing import Iterable, List, Sequence, Tuple, Union
+from urllib.parse import urljoin
 
 import fiona
 import pandas as pd
 from lxml import etree
 from owslib.fes import PropertyIsLike
+from owslib.wcs import WebCoverageService
 from owslib.wfs import WebFeatureService
 from requests import Request
 from shapely.geometry import Point, shape
 
 from ravenpy.utils import crs_sniffer, single_file_check
 
-GEO_URL = "http://boreas.ouranos.ca/geoserver/"
+GEO_URL = "http://boreas.ouranos.ca/geoserver"
 
 # We store the contour of different hydrobasins domains
 hybas_dir = Path(__file__).parent.parent / "data" / "hydrobasins_domains"
@@ -40,9 +42,9 @@ def _get_location_wfs(
         Union[str, float, int],
         Union[str, float, int],
         Union[str, float, int],
-    ] = None,
-    level: int = None,
+    ],
     layer: str = True,
+    geoserver: str = GEO_URL,
 ) -> str:
     """Return leveled features from a hosted data set using bounding box coordinates and WFS 1.1.0 protocol.
 
@@ -53,10 +55,10 @@ def _get_location_wfs(
     ----------
     coordinates : Tuple[Union[str, float, int], Union[str, float, int], Union[str, float, int], Union[str, float, int]]
       Geographic coordinates of the bounding box (left, down, right, up).
-    level : int
-      Level of granularity requested for the lakes vector.
     layer : str
       The WFS/WMS layer name requested.
+    geoserver: str
+      The address of the geoserver housing the layer to be queried. Default: http://boreas.ouranos.ca/geoserver.
 
     Returns
     -------
@@ -64,18 +66,8 @@ def _get_location_wfs(
       A GML-encoded vector feature.
 
     """
-    layer = f"{layer}{level}"
-
-    if coordinates is not None:
-        wfs = WebFeatureService(f"{GEO_URL}/wfs", version="1.1.0", timeout=30)
-        try:
-            resp = wfs.getfeature(
-                typename=layer, bbox=coordinates, srsname="urn:x-ogc:def:crs:EPSG:4326"
-            )
-        except Exception as e:
-            raise Exception(e)
-    else:
-        raise NotImplementedError
+    wfs = WebFeatureService(url=urljoin(geoserver, 'wfs'), version="1.1.0", timeout=30)
+    resp = wfs.getfeature(typename=layer, bbox=coordinates, srsname="urn:x-ogc:def:crs:EPSG:4326")
 
     data = resp.read()
     return data
@@ -84,8 +76,8 @@ def _get_location_wfs(
 def _get_feature_attributes_wfs(
     attribute: str = None,
     value: Union[str, float, int] = None,
-    level: int = 12,
     layer: str = None,
+    geoserver: str = GEO_URL,
 ) -> str:
     """Return a URL that formats and returns remote GetFeatures request from a hosted WFS dataset.
 
@@ -98,8 +90,8 @@ def _get_feature_attributes_wfs(
       Attribute/field to be queried.
     value: Union[str, float, int]
       Value for attribute queried.
-    level : int
-      Level of granularity requested for the lakes vector.
+    geoserver: str
+      The address of the geoserver housing the layer to be queried. Default: http://boreas.ouranos.ca/geoserver.
 
     Returns
     -------
@@ -107,38 +99,30 @@ def _get_feature_attributes_wfs(
       URL to the GeoJSON-encoded WFS response.
 
     """
-    layer = f"{layer}{level}"
-
-    if attribute is not None and value is not None:
-
-        try:
-            attribute = str(attribute)
-            value = str(value)
-
-        except ValueError:
-            raise Exception("Unable to cast attribute/filter to string")
-
-        try:
-            filter_request = PropertyIsLike(
-                propertyname=attribute, literal=value, wildCard="*"
-            )
-            filterxml = etree.tostring(filter_request.toXML()).decode("utf-8")
-            params = dict(
-                service="WFS",
-                version="1.1.0",
-                request="GetFeature",
-                typename=layer,
-                outputFormat="json",
-                filter=filterxml,
-            )
-
-            q = Request("GET", f"{GEO_URL}/wfs", params=params).prepare().url
-
-        except Exception as e:
-            raise Exception(e)
-
-    else:
+    if attribute is None or value is None:
         raise NotImplementedError
+
+    try:
+        attribute = str(attribute)
+        value = str(value)
+
+    except ValueError:
+        raise Exception("Unable to cast attribute/filter to string")
+
+    filter_request = PropertyIsLike(
+        propertyname=attribute, literal=value, wildCard="*"
+    )
+    filterxml = etree.tostring(filter_request.toXML()).decode("utf-8")
+    params = dict(
+        service="WFS",
+        version="1.1.0",
+        request="GetFeature",
+        typename=layer,
+        outputFormat="json",
+        filter=filterxml,
+    )
+
+    q = Request("GET", url=urljoin(geoserver, 'wfs'), params=params).prepare().url
 
     return q
 
@@ -222,6 +206,7 @@ def get_raster_wcs(
     coordinates: Union[Iterable, Sequence[Union[float, str]]],
     geographic: bool = True,
     layer: str = None,
+    geoserver: str = GEO_URL
 ) -> bytes:
     """Return a subset of a raster image from the local GeoServer via WCS 2.0.1 protocol.
 
@@ -236,6 +221,8 @@ def get_raster_wcs(
       If True, uses "Long" and "Lat" in WCS call. Otherwise uses "E" and "N".
     layer : str
       Layer name of raster exposed on GeoServer instance. E.g. 'public:CEC_NALCMS_LandUse_2010'
+    geoserver: str
+      The address of the geoserver housing the layer to be queried. Default: http://boreas.ouranos.ca/geoserver.
 
     Returns
     -------
@@ -243,9 +230,6 @@ def get_raster_wcs(
       A GeoTIFF array.
 
     """
-    from lxml import etree
-    from owslib.wcs import WebCoverageService
-
     (left, down, right, up) = coordinates
 
     if geographic:
@@ -253,7 +237,7 @@ def get_raster_wcs(
     else:
         x, y = "E", "N"
 
-    wcs = WebCoverageService(f"{GEO_URL}/ows", version="2.0.1")
+    wcs = WebCoverageService(url=urljoin(geoserver, 'ows'), version="2.0.1")
 
     try:
         resp = wcs.getCoverage(
@@ -379,6 +363,7 @@ def get_hydrobasins_attributes_wfs(
     level: int = 12,
     lakes: bool = True,
     domain: str = None,
+    geoserver: str = GEO_URL,
 ) -> str:
     """Return a URL that formats and returns a remote GetFeatures request from the USGS HydroBASINS dataset.
 
@@ -397,6 +382,8 @@ def get_hydrobasins_attributes_wfs(
       Whether or not the vector should include the delimitation of lakes.
     domain : str
       The domain of the HydroBASINS data. Possible values:"na", "ar".
+    geoserver: str
+      The address of the geoserver housing the layer to be queried. Default: http://boreas.ouranos.ca/geoserver.
 
     Returns
     -------
@@ -404,9 +391,9 @@ def get_hydrobasins_attributes_wfs(
       URL to the GeoJSON-encoded WFS response.
 
     """
-    layer = f"public:USGS_HydroBASINS_{'lake_' if lakes else ''}{domain}_lev"
+    layer = f"public:USGS_HydroBASINS_{'lake_' if lakes else ''}{domain}_lev{level}"
     q = _get_feature_attributes_wfs(
-        attribute=attribute, value=value, level=level, layer=layer
+        attribute=attribute, value=value, layer=layer, geoserver=geoserver
     )
 
     return q
@@ -418,10 +405,11 @@ def get_hydrobasins_location_wfs(
         Union[str, float, int],
         Union[str, float, int],
         Union[str, float, int],
-    ] = None,
+    ],
     level: int = 12,
     lakes: bool = True,
     domain: str = None,
+    geoserver: str = GEO_URL,
 ) -> str:
     """Return features from the USGS HydroBASINS data set using bounding box coordinates.
 
@@ -438,6 +426,8 @@ def get_hydrobasins_location_wfs(
       Whether or not the vector should include the delimitation of lakes.
     domain : str
       The domain of the HydroBASINS data. Possible values:"na", "ar".
+    geoserver: str
+      The address of the geoserver housing the layer to be queried. Default: http://boreas.ouranos.ca/geoserver.
 
     Returns
     -------
@@ -445,8 +435,8 @@ def get_hydrobasins_location_wfs(
       A GML-encoded vector feature.
 
     """
-    layer = f"public:USGS_HydroBASINS_{'lake_' if lakes else ''}{domain}_lev"
-    data = _get_location_wfs(coordinates, level=level, layer=layer)
+    layer = f"public:USGS_HydroBASINS_{'lake_' if lakes else ''}{domain}_lev{level}"
+    data = _get_location_wfs(coordinates, layer=layer, geoserver=geoserver)
 
     return data
 
@@ -459,6 +449,7 @@ def get_hydro_routing_attributes_wfs(
     value: Union[str, float, int] = None,
     level: int = 12,
     lakes: str = None,
+    geoserver: str = GEO_URL,
 ) -> str:
     """Return a URL that formats and returns a remote GetFeatures request from hydro routing dataset.
 
@@ -475,6 +466,8 @@ def get_hydro_routing_attributes_wfs(
       Level of granularity requested for the lakes vector (range(7,13)). Default: 12.
     lakes : bool
       Query the version of dataset with lakes under 1km in width removed ("1km") or return all lakes ("all").
+    geoserver: str
+      The address of the geoserver housing the layer to be queried. Default: http://boreas.ouranos.ca/geoserver.
 
     Returns
     -------
@@ -482,9 +475,9 @@ def get_hydro_routing_attributes_wfs(
       URL to the GeoJSON-encoded WFS response.
 
     """
-    layer = f"public:routing_{lakes}Lake_"
+    layer = f"public:routing_{lakes}Lake_{level}"
     q = _get_feature_attributes_wfs(
-        attribute=attribute, value=value, level=level, layer=layer
+        attribute=attribute, value=value, layer=layer, geoserver=geoserver
     )
 
     return q
@@ -496,9 +489,10 @@ def get_hydro_routing_location_wfs(
         Union[str, float, int],
         Union[str, float, int],
         Union[str, float, int],
-    ] = None,
+    ],
+    lakes: str,
     level: int = 12,
-    lakes: str = None,
+    geoserver: str = GEO_URL,
 ) -> str:
     """Return features from the hydro routing data set using bounding box coordinates.
 
@@ -509,10 +503,12 @@ def get_hydro_routing_location_wfs(
     ----------
     coordinates : Tuple[Union[str, float, int], Union[str, float, int], Union[str, float, int], Union[str, float, int]]
       Geographic coordinates of the bounding box (left, down, right, up).
-    level : int
-      Level of granularity requested for the lakes vector (range(7,13)). Default: 12.
     lakes : {"1km", "all"}
       Query the version of dataset with lakes under 1km in width removed ("1km") or return all lakes ("all").
+    level : int
+      Level of granularity requested for the lakes vector (range(7,13)). Default: 12.
+    geoserver: str
+      The address of the geoserver housing the layer to be queried. Default: http://boreas.ouranos.ca/geoserver.
 
     Returns
     -------
@@ -520,7 +516,7 @@ def get_hydro_routing_location_wfs(
       A GML-encoded vector feature.
 
     """
-    layer = f"public:routing_{lakes}Lakes_"
-    data = _get_location_wfs(coordinates, level=level, layer=layer)
+    layer = f"public:routing_{lakes}Lakes_{level}"
+    data = _get_location_wfs(coordinates, layer=layer, geoserver=geoserver)
 
     return data
