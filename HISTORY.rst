@@ -4,7 +4,8 @@ History
 
 0.2.1
 -----
-Fix xarray caching bug in regionalization.
+* Fix xarray caching bug in regionalization.
+* Set wcs.getCoverage timeout to 120 seconds.
 
 0.2.0
 -----
