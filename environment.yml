@@ -3,15 +3,18 @@ channels:
 - conda-forge
 - defaults
 dependencies:
+  - affine
   - click
   - clisops>=0.5.1
   - fiona
   - gdal
   - lxml
   - matplotlib
+  - numpy
   - owslib
   - pandas
   - pip
+  - pyproj
   - rasterio
   - requests
   - rioxarray

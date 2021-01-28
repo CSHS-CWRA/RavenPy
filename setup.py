@@ -18,13 +18,16 @@ with open("HISTORY.rst") as history_file:
     history = history_file.read()
 
 requirements = [
+    "affine",
     "click",
     "fiona",
     "gdal",
     "lxml",
     "matplotlib",
+    "numpy",
     "owslib",
     "pandas",
+    "pyproj",
     "rasterio",
     "rioxarray",
     "shapely",
