@@ -159,7 +159,7 @@ setup(
         "dev": dev_requirements,
     },
     url="https://github.com/CSHS-CWRA/ravenpy",
-    version="0.2.0",
+    version="0.2.1",
     zip_safe=False,
     cmdclass={"install": InstallExternalDeps},
 )
