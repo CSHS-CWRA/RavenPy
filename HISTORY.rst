@@ -6,6 +6,7 @@ History
 -----
 * Set wcs.getCoverage timeout to 120 seconds.
 * Fix `Raven.parse_results` logic when no flow observations are present and no diagnostic file is created.
+* Fix ECCC test where input was cached and shadowed forecast input data
 
 0.2.1
 -----
