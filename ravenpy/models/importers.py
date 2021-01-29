@@ -306,7 +306,7 @@ class RoutingProductGridWeightImporter:
         if self._sub_ids:
             # Here we want to extract the network of connected subbasins by going upstream via their DowSubId,
             # starting from the list supplied by the user (either directly, or via their gauge IDs).. We first
-            # build a map of downSubID -> subID for effficient lookup
+            # build a map of downSubID -> subID for efficient lookup
             downsubid_to_subids = defaultdict(set)
             for _, r in self._routing_data.iterrows():
                 downsubid_to_subids[r.DowSubId].add(r.SubId)
