@@ -39,9 +39,9 @@ class TestECCCForecast:
         # Extract the final states that will be used as the next initial states
         rvc = model.outputs["solution"]
 
-        # Collect test forecast data for location and climate model.
-        fcst_fn = get_local_testdata("eccc_forecasts/geps_watershed.nc")
-        fcst = xr.open_dataset(fcst_fn)
+        # Collect test forecast data for location and climate model (20 members)
+        ts20 = get_local_testdata("eccc_forecasts/geps_watershed.nc")
+        nm = 20
 
         # It is necessary to clean the model state because the input variables of the previous
         # model are not the same as the ones provided in the forecast model. therefore, if we
@@ -53,8 +53,8 @@ class TestECCCForecast:
         model.rvc.parse(rvc.read_text())
 
         model(
-            ts=(fcst_fn,),
-            nc_index=range(fcst.dims.get("member")),
+            ts=(ts20,),
+            nc_index=range(nm),
             duration=9,
             area=44250.6,
             elevation=843.0,
@@ -70,7 +70,7 @@ class TestECCCForecast:
         assert len(model.q_sim.values) == 10
 
         # Also see if GEPS has 20 members produced.
-        assert model.q_sim.values.shape[1] == 20
+        assert model.q_sim.values.shape[1] == nm
 
         # Check all members are different (checking snow because data in winter)
-        assert len(set(model.storage.Snow.isel(time=-1).values)) == 20
+        assert len(set(model.storage.Snow.isel(time=-1).values)) == nm
