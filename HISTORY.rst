@@ -2,10 +2,14 @@
 History
 =======
 
+0.2.2
+-----
+* Set wcs.getCoverage timeout to 120 seconds.
+* Fix `Raven.parse_results` logic when no flow observations are present and no diagnostic file is created.
+
 0.2.1
 -----
 * Fix xarray caching bug in regionalization.
-* Set wcs.getCoverage timeout to 120 seconds.
 
 0.2.0
 -----
