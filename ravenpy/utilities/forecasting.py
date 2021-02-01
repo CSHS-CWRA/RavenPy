@@ -210,11 +210,8 @@ def get_CASPAR_dataset(climate_model, date):
     """Return Caspar Dataset."""
 
     if climate_model == "GEPS":
-        file_url = (
-            "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/birdhouse/caspar/daily/GEPS_"
-            + dt.datetime.strftime(date, "%Y%m%d")
-            + ".nc"
-        )
+        d = dt.datetime.strftime(date, "%Y%m%d")
+        file_url = f"https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/birdhouse/caspar/daily/GEPS_{d}.nc"
         ds = xr.open_dataset(file_url)
         # Here we also extract the times at 6-hour intervals as Raven must have
         # constant timesteps and GEPS goes to 6 hours
