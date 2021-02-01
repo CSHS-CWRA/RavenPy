@@ -8,7 +8,7 @@ History
 * Regionalisation data is now part of the package.
 * Fix tests that were not using testdata properly.
 * Add tests for external dataset access.
-* `utilities.testdata.get_local_testdata` now crashes when it finds no dataset corresponding to the user pattern.
+* `utilities.testdata.get_local_testdata` now raises an exception when it finds no dataset corresponding to the user pattern.
 
 0.2.2
 -----
