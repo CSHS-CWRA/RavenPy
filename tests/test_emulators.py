@@ -19,19 +19,19 @@ from ravenpy.models import (
     Raven,
 )
 from ravenpy.models.state import HRUStateVariables
-from ravenpy.utilities.testdata import get_test_data
+from ravenpy.utilities.testdata import get_local_testdata
 
 from .common import _convert_2d
 
-TS = get_test_data(
-    "raven-gr4j-cemaneige", "Salmon-River-Near-Prince-George_meteo_daily.nc"
+TS = get_local_testdata(
+    "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
 )
 
 
 @pytest.fixture
 def input2d(tmpdir):
     """Convert 1D input to 2D output by copying all the time series along a new region dimension."""
-    ds = _convert_2d(TS[0])
+    ds = _convert_2d(TS)
     fn_out = os.path.join(tmpdir, "input2d.nc")
     ds.to_netcdf(fn_out)
     return fn_out

@@ -29,7 +29,7 @@ LOGGER = logging.getLogger("PYWPS")
 
 
 # This function gets model states after running the model (i.e. states at the end of the run).
-def get_raven_states(model, **kwds):
+def get_raven_states(model, workdir=None, **kwds):
     """Get the RAVEN states file (.rvc file) after a model run.
 
     Parameters
@@ -46,7 +46,7 @@ def get_raven_states(model, **kwds):
 
     """
     # Run the model and get the rvc file for future hotstart.
-    m = get_model(model)()
+    m = get_model(model)(workdir=workdir)
     m(overwrite=True, **kwds)
     rvc = m.outputs["solution"]
 
@@ -54,13 +54,13 @@ def get_raven_states(model, **kwds):
 
 
 # Do the actual forecasting step
-def perform_forecasting_step(rvc, model, **kwds):
+def perform_forecasting_step(rvc, model, workdir=None, **kwds):
     """
     Function that might be useful eventually to do a forecast from a model setup.
     """
     # kwds includes 'ts', the forecast timeseries data
     # Setup the model
-    m = get_model(model)()
+    m = get_model(model)(workdir=workdir)
 
     # Force the initial conditions
     m.resume(rvc)
@@ -71,7 +71,9 @@ def perform_forecasting_step(rvc, model, **kwds):
     return m.q_sim
 
 
-def perform_climatology_esp(model_name, forecast_date, forecast_duration, **kwds):
+def perform_climatology_esp(
+    model_name, forecast_date, forecast_duration, workdir=None, **kwds
+):
     """
     This function takes the model setup and name as well as forecast data and duration and returns
     an ESP forecast netcdf. The data comes from the climatology data and thus there is a mechanism
@@ -98,7 +100,7 @@ def perform_climatology_esp(model_name, forecast_date, forecast_duration, **kwds
     tsnc = xr.open_dataset(kwds["ts"])
 
     # Prepare model instance
-    m = get_model(model_name)()
+    m = get_model(model_name)(workdir=workdir)
 
     # Now find the periods of time for warm-up and forecast and add to the model keywords as the defaults are failing
     # (nanoseconds datetimes do not like the year 0001...)
@@ -139,7 +141,7 @@ def perform_climatology_esp(model_name, forecast_date, forecast_duration, **kwds
     kwds["end_date"] = forecast_date - dt.timedelta(days=1)
 
     # Run model to get rvc file after warm-up using base meteo.
-    rvc = get_raven_states(model_name, **kwds)
+    rvc = get_raven_states(model_name, workdir=workdir, **kwds)
 
     # We need to check which years are long enough (ex: wrapping years, 365-day forecast starting in
     # September 2015 will need data up to August 2016 at least)
@@ -166,7 +168,7 @@ def perform_climatology_esp(model_name, forecast_date, forecast_duration, **kwds
         # Setup the initial states from the warm-up and run the model.
         # Note that info on start/end dates and timeseries are in the kwds.
         m.resume(rvc)
-        m(overwrite=True, **kwds)
+        m(run_name=f"run_{years}", **kwds)
 
         # Add member to the ensemble and retag the dates to the real forecast dates
         # (or else we will get dates from the climate dataset that cover all years)
@@ -331,7 +333,7 @@ def get_subsetted_forecast(region_coll, ds, times, is_caspar):
         ds.rio.set_spatial_dims("rlon", "rlat")
         ds["rlon"] = ds["rlon"] - 360
         # clip the netcdf and average across space.
-        shdf = [region_coll.next()["geometry"]]
+        shdf = [next(iter(region_coll))["geometry"]]
         forecast = ds.rio.clip(shdf, crs=crs)
         forecast = forecast.mean(dim={"rlat", "rlon"}, keep_attrs=True)
 
@@ -339,7 +341,7 @@ def get_subsetted_forecast(region_coll, ds, times, is_caspar):
         ds.rio.set_spatial_dims("lon", "lat")
         ds["lon"] = ds["lon"] - 360
         # clip the netcdf and average across space.
-        shdf = [region_coll.next()["geometry"]]
+        shdf = [next(iter(region_coll))["geometry"]]
         forecast = ds.rio.clip(shdf, crs=crs)
         forecast = forecast.mean(dim={"lat", "lon"}, keep_attrs=True)
 

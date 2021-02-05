@@ -1,6 +1,6 @@
 {
     "template": "https://github.com/Ouranosinc/cookiecutter-pypackage",
-    "commit": "d2a5a7a2470e4f421d29892bd0c749142b83046e",
+    "commit": "4d4772fcb64a50904d5f5cce7a1df2cfd970998f",
     "context": {
         "cookiecutter": {
             "full_name": "David Huard",
@@ -10,7 +10,7 @@
             "project_slug": "ravenpy",
             "project_short_description": "A Python wrapper to setup and run the hydrologic modelling framework Raven.",
             "pypi_username": "CSHS-CWRA",
-            "version": "0.1.4-beta",
+            "version": "0.2.1",
             "use_pytest": "y",
             "use_pypi_deployment_with_travis": "y",
             "add_pyup_badge": "y",

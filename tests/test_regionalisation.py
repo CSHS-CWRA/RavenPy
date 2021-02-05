@@ -1,12 +1,12 @@
 import datetime as dt
 
 from ravenpy.utilities import regionalization as reg
-from ravenpy.utilities.testdata import get_test_data
+from ravenpy.utilities.testdata import get_local_testdata
 
 
 def test_regionalization():
-    ts = get_test_data(
-        "raven-gr4j-cemaneige", "Salmon-River-Near-Prince-George_meteo_daily.nc"
+    ts = get_local_testdata(
+        "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
     )
     model = "GR4JCN"
     nash, params = reg.read_gauged_params(model)
