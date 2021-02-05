@@ -532,13 +532,14 @@ class Raven:
             # There are no diagnostics if a streamflow time series is not provided.
             try:
                 fns = self._get_output(pattern, path=path)
+                fns.sort()
+                self.ind_outputs[key] = fns
+                self.outputs[key] = self._merge_output(fns, pattern[1:])
+
             except UserWarning as exc:
                 if key != "diagnostics":
                     raise exc
-
-            fns.sort()
-            self.ind_outputs[key] = fns
-            self.outputs[key] = self._merge_output(fns, pattern[1:])
+                fns = None
 
         self.outputs["rv_config"] = self._merge_output(self.rvs, "rv.zip")
 

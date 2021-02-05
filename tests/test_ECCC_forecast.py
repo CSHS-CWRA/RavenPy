@@ -1,11 +1,6 @@
 import datetime as dt
-import tempfile
-
-import pandas as pd
-from fiona.io import ZipMemoryFile
 
 from ravenpy.models import GR4JCN
-from ravenpy.utilities import forecasting
 from ravenpy.utilities.testdata import get_local_testdata
 
 """
@@ -39,18 +34,9 @@ class TestECCCForecast:
         # Extract the final states that will be used as the next initial states
         rvc = model.outputs["solution"]
 
-        # Collect the most recent forecast data for location and climate model.
-        # Limited to GEPS for now
-        with open(get_local_testdata("watershed_vector/LSJ_LL.zip"), "rb") as f:
-            with ZipMemoryFile(f.read()) as z:
-                region_coll = z.open("LSJ_LL.shp")
-                fcst = forecasting.get_recent_ECCC_forecast(
-                    region_coll, climate_model="GEPS"
-                )
-
-        # write the forecast data to file
-        ts = f"{tmpdir}/fcstfile.nc"
-        fcst.to_netcdf(ts)
+        # Collect test forecast data for location and climate model (20 members)
+        ts20 = get_local_testdata("eccc_forecasts/geps_watershed.nc")
+        nm = 20
 
         # It is necessary to clean the model state because the input variables of the previous
         # model are not the same as the ones provided in the forecast model. therefore, if we
@@ -62,8 +48,8 @@ class TestECCCForecast:
         model.rvc.parse(rvc.read_text())
 
         model(
-            ts=(ts,),
-            nc_index=range(fcst.dims.get("member")),
+            ts=(ts20,),
+            nc_index=range(nm),
             duration=9,
             area=44250.6,
             elevation=843.0,
@@ -77,5 +63,9 @@ class TestECCCForecast:
 
         # The model now has the forecast data generated and it has 10 days of forecasts.
         assert len(model.q_sim.values) == 10
+
         # Also see if GEPS has 20 members produced.
-        assert model.q_sim.values.shape[1] == 20
+        assert model.q_sim.values.shape[1] == nm
+
+        # Check all members are different (checking snow because data in winter)
+        assert len(set(model.storage.Snow.isel(time=-1).values)) == nm

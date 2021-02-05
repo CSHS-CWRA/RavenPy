@@ -41,6 +41,8 @@ def get_local_testdata(pattern: str) -> Union[Path, List[Path]]:
     if not testdata_path.exists():
         raise RuntimeError(f"{testdata_path} does not exists")
     paths = [path for path in testdata_path.glob(pattern) if path.suffix != ".md5"]
+    if not paths:
+        raise RuntimeError(f"No data found for {pattern} at {testdata_path}")
     # Return item directly when singleton, for convenience
     return paths[0] if len(paths) == 1 else paths
 
