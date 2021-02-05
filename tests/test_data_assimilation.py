@@ -3,6 +3,7 @@ import os
 import pdb
 import tempfile
 from copy import deepcopy
+from dataclasses import replace
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -160,7 +161,7 @@ class TestAssimilationGR4JCN:
             # Get new initial conditions and feed assimilated values
             hru_states, basin_states = model.get_final_state()
             hru_states = [
-                hru_states[i]._replace(**dict(zip(assim_var, xa[:, i])))
+                replace(hru_states[i], **dict(zip(assim_var, xa[:, i])))
                 for i in range(n_members)
             ]
 
