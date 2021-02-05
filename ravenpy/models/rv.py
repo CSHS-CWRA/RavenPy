@@ -1,17 +1,31 @@
 import collections
 import datetime as dt
-from pathlib import Path
 from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Dict, List, Tuple
 
 import cftime
 import geopandas
 import six
 from xclim.core.units import units, units2pint
-from typing import List, Tuple, Dict
 
-from .state import BasinStateVariables, HRUStateVariables, HRUStateVariableTableCommand, BasinStateVariablesCommand
-from .commands import SubBasinsCommandRecord, SubBasinsCommand, SubBasinGroupCommand, ReservoirCommand, HRUsCommand, \
-    HRUsCommandRecord, ReservoirList, ChannelProfileCommand, ChannelProfileList
+from .commands import (
+    ChannelProfileCommand,
+    ChannelProfileList,
+    HRUsCommand,
+    HRUsCommandRecord,
+    ReservoirCommand,
+    ReservoirList,
+    SubBasinGroupCommand,
+    SubBasinsCommand,
+    SubBasinsCommandRecord,
+)
+from .state import (
+    BasinStateVariables,
+    BasinStateVariablesCommand,
+    HRUStateVariables,
+    HRUStateVariableTableCommand,
+)
 
 """
 Raven configuration
@@ -187,7 +201,12 @@ class RV(collections.abc.Mapping):
         a = list(filter(lambda x: not x.startswith("_"), self.__dict__))
 
         # Properties
-        p = list(filter(lambda x: isinstance(getattr(self.__class__, x, None), property), dir(self)))
+        p = list(
+            filter(
+                lambda x: isinstance(getattr(self.__class__, x, None), property),
+                dir(self),
+            )
+        )
         return a + p
 
     def items(self):
@@ -659,10 +678,12 @@ class RVI(RV):
 
 
 class RVC(RV):
-    def __init__(self,
-                 hru_states: Dict[int, HRUStateVariables] = None,
-                 bassin_states: Dict[int, BasinStateVariables] = None,
-                **kwds):
+    def __init__(
+        self,
+        hru_states: Dict[int, HRUStateVariables] = None,
+        bassin_states: Dict[int, BasinStateVariables] = None,
+        **kwds,
+    ):
         self.hru_states = hru_states or {}
         self.basin_states = bassin_states or {}
         super().__init__(**kwds)
@@ -897,6 +918,6 @@ def _parser(lines, indent="", fmt=str):
         else:
             data = line.split(",")
             i = int(data.pop(0))
-            out["data"][i] = [i, ] + list(map(float, data))
+            out["data"][i] = [i] + list(map(float, data))
 
     return out
