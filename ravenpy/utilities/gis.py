@@ -75,7 +75,8 @@ def feature_contains(
     for i, layer_name in enumerate(fiona.listlayers(str(shp))):
         with fiona.open(shp, "r", crs=shape_crs, layer=i) as vector:
             for f in vector.filter(bbox=(point.x, point.y, point.x, point.y)):
-                return f
+                return f0
+
 
     return False
 
