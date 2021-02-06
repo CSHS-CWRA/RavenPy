@@ -1,5 +1,8 @@
 from dataclasses import asdict, dataclass, field
+from textwrap import dedent
 from typing import Dict, Tuple
+
+INDENT = " " * 4
 
 
 @dataclass
@@ -26,16 +29,17 @@ class SubBasinsCommand:
 
     subbasins: Tuple[SubBasinsCommandRecord] = ()
 
+    template = """
+    :SubBasins
+      :Attributes   ID NAME DOWNSTREAM_ID PROFILE REACH_LENGTH  GAUGED
+      :Units      none none          none    none           km    none
+      {subbasin_records}
+    :EndSubBasins
+    """
+
     def __repr__(self):
-        pat = """
-:SubBasins
-  :Attributes   ID NAME DOWNSTREAM_ID PROFILE REACH_LENGTH  GAUGED
-  :Units      none none          none    none           km    none
-  {subbasin_records}
-:EndSubBasins
-        """
         recs = [f"\t{sb}" for sb in self.subbasins]
-        return pat.format(subbasin_records="\n".join(recs))
+        return dedent(self.template).format(subbasin_records="\n".join(recs))
 
 
 @dataclass
@@ -67,16 +71,17 @@ class HRUsCommand:
 
     hrus: Tuple[HRUsCommandRecord] = ()
 
+    template = """
+    :HRUs
+      :Attributes      AREA  ELEVATION       LATITUDE      LONGITUDE BASIN_ID       LAND_USE_CLASS           VEG_CLASS      SOIL_PROFILE  AQUIFER_PROFILE TERRAIN_CLASS      SLOPE     ASPECT
+      :Units            km2          m            deg            deg     none                  none               none              none             none          none        deg       degN
+      {hru_records}
+    :EndHRUs
+    """
+
     def __repr__(self):
-        pat = """
-:HRUs
-  :Attributes      AREA  ELEVATION       LATITUDE      LONGITUDE BASIN_ID       LAND_USE_CLASS           VEG_CLASS      SOIL_PROFILE  AQUIFER_PROFILE TERRAIN_CLASS      SLOPE     ASPECT
-  :Units            km2          m            deg            deg     none                  none               none              none             none          none        deg       degN
-  {hru_records}
-:EndHRUs
-        """
         recs = [f"\t{hru}" for hru in self.hrus]
-        return pat.format(hru_records="\n".join(recs))
+        return dedent(self.template).format(hru_records="\n".join(recs))
 
 
 @dataclass
@@ -91,20 +96,21 @@ class ReservoirCommand:
     max_depth: float = 0
     lake_area: float = 0
 
+    template = """
+    :Reservoir {name}
+        :SubBasinID {subbasin_id}
+        :HRUID {hru_id}
+        :Type RESROUTE_STANDARD
+        :WeirCoefficient {weir_coefficient}
+        :CrestWidth {crest_width}
+        :MaxDepth {max_depth}
+        :LakeArea {lake_area}
+    :EndReservoir
+    """
+
     def __repr__(self):
-        pat = """
-:Reservoir {name}
-\t:SubBasinID {subbasin_id}
-\t:HRUID {hru_id}
-\t:Type RESROUTE_STANDARD
-\t:WeirCoefficient {weir_coefficient}
-\t:CrestWidth {crest_width}
-\t:MaxDepth {max_depth}
-\t:LakeArea {lake_area}
-:EndReservoir
-        """
         d = asdict(self)
-        return pat.format(**d)
+        return dedent(self.template).format(**d)
 
 
 @dataclass
@@ -124,15 +130,16 @@ class SubBasinGroupCommand:
     name: str = ""
     subbasin_ids: Tuple[int] = ()
 
+    template = """
+    :SubBasinGroup {name}
+        {subbasin_ids}
+    :EndSubBasinGroup
+    """
+
     def __repr__(self):
-        pat = """
-:SubBasinGroup {name}
-\t{subbasin_ids}
-:EndSubBasinGroup
-        """
         d = asdict(self)
         d["subbasin_ids"] = map(str, self.subbasin_ids)
-        return pat.format(**d)
+        return dedent(self.template).format(**d)
 
 
 @dataclass
@@ -144,24 +151,27 @@ class ChannelProfileCommand:
     survey_points: Tuple[Tuple[float, float]] = ()
     roughness_zones: Tuple[Tuple[float, float]] = ()
 
+    template = """
+    :ChannelProfile {name}
+        :Bedslope {bed_slope}
+        :SurveyPoints
+        {survey_points}
+        :EndSurveyPoints
+        :RoughnessZones
+        {roughness_zones}
+        :EndRoughnessZones
+    :EndChannelProfile
+    """
+
     def __repr__(self):
-        pat = """
-:ChannelProfile {name}
-\t:Bedslope {bed_slope}
-\t:SurveyPoints
-{survey_points}
-\t:EndSurveyPoints
-\t:RoughnessZones
-{roughness_zones}
-\t:EndRoughnessZones
-:EndChannelProfile
-        """
         d = asdict(self)
-        d["survey_points"] = "\n".join(f"\t\t{p[0]} {p[1]}" for p in d["survey_points"])
-        d["roughness_zones"] = "\n".join(
-            f"\t\t{z[0]} {z[1]}" for z in d["roughness_zones"]
+        d["survey_points"] = "\n".join(
+            f"{INDENT * 2}{p[0]} {p[1]}" for p in d["survey_points"]
         )
-        return pat.format(**d)
+        d["roughness_zones"] = "\n".join(
+            f"{INDENT * 2}{z[0]} {z[1]}" for z in d["roughness_zones"]
+        )
+        return dedent(self.template).format(**d)
 
 
 @dataclass
@@ -180,19 +190,20 @@ class GridWeightsCommand:
     number_grid_cells: int = 0
     data: Tuple[Tuple[int, int, float]] = ()
 
+    template = """
+    {indent}:GridWeights
+    {indent}    :NumberHRUs {number_hrus}
+    {indent}    :NumberGridCells {number_grid_cells}
+    {data}
+    {indent}:EndGridWeights
+    """
+
     def __repr__(self, indent_level=0):
-        indent = "\t" * indent_level
-        pat = """
-{indent}:GridWeights
-{indent}\t:NumberHRUs {number_hrus}
-{indent}\t:NumberGridCells {number_grid_cells}
-{data}
-{indent}:EndGridWeights
-        """.strip()
+        indent = INDENT * indent_level
         d = asdict(self)
         d["indent"] = indent
         d["data"] = "\n".join(f"{indent}\t{p[0]} {p[1]} {p[2]}" for p in self.data)
-        return pat.format(**d)
+        return dedent(self.template).format(**d)
 
 
 @dataclass
@@ -206,20 +217,21 @@ class GriddedForcingCommand:
     dim_names_nc: Tuple[str, str, str] = ("x", "y", "t")
     grid_weights: GridWeightsCommand = None
 
+    template = """
+    :GriddedForcing {name}
+        :ForcingType {forcing_type}
+        :FileNameNC {file_name_nc}
+        :VarNameNC {var_name_nc}
+        :DimNamesNC {dim_names_nc}
+        {grid_weights}
+    :EndGriddedForcing
+    """
+
     def __repr__(self):
-        pat = """
-:GriddedForcing {name}
-\t:ForcingType {forcing_type}
-\t:FileNameNC {file_name_nc}
-\t:VarNameNC {var_name_nc}
-\t:DimNamesNC {dim_names_nc}
-{grid_weights}
-:EndGriddedForcing
-        """
         d = asdict(self)
         d["dim_names_nc"] = " ".join(self.dim_names_nc)
         d["grid_weights"] = self.grid_weights
-        return pat.format(**d)
+        return dedent(self.template).format(**d)
 
 
 @dataclass
@@ -349,18 +361,18 @@ class HRUStateVariableTableCommand:
     """Initial condition for a given HRU."""
 
     template = """
-:HRUStateVariableTable
-:Attributes,SURFACE_WATER,ATMOSPHERE,ATMOS_PRECIP,PONDED_WATER,SOIL[0],SOIL[1],SOIL[2],SOIL[3],SNOW_TEMP,SNOW,SNOW_COVER,AET,CONVOLUTION[0],CONVOLUTION[1],CONV_STOR[0],CONV_STOR[1],CONV_STOR[2],CONV_STOR[3],CONV_STOR[4],CONV_STOR[5],CONV_STOR[6],CONV_STOR[7],CONV_STOR[8],CONV_STOR[9],CONV_STOR[10],CONV_STOR[11],CONV_STOR[12],CONV_STOR[13],CONV_STOR[14],CONV_STOR[15],CONV_STOR[16],CONV_STOR[17],CONV_STOR[18],CONV_STOR[19],CONV_STOR[20],CONV_STOR[21],CONV_STOR[22],CONV_STOR[23],CONV_STOR[24],CONV_STOR[25],CONV_STOR[26],CONV_STOR[27],CONV_STOR[28],CONV_STOR[29],CONV_STOR[30],CONV_STOR[31],CONV_STOR[32],CONV_STOR[33],CONV_STOR[34],CONV_STOR[35],CONV_STOR[36],CONV_STOR[37],CONV_STOR[38],CONV_STOR[39],CONV_STOR[40],CONV_STOR[41],CONV_STOR[42],CONV_STOR[43],CONV_STOR[44],CONV_STOR[45],CONV_STOR[46],CONV_STOR[47],CONV_STOR[48],CONV_STOR[49],CONV_STOR[50],CONV_STOR[51],CONV_STOR[52],CONV_STOR[53],CONV_STOR[54],CONV_STOR[55],CONV_STOR[56],CONV_STOR[57],CONV_STOR[58],CONV_STOR[59],CONV_STOR[60],CONV_STOR[61],CONV_STOR[62],CONV_STOR[63],CONV_STOR[64],CONV_STOR[65],CONV_STOR[66],CONV_STOR[67],CONV_STOR[68],CONV_STOR[69],CONV_STOR[70],CONV_STOR[71],CONV_STOR[72],CONV_STOR[73],CONV_STOR[74],CONV_STOR[75],CONV_STOR[76],CONV_STOR[77],CONV_STOR[78],CONV_STOR[79],CONV_STOR[80],CONV_STOR[81],CONV_STOR[82],CONV_STOR[83],CONV_STOR[84],CONV_STOR[85],CONV_STOR[86],CONV_STOR[87],CONV_STOR[88],CONV_STOR[89],CONV_STOR[90],CONV_STOR[91],CONV_STOR[92],CONV_STOR[93],CONV_STOR[94],CONV_STOR[95],CONV_STOR[96],CONV_STOR[97],CONV_STOR[98],CONV_STOR[99]
-  :Units,mm,mm,mm,mm,mm,mm,mm,mm,C,mm,0-1,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm
-  {hru_states}
-:EndHRUStateVariableTable
+    :HRUStateVariableTable
+    :Attributes,SURFACE_WATER,ATMOSPHERE,ATMOS_PRECIP,PONDED_WATER,SOIL[0],SOIL[1],SOIL[2],SOIL[3],SNOW_TEMP,SNOW,SNOW_COVER,AET,CONVOLUTION[0],CONVOLUTION[1],CONV_STOR[0],CONV_STOR[1],CONV_STOR[2],CONV_STOR[3],CONV_STOR[4],CONV_STOR[5],CONV_STOR[6],CONV_STOR[7],CONV_STOR[8],CONV_STOR[9],CONV_STOR[10],CONV_STOR[11],CONV_STOR[12],CONV_STOR[13],CONV_STOR[14],CONV_STOR[15],CONV_STOR[16],CONV_STOR[17],CONV_STOR[18],CONV_STOR[19],CONV_STOR[20],CONV_STOR[21],CONV_STOR[22],CONV_STOR[23],CONV_STOR[24],CONV_STOR[25],CONV_STOR[26],CONV_STOR[27],CONV_STOR[28],CONV_STOR[29],CONV_STOR[30],CONV_STOR[31],CONV_STOR[32],CONV_STOR[33],CONV_STOR[34],CONV_STOR[35],CONV_STOR[36],CONV_STOR[37],CONV_STOR[38],CONV_STOR[39],CONV_STOR[40],CONV_STOR[41],CONV_STOR[42],CONV_STOR[43],CONV_STOR[44],CONV_STOR[45],CONV_STOR[46],CONV_STOR[47],CONV_STOR[48],CONV_STOR[49],CONV_STOR[50],CONV_STOR[51],CONV_STOR[52],CONV_STOR[53],CONV_STOR[54],CONV_STOR[55],CONV_STOR[56],CONV_STOR[57],CONV_STOR[58],CONV_STOR[59],CONV_STOR[60],CONV_STOR[61],CONV_STOR[62],CONV_STOR[63],CONV_STOR[64],CONV_STOR[65],CONV_STOR[66],CONV_STOR[67],CONV_STOR[68],CONV_STOR[69],CONV_STOR[70],CONV_STOR[71],CONV_STOR[72],CONV_STOR[73],CONV_STOR[74],CONV_STOR[75],CONV_STOR[76],CONV_STOR[77],CONV_STOR[78],CONV_STOR[79],CONV_STOR[80],CONV_STOR[81],CONV_STOR[82],CONV_STOR[83],CONV_STOR[84],CONV_STOR[85],CONV_STOR[86],CONV_STOR[87],CONV_STOR[88],CONV_STOR[89],CONV_STOR[90],CONV_STOR[91],CONV_STOR[92],CONV_STOR[93],CONV_STOR[94],CONV_STOR[95],CONV_STOR[96],CONV_STOR[97],CONV_STOR[98],CONV_STOR[99]
+        :Units,mm,mm,mm,mm,mm,mm,mm,mm,C,mm,0-1,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm,mm
+        {hru_states}
+    :EndHRUStateVariableTable
     """
     hru_states: Dict[int, HRUStateVariableTableCommandRecord] = field(
         default_factory=dict
     )
 
     def __repr__(self):
-        return self.template.format(
+        return dedent(self.template).format(
             hru_states="\n".join(map(str, self.hru_states.values()))
         )
 
@@ -377,6 +389,7 @@ class BasinIndexCommand:
         :Qlat,{nQlatHist},{qlat},{qlatlast}
         :Qin ,{nQinHist}, {qin}
         """
+
     index: int = 1
     name: str = "watershed"
     channelstorage: float = 0
@@ -389,7 +402,8 @@ class BasinIndexCommand:
 
     def __repr__(self):
         return (
-            self.template.format(
+            dedent(self.template)
+            .format(
                 **asdict(self),
                 nsegs=len(self.qout),
                 nQlatHist=len(self.qlat),
@@ -402,14 +416,16 @@ class BasinIndexCommand:
 
 @dataclass
 class BasinStateVariablesCommand:
+
     template = """
-:BasinStateVariables
-  {basin_states_list}
-:EndBasinStateVariables
+    :BasinStateVariables
+        {basin_states_list}
+    :EndBasinStateVariables
     """
+
     basin_states: Dict[int, BasinIndexCommand] = field(default_factory=dict)
 
     def __repr__(self):
-        return self.template.format(
+        return dedent(self.template).format(
             basin_states_list="\n".join(map(str, self.basin_states.values()))
         )
