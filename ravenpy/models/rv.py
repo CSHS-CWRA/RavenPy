@@ -2,6 +2,7 @@ import collections
 import datetime as dt
 from dataclasses import dataclass, field
 from pathlib import Path
+from textwrap import dedent
 from typing import Dict, List, Tuple
 
 import cftime
@@ -10,21 +11,19 @@ import six
 from xclim.core.units import units, units2pint
 
 from .commands import (
+    BasinIndexCommand,
+    BasinStateVariablesCommand,
     ChannelProfileCommand,
     ChannelProfileList,
     HRUsCommand,
     HRUsCommandRecord,
+    HRUStateVariableTableCommand,
+    HRUStateVariableTableCommandRecord,
     ReservoirCommand,
     ReservoirList,
     SubBasinGroupCommand,
     SubBasinsCommand,
     SubBasinsCommandRecord,
-)
-from .state import (
-    BasinStateVariables,
-    BasinStateVariablesCommand,
-    HRUStateVariables,
-    HRUStateVariableTableCommand,
 )
 
 """
@@ -459,13 +458,11 @@ class RVT(RV):
                 if isinstance(val, dict):
                     self[key].update(val, force=True)
 
-    def to_rv(self):
+    def __repr__(self):
         return """
 {gridded_forcing_cmds}
         """.format(
-            gridded_forcing_cmds="\n\n".join(
-                [gf.to_rv() for gf in self._gridded_forcings]
-            ),
+            gridded_forcing_cmds="\n\n".join(map(str, self._gridded_forcings)),
         )
 
 
@@ -680,8 +677,8 @@ class RVI(RV):
 class RVC(RV):
     def __init__(
         self,
-        hru_states: Dict[int, HRUStateVariables] = None,
-        basin_states: Dict[int, BasinStateVariables] = None,
+        hru_states: Dict[int, HRUStateVariableTableCommandRecord] = None,
+        basin_states: Dict[int, BasinIndexCommand] = None,
         **kwds,
     ):
         self.hru_states = hru_states or {}
@@ -735,16 +732,16 @@ class RVH(RV):
     hrus: Tuple[HRUsCommandRecord] = ()
 
     template = """
-{subbasins_cmd}
+    {subbasins_cmd}
 
-{hrus_cmd}
+    {hrus_cmd}
 
-{land_subbasin_group_cmd}
+    {land_subbasin_group_cmd}
 
-{lake_subbasin_group_cmd}
+    {lake_subbasin_group_cmd}
 
-{reservoir_list_cmd}
-        """
+    {reservoir_list_cmd}
+    """
 
     @property
     def subbasins_cmd(self):
@@ -766,9 +763,9 @@ class RVH(RV):
     def hrus_cmd(self):
         return HRUsCommand(self.hrus)
 
-    def to_rv(self):
+    def __repr__(self):
         params = self.items()
-        return self.template.format(**dict(self.items()))
+        return dedent(self.template).format(**dict(self.items()))
 
 
 @dataclass
@@ -850,11 +847,11 @@ def get_states(solution, hru_index=None, basin_index=None):
     basin_state = {}
 
     for index, params in solution["HRUStateVariableTable"]["data"].items():
-        hru_state[index] = HRUStateVariables(*params)
+        hru_state[index] = HRUStateVariableTableCommandRecord(*params)
 
     for index, raw in solution["BasinStateVariables"]["BasinIndex"].items():
         params = {k.lower(): v for (k, v) in raw.items()}
-        basin_state[index] = BasinStateVariables(**params)
+        basin_state[index] = BasinIndexCommand(**params)
 
     if hru_index is not None:
         hru_state = hru_state[hru_index]

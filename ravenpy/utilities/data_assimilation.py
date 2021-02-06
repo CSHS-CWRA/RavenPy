@@ -26,8 +26,6 @@ from pathlib import Path
 import numpy as np
 import xarray as xr
 
-from ravenpy.models.state import HRU_NC_MAP
-
 """
 Suggestion:
 This was initially suggested to make parallel and faster. However, I was blocked and could not make it work

@@ -3,6 +3,7 @@ import os
 import tempfile
 import zipfile
 from dataclasses import replace
+
 import numpy as np
 import pytest
 import xarray as xr
@@ -18,7 +19,7 @@ from ravenpy.models import (
     MOHYSE_OST,
     Raven,
 )
-from ravenpy.models.state import HRUStateVariables
+from ravenpy.models.commands import HRUStateVariableTableCommandRecord
 from ravenpy.utilities.testdata import get_local_testdata
 
 from .common import _convert_2d
@@ -167,7 +168,7 @@ class TestGR4JCN:
         model(
             TS,
             end_date=dt.datetime(2001, 2, 1),
-            hru_state=HRUStateVariables(soil0=0),
+            hru_state=HRUStateVariableTableCommandRecord(soil0=0),
             overwrite=True,
         )
         assert model.q_sim.isel(time=1).values[0] < qsim2.isel(time=1).values[0]

@@ -219,8 +219,8 @@ class TestRVC:
         assert self.r.basin_state.qoutlast == 13.29232
 
     def test_write(self):
-        assert "1,0.0,821.98274" in self.r.hru_states_cmd.to_rv()
-        assert ":BasinIndex 1,watershed" in self.r.basin_states_cmd.to_rv()
+        assert "1,0.0,821.98274" in repr(self.r.hru_states_cmd)
+        assert ":BasinIndex 1,watershed" in repr(self.r.basin_states_cmd)
 
     def test_format(self):
         rvc_template = Path(ravenpy.models.__file__).parent / "global" / "global.rvc"
@@ -244,7 +244,7 @@ class TestRVH:
         assert len(self.rvh.hrus) == 51
 
     def test_format(self):
-        res = self.rvh.to_rv()
+        res = repr(self.rvh)
 
         sbs = (
             re.search(":SubBasins(.+):EndSubBasins", res, re.MULTILINE | re.DOTALL)
@@ -279,7 +279,7 @@ class TestRVP:
         assert len(self.rvp.channel_profiles) == 46
 
     def test_format(self):
-        res = self.rvp.channel_profile_list.to_rv()
+        res = repr(self.rvp.channel_profile_list)
 
         assert res.count(":ChannelProfile") == 46
         assert res.count(":EndChannelProfile") == 46
@@ -296,7 +296,7 @@ class TestRVT:
         self.rvt = RVT([gfc])
 
     def test_import_process(self):
-        res = self.rvt.to_rv()
+        res = repr(self.rvt)
 
         assert ":NumberHRUs 51" in res
         assert ":NumberGridCells 100" in res

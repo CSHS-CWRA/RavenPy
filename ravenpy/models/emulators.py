@@ -5,10 +5,20 @@ import xarray as xr
 
 from ravenpy.models import Ostrich, Raven
 
+from .commands import BasinIndexCommand, HRUStateVariableTableCommandRecord
 from .rv import RV, RVC, RVI, RVT, MonthlyAverage, Ost, RavenNcData
-from .state import BasinStateVariables, HRUStateVariables
 
-__all__ = ["GR4JCN", "MOHYSE", "HMETS", "HBVEC", "GR4JCN_OST", "MOHYSE_OST", "HMETS_OST", "HBVEC_OST", "get_model"]
+__all__ = [
+    "GR4JCN",
+    "MOHYSE",
+    "HMETS",
+    "HBVEC",
+    "GR4JCN_OST",
+    "MOHYSE_OST",
+    "HMETS_OST",
+    "HBVEC_OST",
+    "get_model",
+]
 
 nc = RavenNcData
 std_vars = (
@@ -56,7 +66,7 @@ class GR4JCN(Raven):
         )
 
         # Initialize the stores to 1/2 full. Declare the parameters that can be user-modified
-        self.rvc = RVC(soil0=None, soil1=15, basin_state=BasinStateVariables())
+        self.rvc = RVC(soil0=None, soil1=15, basin_state=BasinIndexCommand())
         self.rvd = RV(one_minus_CEMANEIGE_X2=None, GR4J_X1_hlf=None)
 
     def derived_parameters(self):
@@ -68,7 +78,9 @@ class GR4JCN(Raven):
             soil0 = self.rvd.GR4J_X1_hlf if self.rvc.soil0 is None else self.rvc.soil0
             soil1 = self.rvc.soil1
 
-            self.rvc.hru_state = HRUStateVariables(index=1, soil0=soil0, soil1=soil1)
+            self.rvc.hru_state = HRUStateVariableTableCommandRecord(
+                index=1, soil0=soil0, soil1=soil1
+            )
 
 
 class GR4JCN_OST(Ostrich, GR4JCN):
@@ -106,7 +118,10 @@ class MOHYSE(Raven):
         )
         self.rvt = RVT(**{k: nc() for k in std_vars})
         self.rvi = RVI(evaporation="PET_MOHYSE", rain_snow_fraction="RAINSNOW_DATA")
-        self.rvc = RVC(hru_state=HRUStateVariables(), basin_state=BasinStateVariables())
+        self.rvc = RVC(
+            hru_state=HRUStateVariableTableCommandRecord(),
+            basin_state=BasinIndexCommand(),
+        )
         self.rvd = RV(par_rezi_x10=None)
 
     def derived_parameters(self):
@@ -172,7 +187,7 @@ class HMETS(GR4JCN):
         self.rvp = RV(params=HMETS.params(*((None,) * len(HMETS.params._fields))))
         self.rvt = RVT(**{k: nc() for k in std_vars})
         self.rvi = RVI(evaporation="PET_OUDIN", rain_snow_fraction="RAINSNOW_DATA")
-        self.rvc = RVC(soil0=None, soil1=None, basin_state=BasinStateVariables())
+        self.rvc = RVC(soil0=None, soil1=None, basin_state=BasinIndexCommand())
         self.rvd = RV(
             TOPSOIL_m=None,
             PHREATIC_m=None,
@@ -202,7 +217,9 @@ class HMETS(GR4JCN):
             soil1 = (
                 self.rvd["PHREATIC_hlf"] if self.rvc.soil1 is None else self.rvc.soil1
             )
-            self.rvc.hru_state = HRUStateVariables(soil0=soil0, soil1=soil1)
+            self.rvc.hru_state = HRUStateVariableTableCommandRecord(
+                soil0=soil0, soil1=soil1
+            )
 
 
 class HMETS_OST(Ostrich, HMETS):
@@ -323,9 +340,11 @@ class HBVEC(GR4JCN):
 
         # Default initial conditions if none are given
         if self.rvc.hru_state is None:
-            self.rvc.hru_state = HRUStateVariables(soil2=self.rvc.soil2)
+            self.rvc.hru_state = HRUStateVariableTableCommandRecord(
+                soil2=self.rvc.soil2
+            )
         if self.rvc.basin_state is None:
-            self.rvc.basin_state = BasinStateVariables(qout=(self.rvc.qout,))
+            self.rvc.basin_state = BasinIndexCommand(qout=(self.rvc.qout,))
 
     # TODO: Support index specification and unit changes.
     def _monthly_average(self):
