@@ -18,23 +18,15 @@ with open("HISTORY.rst") as history_file:
     history = history_file.read()
 
 requirements = [
-    "affine",
     "click",
-    "fiona",
-    "gdal",
-    "lxml",
     "matplotlib",
+    "netCDF4",
     "numpy",
-    "owslib",
     "pandas",
-    "pyproj",
-    "rasterio",
-    "rioxarray",
-    "shapely",
+    "requests",
     "statsmodels",
     "xarray",
-    "xclim[gis]>=0.23",
-    "requests",
+    "xclim>=0.23",
     "wheel",
 ]
 
@@ -48,6 +40,10 @@ docs_requirements = [
 
 dev_requirements = [
     dependency for dependency in open("requirements_dev.txt").readlines()
+]
+
+gis_requirements = [
+    dependency for dependency in open("requirements_gis.txt").readlines()
 ]
 
 
@@ -114,7 +110,7 @@ class InstallExternalDeps(install):
                 url,
                 "ostrich",
                 "Ostrich_2017-12-19_plus_progressJSON",
-                f"OstrichGCC",
+                "OstrichGCC",
                 "GCC",
             )
 
@@ -163,10 +159,11 @@ setup(
     ),
     test_suite="tests",
     tests_require=test_requirements,
-    extras_require={
-        "docs": docs_requirements,
-        "dev": dev_requirements,
-    },
+    extras_require=dict(
+        dev=dev_requirements,
+        docs=docs_requirements,
+        gis=gis_requirements,
+    ),
     url="https://github.com/CSHS-CWRA/ravenpy",
     version="0.2.0",
     zip_safe=False,

@@ -1,0 +1,12 @@
+affine
+clisops>=0.5.1
+fiona
+gdal
+geopandas
+lxml
+owslib
+pyproj
+rasterio
+rioxarray
+shapely
+

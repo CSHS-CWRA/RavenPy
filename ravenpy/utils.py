@@ -13,19 +13,36 @@ from re import search
 from string import ascii_letters
 from typing import Any, List, Optional, Sequence, Tuple, Union
 
-import fiona
-import fiona.crs
+from . import RavenPyDependencyError
+
+try:
+    import fiona
+    import fiona.crs
+    import pyproj
+    import rasterio
+    import rasterio.mask
+    import rasterio.vrt
+    import rasterio.warp
+    from affine import Affine
+    from gdal import DEMProcessing
+    from rasterio.crs import CRS
+    from shapely.geometry import (
+        GeometryCollection,
+        MultiPolygon,
+        Polygon,
+        mapping,
+        shape,
+    )
+    from shapely.ops import transform
+except ModuleNotFoundError as e:
+    msg = (
+        f"`{Path(__file__).stem}` requires installation of the RavenPy GIS libraries. These can be installed using the"
+        " `pip install ravenpy[gis]` recipe or via Anaconda (`conda env -n ravenpy-env -f environment.yml`)"
+        " from the RavenPy repository source files."
+    )
+    raise RavenPyDependencyError(msg) from e
+
 import numpy as np
-import pyproj
-import rasterio
-import rasterio.mask
-import rasterio.vrt
-import rasterio.warp
-from affine import Affine
-from gdal import DEMProcessing
-from rasterio.crs import CRS
-from shapely.geometry import GeometryCollection, MultiPolygon, Polygon, mapping, shape
-from shapely.ops import transform
 
 LOGGER = logging.getLogger("RAVEN")
 

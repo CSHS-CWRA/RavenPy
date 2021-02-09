@@ -3,9 +3,8 @@ import datetime as dt
 from pathlib import Path
 
 import cftime
-import geopandas
 import six
-from xclim.core.units import units, units2pint
+from xclim.core.units import units2pint
 
 from .state import BasinStateVariables, HRUStateVariables
 

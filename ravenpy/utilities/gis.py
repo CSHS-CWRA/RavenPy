@@ -14,14 +14,25 @@ from pathlib import Path
 from typing import Iterable, List, Optional, Sequence, Tuple, Union
 from urllib.parse import urljoin
 
-import fiona
-import pandas as pd
-from lxml import etree
-from owslib.fes import PropertyIsLike
-from owslib.wcs import WebCoverageService
-from owslib.wfs import WebFeatureService
 from requests import Request
-from shapely.geometry import Point, shape
+
+from .. import RavenPyDependencyError
+
+try:
+    import fiona
+    import pandas as pd
+    from lxml import etree
+    from owslib.fes import PropertyIsLike
+    from owslib.wcs import WebCoverageService
+    from owslib.wfs import WebFeatureService
+    from shapely.geometry import Point, shape
+except ModuleNotFoundError as e:
+    msg = (
+        f"`{Path(__file__).stem}` requires installation of the RavenPy GIS libraries. These can be installed using the"
+        " `pip install ravenpy[gis]` recipe or via Anaconda (`conda env -n ravenpy-env -f environment.yml`)"
+        " from the RavenPy repository source files."
+    )
+    raise RavenPyDependencyError(msg) from e
 
 from ravenpy.utils import crs_sniffer, single_file_check
 
