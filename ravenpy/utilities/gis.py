@@ -25,7 +25,8 @@ from shapely.geometry import Point, shape
 
 from ravenpy.utils import crs_sniffer, single_file_check
 
-GEO_URL = "http://boreas.ouranos.ca/geoserver"
+# Do not remove the trailing / otherwise `urljoin` will remove the geoserver path.
+GEO_URL = "http://pavics.ouranos.ca/geoserver/"
 
 # We store the contour of different hydrobasins domains
 hybas_dir = Path(__file__).parent.parent / "data" / "hydrobasins_domains"
