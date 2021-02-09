@@ -19,7 +19,7 @@ from .commands import (
     HRUsCommandRecord,
     HRUStateVariableTableCommand,
     HRUStateVariableTableCommandRecord,
-    RavenRenderable,
+    RavenConfig,
     ReservoirCommand,
     ReservoirList,
     SubBasinGroupCommand,
@@ -154,7 +154,7 @@ class RVFile:
         return pattern.findall(self.content)
 
 
-class RV(collections.abc.Mapping, RavenRenderable):
+class RV(collections.abc.Mapping, RavenConfig):
     """Generic configuration class.
 
     RV provides two mechanisms to set values, a dictionary-like interface and an object-like interface::

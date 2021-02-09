@@ -5,13 +5,13 @@ from typing import Dict, Tuple
 INDENT = " " * 4
 
 
-class RavenRenderable:
+class RavenConfig:
     def __str__(self):
         return self.to_rv()
 
 
 @dataclass
-class SubBasinsCommandRecord(RavenRenderable):
+class SubBasinsCommandRecord(RavenConfig):
     """Record to populate RVH :SubBasins command internal table."""
 
     subbasin_id: int = 0
@@ -29,7 +29,7 @@ class SubBasinsCommandRecord(RavenRenderable):
 
 
 @dataclass
-class SubBasinsCommand(RavenRenderable):
+class SubBasinsCommand(RavenConfig):
     """:SubBasins command (RVH)."""
 
     subbasins: Tuple[SubBasinsCommandRecord] = ()
@@ -48,7 +48,7 @@ class SubBasinsCommand(RavenRenderable):
 
 
 @dataclass
-class HRUsCommandRecord(RavenRenderable):
+class HRUsCommandRecord(RavenConfig):
     """Record to populate :HRUs command internal table (RVH)."""
 
     hru_id: int = 0
@@ -71,7 +71,7 @@ class HRUsCommandRecord(RavenRenderable):
 
 
 @dataclass
-class HRUsCommand(RavenRenderable):
+class HRUsCommand(RavenConfig):
     """:HRUs command (RVH)."""
 
     hrus: Tuple[HRUsCommandRecord] = ()
@@ -90,7 +90,7 @@ class HRUsCommand(RavenRenderable):
 
 
 @dataclass
-class ReservoirCommand(RavenRenderable):
+class ReservoirCommand(RavenConfig):
     """:Reservoir command (RVH)."""
 
     subbasin_id: int = 0
@@ -119,7 +119,7 @@ class ReservoirCommand(RavenRenderable):
 
 
 @dataclass
-class ReservoirList(RavenRenderable):
+class ReservoirList(RavenConfig):
     """Sequence of :Reservoir commands."""
 
     reservoirs: Tuple[ReservoirCommand] = ()
@@ -129,7 +129,7 @@ class ReservoirList(RavenRenderable):
 
 
 @dataclass
-class SubBasinGroupCommand(RavenRenderable):
+class SubBasinGroupCommand(RavenConfig):
     """:SubBasinGroup command (RVH)."""
 
     name: str = ""
@@ -148,7 +148,7 @@ class SubBasinGroupCommand(RavenRenderable):
 
 
 @dataclass
-class ChannelProfileCommand(RavenRenderable):
+class ChannelProfileCommand(RavenConfig):
     """:ChannelProfile command (RVP)."""
 
     name: str = "chn_XXX"
@@ -188,7 +188,7 @@ class ChannelProfileList:
 
 
 @dataclass
-class GridWeightsCommand(RavenRenderable):
+class GridWeightsCommand(RavenConfig):
     """:GridWeights command."""
 
     number_hrus: int = 0
@@ -212,7 +212,7 @@ class GridWeightsCommand(RavenRenderable):
 
 
 @dataclass
-class GriddedForcingCommand(RavenRenderable):
+class GriddedForcingCommand(RavenConfig):
     """:GriddedForcing command (RVT)."""
 
     name: str = ""
@@ -240,7 +240,7 @@ class GriddedForcingCommand(RavenRenderable):
 
 
 @dataclass
-class HRUStateVariableTableCommandRecord(RavenRenderable):
+class HRUStateVariableTableCommandRecord(RavenConfig):
     index: int = 1
     surface_water: float = 0
     atmosphere: float = 0
@@ -362,7 +362,7 @@ class HRUStateVariableTableCommandRecord(RavenRenderable):
 
 
 @dataclass
-class HRUStateVariableTableCommand(RavenRenderable):
+class HRUStateVariableTableCommand(RavenConfig):
     """Initial condition for a given HRU."""
 
     template = """
@@ -383,7 +383,7 @@ class HRUStateVariableTableCommand(RavenRenderable):
 
 
 @dataclass
-class BasinIndexCommand(RavenRenderable):
+class BasinIndexCommand(RavenConfig):
     """Initial conditions for a flow segment."""
 
     template = """
@@ -420,7 +420,7 @@ class BasinIndexCommand(RavenRenderable):
 
 
 @dataclass
-class BasinStateVariablesCommand(RavenRenderable):
+class BasinStateVariablesCommand(RavenConfig):
 
     template = """
     :BasinStateVariables
