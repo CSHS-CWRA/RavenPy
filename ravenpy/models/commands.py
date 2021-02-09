@@ -5,8 +5,13 @@ from typing import Dict, Tuple
 INDENT = " " * 4
 
 
+class RavenRenderable:
+    def __str__(self):
+        return self.to_rv()
+
+
 @dataclass
-class SubBasinsCommandRecord:
+class SubBasinsCommandRecord(RavenRenderable):
     """Record to populate RVH :SubBasins command internal table."""
 
     subbasin_id: int = 0
@@ -16,7 +21,7 @@ class SubBasinsCommandRecord:
     reach_length: float = 0
     gauged: bool = False
 
-    def __repr__(self):
+    def to_rv(self):
         d = asdict(self)
         d["reach_length"] = d["reach_length"] if d["reach_length"] else "ZERO-"
         d["gauged"] = int(d["gauged"])
@@ -24,26 +29,26 @@ class SubBasinsCommandRecord:
 
 
 @dataclass
-class SubBasinsCommand:
+class SubBasinsCommand(RavenRenderable):
     """:SubBasins command (RVH)."""
 
     subbasins: Tuple[SubBasinsCommandRecord] = ()
 
     template = """
     :SubBasins
-      :Attributes   ID NAME DOWNSTREAM_ID PROFILE REACH_LENGTH  GAUGED
-      :Units      none none          none    none           km    none
-      {subbasin_records}
+        :Attributes   ID NAME DOWNSTREAM_ID PROFILE REACH_LENGTH  GAUGED
+        :Units      none none          none    none           km    none
+        {subbasin_records}
     :EndSubBasins
     """
 
-    def __repr__(self):
-        recs = [f"\t{sb}" for sb in self.subbasins]
+    def to_rv(self):
+        recs = [f"    {sb}" for sb in self.subbasins]
         return dedent(self.template).format(subbasin_records="\n".join(recs))
 
 
 @dataclass
-class HRUsCommandRecord:
+class HRUsCommandRecord(RavenRenderable):
     """Record to populate :HRUs command internal table (RVH)."""
 
     hru_id: int = 0
@@ -60,32 +65,32 @@ class HRUsCommandRecord:
     slope: float = 0.0
     aspect: float = 0.0
 
-    def __repr__(self):
+    def to_rv(self):
         d = asdict(self)
         return " ".join(map(str, d.values()))
 
 
 @dataclass
-class HRUsCommand:
+class HRUsCommand(RavenRenderable):
     """:HRUs command (RVH)."""
 
     hrus: Tuple[HRUsCommandRecord] = ()
 
     template = """
     :HRUs
-      :Attributes      AREA  ELEVATION       LATITUDE      LONGITUDE BASIN_ID       LAND_USE_CLASS           VEG_CLASS      SOIL_PROFILE  AQUIFER_PROFILE TERRAIN_CLASS      SLOPE     ASPECT
-      :Units            km2          m            deg            deg     none                  none               none              none             none          none        deg       degN
-      {hru_records}
+        :Attributes      AREA  ELEVATION       LATITUDE      LONGITUDE BASIN_ID       LAND_USE_CLASS           VEG_CLASS      SOIL_PROFILE  AQUIFER_PROFILE TERRAIN_CLASS      SLOPE     ASPECT
+        :Units            km2          m            deg            deg     none                  none               none              none             none          none        deg       degN
+        {hru_records}
     :EndHRUs
     """
 
-    def __repr__(self):
-        recs = [f"\t{hru}" for hru in self.hrus]
+    def to_rv(self):
+        recs = [f"    {hru}" for hru in self.hrus]
         return dedent(self.template).format(hru_records="\n".join(recs))
 
 
 @dataclass
-class ReservoirCommand:
+class ReservoirCommand(RavenRenderable):
     """:Reservoir command (RVH)."""
 
     subbasin_id: int = 0
@@ -108,23 +113,23 @@ class ReservoirCommand:
     :EndReservoir
     """
 
-    def __repr__(self):
+    def to_rv(self):
         d = asdict(self)
         return dedent(self.template).format(**d)
 
 
 @dataclass
-class ReservoirList:
+class ReservoirList(RavenRenderable):
     """Sequence of :Reservoir commands."""
 
     reservoirs: Tuple[ReservoirCommand] = ()
 
-    def __repr__(self):
+    def to_rv(self):
         return "\n\n".join(map(str, self.reservoirs))
 
 
 @dataclass
-class SubBasinGroupCommand:
+class SubBasinGroupCommand(RavenRenderable):
     """:SubBasinGroup command (RVH)."""
 
     name: str = ""
@@ -136,14 +141,14 @@ class SubBasinGroupCommand:
     :EndSubBasinGroup
     """
 
-    def __repr__(self):
+    def to_rv(self):
         d = asdict(self)
         d["subbasin_ids"] = map(str, self.subbasin_ids)
         return dedent(self.template).format(**d)
 
 
 @dataclass
-class ChannelProfileCommand:
+class ChannelProfileCommand(RavenRenderable):
     """:ChannelProfile command (RVP)."""
 
     name: str = "chn_XXX"
@@ -163,7 +168,7 @@ class ChannelProfileCommand:
     :EndChannelProfile
     """
 
-    def __repr__(self):
+    def to_rv(self):
         d = asdict(self)
         d["survey_points"] = "\n".join(
             f"{INDENT * 2}{p[0]} {p[1]}" for p in d["survey_points"]
@@ -178,12 +183,12 @@ class ChannelProfileCommand:
 class ChannelProfileList:
     channel_profiles: Tuple[ChannelProfileCommand] = ()
 
-    def __repr__(self):
+    def to_rv(self):
         return "\n\n".join(map(str, self.channel_profiles))
 
 
 @dataclass
-class GridWeightsCommand:
+class GridWeightsCommand(RavenRenderable):
     """:GridWeights command."""
 
     number_hrus: int = 0
@@ -198,16 +203,16 @@ class GridWeightsCommand:
     {indent}:EndGridWeights
     """
 
-    def __repr__(self, indent_level=0):
+    def to_rv(self, indent_level=0):
         indent = INDENT * indent_level
         d = asdict(self)
         d["indent"] = indent
-        d["data"] = "\n".join(f"{indent}\t{p[0]} {p[1]} {p[2]}" for p in self.data)
+        d["data"] = "\n".join(f"{indent}    {p[0]} {p[1]} {p[2]}" for p in self.data)
         return dedent(self.template).format(**d)
 
 
 @dataclass
-class GriddedForcingCommand:
+class GriddedForcingCommand(RavenRenderable):
     """:GriddedForcing command (RVT)."""
 
     name: str = ""
@@ -227,7 +232,7 @@ class GriddedForcingCommand:
     :EndGriddedForcing
     """
 
-    def __repr__(self):
+    def to_rv(self):
         d = asdict(self)
         d["dim_names_nc"] = " ".join(self.dim_names_nc)
         d["grid_weights"] = self.grid_weights
@@ -235,7 +240,7 @@ class GriddedForcingCommand:
 
 
 @dataclass
-class HRUStateVariableTableCommandRecord:
+class HRUStateVariableTableCommandRecord(RavenRenderable):
     index: int = 1
     surface_water: float = 0
     atmosphere: float = 0
@@ -352,12 +357,12 @@ class HRUStateVariableTableCommandRecord:
     conv_stor98: float = 0
     conv_stor99: float = 0
 
-    def __repr__(self):
+    def to_rv(self):
         return ",".join(map(repr, asdict(self).values()))
 
 
 @dataclass
-class HRUStateVariableTableCommand:
+class HRUStateVariableTableCommand(RavenRenderable):
     """Initial condition for a given HRU."""
 
     template = """
@@ -371,14 +376,14 @@ class HRUStateVariableTableCommand:
         default_factory=dict
     )
 
-    def __repr__(self):
+    def to_rv(self):
         return dedent(self.template).format(
             hru_states="\n".join(map(str, self.hru_states.values()))
         )
 
 
 @dataclass
-class BasinIndexCommand:
+class BasinIndexCommand(RavenRenderable):
     """Initial conditions for a flow segment."""
 
     template = """
@@ -400,7 +405,7 @@ class BasinIndexCommand:
     qlatlast: float = 0
     qin: tuple = 20 * (0,)
 
-    def __repr__(self):
+    def to_rv(self):
         return (
             dedent(self.template)
             .format(
@@ -415,7 +420,7 @@ class BasinIndexCommand:
 
 
 @dataclass
-class BasinStateVariablesCommand:
+class BasinStateVariablesCommand(RavenRenderable):
 
     template = """
     :BasinStateVariables
@@ -425,7 +430,7 @@ class BasinStateVariablesCommand:
 
     basin_states: Dict[int, BasinIndexCommand] = field(default_factory=dict)
 
-    def __repr__(self):
+    def to_rv(self):
         return dedent(self.template).format(
             basin_states_list="\n".join(map(str, self.basin_states.values()))
         )

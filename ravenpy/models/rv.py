@@ -19,6 +19,7 @@ from .commands import (
     HRUsCommandRecord,
     HRUStateVariableTableCommand,
     HRUStateVariableTableCommandRecord,
+    RavenRenderable,
     ReservoirCommand,
     ReservoirList,
     SubBasinGroupCommand,
@@ -153,7 +154,7 @@ class RVFile:
         return pattern.findall(self.content)
 
 
-class RV(collections.abc.Mapping):
+class RV(collections.abc.Mapping, RavenRenderable):
     """Generic configuration class.
 
     RV provides two mechanisms to set values, a dictionary-like interface and an object-like interface::
@@ -458,7 +459,7 @@ class RVT(RV):
                 if isinstance(val, dict):
                     self[key].update(val, force=True)
 
-    def __repr__(self):
+    def to_rv(self):
         return """
 {gridded_forcing_cmds}
         """.format(
@@ -763,7 +764,7 @@ class RVH(RV):
     def hrus_cmd(self):
         return HRUsCommand(self.hrus)
 
-    def __repr__(self):
+    def to_rv(self):
         params = self.items()
         return dedent(self.template).format(**dict(self.items()))
 

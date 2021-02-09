@@ -20,7 +20,7 @@ def test_generate_grid_weights_with_nc_input_and_2d_coords():
     assert not result.exception
     assert ":NumberHRUs 51" in result.output
     assert ":NumberGridCells 100" in result.output
-    assert len(result.output.split("\n")) == 216
+    assert len(result.output.split("\n")) == 218
 
     # check derived weights
     weight = float(re.search("1 52 (.+)", result.output).group(1))
@@ -47,7 +47,7 @@ def test_generate_grid_weights_with_multiple_subids():
     assert not result.exception
     assert ":NumberHRUs 51" in result.output
     assert ":NumberGridCells 100" in result.output
-    assert len(result.output.split("\n")) == 216
+    assert len(result.output.split("\n")) == 218
 
     # check derived weights
     weight = float(re.search("1 52 (.+)", result.output).group(1))
@@ -71,7 +71,7 @@ def test_generate_grid_weights_with_nc_input_and_1d_coords():
     assert not result.exception
     assert ":NumberHRUs 51" in result.output
     assert ":NumberGridCells 9801" in result.output
-    assert len(result.output.split("\n")) == 128
+    assert len(result.output.split("\n")) == 130
 
     # check derived weights
     weight = float(re.search("4 3731 (.+)", result.output).group(1))
@@ -92,7 +92,7 @@ def test_generate_grid_weights_with_shp_input():
     assert not result.exception
     assert ":NumberHRUs 51" in result.output
     assert ":NumberGridCells 810" in result.output
-    assert len(result.output.split("\n")) == 230
+    assert len(result.output.split("\n")) == 232
 
     # check derived weights
     weight = float(re.search("13 238 (.+)", result.output).group(1))
@@ -115,7 +115,7 @@ def test_generate_grid_weights_with_weight_rescaling():
     assert not result.exception
     assert ":NumberHRUs 51" in result.output
     assert ":NumberGridCells 810" in result.output
-    assert len(result.output.split("\n")) == 230
+    assert len(result.output.split("\n")) == 232
 
     # check derived weights
     weight = float(re.search("13 238 (.+)", result.output).group(1))
