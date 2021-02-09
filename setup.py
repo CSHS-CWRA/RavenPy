@@ -24,6 +24,7 @@ requirements = [
     "numpy",
     "pandas",
     "requests",
+    "scipy",
     "statsmodels",
     "xarray",
     "xclim>=0.23",

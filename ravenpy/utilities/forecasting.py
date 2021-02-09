@@ -16,12 +16,24 @@ import datetime as dt
 import logging
 import re
 import warnings
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
-import rioxarray
 import xarray as xr
 from xclim import subset
+
+from .. import RavenPyDependencyError
+
+try:
+    import rioxarray
+except ModuleNotFoundError as e:
+    msg = (
+        f"`{Path(__file__).stem}` requires installation of the RavenPy GIS libraries. These can be installed using the"
+        " `pip install ravenpy[gis]` recipe or via Anaconda (`conda env -n ravenpy-env -f environment.yml`)"
+        " from the RavenPy repository source files."
+    )
+    raise RavenPyDependencyError(msg) from e
 
 from ravenpy.models import get_model
 

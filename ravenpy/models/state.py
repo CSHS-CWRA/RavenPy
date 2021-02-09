@@ -10,7 +10,7 @@ Implemented using typing.NamedTuple
 Use _replace to update individual values.
 
 """
-from typing import List, NamedTuple, Tuple
+from typing import NamedTuple
 
 
 class HRUStateVariables(NamedTuple):
