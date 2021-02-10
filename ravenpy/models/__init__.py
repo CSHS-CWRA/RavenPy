@@ -1,4 +1,5 @@
 import os
+from .aggregate_forcings_to_HRUs import aggregate_forcings_to_HRUs
 from .base import Raven, Ostrich
 from .emulators import GR4JCN, MOHYSE, HMETS, HBVEC, get_model
 from .emulators import GR4JCN_OST, MOHYSE_OST, HMETS_OST, HBVEC_OST
