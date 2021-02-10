@@ -180,8 +180,8 @@ def update_state(x, qobs_pert, qobs_error, qsim):
     ndarray (n_states, n_members)
       Model state values after assimilation.
 
-    Reference
-    ---------
+    References
+    ----------
     The Ensemble Kalman Filter: theoretical formulation and practical implementation, Evensen 2003
     https://link.springer.com/article/10.1007%2Fs10236-003-0036-9
 
