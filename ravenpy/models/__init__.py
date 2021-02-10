@@ -1,5 +1,6 @@
 import os
-from .base import Raven, Ostrich
+
+from .base import Ostrich, Raven
 from .emulators import *
 from .multimodel import RavenMultiModel
 from .rv import RV, RVI

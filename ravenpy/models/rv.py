@@ -1,17 +1,31 @@
 import collections
 import datetime as dt
+from dataclasses import dataclass
 from pathlib import Path
-from dataclasses import dataclass, field
+from textwrap import dedent
+from typing import Dict, List, Tuple
 
 import cftime
 import geopandas
 import six
 from xclim.core.units import units, units2pint
-from typing import List, Tuple, Dict
 
-from .state import BasinStateVariables, HRUStateVariables, HRUStateVariableTableCommand, BasinStateVariablesCommand
-from .commands import SubBasinsCommandRecord, SubBasinsCommand, SubBasinGroupCommand, ReservoirCommand, HRUsCommand, \
-    HRUsCommandRecord, ReservoirList, ChannelProfileCommand, ChannelProfileList
+from .commands import (
+    BasinIndexCommand,
+    BasinStateVariablesCommand,
+    ChannelProfileCommand,
+    ChannelProfileList,
+    HRUsCommand,
+    HRUsCommandRecord,
+    HRUStateVariableTableCommand,
+    HRUStateVariableTableCommandRecord,
+    RavenConfig,
+    ReservoirCommand,
+    ReservoirList,
+    SubBasinGroupCommand,
+    SubBasinsCommand,
+    SubBasinsCommandRecord,
+)
 
 """
 Raven configuration
@@ -140,7 +154,7 @@ class RVFile:
         return pattern.findall(self.content)
 
 
-class RV(collections.abc.Mapping):
+class RV(collections.abc.Mapping, RavenConfig):
     """Generic configuration class.
 
     RV provides two mechanisms to set values, a dictionary-like interface and an object-like interface::
@@ -187,7 +201,12 @@ class RV(collections.abc.Mapping):
         a = list(filter(lambda x: not x.startswith("_"), self.__dict__))
 
         # Properties
-        p = list(filter(lambda x: isinstance(getattr(self.__class__, x, None), property), dir(self)))
+        p = list(
+            filter(
+                lambda x: isinstance(getattr(self.__class__, x, None), property),
+                dir(self),
+            )
+        )
         return a + p
 
     def items(self):
@@ -439,9 +458,7 @@ class RVT(RV):
         return """
 {gridded_forcing_cmds}
         """.format(
-            gridded_forcing_cmds="\n\n".join(
-                [gf.to_rv() for gf in self._gridded_forcings]
-            ),
+            gridded_forcing_cmds="\n\n".join(map(str, self._gridded_forcings)),
         )
 
 
@@ -654,9 +671,14 @@ class RVI(RV):
 
 
 class RVC(RV):
-    def __init__(self, **kwds):
-        self.hru_states = {}
-        self.basin_states = {}
+    def __init__(
+        self,
+        hru_states: Dict[int, HRUStateVariableTableCommandRecord] = None,
+        basin_states: Dict[int, BasinIndexCommand] = None,
+        **kwds,
+    ):
+        self.hru_states = hru_states or {}
+        self.basin_states = basin_states or {}
         super().__init__(**kwds)
 
     def parse(self, rvc):
@@ -697,26 +719,25 @@ class RVC(RV):
         return BasinStateVariablesCommand(self.basin_states)
 
 
+@dataclass
 class RVH(RV):
-    def __init__(self, **kwds):
-        self.subbasins = (SubBasinsCommandRecord(),)
-        self.land_subbasins = ()
-        self.lake_subbasins = ()
-        self.reservoirs = ()
-        self.hrus = ()
-        super().__init__(**kwds)
+    subbasins: Tuple[SubBasinsCommandRecord] = (SubBasinsCommandRecord(),)
+    land_subbasins: Tuple[int] = ()
+    lake_subbasins: Tuple[int] = ()
+    reservoirs: Tuple[ReservoirCommand] = ()
+    hrus: Tuple[HRUsCommandRecord] = ()
 
     template = """
-{subbasins_cmd}
+    {subbasins_cmd}
 
-{hrus_cmd}
+    {hrus_cmd}
 
-{land_subbasin_group_cmd}
+    {land_subbasin_group_cmd}
 
-{lake_subbasin_group_cmd}
+    {lake_subbasin_group_cmd}
 
-{reservoir_list_cmd}
-        """
+    {reservoir_list_cmd}
+    """
 
     @property
     def subbasins_cmd(self):
@@ -740,13 +761,12 @@ class RVH(RV):
 
     def to_rv(self):
         params = self.items()
-        return self.template.format(**dict(self.items()))
+        return dedent(self.template).format(**dict(self.items()))
 
 
+@dataclass
 class RVP(RV):
-    def __init__(self, **kwds):
-        self.channel_profiles = ()
-        super().__init__(**kwds)
+    channel_profiles: Tuple[ChannelProfileCommand] = ()
 
     @property
     def channel_profile_list(self):
@@ -823,11 +843,11 @@ def get_states(solution, hru_index=None, basin_index=None):
     basin_state = {}
 
     for index, params in solution["HRUStateVariableTable"]["data"].items():
-        hru_state[index] = HRUStateVariables(*params)
+        hru_state[index] = HRUStateVariableTableCommandRecord(*params)
 
     for index, raw in solution["BasinStateVariables"]["BasinIndex"].items():
         params = {k.lower(): v for (k, v) in raw.items()}
-        basin_state[index] = BasinStateVariables(**params)
+        basin_state[index] = BasinIndexCommand(**params)
 
     if hru_index is not None:
         hru_state = hru_state[hru_index]
@@ -891,6 +911,6 @@ def _parser(lines, indent="", fmt=str):
         else:
             data = line.split(",")
             i = int(data.pop(0))
-            out["data"][i] = [i, ] + list(map(float, data))
+            out["data"][i] = [i] + list(map(float, data))
 
     return out

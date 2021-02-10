@@ -3,13 +3,10 @@ import os
 import tempfile
 import zipfile
 from dataclasses import replace
+
 import numpy as np
 import pytest
 import xarray as xr
-from ravenpy.models.importers import (
-    RoutingProductGridWeightImporter,
-    RoutingProductShapefileImporter,
-)
 
 from ravenpy.models import (
     GR4JCN,
@@ -23,20 +20,24 @@ from ravenpy.models import (
     Raven,
     Routing,
 )
-from ravenpy.models.state import HRUStateVariables
-from ravenpy.utilities.testdata import get_test_data
+from ravenpy.models.commands import HRUStateVariableTableCommandRecord
+from ravenpy.models.importers import (
+    RoutingProductGridWeightImporter,
+    RoutingProductShapefileImporter,
+)
+from ravenpy.utilities.testdata import get_local_testdata
 
 from .common import _convert_2d
 
-TS = get_test_data(
-    "raven-gr4j-cemaneige", "Salmon-River-Near-Prince-George_meteo_daily.nc"
+TS = get_local_testdata(
+    "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
 )
 
 
 @pytest.fixture
 def input2d(tmpdir):
     """Convert 1D input to 2D output by copying all the time series along a new region dimension."""
-    ds = _convert_2d(TS[0])
+    ds = _convert_2d(TS)
     fn_out = os.path.join(tmpdir, "input2d.nc")
     ds.to_netcdf(fn_out)
     return fn_out
@@ -172,7 +173,7 @@ class TestGR4JCN:
         model(
             TS,
             end_date=dt.datetime(2001, 2, 1),
-            hru_state=HRUStateVariables(soil0=0),
+            hru_state=HRUStateVariableTableCommandRecord(soil0=0),
             overwrite=True,
         )
         assert model.q_sim.isel(time=1).values[0] < qsim2.isel(time=1).values[0]
@@ -1075,5 +1076,3 @@ class TestRouting:
         importer = RoutingProductShapefileImporter(shp)
         config = importer.extract()
         model(**config)
-
-

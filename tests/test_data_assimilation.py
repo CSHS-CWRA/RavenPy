@@ -3,6 +3,7 @@ import os
 import pdb
 import tempfile
 from copy import deepcopy
+from dataclasses import replace
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -11,16 +12,16 @@ import pytest
 import xarray as xr
 
 from ravenpy.models import GR4JCN
+from ravenpy.models.commands import BasinIndexCommand
 from ravenpy.models.rv import RVC
-from ravenpy.models.state import BasinStateVariables
 from ravenpy.utilities.data_assimilation import assimilate, perturbation
-from ravenpy.utilities.testdata import get_test_data
+from ravenpy.utilities.testdata import get_local_testdata
 
 
 def test_perturbation():
-    ts = get_test_data(
-        "raven-gr4j-cemaneige", "Salmon-River-Near-Prince-George_meteo_daily.nc"
-    )[0]
+    ts = get_local_testdata(
+        "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
+    )
     ds = xr.open_dataset(ts)
 
     tmax = ds.tmax.isel(time=slice(0, 10))
@@ -39,9 +40,9 @@ class TestAssimilationGR4JCN:
     def test_simple(self):
 
         # get timeseries
-        ts = get_test_data(
-            "raven-gr4j-cemaneige", "Salmon-River-Near-Prince-George_meteo_daily.nc"
-        )[0]
+        ts = get_local_testdata(
+            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
+        )
 
         # set number of members. Using 7 here to make it easier to find and debug.
         n_members = 7
@@ -160,7 +161,7 @@ class TestAssimilationGR4JCN:
             # Get new initial conditions and feed assimilated values
             hru_states, basin_states = model.get_final_state()
             hru_states = [
-                hru_states[i]._replace(**dict(zip(assim_var, xa[:, i])))
+                replace(hru_states[i], **dict(zip(assim_var, xa[:, i])))
                 for i in range(n_members)
             ]
 
@@ -170,12 +171,8 @@ class TestAssimilationGR4JCN:
         model.rvi.run_name = "ref"
         model.rvi.start_date = start_date
         model.rvi.end_date = end_date
-        model.rvc = RVC(soil0=None, soil1=15, basin_state=BasinStateVariables())
-        model(
-            [
-                ts,
-            ]
-        )
+        model.rvc = RVC(soil0=None, soil1=15, basin_state=BasinIndexCommand())
+        model([ts])
 
         # We can now plot everything!
         plt.plot(q_assim.T, "r", label="Assimilated")  # plot the assimilated flows
@@ -184,7 +181,7 @@ class TestAssimilationGR4JCN:
             model.q_sim, "g", label="Simulated"
         )  # plot the open_loop (simulation with no assimilation)
         # plt.legend()
-        plt.show()
+        # plt.show()
 
         assert q_assim.shape[0] == n_members
         assert q_assim.shape[1] == sum(assim_days)

@@ -100,14 +100,8 @@ class RoutingProductShapefileImporter:
             # ChannelProfile
             channel_profile_cmds.append(self._extract_channel_profile(row))
 
-        return dict(subbasins=subbasin_recs,
-                    land_subbasins=land_sb_ids,
-                    lake_subbasins=lake_sb_ids,
-                    reservoirs=reservoir_cmds,
-                    channel_profiles=channel_profile_cmds,
-                    hrus=hru_recs)
-
-        return (subbasin_recs,
+        return (
+            subbasin_recs,
             land_sb_ids,
             lake_sb_ids,
             reservoir_cmds,
@@ -319,7 +313,7 @@ class RoutingProductGridWeightImporter:
         if self._sub_ids:
             # Here we want to extract the network of connected subbasins by going upstream via their DowSubId,
             # starting from the list supplied by the user (either directly, or via their gauge IDs).. We first
-            # build a map of downSubID -> subID for effficient lookup
+            # build a map of downSubID -> subID for efficient lookup
             downsubid_to_subids = defaultdict(set)
             for _, r in self._routing_data.iterrows():
                 downsubid_to_subids[r.DowSubId].add(r.SubId)

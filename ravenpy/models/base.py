@@ -407,7 +407,7 @@ class Raven:
         for p in self._parallel_parameters:
             a = kwds.pop(p, None)
 
-            if a is not None and p in ["params",]:
+            if a is not None and p in ["params"]:
                 pdict[p] = np.atleast_2d(a)
             else:
                 pdict[p] = np.atleast_1d(a)
@@ -535,6 +535,8 @@ class Raven:
             except UserWarning as exc:
                 if key != "diagnostics":
                     raise exc
+                else:
+                    continue
 
             fns.sort()
             self.ind_outputs[key] = fns

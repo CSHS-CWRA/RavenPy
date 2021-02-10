@@ -2,7 +2,12 @@ from pathlib import Path
 
 import xarray
 
-from ravenpy.tutorial import _default_cache_dir, get_file, open_dataset, query_folder
+from ravenpy.utilities.testdata import (
+    _default_cache_dir,
+    get_file,
+    open_dataset,
+    query_folder,
+)
 
 
 class TestRemoteFileAccess:
@@ -76,7 +81,6 @@ class TestQueryFolder:
 
     def test_query_specific_folder(self):
         folder = query_folder(folder="raven-gr4j-cemaneige", branch=self.branch)
-        print(folder)
         assert len(folder) == 8
 
     def test_query_folder_patterns(self):
