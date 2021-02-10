@@ -44,6 +44,7 @@ except ModuleNotFoundError as e:
 
 import numpy as np
 
+# FIXME: Changes for this file currently in RAVEN need to be ported here. Everything below this line is not current.
 LOGGER = logging.getLogger("RAVEN")
 
 # See: https://kokoalberti.com/articles/geotiff-compression-optimization-guide/
