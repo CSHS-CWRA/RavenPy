@@ -78,6 +78,9 @@ def aggregate_forcings_to_HRUs( input_file, routing_file, output_file,
     nc_dim_time = nc_out.createDimension('time',ntime)
     nc_dim_hrus = nc_out.createDimension('nHRU',nHRU)
 
+    # copy all global attributes over
+    nc_out.setncatts(nc_in.__dict__)
+
     # create all variables in output NC (incl. time) and copy over all attributes
     for name, variable in nc_in.variables.items():
         if name in variables_to_aggregate+['time']:
