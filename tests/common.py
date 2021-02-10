@@ -5,7 +5,11 @@ import pandas as pd
 import xarray as xr
 
 
-def count_pixels(stats, numeric_categories=False):
+def test_data() -> Path:
+    return Path(__file__).parent.joinpath("testdata")
+
+
+def count_pixels(stats: dict, numeric_categories=False) -> int:
     category_counts = 0
     for key, val in stats.items():
         if numeric_categories:
