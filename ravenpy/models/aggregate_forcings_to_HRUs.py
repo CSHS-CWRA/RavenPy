@@ -1,5 +1,6 @@
 from ravenpy.models.importers import (
-    RoutingProductGridWeightImporter,  
+    RoutingProductGridWeightImporter,
+    GridWeightsCommand
 )
 import netCDF4 as nc4
 import numpy as np
@@ -11,6 +12,54 @@ ROUTING_ID_FIELD = "HRU_ID"
 NETCDF_INPUT_FIELD = "NetCDF_col"
 AREA_ERROR_THRESHOLD = 0.05
 VARIABLES_TO_AGGREGATE = ["Streaminputs"]
+
+def convert_cell_id_to_ilat_ilon( gws, nlon, nlat ):
+    """
+    Purpose:
+       convert cell_id used in weights file (required by Raven) into 
+       latitude ID (ilat) and longitude ID (ilon);
+       both starting with 0
+
+    Return:
+      gridweights structure with (ilon, ilat) instead of (cell_id)
+
+    Arguments:
+      gws  (structure) ... grid-weights-structure as returned by RoutingProductGridWeightImporter and then extracted()
+      nlon (integer)   ... number longitudes NetCDF file
+      nlat (integer)   ... number latitudes  NetCDF file
+    """
+
+    nHRU         = gws.number_hrus
+    nCells       = gws.number_grid_cells
+    weights_data = gws.data
+
+    # check that this matches the nCells from grid-weights
+    # (basically making sure these are the same NetCDF files; not sure how that would happen but just to be on the safe side)
+    if nlon*nlat != nCells:
+        raise ValueError(
+                "Number of cells used to derive grid-weights does not match NetCDF provided for aggregating variables"
+            )
+
+    # convert weights (cell_id) required by Raven into (lon_id,lat_id)
+    # cell_id = ilat * nlon + ilon
+    # ---> ilon = cell_id %  nlon
+    # ---> ilat = cell_id // nlon
+    weights_data_lon_lat_ids = []
+    for iweights_data in weights_data:
+
+        cell_id = iweights_data[1]
+        ilon = cell_id %  nlon
+        ilat = cell_id // nlon
+        weights_data_lon_lat_ids.append( tuple( [ iweights_data[0],ilon,ilat,iweights_data[2] ] ) )
+    weights_data_lon_lat_ids = np.array(weights_data_lon_lat_ids)   # because I dont know how to do most operations elegantly with lists of tuples
+
+    gws = GridWeightsCommand(
+            number_hrus=nHRU,
+            number_grid_cells=nCells,
+            data=weights_data_lon_lat_ids,
+        )
+
+    return gws
 
 def aggregate_forcings_to_HRUs( input_file, routing_file, output_file,
                                     dim_names=DIM_NAMES,
@@ -26,11 +75,12 @@ def aggregate_forcings_to_HRUs( input_file, routing_file, output_file,
     """
     arguments:
          all same as in RoutingProductGridWeightImporter
-         variables_to_aggregate ... list of strings of netcdf variables that will be aggregated
-                                    variable needs to be 3D (lat, lon, time) - dimension order does not matter
+         output_file            (string)          ... filename of output NetCDF file
+         variables_to_aggregate (list of strings) ... netcdf variables that will be aggregated
+                                                      variable needs to be 3D (lat, lon, time) - dimension order does not matter
+                                    
     """
 
-    
     importer = RoutingProductGridWeightImporter(input_file, routing_file,
                                                     dim_names=dim_names, var_names=var_names,
                                                     routing_id_field=routing_id_field,
@@ -53,32 +103,16 @@ def aggregate_forcings_to_HRUs( input_file, routing_file, output_file,
     nlat  = nc_in.dimensions[dim_names[1]].size
     ntime = nc_in.dimensions['time'].size
 
-    # check that this matches the nCells from grid-weights
-    # (basically making sure these are the same NetCDF files; not sure how that would happen but just to be on the safe side)
-    if nlon*nlat != nCells:
-        raise ValueError(
-                "Number of cells used to derive grid-weights does not match NetCDF provided for aggregating variables"
-            )
-
-    # convert cell_id (from weights) into (lat_id and lon_id)
-    # cell_id = ilat * nlon + ilon
-    # ---> ilon = cell_id %  nlon
-    # ---> ilat = cell_id // nlon
-    weights_data_lon_lat_ids = []
-    for iweights_data in weights_data:
-
-        cell_id = iweights_data[1]
-        ilon = cell_id %  nlon
-        ilat = cell_id // nlon
-        weights_data_lon_lat_ids.append( tuple( [ iweights_data[0],ilon,ilat,iweights_data[2] ] ) )
-    weights_data_lon_lat_ids = np.array(weights_data_lon_lat_ids)   # because I dont know how to do most operations elegantly with lists of tuples
+    # convert weights structure to (ilon, ilat) instead of (cell_id)
+    gws_lon_lat = convert_cell_id_to_ilat_ilon(gws,nlon,nlat)
+    weights_data_lon_lat_ids = gws_lon_lat.data
 
     # create new NetCDF that will contain aggregated data of listed variables
     nc_out = nc4.Dataset(output_file,'w')
     nc_dim_time = nc_out.createDimension('time',ntime)
     nc_dim_hrus = nc_out.createDimension('nHRU',nHRU)
 
-    # copy all global attributes over
+    # copy all global attributes over 
     nc_out.setncatts(nc_in.__dict__)
 
     # create all variables in output NC (incl. time) and copy over all attributes
@@ -156,7 +190,13 @@ def aggregate_forcings_to_HRUs( input_file, routing_file, output_file,
     # the return should actually look exactly like the return of "RoutingProductGridWeightImporter"
     # not sure how to do that
 
-    return new_weights
+    gws_new = GridWeightsCommand(
+            number_hrus=nHRU,
+            number_grid_cells=nHRU,
+            data=new_weights,
+        )
+
+    return gws_new
 
 
 
@@ -173,7 +213,6 @@ def aggregate_forcings_to_HRUs( input_file, routing_file, output_file,
 # gauge_ids=None
 # sub_ids=None
 # area_error_threshold=AREA_ERROR_THRESHOLD
-
 
 
 
