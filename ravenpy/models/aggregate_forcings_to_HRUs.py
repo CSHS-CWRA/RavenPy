@@ -88,6 +88,7 @@ def aggregate_forcings_to_HRUs( input_file, routing_file, output_file,
                                                     gauge_ids=gauge_ids,
                                                     sub_ids=sub_ids,
                                                     area_error_threshold=area_error_threshold)
+    
     gws = importer.extract()
 
     nHRU         = gws.number_hrus
@@ -132,7 +133,6 @@ def aggregate_forcings_to_HRUs( input_file, routing_file, output_file,
             if name == 'time':
                 nc_out[name][:] = nc_in[name][:]
 
-
     for variable_to_aggregate in variables_to_aggregate:
 
         # read 3D variable
@@ -152,6 +152,18 @@ def aggregate_forcings_to_HRUs( input_file, routing_file, output_file,
         idx_lon_dim  = input_var.dimensions.index( dim_names[0] )
         idx_lat_dim  = input_var.dimensions.index( dim_names[1] )
         idx_time_dim = input_var.dimensions.index('time')
+
+        # read in data for bounding box (is faster than reading then every single cell individually)
+        # --> this takes most time for large NetCDFs
+        min_lon = int(np.min(weights_data_lon_lat_ids[:,1]))
+        max_lon = int(np.max(weights_data_lon_lat_ids[:,1]))
+        min_lat = int(np.min(weights_data_lon_lat_ids[:,2]))
+        max_lat = int(np.max(weights_data_lon_lat_ids[:,2]))
+        idx_input              = [slice(0,ntime,1), slice(0,ntime,1), slice(0,ntime,1)]
+        idx_input[idx_lon_dim] = slice(min_lon, max_lon+1,1)
+        idx_input[idx_lat_dim] = slice(min_lat, max_lat+1,1)
+        idx_input = tuple( idx_input )
+        input_var_bb = input_var[idx_input]
 
         # list of HRU IDs
         hrus = np.unique( weights_data_lon_lat_ids[:,0] )
@@ -173,11 +185,13 @@ def aggregate_forcings_to_HRUs( input_file, routing_file, output_file,
             idx = np.where( weights_data_lon_lat_ids[:,0] == hru )[0]
 
             for ii in idx:
+
                 # bring idx for input_var in appropriate order
                 idx_input = [slice(0,ntime,1), slice(0,ntime,1), slice(0,ntime,1)]
-                idx_input[idx_lon_dim] = int(weights_data_lon_lat_ids[ii,1])
-                idx_input[idx_lat_dim] = int(weights_data_lon_lat_ids[ii,2])
-                agg_var[:,ihru] +=  input_var[idx_input] * weights_data_lon_lat_ids[ii,3]
+                idx_input[idx_lon_dim] = int(weights_data_lon_lat_ids[ii,1]) - min_lon
+                idx_input[idx_lat_dim] = int(weights_data_lon_lat_ids[ii,2]) - min_lat
+                idx_input = tuple( idx_input )
+                agg_var[:,ihru] +=  input_var_bb[idx_input] * weights_data_lon_lat_ids[ii,3]
 
             # create new weights: now each HRU is exactly one "grid-cell"
             new_weights.append( tuple( [hru,ihru,1.0] ) )
