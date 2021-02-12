@@ -634,9 +634,9 @@ class Raven:
         """
         files = list(path.rglob(pattern))
 
-        # TODO: Fix this. Raven won't have rvi.suppress_output is initialized with existing configuration files.
-        if len(files) == 0 and not self.rvi.suppress_output:
-            raise UserWarning("No output files for {} in {}.".format(pattern, path))
+        if len(files) == 0:
+            if not (isinstance(self.rvi, RVI) and self.rvi.suppress_output):
+                raise UserWarning("No output files for {} in {}.".format(pattern, path))
 
         return [f.absolute() for f in files]
 
