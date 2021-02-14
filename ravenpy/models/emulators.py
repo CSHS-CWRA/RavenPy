@@ -6,7 +6,7 @@ import xarray as xr
 from ravenpy.models import Ostrich, Raven
 
 from .commands import BasinIndexCommand, HRUStateVariableTableCommandRecord
-from .rv import RV, RVC, RVI, RVT, MonthlyAverage, Ost, RavenNcData
+from .rv import RV, RVC, RVH, RVI, RVP, RVT, MonthlyAverage, Ost, RavenNcData
 
 __all__ = [
     "GR4JCN",
@@ -454,23 +454,15 @@ class Routing(Raven):
     def __init__(self, *args, **kwds):
         super().__init__(*args, **kwds)
 
-        self.rvp = RV(params=Routing.params())
-        self.rvt = RVT(water_volume_transport_in_river_channel=nc())
-        self.rvi = RVI()
-        self.rvh = RVH()
-
         # Declare the parameters that can be user-modified.
-        self.rvc = RVC(soil0=15, basin_state=BasinStateVariables())
-        self.rvd = RV(avg_annual_runoff=500)
+
+        self.rvi = RVI()
+        self.rvp = RVP()
+        self.rvh = RVH()
+        self.rvt = RVT()
 
     def derived_parameters(self):
-        # Default initial conditions if none are given
-        for hru in self.rvc.hrus:
-            i = hru.hru_id
-            if i not in self.rvc_hru_states:
-                self.rvc.hru_states[i] = HRUStateVariables(
-                    index=i, soil0=self.rvc.soil0
-                )
+        pass
 
         # TODO: Compute this from the input file
         # self.rvd["avg_annual_runoff"] = ?

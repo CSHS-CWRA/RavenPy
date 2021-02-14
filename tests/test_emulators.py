@@ -1,10 +1,12 @@
 import datetime as dt
 import os
 import tempfile
+import time
 import zipfile
 from dataclasses import replace
 
 import numpy as np
+import pandas as pd
 import pytest
 import xarray as xr
 
@@ -20,11 +22,15 @@ from ravenpy.models import (
     Raven,
     Routing,
 )
-from ravenpy.models.commands import HRUStateVariableTableCommandRecord
+from ravenpy.models.commands import (
+    GriddedForcingCommand,
+    HRUStateVariableTableCommandRecord,
+)
 from ravenpy.models.importers import (
     RoutingProductGridWeightImporter,
     RoutingProductShapefileImporter,
 )
+from ravenpy.models.rv import RVH
 from ravenpy.utilities.testdata import get_local_testdata
 
 from .common import _convert_2d
@@ -1069,10 +1075,124 @@ class TestHBVEC_OST:
 
 
 class TestRouting:
-    @pytest.mark.xfail
-    def test_tutorial(self):
-        shp = get_test_data("raven-routing-sample", "finalcat_hru_info.zip")[0]
-        model = Routing()
-        importer = RoutingProductShapefileImporter(shp)
-        config = importer.extract()
-        model(**config)
+    def test_lievre_tutorial(self):
+        def to_py_datetime(x_dt):
+            """
+            It's pretty obvious that there exists a more obvious way but I'm tired
+            of searching for what should be "obvious".
+            """
+            return dt.datetime(
+                x_dt.year.item(),
+                x_dt.month.item(),
+                x_dt.day.item(),
+                x_dt.hour.item(),
+                x_dt.minute.item(),
+                x_dt.second.item(),
+            )
+
+        ###############
+        # Input files #
+        ###############
+
+        routing_product_shp = get_local_testdata(
+            "raven-routing-sample/finalcat_hru_info.zip"
+        )
+        vic_streaminputs_nc = get_local_testdata(
+            "raven-routing-sample/VIC_streaminputs_COPY.nc"
+        )
+        vic_temperatures_nc = get_local_testdata(
+            "raven-routing-sample/VIC_temperatures_COPY.nc"
+        )
+
+        #########
+        # Model #
+        #########
+
+        model = Routing("/tmp/ravenpy_routing_emu_dev")
+
+        #######
+        # RVI #
+        #######
+
+        streaminputs = xr.open_dataset(vic_streaminputs_nc)
+
+        start_date = streaminputs.time[0].dt
+        end_date = streaminputs.time[-1].dt
+
+        # Round to hours
+        n_seconds = (
+            ((streaminputs.time[-1] - streaminputs.time[0]) / len(streaminputs.time))
+            .dt.round("h")
+            .dt.seconds.item()
+        )
+        # Warning: this is only good up to 24 hours (24:00:00)
+        time_step = time.strftime("%H:%M:%S", time.gmtime(n_seconds))
+
+        model.rvi.start_date = to_py_datetime(start_date)
+        model.rvi.end_date = to_py_datetime(end_date)
+        model.rvi.time_step = time_step
+
+        #######
+        # RVH #
+        #######
+
+        rvh_importer = RoutingProductShapefileImporter(routing_product_shp)
+        (
+            subbasins,
+            land_group,
+            lake_group,
+            reservoirs,
+            channels,
+            hrus,
+        ) = rvh_importer.extract()
+
+        model.rvh.subbasins = subbasins
+        model.rvh.land_subbasins = land_group
+        model.rvh.lake_subbasins = land_group
+        model.rvh.reservoirs = reservoirs
+        model.rvh.hrus = hrus
+
+        #######
+        # RVP #
+        #######
+
+        model.rvp.avg_annual_runoff = 594
+        model.rvp.channel_profile_list = channels
+
+        #######
+        # RVT #
+        #######
+
+        streaminputs_importer = RoutingProductGridWeightImporter(
+            vic_streaminputs_nc, routing_product_shp
+        )
+
+        temperatures_importer = RoutingProductGridWeightImporter(
+            vic_temperatures_nc, routing_product_shp
+        )
+
+        streaminputs_gf = GriddedForcingCommand(
+            name="StreamInputs",
+            forcing_type="PRECIP",
+            file_name_nc="VIC_streaminputs_COPY.nc",
+            var_name_nc="bla",
+            dim_names_nc=("lon", "lat", "time"),
+            grid_weights=streaminputs_importer.extract(),
+        )
+
+        temperatures_gf = GriddedForcingCommand(
+            name="AverageTemp",
+            forcing_type="TEMP_AVE",
+            file_name_nc="VIC_temperatures_COPY.nc",
+            var_name_nc="bla",
+            dim_names_nc=("lon", "lat", "time"),
+            grid_weights=temperatures_importer.extract(),
+        )
+
+        model.rvt.gridded_forcings = [streaminputs_gf, temperatures_gf]
+
+        #############
+        # Run model #
+        #############
+
+        model([vic_streaminputs_nc, vic_temperatures_nc])

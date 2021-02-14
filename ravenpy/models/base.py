@@ -398,9 +398,7 @@ class Raven:
 
         """
         if isinstance(ts, (six.string_types, Path)):
-            ts = [
-                ts,
-            ]
+            ts = [ts]
 
         # Case for potentially parallel parameters
         pdict = {}

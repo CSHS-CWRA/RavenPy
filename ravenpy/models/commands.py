@@ -119,16 +119,6 @@ class ReservoirCommand(RavenConfig):
 
 
 @dataclass
-class ReservoirList(RavenConfig):
-    """Sequence of :Reservoir commands."""
-
-    reservoirs: Tuple[ReservoirCommand] = ()
-
-    def to_rv(self):
-        return "\n\n".join(map(str, self.reservoirs))
-
-
-@dataclass
 class SubBasinGroupCommand(RavenConfig):
     """:SubBasinGroup command (RVH)."""
 
@@ -143,7 +133,7 @@ class SubBasinGroupCommand(RavenConfig):
 
     def to_rv(self):
         d = asdict(self)
-        d["subbasin_ids"] = map(str, self.subbasin_ids)
+        d["subbasin_ids"] = " ".join(map(str, self.subbasin_ids))
         return dedent(self.template).format(**d)
 
 
@@ -177,14 +167,6 @@ class ChannelProfileCommand(RavenConfig):
             f"{INDENT * 2}{z[0]} {z[1]}" for z in d["roughness_zones"]
         )
         return dedent(self.template).format(**d)
-
-
-@dataclass
-class ChannelProfileList:
-    channel_profiles: Tuple[ChannelProfileCommand] = ()
-
-    def to_rv(self):
-        return "\n\n".join(map(str, self.channel_profiles))
 
 
 @dataclass

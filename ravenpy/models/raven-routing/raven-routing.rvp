@@ -33,5 +33,4 @@
 :AvgAnnualRunoff 		{avg_annual_runoff}
 
 # List of channel profiles
-{channel_profiles}
-
+{channel_profile_list}

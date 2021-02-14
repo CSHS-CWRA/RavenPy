@@ -14,14 +14,12 @@ from .commands import (
     BasinIndexCommand,
     BasinStateVariablesCommand,
     ChannelProfileCommand,
-    ChannelProfileList,
     HRUsCommand,
     HRUsCommandRecord,
     HRUStateVariableTableCommand,
     HRUStateVariableTableCommandRecord,
     RavenConfig,
     ReservoirCommand,
-    ReservoirList,
     SubBasinGroupCommand,
     SubBasinsCommand,
     SubBasinsCommandRecord,
@@ -425,6 +423,7 @@ class MonthlyAverage(RV):
 class RVT(RV):
     def __init__(self, **kwargs):
         self._nc_index = None
+        self.gridded_forcings = ()
         super(RVT, self).__init__(**kwargs)
 
     @property
@@ -436,6 +435,15 @@ class RVT(RV):
         for key, val in self.items():
             if isinstance(val, RavenNcData):
                 setattr(val, "index", value)
+
+    @property
+    def gridded_forcing_list(self):
+        return "\n\n".join(map(str, self.gridded_forcings))
+        # return GriddedForcingList(self.gridded_forcings)
+
+    @gridded_forcing_list.setter
+    def gridded_forcing_list(self, value):
+        self.gridded_forcings = value
 
     def update(self, items, force=False):
         """Update values from dictionary items.
@@ -453,13 +461,6 @@ class RVT(RV):
             for key, val in items.items():
                 if isinstance(val, dict):
                     self[key].update(val, force=True)
-
-    def to_rv(self):
-        return """
-{gridded_forcing_cmds}
-        """.format(
-            gridded_forcing_cmds="\n\n".join(map(str, self._gridded_forcings)),
-        )
 
 
 class RVI(RV):
@@ -736,7 +737,7 @@ class RVH(RV):
 
     {lake_subbasin_group_cmd}
 
-    {reservoir_list_cmd}
+    {reservoir_cmd_list}
     """
 
     @property
@@ -752,8 +753,8 @@ class RVH(RV):
         return SubBasinGroupCommand("Lakes", self.lake_subbasins)
 
     @property
-    def reservoir_list_cmd(self):
-        return ReservoirList(self.reservoirs)  # return list directly
+    def reservoir_cmd_list(self):
+        return "\n\n".join(map(str, self.reservoirs))
 
     @property
     def hrus_cmd(self):
@@ -770,7 +771,15 @@ class RVP(RV):
 
     @property
     def channel_profile_list(self):
-        return ChannelProfileList(self.channel_profiles)
+        return "\n\n".join(map(str, self.channel_profiles))
+
+    @channel_profile_list.setter
+    def channel_profile_list(self, value):
+        self.channel_profiles = value
+
+    def to_rv(self):
+        params = self.items()
+        return dedent(self.template).format(**dict(self.items()))
 
 
 class Ost(RV):
