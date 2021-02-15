@@ -1078,8 +1078,16 @@ class TestRouting:
     def test_lievre_tutorial(self):
         def to_py_datetime(x_dt):
             """
-            It's pretty obvious that there exists a more obvious way but I'm tired
-            of searching for what should be "obvious".
+            Cast an xarray datetime to a python datetime.
+
+            Parameters
+            ----------
+            x_dt: xarray.core.accessor_dt.DatetimeAccessor
+
+            Returns
+            -------
+            datetime.datime
+
             """
             return dt.datetime(
                 x_dt.year.item(),
