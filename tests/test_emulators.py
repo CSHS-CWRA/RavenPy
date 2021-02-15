@@ -1116,7 +1116,7 @@ class TestRouting:
         # Model #
         #########
 
-        model = Routing("/tmp/ravenpy_routing_emu_dev")
+        model = Routing()
 
         #######
         # RVI #
