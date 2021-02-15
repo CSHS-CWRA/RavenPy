@@ -1076,6 +1076,13 @@ class TestHBVEC_OST:
 
 class TestRouting:
     def test_lievre_tutorial(self):
+        """
+        This test reproduces the Lievre tutorial setup:
+
+        http://raven.uwaterloo.ca/files/RavenTutorial6.zip
+
+        """
+
         def to_py_datetime(x_dt):
             """
             Cast an xarray datetime to a python datetime.
@@ -1102,13 +1109,13 @@ class TestRouting:
         # Input files #
         ###############
 
-        routing_product_shp = get_local_testdata(
+        routing_product_shp_path = get_local_testdata(
             "raven-routing-sample/finalcat_hru_info.zip"
         )
-        vic_streaminputs_nc = get_local_testdata(
+        vic_streaminputs_nc_path = get_local_testdata(
             "raven-routing-sample/VIC_streaminputs.nc"
         )
-        vic_temperatures_nc = get_local_testdata(
+        vic_temperatures_nc_path = get_local_testdata(
             "raven-routing-sample/VIC_temperatures.nc"
         )
 
@@ -1116,13 +1123,13 @@ class TestRouting:
         # Model #
         #########
 
-        model = Routing()
+        model = Routing()  # "/tmp/ravenpy_routing_emu_dev")
 
         #######
         # RVI #
         #######
 
-        streaminputs = xr.open_dataset(vic_streaminputs_nc)
+        streaminputs = xr.open_dataset(vic_streaminputs_nc_path)
 
         start_date = streaminputs.time[0].dt
         end_date = streaminputs.time[-1].dt
@@ -1144,7 +1151,7 @@ class TestRouting:
         # RVH #
         #######
 
-        rvh_importer = RoutingProductShapefileImporter(routing_product_shp)
+        rvh_importer = RoutingProductShapefileImporter(routing_product_shp_path)
         (
             subbasins,
             land_group,
@@ -1172,17 +1179,17 @@ class TestRouting:
         #######
 
         streaminputs_importer = RoutingProductGridWeightImporter(
-            vic_streaminputs_nc, routing_product_shp
+            vic_streaminputs_nc_path, routing_product_shp_path
         )
 
         temperatures_importer = RoutingProductGridWeightImporter(
-            vic_temperatures_nc, routing_product_shp
+            vic_temperatures_nc_path, routing_product_shp_path
         )
 
         streaminputs_gf = GriddedForcingCommand(
             name="StreamInputs",
             forcing_type="PRECIP",
-            file_name_nc="VIC_streaminputs_COPY.nc",
+            file_name_nc=vic_streaminputs_nc_path.name,
             var_name_nc="Streaminputs",
             dim_names_nc=("lon_dim", "lat_dim", "time"),
             grid_weights=streaminputs_importer.extract(),
@@ -1191,7 +1198,7 @@ class TestRouting:
         temperatures_gf = GriddedForcingCommand(
             name="AverageTemp",
             forcing_type="TEMP_AVE",
-            file_name_nc="VIC_temperatures_COPY.nc",
+            file_name_nc=vic_temperatures_nc_path.name,
             var_name_nc="Avg_temp",
             dim_names_nc=("lon_dim", "lat_dim", "time"),
             grid_weights=temperatures_importer.extract(),
@@ -1203,4 +1210,4 @@ class TestRouting:
         # Run model #
         #############
 
-        model([vic_streaminputs_nc, vic_temperatures_nc])
+        model([vic_streaminputs_nc_path, vic_temperatures_nc_path])
