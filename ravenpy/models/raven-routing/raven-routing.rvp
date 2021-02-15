@@ -10,23 +10,23 @@
 
 :SoilProfiles
   # name, number of layers, soil class, thickness [m]
-  LakeHRU_soil_profile,    1,    AQUIFER, 5
-  LandHRU_soil_profile,    1,    AQUIFER, 5
+  Lake_Soil_Lake_HRU,      1,    AQUIFER, 5
+  Soil_Land_HRU,           1,    AQUIFER, 5
 :EndSoilProfiles
 
 # the vegetation and land use parameters unused in routing
 :VegetationClasses
   :Attributes,                MAX_HT,       MAX_LAI,    MAX_LEAF_COND
   :Units,                       m,            none,       mm_per_s
-  LandHRU_vege_class,           25,           5.0,          5.0
-  LakeHRU_vege_class,           0,              0,          0
+  Veg_Land_HRU,                 25,           5.0,          5.0
+  Veg_Lake_HRU,                 0,              0,          0
 :EndVegetationClasses
 
 :LandUseClasses
   :Attributes,        IMPERMEABLE_FRAC,         FOREST_COVERAGE
   :Units,                     fract,                    fract
-  LandHRU_landuse_class,      0,                        1
-  LakeHRU_landuse_class,      0,                        0
+  Landuse_Land_HRU,           0,                        1
+  Landuse_Lake_HRU,           0,                        0
 :EndLandUseClasses
 
 # Global Parameters-----------------------------

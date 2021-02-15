@@ -1098,10 +1098,10 @@ class TestRouting:
             "raven-routing-sample/finalcat_hru_info.zip"
         )
         vic_streaminputs_nc = get_local_testdata(
-            "raven-routing-sample/VIC_streaminputs_COPY.nc"
+            "raven-routing-sample/VIC_streaminputs.nc"
         )
         vic_temperatures_nc = get_local_testdata(
-            "raven-routing-sample/VIC_temperatures_COPY.nc"
+            "raven-routing-sample/VIC_temperatures.nc"
         )
 
         #########
@@ -1175,8 +1175,8 @@ class TestRouting:
             name="StreamInputs",
             forcing_type="PRECIP",
             file_name_nc="VIC_streaminputs_COPY.nc",
-            var_name_nc="bla",
-            dim_names_nc=("lon", "lat", "time"),
+            var_name_nc="Streaminputs",
+            dim_names_nc=("lon_dim", "lat_dim", "time"),
             grid_weights=streaminputs_importer.extract(),
         )
 
@@ -1184,8 +1184,8 @@ class TestRouting:
             name="AverageTemp",
             forcing_type="TEMP_AVE",
             file_name_nc="VIC_temperatures_COPY.nc",
-            var_name_nc="bla",
-            dim_names_nc=("lon", "lat", "time"),
+            var_name_nc="Avg_temp",
+            dim_names_nc=("lon_dim", "lat_dim", "time"),
             grid_weights=temperatures_importer.extract(),
         )
 
