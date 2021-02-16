@@ -794,12 +794,8 @@ class RVP(RV):
         return LandUseClassesCommand(self.land_use_classes)
 
     @property
-    def channel_profile_list(self):
+    def channel_profile_cmd_list(self):
         return "\n\n".join(map(str, self.channel_profiles))
-
-    @channel_profile_list.setter
-    def channel_profile_list(self, value):
-        self.channel_profiles = value
 
     ## Note sure about this!
     # def to_rv(self):

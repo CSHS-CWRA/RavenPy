@@ -233,8 +233,9 @@ class TestRVH:
     def setup_class(self):
         shp = get_local_testdata("raven-routing-sample/finalcat_hru_info.zip")
         importer = RoutingProductShapefileImporter(shp)
-        sbs, land_group, lake_group, reservoirs, _, hrus = importer.extract()
-        self.rvh = RVH(sbs, land_group, lake_group, reservoirs, hrus)
+        config = importer.extract()
+        config.pop('channel_profiles')
+        self.rvh = RVH(**config)
 
     def test_import_process(self):
         assert len(self.rvh.subbasins) == 46
@@ -272,14 +273,14 @@ class TestRVP:
     def setup_class(self):
         shp = get_local_testdata("raven-routing-sample/finalcat_hru_info.zip")
         importer = RoutingProductShapefileImporter(shp)
-        _, _, _, _, cps, _ = importer.extract()
-        self.rvp = RVP(cps)
+        config = importer.extract()
+        self.rvp = RVP(channel_profiles=config['channel_profiles'])
 
     def test_import_process(self):
         assert len(self.rvp.channel_profiles) == 46
 
     def test_format(self):
-        res = self.rvp.channel_profile_list.to_rv()
+        res = self.rvp.channel_profile_cmd_list
 
         assert res.count(":ChannelProfile") == 46
         assert res.count(":EndChannelProfile") == 46

@@ -1131,20 +1131,10 @@ class TestRouting:
         #######
 
         rvh_importer = RoutingProductShapefileImporter(routing_product_shp_path)
-        (
-            subbasins,
-            land_group,
-            lake_group,
-            reservoirs,
-            channels,
-            hrus,
-        ) = rvh_importer.extract()
+        rvh_config = rvh_importer.extract()
+        channel_profiles = rvh_config.pop("channel_profiles")
 
-        model.rvh.subbasins = subbasins
-        model.rvh.land_subbasins = land_group
-        model.rvh.lake_subbasins = land_group
-        model.rvh.reservoirs = reservoirs
-        model.rvh.hrus = hrus
+        model.rvh.update(rvh_config)
 
         #######
         # RVP #
@@ -1164,7 +1154,7 @@ class TestRouting:
             LandUseClassesCommand.Record("Landuse_Land_HRU", 0, 1),
             LandUseClassesCommand.Record("Landuse_Lake_HRU", 0, 0),
         ]
-        model.rvp.channel_profile_list = channels
+        model.rvp.channel_profiles = channel_profiles
 
         #######
         # RVT #

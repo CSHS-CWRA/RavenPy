@@ -44,7 +44,7 @@ class RoutingProductShapefileImporter:
     def extract(self):
         """
         This will extract the data from the Routing Product shapefile and
-        return it as relevant commands.
+        return it as relevant Raven command data objects.
 
         Returns
         -------
@@ -60,7 +60,7 @@ class RoutingProductShapefileImporter:
             "channel_profiles"
                Sequence of `commands.ChannelProfileCommand` objects
             "hrus"
-               Sequence of `commands.HRUsCommand` objects
+               Sequence of `commands.HRUsCommandRecord` objects
 
         """
 
@@ -100,13 +100,13 @@ class RoutingProductShapefileImporter:
             # ChannelProfile
             channel_profile_cmds.append(self._extract_channel_profile(row))
 
-        return (
-            subbasin_recs,
-            land_sb_ids,
-            lake_sb_ids,
-            reservoir_cmds,
-            channel_profile_cmds,
-            hru_recs,
+        return dict(
+            subbasins=subbasin_recs,
+            land_subbasins=land_sb_ids,
+            lake_subbasins=lake_sb_ids,
+            reservoirs=reservoir_cmds,
+            channel_profiles=channel_profile_cmds,
+            hrus=hru_recs,
         )
 
     def _extract_subbasin(self, row, subbasin_ids) -> SubBasinsCommandRecord:
