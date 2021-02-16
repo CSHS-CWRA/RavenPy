@@ -363,7 +363,7 @@ def hydrobasins_upstream_ids(
 
 
 def hydrobasins_aggregate(gdf: pd.DataFrame = None) -> pd.Series:
-    """Aggregate multiple hydrobasin watersheds into a single geometry.
+    """Aggregate multiple HydroBASINS watersheds into a single geometry.
 
     Parameters
     ----------

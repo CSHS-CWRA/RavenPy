@@ -138,8 +138,18 @@ class TestFileInfoFuncs:
 @pytest.mark.skipif(condition=utils is False, reason="GIS dependencies are needed.")
 class TestGdalOgrFunctions:
 
+    raster_file = test_data() / "Mars_MGS_MOLA_DEM_georeferenced_region_compressed.tiff"
+
     def test_gdal_aspect(self):
-        pass
+        # FIXME: This should
+        aspect_grid = utils.gdal_aspect_analysis(self.raster_file)
+        np.testing.assert_almost_equal(utils.circular_mean_aspect(aspect_grid), 10.911903)
+
+        # test with creation of a temporary file
+        aspect_tempfile = tempfile.NamedTemporaryFile(prefix="aspect_", suffix=".tiff", delete=False).name
+        aspect_grid = utils.gdal_aspect_analysis(self.raster_file, output=aspect_tempfile)
+        np.testing.assert_almost_equal(utils.circular_mean_aspect(aspect_grid), 10.911903)
+        assert Path(aspect_tempfile).stat().st_size > 0
 
     def test_gdal_slope(self):
         pass
