@@ -1083,28 +1083,6 @@ class TestRouting:
 
         """
 
-        def to_py_datetime(x_dt):
-            """
-            Cast an xarray datetime to a python datetime.
-
-            Parameters
-            ----------
-            x_dt: xarray.core.accessor_dt.DatetimeAccessor
-
-            Returns
-            -------
-            datetime.datime
-
-            """
-            return dt.datetime(
-                x_dt.year.item(),
-                x_dt.month.item(),
-                x_dt.day.item(),
-                x_dt.hour.item(),
-                x_dt.minute.item(),
-                x_dt.second.item(),
-            )
-
         ###############
         # Input files #
         ###############
@@ -1123,7 +1101,7 @@ class TestRouting:
         # Model #
         #########
 
-        model = Routing()  # "/tmp/ravenpy_routing_emu_dev")
+        model = Routing()
 
         #######
         # RVI #
@@ -1131,20 +1109,17 @@ class TestRouting:
 
         streaminputs = xr.open_dataset(vic_streaminputs_nc_path)
 
-        start_date = streaminputs.time[0].dt
-        end_date = streaminputs.time[-1].dt
+        start = streaminputs.indexes["time"][0]
+        end = streaminputs.indexes["time"][-1]
 
         # Round to hours
-        n_seconds = (
-            ((streaminputs.time[-1] - streaminputs.time[0]) / len(streaminputs.time))
-            .dt.round("h")
-            .dt.seconds.item()
-        )
+        n_seconds = ((start - end) / len(streaminputs.time)).round("h").seconds
+
         # Warning: this is only good up to 24 hours (24:00:00)
         time_step = time.strftime("%H:%M:%S", time.gmtime(n_seconds))
 
-        model.rvi.start_date = to_py_datetime(start_date)
-        model.rvi.end_date = to_py_datetime(end_date)
+        model.rvi.start_date = start.to_pydatetime()
+        model.rvi.end_date = end.to_pydatetime()
         model.rvi.time_step = time_step
 
         #######
