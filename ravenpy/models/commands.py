@@ -491,3 +491,108 @@ class BasinStateVariablesCommand(RavenConfig):
         return dedent(self.template).format(
             basin_states_list="\n".join(map(str, self.basin_states.values()))
         )
+
+
+@dataclass
+class SoilClassesCommand(RavenConfig):
+    @dataclass
+    class Record(RavenConfig):
+        name: str = ""
+
+        def to_rv(self):
+            return " ".join(map(str, asdict(self).values()))
+
+    template = """
+    :SoilClasses
+        {soil_class_records}
+    :EndSoilClasses
+    """
+
+    soil_classes: Tuple[Record] = ()
+
+    def to_rv(self):
+        return dedent(self.template).format(
+            soil_class_records="\n".join(map(str, self.soil_classes))
+        )
+
+
+@dataclass
+class SoilProfilesCommand(RavenConfig):
+    @dataclass
+    class Record(RavenConfig):
+        name: str = ""
+        number_of_layers: int = 1
+        soil_class: str = ""
+        thickness: float = 0
+
+        def to_rv(self):
+            return " ".join(map(str, asdict(self).values()))
+
+    template = """
+    :SoilProfiles
+        # name, number of layers, soil class, thickness [m]
+        {soil_profile_records}
+    :EndSoilProfiles
+    """
+
+    soil_profiles: Tuple[Record] = ()
+
+    def to_rv(self):
+        return dedent(self.template).format(
+            soil_profile_records="\n".join(map(str, self.soil_profiles))
+        )
+
+
+@dataclass
+class VegetationClassesCommand(RavenConfig):
+    @dataclass
+    class Record(RavenConfig):
+        name: str = ""
+        max_ht: float = 0
+        max_lai: float = 0
+        max_leaf_cond: float = 0
+
+        def to_rv(self):
+            return " ".join(map(str, asdict(self).values()))
+
+    template = """
+    :VegetationClasses
+        :Attributes,                MAX_HT,       MAX_LAI,    MAX_LEAF_COND
+        :Units,                       m,            none,       mm_per_s
+        {vegetation_class_records}
+    :EndVegetationClasses
+    """
+
+    vegetation_classes: Tuple[Record] = ()
+
+    def to_rv(self):
+        return dedent(self.template).format(
+            vegetation_class_records="\n".join(map(str, self.vegetation_classes))
+        )
+
+
+@dataclass
+class LandUseClassesCommand(RavenConfig):
+    @dataclass
+    class Record(RavenConfig):
+        name: str = ""
+        impermeable_frac: float = 0
+        forest_coverage: float = 0
+
+        def to_rv(self):
+            return " ".join(map(str, asdict(self).values()))
+
+    template = """
+    :LandUseClasses
+        :Attributes,        IMPERMEABLE_FRAC,         FOREST_COVERAGE
+        :Units,                     fract,                    fract
+        {land_use_class_records}
+    :EndLandUseClasses
+    """
+
+    land_use_classes: Tuple[Record] = ()
+
+    def to_rv(self):
+        return dedent(self.template).format(
+            land_use_class_records="\n".join(map(str, self.land_use_classes))
+        )

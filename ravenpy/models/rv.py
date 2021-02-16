@@ -18,11 +18,15 @@ from .commands import (
     HRUsCommandRecord,
     HRUStateVariableTableCommand,
     HRUStateVariableTableCommandRecord,
+    LandUseClassesCommand,
     RavenConfig,
     ReservoirCommand,
+    SoilClassesCommand,
+    SoilProfilesCommand,
     SubBasinGroupCommand,
     SubBasinsCommand,
     SubBasinsCommandRecord,
+    VegetationClassesCommand,
 )
 
 """
@@ -767,7 +771,27 @@ class RVH(RV):
 
 @dataclass
 class RVP(RV):
+    soil_classes: Tuple[SoilClassesCommand.Record] = ()
+    soil_profiles: Tuple[SoilProfilesCommand.Record] = ()
+    vegetation_classes: Tuple[VegetationClassesCommand.Record] = ()
+    land_use_classes: Tuple[LandUseClassesCommand.Record] = ()
     channel_profiles: Tuple[ChannelProfileCommand] = ()
+
+    @property
+    def soil_classes_cmd(self):
+        return SoilClassesCommand(self.soil_classes)
+
+    @property
+    def soil_profiles_cmd(self):
+        return SoilProfilesCommand(self.soil_profiles)
+
+    @property
+    def vegetation_classes_cmd(self):
+        return VegetationClassesCommand(self.vegetation_classes)
+
+    @property
+    def land_use_classes_cmd(self):
+        return LandUseClassesCommand(self.land_use_classes)
 
     @property
     def channel_profile_list(self):
@@ -777,9 +801,10 @@ class RVP(RV):
     def channel_profile_list(self, value):
         self.channel_profiles = value
 
-    def to_rv(self):
-        params = self.items()
-        return dedent(self.template).format(**dict(self.items()))
+    ## Note sure about this!
+    # def to_rv(self):
+    #     params = self.items()
+    #     return dedent(self.template).format(**dict(self.items()))
 
 
 class Ost(RV):

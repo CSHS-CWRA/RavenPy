@@ -25,6 +25,10 @@ from ravenpy.models import (
 from ravenpy.models.commands import (
     GriddedForcingCommand,
     HRUStateVariableTableCommandRecord,
+    LandUseClassesCommand,
+    SoilClassesCommand,
+    SoilProfilesCommand,
+    VegetationClassesCommand,
 )
 from ravenpy.models.importers import (
     RoutingProductGridWeightImporter,
@@ -1112,8 +1116,8 @@ class TestRouting:
         start = streaminputs.indexes["time"][0]
         end = streaminputs.indexes["time"][-1]
 
-        # Round to hours
-        n_seconds = ((start - end) / len(streaminputs.time)).round("h").seconds
+        # Round to hours (should be 6 hours)
+        n_seconds = ((end - start) / len(streaminputs.time)).round("h").seconds
 
         # Warning: this is only good up to 24 hours (24:00:00)
         time_step = time.strftime("%H:%M:%S", time.gmtime(n_seconds))
@@ -1147,6 +1151,19 @@ class TestRouting:
         #######
 
         model.rvp.avg_annual_runoff = 594
+        model.rvp.soil_classes = [SoilClassesCommand.Record("AQUIFER")]
+        model.rvp.soil_profiles = [
+            SoilProfilesCommand.Record("Lake_Soil_Lake_HRU", 1, "AQUIFER", 5),
+            SoilProfilesCommand.Record("Soil_Land_HRU", 1, "AQUIFER", 5),
+        ]
+        model.rvp.vegetation_classes = [
+            VegetationClassesCommand.Record("Veg_Land_HRU", 25, 5.0, 5.0),
+            VegetationClassesCommand.Record("Veg_Lake_HRU", 0, 0, 0),
+        ]
+        model.rvp.land_use_classes = [
+            LandUseClassesCommand.Record("Landuse_Land_HRU", 0, 1),
+            LandUseClassesCommand.Record("Landuse_Lake_HRU", 0, 0),
+        ]
         model.rvp.channel_profile_list = channels
 
         #######
