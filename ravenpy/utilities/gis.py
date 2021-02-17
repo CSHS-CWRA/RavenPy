@@ -57,7 +57,7 @@ def _get_location_wfs(
     ],
     layer: str = True,
     geoserver: str = GEO_URL,
-) -> str:
+) -> bytes:
     """Return leveled features from a hosted data set using bounding box coordinates and WFS 1.1.0 protocol.
 
     For geographic rasters, subsetting is based on WGS84 (Long, Lat) boundaries. If not geographic, subsetting based
@@ -473,7 +473,7 @@ def get_hydrobasins_location_wfs(
     lakes: bool = True,
     domain: str = None,
     geoserver: str = GEO_URL,
-) -> str:
+) -> bytes:
     """Return features from the USGS HydroBASINS data set using bounding box coordinates.
 
     For geographic rasters, subsetting is based on WGS84 (Long, Lat) boundaries. If not geographic, subsetting based
@@ -590,7 +590,7 @@ def get_hydro_routing_location_wfs(
     lakes: str,
     level: int = 12,
     geoserver: str = GEO_URL,
-) -> str:
+) -> bytes:
     """Return features from the hydro routing data set using bounding box coordinates.
 
     For geographic rasters, subsetting is based on WGS84 (Long, Lat) boundaries. If not geographic, subsetting based
