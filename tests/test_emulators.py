@@ -1197,3 +1197,14 @@ class TestRouting:
         #############
 
         model([vic_streaminputs_nc_path, vic_temperatures_nc_path])
+
+        ##########
+        # Verify #
+        ##########
+
+        assert len(model.hydrograph.time) == len(streaminputs.time)
+
+        gauge = [sb for sb in rvh_config["subbasins"] if sb.gauged]
+        assert len(gauge) == 1
+
+        assert model.hydrograph.basin_name.item() == gauge[0].name
