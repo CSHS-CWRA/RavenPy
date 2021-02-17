@@ -1140,6 +1140,10 @@ class TestRouting:
         # RVP #
         #######
 
+        # The labels used for the following commands ("Lake_Soil_Lake_HRU", "Soil_Land_HRU", etc)
+        # must correspond to the values of certain fields of the Routing Product:
+        # LAND_USE_C, VEG_C, SOIL_PROF
+
         model.rvp.avg_annual_runoff = 594
         model.rvp.soil_classes = [SoilClassesCommand.Record("AQUIFER")]
         model.rvp.soil_profiles = [
