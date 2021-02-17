@@ -151,6 +151,7 @@ class TestGdalOgrFunctions:
     raster_file = test_data() / "Mars_MGS_MOLA_DEM_georeferenced_region_compressed.tiff"
     geojson_file = test_data() / "polygons.geojson"
 
+    # FIXME: Options exist for gdal.DEMProcessing to return in-memory arrays (output="", format="MEM"). Not documented.
     def test_gdal_aspect_not_projected(self):
         # FIXME: This should remove the temporary file, saving the grid in memory only.
         aspect_grid = utils.gdal_aspect_analysis(self.raster_file)
@@ -171,6 +172,7 @@ class TestGdalOgrFunctions:
         assert Path(aspect_tempfile).stat().st_size > 0
 
     # Slope values are high due to data values using Geographic CRS
+    # FIXME: Options exist for gdal.DEMProcessing to return in-memory arrays (output="", format="MEM"). Not documented.
     def test_gdal_slope_not_projected(self):
         # FIXME: This should remove the temporary file, saving the grid in memory only.
         slope_grid = utils.gdal_slope_analysis(self.raster_file)
@@ -221,28 +223,119 @@ class TestGdalOgrFunctions:
         geom_2_properties = utils.geom_prop(geom_2)
         np.testing.assert_almost_equal(geom_2_properties["area"], 361.5114221)
         np.testing.assert_almost_equal(
-            geom_2_properties["centroid"], (-70.2394629,  45.7698029)
+            geom_2_properties["centroid"], (-70.2394629, 45.7698029)
         )
         np.testing.assert_almost_equal(geom_2_properties["perimeter"], 96.1035859)
         np.testing.assert_almost_equal(geom_2_properties["gravelius"], 1.4258493)
 
 
 @pytest.mark.skipif(condition=utils is False, reason="GIS dependencies are needed.")
-class TestGeoOperations:
+class TestGenericGeoOperations:
+
+    raster_file = test_data() / "Mars_MGS_MOLA_DEM_georeferenced_region_compressed.tiff"
+    geojson_file = test_data() / "polygons.geojson"
+
     def test_vector_reprojection(self):
-        pass
+        # TODO: It would be awesome if this returned a temporary filepath if no file given.
+        # FIXME: CRS type is completely changed in RAVEN. Needs to be ported.
+        reproj_file = tempfile.NamedTemporaryFile(
+            prefix="reproj_", suffix=".geojson", delete=False
+        ).name
+        utils.generic_vector_reproject(
+            self.geojson_file, projected=reproj_file, target_crs="EPSG:3348"
+        )
+
+        with fiona.open(reproj_file) as gj:
+            iterable = iter(gj)
+            feature = next(iterable)
+            geom = shape(feature["geometry"])
+
+        geom_properties = utils.geom_prop(geom)
+        np.testing.assert_almost_equal(geom_properties["area"], 6450001762792.884, 3)
+        np.testing.assert_almost_equal(
+            geom_properties["centroid"], (1645777.7589835, -933242.1203143)
+        )
+        np.testing.assert_almost_equal(geom_properties["perimeter"], 9194343.1759303)
+        np.testing.assert_almost_equal(geom_properties["gravelius"], 1.0212589)
 
     def test_raster_warp(self):
-        pass
+        # TODO: It would be awesome if this returned a temporary filepath if no file given.
+        # TODO: either use `output` or `reprojected/warped` for these functions.
+        reproj_file = tempfile.NamedTemporaryFile(
+            prefix="reproj_", suffix=".tiff", delete=False
+        ).name
+        utils.generic_raster_warp(
+            self.raster_file, output=reproj_file, target_crs="EPSG:3348"
+        )
 
+        with rasterio.open(reproj_file) as gt:
+            assert gt.crs.to_epsg() == 3348
+            np.testing.assert_almost_equal(gt.bounds.left, -2077535.25979486)
+            np.testing.assert_almost_equal(gt.bounds.right, 15591620.75098695)
+            np.testing.assert_almost_equal(gt.bounds.bottom, -4167898.76317739)
+            np.testing.assert_almost_equal(gt.bounds.top, 5817014.91999878)
+
+            data = gt.read(1)  # read band 1 (red)
+            assert data.min() == 0
+            assert data.max() == 255
+            np.testing.assert_almost_equal(data.mean(), 60.7291936)
+
+    # FIXME: Options exist for gdal.DEMProcessing to return in-memory arrays (output="", format="MEM"). Not documented.
     def test_warped_raster_slope(self):
-        pass
+        reproj_file = tempfile.NamedTemporaryFile(
+            prefix="reproj_", suffix=".tiff", delete=False
+        ).name
+        utils.generic_raster_warp(
+            self.raster_file, output=reproj_file, target_crs="EPSG:3348"
+        )
+        slope_grid = utils.gdal_slope_analysis(reproj_file)
 
+        np.testing.assert_almost_equal(slope_grid.min(), 0.0)
+        np.testing.assert_almost_equal(slope_grid.mean(), 0.0034991)
+        np.testing.assert_almost_equal(slope_grid.max(), 0.3523546)
+
+    # FIXME: Options exist for gdal.DEMProcessing to return in-memory arrays (output="", format="MEM"). Not documented.
     def test_warped_raster_aspect(self):
-        pass
+        reproj_file = tempfile.NamedTemporaryFile(
+            prefix="reproj_", suffix=".tiff", delete=False
+        ).name
+        utils.generic_raster_warp(
+            self.raster_file, output=reproj_file, target_crs="EPSG:3348"
+        )
+        aspect_grid = utils.gdal_aspect_analysis(reproj_file)
+
+        np.testing.assert_almost_equal(
+            utils.circular_mean_aspect(aspect_grid), 7.7805879
+        )
 
     def test_raster_clip(self):
-        pass
+        with fiona.open(self.geojson_file) as gj:
+            feature = next(iter(gj))
+            geom = shape(feature["geometry"])
+
+        clipped_file = tempfile.NamedTemporaryFile(
+            prefix="reproj_", suffix=".tiff", delete=False
+        ).name
+        utils.generic_raster_clip(self.raster_file, clipped_file, geometry=geom)
+
+        with rasterio.open(clipped_file) as gt:
+            assert gt.crs.to_epsg() == 4326
+
+            data = gt.read(1)  # read band 1 (red)
+            assert data.min() == 0
+            assert data.max() == 255
+            np.testing.assert_almost_equal(data.mean(), 102.8222965)
 
     def test_shapely_pyproj_transform(self):
-        pass
+        with fiona.open(self.geojson_file) as gj:
+            feature = next(iter(gj))
+            geom = shape(feature["geometry"])
+
+        transformed = utils.geom_transform(geom, target_crs="EPSG:3348")
+        np.testing.assert_almost_equal(
+            transformed.bounds,
+            (188140.3820599, -2374936.1363096, 3086554.0207066, 409691.2180337),
+        )
+        np.testing.assert_almost_equal(transformed.centroid.x, 1645777.7589835)
+        np.testing.assert_almost_equal(transformed.centroid.y, -933242.1203143)
+        np.testing.assert_almost_equal(transformed.area, 6450001762792.884, 3)
