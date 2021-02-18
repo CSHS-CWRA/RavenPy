@@ -202,7 +202,7 @@ def feature_contains(
 
     Returns
     -------
-    dict
+    Union[dict, bool]
       The feature found.
 
     Notes
