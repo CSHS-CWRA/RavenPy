@@ -1,23 +1,28 @@
-import pytest
 import tempfile
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 from ravenpy import RavenPyDependencyError
 
 try:
-    import ravenpy.utils as utils
     import fiona
     import rasterio
-    from shapely.geometry import shape, GeometryCollection
-except RavenPyDependencyError:
+    from shapely.geometry import GeometryCollection, shape
+
+    import ravenpy.utils as utils
+except (ModuleNotFoundError, RavenPyDependencyError):
     utils = False
 
 from .common import test_data
 
 
+@pytest.mark.skipif(condition=utils is False, reason="GIS dependencies are needed.")
 class TestOperations:
+
+    zipped_file = test_data() / "polygons.zip"
+
     def test_circular_mean_aspect(self):
         northern_angles = np.array([330, 30, 15, 345])
         slight_northeast_angles = np.append(northern_angles, [0.000001])
@@ -45,12 +50,11 @@ class TestOperations:
             utils.parse_lonlat("This isn't a number, 333.444")
 
     def test_address_append(self):
-        zipped_file = test_data() / "polygons.zip"
-        tarred_file = test_data() / "polygons.tar"
+        non_existing_tarred_file = test_data() / "polygons.tar"
         non_zipped_file = test_data() / "polygons.geojson"
 
-        assert "zip://" in utils.address_append(zipped_file)
-        assert "tar://" in utils.address_append(tarred_file)
+        assert "zip://" in utils.address_append(self.zipped_file)
+        assert "tar://" in utils.address_append(non_existing_tarred_file)
         # Need to change return type in RAVEN address_append to always be str
         assert not str(utils.address_append(non_zipped_file)).startswith(
             ("zip://", "tar://")
@@ -64,45 +68,43 @@ class TestOperations:
         assert probable_shp == ["/tmp/polygons.shp"]
 
     def test_archive_extract(self):
-        zipped_file = test_data() / "polygons.zip"
-        assert zipped_file.exists()
+
+        assert self.zipped_file.exists()
 
         files = list()
         with tempfile.TemporaryDirectory() as tdir:
-            files.extend(utils.generic_extract_archive(zipped_file, output_dir=tdir))
+            files.extend(utils.generic_extract_archive(self.zipped_file, output_dir=tdir))
             assert len(files) == 5
             for f in files:
                 assert Path(f).exists()
         assert not np.any([Path(f).exists() for f in files])
 
-        files = utils.generic_extract_archive(zipped_file)
+        files = utils.generic_extract_archive(self.zipped_file)
         assert np.all([Path(f).exists() for f in files])
 
 
 @pytest.mark.skipif(condition=utils is False, reason="GIS dependencies are needed.")
 class TestFileInfoFuncs:
-    def test_raster_datatype_sniffer(self):
-        raster_file = (
-            test_data() / "Mars_MGS_MOLA_DEM_georeferenced_region_compressed.tiff"
-        )
 
-        datatype = utils.raster_datatype_sniffer(raster_file)
+    zipped_file = test_data() / "polygons.zip"
+    geojson_file = test_data() / "polygons.geojson"
+    raster_file = (
+            test_data() / "Mars_MGS_MOLA_DEM_georeferenced_region_compressed.tiff"
+    )
+    non_existing_file = test_data() / "unreal.zip"
+
+    def test_raster_datatype_sniffer(self):
+        datatype = utils.raster_datatype_sniffer(self.raster_file)
         assert datatype.lower() == "uint8"
 
     def test_crs_sniffer(self):
         # FIXME: This utility should not complain if given a single file / list
-        zipped_file = test_data() / "polygons.zip"
-        geojson_file = test_data() / "polygons.geojson"
-        raster_file = (
-            test_data() / "Mars_MGS_MOLA_DEM_georeferenced_region_compressed.tiff"
-        )
-
         # FIXME: Should this be raising a FileNotFound internally? Probably not.
         with pytest.raises(Exception):
-            utils.crs_sniffer(zipped_file)
+            utils.crs_sniffer(self.zipped_file)
 
         # TODO: This will fail with the new PyProj when ported. Will be == int(4326).
-        assert set(utils.crs_sniffer(geojson_file, raster_file)) == {"+init=epsg:4326"}
+        assert set(utils.crs_sniffer(self.geojson_file, self.raster_file)) == {"+init=epsg:4326"}
 
     @pytest.mark.skip
     def test_single_file_check(self):
@@ -124,21 +126,15 @@ class TestFileInfoFuncs:
     def test_boundary_check(self):
         # FIXME: This utility should not complain if given a single file / list
         # FIXME: This is very broken. Needs to be fully rewritten.
-        zipped_file = test_data() / "polygons.zip"
-        geojson_file = test_data() / "polygons.geojson"
-        raster_file = (
-            test_data() / "Mars_MGS_MOLA_DEM_georeferenced_region_compressed.tiff"
-        )
-        nonexists_file = test_data() / "unreal.zip"
 
         with pytest.warns(None):
-            utils.boundary_check([zipped_file, geojson_file, raster_file], max_y=80)
+            utils.boundary_check([self.zipped_file, self.geojson_file, self.raster_file], max_y=80)
 
         with pytest.warns(UserWarning):
-            utils.boundary_check([zipped_file, geojson_file, raster_file], max_y=15)
+            utils.boundary_check([self.zipped_file, self.geojson_file, self.raster_file], max_y=15)
 
         with pytest.raises(FileNotFoundError):
-            utils.boundary_check([nonexists_file])
+            utils.boundary_check([self.non_existing_file])
 
     @pytest.mark.skip(reason="Not presently testable")
     def test_multipolygon_check(self):

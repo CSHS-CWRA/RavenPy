@@ -188,15 +188,15 @@ def _determine_upstream_ids(
 
 
 def feature_contains(
-    point: Tuple[Union[int, float, str], Union[str, float, int]],
+    point: Union[Tuple[Union[int, float, str], Union[str, float, int]], Point],
     shp: Union[str, Path, List[Union[str, Path]]],
 ) -> Union[dict, bool]:
     """Return the first feature containing a location.
 
     Parameters
     ----------
-    point : Tuple[Union[int, float, str], Union[str, float, int]]
-      Geographic coordinates of a point (lon, lat).
+    point : Union[Tuple[Union[int, float, str], Union[str, float, int]], Point]
+      Geographic coordinates of a point (lon, lat) or a shapely Point.
     shp : Union[str, Path, List[str, Path]]
       Path to the file storing the geometries.
 
@@ -235,7 +235,7 @@ def feature_contains(
     return False
 
 
-def get_bbox(vector: str, all_features: bool = True) -> list:
+def get_bbox(vector: Union[str, Path], all_features: bool = True) -> tuple:
     """Return bounding box of all features or the first feature in file.
 
     Parameters
@@ -247,7 +247,7 @@ def get_bbox(vector: str, all_features: bool = True) -> list:
 
     Returns
     -------
-    list
+    tuple
       Geographic coordinates of the bounding box (lon0, lat0, lon1, lat1).
 
     """
@@ -362,7 +362,7 @@ def hydrobasins_upstream_ids(
     return df_upstream
 
 
-def hydrobasins_aggregate(gdf: pd.DataFrame = None) -> pd.Series:
+def hydrobasins_aggregate(gdf: pd.DataFrame) -> pd.Series:
     """Aggregate multiple HydroBASINS watersheds into a single geometry.
 
     Parameters
