@@ -14,7 +14,7 @@ dependencies:
   - rioxarray
   - statsmodels
   - xarray
-  - xclim
+  - xclim>=0.23
   - wheel
   - sphinx
   - nbsphinx
