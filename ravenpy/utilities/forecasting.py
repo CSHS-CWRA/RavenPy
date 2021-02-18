@@ -21,12 +21,13 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import xarray as xr
-from xclim import subset
+
 
 from .. import RavenPyDependencyError
 
 try:
     import rioxarray
+    from clisops.core import subset
 except ModuleNotFoundError as e:
     msg = (
         f"`{Path(__file__).stem}` requires installation of the RavenPy GIS libraries. These can be installed using the"

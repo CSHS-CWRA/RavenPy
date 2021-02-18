@@ -19,6 +19,7 @@
 #
 import os
 import sys
+
 sys.path.insert(0, os.path.abspath('..'))
 
 import ravenpy
@@ -39,7 +40,19 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx_click']
 
 # To avoid having to install these and burst memory limit on ReadTheDocs.
-autodoc_mock_imports = []
+autodoc_mock_imports = [
+    'affine',
+    'clisops',
+    'fiona',
+    'gdal',
+    'geopandas',
+    'lxml',
+    'owslib',
+    'pyproj',
+    'rasterio',
+    'rioxarray',
+    'shapely'
+]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -85,7 +98,6 @@ pygments_style = 'sphinx'
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
 
-
 # -- Options for HTML output -------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
@@ -104,12 +116,10 @@ html_theme = 'sphinx_rtd_theme'
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
-
 # -- Options for HTMLHelp output ---------------------------------------
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'ravenpydoc'
-
 
 # -- Options for LaTeX output ------------------------------------------
 
@@ -140,7 +150,6 @@ latex_documents = [
      'David Huard', 'manual'),
 ]
 
-
 # -- Options for manual page output ------------------------------------
 
 # One entry per manual page. List of tuples
@@ -150,7 +159,6 @@ man_pages = [
      'RavenPy Documentation',
      [author], 1)
 ]
-
 
 # -- Options for Texinfo output ----------------------------------------
 
@@ -165,6 +173,3 @@ texinfo_documents = [
      'One line description of project.',
      'Miscellaneous'),
 ]
-
-
-
