@@ -134,7 +134,12 @@ class SubBasinGroupCommand(RavenConfig):
 
     def to_rv(self):
         d = asdict(self)
-        d["subbasin_ids"] = " ".join(map(str, self.subbasin_ids))
+        n_per_line = 10
+        sbids_lines = [
+            map(str, self.subbasin_ids[i : i + n_per_line])
+            for i in range(0, len(self.subbasin_ids), n_per_line)
+        ]
+        d["subbasin_ids"] = "\n    ".join([" ".join(sbids) for sbids in sbids_lines])
         return dedent(self.template).format(**d)
 
 
