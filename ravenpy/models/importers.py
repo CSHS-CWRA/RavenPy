@@ -20,6 +20,8 @@ from .commands import (
     SubBasinsCommandRecord,
 )
 
+HRU_ASPECT_CONVENTION = "GRASS"  # GRASS | ArcGIS
+
 
 class RoutingProductShapefileImporter:
 
@@ -36,10 +38,11 @@ class RoutingProductShapefileImporter:
     USE_MANNING_COEFF = False
     MANNING_DEFAULT = 0.035
 
-    def __init__(self, shapefile_path):
+    def __init__(self, shapefile_path, hru_aspect_convention=HRU_ASPECT_CONVENTION):
         if Path(shapefile_path).suffix == ".zip":
             shapefile_path = f"zip://{shapefile_path}"
         self._df = geopandas.read_file(shapefile_path)
+        self.hru_aspect_convention = hru_aspect_convention
 
     def extract(self):
         """
@@ -73,7 +76,6 @@ class RoutingProductShapefileImporter:
 
         # Collect all subbasin_ids for fast lookup in next loop
         subbasin_ids = {int(row["SubId"]) for _, row in self._df.iterrows()}
-        subbasin_id_accum = set()
 
         for _, row in self._df.iterrows():
 
@@ -82,20 +84,20 @@ class RoutingProductShapefileImporter:
 
             subbasin_id = int(row["SubId"])
 
-            # We only want to process the first row with a given SubId (we ignore the other ones)
-            if subbasin_id in subbasin_id_accum:
-                continue
-            subbasin_id_accum.add(subbasin_id)
+            is_lake = False
 
-            # Subbasin
-            sb, is_lake = self._extract_subbasin(row, subbasin_ids)
-            subbasin_recs.append(sb)
-
-            if is_lake:
+            if row["IsLake"] > 0 and row["HRU_IsLake"] > 0:
                 lake_sb_ids.append(subbasin_id)
                 reservoir_cmds.append(self._extract_reservoir(row))
+                is_lake = True
+            elif row["IsLake"] > 0:
+                continue
             else:
                 land_sb_ids.append(subbasin_id)
+
+            # Subbasin
+            sb = self._extract_subbasin(row, is_lake, subbasin_ids)
+            subbasin_recs.append(sb)
 
             # ChannelProfile
             channel_profile_cmds.append(self._extract_channel_profile(row))
@@ -109,10 +111,10 @@ class RoutingProductShapefileImporter:
             hrus=hru_recs,
         )
 
-    def _extract_subbasin(self, row, subbasin_ids) -> SubBasinsCommandRecord:
+    def _extract_subbasin(self, row, is_lake, subbasin_ids) -> SubBasinsCommandRecord:
         subbasin_id = int(row["SubId"])
-        is_lake = row["IsLake"] >= 0
-        river_length_in_kms = 0 if is_lake else row["Rivlen"] / 1000
+        # is_lake = row["HRU_IsLake"] >= 0
+        river_length_in_kms = 0 if is_lake else round(row["Rivlen"] / 1000, 5)
         river_slope = max(
             row["RivSlope"], RoutingProductShapefileImporter.MAX_RIVER_SLOPE
         )
@@ -123,7 +125,7 @@ class RoutingProductShapefileImporter:
         elif downstream_id not in subbasin_ids:
             downstream_id = -1
         gauged = row["IsObs"] > 0 or (
-            row["IsLake"] >= 0 and RoutingProductShapefileImporter.USE_LAKE_AS_GAUGE
+            is_lake and RoutingProductShapefileImporter.USE_LAKE_AS_GAUGE
         )
         rec = SubBasinsCommandRecord(
             subbasin_id=subbasin_id,
@@ -134,7 +136,7 @@ class RoutingProductShapefileImporter:
             gauged=gauged,
         )
 
-        return rec, is_lake
+        return rec
 
     def _extract_reservoir(self, row) -> ReservoirCommand:
         lake_id = int(row["HyLakeId"])
@@ -146,7 +148,7 @@ class RoutingProductShapefileImporter:
             weir_coefficient=RoutingProductShapefileImporter.WEIR_COEFFICIENT,
             crest_width=row["BkfWidth"],
             max_depth=row["LakeDepth"],
-            lake_area=row["HRU_Area"],
+            lake_area=row["LakeArea"] * 1_000_000,
         )
 
     def _extract_channel_profile(self, row) -> ChannelProfileCommand:
@@ -201,9 +203,21 @@ class RoutingProductShapefileImporter:
         )
 
     def _extract_hru(self, row) -> HRUsCommandRecord:
+
+        aspect = row["HRU_A_mean"]
+
+        if self.hru_aspect_convention == "GRASS":
+            aspect -= 360
+            if aspect < 0:
+                aspect += 360
+        elif self.hru_aspect_convention == "ArcGIS":
+            aspect = 360 - aspect
+        else:
+            assert False
+
         return HRUsCommandRecord(
             hru_id=int(row["HRU_ID"]),
-            area=row["HRU_Area"],
+            area=row["HRU_Area"] / 1_000_000,
             elevation=row["HRU_E_mean"],
             latitude=row["HRU_CenY"],
             longitude=row["HRU_CenX"],
@@ -214,7 +228,7 @@ class RoutingProductShapefileImporter:
             aquifer_profile="[NONE]",
             terrain_class="[NONE]",
             slope=row["HRU_S_mean"],
-            aspect=row["HRU_A_mean"],
+            aspect=aspect,
         )
 
 
