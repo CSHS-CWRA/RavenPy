@@ -157,10 +157,10 @@ class ChannelProfileCommand(RavenConfig):
     :ChannelProfile {name}
         :Bedslope {bed_slope}
         :SurveyPoints
-        {survey_points}
+    {survey_points}
         :EndSurveyPoints
         :RoughnessZones
-        {roughness_zones}
+    {roughness_zones}
         :EndRoughnessZones
     :EndChannelProfile
     """
