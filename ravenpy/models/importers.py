@@ -153,24 +153,32 @@ class RoutingProductShapefileImporter:
         subbasin_id = int(row["SubId"])
         slope = max(row["RivSlope"], RoutingProductShapefileImporter.MAX_RIVER_SLOPE)
 
-        channel_width = row["BkfWidth"]
-        channel_depth = row["BkfDepth"]
+        channel_width = row["BkfWidth"]  # SWAT: top width of channel when filled with water; bankfull width W_bnkfull
+        channel_depth = row["BkfDepth"]  # SWAT: depth of water in channel when filled to top of bank
         channel_elev = row["MeanElev"]
         floodn = row["FloodP_n"]
         channeln = row["Ch_n"]
 
-        zch = 2
-        sidwd = zch * channel_depth  # river side width
-        botwd = channel_width - 2 * sidwd  # river
+        # channel profile calculations are based on theory SWAT model is based on
+        # see: https://swat.tamu.edu/media/99192/swat2009-theory.pdf
+        #      --> "Channel Characteristics" p. 429 ff
+
+        zch = 2                            # inverse of channel side slope; channel sides assumed to have 2:1 run to rise ratio
+        sidwd = zch * channel_depth        # river side width 
+        botwd = channel_width - 2 * sidwd  # river bottom width W_btm
+
+        # if derived bottom width is negative, set bottom width to 0.5*bankfull width and recalculate zch
         if botwd < 0:
             botwd = 0.5 * channel_width
             sidwd = 0.5 * 0.5 * channel_width
-            zch = (channel_width - botwd) / 2 / channel_depth
+            zch = (channel_width - botwd) / (2 * channel_depth)
 
-        zfld = 4 + channel_elev
-        zbot = channel_elev - channel_depth
-        sidwdfp = 4 / 0.25
+        zfld = 4 + channel_elev               # inverse of floodplain side slope; flood plain side slopes assumed to have 4:1 run to rise ratio
+        zbot = channel_elev - channel_depth   # floodplain bottom width 
+        sidwdfp = 4 / 0.25                    # floodplain side width 
 
+        # geometry of the channel and floodplain
+        # (see figure 7:1-2 in SWAT theory document)
         survey_points = [
             (0, zfld),
             (sidwdfp, channel_elev),
@@ -187,6 +195,7 @@ class RoutingProductShapefileImporter:
         else:
             mann = RoutingProductShapefileImporter.MANNING_DEFAULT
 
+        # roughness zones of channel and floodplain
         roughness_zones = [
             (0, floodn),
             (sidwdfp + 2 * channel_width, mann),
