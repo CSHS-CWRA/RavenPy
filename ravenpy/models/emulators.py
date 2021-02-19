@@ -5,7 +5,7 @@ import xarray as xr
 
 from ravenpy.models import Ostrich, Raven
 
-from .commands import BasinIndexCommand, HRUStateVariableTableCommandRecord
+from .commands import BasinIndexCommand, HRUStateVariableTableCommand
 from .rv import RV, RVC, RVH, RVI, RVP, RVT, MonthlyAverage, Ost, RavenNcData
 
 __all__ = [
@@ -32,6 +32,8 @@ std_vars = (
     "evspsbl",
     "water_volume_transport_in_river_channel",
 )
+
+HRUState = HRUStateVariableTableCommand.Record
 
 
 class GR4JCN(Raven):
@@ -80,7 +82,7 @@ class GR4JCN(Raven):
             soil0 = self.rvd.GR4J_X1_hlf if self.rvc.soil0 is None else self.rvc.soil0
             soil1 = self.rvc.soil1
 
-            self.rvc.hru_state = HRUStateVariableTableCommandRecord(
+            self.rvc.hru_state = HRUState(
                 index=1, soil0=soil0, soil1=soil1
             )
 
@@ -121,7 +123,7 @@ class MOHYSE(Raven):
         self.rvt = RVT(**{k: nc() for k in std_vars})
         self.rvi = RVI(evaporation="PET_MOHYSE", rain_snow_fraction="RAINSNOW_DATA")
         self.rvc = RVC(
-            hru_state=HRUStateVariableTableCommandRecord(),
+            hru_state=HRUState(),
             basin_state=BasinIndexCommand(),
         )
         self.rvd = RV(par_rezi_x10=None)
@@ -219,7 +221,7 @@ class HMETS(GR4JCN):
             soil1 = (
                 self.rvd["PHREATIC_hlf"] if self.rvc.soil1 is None else self.rvc.soil1
             )
-            self.rvc.hru_state = HRUStateVariableTableCommandRecord(
+            self.rvc.hru_state = HRUState(
                 soil0=soil0, soil1=soil1
             )
 
@@ -342,7 +344,7 @@ class HBVEC(GR4JCN):
 
         # Default initial conditions if none are given
         if self.rvc.hru_state is None:
-            self.rvc.hru_state = HRUStateVariableTableCommandRecord(
+            self.rvc.hru_state = HRUState(
                 soil2=self.rvc.soil2
             )
         if self.rvc.basin_state is None:

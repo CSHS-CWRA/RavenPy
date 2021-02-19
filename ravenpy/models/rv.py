@@ -15,9 +15,7 @@ from .commands import (
     BasinStateVariablesCommand,
     ChannelProfileCommand,
     HRUsCommand,
-    HRUsCommandRecord,
     HRUStateVariableTableCommand,
-    HRUStateVariableTableCommandRecord,
     LandUseClassesCommand,
     RavenConfig,
     ReservoirCommand,
@@ -25,9 +23,10 @@ from .commands import (
     SoilProfilesCommand,
     SubBasinGroupCommand,
     SubBasinsCommand,
-    SubBasinsCommandRecord,
     VegetationClassesCommand,
 )
+
+HRUState = HRUStateVariableTableCommand.Record
 
 """
 Raven configuration
@@ -678,7 +677,7 @@ class RVI(RV):
 class RVC(RV):
     def __init__(
         self,
-        hru_states: Dict[int, HRUStateVariableTableCommandRecord] = None,
+        hru_states: Dict[int, HRUState] = None,
         basin_states: Dict[int, BasinIndexCommand] = None,
         **kwds,
     ):
@@ -726,11 +725,11 @@ class RVC(RV):
 
 @dataclass
 class RVH(RV):
-    subbasins: Tuple[SubBasinsCommandRecord] = (SubBasinsCommandRecord(),)
+    subbasins: Tuple[SubBasinsCommand.Record] = (SubBasinsCommand.Record(),)
     land_subbasins: Tuple[int] = ()
     lake_subbasins: Tuple[int] = ()
     reservoirs: Tuple[ReservoirCommand] = ()
-    hrus: Tuple[HRUsCommandRecord] = ()
+    hrus: Tuple[HRUsCommand.Record] = ()
 
     template = """
     {subbasins_cmd}
@@ -873,7 +872,7 @@ def get_states(solution, hru_index=None, basin_index=None):
     basin_state = {}
 
     for index, params in solution["HRUStateVariableTable"]["data"].items():
-        hru_state[index] = HRUStateVariableTableCommandRecord(*params)
+        hru_state[index] = HRUState(*params)
 
     for index, raw in solution["BasinStateVariables"]["BasinIndex"].items():
         params = {k.lower(): v for (k, v) in raw.items()}

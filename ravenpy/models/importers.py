@@ -13,11 +13,9 @@ from .commands import (
     GriddedForcingCommand,
     GridWeightsCommand,
     HRUsCommand,
-    HRUsCommandRecord,
     ReservoirCommand,
     SubBasinGroupCommand,
     SubBasinsCommand,
-    SubBasinsCommandRecord,
 )
 
 HRU_ASPECT_CONVENTION = "GRASS"  # GRASS | ArcGIS
@@ -53,7 +51,7 @@ class RoutingProductShapefileImporter:
         -------
         dict
             "subbasins"
-               Sequence of `commands.SubBasinsCommandRecord` objects
+               Sequence of `commands.SubBasinsCommand.Record` objects
             "land_subbasins"
                Sequence of land subbasins ids
             "lake_subbasins"
@@ -63,7 +61,7 @@ class RoutingProductShapefileImporter:
             "channel_profiles"
                Sequence of `commands.ChannelProfileCommand` objects
             "hrus"
-               Sequence of `commands.HRUsCommandRecord` objects
+               Sequence of `commands.HRUsCommand.Record` objects
 
         """
 
@@ -111,7 +109,7 @@ class RoutingProductShapefileImporter:
             hrus=hru_recs,
         )
 
-    def _extract_subbasin(self, row, is_lake, subbasin_ids) -> SubBasinsCommandRecord:
+    def _extract_subbasin(self, row, is_lake, subbasin_ids) -> SubBasinsCommand.Record:
         subbasin_id = int(row["SubId"])
         # is_lake = row["HRU_IsLake"] >= 0
         river_length_in_kms = 0 if is_lake else round(row["Rivlen"] / 1000, 5)
@@ -127,7 +125,7 @@ class RoutingProductShapefileImporter:
         gauged = row["IsObs"] > 0 or (
             is_lake and RoutingProductShapefileImporter.USE_LAKE_AS_GAUGE
         )
-        rec = SubBasinsCommandRecord(
+        rec = SubBasinsCommand.Record(
             subbasin_id=subbasin_id,
             name=f"sub_{subbasin_id}",
             downstream_id=downstream_id,
@@ -202,7 +200,7 @@ class RoutingProductShapefileImporter:
             roughness_zones=roughness_zones,
         )
 
-    def _extract_hru(self, row) -> HRUsCommandRecord:
+    def _extract_hru(self, row) -> HRUsCommand.Record:
 
         aspect = row["HRU_A_mean"]
 
@@ -215,7 +213,7 @@ class RoutingProductShapefileImporter:
         else:
             assert False
 
-        return HRUsCommandRecord(
+        return HRUsCommand.Record(
             hru_id=int(row["HRU_ID"]),
             area=row["HRU_Area"] / 1_000_000,
             elevation=row["HRU_E_mean"],
