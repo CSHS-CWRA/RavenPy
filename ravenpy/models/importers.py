@@ -153,8 +153,10 @@ class RoutingProductShapefileImporter:
         subbasin_id = int(row["SubId"])
         slope = max(row["RivSlope"], RoutingProductShapefileImporter.MAX_RIVER_SLOPE)
 
-        channel_width = row["BkfWidth"]  # SWAT: top width of channel when filled with water; bankfull width W_bnkfull
-        channel_depth = row["BkfDepth"]  # SWAT: depth of water in channel when filled to top of bank
+        # SWAT: top width of channel when filled with water; bankfull width W_bnkfull
+        channel_width = row["BkfWidth"]
+        # SWAT: depth of water in channel when filled to top of bank
+        channel_depth = row["BkfDepth"]
         channel_elev = row["MeanElev"]
         floodn = row["FloodP_n"]
         channeln = row["Ch_n"]
@@ -163,9 +165,12 @@ class RoutingProductShapefileImporter:
         # see: https://swat.tamu.edu/media/99192/swat2009-theory.pdf
         #      --> "Channel Characteristics" p. 429 ff
 
-        zch = 2                            # inverse of channel side slope; channel sides assumed to have 2:1 run to rise ratio
-        sidwd = zch * channel_depth        # river side width 
-        botwd = channel_width - 2 * sidwd  # river bottom width W_btm
+        # inverse of channel side slope; channel sides assumed to have 2:1 run to rise ratio
+        zch = 2
+        # river side width
+        sidwd = zch * channel_depth
+        # river bottom width W_btm
+        botwd = channel_width - 2 * sidwd
 
         # if derived bottom width is negative, set bottom width to 0.5*bankfull width and recalculate zch
         if botwd < 0:
@@ -173,9 +178,12 @@ class RoutingProductShapefileImporter:
             sidwd = 0.5 * 0.5 * channel_width
             zch = (channel_width - botwd) / (2 * channel_depth)
 
-        zfld = 4 + channel_elev               # inverse of floodplain side slope; flood plain side slopes assumed to have 4:1 run to rise ratio
-        zbot = channel_elev - channel_depth   # floodplain bottom width 
-        sidwdfp = 4 / 0.25                    # floodplain side width 
+        # inverse of floodplain side slope; flood plain side slopes assumed to have 4:1 run to rise ratio
+        zfld = 4 + channel_elev
+        # floodplain bottom width
+        zbot = channel_elev - channel_depth
+        # floodplain side width
+        sidwdfp = 4 / 0.25
 
         # geometry of the channel and floodplain
         # (see figure 7:1-2 in SWAT theory document)
