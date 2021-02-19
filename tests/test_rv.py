@@ -300,7 +300,7 @@ class TestRVT:
 
         assert ":NumberHRUs 51" in res
         assert ":NumberGridCells 100" in res
-        assert len(res.split("\n")) == 225
+        assert len(res.split("\n")) == 227
 
 
 def test_isinstance_namedtuple():
