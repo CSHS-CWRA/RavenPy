@@ -148,7 +148,7 @@ class RoutingProductShapefileImporter:
             weir_coefficient=RoutingProductShapefileImporter.WEIR_COEFFICIENT,
             crest_width=row["BkfWidth"],
             max_depth=row["LakeDepth"],
-            lake_area=row["LakeArea"] * 1_000_000,
+            lake_area=row["HRU_Area"],
         )
 
     def _extract_channel_profile(self, row) -> ChannelProfileCommand:
