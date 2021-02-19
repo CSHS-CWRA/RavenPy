@@ -1,8 +1,9 @@
 from dataclasses import asdict, dataclass, field
 from textwrap import dedent
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 INDENT = " " * 4
+VALUE_PADDING = 10
 
 
 class RavenConfig:
@@ -25,7 +26,7 @@ class SubBasinsCommandRecord(RavenConfig):
         d = asdict(self)
         d["reach_length"] = d["reach_length"] if d["reach_length"] else "ZERO-"
         d["gauged"] = int(d["gauged"])
-        return " ".join(map(str, d.values()))
+        return " ".join(f"{v: <{VALUE_PADDING}}" for v in d.values())
 
 
 @dataclass
@@ -38,7 +39,7 @@ class SubBasinsCommand(RavenConfig):
     :SubBasins
         :Attributes   ID NAME DOWNSTREAM_ID PROFILE REACH_LENGTH  GAUGED
         :Units      none none          none    none           km    none
-        {subbasin_records}
+    {subbasin_records}
     :EndSubBasins
     """
 
@@ -67,7 +68,7 @@ class HRUsCommandRecord(RavenConfig):
 
     def to_rv(self):
         d = asdict(self)
-        return " ".join(map(str, d.values()))
+        return " ".join(f"{v: <{VALUE_PADDING * 2}}" for v in d.values())
 
 
 @dataclass
@@ -80,7 +81,7 @@ class HRUsCommand(RavenConfig):
     :HRUs
         :Attributes      AREA  ELEVATION       LATITUDE      LONGITUDE BASIN_ID       LAND_USE_CLASS           VEG_CLASS      SOIL_PROFILE  AQUIFER_PROFILE TERRAIN_CLASS      SLOPE     ASPECT
         :Units            km2          m            deg            deg     none                  none               none              none             none          none        deg       degN
-        {hru_records}
+    {hru_records}
     :EndHRUs
     """
 
@@ -99,7 +100,7 @@ class ReservoirCommand(RavenConfig):
     weir_coefficient: float = 0
     crest_width: float = 0
     max_depth: float = 0
-    lake_area: float = 0
+    lake_area: float = 0  # in m^2
 
     template = """
     :Reservoir {name}
@@ -202,6 +203,8 @@ class GriddedForcingCommand(RavenConfig):
     file_name_nc: str = ""
     var_name_nc: str = ""
     dim_names_nc: Tuple[str, str, str] = ("x", "y", "t")
+    time_shift: Optional[int] = None  # in days
+    linear_transform: Optional[Tuple[float, float]] = None
     grid_weights: GridWeightsCommand = None
 
     template = """
@@ -210,6 +213,8 @@ class GriddedForcingCommand(RavenConfig):
         :FileNameNC {file_name_nc}
         :VarNameNC {var_name_nc}
         :DimNamesNC {dim_names_nc}
+        {time_shift}
+        {linear_transform}
         {grid_weights}
     :EndGriddedForcing
     """
@@ -217,7 +222,13 @@ class GriddedForcingCommand(RavenConfig):
     def to_rv(self):
         d = asdict(self)
         d["dim_names_nc"] = " ".join(self.dim_names_nc)
-        d["grid_weights"] = self.grid_weights
+        d["time_shift"] = f":TimeShift {self.time_shift}" if self.time_shift else ""
+        if self.linear_transform:
+            slope, intercept = self.linear_transform
+            d["linear_transform"] = f":LinearTransform {slope} {intercept}"
+        else:
+            d["linear_transform"] = ""
+        d["grid_weights"] = self.grid_weights.to_rv(indent_level=1)
         return dedent(self.template).format(**d)
 
 
