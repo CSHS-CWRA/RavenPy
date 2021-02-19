@@ -283,9 +283,27 @@ class RoutingProductGridWeightImporter:
             epsg=RoutingProductGridWeightImporter.CRS_CAEA
         )
 
+        # this is not correct ...
         self._routing_data = self._routing_data.drop_duplicates(
             self._routing_id_field
         ).sort_values(self._routing_id_field)
+
+        # ... it should be this (or similar)
+        # # since we will delete all duplicate gauges with DowSub-Id == -1 in next step,
+        # # we need to make sure that the Obs_NM of the requested station is set in all SubIds (if duplicate)
+        # if self._gauge_ids:
+        #     self._target_subId = self._routing_data.loc[self._routing_data.Obs_NM.isin(self._gauge_ids)].SubId.tolist()
+        # else:
+        #    self._target_subId = self._sub_ids
+        # # find that sub-Id and the extract the gauge name (if existing; otherwise it will be -9999 for all)
+        # self._target_obs_nm = sorted(self._routing_data.loc[self._routing_data.SubId.isin(self._target_subId)].Obs_NM.tolist())[-1]
+        # # put this gauge name in all the records with the target_subId
+        # self._routing_data.loc[self._routing_data.SubId.isin(self._target_subId),"Obs_NM"] = self._target_obs_nm
+        
+        # remove duplicates
+        self._routing_data = self._routing_data.sort_values(
+            [self._routing_id_field, "DowSubId"]
+        ).drop_duplicates(self._routing_id_field, keep="last")
 
         # Make sure those are ints
         self._routing_data.SubId = self._routing_data.SubId.astype(int)
