@@ -14,7 +14,6 @@ from .commands import (
     GridWeightsCommand,
     HRUsCommand,
     ReservoirCommand,
-    SubBasinGroupCommand,
     SubBasinsCommand,
 )
 
@@ -154,9 +153,9 @@ class RoutingProductShapefileImporter:
         slope = max(row["RivSlope"], RoutingProductShapefileImporter.MAX_RIVER_SLOPE)
 
         # SWAT: top width of channel when filled with water; bankfull width W_bnkfull
-        channel_width = row["BkfWidth"]
+        channel_width = max(row["BkfWidth"], 1)
         # SWAT: depth of water in channel when filled to top of bank
-        channel_depth = row["BkfDepth"]
+        channel_depth = max(row["BkfDepth"], 1)
         channel_elev = row["MeanElev"]
         floodn = row["FloodP_n"]
         channeln = row["Ch_n"]
