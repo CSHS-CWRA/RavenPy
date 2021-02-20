@@ -24,8 +24,10 @@ from ravenpy.models import (
 )
 from ravenpy.models.commands import (
     GriddedForcingCommand,
-    HRUStateVariableTableCommandRecord,
+    HRUStateVariableTableCommand,
     LandUseClassesCommand,
+    ObservationDataCommand,
+    SBGroupPropertyMultiplierCommand,
     SoilClassesCommand,
     SoilProfilesCommand,
     VegetationClassesCommand,
@@ -183,7 +185,7 @@ class TestGR4JCN:
         model(
             TS,
             end_date=dt.datetime(2001, 2, 1),
-            hru_state=HRUStateVariableTableCommandRecord(soil0=0),
+            hru_state=HRUStateVariableTableCommand.Record(soil0=0),
             overwrite=True,
         )
         assert model.q_sim.isel(time=1).values[0] < qsim2.isel(time=1).values[0]
@@ -1094,6 +1096,7 @@ class TestRouting:
         routing_product_shp_path = get_local_testdata(
             "raven-routing-sample/finalcat_hru_info.zip"
         )
+
         vic_streaminputs_nc_path = get_local_testdata(
             "raven-routing-sample/VIC_streaminputs.nc"
         )
@@ -1101,11 +1104,15 @@ class TestRouting:
             "raven-routing-sample/VIC_temperatures.nc"
         )
 
+        observation_data_nc_path = get_local_testdata(
+            "raven-routing-sample/WSC02LE024.nc"
+        )
+
         #########
         # Model #
         #########
 
-        model = Routing()
+        model = Routing("/tmp/ravenpy_routing_emu_dev/")
 
         #######
         # RVI #
@@ -1114,27 +1121,36 @@ class TestRouting:
         streaminputs = xr.open_dataset(vic_streaminputs_nc_path)
 
         start = streaminputs.indexes["time"][0]
-        end = streaminputs.indexes["time"][-1]
-
-        # Round to hours (should be 6 hours)
-        n_seconds = ((end - start) / len(streaminputs.time)).round("h").seconds
-
-        # Warning: this is only good up to 24 hours (24:00:00)
-        time_step = time.strftime("%H:%M:%S", time.gmtime(n_seconds))
+        end = streaminputs.indexes["time"][-4]  # to match the tutorial end date
 
         model.rvi.start_date = start.to_pydatetime()
         model.rvi.end_date = end.to_pydatetime()
-        model.rvi.time_step = time_step
+
+        # Raven will use 24h even though the NC inputs are 6h
+        model.rvi.time_step = "24:00:00"
+
+        model.rvi.evaluation_metrics = "NASH_SUTCLIFFE PCT_BIAS KLING_GUPTA"
 
         #######
         # RVH #
         #######
 
-        rvh_importer = RoutingProductShapefileImporter(routing_product_shp_path)
+        rvh_importer = RoutingProductShapefileImporter(
+            routing_product_shp_path, hru_aspect_convention="ArcGIS"
+        )
         rvh_config = rvh_importer.extract()
         channel_profiles = rvh_config.pop("channel_profiles")
 
+        gauge = [sb for sb in rvh_config["subbasins"] if sb.gauged]
+        assert len(gauge) == 1
+        gauge = gauge[0]
+
         model.rvh.update(rvh_config)
+
+        model.rvh["sb_group_property_multipliers"] = (
+            SBGroupPropertyMultiplierCommand("Land", "MANNINGS_N", 1.0),
+            SBGroupPropertyMultiplierCommand("Lakes", "RESERVOIR_CREST_WIDTH", 1.0),
+        )
 
         #######
         # RVP #
@@ -1178,6 +1194,7 @@ class TestRouting:
             file_name_nc=vic_streaminputs_nc_path.name,
             var_name_nc="Streaminputs",
             dim_names_nc=("lon_dim", "lat_dim", "time"),
+            linear_transform=(4.0, 0),
             grid_weights=streaminputs_importer.extract(),
         )
 
@@ -1192,19 +1209,51 @@ class TestRouting:
 
         model.rvt.gridded_forcings = [streaminputs_gf, temperatures_gf]
 
+        model.rvt.observation_data = ObservationDataCommand(
+            data_type="HYDROGRAPH",
+            subbasin_id=gauge.subbasin_id,
+            units="m3/s",
+            file_name_nc=observation_data_nc_path.name,
+            var_name_nc="Q",
+            dim_names_nc=("nstations", "time"),
+            station_idx=1,
+        )
+
         #############
         # Run model #
         #############
 
-        model([vic_streaminputs_nc_path, vic_temperatures_nc_path])
+        model(
+            [
+                vic_streaminputs_nc_path,
+                vic_temperatures_nc_path,
+                observation_data_nc_path,
+            ],
+            overwrite=True,
+        )
 
         ##########
         # Verify #
         ##########
 
-        assert len(model.hydrograph.time) == len(streaminputs.time)
+        assert len(model.hydrograph.time) == (end - start).days + 1
 
-        gauge = [sb for sb in rvh_config["subbasins"] if sb.gauged]
-        assert len(gauge) == 1
+        assert model.hydrograph.basin_name.item() == gauge.name
 
-        assert model.hydrograph.basin_name.item() == gauge[0].name
+        csv_lines = model.outputs["diagnostics"].read_text().split("\n")
+        assert csv_lines[1].split(",")[:-1] == [
+            "HYDROGRAPH_ALL",
+            observation_data_nc_path.name,
+            "0.311049",
+            "-11.9514",
+            "0.471256",
+        ]
+
+        for d, q_sim in [
+            (0, 85.97869699520872),
+            (1000, 78.9516829670743),
+            (2000, 70.29412760595676),
+            (3000, 44.711237489482755),
+            (4000, 129.98874279175033),
+        ]:
+            assert model.hydrograph.q_sim[d].item() == q_sim
