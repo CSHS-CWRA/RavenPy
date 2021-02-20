@@ -143,6 +143,19 @@ class SubBasinGroupCommand(RavenConfig):
 
 
 @dataclass
+class SBGroupPropertyMultiplierCommand(RavenConfig):
+
+    group_name: str = ""
+    parameter_name: str = ""
+    mult: float = None
+
+    template = ":SBGroupPropertyMultiplier {group_name} {parameter_name} {mult}"
+
+    def to_rv(self):
+        return dedent(self.template).format(**asdict(self))
+
+
+@dataclass
 class ChannelProfileCommand(RavenConfig):
     """:ChannelProfile command (RVP)."""
 
@@ -455,15 +468,6 @@ class HRUStateVariableTableCommand(RavenConfig):
 class BasinIndexCommand(RavenConfig):
     """Initial conditions for a flow segment."""
 
-    template = """
-    :BasinIndex {index},{name}
-        :ChannelStorage, {channelstorage}
-        :RivuletStorage, {rivuletstorage}
-        :Qout,{nsegs},{qout},{qoutlast}
-        :Qlat,{nQlatHist},{qlat},{qlatlast}
-        :Qin ,{nQinHist}, {qin}
-        """
-
     index: int = 1
     name: str = "watershed"
     channelstorage: float = 0
@@ -473,6 +477,15 @@ class BasinIndexCommand(RavenConfig):
     qlat: tuple = (0, 0, 0)
     qlatlast: float = 0
     qin: tuple = 20 * (0,)
+
+    template = """
+    :BasinIndex {index},{name}
+        :ChannelStorage, {channelstorage}
+        :RivuletStorage, {rivuletstorage}
+        :Qout,{nsegs},{qout},{qoutlast}
+        :Qlat,{nQlatHist},{qlat},{qlatlast}
+        :Qin ,{nQinHist}, {qin}
+        """
 
     def to_rv(self):
         return (
@@ -491,13 +504,13 @@ class BasinIndexCommand(RavenConfig):
 @dataclass
 class BasinStateVariablesCommand(RavenConfig):
 
+    basin_states: Dict[int, BasinIndexCommand] = field(default_factory=dict)
+
     template = """
     :BasinStateVariables
         {basin_states_list}
     :EndBasinStateVariables
     """
-
-    basin_states: Dict[int, BasinIndexCommand] = field(default_factory=dict)
 
     def to_rv(self):
         return dedent(self.template).format(
@@ -514,13 +527,13 @@ class SoilClassesCommand(RavenConfig):
         def to_rv(self):
             return " ".join(map(str, asdict(self).values()))
 
+    soil_classes: Tuple[Record] = ()
+
     template = """
     :SoilClasses
         {soil_class_records}
     :EndSoilClasses
     """
-
-    soil_classes: Tuple[Record] = ()
 
     def to_rv(self):
         return dedent(self.template).format(
@@ -540,14 +553,14 @@ class SoilProfilesCommand(RavenConfig):
         def to_rv(self):
             return " ".join(map(str, asdict(self).values()))
 
+    soil_profiles: Tuple[Record] = ()
+
     template = """
     :SoilProfiles
         # name, number of layers, soil class, thickness [m]
         {soil_profile_records}
     :EndSoilProfiles
     """
-
-    soil_profiles: Tuple[Record] = ()
 
     def to_rv(self):
         return dedent(self.template).format(
@@ -567,6 +580,8 @@ class VegetationClassesCommand(RavenConfig):
         def to_rv(self):
             return " ".join(map(str, asdict(self).values()))
 
+    vegetation_classes: Tuple[Record] = ()
+
     template = """
     :VegetationClasses
         :Attributes,                MAX_HT,       MAX_LAI,    MAX_LEAF_COND
@@ -574,8 +589,6 @@ class VegetationClassesCommand(RavenConfig):
         {vegetation_class_records}
     :EndVegetationClasses
     """
-
-    vegetation_classes: Tuple[Record] = ()
 
     def to_rv(self):
         return dedent(self.template).format(
@@ -594,6 +607,8 @@ class LandUseClassesCommand(RavenConfig):
         def to_rv(self):
             return " ".join(map(str, asdict(self).values()))
 
+    land_use_classes: Tuple[Record] = ()
+
     template = """
     :LandUseClasses
         :Attributes,        IMPERMEABLE_FRAC,         FOREST_COVERAGE
@@ -602,9 +617,36 @@ class LandUseClassesCommand(RavenConfig):
     :EndLandUseClasses
     """
 
-    land_use_classes: Tuple[Record] = ()
-
     def to_rv(self):
         return dedent(self.template).format(
             land_use_class_records="\n".join(map(str, self.land_use_classes))
         )
+
+
+@dataclass
+class ObservationDataCommand(RavenConfig):
+
+    data_type: str = "HYDROGRAPH"
+    subbasin_id: int = None
+    units: str = "m3/s"
+    file_name_nc: str = None
+    var_name_nc: str = None
+    dim_names_nc: Tuple[str, str] = ("?", "?")
+    station_idx: int = None
+
+    template = """
+    :ObservationData {data_type} {subbasin_id} {units}
+        :ReadFromNetCDF
+             :FileNameNC     {file_name_nc}
+             :VarNameNC      {var_name_nc}
+             :DimNamesNC     {dim_names_nc}
+             :StationIdx     {station_idx}
+        :EndReadFromNetCDF
+    :EndObservationData
+    """
+
+    def to_rv(self):
+        d = asdict(self)
+        dns = d["dim_names_nc"]
+        d["dim_names_nc"] = f"{dns[0]} {dns[1]}"
+        return dedent(self.template).format(**d)
