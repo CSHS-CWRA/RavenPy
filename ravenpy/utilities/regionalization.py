@@ -12,9 +12,10 @@ import xarray as xr
 from ravenpy.models import get_model
 
 from . import coords
-from .testdata import get_local_testdata
 
 LOGGER = logging.getLogger("PYWPS")
+
+regionalisation_data_dir = Path(__file__).parent.parent / "data" / "regionalisation"
 
 
 def regionalize(
@@ -114,9 +115,10 @@ def regionalize(
     m = get_model(model)()
     qsims = []
 
-    for params in reg_params:
+    for i, params in enumerate(reg_params):
         kwds["params"] = params
-        m(overwrite=True, **kwds)
+        kwds["run_name"] = f"reg_{i}"
+        m(**kwds)
         qsims.append(m.q_sim.copy(deep=True))
 
     qsims = xr.concat(qsims, dim=cr)
@@ -170,7 +172,7 @@ def read_gauged_properties(properties):
     pd.DataFrame
       Catchment properties keyed by catchment ID.
     """
-    f = get_local_testdata("regionalisation_data/gauged_catchment_properties.csv")
+    f = regionalisation_data_dir / "gauged_catchment_properties.csv"
     proptable = pd.read_csv(f, index_col="ID")
 
     return proptable[properties]
@@ -186,7 +188,7 @@ def read_gauged_params(model):
     pd.DataFrame
       Model parameters keyed by catchment ID.
     """
-    f = get_local_testdata(f"regionalisation_data/{model}_parameters.csv")
+    f = regionalisation_data_dir / f"{model}_parameters.csv"
     params = pd.read_csv(f, index_col="ID")
 
     return params["NASH"], params.iloc[:, 1:]

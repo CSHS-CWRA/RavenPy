@@ -532,13 +532,14 @@ class Raven:
             # There are no diagnostics if a streamflow time series is not provided.
             try:
                 fns = self._get_output(pattern, path=path)
+                fns.sort()
+                self.ind_outputs[key] = fns
+                self.outputs[key] = self._merge_output(fns, pattern[1:])
+
             except UserWarning as exc:
                 if key != "diagnostics":
                     raise exc
-
-            fns.sort()
-            self.ind_outputs[key] = fns
-            self.outputs[key] = self._merge_output(fns, pattern[1:])
+                fns = None
 
         self.outputs["rv_config"] = self._merge_output(self.rvs, "rv.zip")
 
@@ -633,9 +634,9 @@ class Raven:
         """
         files = list(path.rglob(pattern))
 
-        # TODO: Fix this. Raven won't have rvi.suppress_output is initialized with existing configuration files.
-        if len(files) == 0 and not self.rvi.suppress_output:
-            raise UserWarning("No output files for {} in {}.".format(pattern, path))
+        if len(files) == 0:
+            if not (isinstance(self.rvi, RVI) and self.rvi.suppress_output):
+                raise UserWarning("No output files for {} in {}.".format(pattern, path))
 
         return [f.absolute() for f in files]
 

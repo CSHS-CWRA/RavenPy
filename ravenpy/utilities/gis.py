@@ -304,6 +304,7 @@ def get_raster_wcs(
             identifier=[layer],
             format="image/tiff",
             subsets=[(x, left, right), (y, down, up)],
+            timeout=120
         )
 
     except Exception as e:
