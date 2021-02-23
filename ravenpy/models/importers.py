@@ -283,27 +283,28 @@ class RoutingProductGridWeightImporter:
             epsg=RoutingProductGridWeightImporter.CRS_CAEA
         )
 
-        # this is not correct ...
-        self._routing_data = self._routing_data.drop_duplicates(
-            self._routing_id_field
-        ).sort_values(self._routing_id_field)
+        def keep_only_valid_downsubid_and_obs_nm(g):
+            """
+            This is an aggregator that takes as input a set of rows (g) that have been grouped by HRU_ID,
+            and returns a single row containing:
+              * The DownSubId value that is NOT -1
+              * The Obs_NM value that is NOT -9999
+              * All the other values for the remaining columns, which SHOULD be the same for every row
+            Since these two values can be in any record of the group, this function is needed.
+            """
+            if len(g) == 1:
+                return g
+            hru_id = self._routing_id_field
+            hru = g[hru_id][:1]
+            did = g[g["DowSubId"] != -1]["DowSubId"].values[0]
+            onm = g[g["Obs_NM"] != -9999]["Obs_NM"].values[0]
+            other_cols = g[[c for c in g.columns if c not in [hru_id, "DowSubId", "Obs_NM"]]]
+            # Make sure that all the other values are the same for every row
+            assert other_cols.value_counts().shape == (1,)
+            return pd.DataFrame(dict({hru_id: hru, "DowSubId": did, "Obs_NM": onm}, **other_cols[:1]))
 
-        # ... it should be this (or similar)
-        # # since we will delete all duplicate gauges with DowSub-Id == -1 in next step,
-        # # we need to make sure that the Obs_NM of the requested station is set in all SubIds (if duplicate)
-        # if self._gauge_ids:
-        #     self._target_subId = self._routing_data.loc[self._routing_data.Obs_NM.isin(self._gauge_ids)].SubId.tolist()
-        # else:
-        #    self._target_subId = self._sub_ids
-        # # find that sub-Id and the extract the gauge name (if existing; otherwise it will be -9999 for all)
-        # self._target_obs_nm = sorted(self._routing_data.loc[self._routing_data.SubId.isin(self._target_subId)].Obs_NM.tolist())[-1]
-        # # put this gauge name in all the records with the target_subId
-        # self._routing_data.loc[self._routing_data.SubId.isin(self._target_subId),"Obs_NM"] = self._target_obs_nm
-        
-        # remove duplicates
-        self._routing_data = self._routing_data.sort_values(
-            [self._routing_id_field, "DowSubId"]
-        ).drop_duplicates(self._routing_id_field, keep="last")
+        # Remove duplicate HRU_IDs while making sure that we keed relevant DowSubId and Obs_NM values
+        self._routing_data = self._routing_data.groupby(self._routing_id_field).apply(keep_only_valid_downsubid_and_obs_nm)
 
         # Make sure those are ints
         self._routing_data.SubId = self._routing_data.SubId.astype(int)
