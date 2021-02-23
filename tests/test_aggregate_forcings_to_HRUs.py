@@ -25,7 +25,7 @@ def test_convert_cell_id_to_ilat_ilon():
     input_file = get_local_testdata("raven-routing-sample/VIC_streaminputs.nc")
     routing_file = get_local_testdata("raven-routing-sample/finalcat_hru_info.zip")
 
-    DIM_NAMES = ("lon", "lat")
+    DIM_NAMES = ("lon_dim", "lat_dim")
     VAR_NAMES = ("lon", "lat")
     ROUTING_ID_FIELD = "HRU_ID"
     NETCDF_INPUT_FIELD = "NetCDF_col"
@@ -65,7 +65,7 @@ def test_aggregate_forcings_to_HRUs():
     routing_file = get_local_testdata("raven-routing-sample/finalcat_hru_info.zip")
     output_file = "/tmp/VIC_streaminputs_aggregated.nc"   # this should be something better
 
-    DIM_NAMES = ("lon", "lat")
+    DIM_NAMES = ("lon_dim", "lat_dim")
     VAR_NAMES = ("lon", "lat")
     ROUTING_ID_FIELD = "HRU_ID"
     NETCDF_INPUT_FIELD = "NetCDF_col"
