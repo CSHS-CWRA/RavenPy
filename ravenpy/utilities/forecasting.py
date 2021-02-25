@@ -22,7 +22,8 @@ import pandas as pd
 import rioxarray
 import xarray as xr
 from xclim import subset
-
+import climpred
+from climpred import HindcastEnsemble, PerfectModelEnsemble
 from ravenpy.models import get_model
 
 LOGGER = logging.getLogger("PYWPS")
@@ -72,8 +73,7 @@ def perform_forecasting_step(rvc, model, workdir=None, **kwds):
 
 
 def perform_climatology_esp(
-    model_name, forecast_date, forecast_duration, workdir=None, **kwds
-):
+    model_name, forecast_date, forecast_duration, workdir=None, **kwds):
     """
     This function takes the model setup and name as well as forecast data and duration and returns
     an ESP forecast netcdf. The data comes from the climatology data and thus there is a mechanism
@@ -343,3 +343,56 @@ def get_subsetted_forecast(region_coll, ds, times, is_caspar):
         forecast = forecast.mean(dim={"lat", "lon"}, keep_attrs=True)
 
     return forecast
+
+def make_climpred_hindcast_object(hindcast,observations):
+    """
+    This function takes a hindcasting dataset of streamflow as well as associated
+    observations and creates a hindcasting object that can be used by the 
+    climpred toolbox for hindcast verification.
+    
+    Parameters
+    ----------
+    hindcast : xarray.Dataset
+      The hindcasting streamflow data for a given period
+    observations : xarray.Dataset
+      The streamflow observations that are used to verify the hindcasts
+
+    Returns
+    -------
+    hindcast_obj : climpred.HindcastEnsemble object
+      The hindcast ensemble formatted to be used in climpred.
+
+    """
+    
+    # Todo: Add verification that the variable names are the same
+    # Todo: Add verification of sizes, catch and return message.
+    hindcast_obj=HindcastEnsemble(hindcast)
+    hindcast_obj=hindcast_obj.add_observations(observations)
+
+
+def make_ESP_hindcast_dataset(model_name,forecast_date, included_years,
+                              forecast_duration,**kwargs):
+
+    import pdb
+    
+    
+    qsims=perform_climatology_esp(model_name, forecast_date.replace(year=included_years[0]), forecast_duration, **kwargs)
+    qsims=qsims.rename({'time':'lead'})
+    qsims=qsims.assign_coords(lead=list(range(1,forecast_duration+1)))
+    qsims=qsims.assign_coords(member=list(range(1,qsims.data.shape[0]+1)))
+    pdb.set_trace()
+    #obs=xr.open_dataset(kwargs["ts"].qobs).sel(time=slice(forecast_date.replace(year=included_years[0]),forecast_date.replace(year=included_years[0])+dt.timedelta(days=forecast_duration-1)))
+    for i in included_years[1:]:
+        
+        qsims_tmp=perform_climatology_esp(model_name, forecast_date.replace(year=i), forecast_duration, **kwargs)
+        qsims_tmp=qsims_tmp.rename({'time':'lead'})
+        qsims_tmp=qsims_tmp.assign_coords(lead=list(range(1,forecast_duration+1)))
+        qsims_tmp=qsims_tmp.assign_coords(member=list(range(1,qsims_tmp.data.shape[0]+1)))
+ #       obs_tmp=xr.open_dataset(kwargs["ts"].qobs).sel(time=slice(forecast_date.replace(year=i),forecast_date.replace(year=i)+dt.timedelta(days=forecast_duration-1)))
+
+        qsims=xr.concat([qsims,qsims_tmp],dim="init")
+        
+    
+    qsims=qsims.assign_coords(init=included_years)
+    qobs=xr.open_dataset(kwargs["ts"].qobs)
+    return qsims, qobs
