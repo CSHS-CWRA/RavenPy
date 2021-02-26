@@ -208,7 +208,7 @@ class GridWeightsCommand(RavenConfig):
         d = asdict(self)
         d["indent"] = indent
         d["data"] = "\n".join(f"{indent}    {p[0]} {p[1]} {p[2]}" for p in self.data)
-        return dedent(self.template).format(**d)
+        return dedent(self.template).strip().format(**d)
 
 
 @dataclass
