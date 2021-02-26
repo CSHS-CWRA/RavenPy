@@ -13,12 +13,11 @@ from .commands import (
     GriddedForcingCommand,
     GridWeightsCommand,
     HRUsCommand,
-    HRUsCommandRecord,
     ReservoirCommand,
-    SubBasinGroupCommand,
     SubBasinsCommand,
-    SubBasinsCommandRecord,
 )
+
+HRU_ASPECT_CONVENTION = "GRASS"  # GRASS | ArcGIS
 
 
 class RoutingProductShapefileImporter:
@@ -36,24 +35,32 @@ class RoutingProductShapefileImporter:
     USE_MANNING_COEFF = False
     MANNING_DEFAULT = 0.035
 
-    def __init__(self, shapefile_path):
+    def __init__(self, shapefile_path, hru_aspect_convention=HRU_ASPECT_CONVENTION):
         if Path(shapefile_path).suffix == ".zip":
             shapefile_path = f"zip://{shapefile_path}"
         self._df = geopandas.read_file(shapefile_path)
+        self.hru_aspect_convention = hru_aspect_convention
 
     def extract(self):
         """
         This will extract the data from the Routing Product shapefile and
-        return it as relevant commands.
+        return it as relevant Raven command data objects.
 
         Returns
         -------
-        `commands.SubBasinsCommand`
-        `commands.SubBasinGroup`
-        `commands.SubBasinGroup`
-        list of `commands.ReservoirCommand`
-        list of `commands.ChannelProfileCommand`
-        `commands.HRUsCommand`
+        dict
+            "subbasins"
+               Sequence of `commands.SubBasinsCommand.Record` objects
+            "land_subbasins"
+               Sequence of land subbasins ids
+            "lake_subbasins"
+               Sequence of lake subbasins ids
+            "reservoirs"
+               Sequence of `commands.ReservoirCommand` objects
+            "channel_profiles"
+               Sequence of `commands.ChannelProfileCommand` objects
+            "hrus"
+               Sequence of `commands.HRUsCommand.Record` objects
 
         """
 
@@ -66,7 +73,6 @@ class RoutingProductShapefileImporter:
 
         # Collect all subbasin_ids for fast lookup in next loop
         subbasin_ids = {int(row["SubId"]) for _, row in self._df.iterrows()}
-        subbasin_id_accum = set()
 
         for _, row in self._df.iterrows():
 
@@ -75,37 +81,37 @@ class RoutingProductShapefileImporter:
 
             subbasin_id = int(row["SubId"])
 
-            # We only want to process the first row with a given SubId (we ignore the other ones)
-            if subbasin_id in subbasin_id_accum:
-                continue
-            subbasin_id_accum.add(subbasin_id)
+            is_lake = False
 
-            # Subbasin
-            sb, is_lake = self._extract_subbasin(row, subbasin_ids)
-            subbasin_recs.append(sb)
-
-            if is_lake:
+            if row["IsLake"] > 0 and row["HRU_IsLake"] > 0:
                 lake_sb_ids.append(subbasin_id)
                 reservoir_cmds.append(self._extract_reservoir(row))
+                is_lake = True
+            elif row["IsLake"] > 0:
+                continue
             else:
                 land_sb_ids.append(subbasin_id)
+
+            # Subbasin
+            sb = self._extract_subbasin(row, is_lake, subbasin_ids)
+            subbasin_recs.append(sb)
 
             # ChannelProfile
             channel_profile_cmds.append(self._extract_channel_profile(row))
 
-        return (
-            SubBasinsCommand(subbasin_recs),
-            SubBasinGroupCommand("land", land_sb_ids),
-            SubBasinGroupCommand("lake", lake_sb_ids),
-            reservoir_cmds,
-            channel_profile_cmds,
-            HRUsCommand(hru_recs),
+        return dict(
+            subbasins=subbasin_recs,
+            land_subbasins=land_sb_ids,
+            lake_subbasins=lake_sb_ids,
+            reservoirs=reservoir_cmds,
+            channel_profiles=channel_profile_cmds,
+            hrus=hru_recs,
         )
 
-    def _extract_subbasin(self, row, subbasin_ids) -> SubBasinsCommandRecord:
+    def _extract_subbasin(self, row, is_lake, subbasin_ids) -> SubBasinsCommand.Record:
         subbasin_id = int(row["SubId"])
-        is_lake = row["IsLake"] >= 0
-        river_length_in_kms = 0 if is_lake else row["Rivlen"] / 1000
+        # is_lake = row["HRU_IsLake"] >= 0
+        river_length_in_kms = 0 if is_lake else round(row["Rivlen"] / 1000, 5)
         river_slope = max(
             row["RivSlope"], RoutingProductShapefileImporter.MAX_RIVER_SLOPE
         )
@@ -116,9 +122,9 @@ class RoutingProductShapefileImporter:
         elif downstream_id not in subbasin_ids:
             downstream_id = -1
         gauged = row["IsObs"] > 0 or (
-            row["IsLake"] >= 0 and RoutingProductShapefileImporter.USE_LAKE_AS_GAUGE
+            is_lake and RoutingProductShapefileImporter.USE_LAKE_AS_GAUGE
         )
-        rec = SubBasinsCommandRecord(
+        rec = SubBasinsCommand.Record(
             subbasin_id=subbasin_id,
             name=f"sub_{subbasin_id}",
             downstream_id=downstream_id,
@@ -127,7 +133,7 @@ class RoutingProductShapefileImporter:
             gauged=gauged,
         )
 
-        return rec, is_lake
+        return rec
 
     def _extract_reservoir(self, row) -> ReservoirCommand:
         lake_id = int(row["HyLakeId"])
@@ -146,24 +152,40 @@ class RoutingProductShapefileImporter:
         subbasin_id = int(row["SubId"])
         slope = max(row["RivSlope"], RoutingProductShapefileImporter.MAX_RIVER_SLOPE)
 
-        channel_width = row["BkfWidth"]
-        channel_depth = row["BkfDepth"]
+        # SWAT: top width of channel when filled with water; bankfull width W_bnkfull
+        channel_width = max(row["BkfWidth"], 1)
+        # SWAT: depth of water in channel when filled to top of bank
+        channel_depth = max(row["BkfDepth"], 1)
         channel_elev = row["MeanElev"]
         floodn = row["FloodP_n"]
         channeln = row["Ch_n"]
 
+        # channel profile calculations are based on theory SWAT model is based on
+        # see: https://swat.tamu.edu/media/99192/swat2009-theory.pdf
+        #      --> "Channel Characteristics" p. 429 ff
+
+        # inverse of channel side slope; channel sides assumed to have 2:1 run to rise ratio
         zch = 2
-        sidwd = zch * channel_depth  # river side width
-        botwd = channel_width - 2 * sidwd  # river
+        # river side width
+        sidwd = zch * channel_depth
+        # river bottom width W_btm
+        botwd = channel_width - 2 * sidwd
+
+        # if derived bottom width is negative, set bottom width to 0.5*bankfull width and recalculate zch
         if botwd < 0:
             botwd = 0.5 * channel_width
             sidwd = 0.5 * 0.5 * channel_width
-            zch = (channel_width - botwd) / 2 / channel_depth
+            zch = (channel_width - botwd) / (2 * channel_depth)
 
+        # inverse of floodplain side slope; flood plain side slopes assumed to have 4:1 run to rise ratio
         zfld = 4 + channel_elev
+        # floodplain bottom width
         zbot = channel_elev - channel_depth
+        # floodplain side width
         sidwdfp = 4 / 0.25
 
+        # geometry of the channel and floodplain
+        # (see figure 7:1-2 in SWAT theory document)
         survey_points = [
             (0, zfld),
             (sidwdfp, channel_elev),
@@ -180,6 +202,7 @@ class RoutingProductShapefileImporter:
         else:
             mann = RoutingProductShapefileImporter.MANNING_DEFAULT
 
+        # roughness zones of channel and floodplain
         roughness_zones = [
             (0, floodn),
             (sidwdfp + 2 * channel_width, mann),
@@ -193,10 +216,22 @@ class RoutingProductShapefileImporter:
             roughness_zones=roughness_zones,
         )
 
-    def _extract_hru(self, row) -> HRUsCommandRecord:
-        return HRUsCommandRecord(
+    def _extract_hru(self, row) -> HRUsCommand.Record:
+
+        aspect = row["HRU_A_mean"]
+
+        if self.hru_aspect_convention == "GRASS":
+            aspect -= 360
+            if aspect < 0:
+                aspect += 360
+        elif self.hru_aspect_convention == "ArcGIS":
+            aspect = 360 - aspect
+        else:
+            assert False
+
+        return HRUsCommand.Record(
             hru_id=int(row["HRU_ID"]),
-            area=row["HRU_Area"],
+            area=row["HRU_Area"] / 1_000_000,
             elevation=row["HRU_E_mean"],
             latitude=row["HRU_CenY"],
             longitude=row["HRU_CenX"],
@@ -207,7 +242,7 @@ class RoutingProductShapefileImporter:
             aquifer_profile="[NONE]",
             terrain_class="[NONE]",
             slope=row["HRU_S_mean"],
-            aspect=row["HRU_A_mean"],
+            aspect=aspect,
         )
 
 

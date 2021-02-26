@@ -26,8 +26,6 @@ from pathlib import Path
 import numpy as np
 import xarray as xr
 
-from ravenpy.models.state import HRU_NC_MAP
-
 """
 Suggestion:
 This was initially suggested to make parallel and faster. However, I was blocked and could not make it work
@@ -180,8 +178,8 @@ def update_state(x, qobs_pert, qobs_error, qsim):
     ndarray (n_states, n_members)
       Model state values after assimilation.
 
-    Reference
-    ---------
+    References
+    ----------
     The Ensemble Kalman Filter: theoretical formulation and practical implementation, Evensen 2003
     https://link.springer.com/article/10.1007%2Fs10236-003-0036-9
 

@@ -398,16 +398,14 @@ class Raven:
 
         """
         if isinstance(ts, (six.string_types, Path)):
-            ts = [
-                ts,
-            ]
+            ts = [ts]
 
         # Case for potentially parallel parameters
         pdict = {}
         for p in self._parallel_parameters:
             a = kwds.pop(p, None)
 
-            if a is not None and p in ["params", "basin_state", "hru_state"]:
+            if a is not None and p in ["params"]:
                 pdict[p] = np.atleast_2d(a)
             else:
                 pdict[p] = np.atleast_1d(a)
@@ -532,14 +530,15 @@ class Raven:
             # There are no diagnostics if a streamflow time series is not provided.
             try:
                 fns = self._get_output(pattern, path=path)
-                fns.sort()
-                self.ind_outputs[key] = fns
-                self.outputs[key] = self._merge_output(fns, pattern[1:])
-
             except UserWarning as exc:
                 if key != "diagnostics":
                     raise exc
-                fns = None
+                else:
+                    continue
+
+            fns.sort()
+            self.ind_outputs[key] = fns
+            self.outputs[key] = self._merge_output(fns, pattern[1:])
 
         self.outputs["rv_config"] = self._merge_output(self.rvs, "rv.zip")
 
@@ -634,9 +633,9 @@ class Raven:
         """
         files = list(path.rglob(pattern))
 
-        # TODO: Fix this. Raven won't have rvi.suppress_output is initialized with existing configuration files.
-        if len(files) == 0 and not self.rvi.suppress_output:
-            raise UserWarning("No output files for {} in {}.".format(pattern, path))
+        if len(files) == 0:
+            if not (isinstance(self.rvi, RVI) and self.rvi.suppress_output):
+                raise UserWarning("No output files for {} in {}.".format(pattern, path))
 
         return [f.absolute() for f in files]
 

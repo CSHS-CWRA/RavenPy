@@ -219,8 +219,8 @@ class TestRVC:
         assert self.r.basin_state.qoutlast == 13.29232
 
     def test_write(self):
-        assert self.r.txt_hru_state.startswith("1,")
-        assert self.r.txt_basin_state.strip().startswith(":BasinIndex 1,watershed")
+        assert "1,0.0,821.98274" in self.r.hru_states_cmd.to_rv()
+        assert ":BasinIndex 1,watershed" in self.r.basin_states_cmd.to_rv()
 
     def test_format(self):
         rvc_template = Path(ravenpy.models.__file__).parent / "global" / "global.rvc"
@@ -233,13 +233,14 @@ class TestRVH:
     def setup_class(self):
         shp = get_local_testdata("raven-routing-sample/finalcat_hru_info.zip")
         importer = RoutingProductShapefileImporter(shp)
-        sbs, land_group, lake_group, reservoirs, _, hrus = importer.extract()
-        self.rvh = RVH(sbs, land_group, lake_group, reservoirs, hrus)
+        config = importer.extract()
+        config.pop('channel_profiles')
+        self.rvh = RVH(**config)
 
     def test_import_process(self):
         assert len(self.rvh.subbasins) == 46
-        assert len(self.rvh.land_subbasin_group) == 41
-        assert len(self.rvh.lake_subbasin_group) == 5
+        assert len(self.rvh.land_subbasins) == 41
+        assert len(self.rvh.lake_subbasins) == 5
         assert len(self.rvh.reservoirs) == 5
         assert len(self.rvh.hrus) == 51
 
@@ -272,14 +273,14 @@ class TestRVP:
     def setup_class(self):
         shp = get_local_testdata("raven-routing-sample/finalcat_hru_info.zip")
         importer = RoutingProductShapefileImporter(shp)
-        _, _, _, _, cps, _ = importer.extract()
-        self.rvp = RVP(cps)
+        config = importer.extract()
+        self.rvp = RVP(channel_profiles=config['channel_profiles'])
 
     def test_import_process(self):
         assert len(self.rvp.channel_profiles) == 46
 
     def test_format(self):
-        res = self.rvp.to_rv()
+        res = self.rvp.channel_profile_cmd_list
 
         assert res.count(":ChannelProfile") == 46
         assert res.count(":EndChannelProfile") == 46
@@ -292,15 +293,14 @@ class TestRVT:
         routing_file = get_local_testdata("raven-routing-sample/finalcat_hru_info.zip")
         importer = RoutingProductGridWeightImporter(input_file, routing_file)
         gws = importer.extract()
-        gfc = GriddedForcingCommand(grid_weights=gws)
-        self.rvt = RVT([gfc])
+        self.gfc = GriddedForcingCommand(grid_weights=gws)
 
     def test_import_process(self):
-        res = self.rvt.to_rv()
+        res = self.gfc.to_rv()
 
         assert ":NumberHRUs 51" in res
         assert ":NumberGridCells 100" in res
-        assert len(res.split("\n")) == 225
+        assert len(res.split("\n")) == 227
 
 
 def test_isinstance_namedtuple():
