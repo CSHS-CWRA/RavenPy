@@ -6,17 +6,10 @@ from pathlib import Path
 
 import click
 
-from ravenpy import __version__
 from ravenpy.models.importers import RoutingProductGridWeightImporter
 
 
-@click.group()
-@click.version_option(__version__)
-def cli():
-    pass
-
-
-@cli.command()
+@click.command()
 @click.argument("input-file", type=click.Path(exists=True))
 @click.argument("routing-file", type=click.Path(exists=True))
 @click.option(
@@ -143,7 +136,3 @@ def generate_grid_weights(
         f.write(gw_cmd.to_rv() + "\n")
 
     click.echo(f"Created {output_file_path}")
-
-
-if __name__ == "__main__":
-    sys.exit(cli())  # pragma: no cover
