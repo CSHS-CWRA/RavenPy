@@ -4,15 +4,13 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from ravenpy import RavenPyDependencyError
-
 try:
     import fiona
     import rasterio
     from shapely.geometry import GeometryCollection, shape
 
     import ravenpy.utils as utils
-except (ModuleNotFoundError, RavenPyDependencyError):
+except (ModuleNotFoundError, ImportError):
     utils = False
 
 from .common import test_data
