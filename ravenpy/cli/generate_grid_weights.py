@@ -132,7 +132,6 @@ def generate_grid_weights(
     else:
         output_file_path = output
 
-    with open(output_file_path, "w") as f:
-        f.write(gw_cmd.to_rv() + "\n")
+    output_file_path.write_text(gw_cmd.to_rv() + "\n")
 
     click.echo(f"Created {output_file_path}")

@@ -1,3 +1,4 @@
+import re
 from dataclasses import asdict, dataclass, field
 from textwrap import dedent
 from typing import Any, Dict, Optional, Tuple
@@ -202,6 +203,23 @@ class GridWeightsCommand(RavenConfig):
     {data}
     {indent}:EndGridWeights
     """
+
+    @classmethod
+    def parse(cls, s):
+        pat = """
+        :GridWeights
+            :NumberHRUs (\d+)
+            :NumberGridCells (\d+)
+            (.+)
+        :EndGridWeights
+        """
+        m = re.match(dedent(pat).strip(), s, re.DOTALL)
+        n_hrus, n_grid_cells, data = m.groups()
+        data = [d.strip().split() for d in data.split("\n")]
+        data = tuple((int(h), int(c), float(w)) for h, c, w in data)
+        return cls(
+            number_hrus=int(n_hrus), number_grid_cells=int(n_grid_cells), data=data
+        )
 
     def to_rv(self, indent_level=0):
         indent = INDENT * indent_level

@@ -1,6 +1,5 @@
 import os
 
-from .aggregate_forcings_to_HRUs import aggregate_forcings_to_HRUs
 from .base import Ostrich, Raven
 from .emulators import *
 from .multimodel import RavenMultiModel
