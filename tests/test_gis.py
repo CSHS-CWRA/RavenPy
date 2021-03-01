@@ -78,7 +78,7 @@ class TestHydroBASINS:
             np.array([[-80.8542, 8.2459, -80.1375, 8.7004]]),
         )
 
-    def test_hydrobasins_upstream_ids_aggregate(self, upstream):
+    def test_hydrobasins_upstream_ids_aggregate(self):
         puerto_cortes = (-83.525, 8.96)
         feature = gis.get_hydrobasins_location_wfs(
             coordinates=puerto_cortes * 2, lakes=True, domain="na"
