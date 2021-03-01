@@ -1,20 +1,18 @@
 from collections import defaultdict
 from pathlib import Path
 
-from .. import RavenPyDependencyError
-
 try:
     import geopandas
     from osgeo import __version__ as osgeo_version  # noqa
     from osgeo import ogr, osr  # noqa
 
-except ModuleNotFoundError as e:
+except (ImportError, ModuleNotFoundError) as e:
     msg = (
         f"`{Path(__file__).stem}` requires installation of the RavenPy GIS libraries. These can be installed using the"
         " `pip install ravenpy[gis]` recipe or via Anaconda (`conda env -n ravenpy-env -f environment.yml`)"
         " from the RavenPy repository source files."
     )
-    raise RavenPyDependencyError(msg) from e
+    raise ImportError(msg) from e
 
 
 import netCDF4 as nc4
