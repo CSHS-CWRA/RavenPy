@@ -5,13 +5,7 @@ import netCDF4 as nc4
 import numpy as np
 
 from ravenpy.models.commands import GridWeightsCommand
-
-DIM_NAMES = ("lon_dim", "lat_dim")
-VAR_NAMES = ("lon", "lat")
-ROUTING_ID_FIELD = "HRU_ID"
-NETCDF_INPUT_FIELD = "NetCDF_col"
-AREA_ERROR_THRESHOLD = 0.05
-VARIABLES_TO_AGGREGATE = ["Streaminputs"]
+from ravenpy.models.importers import RoutingProductGridWeightImporter
 
 
 def convert_cell_id_to_ilat_ilon(gws, nlon, nlat):
@@ -68,24 +62,42 @@ def convert_cell_id_to_ilat_ilon(gws, nlon, nlat):
 
 
 @click.command()
-@click.argument("input-weight-file", type=click.Path(exists=True))
 @click.argument("input-nc-file", type=click.Path(exists=True))
-@click.option("--output-weight-file", type=click.Path(), help="")
+@click.argument("input-weight-file", type=click.Path(exists=True))
+@click.option(
+    "-d",
+    "--dim-names",
+    nargs=2,
+    type=click.Tuple([str, str]),
+    default=RoutingProductGridWeightImporter.DIM_NAMES,
+    show_default=True,
+    help="Ordered dimension names of longitude (x) and latitude (y) in the NetCDF INPUT_NC_FILE.",
+)
+@click.option(
+    "-v",
+    "--var-to-aggregate",
+    "variables_to_aggregate",  # rename arg to put emphasis on the fact that it's a list
+    multiple=True,
+    type=str,
+    show_default=True,
+    help="Variables to aggregate in INPUT_NC_FILE.",
+)
 @click.option("--output-nc-file", type=click.Path(), help="")
+@click.option("--output-weight-file", type=click.Path(), help="")
 def aggregate_forcings_to_hrus(
-    input_weight_file,
     input_nc_file,
-    output_weight_file,
+    input_weight_file,
     output_nc_file,
-    dim_names=DIM_NAMES,
-    # var_names=VAR_NAMES,
-    # routing_id_field=ROUTING_ID_FIELD,
-    # netcdf_input_field=NETCDF_INPUT_FIELD,
-    # gauge_ids=None,
-    # sub_ids=None,
-    # area_error_threshold=AREA_ERROR_THRESHOLD,
-    variables_to_aggregate=VARIABLES_TO_AGGREGATE,
+    output_weight_file,
+    dim_names,
+    variables_to_aggregate,
 ):
+    if not variables_to_aggregate:
+        click.echo(
+            "Must specify at least one variable to aggregate (with -v)", err=True
+        )
+        exit(1)
+
     gws = GridWeightsCommand.parse(Path(input_weight_file).read_text())
 
     nHRU = gws.number_hrus
@@ -114,7 +126,7 @@ def aggregate_forcings_to_hrus(
             input_nc_file_path.parent / f"{input_nc_file_path.stem}_aggregated.nc"
         )
     else:
-        output_nc_file_path = output_nc_file
+        output_nc_file_path = Path(output_nc_file)
 
     nc_out = nc4.Dataset(output_nc_file_path, "w")
     nc_dim_time = nc_out.createDimension("time", ntime)
@@ -125,7 +137,7 @@ def aggregate_forcings_to_hrus(
 
     # create all variables in output NC (incl. time) and copy over all attributes
     for name, variable in nc_in.variables.items():
-        if name in variables_to_aggregate + ["time"]:
+        if name in variables_to_aggregate + ("time",):
 
             if name != "time":
                 dims = ["time", "nHRU"]
@@ -231,9 +243,9 @@ def aggregate_forcings_to_hrus(
             / f"{input_weight_file_path.stem}_aggregated.rvt"
         )
     else:
-        output_weight_file_path = output_weight_file
+        output_weight_file_path = Path(output_weight_file)
 
     output_weight_file_path.write_text(gws_new.to_rv() + "\n")
 
-    click.echo(f"Created {output_weight_file_path}")
     click.echo(f"Created {output_nc_file_path}")
+    click.echo(f"Created {output_weight_file_path}")

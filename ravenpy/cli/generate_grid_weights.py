@@ -130,7 +130,7 @@ def generate_grid_weights(
             input_file_path.parent / f"{input_file_path.stem}_weights.rvt"
         )
     else:
-        output_file_path = output
+        output_file_path = Path(output)
 
     output_file_path.write_text(gw_cmd.to_rv() + "\n")
 
