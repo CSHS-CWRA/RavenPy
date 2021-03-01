@@ -13,13 +13,14 @@ try:
 except (ModuleNotFoundError, ImportError):
     utils = False
 
-from .common import test_data
+from ravenpy.utilities.testdata import get_local_testdata
 
 
 @pytest.mark.skipif(condition=utils is False, reason="GIS dependencies are needed.")
 class TestOperations:
 
-    zipped_file = test_data() / "polygons.zip"
+    zipped_file = get_local_testdata("polygons/mars.zip")
+    non_zipped_file = get_local_testdata("polygons/mars.geojson")
 
     def test_circular_mean_aspect(self):
         northern_angles = np.array([330, 30, 15, 345])
@@ -48,22 +49,19 @@ class TestOperations:
             utils.parse_lonlat("This isn't a number, 333.444")
 
     def test_address_append(self):
-        non_existing_tarred_file = test_data() / "polygons.tar"
-        non_zipped_file = test_data() / "polygons.geojson"
+        non_existing_tarred_file = "polygons.tar"
 
         assert "zip://" in utils.address_append(self.zipped_file)
         assert "tar://" in utils.address_append(non_existing_tarred_file)
         # Need to change return type in RAVEN address_append to always be str
-        assert not str(utils.address_append(non_zipped_file)).startswith(
+        assert not str(utils.address_append(self.non_zipped_file)).startswith(
             ("zip://", "tar://")
         )
 
     def test_archive_sniffer(self):
-        zipped_file = test_data() / "polygons.zip"
-
-        # `working_dir` should be allowed as None
-        probable_shp = utils.archive_sniffer(zipped_file, working_dir="/tmp")
-        assert probable_shp == ["/tmp/polygons.shp"]
+         # `working_dir` should be allowed as None
+        probable_shp = utils.archive_sniffer(self.zipped_file, working_dir="/tmp")
+        assert probable_shp == ["/tmp/mars.shp"]
 
     def test_archive_extract(self):
 
@@ -84,12 +82,11 @@ class TestOperations:
 @pytest.mark.skipif(condition=utils is False, reason="GIS dependencies are needed.")
 class TestFileInfoFuncs:
 
-    zipped_file = test_data() / "polygons.zip"
-    geojson_file = test_data() / "polygons.geojson"
-    raster_file = (
-            test_data() / "Mars_MGS_MOLA_DEM_georeferenced_region_compressed.tiff"
-    )
-    non_existing_file = test_data() / "unreal.zip"
+    zipped_file = get_local_testdata("polygons/mars.zip")
+    geojson_file = get_local_testdata("polygons/mars.geojson")
+    raster_file = get_local_testdata("nasa/Mars_MGS_MOLA_DEM_georeferenced_region_compressed.tiff")
+
+    non_existing_file = "unreal.zip"
 
     def test_raster_datatype_sniffer(self):
         datatype = utils.raster_datatype_sniffer(self.raster_file)
@@ -142,8 +139,8 @@ class TestFileInfoFuncs:
 @pytest.mark.skipif(condition=utils is False, reason="GIS dependencies are needed.")
 class TestGdalOgrFunctions:
 
-    raster_file = test_data() / "Mars_MGS_MOLA_DEM_georeferenced_region_compressed.tiff"
-    geojson_file = test_data() / "polygons.geojson"
+    geojson_file = get_local_testdata("polygons/mars.geojson")
+    raster_file = get_local_testdata("nasa/Mars_MGS_MOLA_DEM_georeferenced_region_compressed.tiff")
 
     # FIXME: Options exist for gdal.DEMProcessing to return in-memory arrays (output="", format="MEM"). Not documented.
     def test_gdal_aspect_not_projected(self):
@@ -226,8 +223,8 @@ class TestGdalOgrFunctions:
 @pytest.mark.skipif(condition=utils is False, reason="GIS dependencies are needed.")
 class TestGenericGeoOperations:
 
-    raster_file = test_data() / "Mars_MGS_MOLA_DEM_georeferenced_region_compressed.tiff"
-    geojson_file = test_data() / "polygons.geojson"
+    geojson_file = get_local_testdata("polygons/mars.geojson")
+    raster_file = get_local_testdata("nasa/Mars_MGS_MOLA_DEM_georeferenced_region_compressed.tiff")
 
     def test_vector_reprojection(self):
         # TODO: It would be awesome if this returned a temporary filepath if no file given.

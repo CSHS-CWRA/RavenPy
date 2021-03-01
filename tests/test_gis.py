@@ -3,8 +3,6 @@ import tempfile
 import numpy as np
 import pytest
 
-from ravenpy import RavenPyDependencyError
-
 try:
     import fiona
     import geopandas as gpd
@@ -13,10 +11,10 @@ try:
 
     import ravenpy.utilities.gis as gis
     import ravenpy.utils as utils
-except (ModuleNotFoundError, RavenPyDependencyError):
+except (ModuleNotFoundError, ImportError):
     utils = False
 
-from .common import test_data
+from ravenpy.utilities.testdata import get_local_testdata
 
 
 class TestHydroBASINS:
@@ -138,7 +136,7 @@ class TestWFS:
 
 class TestWCS:
 
-    vector_file = test_data() / "Saskatoon.geojson"
+    vector_file = get_local_testdata("polygons/Saskatoon.geojson")
 
     def test_get_raster_wcs(self):
         # TODO: This CRS needs to be redefined using modern pyproj-compatible strings.
@@ -165,7 +163,8 @@ class TestWCS:
 
 
 class TestGIS:
-    vector_file = test_data() / "polygons.geojson"
+
+    vector_file = get_local_testdata("polygons/mars.geojson")
 
     def test_get_bbox_single(self):
         w, s, n, e = gis.get_bbox(self.vector_file, all_features=False)
