@@ -131,7 +131,7 @@ def generate_grid_weights(
     cmd = importer.extract()
 
     if output == "raven":
-        print(cmd.to_rv())
+        print(cmd)
     elif output == "text":
         print("\n".join(" ".join(map(str, d)) for d in cmd.data))
     elif output == "json":

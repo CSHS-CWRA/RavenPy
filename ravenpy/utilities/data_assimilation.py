@@ -25,7 +25,6 @@ from copy import deepcopy
 import numpy as np
 import xarray as xr
 
-# from ravenpy.models.state import HRU_NC_MAP
 
 """
 Suggestion:
