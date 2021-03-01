@@ -20,13 +20,15 @@ with open("HISTORY.rst") as history_file:
 
 requirements = [
     "click",
-    "gdal",
     "matplotlib",
-    "rasterio",
-    "rioxarray",
+    "netCDF4",
+    "numpy",
+    "pandas",
+    "requests",
+    "scipy",
     "statsmodels",
     "xarray",
-    "xclim[gis]>=0.23",
+    "xclim>=0.23",
     "wheel",
 ]
 
@@ -40,6 +42,10 @@ docs_requirements = [
 
 dev_requirements = [
     dependency for dependency in open("requirements_dev.txt").readlines()
+]
+
+gis_requirements = [
+    dependency for dependency in open("requirements_gis.txt").readlines()
 ]
 
 
@@ -96,6 +102,7 @@ def create_external_deps_install_class(command_cls):
             urllib.request.urlretrieve(
                 f"{url}/{rev_name}.zip", self.external_deps_path / f"{name}.zip"
             )
+
 
             print(f"Extracting {name} source code..")
             with zipfile.ZipFile(
@@ -189,10 +196,11 @@ setup(
     ),
     test_suite="tests",
     tests_require=test_requirements,
-    extras_require={
-        "docs": docs_requirements,
-        "dev": dev_requirements,
-    },
+    extras_require=dict(
+        dev=dev_requirements,
+        docs=docs_requirements,
+        gis=gis_requirements,
+    ),
     url="https://github.com/CSHS-CWRA/ravenpy",
     version="0.2.3",
     zip_safe=False,

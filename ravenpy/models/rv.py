@@ -6,9 +6,8 @@ from textwrap import dedent
 from typing import Dict, List, Tuple
 
 import cftime
-import geopandas
 import six
-from xclim.core.units import units, units2pint
+from xclim.core.units import units2pint
 
 from .commands import (
     BasinIndexCommand,

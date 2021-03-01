@@ -19,6 +19,7 @@
 #
 import os
 import sys
+
 sys.path.insert(0, os.path.abspath('..'))
 
 import ravenpy
@@ -32,10 +33,28 @@ import ravenpy
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = ['sphinx.ext.autodoc',
+              'sphinx.ext.autosummary',
               'sphinx.ext.viewcode',
               'numpydoc',
               'nbsphinx',
               'sphinx_click']
+
+# To avoid having to install these and burst memory limit on ReadTheDocs.
+autodoc_mock_imports = [
+    'affine',
+    'clisops',
+    'dataclasses',  # needed for python3.6
+    'fiona',
+    'gdal',
+    'osgeo',
+    'geopandas',
+    'lxml',
+    'owslib',
+    'pyproj',
+    'rasterio',
+    'rioxarray',
+    'shapely'
+]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -81,6 +100,11 @@ pygments_style = 'sphinx'
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
 
+# Suppress "WARNING: unknown mimetype for ..." when building EPUB.
+suppress_warnings = ['epub.unknown_project_files']
+
+# Avoid "configuration.rst:4:duplicate label configuration, other instance in configuration.rst"
+autosectionlabel_prefix_document = True
 
 # -- Options for HTML output -------------------------------------------
 
@@ -100,12 +124,10 @@ html_theme = 'sphinx_rtd_theme'
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
-
 # -- Options for HTMLHelp output ---------------------------------------
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'ravenpydoc'
-
 
 # -- Options for LaTeX output ------------------------------------------
 
@@ -136,7 +158,6 @@ latex_documents = [
      'David Huard', 'manual'),
 ]
 
-
 # -- Options for manual page output ------------------------------------
 
 # One entry per manual page. List of tuples
@@ -146,7 +167,6 @@ man_pages = [
      'RavenPy Documentation',
      [author], 1)
 ]
-
 
 # -- Options for Texinfo output ----------------------------------------
 
@@ -161,6 +181,3 @@ texinfo_documents = [
      'One line description of project.',
      'Miscellaneous'),
 ]
-
-
-
