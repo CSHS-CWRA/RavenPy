@@ -4,14 +4,13 @@ Working assumptions for this module
 
 * Point coordinates are passed as shapely.geometry.Point instances.
 * BBox coordinates are passed as (lon1, lat1, lon2, lat2).
-* Shapes (polygons) are passed as ?
+* Shapes (polygons) are passed as Shapely `shape` objects`.
 * All functions that require a CRS have a CRS argument with a default set to WSG84.
 * GEO_URL points to the GeoSever hosting all files.
 
 """
-import collections
 from pathlib import Path
-from typing import Iterable, List, Optional, Sequence, Tuple, Union
+from typing import Iterable, Optional, Sequence, Tuple, Union
 from urllib.parse import urljoin
 
 from requests import Request
@@ -31,8 +30,6 @@ except (ImportError, ModuleNotFoundError) as e:
         " from the RavenPy repository source files."
     )
     raise ImportError(msg) from e
-
-from ravenpy.utils import crs_sniffer, single_file_check
 
 # Do not remove the trailing / otherwise `urljoin` will remove the geoserver path.
 GEO_URL = "http://pavics.ouranos.ca/geoserver/"
@@ -183,81 +180,6 @@ def _determine_upstream_ids(
             up.extend(tmp)
 
     return sub[sub[basin_field].isin(up)]
-
-
-def feature_contains(
-    point: Union[Tuple[Union[int, float, str], Union[str, float, int]], Point],
-    shp: Union[str, Path, List[Union[str, Path]]],
-) -> Union[dict, bool]:
-    """Return the first feature containing a location.
-
-    Parameters
-    ----------
-    point : Union[Tuple[Union[int, float, str], Union[str, float, int]], Point]
-      Geographic coordinates of a point (lon, lat) or a shapely Point.
-    shp : Union[str, Path, List[str, Path]]
-      Path to the file storing the geometries.
-
-    Returns
-    -------
-    Union[dict, bool]
-      The feature found.
-
-    Notes
-    -----
-    This is really slow. Another approach is to use the `fiona.Collection.filter` method.
-    """
-
-    if isinstance(point, collections.abc.Sequence) and not isinstance(point, str):
-        for coord in point:
-            if isinstance(coord, (int, float)):
-                pass
-        point = Point(point)
-    elif isinstance(point, Point):
-        pass
-    else:
-        raise ValueError(
-            f"point should be shapely.Point or tuple of coordinates, got : {point} of type({type(point)})"
-        )
-
-    shape_crs = crs_sniffer(single_file_check(shp))
-
-    if isinstance(shp, list):
-        shp = shp[0]
-
-    for i, layer_name in enumerate(fiona.listlayers(str(shp))):
-        with fiona.open(shp, "r", crs=shape_crs, layer=i) as vector:
-            for f in vector.filter(bbox=(point.x, point.y, point.x, point.y)):
-                return f
-
-    return False
-
-
-def get_bbox(vector: Union[str, Path], all_features: bool = True) -> tuple:
-    """Return bounding box of all features or the first feature in file.
-
-    Parameters
-    ----------
-    vector : str
-      Path to file storing vector features.
-    all_features : bool
-      Return the bounding box for all features. Default: True.
-
-    Returns
-    -------
-    tuple
-      Geographic coordinates of the bounding box (lon0, lat0, lon1, lat1).
-
-    """
-
-    if not all_features:
-        with fiona.open(vector, "r") as src:
-            for feature in src:
-                geom = shape(feature["geometry"])
-                return geom.bounds
-
-    with fiona.open(vector, "r") as src:
-        return src.bounds
 
 
 def get_raster_wcs(

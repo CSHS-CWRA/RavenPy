@@ -1,3 +1,4 @@
+import collections
 import json
 import logging
 import math
@@ -42,18 +43,13 @@ except (ImportError, ModuleNotFoundError) as e:
 
 import numpy as np
 
-# FIXME: Changes for this file currently in RAVEN need to be ported here. Everything below this line is not current.
-LOGGER = logging.getLogger("RAVEN")
+# LOGGER = logging.getLogger("RAVEN")
 
 # See: https://kokoalberti.com/articles/geotiff-compression-optimization-guide/
 GDAL_TIFF_COMPRESSION_OPTION = "compress=lzw"  # or 'compress=deflate' or 'compress=zstd' or 'compress=lerc' or others
 RASTERIO_TIFF_COMPRESSION = "lzw"
 
 WGS84 = "+init=epsg:4326"
-WGS84_PROJ4 = "+proj=longlat +datum=WGS84 +no_defs"
-LAEA = "+proj=laea +lat_0=90 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs"
-WORLDMOLL = "+proj=moll +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs"
-ALBERS_NAM = "+proj=aea +lat_1=20 +lat_2=60 +lat_0=40 +lon_0=-96 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs"
 
 
 def address_append(address: Union[str, Path]) -> str:
@@ -82,8 +78,7 @@ def address_append(address: Union[str, Path]) -> str:
             LOGGER.info("No changes made to address.")
             return address
     except Exception as e:
-        msg = "Failed to prefix or parse URL {}: {}".format(address, e)
-        LOGGER.error(msg)
+        LOGGER.error("Failed to prefix or parse URL %s: %s." % (address, e))
 
 
 def generic_extract_archive(
@@ -111,7 +106,7 @@ def generic_extract_archive(
     if not isinstance(resources, list):
         resources = [resources]
 
-    files = []
+    files = list()
 
     for arch in resources:
         if any(ext in str(arch).lower() for ext in archive_types):
@@ -134,13 +129,13 @@ def generic_extract_archive(
                             [str(Path(output_dir).joinpath(f)) for f in zf.namelist()]
                         )
                 elif file.endswith(".7z"):
-                    msg = "7z file extraction is not supported at this time"
+                    msg = "7z file extraction is not supported at this time."
                     LOGGER.warning(msg)
                     raise UserWarning(msg)
                 else:
-                    LOGGER.debug('File extension "{}" unknown'.format(file))
+                    LOGGER.debug('File extension "%s" unknown' % file)
             except Exception as e:
-                LOGGER.error("Failed to extract sub archive {}: {}".format(arch, e))
+                LOGGER.error("Failed to extract sub archive {%s}: {%s}" % (arch, e))
         else:
             LOGGER.warning("No archives found. Continuing...")
             return resources
@@ -169,7 +164,7 @@ def archive_sniffer(
     List[Union[str, Path]]
       List of files with matching accepted extensions
     """
-    potential_files = []
+    potential_files = list()
 
     if not extensions:
         extensions = [".gml", ".shp", ".geojson", ".gpkg", ".json"]
@@ -181,7 +176,7 @@ def archive_sniffer(
     return potential_files
 
 
-def crs_sniffer(*args: Sequence[Union[str, Path]]) -> Union[List[str], str]:
+def crs_sniffer(*args: Sequence[Union[str, Path]]) -> Union[List[Union[str, int]], str, int]:
     """Return the list of CRS found in files.
 
     Parameters
@@ -194,7 +189,7 @@ def crs_sniffer(*args: Sequence[Union[str, Path]]) -> Union[List[str], str]:
     Union[List[str], str]
       Returns either a list of CRSes or a single CRS definition, depending on the number of instances found.
     """
-    crs_list = []
+    crs_list = list()
     vectors = (".gml", ".shp", ".geojson", ".gpkg", ".json")
     rasters = (".tif", ".tiff")
 
@@ -206,18 +201,18 @@ def crs_sniffer(*args: Sequence[Union[str, Path]]) -> Union[List[str], str]:
                     if len(fiona.listlayers(file)) > 1:
                         raise NotImplementedError
                 with fiona.open(file, "r") as src:
-                    found_crs = fiona.crs.to_string(src.crs)
+                    found_crs = CRS.from_wkt(src.crs_wkt).to_epsg()
             elif str(file).lower().endswith(rasters):
                 with rasterio.open(file, "r") as src:
-                    found_crs = CRS(src.crs).to_proj4()
+                    found_crs = CRS.from_user_input(src.crs).to_epsg()
             else:
                 raise FileNotFoundError("Invalid filename suffix")
         except FileNotFoundError as e:
-            msg = "{}: Unable to open file {}".format(e, args)
+            msg = f"{e}: Unable to open file {args}"
             LOGGER.warning(msg)
             raise Exception(msg)
         except NotImplementedError as e:
-            msg = "{}: Multilayer GeoPackages are currently unsupported".format(e)
+            msg = f"{e}: Multilayer GeoPackages are currently unsupported"
             LOGGER.error(msg)
             raise Exception(msg)
         except RuntimeError:
@@ -226,14 +221,14 @@ def crs_sniffer(*args: Sequence[Union[str, Path]]) -> Union[List[str], str]:
         crs_list.append(found_crs)
 
     if crs_list is None:
-        msg = "No CRS definitions found in {}.".format(args)
+        msg = f"No CRS definitions found in {args}."
         raise FileNotFoundError(msg)
 
     if len(crs_list) == 1:
-        if crs_list[0] == "":
-            msg = "No CRS definitions found in {}. Using {}".format(args, WGS84_PROJ4)
+        if not crs_list[0]:
+            msg = f"No CRS definitions found in {args}. Assuming {WGS84}."
             LOGGER.warning(msg)
-            return WGS84_PROJ4
+            return WGS84
         return crs_list[0]
     return crs_list
 
@@ -302,8 +297,8 @@ def single_file_check(file_list: List[Union[str, Path]]) -> Any:
             raise FileNotFoundError(msg)
         return file_list[0]
     except Exception as e:
-        msg = "{}: Unspecified error. Exiting,"
-        LOGGER.error(msg.format(e))
+        msg = f"{e}: Unspecified error. Exiting,"
+        LOGGER.error(msg)
         raise Exception(msg)
 
 
@@ -378,9 +373,9 @@ def multipolygon_check(geom: GeometryCollection) -> None:
 
 
 def geom_transform(
-    geom: GeometryCollection,
-    source_crs: Union[str, CRS] = WGS84,
-    target_crs: Union[str, CRS] = None,
+    geom: Union[GeometryCollection, shape],
+    source_crs: Union[str, int, CRS] = WGS84,
+    target_crs: Union[str, int, CRS] = None,
 ) -> GeometryCollection:
     """Change the projection of a geometry.
 
@@ -388,11 +383,11 @@ def geom_transform(
 
     Parameters
     ----------
-    geom : GeometryCollection
+    geom : Union[GeometryCollection, shape]
       Source geometry.
-    source_crs : Union[str, CRS]
+    source_crs : Union[str, int, CRS]
       Projection identifier (proj4) for the source geometry, e.g. '+proj=longlat +datum=WGS84 +no_defs'.
-    target_crs : Union[str, CRS]
+    target_crs : Union[str, int, CRS]
       Projection identifier (proj4) for the target geometry.
 
     Returns
@@ -401,13 +396,18 @@ def geom_transform(
       Reprojected geometry.
     """
     try:
-        reprojected = transform(
-            partial(pyproj.transform, pyproj.Proj(source_crs), pyproj.Proj(target_crs)),
-            geom,
-        )
+        from pyproj import Transformer
+        from functools import partial
+
+        source = CRS.from_epsg(source_crs) if isinstance(source_crs, int or str) else source_crs
+        target = CRS.from_epsg(target_crs) if isinstance(target_crs, int or str) else target_crs
+
+        transform_func = Transformer.from_crs(source, target, always_xy=True)
+        reprojected = shapely_transform(transform_func.transform, geom)
+
         return reprojected
-    except Exception as e:
-        msg = "{}: Failed to reproject geometry".format(e)
+    except Exception as err:
+        msg = f"{err}: Failed to reproject geometry"
         LOGGER.error(msg)
         raise Exception(msg)
 
@@ -502,17 +502,10 @@ def dem_prop(
     return {"elevation": elevation.mean(), "slope": slope.mean(), "aspect": aspect_mean}
 
 
-# It's a bit weird to have to pass the output file name as an argument, since you return an in-memory array.
-# Can you keep everything in memory ?
-
-# Response: The DEMPROCESSING function is basically a thin GDAL wrapper for a os.subprocess call. There is
-# unfortunately no way to call the gdal slope/aspect calculation from Python directly so it demands an output filename.
-# Since it technically is writing the information to the file, this function could use a generic named temporary file
-# to perform the analysis and return the array all in memory I suppose. I've added this as an option here.
-
-
 def gdal_slope_analysis(
-    dem: Union[str, Path], output: Union[str, Path] = None, units: str = "degree"
+    dem: Union[str, Path],
+    set_output: Optional[Union[str, Path]] = None,
+    units: str = "degree",
 ) -> np.ndarray:
     """Return the slope of the terrain from the DEM.
 
@@ -522,8 +515,8 @@ def gdal_slope_analysis(
     ----------
     dem : Union[str, Path]
       Path to file storing DEM.
-    output : Union[str, Path]
-      Path to output file.
+    set_output : Optional[Union[str, Path]]
+      Path to output file. If not set, will return an in-memory array.
     units : str
       Slope units. Default: 'degree'.
 
@@ -542,25 +535,35 @@ def gdal_slope_analysis(
         output = tempfile.NamedTemporaryFile().name
     if isinstance(dem, Path):
         dem = str(dem)
-    if isinstance(output, Path):
-        output = str(output)
+    if output:
+        if isinstance(output, Path):
+            output = str(output)
 
-    DEMProcessing(
-        output,
-        dem,
-        "slope",
-        slopeFormat=units,
-        format="GTiff",
-        band=1,
-        creationOptions=[GDAL_TIFF_COMPRESSION_OPTION],
-    )
+        DEMProcessing(
+            output,
+            dem,
+            "slope",
+            slopeFormat=units,
+            format="GTiff",
+            band=1,
+            creationOptions=[GDAL_TIFF_COMPRESSION_OPTION],
+        )
+    else:
+        output = DEMProcessing(
+            "",
+            dem,
+            "slope",
+            slopeFormat=units,
+            format="MEM",
+            band=1,
+        )
     with rasterio.open(output) as src:
         return np.ma.masked_values(src.read(1), value=-9999)
 
 
 def gdal_aspect_analysis(
     dem: Union[str, Path],
-    output: Union[str, Path] = None,
+    set_output: Optional[Union[str, Path]] = None,
     flat_values_are_zero: bool = False,
 ) -> np.ndarray:
     """Return the aspect of the terrain from the DEM.
@@ -571,8 +574,8 @@ def gdal_aspect_analysis(
     ----------
     dem : Union[str, Path]
       Path to file storing DEM.
-    output : Union[str, Path]
-      Path to output file.
+    set_output : Union[str, Path]
+      If set, will write to output file and return . If not set, only an .
     flat_values_are_zero: bool
       Designate flat values with value zero. Default: -9999.
 
@@ -590,18 +593,28 @@ def gdal_aspect_analysis(
         output = tempfile.NamedTemporaryFile().name
     if isinstance(dem, Path):
         dem = str(dem)
-    if isinstance(output, Path):
-        output = str(output)
+    if output:
+        if isinstance(output, Path):
+            output = str(output)
 
-    DEMProcessing(
-        destName=output,
-        srcDS=dem,
-        processing="aspect",
-        zeroForFlat=flat_values_are_zero,
-        format="GTiff",
-        band=1,
-        creationOptions=[GDAL_TIFF_COMPRESSION_OPTION],
-    )
+        DEMProcessing(
+            destName=output,
+            srcDS=dem,
+            processing="aspect",
+            zeroForFlat=flat_values_are_zero,
+            format="GTiff",
+            band=1,
+            creationOptions=[GDAL_TIFF_COMPRESSION_OPTION],
+        )
+    else:
+        output = DEMProcessing(
+            destName="",
+            srcDS=dem,
+            processing="aspect",
+            zeroForFlat=flat_values_are_zero,
+            format="MEM",
+            band=1,
+        )
     with rasterio.open(output) as src:
         return np.ma.masked_values(src.read(1), value=-9999)
 
@@ -749,7 +762,7 @@ def generic_raster_warp(
 def generic_vector_reproject(
     vector: Union[str, Path],
     projected: Union[str, Path],
-    source_crs: Union[str, CRS] = WGS84_PROJ4,
+    source_crs: Union[str, CRS] = WGS84,
     target_crs: Union[str, CRS] = None,
 ) -> None:
     """Reproject all features and layers within a vector file and return a GeoJSON
@@ -771,13 +784,12 @@ def generic_vector_reproject(
     """
 
     if target_crs is None:
-        msg = "No target CRS is defined."
-        raise ValueError(msg)
+        raise ValueError("No target CRS is defined.")
 
     output = {"type": "FeatureCollection", "features": []}
 
     if isinstance(vector, Path):
-        vector = str(vector)
+        vector = vector.as_posix()
 
     for i, layer_name in enumerate(fiona.listlayers(vector)):
         with fiona.open(vector, "r", layer=i) as src:
@@ -790,98 +802,85 @@ def generic_vector_reproject(
                         feature["geometry"] = mapping(transformed)
                         output["features"].append(feature)
                     except Exception as e:
-                        msg = "{}: Unable to reproject feature {}".format(e, feature)
-                        LOGGER.exception(msg)
+                        LOGGER.exception(
+                            "%s: Unable to reproject feature %s" % (e, feature)
+                        )
+                        raise
 
-                sink.write("{}".format(json.dumps(output)))
+                sink.write(f"{json.dumps(output)}")
     return
 
 
-def zonalstats_raster_file(
-    stats: dict,
-    working_dir: str = None,
-    raster_compression: str = RASTERIO_TIFF_COMPRESSION,
-    data_type: str = None,
-    crs: str = None,
-    zip: bool = False,
-) -> Union[str, List[str]]:
-    """
-    Extract the zonalstats grid(s) to a zipped GeoTIFF file and ensure that it is projected to the proper CRS.
+def get_bbox(vector: Union[str, Path], all_features: bool = True) -> tuple:
+    """Return bounding box of all features or the first feature in file.
 
     Parameters
     ----------
-    stats : dict
-      The dictionary produced by the rasterstats `zonalstats` function.
-    working_dir : str
-      The working directory.
-    raster_compression : str
-      The type of compression used on the raster file (default: 'lzw').
-    data_type : str
-      The data encoding of the raster used to write the grid (e.g. 'int16').
-    crs : str
-      The coordinate reference system.
-    zip: bool
-      Return the files as a zipped archive (default: False).
+    vector : str
+      Path to file storing vector features.
+    all_features : bool
+      Return the bounding box for all features. Default: True.
 
     Returns
     -------
-    Union[str, List[str]]
+    tuple
+      Geographic coordinates of the bounding box (lon0, lat0, lon1, lat1).
+
     """
-    out_dir = Path(working_dir).joinpath("output")
-    out_dir.mkdir(exist_ok=True)
-    crs = CRS().from_user_input(crs).to_proj4()
 
-    for i in range(len(stats)):
+    if not all_features:
+        with fiona.open(vector, "r") as src:
+            for feature in src:
+                geom = shape(feature["geometry"])
+                return geom.bounds
 
-        fn = f"subset_{i + 1}.tiff"
-        raster_subset = Path(out_dir).joinpath(fn)
+    with fiona.open(vector, "r") as src:
+        return src.bounds
 
-        try:
-            raster_location = stats[i]
-            raster = raster_location["mini_raster_array"]
-            grid_properties = raster_location["mini_raster_affine"][0:6]
-            nodata = raster_location["mini_raster_nodata"]
 
-            aff = Affine(*grid_properties)
+def feature_contains(
+    point: Union[Tuple[Union[int, float, str], Union[str, float, int]], Point],
+    shp: Union[str, Path, List[Union[str, Path]]],
+) -> Union[dict, bool]:
+    """Return the first feature containing a location.
 
-            LOGGER.info(f"Writing raster data to {raster_subset}")
+    Parameters
+    ----------
+    point : Union[Tuple[Union[int, float, str], Union[str, float, int]], Point]
+      Geographic coordinates of a point (lon, lat) or a shapely Point.
+    shp : Union[str, Path, List[str, Path]]
+      Path to the file storing the geometries.
 
-            masked_array = np.ma.masked_values(raster, nodata)
-            if masked_array.mask.all():
-                msg = f"Subset {i} is empty, continuing..."
-                LOGGER.warning(msg)
+    Returns
+    -------
+    Union[dict, bool]
+      The feature found.
 
-            normal_array = np.asarray(masked_array, dtype=data_type)
+    Notes
+    -----
+    This is really slow. Another approach is to use the `fiona.Collection.filter` method.
+    """
 
-            # Write to GeoTIFF
-            with rasterio.open(
-                raster_subset,
-                "w",
-                driver="GTiff",
-                count=1,
-                compress=raster_compression,
-                height=raster.shape[0],
-                width=raster.shape[1],
-                dtype=data_type,
-                transform=aff,
-                crs=crs,
-                nodata=nodata,
-            ) as f:
-                f.write(normal_array, 1)
-
-        except Exception as e:
-            msg = f"Failed to write raster outputs: {e}"
-            LOGGER.error(msg)
-            raise Exception(msg)
-
-    # `shutil.make_archive` could potentially cause problems with multi-thread? Worth investigating later.
-    if zip:
-        foldername = f"subset_{''.join(choice(ascii_letters) for _ in range(10))}"
-        out_fn = Path(working_dir).joinpath(foldername)
-        shutil.make_archive(
-            base_name=out_fn, format="zip", root_dir=out_dir, logger=LOGGER
+    if isinstance(point, collections.abc.Sequence) and not isinstance(point, str):
+        for coord in point:
+            if isinstance(coord, (int, float)):
+                pass
+        point = Point(point)
+    elif isinstance(point, Point):
+        pass
+    else:
+        raise ValueError(
+            f"point should be shapely.Point or tuple of coordinates, got : {point} of type({type(point)})"
         )
 
-        return "{}.zip".format(out_fn)
-    else:
-        return [f.as_posix() for f in out_dir.glob("*")]
+    shape_crs = crs_sniffer(single_file_check(shp))
+
+    if isinstance(shp, list):
+        shp = shp[0]
+
+    for i, layer_name in enumerate(fiona.listlayers(str(shp))):
+        with fiona.open(shp, "r", crs=shape_crs, layer=i) as vector:
+            for f in vector.filter(bbox=(point.x, point.y, point.x, point.y)):
+                return f
+
+    return False

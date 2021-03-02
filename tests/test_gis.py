@@ -2,6 +2,7 @@ import tempfile
 
 import numpy as np
 import pytest
+import ravenpy.utils
 
 try:
     import fiona
@@ -9,7 +10,7 @@ try:
     import rasterio
     from shapely.geometry import GeometryCollection, shape, Point
 
-    import ravenpy.utilities.gis as gis
+    import ravenpy.utilities.geoserver as gis
     import ravenpy.utils as utils
 except (ModuleNotFoundError, ImportError):
     utils = False
@@ -144,7 +145,7 @@ class TestWCS:
 
         with tempfile.NamedTemporaryFile(prefix="reprojected_", suffix=".json") as projected:
             utils.generic_vector_reproject(self.vector_file, projected.name, target_crs=nalcms_crs)
-            bbox = gis.get_bbox(projected.name)
+            bbox = ravenpy.utils.get_bbox(projected.name)
 
         raster_url = "public:CEC_NALCMS_LandUse_2010"
         raster_bytes = gis.get_raster_wcs(bbox, geographic=False, layer=raster_url)
@@ -167,14 +168,14 @@ class TestGIS:
     vector_file = get_local_testdata("polygons/mars.geojson")
 
     def test_get_bbox_single(self):
-        w, s, n, e = gis.get_bbox(self.vector_file, all_features=False)
+        w, s, n, e = ravenpy.utils.get_bbox(self.vector_file, all_features=False)
         np.testing.assert_almost_equal(w, -139.8514262)
         np.testing.assert_almost_equal(s, 8.3754794)
         np.testing.assert_almost_equal(n, -117.4753973)
         np.testing.assert_almost_equal(e, 29.6327068)
 
     def test_get_bbox_all(self):
-        w, s, n, e = gis.get_bbox(self.vector_file)
+        w, s, n, e = ravenpy.utils.get_bbox(self.vector_file)
         np.testing.assert_almost_equal(w, -139.8514262)
         np.testing.assert_almost_equal(s, 8.3754794)
         np.testing.assert_almost_equal(n, -38.7397456)
@@ -187,5 +188,5 @@ class TestGIS:
         point = -69.0, 45
 
         # FIXME: this fails due to the single_file_check being badly written (by me).
-        assert isinstance(gis.feature_contains(point, self.vector_file), dict)
-        assert isinstance(gis.feature_contains(Point(point), self.vector_file), dict)
+        assert isinstance(ravenpy.utils.feature_contains(point, self.vector_file), dict)
+        assert isinstance(ravenpy.utils.feature_contains(Point(point), self.vector_file), dict)
