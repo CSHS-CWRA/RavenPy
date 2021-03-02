@@ -22,7 +22,7 @@ try:
     from affine import Affine
     from osgeo.gdal import DEMProcessing, Dataset
     from osgeo import gdal_array
-    from rasterio.crs import CRS
+    from pyproj.crs import CRS, CRSError
     from shapely.geometry import (
         GeometryCollection,
         MultiPolygon,
@@ -76,8 +76,8 @@ def address_append(address: Union[str, Path]) -> str:
         else:
             LOGGER.info("No changes made to address.")
             return str(address)
-    except Exception as e:
-        LOGGER.error("Failed to prefix or parse URL %s: %s." % (address, e))
+    except Exception:
+        LOGGER.error("Failed to prefix or parse URL %s." % address)
 
 
 def generic_extract_archive(
@@ -175,7 +175,9 @@ def archive_sniffer(
     return potential_files
 
 
-def crs_sniffer(*args: Union[str, Path, Sequence[Union[str, Path]]]) -> Union[List[Union[str, int]], str, int]:
+def crs_sniffer(
+    *args: Union[str, Path, Sequence[Union[str, Path]]]
+) -> Union[List[Union[str, int]], str, int]:
     """Return the list of CRS found in files.
 
     Parameters
@@ -256,8 +258,8 @@ def raster_datatype_sniffer(file: Union[str, Path]) -> str:
         with rasterio.open(file, "r") as src:
             dtype = src.dtypes[0]
         return dtype
-    except Exception as e:
-        msg = "{}: Unable to read data type from {}".format(e, file)
+    except rasterio.errors.RasterioError:
+        msg = "Unable to read data type from {}.".format(file)
         LOGGER.exception(msg)
         raise ValueError(msg)
 
@@ -329,7 +331,7 @@ def boundary_check(
     vectors = (".gml", ".shp", ".geojson", ".gpkg", ".json")
     rasters = (".tif", ".tiff")
 
-    if len(args) == 1:
+    if len(args) == 1 and not isinstance(args[0], str):
         args = args[0]
 
     for file in args:
@@ -343,7 +345,7 @@ def boundary_check(
 
             try:
                 geographic = CRS(src.crs).is_geographic
-            except AttributeError:
+            except CRSError:
                 geographic = True
             src_min_y, src_max_y = src.bounds[1], src.bounds[3]
             if geographic and (src_max_y > max_y or src_min_y < min_y):
@@ -354,9 +356,7 @@ def boundary_check(
                 LOGGER.warning(msg)
                 warnings.warn(msg, UserWarning)
             if not geographic:
-                msg = (
-                    f"Vector {file} is not in a geographic coordinate system."
-                )
+                msg = f"Vector {file} is not in a geographic coordinate system."
                 LOGGER.warning(msg)
                 warnings.warn(msg, UserWarning)
             src.close()
@@ -418,8 +418,16 @@ def geom_transform(
         from pyproj import Transformer  # noqa
         from functools import partial
 
-        source = CRS.from_epsg(source_crs) if isinstance(source_crs, int or str) else source_crs
-        target = CRS.from_epsg(target_crs) if isinstance(target_crs, int or str) else target_crs
+        source = (
+            CRS.from_epsg(source_crs)
+            if isinstance(source_crs, int or str)
+            else source_crs
+        )
+        target = (
+            CRS.from_epsg(target_crs)
+            if isinstance(target_crs, int or str)
+            else target_crs
+        )
 
         transform_func = Transformer.from_crs(source, target, always_xy=True)
         reprojected = transform(transform_func.transform, geom)
@@ -594,8 +602,7 @@ def gdal_aspect_analysis(
     dem : Union[str, Path]
       Path to file storing DEM.
     set_output : Union[str, Path, bool]
-      If set to True, will write to a Temporary file and return a numpy.ndarray. If set to a valid filepath, will write
-      to this path and return a numpy.ndarray. If not set, will return an in-memory gdal.Dataset.
+      If set to a valid filepath, will write to this path, otherwise will use an in-memory gdal.Dataset.
     flat_values_are_zero: bool
       Designate flat values with value zero. Default: -9999.
 

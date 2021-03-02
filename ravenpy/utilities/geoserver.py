@@ -4,9 +4,9 @@ Working assumptions for this module
 
 * Point coordinates are passed as shapely.geometry.Point instances.
 * BBox coordinates are passed as (lon1, lat1, lon2, lat2).
-* Shapes (polygons) are passed as Shapely `shape` objects`.
-* All functions that require a CRS have a CRS argument with a default set to WSG84.
-* GEO_URL points to the GeoSever hosting all files.
+* Shapes (polygons) are passed as shapely.geometry.shape parsable objects.
+* All functions that require a CRS have a CRS argument with a default set to WGS84.
+* GEO_URL points to the GeoServer instance hosting all files.
 
 """
 from pathlib import Path
@@ -109,7 +109,7 @@ def _get_feature_attributes_wfs(
 
     """
     if attribute is None or value is None:
-        raise NotImplementedError
+        raise NotImplementedError()
 
     try:
         attribute = str(attribute)
@@ -224,7 +224,7 @@ def get_raster_wcs(
             identifier=[layer],
             format="image/tiff",
             subsets=[(x, left, right), (y, down, up)],
-            timeout=120
+            timeout=120,
         )
 
     except Exception as e:
@@ -338,7 +338,7 @@ def select_hybas_domain(
             for _ in coll.filter(bbox=bbox):
                 return dom
 
-    raise LookupError(f"Could not find feature containing bbox {bbox}.")
+    raise LookupError(f"Could not find feature containing bbox: {bbox}.")
 
 
 def get_hydrobasins_attributes_wfs(
