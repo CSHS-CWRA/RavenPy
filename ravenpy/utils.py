@@ -28,6 +28,7 @@ try:
     from shapely.geometry import (
         GeometryCollection,
         MultiPolygon,
+        Point,
         Polygon,
         mapping,
         shape,
