@@ -7,7 +7,7 @@ import pytest
 try:
     import fiona
     import rasterio
-    from shapely.geometry import GeometryCollection, shape
+    from shapely.geometry import GeometryCollection, Point, shape
 
     import ravenpy.utils as utils
 except (ModuleNotFoundError, ImportError):
@@ -53,13 +53,12 @@ class TestOperations:
 
         assert "zip://" in utils.address_append(self.zipped_file)
         assert "tar://" in utils.address_append(non_existing_tarred_file)
-        # Need to change return type in RAVEN address_append to always be str
-        assert not str(utils.address_append(self.non_zipped_file)).startswith(
-            ("zip://", "tar://")
-        )
+        assert not utils.address_append(self.non_zipped_file).startswith(("zip://", "tar://"))
 
     def test_archive_sniffer(self):
-         # `working_dir` should be allowed as None
+        probable_shp = utils.archive_sniffer(self.zipped_file)
+        assert probable_shp == ["/tmp/mars.shp"]
+
         probable_shp = utils.archive_sniffer(self.zipped_file, working_dir="/tmp")
         assert probable_shp == ["/tmp/mars.shp"]
 
@@ -93,18 +92,10 @@ class TestFileInfoFuncs:
         assert datatype.lower() == "uint8"
 
     def test_crs_sniffer(self):
-        # FIXME: This utility should not complain if given a single file / list
-        # FIXME: Should this be raising a FileNotFound internally? Probably not.
-        with pytest.raises(Exception):
-            utils.crs_sniffer(self.zipped_file)
+        assert utils.crs_sniffer(self.zipped_file) == 4326
+        assert set(utils.crs_sniffer(self.geojson_file, self.raster_file)) == {4326}
 
-        # TODO: This will fail with the new PyProj when ported. Will be == int(4326).
-        assert set(utils.crs_sniffer(self.geojson_file, self.raster_file)) == {"+init=epsg:4326"}
-
-    @pytest.mark.skip
     def test_single_file_check(self):
-        # FIXME: This utility should ensure that files exist. Everything goes right now.
-        # FIXME: Exceptions do not work as intended. Port changes from RAVEN.
         one = [Path(__file__).parent / "__init__.py"]
         zero = []
         three = [1, Path().root, 2.333]
@@ -117,16 +108,14 @@ class TestFileInfoFuncs:
         with pytest.raises(NotImplementedError):
             utils.single_file_check(three)
 
-    @pytest.mark.skip
     def test_boundary_check(self):
-        # FIXME: This utility should not complain if given a single file / list
-        # FIXME: This is very broken. Needs to be fully rewritten.
+        # NOTE: does not presently accept zipped files.
 
         with pytest.warns(None):
-            utils.boundary_check([self.zipped_file, self.geojson_file, self.raster_file], max_y=80)
+            utils.boundary_check([self.geojson_file, self.raster_file], max_y=80)
 
         with pytest.warns(UserWarning):
-            utils.boundary_check([self.zipped_file, self.geojson_file, self.raster_file], max_y=15)
+            utils.boundary_check([self.geojson_file, self.raster_file], max_y=15)
 
         with pytest.raises(FileNotFoundError):
             utils.boundary_check([self.non_existing_file])
@@ -142,9 +131,7 @@ class TestGdalOgrFunctions:
     geojson_file = get_local_testdata("polygons/mars.geojson")
     raster_file = get_local_testdata("nasa/Mars_MGS_MOLA_DEM_georeferenced_region_compressed.tiff")
 
-    # FIXME: Options exist for gdal.DEMProcessing to return in-memory arrays (output="", format="MEM"). Not documented.
     def test_gdal_aspect_not_projected(self):
-        # FIXME: This should remove the temporary file, saving the grid in memory only.
         aspect_grid = utils.gdal_aspect_analysis(self.raster_file)
         np.testing.assert_almost_equal(
             utils.circular_mean_aspect(aspect_grid), 10.9119033
@@ -155,7 +142,7 @@ class TestGdalOgrFunctions:
             prefix="aspect_", suffix=".tiff", delete=False
         ).name
         aspect_grid = utils.gdal_aspect_analysis(
-            self.raster_file, output=aspect_tempfile
+            self.raster_file, set_output=aspect_tempfile
         )
         np.testing.assert_almost_equal(
             utils.circular_mean_aspect(aspect_grid), 10.9119033
@@ -163,9 +150,7 @@ class TestGdalOgrFunctions:
         assert Path(aspect_tempfile).stat().st_size > 0
 
     # Slope values are high due to data values using Geographic CRS
-    # FIXME: Options exist for gdal.DEMProcessing to return in-memory arrays (output="", format="MEM"). Not documented.
     def test_gdal_slope_not_projected(self):
-        # FIXME: This should remove the temporary file, saving the grid in memory only.
         slope_grid = utils.gdal_slope_analysis(self.raster_file)
         np.testing.assert_almost_equal(slope_grid.min(), 0.0)
         np.testing.assert_almost_equal(slope_grid.mean(), 64.4365427)
@@ -174,7 +159,7 @@ class TestGdalOgrFunctions:
         slope_tempfile = tempfile.NamedTemporaryFile(
             prefix="slope_", suffix=".tiff", delete=False
         ).name
-        slope_grid = utils.gdal_slope_analysis(self.raster_file, output=slope_tempfile)
+        slope_grid = utils.gdal_slope_analysis(self.raster_file, set_output=slope_tempfile)
         np.testing.assert_almost_equal(slope_grid.mean(), 64.4365427)
         assert Path(slope_tempfile).stat().st_size > 0
 
@@ -228,7 +213,6 @@ class TestGenericGeoOperations:
 
     def test_vector_reprojection(self):
         # TODO: It would be awesome if this returned a temporary filepath if no file given.
-        # FIXME: CRS type is completely changed in RAVEN. Needs to be ported.
         reproj_file = tempfile.NamedTemporaryFile(
             prefix="reproj_", suffix=".geojson", delete=False
         ).name
@@ -271,7 +255,6 @@ class TestGenericGeoOperations:
             assert data.max() == 255
             np.testing.assert_almost_equal(data.mean(), 60.7291936)
 
-    # FIXME: Options exist for gdal.DEMProcessing to return in-memory arrays (output="", format="MEM"). Not documented.
     def test_warped_raster_slope(self):
         reproj_file = tempfile.NamedTemporaryFile(
             prefix="reproj_", suffix=".tiff", delete=False
@@ -285,7 +268,6 @@ class TestGenericGeoOperations:
         np.testing.assert_almost_equal(slope_grid.mean(), 0.0034991)
         np.testing.assert_almost_equal(slope_grid.max(), 0.3523546)
 
-    # FIXME: Options exist for gdal.DEMProcessing to return in-memory arrays (output="", format="MEM"). Not documented.
     def test_warped_raster_aspect(self):
         reproj_file = tempfile.NamedTemporaryFile(
             prefix="reproj_", suffix=".tiff", delete=False
@@ -330,3 +312,27 @@ class TestGenericGeoOperations:
         np.testing.assert_almost_equal(transformed.centroid.x, 1645777.7589835)
         np.testing.assert_almost_equal(transformed.centroid.y, -933242.1203143)
         np.testing.assert_almost_equal(transformed.area, 6450001762792.884, 3)
+
+
+class TestGIS:
+
+    vector_file = get_local_testdata("polygons/mars.geojson")
+
+    def test_get_bbox_single(self):
+        w, s, n, e = utils.get_bbox(self.vector_file, all_features=False)
+        np.testing.assert_almost_equal(w, -139.8514262)
+        np.testing.assert_almost_equal(s, 8.3754794)
+        np.testing.assert_almost_equal(n, -117.4753973)
+        np.testing.assert_almost_equal(e, 29.6327068)
+
+    def test_get_bbox_all(self):
+        w, s, n, e = utils.get_bbox(self.vector_file)
+        np.testing.assert_almost_equal(w, -139.8514262)
+        np.testing.assert_almost_equal(s, 8.3754794)
+        np.testing.assert_almost_equal(n, -38.7397456)
+        np.testing.assert_almost_equal(e, 64.1757015)
+
+    def test_feature_contains(self):
+        point = -69.0, 45
+        assert isinstance(utils.feature_contains(point, self.vector_file), dict)
+        assert isinstance(utils.feature_contains(Point(point), self.vector_file), dict)

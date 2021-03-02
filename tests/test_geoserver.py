@@ -10,7 +10,7 @@ try:
     import rasterio
     from shapely.geometry import GeometryCollection, shape, Point
 
-    import ravenpy.utilities.geoserver as gis
+    from ravenpy.utilities import geoserver
     import ravenpy.utils as utils
 except (ModuleNotFoundError, ImportError):
     utils = False
@@ -21,17 +21,17 @@ from ravenpy.utilities.testdata import get_local_testdata
 class TestHydroBASINS:
     def test_select_hybas_na_domain(self):
         bbox = (-68.0, 50.0) * 2
-        dom = gis.select_hybas_domain(bbox)
+        dom = geoserver.select_hybas_domain(bbox)
         assert dom == "na"
 
     def test_select_hybas_ar_domain(self):
         bbox = (-114.65, 61.35) * 2
-        dom = gis.select_hybas_domain(bbox)
+        dom = geoserver.select_hybas_domain(bbox)
         assert dom == "ar"
 
     def test_get_hydrobasins_location_wfs(self):
         lake_winnipeg = (-98.03575958286369, 52.88238524279493)
-        feature = gis.get_hydrobasins_location_wfs(
+        feature = geoserver.get_hydrobasins_location_wfs(
             coordinates=lake_winnipeg * 2, lakes=True, domain="na"
         )
 
@@ -48,7 +48,7 @@ class TestHydroBASINS:
 
     def test_get_hydrobasins_attributes_wfs(self):
         rio_grande = (-80.475, 8.4)
-        feature = gis.get_hydrobasins_location_wfs(
+        feature = geoserver.get_hydrobasins_location_wfs(
             coordinates=rio_grande * 2, lakes=True, domain="na"
         )
 
@@ -62,7 +62,7 @@ class TestHydroBASINS:
             main_bas = feat["properties"]["MAIN_BAS"]
 
         # TODO: It would be swell to just have this function determine the domain if not given.
-        region_url = gis.get_hydrobasins_attributes_wfs(
+        region_url = geoserver.get_hydrobasins_attributes_wfs(
             attribute="MAIN_BAS", value=main_bas, domain="na"
         )
         gdf = gpd.read_file(region_url)
@@ -79,7 +79,7 @@ class TestHydroBASINS:
 
     def test_hydrobasins_upstream_ids_aggregate(self):
         puerto_cortes = (-83.525, 8.96)
-        feature = gis.get_hydrobasins_location_wfs(
+        feature = geoserver.get_hydrobasins_location_wfs(
             coordinates=puerto_cortes * 2, lakes=True, domain="na"
         )
 
@@ -94,18 +94,18 @@ class TestHydroBASINS:
             hybas_id = feat["properties"]["HYBAS_ID"]
 
         # TODO: It would be swell to just have this function determine the domain if not given.
-        region_url = gis.get_hydrobasins_attributes_wfs(
+        region_url = geoserver.get_hydrobasins_attributes_wfs(
             attribute="MAIN_BAS", value=main_bas, domain="na"
         )
         gdf = gpd.read_file(region_url)
-        gdf_upstream = gis.hydrobasins_upstream_ids(hybas_id, gdf)
+        gdf_upstream = geoserver.hydrobasins_upstream_ids(hybas_id, gdf)
         assert len(gdf) == len(gdf_upstream) + 1
 
         # FIXME: This file write step workaround is needed for some unknown reason.
         with tempfile.NamedTemporaryFile(prefix="hybas_", suffix=".json") as tf:
             gdf_upstream.to_file(tf.name, driver="GeoJSON")
             gdf_upstream = gpd.read_file(tf.name)
-        aggregated = gis.hydrobasins_aggregate(gdf_upstream)
+        aggregated = geoserver.hydrobasins_aggregate(gdf_upstream)
 
         assert len(aggregated) == 1
         assert aggregated.SUB_AREA.values == 4977.8
@@ -148,7 +148,7 @@ class TestWCS:
             bbox = ravenpy.utils.get_bbox(projected.name)
 
         raster_url = "public:CEC_NALCMS_LandUse_2010"
-        raster_bytes = gis.get_raster_wcs(bbox, geographic=False, layer=raster_url)
+        raster_bytes = geoserver.get_raster_wcs(bbox, geographic=False, layer=raster_url)
 
         with tempfile.NamedTemporaryFile(prefix="wcs_", suffix=".tiff") as raster_file:
             with open(raster_file.name, "wb") as f:
@@ -162,31 +162,3 @@ class TestWCS:
                 data = src.read()
                 assert np.unique(data).tolist() == [1, 5, 8, 10, 14, 15, 16, 17, 18]
 
-
-class TestGIS:
-
-    vector_file = get_local_testdata("polygons/mars.geojson")
-
-    def test_get_bbox_single(self):
-        w, s, n, e = ravenpy.utils.get_bbox(self.vector_file, all_features=False)
-        np.testing.assert_almost_equal(w, -139.8514262)
-        np.testing.assert_almost_equal(s, 8.3754794)
-        np.testing.assert_almost_equal(n, -117.4753973)
-        np.testing.assert_almost_equal(e, 29.6327068)
-
-    def test_get_bbox_all(self):
-        w, s, n, e = ravenpy.utils.get_bbox(self.vector_file)
-        np.testing.assert_almost_equal(w, -139.8514262)
-        np.testing.assert_almost_equal(s, 8.3754794)
-        np.testing.assert_almost_equal(n, -38.7397456)
-        np.testing.assert_almost_equal(e, 64.1757015)
-
-    @pytest.mark.xfail(
-        reason="ravenpy.utils.single_file_check() doesn't handle single files well."
-    )
-    def test_feature_contains(self):
-        point = -69.0, 45
-
-        # FIXME: this fails due to the single_file_check being badly written (by me).
-        assert isinstance(ravenpy.utils.feature_contains(point, self.vector_file), dict)
-        assert isinstance(ravenpy.utils.feature_contains(Point(point), self.vector_file), dict)

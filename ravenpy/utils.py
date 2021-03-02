@@ -3,16 +3,13 @@ import json
 import logging
 import math
 import re
-import shutil
 import tarfile
 import tempfile
+import warnings
 import zipfile
-from functools import partial
 from pathlib import Path
-from random import choice
 from re import search
-from string import ascii_letters
-from typing import Any, List, Optional, Sequence, Tuple, Union
+from typing import Any, Iterable, List, Optional, Sequence, Tuple, Union
 
 try:
     import fiona
@@ -23,7 +20,8 @@ try:
     import rasterio.vrt
     import rasterio.warp
     from affine import Affine
-    from gdal import DEMProcessing
+    from osgeo.gdal import DEMProcessing, Dataset
+    from osgeo import gdal_array
     from rasterio.crs import CRS
     from shapely.geometry import (
         GeometryCollection,
@@ -44,13 +42,13 @@ except (ImportError, ModuleNotFoundError) as e:
 
 import numpy as np
 
-# LOGGER = logging.getLogger("RAVEN")
+LOGGER = logging.getLogger("RavenPy")
 
 # See: https://kokoalberti.com/articles/geotiff-compression-optimization-guide/
 GDAL_TIFF_COMPRESSION_OPTION = "compress=lzw"  # or 'compress=deflate' or 'compress=zstd' or 'compress=lerc' or others
 RASTERIO_TIFF_COMPRESSION = "lzw"
 
-WGS84 = "+init=epsg:4326"
+WGS84 = 4326
 
 
 def address_append(address: Union[str, Path]) -> str:
@@ -77,7 +75,7 @@ def address_append(address: Union[str, Path]) -> str:
             return "tar://{}".format(address)
         else:
             LOGGER.info("No changes made to address.")
-            return address
+            return str(address)
     except Exception as e:
         LOGGER.error("Failed to prefix or parse URL %s: %s." % (address, e))
 
@@ -132,7 +130,7 @@ def generic_extract_archive(
                 elif file.endswith(".7z"):
                     msg = "7z file extraction is not supported at this time."
                     LOGGER.warning(msg)
-                    raise UserWarning(msg)
+                    warnings.warn(msg, UserWarning)
                 else:
                     LOGGER.debug('File extension "%s" unknown' % file)
             except Exception as e:
@@ -146,8 +144,8 @@ def generic_extract_archive(
 
 def archive_sniffer(
     archives: Union[str, Path, List[Union[str, Path]]],
-    working_dir: Union[str, Path],
-    extensions: Optional[List[str]] = None,
+    working_dir: Optional[Union[str, Path]] = None,
+    extensions: Optional[Iterable[str]] = None,
 ) -> List[Union[str, Path]]:
     """Return a list of locally unarchived files that match the desired extensions.
 
@@ -177,13 +175,13 @@ def archive_sniffer(
     return potential_files
 
 
-def crs_sniffer(*args: Sequence[Union[str, Path]]) -> Union[List[Union[str, int]], str, int]:
+def crs_sniffer(*args: Union[str, Path, Sequence[Union[str, Path]]]) -> Union[List[Union[str, int]], str, int]:
     """Return the list of CRS found in files.
 
     Parameters
     ----------
-    args : Sequence[Union[str, Path]]
-      Paths to the files to examine.
+    args : Union[str, Path, Sequence[Union[str, Path]]]
+      Path(s) to the file(s) to examine.
 
     Returns
     -------
@@ -193,17 +191,23 @@ def crs_sniffer(*args: Sequence[Union[str, Path]]) -> Union[List[Union[str, int]
     crs_list = list()
     vectors = (".gml", ".shp", ".geojson", ".gpkg", ".json")
     rasters = (".tif", ".tiff")
+    all_files = vectors + rasters
 
     for file in args:
         found_crs = False
+        suffix = Path(file).suffix.lower()
         try:
-            if str(file).lower().endswith(vectors):
-                if str(file).lower().endswith(".gpkg"):
+            if suffix == ".zip":
+                file = archive_sniffer(file, extensions=all_files)[0]
+                suffix = Path(file).suffix.lower()
+
+            if suffix in vectors:
+                if suffix == ".gpkg":
                     if len(fiona.listlayers(file)) > 1:
                         raise NotImplementedError
                 with fiona.open(file, "r") as src:
                     found_crs = CRS.from_wkt(src.crs_wkt).to_epsg()
-            elif str(file).lower().endswith(rasters):
+            elif suffix in rasters:
                 with rasterio.open(file, "r") as src:
                     found_crs = CRS.from_user_input(src.crs).to_epsg()
             else:
@@ -229,6 +233,7 @@ def crs_sniffer(*args: Sequence[Union[str, Path]]) -> Union[List[Union[str, int]
         if not crs_list[0]:
             msg = f"No CRS definitions found in {args}. Assuming {WGS84}."
             LOGGER.warning(msg)
+            warnings.warn(msg, UserWarning)
             return WGS84
         return crs_list[0]
     return crs_list
@@ -289,6 +294,9 @@ def single_file_check(file_list: List[Union[str, Path]]) -> Any:
     ----------
     file_list : List[Union[str, Path]]
     """
+    if isinstance(file_list, (str, Path)):
+        return file_list
+
     try:
         if len(file_list) > 1:
             msg = "Multi-file handling for file is not supported. Exiting."
@@ -297,10 +305,9 @@ def single_file_check(file_list: List[Union[str, Path]]) -> Any:
             msg = "No files found. Exiting."
             raise FileNotFoundError(msg)
         return file_list[0]
-    except Exception as e:
-        msg = f"{e}: Unspecified error. Exiting,"
-        LOGGER.error(msg)
-        raise Exception(msg)
+    except (FileNotFoundError, NotImplementedError) as e:
+        LOGGER.error(e)
+        raise
 
 
 def boundary_check(
@@ -321,31 +328,43 @@ def boundary_check(
     """
     vectors = (".gml", ".shp", ".geojson", ".gpkg", ".json")
     rasters = (".tif", ".tiff")
+
+    if len(args) == 1:
+        args = args[0]
+
     for file in args:
-        src = None
         try:
             if str(file).lower().endswith(vectors):
                 src = fiona.open(file, "r")
             elif str(file).lower().endswith(rasters):
                 src = rasterio.open(file, "r")
             else:
-                FileNotFoundError("Invalid filename suffix")
+                raise FileNotFoundError()
 
-            geographic = CRS(src.crs).is_geographic
-            if geographic and (src.bounds > max_y or src.bounds < min_y):
+            try:
+                geographic = CRS(src.crs).is_geographic
+            except AttributeError:
+                geographic = True
+            src_min_y, src_max_y = src.bounds[1], src.bounds[3]
+            if geographic and (src_max_y > max_y or src_min_y < min_y):
                 msg = (
-                    "Vector {} contains geometries in high latitudes."
-                    " Verify choice of projected CRS is appropriate for analysis.".format(
-                        file
-                    )
+                    f"Vector {file} contains geometries in high latitudes."
+                    " Verify choice of projected CRS is appropriate for analysis."
                 )
                 LOGGER.warning(msg)
-                UserWarning(msg)
+                warnings.warn(msg, UserWarning)
+            if not geographic:
+                msg = (
+                    f"Vector {file} is not in a geographic coordinate system."
+                )
+                LOGGER.warning(msg)
+                warnings.warn(msg, UserWarning)
             src.close()
 
-        except Exception as e:
-            msg = "{}: Unable to read boundaries from {}".format(e, args)
-            LOGGER.exception(msg)
+        except FileNotFoundError:
+            msg = f"Unable to read boundaries from {file}"
+            LOGGER.error(msg)
+            raise
     return
 
 
@@ -363,10 +382,9 @@ def multipolygon_check(geom: GeometryCollection) -> None:
     if not isinstance(type(geom), GeometryCollection):
         try:
             geom = shape(geom)
-        except Exception as e:
-            LOGGER.error(
-                "{}: Unable to load vector as shapely.geometry.shape().".format(e)
-            )
+        except AttributeError:
+            LOGGER.error("Unable to load argument as shapely.geometry.shape().")
+            raise
 
     if isinstance(type(geom), MultiPolygon):
         LOGGER.warning("Shape is a Multipolygon.")
@@ -397,14 +415,14 @@ def geom_transform(
       Reprojected geometry.
     """
     try:
-        from pyproj import Transformer
+        from pyproj import Transformer  # noqa
         from functools import partial
 
         source = CRS.from_epsg(source_crs) if isinstance(source_crs, int or str) else source_crs
         target = CRS.from_epsg(target_crs) if isinstance(target_crs, int or str) else target_crs
 
         transform_func = Transformer.from_crs(source, target, always_xy=True)
-        reprojected = shapely_transform(transform_func.transform, geom)
+        reprojected = transform(transform_func.transform, geom)
 
         return reprojected
     except Exception as err:
@@ -463,7 +481,7 @@ def dem_prop(
     geom : Union[Polygon, MultiPolygon, List[Union[Polygon, MultiPolygon]]]
       Geometry over which aggregate properties will be computed. If None compute properties over entire raster.
     directory : Union[str, Path]
-      Folder to save the GDAL terrain anlaysis outputs
+      Folder to save the GDAL terrain analysis outputs.
 
     Returns
     -------
@@ -494,10 +512,10 @@ def dem_prop(
             elevation = f.read(1, masked=True)
 
     # Compute slope
-    slope = gdal_slope_analysis(fns["dem"], output=fns["slope"])
+    slope = gdal_slope_analysis(fns["dem"], set_output=fns["slope"])
 
     # Compute aspect
-    aspect = gdal_aspect_analysis(fns["dem"], output=fns["aspect"])
+    aspect = gdal_aspect_analysis(fns["dem"], set_output=fns["aspect"])
     aspect_mean = circular_mean_aspect(aspect)
 
     return {"elevation": elevation.mean(), "slope": slope.mean(), "aspect": aspect_mean}
@@ -516,8 +534,8 @@ def gdal_slope_analysis(
     ----------
     dem : Union[str, Path]
       Path to file storing DEM.
-    set_output : Optional[Union[str, Path]]
-      Path to output file. If not set, will return an in-memory array.
+    set_output : Union[str, Path]
+      If set to a valid filepath, will write to this path, otherwise will use an in-memory gdal.Dataset.
     units : str
       Slope units. Default: 'degree'.
 
@@ -532,25 +550,26 @@ def gdal_slope_analysis(
     horizontal scale is the same as the vertical scale (m).
 
     """
-    if output is None:
-        output = tempfile.NamedTemporaryFile().name
     if isinstance(dem, Path):
         dem = str(dem)
-    if output:
-        if isinstance(output, Path):
-            output = str(output)
-
-        DEMProcessing(
-            output,
-            dem,
-            "slope",
-            slopeFormat=units,
-            format="GTiff",
-            band=1,
-            creationOptions=[GDAL_TIFF_COMPRESSION_OPTION],
-        )
+    if set_output:
+        if isinstance(set_output, (str, Path)):
+            set_output = str(set_output)
+            DEMProcessing(
+                set_output,
+                dem,
+                "slope",
+                slopeFormat=units,
+                format="GTiff",
+                band=1,
+                creationOptions=[GDAL_TIFF_COMPRESSION_OPTION],
+            )
+            with rasterio.open(set_output) as src:
+                return np.ma.masked_values(src.read(1), value=-9999)
+        else:
+            raise ValueError()
     else:
-        output = DEMProcessing(
+        set_output = DEMProcessing(
             "",
             dem,
             "slope",
@@ -558,15 +577,14 @@ def gdal_slope_analysis(
             format="MEM",
             band=1,
         )
-    with rasterio.open(output) as src:
-        return np.ma.masked_values(src.read(1), value=-9999)
+        return np.ma.masked_values(set_output.ReadAsArray(), value=-9999)
 
 
 def gdal_aspect_analysis(
     dem: Union[str, Path],
-    set_output: Optional[Union[str, Path]] = None,
+    set_output: Union[str, Path, bool] = False,
     flat_values_are_zero: bool = False,
-) -> np.ndarray:
+) -> Union[np.ndarray, Dataset]:
     """Return the aspect of the terrain from the DEM.
 
     The aspect is the compass direction of the steepest slope (0: North, 90: East, 180: South, 270: West).
@@ -575,8 +593,9 @@ def gdal_aspect_analysis(
     ----------
     dem : Union[str, Path]
       Path to file storing DEM.
-    set_output : Union[str, Path]
-      If set, will write to output file and return . If not set, only an .
+    set_output : Union[str, Path, bool]
+      If set to True, will write to a Temporary file and return a numpy.ndarray. If set to a valid filepath, will write
+      to this path and return a numpy.ndarray. If not set, will return an in-memory gdal.Dataset.
     flat_values_are_zero: bool
       Designate flat values with value zero. Default: -9999.
 
@@ -590,25 +609,27 @@ def gdal_aspect_analysis(
     Ensure that the DEM is in a *projected coordinate*, not a geographic coordinate system, so that the
     horizontal scale is the same as the vertical scale (m).
     """
-    if output is None:
-        output = tempfile.NamedTemporaryFile().name
     if isinstance(dem, Path):
         dem = str(dem)
-    if output:
-        if isinstance(output, Path):
-            output = str(output)
+    if set_output:
+        if isinstance(set_output, (str, Path)):
+            set_output = str(set_output)
+            DEMProcessing(
+                destName=set_output,
+                srcDS=dem,
+                processing="aspect",
+                zeroForFlat=flat_values_are_zero,
+                format="GTiff",
+                band=1,
+                creationOptions=[GDAL_TIFF_COMPRESSION_OPTION],
+            )
+            with rasterio.open(set_output) as src:
+                return np.ma.masked_values(src.read(1), value=-9999)
+        else:
+            raise ValueError()
 
-        DEMProcessing(
-            destName=output,
-            srcDS=dem,
-            processing="aspect",
-            zeroForFlat=flat_values_are_zero,
-            format="GTiff",
-            band=1,
-            creationOptions=[GDAL_TIFF_COMPRESSION_OPTION],
-        )
     else:
-        output = DEMProcessing(
+        set_output = DEMProcessing(
             destName="",
             srcDS=dem,
             processing="aspect",
@@ -616,8 +637,7 @@ def gdal_aspect_analysis(
             format="MEM",
             band=1,
         )
-    with rasterio.open(output) as src:
-        return np.ma.masked_values(src.read(1), value=-9999)
+        return np.ma.masked_values(set_output.ReadAsArray(), value=-9999)
 
 
 def circular_mean_aspect(angles: np.ndarray) -> np.ndarray:
