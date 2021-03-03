@@ -178,7 +178,7 @@ setup(
     description="A Python wrapper to setup and run the hydrologic modelling framework Raven.",
     entry_points={
         "console_scripts": [
-            "ravenpy=ravenpy.cli:cli",
+            "ravenpy=ravenpy.cli:main",
         ],
     },
     install_requires=requirements,
