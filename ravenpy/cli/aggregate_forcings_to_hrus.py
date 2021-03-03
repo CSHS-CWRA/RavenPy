@@ -8,59 +8,6 @@ from ravenpy.models.commands import GridWeightsCommand
 from ravenpy.models.importers import RoutingProductGridWeightImporter
 
 
-def convert_cell_id_to_ilat_ilon(gws, nlon, nlat):
-    """
-    Purpose:
-       convert cell_id used in weights file (required by Raven) into
-       latitude ID (ilat) and longitude ID (ilon);
-       both starting with 0
-
-    Return:
-      gridweights structure with (ilon, ilat) instead of (cell_id)
-
-    Arguments:
-      gws  (structure) ... grid-weights-structure as returned by RoutingProductGridWeightImporter and then extracted()
-      nlon (integer)   ... number longitudes NetCDF file
-      nlat (integer)   ... number latitudes  NetCDF file
-    """
-
-    nHRU = gws.number_hrus
-    nCells = gws.number_grid_cells
-    weights_data = gws.data
-
-    # check that this matches the nCells from grid-weights
-    # (basically making sure these are the same NetCDF files; not sure how that would happen but just to be on the safe side)
-    if nlon * nlat != nCells:
-        raise ValueError(
-            "Number of cells used to derive grid-weights does not match NetCDF provided for aggregating variables"
-        )
-
-    # convert weights (cell_id) required by Raven into (lon_id,lat_id)
-    # cell_id = ilat * nlon + ilon
-    # ---> ilon = cell_id %  nlon
-    # ---> ilat = cell_id // nlon
-    weights_data_lon_lat_ids = []
-    for iweights_data in weights_data:
-
-        cell_id = iweights_data[1]
-        ilon = cell_id % nlon
-        ilat = cell_id // nlon
-        weights_data_lon_lat_ids.append(
-            tuple([iweights_data[0], ilon, ilat, iweights_data[2]])
-        )
-    weights_data_lon_lat_ids = np.array(
-        weights_data_lon_lat_ids
-    )  # because I dont know how to do most operations elegantly with lists of tuples
-
-    gws = GridWeightsCommand(
-        number_hrus=nHRU,
-        number_grid_cells=nCells,
-        data=weights_data_lon_lat_ids,
-    )
-
-    return gws
-
-
 @click.command()
 @click.argument("input-nc-file", type=click.Path(exists=True))
 @click.argument("input-weight-file", type=click.Path(exists=True))
@@ -77,10 +24,11 @@ def convert_cell_id_to_ilat_ilon(gws, nlon, nlat):
     "-v",
     "--var-to-aggregate",
     "variables_to_aggregate",  # rename arg to put emphasis on the fact that it's a list
+    required=True,
     multiple=True,
     type=str,
     show_default=True,
-    help="Variables to aggregate in INPUT_NC_FILE.",
+    help="Variables to aggregate in INPUT_NC_FILE (at least one).",
 )
 @click.option("--output-nc-file", type=click.Path(), help="")
 @click.option("--output-weight-file", type=click.Path(), help="")
@@ -92,11 +40,31 @@ def aggregate_forcings_to_hrus(
     dim_names,
     variables_to_aggregate,
 ):
-    if not variables_to_aggregate:
-        click.echo(
-            "Must specify at least one variable to aggregate (with -v)", err=True
-        )
-        exit(1)
+    """
+    Aggregates NetCDF files containing 3-dimensional forcing variables like precipitation and temperature
+    over (x,y,time) into 2-dimensional forcings for each of the n HRUs of a specific basin over (n,time).
+    The 3-dimensional NetCDF files are usually used in :GriddedForcing commands in Raven while the 2-dimensional
+    ones can be used in :StationForcing commands. The NetCDF files generated with this function will only
+    contain the forcings required to simulate an individual basin and hence file sizes are smaller and Raven
+    runtimes can decrease drastically under certain conditions.
+
+    INPUT_NC_FILE: NetCDF file containing 3-dimensional variables that will be aggregated. Either all variables
+    will be aggregated or only a subset specified using --var-to-aggregate (e.g., [precip,temp]). The name of
+    the spatial dimensions of the NetCDF are assumed to be (lon_dim, lat_dim). Otherwise they will need to be
+    specified using --dim-names. The order of the three dimensions for each variable does not matter; the
+    function will arrange them as required.
+
+    INPUT_WEIGHT_FILE: A text file containing the grid weights derived using the script "generate-grid-weights"
+    for the basin forcings are required and the specified NetCDF file. The content of this file must be formatted
+    as a valid :GridWeights Raven command.
+
+    The script outputs two files:
+
+    (1) Aggregated NetCDF file that can be used in a :StationForcing command in a Raven config.
+
+    (2) A text file (with the same format as INPUT_WEIGHT_FILE) with the updated grid weights, that a :StationForcing
+    command will require.
+    """
 
     gws = GridWeightsCommand.parse(Path(input_weight_file).read_text())
 
@@ -112,11 +80,19 @@ def aggregate_forcings_to_hrus(
     nlat = nc_in.dimensions[dim_names[1]].size
     ntime = nc_in.dimensions["time"].size
 
-    # convert weights structure to (ilon, ilat) instead of (cell_id)
-    gws_lon_lat = convert_cell_id_to_ilat_ilon(gws, nlon, nlat)
-    weights_data_lon_lat_ids = gws_lon_lat.data
-
-    # print(weights_data_lon_lat_ids)
+    # convert weights (cell_id) required by Raven into (lon_id, lat_id)
+    # cell_id = ilat * nlon + ilon
+    # ---> ilon = cell_id %  nlon
+    # ---> ilat = cell_id // nlon
+    weights_data_lon_lat_ids = []
+    for iweights_data in weights_data:
+        cell_id = iweights_data[1]
+        ilon = cell_id % nlon
+        ilat = cell_id // nlon
+        weights_data_lon_lat_ids.append(
+            tuple([iweights_data[0], ilon, ilat, iweights_data[2]])
+        )
+    weights_data_lon_lat_ids = np.asarray(weights_data_lon_lat_ids)
 
     # create new NetCDF that will contain aggregated data of listed variables
 
