@@ -375,7 +375,7 @@ def get_hydrobasins_attributes_wfs(
       URL to the GeoJSON-encoded WFS response.
 
     """
-    layer = f"public:USGS_HydroBASINS_{'lake_' if lakes else ''}{domain}_lev{level}"
+    layer = f"public:USGS_HydroBASINS_{'lake_' if lakes else ''}{domain}_lev{str(level).zfill(2)}"
     q = _get_feature_attributes_wfs(
         attribute=attribute, value=value, layer=layer, geoserver=geoserver
     )
@@ -385,7 +385,7 @@ def get_hydrobasins_attributes_wfs(
 
 def get_hydrobasins_location_wfs(
     coordinates: Tuple[
-        Union[int, float, str],
+        Union[str, float, int],
         Union[str, float, int],
         Union[str, float, int],
         Union[str, float, int],
@@ -419,7 +419,7 @@ def get_hydrobasins_location_wfs(
       A GML-encoded vector feature.
 
     """
-    layer = f"public:USGS_HydroBASINS_{'lake_' if lakes else ''}{domain}_lev{level}"
+    layer = f"public:USGS_HydroBASINS_{'lake_' if lakes else ''}{domain}_lev{str(level).zfill(2)}"
     data = _get_location_wfs(coordinates, layer=layer, geoserver=geoserver)
 
     return data
@@ -427,18 +427,45 @@ def get_hydrobasins_location_wfs(
 
 # ~~~~ Hydro Routing ~~~~ #
 
+def hydro_routing_aggregate(gdf: pd.DataFrame) -> pd.Series:
+    """Aggregate multiple hydro routing watersheds into a single geometry.
+
+    Parameters
+    ----------
+    gdf : pd.DataFrame
+      Watershed attributes indexed by HYBAS_ID
+
+    Returns
+    -------
+    pd.Series
+    """
+
+    # TODO: @huard this needs to be discussed/reviewed. Dependent on ingesting the entire dataset. Very slow.
+    def aggfunc(x):
+        if x.name in ["area"]:
+            return x.sum()
+        elif x.name in ["MeanElev"]:
+            return x.mean()
+        else:
+            return x[0]
+
+    # Buffer function to fix invalid geometries
+    gdf["geometry"] = gdf.buffer(0)
+
+    return gdf.dissolve(aggfunc=aggfunc)
+
 
 def hydro_routing_upstream_ids(
-    fid: str,
+    fid: Union[str, float, int],
     df: pd.DataFrame,
     basin_field="SubId",
     downstream_field="DowSubId",
 ) -> pd.Series:
-    """Return a list of hydrobasins features located upstream.
+    """Return a list of hydro routing features located upstream.
 
     Parameters
     ----------
-    fid : str
+    fid : Union[str, float, int]
       Basin feature ID code of the downstream feature.
     df : pd.DataFrame
       Watershed attributes.
@@ -493,7 +520,7 @@ def get_hydro_routing_attributes_wfs(
       URL to the GeoJSON-encoded WFS response.
 
     """
-    layer = f"public:routing_{lakes}Lake_{level}"
+    layer = f"public:routing_{lakes}Lakes_{str(level).zfill(2)}"
     q = _get_feature_attributes_wfs(
         attribute=attribute, value=value, layer=layer, geoserver=geoserver
     )
@@ -534,7 +561,7 @@ def get_hydro_routing_location_wfs(
       A GML-encoded vector feature.
 
     """
-    layer = f"public:routing_{lakes}Lakes_{level}"
+    layer = f"public:routing_{lakes}Lakes_{str(level).zfill(2)}"
     data = _get_location_wfs(coordinates, layer=layer, geoserver=geoserver)
 
     return data
