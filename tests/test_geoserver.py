@@ -3,7 +3,6 @@ import tempfile
 import numpy as np
 import pytest
 
-
 from ravenpy.utilities.testdata import get_local_testdata
 
 
@@ -130,17 +129,15 @@ class TestHydroRouting:
 
     def test_get_hydro_routing_attributes_wfs(self):
         region_url = self.geoserver.get_hydro_routing_attributes_wfs(
-            attribute="IsLake", value="1.0", lakes="all", level="07"
+            attribute="IsLake", value="1.0", lakes="1km", level="07"
         )
         gdf = self.gpd.read_file(region_url)
-        assert len(gdf) == 20707
+        assert len(gdf) == 11415
 
-    # NOTE: There is no reliable way to gather potential features via basin IDs for the Hydro Routing project.
-    @pytest.mark.skip(reason="Feature IDs (`SubId`) are encoded as double values. This makes them impossible to use as search keys.")
     def test_hydro_routing_upstream_ids(self):
         amadjuak = (-71.225, 65.05)
         feature = self.geoserver.get_hydro_routing_location_wfs(
-            coordinates=amadjuak * 2, lakes="all"
+            coordinates=amadjuak * 2, lakes="1km", level=7
         )
 
         gml = tempfile.NamedTemporaryFile(suffix=".gml", delete=False)
@@ -155,20 +152,21 @@ class TestHydroRouting:
             attribute="SubId", value="*", lakes="1km", level=7
         )
         gdf = self.gpd.read_file(region_url)
-        # FIXME: This fails due to a precision issue. This may require changes to the dataset.
-        # Note: `SubId` is a float for some reason and Python float != GeoServer double.
         gdf_upstream = self.geoserver.hydro_routing_upstream_ids(subbasin_id, gdf)
 
         with tempfile.NamedTemporaryFile(prefix="hydro_routing_", suffix=".json") as tf:
             gdf_upstream.to_file(tf.name, driver="GeoJSON")
             gdf_upstream = self.gpd.read_file(tf.name)
+
+        assert len(gdf_upstream) == 33  # TODO: Verify this with the model maintainers.
+
         aggregated = self.geoserver.hydro_routing_aggregate(gdf_upstream)
 
         assert len(aggregated) == 1
-        assert aggregated.area.values == 4977.8
+        assert aggregated.area.values == 3.71388447
         np.testing.assert_equal(
             aggregated.geometry.bounds.values,
-            np.array([[-83.8167, 8.7625, -82.7125, 9.5875]]),
+            np.array([[-72.4375,  63.7042, -68.5375,  65.4375]]),
         )
 
 

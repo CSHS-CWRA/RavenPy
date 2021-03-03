@@ -4,7 +4,6 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-
 from ravenpy.utilities.testdata import get_local_testdata
 
 
@@ -45,7 +44,9 @@ class TestOperations:
 
         assert "zip://" in self.utils.address_append(self.zipped_file)
         assert "tar://" in self.utils.address_append(non_existing_tarred_file)
-        assert not self.utils.address_append(self.non_zipped_file).startswith(("zip://", "tar://"))
+        assert not self.utils.address_append(self.non_zipped_file).startswith(
+            ("zip://", "tar://")
+        )
 
     def test_archive_sniffer(self):
         probable_shp = self.utils.archive_sniffer(self.zipped_file)
@@ -60,7 +61,9 @@ class TestOperations:
 
         files = list()
         with tempfile.TemporaryDirectory() as tdir:
-            files.extend(self.utils.generic_extract_archive(self.zipped_file, output_dir=tdir))
+            files.extend(
+                self.utils.generic_extract_archive(self.zipped_file, output_dir=tdir)
+            )
             assert len(files) == 5
             for f in files:
                 assert Path(f).exists()
@@ -75,7 +78,9 @@ class TestFileInfoFuncs:
 
     zipped_file = get_local_testdata("polygons/mars.zip")
     geojson_file = get_local_testdata("polygons/mars.geojson")
-    raster_file = get_local_testdata("nasa/Mars_MGS_MOLA_DEM_georeferenced_region_compressed.tiff")
+    raster_file = get_local_testdata(
+        "nasa/Mars_MGS_MOLA_DEM_georeferenced_region_compressed.tiff"
+    )
 
     non_existing_file = "unreal.zip"
 
@@ -85,7 +90,9 @@ class TestFileInfoFuncs:
 
     def test_crs_sniffer(self):
         assert self.utils.crs_sniffer(self.zipped_file) == 4326
-        assert set(self.utils.crs_sniffer(self.geojson_file, self.raster_file)) == {4326}
+        assert set(self.utils.crs_sniffer(self.geojson_file, self.raster_file)) == {
+            4326
+        }
 
     def test_single_file_check(self):
         one = [Path(__file__).parent / "__init__.py"]
@@ -123,7 +130,9 @@ class TestGdalOgrFunctions:
     sgeo = pytest.importorskip("shapely.geometry")
 
     geojson_file = get_local_testdata("polygons/mars.geojson")
-    raster_file = get_local_testdata("nasa/Mars_MGS_MOLA_DEM_georeferenced_region_compressed.tiff")
+    raster_file = get_local_testdata(
+        "nasa/Mars_MGS_MOLA_DEM_georeferenced_region_compressed.tiff"
+    )
 
     def test_gdal_aspect_not_projected(self):
         aspect_grid = self.utils.gdal_aspect_analysis(self.raster_file)
@@ -153,7 +162,9 @@ class TestGdalOgrFunctions:
         slope_tempfile = tempfile.NamedTemporaryFile(
             prefix="slope_", suffix=".tiff", delete=False
         ).name
-        slope_grid = self.utils.gdal_slope_analysis(self.raster_file, set_output=slope_tempfile)
+        slope_grid = self.utils.gdal_slope_analysis(
+            self.raster_file, set_output=slope_tempfile
+        )
         np.testing.assert_almost_equal(slope_grid.mean(), 64.4365427)
         assert Path(slope_tempfile).stat().st_size > 0
 
@@ -206,7 +217,9 @@ class TestGenericGeoOperations:
     sgeo = pytest.importorskip("shapely.geometry")
 
     geojson_file = get_local_testdata("polygons/mars.geojson")
-    raster_file = get_local_testdata("nasa/Mars_MGS_MOLA_DEM_georeferenced_region_compressed.tiff")
+    raster_file = get_local_testdata(
+        "nasa/Mars_MGS_MOLA_DEM_georeferenced_region_compressed.tiff"
+    )
 
     def test_vector_reprojection(self):
         # TODO: It would be awesome if this returned a temporary filepath if no file given.
@@ -334,4 +347,6 @@ class TestGIS:
     def test_feature_contains(self):
         point = -69.0, 45
         assert isinstance(self.utils.feature_contains(point, self.vector_file), dict)
-        assert isinstance(self.utils.feature_contains(self.sgeo.Point(point), self.vector_file), dict)
+        assert isinstance(
+            self.utils.feature_contains(self.sgeo.Point(point), self.vector_file), dict
+        )

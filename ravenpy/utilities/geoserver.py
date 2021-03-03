@@ -165,12 +165,19 @@ def _determine_upstream_ids(
     def upstream_ids(bdf, bid):
         return bdf[bdf[downstream_field] == bid][basin_field]
 
-    sub = None
+    # Note: Hydro Routing `SubId` is a float for some reason and Python float != GeoServer double. Cast them to int.
+    if isinstance(fid, float):
+        fid = int(fid)
+        df[basin_field] = df[basin_field].astype(int)
+        df[downstream_field] = df[downstream_field].astype(int)
+
     # Locate the downstream feature
     ds = df.set_index(basin_field).loc[fid]
     if basin_family is not None:
         # Do a first selection on the main basin ID of the downstream feature.
         sub = df[df[basin_family] == ds[basin_family]]
+    else:
+        sub = None
 
     # Find upstream basins
     up = [fid]
@@ -179,7 +186,7 @@ def _determine_upstream_ids(
         if len(tmp):
             up.extend(tmp)
 
-    return sub[sub[basin_field].isin(up)]
+    return sub[sub[basin_field].isin(up)] if sub is not None else df[df[basin_field].isin(up)]
 
 
 def get_raster_wcs(
