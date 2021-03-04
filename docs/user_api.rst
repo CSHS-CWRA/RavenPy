@@ -28,9 +28,6 @@ Configuration options
 .. automodule:: ravenpy.models.rv
    :members:
 
-.. automodule::  ravenpy.models.state
-   :members:
-
 .. automodule::  ravenpy.models.commands
    :members:
 
@@ -47,7 +44,13 @@ Utilities
 
 Geospatial
 ----------
-.. automodule::  ravenpy.utilities.gis
+.. automodule::  ravenpy.utilities.io
+   :members:
+
+.. automodule::  ravenpy.utilities.geo
+   :members:
+
+.. automodule::  ravenpy.utilities.geoserver
    :members:
 
 Graphics

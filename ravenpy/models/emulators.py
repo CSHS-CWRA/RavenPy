@@ -3,7 +3,7 @@ from pathlib import Path
 
 import xarray as xr
 
-from ravenpy.models import Ostrich, Raven
+from .base import Ostrich, Raven
 
 from .commands import BasinIndexCommand, HRUStateVariableTableCommand
 from .rv import RV, RVC, RVH, RVI, RVP, RVT, MonthlyAverage, Ost, RavenNcData

@@ -36,11 +36,14 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.autosummary',
               'sphinx.ext.viewcode',
               'autoapi.extension',
+              # 'numpydoc',
               'nbsphinx',
               'sphinx_click']
 
 autoapi_type = 'python'
 autoapi_dirs = ['../ravenpy']
+autoapi_add_toctree_entry = False
+# autosummary_generate = True
 
 # To avoid having to install these and burst memory limit on ReadTheDocs.
 autodoc_mock_imports = [

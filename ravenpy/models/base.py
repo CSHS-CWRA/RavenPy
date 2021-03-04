@@ -16,6 +16,7 @@ import subprocess
 import tempfile
 from collections import OrderedDict
 from pathlib import Path
+from typing import Union
 
 import numpy as np
 import xarray as xr
@@ -47,7 +48,6 @@ class Raven:
     --------
     >>> r = Raven('/tmp/testdir')
     >>> r.configure()
-
     """
 
     identifier = "generic-raven"
@@ -90,7 +90,7 @@ class Raven:
         "hrus",
     ]
 
-    def __init__(self, workdir=None):
+    def __init__(self, workdir: Union[str, Path] = None):
         """Initialize the RAVEN model.
 
         Parameters
