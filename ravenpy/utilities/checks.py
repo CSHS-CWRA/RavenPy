@@ -16,7 +16,7 @@ except (ImportError, ModuleNotFoundError) as e:
     msg = gis_error_message.format(Path(__file__).stem)
     raise ImportError(msg) from e
 
-from ravenpy.utilities.io import crs_sniffer
+import ravenpy.utilities.io as io
 
 LOGGER = logging.getLogger("RavenPy")
 
@@ -158,7 +158,7 @@ def feature_contains(
             f"point should be shapely.Point or tuple of coordinates, got : {point} of type({type(point)})"
         )
 
-    shape_crs = crs_sniffer(single_file_check(shp))
+    shape_crs = io.crs_sniffer(single_file_check(shp))
 
     if isinstance(shp, list):
         shp = shp[0]
