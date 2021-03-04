@@ -1,6 +1,6 @@
 import numpy as np
 import xarray as xr
-from ravenpy.models import get_model
+import ravenpy.models as models
 
 
 def realization(n):
@@ -31,7 +31,7 @@ def param(model):
     model : str
       Model name.
     """
-    model = get_model(model)
+    model = models.get_model(model)
     return xr.IndexVariable(
         "param",
         data=np.array(model.params._fields),
