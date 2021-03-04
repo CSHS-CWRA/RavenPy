@@ -1,3 +1,4 @@
+import logging
 import math
 import tempfile
 from pathlib import Path
@@ -5,23 +6,22 @@ from typing import Union, List, Optional
 
 import numpy as np
 
+from . import gis_error_message
+
 try:
     import rasterio
     from osgeo.gdal import DEMProcessing, Dataset
     from shapely.geometry import Polygon, MultiPolygon, GeometryCollection, shape
 except (ImportError, ModuleNotFoundError) as e:
-    msg = (
-        f"`{Path(__file__).stem}` requires installation of the RavenPy GIS libraries. These can be installed using the"
-        " `pip install ravenpy[gis]` recipe or via Anaconda (`conda env -n ravenpy-env -f environment.yml`)"
-        " from the RavenPy repository source files."
-    )
+    msg = gis_error_message.format(Path(__file__).stem)
     raise ImportError(msg) from e
 
 from ravenpy.utilities.geo import generic_raster_clip
-from ravenpy.utilities.io import LOGGER
 
 # See: https://kokoalberti.com/articles/geotiff-compression-optimization-guide/
 GDAL_TIFF_COMPRESSION_OPTION = "compress=lzw"  # or 'compress=deflate' or 'compress=zstd' or 'compress=lerc' or others
+
+LOGGER = logging.getLogger("RavenPy")
 
 
 def geom_prop(geom: Union[Polygon, MultiPolygon, GeometryCollection]) -> dict:

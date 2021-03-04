@@ -23,13 +23,13 @@ class TestHydroBASINS:
         dom = self.geoserver.select_hybas_domain(bbox)
         assert dom == "ar"
 
-    def test_get_hydrobasins_location_wfs(self):
+    def test_get_hydrobasins_location_wfs(self, tmp_path):
         lake_winnipeg = (-98.03575958286369, 52.88238524279493)
         feature = self.geoserver.get_hydrobasins_location_wfs(
             coordinates=lake_winnipeg * 2, lakes=True, domain="na"
         )
 
-        gml = tempfile.NamedTemporaryFile(suffix=".gml", delete=False)
+        gml = tempfile.NamedTemporaryFile(suffix=".gml", delete=False, dir=tmp_path)
         with open(gml.name, "wb") as f:
             f.write(feature)
 
@@ -39,13 +39,13 @@ class TestHydroBASINS:
             assert geom.bounds == (-99.2731, 50.3603, -96.2578, 53.8705)
             np.testing.assert_almost_equal(geom.area, 3.2530867)
 
-    def test_get_hydrobasins_attributes_wfs(self):
+    def test_get_hydrobasins_attributes_wfs(self, tmp_path):
         rio_grande = (-80.475, 8.4)
         feature = self.geoserver.get_hydrobasins_location_wfs(
             coordinates=rio_grande * 2, lakes=True, domain="na"
         )
 
-        gml = tempfile.NamedTemporaryFile(suffix=".gml", delete=False)
+        gml = tempfile.NamedTemporaryFile(suffix=".gml", delete=False, dir=tmp_path)
         with open(gml.name, "wb") as f:
             f.write(feature)
 
@@ -68,13 +68,13 @@ class TestHydroBASINS:
             np.array([[-80.8542, 8.2459, -80.1375, 8.7004]]),
         )
 
-    def test_hydrobasins_upstream_ids_aggregate(self):
+    def test_hydrobasins_upstream_ids_aggregate(self, tmp_path):
         puerto_cortes = (-83.525, 8.96)
         feature = self.geoserver.get_hydrobasins_location_wfs(
             coordinates=puerto_cortes * 2, lakes=True, domain="na"
         )
 
-        gml = tempfile.NamedTemporaryFile(suffix=".gml", delete=False)
+        gml = tempfile.NamedTemporaryFile(suffix=".gml", delete=False, dir=tmp_path)
         with open(gml.name, "wb") as f:
             f.write(feature)
 
@@ -91,7 +91,9 @@ class TestHydroBASINS:
         assert len(gdf) == len(gdf_upstream) + 1
 
         # FIXME: This file write step workaround is needed for some unknown reason.
-        with tempfile.NamedTemporaryFile(prefix="hybas_", suffix=".json") as tf:
+        with tempfile.NamedTemporaryFile(
+            prefix="hybas_", suffix=".json", dir=tmp_path
+        ) as tf:
             gdf_upstream.to_file(tf.name, driver="GeoJSON")
             gdf_upstream = self.gpd.read_file(tf.name)
         aggregated = self.geoserver.hydrobasins_aggregate(gdf_upstream)
@@ -111,13 +113,13 @@ class TestHydroRouting:
     gpd = pytest.importorskip("geopandas")
     sgeo = pytest.importorskip("shapely.geometry")
 
-    def test_hydro_routing_locations(self):
+    def test_hydro_routing_locations(self, tmp_path):
         lake_winnipeg = (-98.03575958286369, 52.88238524279493)
         feature = self.geoserver.get_hydro_routing_location_wfs(
             coordinates=lake_winnipeg * 2, lakes="all"
         )
 
-        gml = tempfile.NamedTemporaryFile(suffix=".gml", delete=False)
+        gml = tempfile.NamedTemporaryFile(suffix=".gml", delete=False, dir=tmp_path)
         with open(gml.name, "wb") as f:
             f.write(feature)
 
@@ -134,13 +136,14 @@ class TestHydroRouting:
         gdf = self.gpd.read_file(region_url)
         assert len(gdf) == 11415
 
-    def test_hydro_routing_upstream_ids(self):
+    @pytest.mark.slow
+    def test_hydro_routing_upstream_ids(self, tmp_path):
         amadjuak = (-71.225, 65.05)
         feature = self.geoserver.get_hydro_routing_location_wfs(
             coordinates=amadjuak * 2, lakes="1km", level=7
         )
 
-        gml = tempfile.NamedTemporaryFile(suffix=".gml", delete=False)
+        gml = tempfile.NamedTemporaryFile(suffix=".gml", delete=False, dir=tmp_path)
         with open(gml.name, "wb") as f:
             f.write(feature)
 
@@ -154,7 +157,9 @@ class TestHydroRouting:
         gdf = self.gpd.read_file(region_url)
         gdf_upstream = self.geoserver.hydro_routing_upstream_ids(subbasin_id, gdf)
 
-        with tempfile.NamedTemporaryFile(prefix="hydro_routing_", suffix=".json") as tf:
+        with tempfile.NamedTemporaryFile(
+            prefix="hydro_routing_", suffix=".json", dir=tmp_path
+        ) as tf:
             gdf_upstream.to_file(tf.name, driver="GeoJSON")
             gdf_upstream = self.gpd.read_file(tf.name)
 
@@ -163,10 +168,10 @@ class TestHydroRouting:
         aggregated = self.geoserver.hydro_routing_aggregate(gdf_upstream)
 
         assert len(aggregated) == 1
-        assert float(aggregated.area.values) == 3.71388447
+        np.testing.assert_almost_equal(aggregated.area.values, np.array([3.71388447]))
         np.testing.assert_equal(
             aggregated.geometry.bounds.values,
-            np.array([[-72.4375,  63.7042, -68.5375,  65.4375]]),
+            np.array([[-72.4375, 63.7042, -68.5375, 65.4375]]),
         )
 
 
@@ -187,12 +192,12 @@ class TestWCS:
 
     vector_file = get_local_testdata("polygons/Saskatoon.geojson")
 
-    def test_get_raster_wcs(self):
+    def test_get_raster_wcs(self, tmp_path):
         # TODO: This CRS needs to be redefined using modern pyproj-compatible strings.
         nalcms_crs = "+proj=laea +lat_0=45 +lon_0=-100 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs=True"
 
         with tempfile.NamedTemporaryFile(
-            prefix="reprojected_", suffix=".json"
+            prefix="reprojected_", suffix=".json", dir=tmp_path
         ) as projected:
             self.geo.generic_vector_reproject(
                 self.vector_file, projected.name, target_crs=nalcms_crs
@@ -204,7 +209,9 @@ class TestWCS:
             bbox, geographic=False, layer=raster_url
         )
 
-        with tempfile.NamedTemporaryFile(prefix="wcs_", suffix=".tiff") as raster_file:
+        with tempfile.NamedTemporaryFile(
+            prefix="wcs_", suffix=".tiff", dir=tmp_path
+        ) as raster_file:
             with open(raster_file.name, "wb") as f:
                 f.write(raster_bytes)
 

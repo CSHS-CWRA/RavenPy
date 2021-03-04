@@ -1,7 +1,10 @@
 import collections
+import logging
 import warnings
 from pathlib import Path
 from typing import List, Union, Any, Sequence, Tuple
+
+from . import gis_error_message
 
 try:
     import fiona
@@ -10,14 +13,12 @@ try:
     from pyproj.exceptions import CRSError
     from shapely.geometry import GeometryCollection, shape, MultiPolygon, Point
 except (ImportError, ModuleNotFoundError) as e:
-    msg = (
-        f"`{Path(__file__).stem}` requires installation of the RavenPy GIS libraries. These can be installed using the"
-        " `pip install ravenpy[gis]` recipe or via Anaconda (`conda env -n ravenpy-env -f environment.yml`)"
-        " from the RavenPy repository source files."
-    )
+    msg = gis_error_message.format(Path(__file__).stem)
     raise ImportError(msg) from e
 
-from ravenpy.utilities.io import LOGGER, crs_sniffer
+from ravenpy.utilities.io import crs_sniffer
+
+LOGGER = logging.getLogger("RavenPy")
 
 
 def single_file_check(file_list: List[Union[str, Path]]) -> Any:

@@ -1,7 +1,10 @@
+import collections
 import json
 import logging
 from pathlib import Path
 from typing import Union, List
+
+from . import gis_error_message
 
 try:
     import fiona
@@ -13,11 +16,7 @@ try:
     from shapely.geometry import GeometryCollection, shape, Polygon, MultiPolygon, mapping
     from shapely.ops import transform
 except (ImportError, ModuleNotFoundError) as e:
-    msg = (
-        f"`{Path(__file__).stem}` requires installation of the RavenPy GIS libraries. These can be installed using the"
-        " `pip install ravenpy[gis]` recipe or via Anaconda (`conda env -n ravenpy-env -f environment.yml`)"
-        " from the RavenPy repository source files."
-    )
+    msg = gis_error_message.format(Path(__file__).stem)
     raise ImportError(msg) from e
 
 RASTERIO_TIFF_COMPRESSION = "lzw"
@@ -52,16 +51,15 @@ def geom_transform(
         from pyproj import Transformer  # noqa
         from functools import partial
 
-        source = (
-            CRS.from_epsg(source_crs)
-            if isinstance(source_crs, int or str)
-            else source_crs
-        )
-        target = (
-            CRS.from_epsg(target_crs)
-            if isinstance(target_crs, int or str)
-            else target_crs
-        )
+        if isinstance(source_crs, int or str):
+            source = CRS.from_epsg(source_crs)
+        else:
+            source = source_crs
+
+        if isinstance(target_crs, int or str):
+            target = CRS.from_epsg(target_crs)
+        else:
+            target = target_crs
 
         transform_func = Transformer.from_crs(source, target, always_xy=True)
         reprojected = transform(transform_func.transform, geom)
@@ -106,7 +104,7 @@ def generic_raster_clip(
     -------
     None
     """
-    if not (type(geometry) in (list, tuple)):
+    if not isinstance(geometry, collections.abc.Iterable):
         geometry = [geometry]
 
     with rasterio.open(raster, "r") as src:
@@ -132,7 +130,6 @@ def generic_raster_clip(
         # Write the new masked image
         with rasterio.open(output, "w", **mask_meta) as dst:
             dst.write(mask_image)
-    return
 
 
 def generic_raster_warp(
@@ -183,7 +180,6 @@ def generic_raster_warp(
 
             with rasterio.open(output, "w", **metadata) as dst:
                 dst.write(data)
-    return
 
 
 def generic_vector_reproject(

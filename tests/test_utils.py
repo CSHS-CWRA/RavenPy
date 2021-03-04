@@ -29,7 +29,6 @@ class TestOperations:
             self.analysis.circular_mean_aspect(southwest_angles), 191.88055987
         )
 
-
     def test_address_append(self):
         non_existing_tarred_file = "polygons.tar"
 
@@ -39,19 +38,18 @@ class TestOperations:
             ("zip://", "tar://")
         )
 
-    def test_archive_sniffer(self):
+    def test_archive_sniffer(self, tmp_path):
         probable_shp = self.io.archive_sniffer(self.zipped_file)
-        assert probable_shp == ["/tmp/mars.shp"]
+        assert Path(probable_shp[0]).name == "mars.shp"
 
-        probable_shp = self.io.archive_sniffer(self.zipped_file, working_dir="/tmp")
-        assert probable_shp == ["/tmp/mars.shp"]
+        probable_shp = self.io.archive_sniffer(self.zipped_file, working_dir=tmp_path)
+        assert Path(probable_shp[0]).name == "mars.shp"
 
-    def test_archive_extract(self):
-
+    def test_archive_extract(self, tmp_path):
         assert self.zipped_file.exists()
 
         files = list()
-        with tempfile.TemporaryDirectory() as tdir:
+        with tempfile.TemporaryDirectory(dir=tmp_path) as tdir:
             files.extend(
                 self.io.generic_extract_archive(self.zipped_file, output_dir=tdir)
             )
@@ -82,13 +80,11 @@ class TestFileInfoFuncs:
 
     def test_crs_sniffer(self):
         assert self.io.crs_sniffer(self.zipped_file) == 4326
-        assert set(self.io.crs_sniffer(self.geojson_file, self.raster_file)) == {
-            4326
-        }
+        assert set(self.io.crs_sniffer(self.geojson_file, self.raster_file)) == {4326}
 
     def test_single_file_check(self):
         one = [Path(__file__).parent / "__init__.py"]
-        zero = []
+        zero = list()
         three = [1, Path().root, 2.333]
 
         assert self.checks.single_file_check(one) == one[0]
@@ -126,7 +122,7 @@ class TestGdalOgrFunctions:
         "nasa/Mars_MGS_MOLA_DEM_georeferenced_region_compressed.tiff"
     )
 
-    def test_gdal_aspect_not_projected(self):
+    def test_gdal_aspect_not_projected(self, tmp_path):
         aspect_grid = self.analysis.gdal_aspect_analysis(self.raster_file)
         np.testing.assert_almost_equal(
             self.analysis.circular_mean_aspect(aspect_grid), 10.9119033
@@ -134,7 +130,7 @@ class TestGdalOgrFunctions:
 
         # test with creation of a temporary file
         aspect_tempfile = tempfile.NamedTemporaryFile(
-            prefix="aspect_", suffix=".tiff", delete=False
+            prefix="aspect_", suffix=".tiff", delete=False, dir=tmp_path
         ).name
         aspect_grid = self.analysis.gdal_aspect_analysis(
             self.raster_file, set_output=aspect_tempfile
@@ -145,14 +141,14 @@ class TestGdalOgrFunctions:
         assert Path(aspect_tempfile).stat().st_size > 0
 
     # Slope values are high due to data values using Geographic CRS
-    def test_gdal_slope_not_projected(self):
+    def test_gdal_slope_not_projected(self, tmp_path):
         slope_grid = self.analysis.gdal_slope_analysis(self.raster_file)
         np.testing.assert_almost_equal(slope_grid.min(), 0.0)
         np.testing.assert_almost_equal(slope_grid.mean(), 64.4365427)
         np.testing.assert_almost_equal(slope_grid.max(), 89.71747, 5)
 
         slope_tempfile = tempfile.NamedTemporaryFile(
-            prefix="slope_", suffix=".tiff", delete=False
+            prefix="slope_", suffix=".tiff", delete=False, dir=tmp_path
         ).name
         slope_grid = self.analysis.gdal_slope_analysis(
             self.raster_file, set_output=slope_tempfile
@@ -215,10 +211,10 @@ class TestGenericGeoOperations:
         "nasa/Mars_MGS_MOLA_DEM_georeferenced_region_compressed.tiff"
     )
 
-    def test_vector_reprojection(self):
+    def test_vector_reprojection(self, tmp_path):
         # TODO: It would be awesome if this returned a temporary filepath if no file given.
         reproj_file = tempfile.NamedTemporaryFile(
-            prefix="reproj_", suffix=".geojson", delete=False
+            prefix="reproj_", suffix=".geojson", delete=False, dir=tmp_path
         ).name
         self.geo.generic_vector_reproject(
             self.geojson_file, projected=reproj_file, target_crs="EPSG:3348"
@@ -237,11 +233,11 @@ class TestGenericGeoOperations:
         np.testing.assert_almost_equal(geom_properties["perimeter"], 9194343.1759303)
         np.testing.assert_almost_equal(geom_properties["gravelius"], 1.0212589)
 
-    def test_raster_warp(self):
+    def test_raster_warp(self, tmp_path):
         # TODO: It would be awesome if this returned a temporary filepath if no file given.
         # TODO: either use `output` or `reprojected/warped` for these functions.
         reproj_file = tempfile.NamedTemporaryFile(
-            prefix="reproj_", suffix=".tiff", delete=False
+            prefix="reproj_", suffix=".tiff", delete=False, dir=tmp_path
         ).name
         self.geo.generic_raster_warp(
             self.raster_file, output=reproj_file, target_crs="EPSG:3348"
@@ -259,9 +255,9 @@ class TestGenericGeoOperations:
             assert data.max() == 255
             np.testing.assert_almost_equal(data.mean(), 60.7291936)
 
-    def test_warped_raster_slope(self):
+    def test_warped_raster_slope(self, tmp_path):
         reproj_file = tempfile.NamedTemporaryFile(
-            prefix="reproj_", suffix=".tiff", delete=False
+            prefix="reproj_", suffix=".tiff", delete=False, dir=tmp_path
         ).name
         self.geo.generic_raster_warp(
             self.raster_file, output=reproj_file, target_crs="EPSG:3348"
@@ -272,9 +268,9 @@ class TestGenericGeoOperations:
         np.testing.assert_almost_equal(slope_grid.mean(), 0.0034991)
         np.testing.assert_almost_equal(slope_grid.max(), 0.3523546)
 
-    def test_warped_raster_aspect(self):
+    def test_warped_raster_aspect(self, tmp_path):
         reproj_file = tempfile.NamedTemporaryFile(
-            prefix="reproj_", suffix=".tiff", delete=False
+            prefix="reproj_", suffix=".tiff", delete=False, dir=tmp_path
         ).name
         self.geo.generic_raster_warp(
             self.raster_file, output=reproj_file, target_crs="EPSG:3348"
@@ -285,13 +281,13 @@ class TestGenericGeoOperations:
             self.analysis.circular_mean_aspect(aspect_grid), 7.7805879
         )
 
-    def test_raster_clip(self):
+    def test_raster_clip(self, tmp_path):
         with self.fiona.open(self.geojson_file) as gj:
             feature = next(iter(gj))
             geom = self.sgeo.shape(feature["geometry"])
 
         clipped_file = tempfile.NamedTemporaryFile(
-            prefix="reproj_", suffix=".tiff", delete=False
+            prefix="reproj_", suffix=".tiff", delete=False, dir=tmp_path
         ).name
         self.geo.generic_raster_clip(self.raster_file, clipped_file, geometry=geom)
 
