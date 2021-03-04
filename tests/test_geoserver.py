@@ -8,6 +8,7 @@ from ravenpy.utilities.testdata import get_local_testdata
 
 class TestHydroBASINS:
     geoserver = pytest.importorskip("ravenpy.utilities.geoserver")
+
     fiona = pytest.importorskip("fiona")
     gpd = pytest.importorskip("geopandas")
     sgeo = pytest.importorskip("shapely.geometry")
@@ -96,7 +97,7 @@ class TestHydroBASINS:
         aggregated = self.geoserver.hydrobasins_aggregate(gdf_upstream)
 
         assert len(aggregated) == 1
-        assert aggregated.SUB_AREA.values == 4977.8
+        assert float(aggregated.SUB_AREA.values) == 4977.8
         np.testing.assert_equal(
             aggregated.geometry.bounds.values,
             np.array([[-83.8167, 8.7625, -82.7125, 9.5875]]),
@@ -105,6 +106,7 @@ class TestHydroBASINS:
 
 class TestHydroRouting:
     geoserver = pytest.importorskip("ravenpy.utilities.geoserver")
+
     fiona = pytest.importorskip("fiona")
     gpd = pytest.importorskip("geopandas")
     sgeo = pytest.importorskip("shapely.geometry")
@@ -161,7 +163,7 @@ class TestHydroRouting:
         aggregated = self.geoserver.hydro_routing_aggregate(gdf_upstream)
 
         assert len(aggregated) == 1
-        assert aggregated.area.values == 3.71388447
+        assert float(aggregated.area.values) == 3.71388447
         np.testing.assert_equal(
             aggregated.geometry.bounds.values,
             np.array([[-72.4375,  63.7042, -68.5375,  65.4375]]),
@@ -178,8 +180,9 @@ class TestWFS:
 
 
 class TestWCS:
+    io = pytest.importorskip("ravenpy.utilities.io")
     geoserver = pytest.importorskip("ravenpy.utilities.geoserver")
-    utils = pytest.importorskip("ravenpy.utils")
+    geo = pytest.importorskip("ravenpy.utilities.geo")
     rasterio = pytest.importorskip("rasterio")
 
     vector_file = get_local_testdata("polygons/Saskatoon.geojson")
@@ -191,10 +194,10 @@ class TestWCS:
         with tempfile.NamedTemporaryFile(
             prefix="reprojected_", suffix=".json"
         ) as projected:
-            self.utils.generic_vector_reproject(
+            self.geo.generic_vector_reproject(
                 self.vector_file, projected.name, target_crs=nalcms_crs
             )
-            bbox = self.utils.get_bbox(projected.name)
+            bbox = self.io.get_bbox(projected.name)
 
         raster_url = "public:CEC_NALCMS_LandUse_2010"
         raster_bytes = self.geoserver.get_raster_wcs(
