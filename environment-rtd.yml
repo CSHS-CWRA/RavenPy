@@ -20,4 +20,4 @@ dependencies:
   - jupyter_client
   - sphinx-click
   - sphinx_rtd_theme
-  - numpydoc
+#  - numpydoc

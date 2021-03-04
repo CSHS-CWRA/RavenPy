@@ -36,12 +36,13 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.autosummary',
               'sphinx.ext.viewcode',
               'numpydoc',
-              'nbsphinx',
+              # 'nbsphinx',
               'sphinx_click']
 
 # To avoid having to install these and burst memory limit on ReadTheDocs.
 autodoc_mock_imports = [
     'affine',
+    "cftime",
     "climpred",
     'clisops',
     'dataclasses',  # needed for python3.6
@@ -51,6 +52,7 @@ autodoc_mock_imports = [
     'geopandas',
     'lxml',
     'owslib',
+    "pandas",
     'pyproj',
     'rasterio',
     'rioxarray',
