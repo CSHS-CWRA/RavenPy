@@ -42,6 +42,7 @@ extensions = ['sphinx.ext.autodoc',
 # To avoid having to install these and burst memory limit on ReadTheDocs.
 autodoc_mock_imports = [
     'affine',
+    "climpred",
     'clisops',
     'dataclasses',  # needed for python3.6
     'fiona',
@@ -53,7 +54,9 @@ autodoc_mock_imports = [
     'pyproj',
     'rasterio',
     'rioxarray',
-    'shapely'
+    'shapely',
+    "statsmodels",
+    "xarray"
 ]
 
 # Add any paths that contain templates here, relative to this directory.

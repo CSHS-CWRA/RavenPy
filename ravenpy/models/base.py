@@ -18,7 +18,6 @@ from collections import OrderedDict
 from pathlib import Path
 
 import numpy as np
-import six
 import xarray as xr
 
 import ravenpy
@@ -39,7 +38,7 @@ OSTRICH_EXEC_PATH = os.getenv("RAVENPY_OSTRICH_BINARY_PATH") or shutil.which("os
 
 
 class Raven:
-    """RAVEN hydrological model wrapper
+    """RAVEN hydrological model wrapper.
 
     This class is used to run the RAVEN model from user-provided configuration files. It can also be subclassed with
     configuration templates for emulated models, allowing direct calls to the models.
@@ -397,7 +396,7 @@ class Raven:
         >>> r.run(ts, start_date=dt.datetime(2000, 1, 1), area=1000, X1=67)
 
         """
-        if isinstance(ts, (six.string_types, Path)):
+        if isinstance(ts, (str, Path)):
             ts = [ts]
 
         # Case for potentially parallel parameters
@@ -775,7 +774,7 @@ class Raven:
     @staticmethod
     def split_ext(fn):
         """Return the name and rv key of the configuration file."""
-        if isinstance(fn, six.string_types):
+        if isinstance(fn, str):
             fn = Path(fn)
 
         return fn.stem, fn.suffix[1:]
@@ -808,22 +807,22 @@ class Raven:
 
 
 class Ostrich(Raven):
-    """Wrapper for OSTRICH calibration of RAVEN hydrological model
+    """Wrapper for OSTRICH calibration of RAVEN hydrological model.
 
     This class is used to calibrate RAVEN model using OSTRICH from user-provided configuration files. It can also be
     subclassed with configuration templates for emulated models, allowing direct calls to the models.
 
-    Examples
-    --------
-    >>> r = Ostrich('/tmp/testdir')
-    >>> r.configure()
-
-    Attributes
+    Parameters
     ----------
     conf
       The rv configuration files + Ostrict ostIn.txt
     tpl
       The Ostrich templates
+
+    Examples
+    --------
+    >>> r = Ostrich('/tmp/testdir')
+    >>> r.configure()
 
     """
 
@@ -934,7 +933,7 @@ class Ostrich(Raven):
                 0
             ].read_text()
 
-        return "{}\n{}".format(ost_err, raven_err)
+        return f"{ost_err}\n{raven_err}"
 
     def parse_optimal_parameter_set(self):
         """Return dictionary of optimal parameter set."""
