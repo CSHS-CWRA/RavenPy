@@ -814,16 +814,15 @@ class Ostrich(Raven):
 
     Parameters
     ----------
-    conf
-      The rv configuration files + Ostrict ostIn.txt
-    tpl
-      The Ostrich templates
+    conf:
+      The rv configuration files + Ostrict ostIn.txt.
+    tpl:
+      The Ostrich templates.
 
     Examples
     --------
     >>> r = Ostrich('/tmp/testdir')
     >>> r.configure()
-
     """
 
     identifier = "generic-ostrich"
@@ -869,20 +868,10 @@ class Ostrich(Raven):
         make_executable(fn)
 
     def setup(self, overwrite=False):
-        """Create directory structure to store model input files, executable and output results.
+        """Create directory structure to store model input files, executable, and output results.
 
         Model configuration files and time series inputs are stored directly in the working directory.
-
-        workdir/  # Created by PyWPS.
-           *.rv?
-           *.tpl
-           ostIn.txt
-           model/
-           model/output/
-           best/
-
-        At each Ostrich loop, configuration files (original and created from templates are copied into model/.
-
+        At each Ostrich loop, configuration files (original and created from templates are copied into model).
         """
         Raven.setup(self, overwrite)
 
