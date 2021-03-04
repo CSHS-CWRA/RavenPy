@@ -65,7 +65,7 @@ def _get_location_wfs(
     layer : str
       The WFS/WMS layer name requested.
     geoserver: str
-      The address of the geoserver housing the layer to be queried. Default: http://boreas.ouranos.ca/geoserver.
+      The address of the geoserver housing the layer to be queried. Default: http://pavics.ouranos.ca/geoserver/.
 
     Returns
     -------
@@ -100,7 +100,7 @@ def _get_feature_attributes_wfs(
     value: Union[str, float, int]
       Value for attribute queried.
     geoserver: str
-      The address of the geoserver housing the layer to be queried. Default: http://boreas.ouranos.ca/geoserver.
+      The address of the geoserver housing the layer to be queried. Default: http://pavics.ouranos.ca/geoserver/.
 
     Returns
     -------
@@ -207,9 +207,9 @@ def get_raster_wcs(
     geographic : bool
       If True, uses "Long" and "Lat" in WCS call. Otherwise uses "E" and "N".
     layer : str
-      Layer name of raster exposed on GeoServer instance. E.g. 'public:CEC_NALCMS_LandUse_2010'
+      Layer name of raster exposed on GeoServer instance, e.g. 'public:CEC_NALCMS_LandUse_2010'
     geoserver: str
-      The address of the geoserver housing the layer to be queried. Default: http://boreas.ouranos.ca/geoserver.
+      The address of the geoserver housing the layer to be queried. Default: http://pavics.ouranos.ca/geoserver/.
 
     Returns
     -------
@@ -374,7 +374,7 @@ def get_hydrobasins_attributes_wfs(
     domain : str
       The domain of the HydroBASINS data. Possible values:"na", "ar".
     geoserver: str
-      The address of the geoserver housing the layer to be queried. Default: http://boreas.ouranos.ca/geoserver.
+      The address of the geoserver housing the layer to be queried. Default: http://pavics.ouranos.ca/geoserver/.
 
     Returns
     -------
@@ -418,7 +418,7 @@ def get_hydrobasins_location_wfs(
     domain : str
       The domain of the HydroBASINS data. Possible values:"na", "ar".
     geoserver: str
-      The address of the geoserver housing the layer to be queried. Default: http://boreas.ouranos.ca/geoserver.
+      The address of the geoserver housing the layer to be queried. Default: http://pavics.ouranos.ca/geoserver/.
 
     Returns
     -------
@@ -519,7 +519,7 @@ def get_hydro_routing_attributes_wfs(
     lakes : bool
       Query the version of dataset with lakes under 1km in width removed ("1km") or return all lakes ("all").
     geoserver: str
-      The address of the geoserver housing the layer to be queried. Default: http://boreas.ouranos.ca/geoserver.
+      The address of the geoserver housing the layer to be queried. Default: http://pavics.ouranos.ca/geoserver/.
 
     Returns
     -------
@@ -560,7 +560,7 @@ def get_hydro_routing_location_wfs(
     level : int
       Level of granularity requested for the lakes vector (range(7,13)). Default: 12.
     geoserver: str
-      The address of the geoserver housing the layer to be queried. Default: http://boreas.ouranos.ca/geoserver.
+      The address of the geoserver housing the layer to be queried. Default: http://pavics.ouranos.ca/geoserver/.
 
     Returns
     -------

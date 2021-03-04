@@ -70,9 +70,9 @@ def address_append(address: Union[str, Path]) -> str:
 
     try:
         if zipped:
-            return "zip://{}".format(address)
+            return f"zip://{address}"
         elif tarred:
-            return "tar://{}".format(address)
+            return f"tar://{address}"
         else:
             LOGGER.info("No changes made to address.")
             return str(address)

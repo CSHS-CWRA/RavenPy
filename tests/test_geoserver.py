@@ -52,7 +52,6 @@ class TestHydroBASINS:
             feat = next(iter(src))
             main_bas = feat["properties"]["MAIN_BAS"]
 
-        # TODO: It would be swell to just have this function determine the domain if not given.
         region_url = self.geoserver.get_hydrobasins_attributes_wfs(
             attribute="MAIN_BAS", value=main_bas, domain="na"
         )
@@ -83,7 +82,6 @@ class TestHydroBASINS:
             main_bas = feat["properties"]["MAIN_BAS"]
             hybas_id = feat["properties"]["HYBAS_ID"]
 
-        # TODO: It would be swell to just have this function determine the domain if not given.
         region_url = self.geoserver.get_hydrobasins_attributes_wfs(
             attribute="MAIN_BAS", value=main_bas, domain="na"
         )
