@@ -231,4 +231,3 @@ def generic_vector_reproject(
                         raise
 
                 sink.write(f"{json.dumps(output)}")
-    return
