@@ -35,9 +35,12 @@ import ravenpy
 extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.autosummary',
               'sphinx.ext.viewcode',
-              'numpydoc',
-              # 'nbsphinx',
+              'autoapi.extension',
+              'nbsphinx',
               'sphinx_click']
+
+autoapi_type = 'python'
+autoapi_dirs = ['../ravenpy']
 
 # To avoid having to install these and burst memory limit on ReadTheDocs.
 autodoc_mock_imports = [
@@ -51,14 +54,17 @@ autodoc_mock_imports = [
     'osgeo',
     'geopandas',
     'lxml',
+    "netCDF4",
     'owslib',
     "pandas",
     'pyproj',
     'rasterio',
     'rioxarray',
+    "scipy",
     'shapely',
     "statsmodels",
-    "xarray"
+    "xarray",
+    "xclim"
 ]
 
 # Add any paths that contain templates here, relative to this directory.
