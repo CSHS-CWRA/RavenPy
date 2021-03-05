@@ -39,6 +39,8 @@ extensions = ['sphinx.ext.autodoc',
               'nbsphinx',
               'sphinx_click']
 
+autosummary_generate = True
+
 # To avoid having to install these and burst memory limit on ReadTheDocs.
 autodoc_mock_imports = [
     'affine',
