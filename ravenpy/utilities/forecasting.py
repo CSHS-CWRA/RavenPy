@@ -11,12 +11,13 @@ import logging
 import re
 import warnings
 from pathlib import Path
+from typing import List, Tuple
 
-import climpred
+# import climpred
 import numpy as np
 import pandas as pd
 import xarray as xr
-from climpred import HindcastEnsemble, PerfectModelEnsemble
+from climpred import HindcastEnsemble
 
 try:
     import rioxarray
@@ -204,8 +205,7 @@ def get_hindcast_day(region_coll, date, climate_model="GEPS"):
     all members.
 
     The code takes the region shapefile, the forecast date required, and the
-    climate_model to use, here GEPS by default, but eventually could be
-    GEPS, GDPS, REPS or RDPS.
+    climate_model to use, here GEPS by default, but eventually could be GEPS, GDPS, REPS or RDPS.
     """
 
     # Get the file locations and filenames as a function of the climate model and date
@@ -386,40 +386,42 @@ def make_climpred_hindcast_object(hindcast, observations):
 
 def make_ESP_hindcast_dataset(
     model_name, forecast_date, included_years, forecast_duration, **kwargs
-):
-    """
+) -> Tuple[xr.Dataset, xr.Dataset]:
+    """Make a hindcast using ESP dataset.
+
     This function takes the required information to run a RAVEN model run in ESP
     mode, and runs RAVEN for a series of queried initialization dates. For each
     requested date, it will perform an ESP forecast using all climate data at
-    its disposal. Returns the hindcast and observations datasets required by
-    climpred.
+    its disposal. Returns the hindcast and observations datasets required by climpred.
 
     Parameters
     ----------
     model_name: string
-        Name of the RAVEN model setup (GR4JCN, MOHYSE, HMETS or HBVEC)
+      Name of the RAVEN model setup (GR4JCN, MOHYSE, HMETS or HBVEC).
     forecast_date: datetime.datetime
-        Calendar date that is used as the base to perform hindcasts. The year
-        component is updated for each initialization date.
-    included_years: list of integers
-        the years that we want to perform a hindcasting for, on the calendar date
-        in "foreacast_date"
+      Calendar date that is used as the base to perform hindcasts.
+      The year component is updated for each initialization date.
+    included_years: List[int]
+      the years that we want to perform a hindcasting for, on the calendar date in "foreacast_date"
     forecast_duration: int
-        Duration of the forecast, in days. Refers to the longest lead-time required.
-    kwargs: All other parameters needed to run RAVEN.
+      Duration of the forecast, in days. Refers to the longest lead-time required.
+    kwargs: dict
+      All other parameters needed to run RAVEN.
 
     Returns
     -------
-    qsims : xarray.Dataset
-        The dataset containing the (init, member, lead) dimensions ready for
-        using in climpred. Here:
-            init = hindcast issue date
-            member = ESP members of the hindcasting experiment
-            lead = number of lead days of the forecast.
-    qobs : xarray.Dataset
-        The dataset containing all observations over the verification period.
-        The only dimension is 'time', as required by climpred. No other processing
-        is required as climpred will find corresponding verification dates on its own.
+    xarray.Dataset
+      The dataset containing the (init, member, lead) dimensions ready for using in climpred. (qsim)
+    xarray.Dataset
+      The dataset containing all observations over the verification period.
+      The only dimension is 'time', as required by climpred. No other processing
+      is required as climpred will find corresponding verification dates on its own. (qobs)
+
+    Notes
+    -----
+    init = hindcast issue date
+    member = ESP members of the hindcasting experiment
+    lead = number of lead days of the forecast.
     """
 
     # Use the ESP functions to generate the ESP hindcasts for the first period (first initialization)

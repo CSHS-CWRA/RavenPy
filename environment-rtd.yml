@@ -4,13 +4,8 @@ channels:
 - defaults
 dependencies:
   - click
-#  - gdal
   - matplotlib
-#  - rasterio
-#  - rioxarray
-#  - statsmodels
   - xarray
-#  - xclim>=0.23
   - wheel
   - dataclasses  # Needed for Python 3.6
   - sphinx
