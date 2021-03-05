@@ -300,7 +300,8 @@ class TestRVT:
 
         assert ":NumberHRUs 51" in res
         assert ":NumberGridCells 100" in res
-        assert len(res.split("\n")) == 227
+        # FIXME: This test is not superb.
+        assert len(res.split("\n")) == 225
 
 
 def test_isinstance_namedtuple():
