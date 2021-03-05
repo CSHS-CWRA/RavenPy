@@ -2,20 +2,14 @@
 import json
 import re
 import sys
+from pathlib import Path
 
 import click
 
-from ravenpy import __version__
 from ravenpy.models.importers import RoutingProductGridWeightImporter
 
 
-@click.group()
-@click.version_option(__version__)
-def cli():
-    pass
-
-
-@cli.command()
+@click.command()
 @click.argument("input-file", type=click.Path(exists=True))
 @click.argument("routing-file", type=click.Path(exists=True))
 @click.option(
@@ -81,9 +75,8 @@ def cli():
 @click.option(
     "-o",
     "--output",
-    type=click.Choice(["raven", "json", "text"]),
-    default="raven",
-    show_default=True,
+    type=click.Path(),
+    help="Text field that will contain the results as a single :GridWeights Raven command containing the weights.",
 )
 def generate_grid_weights(
     input_file,
@@ -114,7 +107,8 @@ def generate_grid_weights(
     of interest (and maybe some more catchments). This file should contain an attribute with a unique identifier for the HRUs:
     the default is "HRU_ID", but it can be set with --routing-id-field (-c).
 
-    The script outputs the results (in the chosen format) on STDOUT, so they can be redirected to a file using the `>` shell operator.
+    The script will output the results as RVT file with a single :GridWeights command block containing the weights (that the user
+    is then free to embed or reference, in her own config context).
     """
 
     importer = RoutingProductGridWeightImporter(
@@ -128,24 +122,16 @@ def generate_grid_weights(
         sub_ids,
         area_error_threshold,
     )
-    cmd = importer.extract()
+    gw_cmd = importer.extract()
 
-    if output == "raven":
-        print(cmd)
-    elif output == "text":
-        print("\n".join(" ".join(map(str, d)) for d in cmd.data))
-    elif output == "json":
-        print(
-            json.dumps(
-                {
-                    "NumberHRUs": cmd.number_hrus,
-                    "NumberGridCells": cmd.number_grid_cells,
-                    "Weights": cmd.data,
-                },
-                indent=4,
-            )
+    if not output:
+        input_file_path = Path(input_file)
+        output_file_path = (
+            input_file_path.parent / f"{input_file_path.stem}_weights.rvt"
         )
+    else:
+        output_file_path = Path(output)
 
+    output_file_path.write_text(gw_cmd.to_rv() + "\n")
 
-if __name__ == "__main__":
-    sys.exit(cli())  # pragma: no cover
+    click.echo(f"Created {output_file_path}")

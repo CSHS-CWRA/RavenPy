@@ -1,3 +1,4 @@
+import warnings
 from collections import defaultdict
 from pathlib import Path
 
@@ -20,7 +21,6 @@ import numpy as np
 
 from .commands import (
     ChannelProfileCommand,
-    GriddedForcingCommand,
     GridWeightsCommand,
     HRUsCommand,
     ReservoirCommand,
@@ -265,11 +265,12 @@ class RoutingProductGridWeightImporter:
     The original version of this algorithm can be found at: https://github.com/julemai/GridWeightsGenerator
     """
 
-    CRS_LLDEG = 4326  # EPSG id of lat/lon (deg) coordinate referenence system (CRS)
-    CRS_CAEA = 3573  # EPSG id of equal-area    coordinate referenence system (CRS)
+    CRS_LLDEG = 4326  # EPSG id of lat/lon (deg) coordinate reference system (CRS)
+    CRS_CAEA = 3573  # EPSG id of equal-area coordinate reference system (CRS)
     ROUTING_ID_FIELD = "HRU_ID"
     NETCDF_INPUT_FIELD = "NetCDF_col"
-    DIM_NAMES = ("lon", "lat")
+    # Renamed because xarray doesn't like when they're the same as vars
+    DIM_NAMES = ("lon_dim", "lat_dim")
     VAR_NAMES = ("lon", "lat")
     AREA_ERROR_THRESHOLD = 0.05
 
@@ -321,7 +322,6 @@ class RoutingProductGridWeightImporter:
         self._routing_data = geopandas.read_file(routing_file_path)
 
     def extract(self) -> GridWeightsCommand:
-
         self._prepare_input_data()
 
         # Read routing data
@@ -331,9 +331,38 @@ class RoutingProductGridWeightImporter:
             epsg=RoutingProductGridWeightImporter.CRS_CAEA
         )
 
-        self._routing_data = self._routing_data.drop_duplicates(
-            self._routing_id_field
-        ).sort_values(self._routing_id_field)
+        def keep_only_valid_downsubid_and_obs_nm(g):
+            """
+            This function receives a group (g) of routing rows that have been grouped by HRU_ID.
+            If there is only one row, there is nothing to do (we return it). If there are more than
+            one rows, we want to return the one with the DowSubId != -1 (if there are more than one
+            we emit a warning). We also want to search for an Obs_NM value different than -9999 in
+            any row of the group, and if we find it we set it in the corresponding field of the
+            returning row (if we can't find one we also emit a warning).
+            """
+            if len(g) == 1:
+                return g
+            hru_id_field = self._routing_id_field
+            row = g[g["DowSubId"] != -1].copy()
+            if len(row) > 1:
+                row = row[:1].copy()
+                warnings.warn(
+                    f"More than one row with HRU_ID={row[hru_id_field]} having DowSubId = -1"
+                )
+            obs_nm = g[g["Obs_NM"] != -9999]
+            if not obs_nm.empty:
+                row["Obs_NM"] = obs_nm["Obs_NM"].iloc[0]
+            else:
+                warnings.warn(
+                    f"All values of Obs_NM are -9999 for rows with HRU_ID={row[hru_id_field]}"
+                )
+
+            return row
+
+        # Remove duplicate HRU_IDs while making sure that we keed relevant DowSubId and Obs_NM values
+        self._routing_data = self._routing_data.groupby(self._routing_id_field).apply(
+            keep_only_valid_downsubid_and_obs_nm
+        )
 
         # Make sure those are ints
         self._routing_data.SubId = self._routing_data.SubId.astype(int)

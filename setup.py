@@ -30,6 +30,8 @@ requirements = [
     "xarray",
     "xclim>=0.23",
     "wheel",
+    "xskillscore",
+    "climpred>=2.1"
 ]
 
 test_requirements = [
@@ -177,7 +179,7 @@ setup(
     description="A Python wrapper to setup and run the hydrologic modelling framework Raven.",
     entry_points={
         "console_scripts": [
-            "ravenpy=ravenpy.cli:cli",
+            "ravenpy=ravenpy.cli:main",
         ],
     },
     install_requires=requirements,
