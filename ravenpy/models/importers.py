@@ -19,6 +19,7 @@ except (ImportError, ModuleNotFoundError) as e:
 import netCDF4 as nc4
 import numpy as np
 
+from . import grid_weight_importer_params
 from .commands import (
     ChannelProfileCommand,
     GridWeightsCommand,
@@ -267,24 +268,18 @@ class RoutingProductGridWeightImporter:
 
     CRS_LLDEG = 4326  # EPSG id of lat/lon (deg) coordinate reference system (CRS)
     CRS_CAEA = 3573  # EPSG id of equal-area coordinate reference system (CRS)
-    ROUTING_ID_FIELD = "HRU_ID"
-    NETCDF_INPUT_FIELD = "NetCDF_col"
-    # Renamed because xarray doesn't like when they're the same as vars
-    DIM_NAMES = ("lon_dim", "lat_dim")
-    VAR_NAMES = ("lon", "lat")
-    AREA_ERROR_THRESHOLD = 0.05
 
     def __init__(
         self,
         input_file_path,
         routing_file_path,
-        dim_names=DIM_NAMES,
-        var_names=VAR_NAMES,
-        routing_id_field=ROUTING_ID_FIELD,
-        netcdf_input_field=NETCDF_INPUT_FIELD,
+        dim_names=grid_weight_importer_params["DIM_NAMES"],
+        var_names=grid_weight_importer_params["VAR_NAMES"],
+        routing_id_field=grid_weight_importer_params["ROUTING_ID_FIELD"],
+        netcdf_input_field=grid_weight_importer_params["NETCDF_INPUT_FIELD"],
         gauge_ids=None,
         sub_ids=None,
-        area_error_threshold=AREA_ERROR_THRESHOLD,
+        area_error_threshold=grid_weight_importer_params["AREA_ERROR_THRESHOLD"],
     ):
         self._dim_names = tuple(dim_names)
         self._var_names = tuple(var_names)

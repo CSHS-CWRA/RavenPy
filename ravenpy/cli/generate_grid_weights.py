@@ -1,12 +1,10 @@
 """Console script for ravenpy."""
-import json
-import re
-import sys
+
 from pathlib import Path
 
 import click
 
-from ravenpy.models.importers import RoutingProductGridWeightImporter
+from ravenpy.models import grid_weight_importer_params
 
 
 @click.command()
@@ -17,7 +15,7 @@ from ravenpy.models.importers import RoutingProductGridWeightImporter
     "--dim-names",
     nargs=2,
     type=click.Tuple([str, str]),
-    default=RoutingProductGridWeightImporter.DIM_NAMES,
+    default=grid_weight_importer_params["DIM_NAMES"],
     show_default=True,
     help="Ordered dimension names of longitude (x) and latitude (y) in the NetCDF INPUT_FILE.",
 )
@@ -26,7 +24,7 @@ from ravenpy.models.importers import RoutingProductGridWeightImporter
     "--var-names",
     nargs=2,
     type=click.Tuple([str, str]),
-    default=RoutingProductGridWeightImporter.VAR_NAMES,
+    default=grid_weight_importer_params["VAR_NAMES"],
     show_default=True,
     help="Variable name of 1D or 2D longitude and latitude variables in the NetCDF INPUT_FILE (in this order).",
 )
@@ -34,7 +32,7 @@ from ravenpy.models.importers import RoutingProductGridWeightImporter
     "-c",  # legacy script short option
     "--routing-id-field",
     type=str,
-    default=RoutingProductGridWeightImporter.ROUTING_ID_FIELD,
+    default=grid_weight_importer_params["ROUTING_ID_FIELD"],
     show_default=True,
     help="Name of column in routing information shapefile (ROUTING_FILE) containing a unique key for each dataset.",
 )
@@ -42,7 +40,7 @@ from ravenpy.models.importers import RoutingProductGridWeightImporter
     "-f",  # legacy script short option
     "--netcdf-input-field",
     type=str,
-    default=RoutingProductGridWeightImporter.NETCDF_INPUT_FIELD,
+    default=grid_weight_importer_params["NETCDF_INPUT_FIELD"],
     show_default=True,
     help="Attribute name in INPUT_FILE shapefile that defines the index of the shape in NetCDF model output file (numbering needs to be [0 ... N-1]).",
 )
@@ -68,7 +66,7 @@ from ravenpy.models.importers import RoutingProductGridWeightImporter
     "-e",  # legacy script short option
     "--area-error-threshold",
     type=float,
-    default=RoutingProductGridWeightImporter.AREA_ERROR_THRESHOLD,
+    default=grid_weight_importer_params["AREA_ERROR_THRESHOLD"],
     show_default=True,
     help="Threshold (as fraction) of allowed mismatch in areas between subbasins from routing information (ROUTING_FILE) and overlay with grid-cells or subbasins (INPUT_FILE). If error is smaller than this threshold the weights will be adjusted such that they sum up to exactly 1. Raven will exit gracefully in case weights do not sum up to at least 0.95.",
 )
@@ -110,6 +108,8 @@ def generate_grid_weights(
     The script will output the results as RVT file with a single :GridWeights command block containing the weights (that the user
     is then free to embed or reference, in her own config context).
     """
+    # NOTE: This is in order to make sphinx-click happy. Magic. Do not touch.
+    from ravenpy.models.importers import RoutingProductGridWeightImporter
 
     importer = RoutingProductGridWeightImporter(
         input_file,
