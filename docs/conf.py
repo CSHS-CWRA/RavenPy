@@ -55,7 +55,6 @@ autodoc_mock_imports = [
     "osgeo",
     "geopandas",
     "lxml",
-    "netCDF4",
     "owslib",
     "pandas",
     "pyproj",
@@ -64,7 +63,6 @@ autodoc_mock_imports = [
     "scipy",
     "shapely",
     "statsmodels",
-    "xarray",
     "xclim",
 ]
 

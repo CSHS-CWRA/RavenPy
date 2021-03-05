@@ -5,8 +5,8 @@ channels:
 dependencies:
   - click
   - matplotlib
-#  - netCDF4
-#  - xarray
+  - netCDF4
+  - xarray
   - wheel
   - dataclasses  # Needed for Python 3.6
   - sphinx
