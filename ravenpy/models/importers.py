@@ -17,7 +17,6 @@ except (ImportError, ModuleNotFoundError) as e:
 
 import netCDF4 as nc4
 import numpy as np
-# import xarray
 
 from .commands import (
     ChannelProfileCommand,
@@ -27,6 +26,9 @@ from .commands import (
     ReservoirCommand,
     SubBasinsCommand,
 )
+
+# import xarray
+
 
 HRU_ASPECT_CONVENTION = "GRASS"  # GRASS | ArcGIS
 
@@ -123,9 +125,9 @@ class RoutingProductShapefileImporter:
         subbasin_id = int(row["SubId"])
         # is_lake = row["HRU_IsLake"] >= 0
         river_length_in_kms = 0 if is_lake else round(row["Rivlen"] / 1000, 5)
-        river_slope = max(
-            row["RivSlope"], RoutingProductShapefileImporter.MAX_RIVER_SLOPE
-        )
+        # river_slope = max(
+        #     row["RivSlope"], RoutingProductShapefileImporter.MAX_RIVER_SLOPE
+        # )
         # downstream_id
         downstream_id = int(row["DowSubId"])
         if downstream_id == subbasin_id:
@@ -398,7 +400,7 @@ class RoutingProductGridWeightImporter:
             enve_basin = poly.GetEnvelope()
 
             area_all = 0.0
-            ncells = 0
+            # ncells = 0
 
             row_grid_weights = []
 
@@ -416,7 +418,7 @@ class RoutingProductGridWeightImporter:
                     if not grid_is_close:
                         continue
 
-                    grid_cell_area = grid_cell_geom_gpd_wkt[ilat][ilon].Area()
+                    # grid_cell_area = grid_cell_geom_gpd_wkt[ilat][ilon].Area()
 
                     # "fake" buffer to avoid invalid polygons and weirdos dumped by ArcGIS
                     inter = grid_cell_geom_gpd_wkt[ilat][ilon].Intersection(

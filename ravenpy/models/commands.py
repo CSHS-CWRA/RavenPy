@@ -252,6 +252,7 @@ class GriddedForcingCommand(RavenConfig):
 @dataclass
 class BaseValueCommand(RavenConfig):
     """BaseValueCommand."""
+
     tag: str = ""
     value: Any = None
 

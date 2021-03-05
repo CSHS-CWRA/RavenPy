@@ -2,7 +2,7 @@ import logging
 import math
 import tempfile
 from pathlib import Path
-from typing import Union, List, Optional
+from typing import List, Optional, Union
 
 import numpy as np
 
@@ -10,8 +10,8 @@ from . import gis_error_message
 
 try:
     import rasterio
-    from osgeo.gdal import DEMProcessing, Dataset
-    from shapely.geometry import Polygon, MultiPolygon, GeometryCollection, shape
+    from osgeo.gdal import Dataset, DEMProcessing
+    from shapely.geometry import GeometryCollection, MultiPolygon, Polygon, shape
 except (ImportError, ModuleNotFoundError) as e:
     msg = gis_error_message.format(Path(__file__).stem)
     raise ImportError(msg) from e
@@ -19,7 +19,8 @@ except (ImportError, ModuleNotFoundError) as e:
 from ravenpy.utilities.geo import generic_raster_clip
 
 # See: https://kokoalberti.com/articles/geotiff-compression-optimization-guide/
-GDAL_TIFF_COMPRESSION_OPTION = "compress=lzw"  # or 'compress=deflate' or 'compress=zstd' or 'compress=lerc' or others
+# or 'compress=deflate' or 'compress=zstd' or 'compress=lerc' or others
+GDAL_TIFF_COMPRESSION_OPTION = "compress=lzw"
 
 LOGGER = logging.getLogger("RavenPy")
 

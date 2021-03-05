@@ -2,7 +2,7 @@ import collections
 import logging
 import warnings
 from pathlib import Path
-from typing import List, Union, Any, Sequence, Tuple
+from typing import Any, List, Sequence, Tuple, Union
 
 from . import gis_error_message
 
@@ -11,7 +11,7 @@ try:
     import rasterio
     from pyproj import CRS
     from pyproj.exceptions import CRSError
-    from shapely.geometry import GeometryCollection, shape, MultiPolygon, Point
+    from shapely.geometry import GeometryCollection, MultiPolygon, Point, shape
 except (ImportError, ModuleNotFoundError) as e:
     msg = gis_error_message.format(Path(__file__).stem)
     raise ImportError(msg) from e

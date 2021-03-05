@@ -13,3 +13,4 @@ Click
 pytest
 pytest-runner
 pytest-cov
+pre-commit

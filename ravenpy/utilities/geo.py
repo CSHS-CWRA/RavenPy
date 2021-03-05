@@ -2,7 +2,7 @@ import collections
 import json
 import logging
 from pathlib import Path
-from typing import Union, List
+from typing import List, Union
 
 from . import gis_error_message
 
@@ -13,7 +13,13 @@ try:
     import rasterio.vrt
     import rasterio.warp
     from pyproj import CRS
-    from shapely.geometry import GeometryCollection, shape, Polygon, MultiPolygon, mapping
+    from shapely.geometry import (
+        GeometryCollection,
+        MultiPolygon,
+        Polygon,
+        mapping,
+        shape,
+    )
     from shapely.ops import transform
 except (ImportError, ModuleNotFoundError) as e:
     msg = gis_error_message.format(Path(__file__).stem)
@@ -48,8 +54,9 @@ def geom_transform(
       Reprojected geometry.
     """
     try:
-        from pyproj import Transformer  # noqa
         from functools import partial
+
+        from pyproj import Transformer  # noqa
 
         if isinstance(source_crs, int or str):
             source = CRS.from_epsg(source_crs)
@@ -226,7 +233,7 @@ def generic_vector_reproject(
                         output["features"].append(feature)
                     except Exception as err:
                         LOGGER.exception(
-                            "%s: Unable to reproject feature %s" % (err, feature)
+                            "{}: Unable to reproject feature {}".format(err, feature)
                         )
                         raise
 

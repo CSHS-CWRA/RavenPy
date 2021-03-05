@@ -5,7 +5,7 @@ import warnings
 import zipfile
 from pathlib import Path
 from re import search
-from typing import Union, List, Optional, Iterable, Sequence
+from typing import Iterable, List, Optional, Sequence, Union
 
 from . import gis_error_message
 
@@ -106,7 +106,9 @@ def generic_extract_archive(
                 else:
                     LOGGER.debug('File extension "%s" unknown' % file)
             except Exception as e:
-                LOGGER.error("Failed to extract sub archive {%s}: {%s}" % (arch, e))
+                LOGGER.error(
+                    "Failed to extract sub archive {{{}}}: {{{}}}".format(arch, e)
+                )
         else:
             LOGGER.warning("No archives found. Continuing...")
             return resources

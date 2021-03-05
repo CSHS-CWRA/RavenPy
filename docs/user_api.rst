@@ -74,4 +74,3 @@ Regionalization
 .. automodule::  ravenpy.utilities.regionalization
    :members:
    :noindex:
-

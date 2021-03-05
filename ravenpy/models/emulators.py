@@ -4,7 +4,6 @@ from pathlib import Path
 import xarray as xr
 
 from .base import Ostrich, Raven
-
 from .commands import BasinIndexCommand, HRUStateVariableTableCommand
 from .rv import RV, RVC, RVH, RVI, RVP, RVT, MonthlyAverage, Ost, RavenNcData
 
@@ -82,9 +81,7 @@ class GR4JCN(Raven):
             soil0 = self.rvd.GR4J_X1_hlf if self.rvc.soil0 is None else self.rvc.soil0
             soil1 = self.rvc.soil1
 
-            self.rvc.hru_state = HRUState(
-                index=1, soil0=soil0, soil1=soil1
-            )
+            self.rvc.hru_state = HRUState(index=1, soil0=soil0, soil1=soil1)
 
 
 class GR4JCN_OST(Ostrich, GR4JCN):
@@ -221,9 +218,7 @@ class HMETS(GR4JCN):
             soil1 = (
                 self.rvd["PHREATIC_hlf"] if self.rvc.soil1 is None else self.rvc.soil1
             )
-            self.rvc.hru_state = HRUState(
-                soil0=soil0, soil1=soil1
-            )
+            self.rvc.hru_state = HRUState(soil0=soil0, soil1=soil1)
 
 
 class HMETS_OST(Ostrich, HMETS):
@@ -344,9 +339,7 @@ class HBVEC(GR4JCN):
 
         # Default initial conditions if none are given
         if self.rvc.hru_state is None:
-            self.rvc.hru_state = HRUState(
-                soil2=self.rvc.soil2
-            )
+            self.rvc.hru_state = HRUState(soil2=self.rvc.soil2)
         if self.rvc.basin_state is None:
             self.rvc.basin_state = BasinIndexCommand(qout=(self.rvc.qout,))
 

@@ -88,4 +88,3 @@ or if a model instance already exists, simply by calling the `resume` method on 
    model(ts=ts, start_date=dt.datetime(2000, 1, 1), end_date=dt.datetime(2002, 2, 1), **kwargs)
    model.resume()
    model(ts=ts, start_date=dt.datetime(2000, 2, 1), end_date=dt.datetime(2002, 3, 1))
-

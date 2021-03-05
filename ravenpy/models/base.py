@@ -782,7 +782,7 @@ class Raven:
 
     def check_inputs(self):
         """Check that necessary variables are defined."""
-        has_file = set([key for key, val in self.rvt.items() if val is not None])
+        has_file = {key for key, val in self.rvt.items() if val is not None}
         vars = list(self.rvt.keys())
 
         for var in vars:
