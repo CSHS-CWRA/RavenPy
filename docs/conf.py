@@ -42,6 +42,7 @@ extensions = [
 ]
 
 autosummary_generate = True
+nbsphinx_execute = "never"
 
 # To avoid having to install these and burst memory limit on ReadTheDocs.
 autodoc_mock_imports = [
@@ -133,7 +134,7 @@ html_theme = "sphinx_rtd_theme"
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ["_static"]
+html_static_path = list()  # "_static"
 
 # -- Options for HTMLHelp output ---------------------------------------
 
