@@ -35,15 +35,9 @@ import ravenpy
 extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.autosummary',
               'sphinx.ext.viewcode',
-              'autoapi.extension',
-              # 'numpydoc',
+              "sphinx.ext.napoleon",
               'nbsphinx',
               'sphinx_click']
-
-autoapi_type = 'python'
-autoapi_dirs = ['../ravenpy']
-autoapi_add_toctree_entry = False
-# autosummary_generate = True
 
 # To avoid having to install these and burst memory limit on ReadTheDocs.
 autodoc_mock_imports = [
@@ -51,7 +45,6 @@ autodoc_mock_imports = [
     "cftime",
     "climpred",
     'clisops',
-    'dataclasses',  # needed for python3.6
     'fiona',
     'gdal',
     'osgeo',
@@ -118,7 +111,7 @@ todo_include_todos = False
 suppress_warnings = ['epub.unknown_project_files']
 
 # Avoid "configuration.rst:4:duplicate label configuration, other instance in configuration.rst"
-autosectionlabel_prefix_document = True
+autosectionlabel_prefix_document = False
 
 # -- Options for HTML output -------------------------------------------
 

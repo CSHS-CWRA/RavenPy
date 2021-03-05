@@ -12,6 +12,7 @@ dependencies:
 #  - xarray
 #  - xclim>=0.23
   - wheel
+  - dataclasses  # Needed for Python 3.6
   - sphinx
   - nbsphinx
   - pandoc

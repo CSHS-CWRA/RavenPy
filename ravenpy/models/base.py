@@ -44,10 +44,8 @@ class Raven:
     This class is used to run the RAVEN model from user-provided configuration files. It can also be subclassed with
     configuration templates for emulated models, allowing direct calls to the models.
 
-    Examples
-    --------
-    >>> r = Raven('/tmp/testdir')
-    >>> r.configure()
+    r = Raven('/tmp/testdir')
+    r.configure()
     """
 
     identifier = "generic-raven"
@@ -93,10 +91,7 @@ class Raven:
     def __init__(self, workdir: Union[str, Path] = None):
         """Initialize the RAVEN model.
 
-        Parameters
-        ----------
-        workdir : str, Path
-          Directory for the model configuration and outputs. If None, a temporary directory will be created.
+        Directory for the model configuration and outputs. If None, a temporary directory will be created.
         """
 
         if not RAVEN_EXEC_PATH:
@@ -315,8 +310,8 @@ class Raven:
         Model configuration files and time series inputs are stored directly in the working directory.
 
         workdir/  # Created by PyWPS. Is considered the model path.
-           model/
-           output/
+        model/
+        output/
 
         """
         if overwrite:
