@@ -43,7 +43,7 @@ repos:
     hooks:
     -   id: isort
         language_version: python3
-        args: ['--profile', 'black']
+        args: ['--profile', 'black', '--filter-files']
 -   repo: https://github.com/pycqa/pydocstyle
     rev: 5.1.1
     hooks:

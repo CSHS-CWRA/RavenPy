@@ -13,4 +13,6 @@ Click
 pytest
 pytest-runner
 pytest-cov
+black
+isort
 pre-commit
