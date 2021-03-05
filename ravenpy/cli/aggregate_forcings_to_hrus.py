@@ -1,8 +1,6 @@
 from pathlib import Path
 
 import click
-import netCDF4 as nc4
-import numpy as np
 
 from ravenpy.models import grid_weight_importer_params
 from ravenpy.models.commands import GridWeightsCommand
@@ -65,6 +63,9 @@ def aggregate_forcings_to_hrus(
     (2) A text file (with the same format as INPUT_WEIGHT_FILE) with the updated grid weights, that a :StationForcing
     command will require.
     """
+    # NOTE: This is in order to make sphinx-click happy. Magic. Do not touch.
+    import netCDF4 as nc4
+    import numpy as np
 
     gws = GridWeightsCommand.parse(Path(input_weight_file).read_text())
 
