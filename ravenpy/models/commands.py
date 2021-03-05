@@ -206,7 +206,7 @@ class GridWeightsCommand(RavenConfig):
 
     @classmethod
     def parse(cls, s):
-        pat = """
+        pat = r"""
         :GridWeights
             :NumberHRUs (\d+)
             :NumberGridCells (\d+)

@@ -42,7 +42,7 @@ extensions = [
 ]
 
 autosummary_generate = True
-nbsphinx_execute = "never"
+nbsphinx_execute = "auto"
 
 # To avoid having to install these and burst memory limit on ReadTheDocs.
 autodoc_mock_imports = [

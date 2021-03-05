@@ -69,7 +69,7 @@ def aggregate_forcings_to_hrus(
     gws = GridWeightsCommand.parse(Path(input_weight_file).read_text())
 
     nHRU = gws.number_hrus
-    nCells = gws.number_grid_cells
+    # nCells = gws.number_grid_cells
     weights_data = gws.data
 
     # read NetCDF
@@ -77,7 +77,7 @@ def aggregate_forcings_to_hrus(
 
     # length of dimensions
     nlon = nc_in.dimensions[dim_names[0]].size
-    nlat = nc_in.dimensions[dim_names[1]].size
+    # nlat = nc_in.dimensions[dim_names[1]].size
     ntime = nc_in.dimensions["time"].size
 
     # convert weights (cell_id) required by Raven into (lon_id, lat_id)
@@ -105,8 +105,8 @@ def aggregate_forcings_to_hrus(
         output_nc_file_path = Path(output_nc_file)
 
     nc_out = nc4.Dataset(output_nc_file_path, "w")
-    nc_dim_time = nc_out.createDimension("time", ntime)
-    nc_dim_hrus = nc_out.createDimension("nHRU", nHRU)
+    # nc_dim_time = nc_out.createDimension("time", ntime)
+    # nc_dim_hrus = nc_out.createDimension("nHRU", nHRU)
 
     # copy all global attributes over
     nc_out.setncatts(nc_in.__dict__)
@@ -115,11 +115,11 @@ def aggregate_forcings_to_hrus(
     for name, variable in nc_in.variables.items():
         if name in variables_to_aggregate + ("time",):
 
-            if name != "time":
-                dims = ["time", "nHRU"]
-            else:
-                dims = ["time"]
-            x = nc_out.createVariable(name, variable.datatype, dims, zlib=True)
+            # if name != "time":
+            #     dims = ["time", "nHRU"]
+            # else:
+            #     dims = ["time"]
+            # x = nc_out.createVariable(name, variable.datatype, dims, zlib=True)
 
             # copy variable attributes all at once via dictionary
             nc_out[name].setncatts(nc_in[name].__dict__)
@@ -144,7 +144,7 @@ def aggregate_forcings_to_hrus(
         # what is the order of dimensions?
         idx_lon_dim = input_var.dimensions.index(dim_names[0])
         idx_lat_dim = input_var.dimensions.index(dim_names[1])
-        idx_time_dim = input_var.dimensions.index("time")
+        # idx_time_dim = input_var.dimensions.index("time")
 
         # read in data for bounding box (is faster than reading then every single cell individually)
         # --> this takes most time for large NetCDFs

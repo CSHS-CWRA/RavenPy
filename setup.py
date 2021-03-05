@@ -31,7 +31,7 @@ requirements = [
     "xclim>=0.23",
     "wheel",
     "xskillscore",
-    "climpred>=2.1"
+    "climpred>=2.1",
 ]
 
 test_requirements = [
