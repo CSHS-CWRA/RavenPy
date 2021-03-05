@@ -48,10 +48,12 @@ nbsphinx_execute = "auto"
 autodoc_mock_imports = [
     "affine",
     "cftime",
+    "click",
     "climpred",
     "clisops",
     "fiona",
     "gdal",
+    "netCDF4",
     "osgeo",
     "geopandas",
     "lxml",
@@ -63,6 +65,7 @@ autodoc_mock_imports = [
     "scipy",
     "shapely",
     "statsmodels",
+    "xarray",
     "xclim",
 ]
 
