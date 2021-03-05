@@ -205,7 +205,7 @@ class TestGR4JCN:
             run_name="run_ab",
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2001, 1, 1),
-            **kwargs
+            **kwargs,
         )
 
         model_a = GR4JCN()
@@ -214,7 +214,7 @@ class TestGR4JCN:
             run_name="run_a",
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2000, 7, 1),
-            **kwargs
+            **kwargs,
         )
 
         # Path to solution file from run A
@@ -228,7 +228,7 @@ class TestGR4JCN:
             run_name="run_2",
             start_date=dt.datetime(2000, 7, 1),
             end_date=dt.datetime(2001, 1, 1),
-            **kwargs
+            **kwargs,
         )
 
         for key in ["Soil Water[0]", "Soil Water[1]"]:
@@ -246,7 +246,7 @@ class TestGR4JCN:
             run_name="run_2",
             start_date=dt.datetime(2000, 7, 1),
             end_date=dt.datetime(2001, 1, 1),
-            **kwargs
+            **kwargs,
         )
 
         for key in ["Soil Water[0]", "Soil Water[1]"]:
@@ -276,7 +276,7 @@ class TestGR4JCN:
             run_name="run_a",
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2000, 2, 1),
-            **kwargs
+            **kwargs,
         )
 
         s_a = model.storage["Soil Water[0]"].isel(time=-1)
@@ -297,7 +297,7 @@ class TestGR4JCN:
             run_name="run_b",
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2000, 2, 1),
-            **kwargs
+            **kwargs,
         )
 
         s_b = model.storage["Soil Water[0]"].isel(time=-1)
@@ -318,7 +318,7 @@ class TestGR4JCN:
             run_name="run_a",
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2000, 2, 1),
-            **kwargs
+            **kwargs,
         )
 
         s_0 = float(model.storage["Soil Water[0]"].isel(time=-1).values)
@@ -332,7 +332,7 @@ class TestGR4JCN:
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2000, 2, 1),
             hru_state=hru_state,
-            **kwargs
+            **kwargs,
         )
 
         assert s_0 != model.storage["Soil Water[0]"].isel(time=-1)
@@ -1256,4 +1256,6 @@ class TestRouting:
             (3000, 44.711237489482755),
             (4000, 129.98874279175033),
         ]:
-            assert model.hydrograph.q_sim[d].item() == q_sim  # NOTE: This test might be dependent on library versions.
+            assert (
+                model.hydrograph.q_sim[d].item() == q_sim
+            )  # NOTE: This test might be dependent on library versions.

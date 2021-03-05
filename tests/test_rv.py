@@ -234,7 +234,7 @@ class TestRVH:
         shp = get_local_testdata("raven-routing-sample/finalcat_hru_info.zip")
         importer = RoutingProductShapefileImporter(shp)
         config = importer.extract()
-        config.pop('channel_profiles')
+        config.pop("channel_profiles")
         self.rvh = RVH(**config)
 
     def test_import_process(self):
@@ -274,7 +274,7 @@ class TestRVP:
         shp = get_local_testdata("raven-routing-sample/finalcat_hru_info.zip")
         importer = RoutingProductShapefileImporter(shp)
         config = importer.extract()
-        self.rvp = RVP(channel_profiles=config['channel_profiles'])
+        self.rvp = RVP(channel_profiles=config["channel_profiles"])
 
     def test_import_process(self):
         assert len(self.rvp.channel_profiles) == 46

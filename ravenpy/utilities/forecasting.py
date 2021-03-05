@@ -6,10 +6,6 @@ Created on Fri Jul 17 09:11:58 2020
 @author: ets
 """
 
-"""
-Tools for hydrological forecasting
-"""
-
 import datetime as dt
 import logging
 import re
@@ -328,7 +324,7 @@ def get_subsetted_forecast(region_coll, ds, times, is_caspar):
 
     # Rioxarray requires CRS definitions for variables
     # Get CRS, e.g. 4326
-    crs = int(re.match("epsg:(\d+)", region_coll.crs["init"]).group(1))
+    crs = int(re.match(r"epsg:(\d+)", region_coll.crs["init"]).group(1))
 
     # Here the name of the variable could differ based on the Caspar file processing
     tas = ds.tas.rio.write_crs(crs)
@@ -336,7 +332,7 @@ def get_subsetted_forecast(region_coll, ds, times, is_caspar):
     ds = xr.merge([tas, pr])
 
     # Now apply the mask of the basin contour and average the values to get a single time series
-    if is_caspar == True:
+    if is_caspar:
         ds.rio.set_spatial_dims("rlon", "rlat")
         ds["rlon"] = ds["rlon"] - 360
         # clip the netcdf and average across space.

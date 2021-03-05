@@ -3,19 +3,16 @@ channels:
 - conda-forge
 - defaults
 dependencies:
-  - pip
-  - pip:
-    - .
-    - sphinx-rtd-theme
   - click
-  - gdal
+#  - gdal
   - matplotlib
-  - rasterio
-  - rioxarray
-  - statsmodels
+#  - rasterio
+#  - rioxarray
+#  - statsmodels
   - xarray
-  - xclim>=0.23
+#  - xclim>=0.23
   - wheel
+  - dataclasses  # Needed for Python 3.6
   - sphinx
   - nbsphinx
   - pandoc
@@ -23,4 +20,5 @@ dependencies:
   - ipykernel
   - jupyter_client
   - sphinx-click
-  - numpydoc
+  - sphinx_rtd_theme
+  - sphinx-autoapi

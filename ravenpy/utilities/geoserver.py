@@ -186,7 +186,11 @@ def _determine_upstream_ids(
         if len(tmp):
             up.extend(tmp)
 
-    return sub[sub[basin_field].isin(up)] if sub is not None else df[df[basin_field].isin(up)]
+    return (
+        sub[sub[basin_field].isin(up)]
+        if sub is not None
+        else df[df[basin_field].isin(up)]
+    )
 
 
 def get_raster_wcs(
@@ -433,6 +437,7 @@ def get_hydrobasins_location_wfs(
 
 
 # ~~~~ Hydro Routing ~~~~ #
+
 
 def hydro_routing_aggregate(gdf: pd.DataFrame) -> pd.Series:
     """Aggregate multiple hydro routing watersheds into a single geometry.

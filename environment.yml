@@ -22,4 +22,5 @@ dependencies:
   - statsmodels
   - xarray
   - xclim>=0.23
+  - pre-commit
   - wheel

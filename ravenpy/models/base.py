@@ -16,9 +16,9 @@ import subprocess
 import tempfile
 from collections import OrderedDict
 from pathlib import Path
+from typing import Union
 
 import numpy as np
-import six
 import xarray as xr
 
 import ravenpy
@@ -39,16 +39,13 @@ OSTRICH_EXEC_PATH = os.getenv("RAVENPY_OSTRICH_BINARY_PATH") or shutil.which("os
 
 
 class Raven:
-    """RAVEN hydrological model wrapper
+    """RAVEN hydrological model wrapper.
 
     This class is used to run the RAVEN model from user-provided configuration files. It can also be subclassed with
     configuration templates for emulated models, allowing direct calls to the models.
 
-    Examples
-    --------
-    >>> r = Raven('/tmp/testdir')
-    >>> r.configure()
-
+    r = Raven('/tmp/testdir')
+    r.configure()
     """
 
     identifier = "generic-raven"
@@ -91,13 +88,10 @@ class Raven:
         "hrus",
     ]
 
-    def __init__(self, workdir=None):
+    def __init__(self, workdir: Union[str, Path] = None):
         """Initialize the RAVEN model.
 
-        Parameters
-        ----------
-        workdir : str, Path
-          Directory for the model configuration and outputs. If None, a temporary directory will be created.
+        Directory for the model configuration and outputs. If None, a temporary directory will be created.
         """
 
         if not RAVEN_EXEC_PATH:
@@ -316,8 +310,8 @@ class Raven:
         Model configuration files and time series inputs are stored directly in the working directory.
 
         workdir/  # Created by PyWPS. Is considered the model path.
-           model/
-           output/
+        model/
+        output/
 
         """
         if overwrite:
@@ -397,7 +391,7 @@ class Raven:
         >>> r.run(ts, start_date=dt.datetime(2000, 1, 1), area=1000, X1=67)
 
         """
-        if isinstance(ts, (six.string_types, Path)):
+        if isinstance(ts, (str, Path)):
             ts = [ts]
 
         # Case for potentially parallel parameters
@@ -775,7 +769,7 @@ class Raven:
     @staticmethod
     def split_ext(fn):
         """Return the name and rv key of the configuration file."""
-        if isinstance(fn, six.string_types):
+        if isinstance(fn, str):
             fn = Path(fn)
 
         return fn.stem, fn.suffix[1:]
@@ -788,7 +782,7 @@ class Raven:
 
     def check_inputs(self):
         """Check that necessary variables are defined."""
-        has_file = set([key for key, val in self.rvt.items() if val is not None])
+        has_file = {key for key, val in self.rvt.items() if val is not None}
         vars = list(self.rvt.keys())
 
         for var in vars:
@@ -808,23 +802,22 @@ class Raven:
 
 
 class Ostrich(Raven):
-    """Wrapper for OSTRICH calibration of RAVEN hydrological model
+    """Wrapper for OSTRICH calibration of RAVEN hydrological model.
 
     This class is used to calibrate RAVEN model using OSTRICH from user-provided configuration files. It can also be
     subclassed with configuration templates for emulated models, allowing direct calls to the models.
+
+    Parameters
+    ----------
+    conf:
+      The rv configuration files + Ostrict ostIn.txt.
+    tpl:
+      The Ostrich templates.
 
     Examples
     --------
     >>> r = Ostrich('/tmp/testdir')
     >>> r.configure()
-
-    Attributes
-    ----------
-    conf
-      The rv configuration files + Ostrict ostIn.txt
-    tpl
-      The Ostrich templates
-
     """
 
     identifier = "generic-ostrich"
@@ -870,20 +863,10 @@ class Ostrich(Raven):
         make_executable(fn)
 
     def setup(self, overwrite=False):
-        """Create directory structure to store model input files, executable and output results.
+        """Create directory structure to store model input files, executable, and output results.
 
         Model configuration files and time series inputs are stored directly in the working directory.
-
-        workdir/  # Created by PyWPS.
-           *.rv?
-           *.tpl
-           ostIn.txt
-           model/
-           model/output/
-           best/
-
-        At each Ostrich loop, configuration files (original and created from templates are copied into model/.
-
+        At each Ostrich loop, configuration files (original and created from templates are copied into model).
         """
         Raven.setup(self, overwrite)
 
@@ -934,7 +917,7 @@ class Ostrich(Raven):
                 0
             ].read_text()
 
-        return "{}\n{}".format(ost_err, raven_err)
+        return f"{ost_err}\n{raven_err}"
 
     def parse_optimal_parameter_set(self):
         """Return dictionary of optimal parameter set."""

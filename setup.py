@@ -103,7 +103,6 @@ def create_external_deps_install_class(command_cls):
                 f"{url}/{rev_name}.zip", self.external_deps_path / f"{name}.zip"
             )
 
-
             print(f"Extracting {name} source code..")
             with zipfile.ZipFile(
                 self.external_deps_path / f"{name}.zip", "r"
@@ -145,7 +144,7 @@ def create_external_deps_install_class(command_cls):
                     url,
                     "ostrich",
                     "Ostrich_2017-12-19_plus_progressJSON",
-                    f"OstrichGCC",
+                    "OstrichGCC",
                     "GCC",
                 )
 
