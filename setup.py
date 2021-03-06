@@ -42,13 +42,14 @@ docs_requirements = [
     dependency for dependency in open("requirements_docs.txt").readlines()
 ]
 
-dev_requirements = [
-    dependency for dependency in open("requirements_dev.txt").readlines()
-]
-
 gis_requirements = [
     dependency for dependency in open("requirements_gis.txt").readlines()
 ]
+
+dev_requirements = [
+    dependency for dependency in open("requirements_dev.txt").readlines()
+]
+dev_requirements.extend(gis_requirements)
 
 
 # Idea taken from: https://stackoverflow.com/a/25176606/787842
