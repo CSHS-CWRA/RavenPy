@@ -7,6 +7,7 @@ Created on Tue Feb 23 22:25:32 2021
 """
 
 import datetime as dt
+import logging
 
 from ravenpy.utilities.forecasting import (
     make_climpred_hindcast_object,
@@ -17,6 +18,10 @@ from ravenpy.utilities.testdata import get_local_testdata
 
 class TestClimpredHindcastVerification:
     def test_simple(self):
+
+        # We don't want climpred logging in the test output
+        logger = logging.getLogger()
+        logger.setLevel(logging.WARNING)
 
         # Prepare the model parameters and forecast details
         model = "GR4JCN"
