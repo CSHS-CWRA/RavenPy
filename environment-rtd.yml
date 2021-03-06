@@ -18,3 +18,4 @@ dependencies:
   - sphinx-click
   - sphinx_rtd_theme
   - sphinx-autoapi
+  - sphinxcontrib-napoleon

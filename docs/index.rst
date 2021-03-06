@@ -22,12 +22,17 @@ RavenPy downloads and compiles the most recent version of the Raven, and offers 
 
    scripts
 
-
 .. toctree::
    :maxdepth: 1
    :caption: API
 
    user_api
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Dev API
+
+   modules
 
 
 Credits
