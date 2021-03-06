@@ -41,8 +41,8 @@ def aggregate_forcings_to_hrus(
     """
     Aggregates NetCDF files containing 3-dimensional forcing variables like precipitation and temperature
     over (x,y,time) into 2-dimensional forcings for each of the n HRUs of a specific basin over (n,time).
-    The 3-dimensional NetCDF files are usually used in :GriddedForcing commands in Raven while the 2-dimensional
-    ones can be used in :StationForcing commands. The NetCDF files generated with this function will only
+    The 3-dimensional NetCDF files are usually used in ``:GriddedForcing`` commands in Raven while the 2-dimensional
+    ones can be used in ``:StationForcing`` commands. The NetCDF files generated with this function will only
     contain the forcings required to simulate an individual basin and hence file sizes are smaller and Raven
     runtimes can decrease drastically under certain conditions.
 
@@ -54,13 +54,13 @@ def aggregate_forcings_to_hrus(
 
     INPUT_WEIGHT_FILE: A text file containing the grid weights derived using the script "generate-grid-weights"
     for the basin forcings are required and the specified NetCDF file. The content of this file must be formatted
-    as a valid :GridWeights Raven command.
+    as a valid ``:GridWeights`` Raven command.
 
     The script outputs two files:
 
-    (1) Aggregated NetCDF file that can be used in a :StationForcing command in a Raven config.
+    (1) Aggregated NetCDF file that can be used in a ``:StationForcing`` command in a Raven config.
 
-    (2) A text file (with the same format as INPUT_WEIGHT_FILE) with the updated grid weights, that a :StationForcing
+    (2) A text file (with the same format as INPUT_WEIGHT_FILE) with the updated grid weights, that a ``:StationForcing``
     command will require.
     """
     # NOTE: This is in order to make sphinx-click happy. Magic. Do not touch.
