@@ -1256,6 +1256,4 @@ class TestRouting:
             (3000, 44.711237489482755),
             (4000, 129.98874279175033),
         ]:
-            assert (
-                model.hydrograph.q_sim[d].item() == q_sim
-            )  # NOTE: This test might be dependent on library versions.
+            assert model.hydrograph.q_sim[d].item() == pytest.approx(q_sim)
