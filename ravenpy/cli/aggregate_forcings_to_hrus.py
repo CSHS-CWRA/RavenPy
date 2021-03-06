@@ -106,8 +106,8 @@ def aggregate_forcings_to_hrus(
         output_nc_file_path = Path(output_nc_file)
 
     nc_out = nc4.Dataset(output_nc_file_path, "w")
-    nc_dim_time = nc_out.createDimension("time", ntime)
-    nc_dim_hrus = nc_out.createDimension("nHRU", nHRU)
+    _ = nc_out.createDimension("time", ntime)
+    _ = nc_out.createDimension("nHRU", nHRU)
 
     # copy all global attributes over
     nc_out.setncatts(nc_in.__dict__)
@@ -120,7 +120,7 @@ def aggregate_forcings_to_hrus(
                 dims = ["time", "nHRU"]
             else:
                 dims = ["time"]
-            x = nc_out.createVariable(name, variable.datatype, dims, zlib=True)
+            _ = nc_out.createVariable(name, variable.datatype, dims, zlib=True)
 
             # copy variable attributes all at once via dictionary
             nc_out[name].setncatts(nc_in[name].__dict__)
