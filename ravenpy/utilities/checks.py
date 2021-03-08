@@ -1,3 +1,7 @@
+"""
+Checks for various geospatial and IO conditions.
+"""
+
 import collections
 import logging
 import warnings

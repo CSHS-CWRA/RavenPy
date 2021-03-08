@@ -1,3 +1,7 @@
+"""
+Tools for performing geospatial translations and transformations.
+"""
+
 import collections
 import json
 import logging

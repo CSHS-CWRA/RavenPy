@@ -1,7 +1,7 @@
 """
-Working assumptions for this module
------------------------------------
+GeoServer interaction operations.
 
+Working assumptions for this module:
 * Point coordinates are passed as shapely.geometry.Point instances.
 * BBox coordinates are passed as (lon1, lat1, lon2, lat2).
 * Shapes (polygons) are passed as shapely.geometry.shape parsable objects.

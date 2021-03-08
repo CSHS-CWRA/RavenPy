@@ -1,5 +1,5 @@
 """
-Tools for hydrological regionalization
+Tools for hydrological regionalization.
 """
 
 import logging

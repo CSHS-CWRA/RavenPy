@@ -1,3 +1,6 @@
+"""
+Tools for reading and writing geospatial data formats.
+"""
 import logging
 import tarfile
 import tempfile
