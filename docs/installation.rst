@@ -63,7 +63,7 @@ without the need for `conda` or `virtualenv`.
 
 .. code-block:: console
 
-  $ pip install raven --verbose --install-option="--with-binaries"
+  $ pip install ravenpy --verbose --install-option="--with-binaries"
 
 Development Installation (from sources)
 ---------------------------------------
