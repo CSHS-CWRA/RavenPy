@@ -29,15 +29,17 @@ class TestHydroBASINS:
             coordinates=lake_winnipeg * 2, lakes=True, domain="na"
         )
 
-        gml = tempfile.NamedTemporaryFile(suffix=".gml", delete=False, dir=tmp_path)
-        with open(gml.name, "wb") as f:
-            f.write(feature)
-
-        with self.fiona.open(gml.name) as src:
-            feat = next(iter(src))
-            geom = self.sgeo.shape(feat["geometry"])
-            assert geom.bounds == (-99.2731, 50.3603, -96.2578, 53.8705)
-            np.testing.assert_almost_equal(geom.area, 3.2530867)
+        with open(
+            tempfile.NamedTemporaryFile(suffix=".gml", dir=tmp_path).name,
+            "wb",
+        ) as gml:
+            gml.write(feature)
+            gml.close()
+            with self.fiona.open(gml.name) as src:
+                feat = next(iter(src))
+                geom = self.sgeo.shape(feat["geometry"])
+                assert geom.bounds == (-99.2731, 50.3603, -96.2578, 53.8705)
+                np.testing.assert_almost_equal(geom.area, 3.2530867)
 
     def test_get_hydrobasins_attributes_wfs(self, tmp_path):
         rio_grande = (-80.475, 8.4)
@@ -45,13 +47,14 @@ class TestHydroBASINS:
             coordinates=rio_grande * 2, lakes=True, domain="na"
         )
 
-        gml = tempfile.NamedTemporaryFile(suffix=".gml", delete=False, dir=tmp_path)
-        with open(gml.name, "wb") as f:
-            f.write(feature)
-
-        with self.fiona.open(gml.name) as src:
-            feat = next(iter(src))
-            main_bas = feat["properties"]["MAIN_BAS"]
+        with open(
+            tempfile.NamedTemporaryFile(suffix=".gml", dir=tmp_path).name, "wb"
+        ) as gml:
+            gml.write(feature)
+            gml.close()
+            with self.fiona.open(gml.name) as src:
+                feat = next(iter(src))
+                main_bas = feat["properties"]["MAIN_BAS"]
 
         region_url = self.geoserver.get_hydrobasins_attributes_wfs(
             attribute="MAIN_BAS", value=main_bas, domain="na"
@@ -74,14 +77,15 @@ class TestHydroBASINS:
             coordinates=puerto_cortes * 2, lakes=True, domain="na"
         )
 
-        gml = tempfile.NamedTemporaryFile(suffix=".gml", delete=False, dir=tmp_path)
-        with open(gml.name, "wb") as f:
-            f.write(feature)
-
-        with self.fiona.open(gml.name) as src:
-            feat = next(iter(src))
-            main_bas = feat["properties"]["MAIN_BAS"]
-            hybas_id = feat["properties"]["HYBAS_ID"]
+        with open(
+            tempfile.NamedTemporaryFile(suffix=".gml", dir=tmp_path).name, "wb"
+        ) as gml:
+            gml.write(feature)
+            gml.close()
+            with self.fiona.open(gml.name) as src:
+                feat = next(iter(src))
+                main_bas = feat["properties"]["MAIN_BAS"]
+                hybas_id = feat["properties"]["HYBAS_ID"]
 
         region_url = self.geoserver.get_hydrobasins_attributes_wfs(
             attribute="MAIN_BAS", value=main_bas, domain="na"
@@ -119,16 +123,17 @@ class TestHydroRouting:
             coordinates=lake_winnipeg * 2, lakes="all"
         )
 
-        gml = tempfile.NamedTemporaryFile(suffix=".gml", delete=False, dir=tmp_path)
-        with open(gml.name, "wb") as f:
-            f.write(feature)
-
-        with self.fiona.open(gml.name) as src:
-            feat = next(iter(src))
-            geom = self.sgeo.shape(feat["geometry"])
-            assert geom.bounds == (-99.3083, 50.1875, -95.9875, 54.0542)
-            # Note: This value is not in sq. km.
-            np.testing.assert_almost_equal(geom.area, 4.0978987)
+        with open(
+            tempfile.NamedTemporaryFile(suffix=".gml", dir=tmp_path).name, "wb"
+        ) as gml:
+            gml.write(feature)
+            gml.close()
+            with self.fiona.open(gml.name) as src:
+                feat = next(iter(src))
+                geom = self.sgeo.shape(feat["geometry"])
+                assert geom.bounds == (-99.3083, 50.1875, -95.9875, 54.0542)
+                # Note: This value is not in sq. km.
+                np.testing.assert_almost_equal(geom.area, 4.0978987)
 
     def test_get_hydro_routing_attributes_wfs(self):
         region_url = self.geoserver.get_hydro_routing_attributes_wfs(
@@ -144,13 +149,14 @@ class TestHydroRouting:
             coordinates=amadjuak * 2, lakes="1km", level=7
         )
 
-        gml = tempfile.NamedTemporaryFile(suffix=".gml", delete=False, dir=tmp_path)
-        with open(gml.name, "wb") as f:
-            f.write(feature)
-
-        with self.fiona.open(gml.name) as src:
-            feat = next(iter(src))
-            subbasin_id = feat["properties"]["SubId"]
+        with open(
+            tempfile.NamedTemporaryFile(suffix=".gml", dir=tmp_path).name, "wb"
+        ) as gml:
+            gml.write(feature)
+            gml.close()
+            with self.fiona.open(gml.name) as src:
+                feat = next(iter(src))
+                subbasin_id = feat["properties"]["SubId"]
 
         region_url = self.geoserver.get_hydro_routing_attributes_wfs(
             attribute="SubId", value="*", lakes="1km", level=7
@@ -176,13 +182,42 @@ class TestHydroRouting:
         )
 
 
-@pytest.mark.skip(reason="Unsure if these tests are necessary.")
 class TestWFS:
-    def test_get_location_wfs(self):
-        pass
+    geoserver = pytest.importorskip("ravenpy.utilities.geoserver")
+
+    fiona = pytest.importorskip("fiona")
+    gpd = pytest.importorskip("geopandas")
+    sgeo = pytest.importorskip("shapely.geometry")
+
+    def test_get_location_wfs(self, tmp_path):
+        las_vegas = (-115.136389, 36.175)
+        usa_admin_bounds = "public:usa_admin_boundaries"
+        feature = self.geoserver._get_location_wfs(
+            coordinates=las_vegas * 2, layer=usa_admin_bounds
+        )
+
+        with open(
+            tempfile.NamedTemporaryFile(suffix=".gml", dir=tmp_path).name, "wb"
+        ) as gml:
+            gml.write(feature)
+            gml.close()
+            with self.fiona.open(gml.name) as src:
+                feat = next(iter(src))
+                geom = self.sgeo.shape(feat["geometry"])
+                assert geom.bounds == (-120.001, 35.0019, -114.0417, 41.9948)
+                # Note: This value is not in sq. km.
+                np.testing.assert_almost_equal(geom.area, 29.9690150)
 
     def test_get_feature_attributes_wfs(self):
-        pass
+        state_name = "Nevada"
+        usa_admin_bounds = "public:usa_admin_boundaries"
+
+        vector_url = self.geoserver._get_feature_attributes_wfs(
+            attribute="STATE_NAME", value=state_name, layer=usa_admin_bounds
+        )
+        gdf = self.gpd.read_file(vector_url)
+        assert len(gdf) == 1
+        assert gdf.STATE_NAME.unique() == "Nevada"
 
 
 class TestWCS:
@@ -213,15 +248,14 @@ class TestWCS:
         with tempfile.NamedTemporaryFile(
             prefix="wcs_", suffix=".tiff", dir=tmp_path
         ) as raster_file:
-            with open(raster_file.name, "wb") as f:
-                f.write(raster_bytes)
-
-            with self.rasterio.open(raster_file) as src:
-                assert src.width == 650
-                assert src.height == 745
-                np.testing.assert_array_equal(
-                    src.lnglat(), (-106.64193764047552, 52.1564202369763)
-                )
-
-                data = src.read()
-                assert np.unique(data).tolist() == [1, 5, 8, 10, 14, 15, 16, 17, 18]
+            with open(raster_file.name, "wb") as rf:
+                rf.write(raster_bytes)
+                rf.close()
+                with self.rasterio.open(rf.name) as src:
+                    assert src.width == 650
+                    assert src.height == 745
+                    np.testing.assert_array_equal(
+                        src.lnglat(), (-106.64193764047552, 52.1564202369763)
+                    )
+                    data = src.read()
+                    assert np.unique(data).tolist() == [1, 5, 8, 10, 14, 15, 16, 17, 18]
