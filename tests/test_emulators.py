@@ -1163,8 +1163,8 @@ class TestRouting:
         model.rvp.avg_annual_runoff = 594
         model.rvp.soil_classes = [SoilClassesCommand.Record("AQUIFER")]
         model.rvp.soil_profiles = [
-            SoilProfilesCommand.Record("Lake_Soil_Lake_HRU", 1, "AQUIFER", 5),
-            SoilProfilesCommand.Record("Soil_Land_HRU", 1, "AQUIFER", 5),
+            SoilProfilesCommand.Record("Lake_Soil_Lake_HRU", ("AQUIFER",), (5,)),
+            SoilProfilesCommand.Record("Soil_Land_HRU", ("AQUIFER",), (5,)),
         ]
         model.rvp.vegetation_classes = [
             VegetationClassesCommand.Record("Veg_Land_HRU", 25, 5.0, 5.0),

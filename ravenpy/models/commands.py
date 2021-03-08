@@ -563,19 +563,23 @@ class SoilClassesCommand(RavenConfig):
 class SoilProfilesCommand(RavenConfig):
     @dataclass
     class Record(RavenConfig):
-        name: str = ""
-        number_of_layers: int = 1
-        soil_class: str = ""
-        thickness: float = 0
+        profile_name: str = ""
+        soil_class_names: Tuple[str] = ()
+        thicknesses: Tuple[float] = ()
 
         def to_rv(self):
-            return " ".join(map(str, asdict(self).values()))
+            # From the Raven manual: {profile_name,#horizons,{soil_class_name,thick.}x{#horizons}}x[NP]
+            n_horizons = len(self.soil_class_names)
+            horizon_data = [
+                a for b in zip(self.soil_class_names, self.thicknesses) for a in b
+            ]
+            horizon_data = ", ".join(map(str, horizon_data))
+            return f"{self.profile_name}, {n_horizons}, {horizon_data}"
 
     soil_profiles: Tuple[Record] = ()
 
     template = """
     :SoilProfiles
-        # name, number of layers, soil class, thickness [m]
         {soil_profile_records}
     :EndSoilProfiles
     """
