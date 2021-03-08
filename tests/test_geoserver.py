@@ -127,6 +127,7 @@ class TestHydroRouting:
             feat = next(iter(src))
             geom = self.sgeo.shape(feat["geometry"])
             assert geom.bounds == (-99.3083, 50.1875, -95.9875, 54.0542)
+            # Note: This value is not in sq. km.
             np.testing.assert_almost_equal(geom.area, 4.0978987)
 
     def test_get_hydro_routing_attributes_wfs(self):
@@ -168,7 +169,7 @@ class TestHydroRouting:
         aggregated = self.geoserver.hydro_routing_aggregate(gdf_upstream)
 
         assert len(aggregated) == 1
-        np.testing.assert_almost_equal(aggregated.area.values, np.array([3.71388447]))
+        assert aggregated["area"].values == 19779812964.467358
         np.testing.assert_equal(
             aggregated.geometry.bounds.values,
             np.array([[-72.4375, 63.7042, -68.5375, 65.4375]]),
