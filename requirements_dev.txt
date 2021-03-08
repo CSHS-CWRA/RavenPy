@@ -1,5 +1,6 @@
 pip
 bump2version
+setuptools
 wheel
 watchdog
 flake8

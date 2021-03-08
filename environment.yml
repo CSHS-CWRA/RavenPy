@@ -25,4 +25,5 @@ dependencies:
   - xclim>=0.23
   - xskillscore
   - pre-commit
+  - setuptools>50.0
   - wheel
