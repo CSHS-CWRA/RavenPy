@@ -14,7 +14,7 @@ class RavenConfig:
 
 @dataclass
 class SubBasinsCommand(RavenConfig):
-    """:SubBasins command (RVH)."""
+    """SubBasins command (RVH)."""
 
     @dataclass
     class Record(RavenConfig):
@@ -50,7 +50,7 @@ class SubBasinsCommand(RavenConfig):
 
 @dataclass
 class HRUsCommand(RavenConfig):
-    """:HRUs command (RVH)."""
+    """HRUs command (RVH)."""
 
     @dataclass
     class Record(RavenConfig):
@@ -91,7 +91,7 @@ class HRUsCommand(RavenConfig):
 
 @dataclass
 class ReservoirCommand(RavenConfig):
-    """:Reservoir command (RVH)."""
+    """Reservoir command (RVH)."""
 
     subbasin_id: int = 0
     hru_id: int = 0
@@ -120,7 +120,7 @@ class ReservoirCommand(RavenConfig):
 
 @dataclass
 class SubBasinGroupCommand(RavenConfig):
-    """:SubBasinGroup command (RVH)."""
+    """SubBasinGroup command (RVH)."""
 
     name: str = ""
     subbasin_ids: Tuple[int] = ()
@@ -158,7 +158,7 @@ class SBGroupPropertyMultiplierCommand(RavenConfig):
 
 @dataclass
 class ChannelProfileCommand(RavenConfig):
-    """:ChannelProfile command (RVP)."""
+    """ChannelProfile command (RVP)."""
 
     name: str = "chn_XXX"
     bed_slope: float = 0
@@ -190,7 +190,7 @@ class ChannelProfileCommand(RavenConfig):
 
 @dataclass
 class GridWeightsCommand(RavenConfig):
-    """:GridWeights command."""
+    """GridWeights command."""
 
     number_hrus: int = 0
     number_grid_cells: int = 0
@@ -206,7 +206,7 @@ class GridWeightsCommand(RavenConfig):
 
     @classmethod
     def parse(cls, s):
-        pat = """
+        pat = r"""
         :GridWeights
             :NumberHRUs (\d+)
             :NumberGridCells (\d+)
@@ -231,7 +231,7 @@ class GridWeightsCommand(RavenConfig):
 
 @dataclass
 class GriddedForcingCommand(RavenConfig):
-    """:GriddedForcing command (RVT)."""
+    """GriddedForcing command (RVT)."""
 
     name: str = ""
     forcing_type: str = ""
@@ -269,6 +269,8 @@ class GriddedForcingCommand(RavenConfig):
 
 @dataclass
 class BaseValueCommand(RavenConfig):
+    """BaseValueCommand."""
+
     tag: str = ""
     value: Any = None
 

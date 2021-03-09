@@ -1,12 +1,10 @@
 import datetime as dt
 import os
 import tempfile
-import time
 import zipfile
 from dataclasses import replace
 
 import numpy as np
-import pandas as pd
 import pytest
 import xarray as xr
 
@@ -32,11 +30,6 @@ from ravenpy.models.commands import (
     SoilProfilesCommand,
     VegetationClassesCommand,
 )
-from ravenpy.models.importers import (
-    RoutingProductGridWeightImporter,
-    RoutingProductShapefileImporter,
-)
-from ravenpy.models.rv import RVH
 from ravenpy.utilities.testdata import get_local_testdata
 
 from .common import _convert_2d
@@ -205,7 +198,7 @@ class TestGR4JCN:
             run_name="run_ab",
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2001, 1, 1),
-            **kwargs
+            **kwargs,
         )
 
         model_a = GR4JCN()
@@ -214,7 +207,7 @@ class TestGR4JCN:
             run_name="run_a",
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2000, 7, 1),
-            **kwargs
+            **kwargs,
         )
 
         # Path to solution file from run A
@@ -228,7 +221,7 @@ class TestGR4JCN:
             run_name="run_2",
             start_date=dt.datetime(2000, 7, 1),
             end_date=dt.datetime(2001, 1, 1),
-            **kwargs
+            **kwargs,
         )
 
         for key in ["Soil Water[0]", "Soil Water[1]"]:
@@ -246,7 +239,7 @@ class TestGR4JCN:
             run_name="run_2",
             start_date=dt.datetime(2000, 7, 1),
             end_date=dt.datetime(2001, 1, 1),
-            **kwargs
+            **kwargs,
         )
 
         for key in ["Soil Water[0]", "Soil Water[1]"]:
@@ -276,7 +269,7 @@ class TestGR4JCN:
             run_name="run_a",
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2000, 2, 1),
-            **kwargs
+            **kwargs,
         )
 
         s_a = model.storage["Soil Water[0]"].isel(time=-1)
@@ -297,7 +290,7 @@ class TestGR4JCN:
             run_name="run_b",
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2000, 2, 1),
-            **kwargs
+            **kwargs,
         )
 
         s_b = model.storage["Soil Water[0]"].isel(time=-1)
@@ -318,7 +311,7 @@ class TestGR4JCN:
             run_name="run_a",
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2000, 2, 1),
-            **kwargs
+            **kwargs,
         )
 
         s_0 = float(model.storage["Soil Water[0]"].isel(time=-1).values)
@@ -332,7 +325,7 @@ class TestGR4JCN:
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2000, 2, 1),
             hru_state=hru_state,
-            **kwargs
+            **kwargs,
         )
 
         assert s_0 != model.storage["Soil Water[0]"].isel(time=-1)
@@ -1081,6 +1074,8 @@ class TestHBVEC_OST:
 
 
 class TestRouting:
+    importers = pytest.importorskip("ravenpy.models.importers")
+
     def test_lievre_tutorial(self):
         """
         This test reproduces the Lievre tutorial setup:
@@ -1135,7 +1130,7 @@ class TestRouting:
         # RVH #
         #######
 
-        rvh_importer = RoutingProductShapefileImporter(
+        rvh_importer = self.importers.RoutingProductShapefileImporter(
             routing_product_shp_path, hru_aspect_convention="ArcGIS"
         )
         rvh_config = rvh_importer.extract()
@@ -1180,11 +1175,11 @@ class TestRouting:
         # RVT #
         #######
 
-        streaminputs_importer = RoutingProductGridWeightImporter(
+        streaminputs_importer = self.importers.RoutingProductGridWeightImporter(
             vic_streaminputs_nc_path, routing_product_shp_path
         )
 
-        temperatures_importer = RoutingProductGridWeightImporter(
+        temperatures_importer = self.importers.RoutingProductGridWeightImporter(
             vic_temperatures_nc_path, routing_product_shp_path
         )
 
@@ -1256,4 +1251,4 @@ class TestRouting:
             (3000, 44.711237489482755),
             (4000, 129.98874279175033),
         ]:
-            assert model.hydrograph.q_sim[d].item() == q_sim
+            assert model.hydrograph.q_sim[d].item() == pytest.approx(q_sim)

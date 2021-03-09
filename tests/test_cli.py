@@ -1,5 +1,4 @@
 import re
-from pathlib import Path
 
 import netCDF4 as nc4
 from click.testing import CliRunner

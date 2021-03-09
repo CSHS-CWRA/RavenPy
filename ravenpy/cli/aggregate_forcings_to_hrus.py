@@ -1,11 +1,9 @@
 from pathlib import Path
 
 import click
-import netCDF4 as nc4
-import numpy as np
 
+from ravenpy.models import grid_weight_importer_params
 from ravenpy.models.commands import GridWeightsCommand
-from ravenpy.models.importers import RoutingProductGridWeightImporter
 
 
 @click.command()
@@ -16,7 +14,7 @@ from ravenpy.models.importers import RoutingProductGridWeightImporter
     "--dim-names",
     nargs=2,
     type=click.Tuple([str, str]),
-    default=RoutingProductGridWeightImporter.DIM_NAMES,
+    default=grid_weight_importer_params["DIM_NAMES"],
     show_default=True,
     help="Ordered dimension names of longitude (x) and latitude (y) in the NetCDF INPUT_NC_FILE.",
 )
@@ -43,8 +41,8 @@ def aggregate_forcings_to_hrus(
     """
     Aggregates NetCDF files containing 3-dimensional forcing variables like precipitation and temperature
     over (x,y,time) into 2-dimensional forcings for each of the n HRUs of a specific basin over (n,time).
-    The 3-dimensional NetCDF files are usually used in :GriddedForcing commands in Raven while the 2-dimensional
-    ones can be used in :StationForcing commands. The NetCDF files generated with this function will only
+    The 3-dimensional NetCDF files are usually used in ``:GriddedForcing`` commands in Raven while the 2-dimensional
+    ones can be used in ``:StationForcing`` commands. The NetCDF files generated with this function will only
     contain the forcings required to simulate an individual basin and hence file sizes are smaller and Raven
     runtimes can decrease drastically under certain conditions.
 
@@ -56,20 +54,23 @@ def aggregate_forcings_to_hrus(
 
     INPUT_WEIGHT_FILE: A text file containing the grid weights derived using the script "generate-grid-weights"
     for the basin forcings are required and the specified NetCDF file. The content of this file must be formatted
-    as a valid :GridWeights Raven command.
+    as a valid ``:GridWeights`` Raven command.
 
     The script outputs two files:
 
-    (1) Aggregated NetCDF file that can be used in a :StationForcing command in a Raven config.
+    (1) Aggregated NetCDF file that can be used in a ``:StationForcing`` command in a Raven config.
 
-    (2) A text file (with the same format as INPUT_WEIGHT_FILE) with the updated grid weights, that a :StationForcing
+    (2) A text file (with the same format as INPUT_WEIGHT_FILE) with the updated grid weights, that a ``:StationForcing``
     command will require.
     """
+    # NOTE: This is in order to make sphinx-click happy. Magic. Do not touch.
+    import netCDF4 as nc4
+    import numpy as np
 
     gws = GridWeightsCommand.parse(Path(input_weight_file).read_text())
 
     nHRU = gws.number_hrus
-    nCells = gws.number_grid_cells
+    # nCells = gws.number_grid_cells
     weights_data = gws.data
 
     # read NetCDF
@@ -77,7 +78,7 @@ def aggregate_forcings_to_hrus(
 
     # length of dimensions
     nlon = nc_in.dimensions[dim_names[0]].size
-    nlat = nc_in.dimensions[dim_names[1]].size
+    # nlat = nc_in.dimensions[dim_names[1]].size
     ntime = nc_in.dimensions["time"].size
 
     # convert weights (cell_id) required by Raven into (lon_id, lat_id)
@@ -105,8 +106,8 @@ def aggregate_forcings_to_hrus(
         output_nc_file_path = Path(output_nc_file)
 
     nc_out = nc4.Dataset(output_nc_file_path, "w")
-    nc_dim_time = nc_out.createDimension("time", ntime)
-    nc_dim_hrus = nc_out.createDimension("nHRU", nHRU)
+    _ = nc_out.createDimension("time", ntime)
+    _ = nc_out.createDimension("nHRU", nHRU)
 
     # copy all global attributes over
     nc_out.setncatts(nc_in.__dict__)
@@ -119,7 +120,7 @@ def aggregate_forcings_to_hrus(
                 dims = ["time", "nHRU"]
             else:
                 dims = ["time"]
-            x = nc_out.createVariable(name, variable.datatype, dims, zlib=True)
+            _ = nc_out.createVariable(name, variable.datatype, dims, zlib=True)
 
             # copy variable attributes all at once via dictionary
             nc_out[name].setncatts(nc_in[name].__dict__)
@@ -144,7 +145,7 @@ def aggregate_forcings_to_hrus(
         # what is the order of dimensions?
         idx_lon_dim = input_var.dimensions.index(dim_names[0])
         idx_lat_dim = input_var.dimensions.index(dim_names[1])
-        idx_time_dim = input_var.dimensions.index("time")
+        # idx_time_dim = input_var.dimensions.index("time")
 
         # read in data for bounding box (is faster than reading then every single cell individually)
         # --> this takes most time for large NetCDFs

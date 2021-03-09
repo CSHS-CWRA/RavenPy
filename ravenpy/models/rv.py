@@ -769,7 +769,7 @@ class RVH(RV):
         return "\n\n".join(map(str, self.sb_group_property_multipliers))
 
     def to_rv(self):
-        params = self.items()
+        # params = self.items()
         return dedent(self.template).format(**dict(self.items()))
 
 
@@ -801,7 +801,7 @@ class RVP(RV):
     def channel_profile_cmd_list(self):
         return "\n\n".join(map(str, self.channel_profiles))
 
-    ## Note sure about this!
+    # Note sure about this!
     # def to_rv(self):
     #     params = self.items()
     #     return dedent(self.template).format(**dict(self.items()))

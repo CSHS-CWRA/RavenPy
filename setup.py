@@ -31,7 +31,7 @@ requirements = [
     "xclim>=0.23",
     "wheel",
     "xskillscore",
-    "climpred>=2.1"
+    "climpred>=2.1",
 ]
 
 test_requirements = [
@@ -42,13 +42,14 @@ docs_requirements = [
     dependency for dependency in open("requirements_docs.txt").readlines()
 ]
 
-dev_requirements = [
-    dependency for dependency in open("requirements_dev.txt").readlines()
-]
-
 gis_requirements = [
     dependency for dependency in open("requirements_gis.txt").readlines()
 ]
+
+dev_requirements = [
+    dependency for dependency in open("requirements_dev.txt").readlines()
+]
+dev_requirements.extend(gis_requirements)
 
 
 # Idea taken from: https://stackoverflow.com/a/25176606/787842
@@ -105,7 +106,6 @@ def create_external_deps_install_class(command_cls):
                 f"{url}/{rev_name}.zip", self.external_deps_path / f"{name}.zip"
             )
 
-
             print(f"Extracting {name} source code..")
             with zipfile.ZipFile(
                 self.external_deps_path / f"{name}.zip", "r"
@@ -147,7 +147,7 @@ def create_external_deps_install_class(command_cls):
                     url,
                     "ostrich",
                     "Ostrich_2017-12-19_plus_progressJSON",
-                    f"OstrichGCC",
+                    "OstrichGCC",
                     "GCC",
                 )
 
