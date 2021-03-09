@@ -1,12 +1,10 @@
 import datetime as dt
 import os
 import tempfile
-import time
 import zipfile
 from dataclasses import replace
 
 import numpy as np
-import pandas as pd
 import pytest
 import xarray as xr
 
@@ -32,11 +30,6 @@ from ravenpy.models.commands import (
     SoilProfilesCommand,
     VegetationClassesCommand,
 )
-from ravenpy.models.importers import (
-    RoutingProductGridWeightImporter,
-    RoutingProductShapefileImporter,
-)
-from ravenpy.models.rv import RVH
 from ravenpy.utilities.testdata import get_local_testdata
 
 from .common import _convert_2d
@@ -1081,6 +1074,8 @@ class TestHBVEC_OST:
 
 
 class TestRouting:
+    importers = pytest.importorskip("ravenpy.models.importers")
+
     def test_lievre_tutorial(self):
         """
         This test reproduces the Lievre tutorial setup:
@@ -1135,7 +1130,7 @@ class TestRouting:
         # RVH #
         #######
 
-        rvh_importer = RoutingProductShapefileImporter(
+        rvh_importer = self.importers.RoutingProductShapefileImporter(
             routing_product_shp_path, hru_aspect_convention="ArcGIS"
         )
         rvh_config = rvh_importer.extract()
@@ -1180,11 +1175,11 @@ class TestRouting:
         # RVT #
         #######
 
-        streaminputs_importer = RoutingProductGridWeightImporter(
+        streaminputs_importer = self.importers.RoutingProductGridWeightImporter(
             vic_streaminputs_nc_path, routing_product_shp_path
         )
 
-        temperatures_importer = RoutingProductGridWeightImporter(
+        temperatures_importer = self.importers.RoutingProductGridWeightImporter(
             vic_temperatures_nc_path, routing_product_shp_path
         )
 

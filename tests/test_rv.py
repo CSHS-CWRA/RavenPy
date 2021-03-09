@@ -1,25 +1,18 @@
 import datetime as dt
 import re
 from collections import namedtuple
-from io import StringIO
 from pathlib import Path
 
-import geopandas
 import pytest
 
 import ravenpy
 from ravenpy.models.commands import GriddedForcingCommand
-from ravenpy.models.importers import (
-    RoutingProductGridWeightImporter,
-    RoutingProductShapefileImporter,
-)
-from ravenpy.models.rv import (
+from ravenpy.models.rv import (  # RVT,
     RV,
     RVC,
     RVH,
     RVI,
     RVP,
-    RVT,
     MonthlyAverage,
     Ost,
     RavenNcData,
@@ -229,10 +222,12 @@ class TestRVC:
 
 
 class TestRVH:
+    importers = pytest.importorskip("ravenpy.models.importers")
+
     @classmethod
     def setup_class(self):
         shp = get_local_testdata("raven-routing-sample/finalcat_hru_info.zip")
-        importer = RoutingProductShapefileImporter(shp)
+        importer = self.importers.RoutingProductShapefileImporter(shp)
         config = importer.extract()
         config.pop("channel_profiles")
         self.rvh = RVH(**config)
@@ -269,10 +264,12 @@ class TestRVH:
 
 
 class TestRVP:
+    importers = pytest.importorskip("ravenpy.models.importers")
+
     @classmethod
     def setup_class(self):
         shp = get_local_testdata("raven-routing-sample/finalcat_hru_info.zip")
-        importer = RoutingProductShapefileImporter(shp)
+        importer = self.importers.RoutingProductShapefileImporter(shp)
         config = importer.extract()
         self.rvp = RVP(channel_profiles=config["channel_profiles"])
 
@@ -287,11 +284,15 @@ class TestRVP:
 
 
 class TestRVT:
+    importers = pytest.importorskip("ravenpy.models.importers")
+
     @classmethod
     def setup_class(self):
         input_file = get_local_testdata("raven-routing-sample/VIC_streaminputs.nc")
         routing_file = get_local_testdata("raven-routing-sample/finalcat_hru_info.zip")
-        importer = RoutingProductGridWeightImporter(input_file, routing_file)
+        importer = self.importers.RoutingProductGridWeightImporter(
+            input_file, routing_file
+        )
         gws = importer.extract()
         self.gfc = GriddedForcingCommand(grid_weights=gws)
 
