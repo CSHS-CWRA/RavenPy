@@ -25,6 +25,8 @@ from .commands import (
     SubBasinGroupCommand,
     SubBasinsCommand,
     VegetationClassesCommand,
+    RainCorrection,
+    SnowCorrection
 )
 
 HRU = HRUsCommand.Record
@@ -430,6 +432,9 @@ class RVT(RV):
     def __init__(self, **kwargs):
         self._nc_index = None
         self.gridded_forcings = ()
+        self.raincorrection = 1
+        self.snowcorrection = 1
+
         super(RVT, self).__init__(**kwargs)
 
     @property
@@ -450,6 +455,14 @@ class RVT(RV):
     @gridded_forcing_list.setter
     def gridded_forcing_list(self, value):
         self.gridded_forcings = value
+
+    @property
+    def raincorrection_cmd(self):
+        return RainCorrection(self.raincorrection)
+
+    @property
+    def snowcorrection_cmd(self):
+        return SnowCorrection(self.snowcorrection)
 
     def update(self, items, force=False):
         """Update values from dictionary items.

@@ -10,8 +10,8 @@
    :Latitude    {latitude}
    :Longitude   {longitude}
    :Elevation   {elevation}
-   #:RainCorrection _raincorrection_
-   #:SnowCorrection _snowcorrection_
+   {raincorrection_cmd}
+   {snowcorrection_cmd}
 
    {pr}
    {rainfall}
