@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from textwrap import dedent
 from typing import Dict, List, Tuple
+from collections import namedtuple
 
 import cftime
 import six
@@ -26,7 +27,9 @@ from .commands import (
     VegetationClassesCommand,
 )
 
+HRU = HRUsCommand.Record
 HRUState = HRUStateVariableTableCommand.Record
+LU = LandUseClassesCommand.Record
 
 """
 Raven configuration
@@ -775,6 +778,7 @@ class RVH(RV):
 
 @dataclass
 class RVP(RV):
+    params: Tuple[namedtuple] = ()
     soil_classes: Tuple[SoilClassesCommand.Record] = ()
     soil_profiles: Tuple[SoilProfilesCommand.Record] = ()
     vegetation_classes: Tuple[VegetationClassesCommand.Record] = ()

@@ -34,11 +34,7 @@
 #-----------------------------------------------------------------
 # Land Use Classes
 #-----------------------------------------------------------------
-:LandUseClasses,
-  :Attributes,        IMPERM,    FOREST_COV,
-       :Units,          frac,          frac,
-       FOREST,           0.0,       0.02345,
-:EndLandUseClasses
+{land_use_classes_cmd}
 
 #-----------------------------------------------------------------
 # Vegetation Classes
