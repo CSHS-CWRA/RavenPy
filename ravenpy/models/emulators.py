@@ -508,94 +508,94 @@ class BLENDED_OST(Ostrich, BLENDED):
             algorithm="DDS",
             max_iterations=50,
             lowerBounds=BLENDED.params(
-                None,       # par_x16              par_x01
-                None,       # par_x22 NEW          par_x02
-                None,       # par_x23 NEW          par_x03
-                None,       # par_x18              10**par_x04
-                None,       # par_x24 NEW          par_x05
-                None,       # par_x25 NEW          par_x06
-                None,       # par_x26 NEW          par_x07
-                None,       # par_x15              par_x08
-                None,       # par_x27 NEW          par_x09
-                None,       # par_x28 NEW          par_x09+par_x10
-                None,       # par_x19              10**par_x11
-                None,       # par_x29 NEW          par_x12
-                None,       # par_x09              par_x13
-                None,       # par_x10              par_x13+par_x14
-                None,       # par_x11              par_x15
-                None,       # par_x12              par_x16
-                None,       # par_x14              par_x17
-                None,       # par_x13              par_x18
-                None,       # par_x30 NEW          par_x19
-                None,       # par_x01              par_x20
-                None,       # par_x02              par_x21
-                None,       # par_x03              par_x22
-                None,       # par_x04              par_x23
-                None,       # par_x05              par_x24
-                None,       # par_x06              par_x24+par_x25
-                None,       # par_x07              par_x26
-                None,       # par_x08              par_x27
-                None,       # par_x17              par_x28
-                None,       # par_x20              par_x29
-                None,       # par_x21              par_x30
-                None,       # par_x31 NEW          par_x31
-                None,       # par_x32 NEW          par_x32
-                None,       # par_x33 NEW          par_x33
-                None,       # par_x34 NEW          par_x34
-                None,       # par_x35 NEW          par_x35
-                None,       # par_x36 NEW          par_r01
-                None,       # par_x37 NEW          par_r02
-                None,       # par_x38 NEW          par_r03
-                None,       # par_x39 NEW          par_r04
-                None,       # par_x40 NEW          par_r05
-                None,       # par_x41 NEW          par_r06
-                None,       # par_x42 NEW          par_r07
-                None,       # par_x43 NEW          par_r08
+                None,       # par_x01
+                None,       # par_x02
+                None,       # par_x03
+                None,       # 10**par_x04
+                None,       # par_x05
+                None,       # par_x06
+                None,       # par_x07
+                None,       # par_x08
+                None,       # par_x09
+                None,       # par_x09+par_x10
+                None,       # 10**par_x11
+                None,       # par_x12
+                None,       # par_x13
+                None,       # par_x13+par_x14
+                None,       # par_x15
+                None,       # par_x16
+                None,       # par_x17
+                None,       # par_x18
+                None,       # par_x19
+                None,       # par_x20
+                None,       # par_x21
+                None,       # par_x22
+                None,       # par_x23
+                None,       # par_x24
+                None,       # par_x24+par_x25
+                None,       # par_x26
+                None,       # par_x27
+                None,       # par_x28
+                None,       # par_x29
+                None,       # par_x30
+                None,       # par_x31
+                None,       # par_x32
+                None,       # par_x33
+                None,       # par_x34
+                None,       # par_x35
+                None,       # par_r01
+                None,       # par_r02
+                None,       # par_r03
+                None,       # par_r04
+                None,       # par_r05
+                None,       # par_r06
+                None,       # par_r07
+                None,       # par_r08
             ),
             upperBounds=BLENDED.params(
-                None,       # par_x16              par_x01
-                None,       # par_x22 NEW          par_x02
-                None,       # par_x23 NEW          par_x03
-                None,       # par_x18              10**par_x04
-                None,       # par_x24 NEW          par_x05
-                None,       # par_x25 NEW          par_x06
-                None,       # par_x26 NEW          par_x07
-                None,       # par_x15              par_x08
-                None,       # par_x27 NEW          par_x09
-                None,       # par_x28 NEW          par_x09+par_x10
-                None,       # par_x19              10**par_x11
-                None,       # par_x29 NEW          par_x12
-                None,       # par_x09              par_x13
-                None,       # par_x10              par_x13+par_x14
-                None,       # par_x11              par_x15
-                None,       # par_x12              par_x16
-                None,       # par_x14              par_x17
-                None,       # par_x13              par_x18
-                None,       # par_x30 NEW          par_x19
-                None,       # par_x01              par_x20
-                None,       # par_x02              par_x21
-                None,       # par_x03              par_x22
-                None,       # par_x04              par_x23
-                None,       # par_x05              par_x24
-                None,       # par_x06              par_x24+par_x25
-                None,       # par_x07              par_x26
-                None,       # par_x08              par_x27
-                None,       # par_x17              par_x28
-                None,       # par_x20              par_x29
-                None,       # par_x21              par_x30
-                None,       # par_x31 NEW          par_x31
-                None,       # par_x32 NEW          par_x32
-                None,       # par_x33 NEW          par_x33
-                None,       # par_x34 NEW          par_x34
-                None,       # par_x35 NEW          par_x35
-                None,       # par_x36 NEW          par_r01
-                None,       # par_x37 NEW          par_r02
-                None,       # par_x38 NEW          par_r03
-                None,       # par_x39 NEW          par_r04
-                None,       # par_x40 NEW          par_r05
-                None,       # par_x41 NEW          par_r06
-                None,       # par_x42 NEW          par_r07
-                None,       # par_x43 NEW          par_r08
+                None,       # par_x01
+                None,       # par_x02
+                None,       # par_x03
+                None,       # 10**par_x04
+                None,       # par_x05
+                None,       # par_x06
+                None,       # par_x07
+                None,       # par_x08
+                None,       # par_x09
+                None,       # par_x09+par_x10
+                None,       # 10**par_x11
+                None,       # par_x12
+                None,       # par_x13
+                None,       # par_x13+par_x14
+                None,       # par_x15
+                None,       # par_x16
+                None,       # par_x17
+                None,       # par_x18
+                None,       # par_x19
+                None,       # par_x20
+                None,       # par_x21
+                None,       # par_x22
+                None,       # par_x23
+                None,       # par_x24
+                None,       # par_x24+par_x25
+                None,       # par_x26
+                None,       # par_x27
+                None,       # par_x28
+                None,       # par_x29
+                None,       # par_x30
+                None,       # par_x31
+                None,       # par_x32
+                None,       # par_x33
+                None,       # par_x34
+                None,       # par_x35
+                None,       # par_r01
+                None,       # par_r02
+                None,       # par_r03
+                None,       # par_r04
+                None,       # par_r05
+                None,       # par_r06
+                None,       # par_r07
+                None,       # par_r08
             ),
         )
 
