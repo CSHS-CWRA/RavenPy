@@ -15,6 +15,7 @@ BeginFilePairs
   raven-blended.rvi.tpl;  raven-blended.rvi
   raven-blended.rvp.tpl;  raven-blended.rvp
   raven-blended.rvc.tpl;  raven-blended.rvc
+  raven-blended.rvt.tpl;  raven-blended.rvt
   #can be multiple (.rvh, .rvi)
 EndFilePairs
 
