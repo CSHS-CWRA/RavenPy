@@ -243,12 +243,13 @@ class TestGenericGeoOperations:
             self.raster_file, output=reproj_file, target_crs="EPSG:3348"
         )
 
+        # EPSG:3348 is a very general transformation; Some tolerance should be allowed.
         with self.rasterio.open(reproj_file) as gt:
             assert gt.crs.to_epsg() == 3348
-            np.testing.assert_almost_equal(gt.bounds.left, -2077535.25979486)
-            np.testing.assert_almost_equal(gt.bounds.right, 15591620.75098695)
-            np.testing.assert_almost_equal(gt.bounds.bottom, -4167898.76317739)
-            np.testing.assert_almost_equal(gt.bounds.top, 5817014.91999878)
+            np.testing.assert_allclose(gt.bounds.left, -2077535, atol=1.25)
+            np.testing.assert_allclose(gt.bounds.right, 15591620, atol=1.25)
+            np.testing.assert_allclose(gt.bounds.bottom, -4167898, atol=1.25)
+            np.testing.assert_allclose(gt.bounds.top, 5817014, atol=1.25)
 
             data = gt.read(1)  # read band 1 (red)
             assert data.min() == 0
@@ -278,7 +279,7 @@ class TestGenericGeoOperations:
         aspect_grid = self.analysis.gdal_aspect_analysis(reproj_file)
 
         np.testing.assert_almost_equal(
-            self.analysis.circular_mean_aspect(aspect_grid), 7.7805879
+            self.analysis.circular_mean_aspect(aspect_grid), 7.780, decimal=3
         )
 
     def test_raster_clip(self, tmp_path):
