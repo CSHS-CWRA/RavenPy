@@ -246,10 +246,10 @@ class TestGenericGeoOperations:
         # EPSG:3348 is a very general transformation; Some tolerance should be allowed.
         with self.rasterio.open(reproj_file) as gt:
             assert gt.crs.to_epsg() == 3348
-            np.testing.assert_allclose(gt.bounds.left, -2077535, atol=1.25)
-            np.testing.assert_allclose(gt.bounds.right, 15591620, atol=1.25)
-            np.testing.assert_allclose(gt.bounds.bottom, -4167898, atol=1.25)
-            np.testing.assert_allclose(gt.bounds.top, 5817014, atol=1.25)
+            np.testing.assert_allclose(gt.bounds.left, -2077535, atol=3)
+            np.testing.assert_allclose(gt.bounds.right, 15591620, atol=3)
+            np.testing.assert_allclose(gt.bounds.bottom, -4167898, atol=3)
+            np.testing.assert_allclose(gt.bounds.top, 5817014, atol=3)
 
             data = gt.read(1)  # read band 1 (red)
             assert data.min() == 0
