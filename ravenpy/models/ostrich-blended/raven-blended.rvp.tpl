@@ -16,7 +16,7 @@
 #    para_pow_x04     = pow_x04     =  10^(para_x04)       = 10^par_x04
 #    para_pow_x11     = pow_x11     =  10^(para_x11)       = 10^par_x11
 
-# RVT shopuld contain
+# RVT should contain
 #  :RainCorrection par_x33
 #  :SnowCorrection par_x34
 
