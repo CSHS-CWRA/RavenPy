@@ -247,7 +247,7 @@ class TestBLENDED_OST:
         )
 
         d = model.diagnostics
-        print(model.exec_path)
+        
         np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -1.51237, 4)
 
         opt_para = model.optimized_parameters
