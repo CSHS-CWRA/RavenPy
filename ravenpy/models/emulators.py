@@ -1,11 +1,12 @@
 from collections import namedtuple
 from pathlib import Path
+from dataclasses import dataclass
 
 import xarray as xr
 
 from .base import Ostrich, Raven
-from .commands import BasinIndexCommand, HRUStateVariableTableCommand
-from .rv import RV, RVC, RVH, RVI, RVP, RVT, MonthlyAverage, Ost, RavenNcData
+from .commands import BasinIndexCommand
+from .rv import RV, RVC, RVH, RVI, RVP, RVT, MonthlyAverage, Ost, RavenNcData, HRU, HRUState, LU
 
 __all__ = [
     "GR4JCN",
@@ -33,8 +34,6 @@ std_vars = (
     "evspsbl",
     "water_volume_transport_in_river_channel",
 )
-
-HRUState = HRUStateVariableTableCommand.Record
 
 
 class GR4JCN(Raven):
@@ -439,7 +438,8 @@ class HBVEC_OST(Ostrich, HBVEC):
     def derived_parameters(self):
         self._monthly_average()
 
-class BLENDED(GR4JCN):
+
+class BLENDED(Raven):
     identifier = "blended"
     templates = tuple((Path(__file__).parent / "raven-blended").glob("*.rv?"))
 
@@ -447,9 +447,20 @@ class BLENDED(GR4JCN):
         "BLENDEDParams", ", ".join(["par_x{:02}".format(i) for i in range(1, 36)]+["par_r{:02}".format(i) for i in range(1, 9)])
     )
 
+    @dataclass
+    class HRU(HRU):
+        land_use_class: str = "FOREST"
+        veg_class: str = "FOREST"
+        soil_profile: str = "DEFAULT_P"
+        aquifer_profile: str = "[NONE]"
+        terrain_class: str = "DEFAULT_T"
+
     def __init__(self, *args, **kwds):
         super().__init__(*args, **kwds)
-        self.rvp = RV(params=BLENDED.params(*((None,) * len(BLENDED.params._fields))))
+        self.rvp = RVP(params=BLENDED.params(*((None,) * len(BLENDED.params._fields))),
+                       land_use_classes=(LU("FOREST", impermeable_frac=0.0, forest_coverage=0.02345),)
+                       )
+        self.rvh = RVH(hrus=(BLENDED.HRU(),))
         self.rvt = RVT(**{k: nc() for k in std_vars})
         self.rvi = RVI(evaporation="PET_OUDIN", rain_snow_fraction="RAINSNOW_HBV")
         self.rvc = RVC(soil0=None, soil1=None, basin_state=BasinIndexCommand())
@@ -625,6 +636,7 @@ class BLENDED_OST(Ostrich, BLENDED):
 
         out = [ops[n] for n in names]
         return self.params(*out)
+
 
 class Routing(Raven):
     """Routing model - no hydrological modeling"""

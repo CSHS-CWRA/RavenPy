@@ -85,7 +85,6 @@ class Raven:
         "latitude",
         "longitude",
         "region_id",
-        "hrus",
     ]
 
     def __init__(self, workdir: Union[str, Path] = None):
@@ -478,6 +477,9 @@ class Raven:
             #    print(line)
         try:
             self.parse_results()
+            err = self.parse_errors()
+            if "ERROR" in err:
+                raise UserWarning("Simulation error")
 
         except UserWarning as e:
             err = self.parse_errors()
@@ -891,9 +893,16 @@ class Ostrich(Raven):
 
         # Store output file names in dict
         for key, pattern in patterns.items():
-            self.outputs[key] = self._get_output(pattern, path=self.exec_path)[0]
+            fns = self._get_output(pattern, path=self.exec_path)
+            if len(fns) == 1:
+                fns = fns[0]
+            self.outputs[key] = fns
 
-        self.outputs["calibparams"] = ", ".join(map(str, self.calibrated_params))
+        try:
+            self.outputs["calibparams"] = ", ".join(map(str, self.calibrated_params))
+        except AttributeError:
+            err = self.parse_errors()
+            raise UserWarning(err)
 
     def parse_errors(self):
         try:

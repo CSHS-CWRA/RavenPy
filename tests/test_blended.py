@@ -6,6 +6,8 @@ import numpy as np
 from ravenpy.models import (
     BLENDED,
     BLENDED_OST,
+    HRU,
+    LU
     )
 
 from ravenpy.utilities.testdata import get_local_testdata
@@ -15,6 +17,15 @@ from .common import _convert_2d
 TS = get_local_testdata(
     "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
 )
+
+hru = BLENDED.HRU(area=4250.6,
+                  elevation=843.0,
+                  latitude=54.4848,
+                  longitude=-123.3659,
+                  slope=0.01234)
+
+lu = LU("FOREST", impermeable_frac=0.0, forest_coverage=0.02345)
+
 
 class TestBLENDED:
     def test_simple(self):
@@ -69,12 +80,9 @@ class TestBLENDED:
             TS,
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2002, 1, 1),
-            area=4250.6,
-            elevation=843.0,
-            latitude=54.4848,
-            longitude=-123.3659,
+            hrus=(hru,),
+            land_use_classes=(lu,),
             # should actually also contain:
-            #       forest_fraction and slope (for RVH) and
             #       :RainCorrection and SnowCorrection (default 1.0) (for RVT) but might be a parameter (here: {param.x33} and {param.x34})
             params=params,
             suppress_output=True,
@@ -83,8 +91,6 @@ class TestBLENDED:
         d = model.diagnostics
 
         np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.913785, 4)
-
-
 
 
 class TestBLENDED_OST:
@@ -230,10 +236,8 @@ class TestBLENDED_OST:
             TS,
             start_date=dt.datetime(1954, 1, 1),
             duration=208,
-            area=4250.6,
-            elevation=843.0,
-            latitude=54.4848,
-            longitude=-123.3659,
+            hrus=(hru,),
+            land_use_classes=(lu,),
             params=params,
             lowerBounds=low,
             upperBounds=high,
@@ -243,7 +247,7 @@ class TestBLENDED_OST:
         )
 
         d = model.diagnostics
-
+        print(model.exec_path)
         np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -1.51237, 4)
 
         opt_para = model.optimized_parameters
@@ -312,10 +316,8 @@ class TestBLENDED_OST:
             TS,
             start_date=dt.datetime(1954, 1, 1),
             duration=208,
-            area=4250.6,
-            elevation=843.0,
-            latitude=54.4848,
-            longitude=-123.3659,
+            hrus=(hru,),
+            land_use_classes=(lu,),
             params=model.calibrated_params,
         )
 
