@@ -129,8 +129,8 @@ class TestBLENDED_OST:
             9.415693E-01,  # par_x30
             -1.856108E+00, # par_x31
             2.356995E+00,  # par_x32
-            1.110496E+00,  # par_x33     <<<<<<<<<<< NOT TEMPLATED YET: IS :RainCorrection in RVT
-            1.042556E+00,  # par_x34     <<<<<<<<<<< NOT TEMPLATED YET: IS :SnowCorrection in RVT
+            1.110496E+00,  # par_x33
+            1.042556E+00,  # par_x34
             7.510967E-03,  # par_x35
             5.321608E-01,  # par_r01
             2.891977E-02,  # par_r02
@@ -248,7 +248,8 @@ class TestBLENDED_OST:
 
         d = model.diagnostics
 
-        np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -1.51237, 4)
+        np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -1.47169, 4)
+        # np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -1.51237, 4)   # true when x33 and x34 set to 1.0 and range [1.0,1.0]
 
         opt_para = model.optimized_parameters
         opt_func = model.obj_func
@@ -306,7 +307,7 @@ class TestBLENDED_OST:
         )
         np.testing.assert_almost_equal(
             opt_func,
-            1.51237,
+            1.47169,
             4,
             err_msg="calibrated NSE is not matching expected value",
         )
