@@ -159,18 +159,18 @@ class TestGdalOgrFunctions:
     # Slope values are high due to data values using Geographic CRS
     def test_dem_properties(self):
         dem_properties = self.analysis.dem_prop(self.raster_file)
-        np.testing.assert_almost_equal(dem_properties["aspect"], 10.9119033)
-        np.testing.assert_almost_equal(dem_properties["elevation"], 79.0341721)
-        np.testing.assert_almost_equal(dem_properties["slope"], 64.4365427)
+        np.testing.assert_almost_equal(dem_properties["aspect"], 10.911, 3)
+        np.testing.assert_almost_equal(dem_properties["elevation"], 79.0341, 4)
+        np.testing.assert_almost_equal(dem_properties["slope"], 64.43654, 5)
 
         with self.fiona.open(self.geojson_file) as gj:
             feature = next(iter(gj))
             geom = self.sgeo.shape(feature["geometry"])
 
         region_dem_properties = self.analysis.dem_prop(self.raster_file, geom=geom)
-        np.testing.assert_almost_equal(region_dem_properties["aspect"], 280.6814208)
-        np.testing.assert_almost_equal(region_dem_properties["elevation"], 145.8899082)
-        np.testing.assert_almost_equal(region_dem_properties["slope"], 61.2650882)
+        np.testing.assert_almost_equal(region_dem_properties["aspect"], 280.681, 3)
+        np.testing.assert_almost_equal(region_dem_properties["elevation"], 145.8899, 4)
+        np.testing.assert_almost_equal(region_dem_properties["slope"], 61.26508, 5)
 
     # Slope values are high due to data values using Geographic CRS
     def test_geom_properties(self):
