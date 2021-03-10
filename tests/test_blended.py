@@ -82,8 +82,6 @@ class TestBLENDED:
             end_date=dt.datetime(2002, 1, 1),
             hrus=(hru,),
             land_use_classes=(lu,),
-            # should actually also contain:
-            #       :RainCorrection and SnowCorrection (default 1.0) (for RVT) but might be a parameter (here: {param.x33} and {param.x34})
             params=params,
             suppress_output=True,
         )
