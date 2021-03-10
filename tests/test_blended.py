@@ -136,94 +136,94 @@ class TestBLENDED_OST:
             7.469583E-01,  # par_r08
         )
         low = (
-            0.0,       # par_x16              par_x01
-            0.1,       # par_x22 NEW          par_x02
-            0.5,       # par_x23 NEW          par_x03
-            -5.0,      # par_x18              10**par_x04
-            0.0,       # par_x24 NEW          par_x05
-            0.5,       # par_x25 NEW          par_x06
-            5.0,       # par_x26 NEW          par_x07
-            0.0,       # par_x15              par_x08
-            0.0,       # par_x27 NEW          par_x09
-            0.0,       # par_x28 NEW          par_x09+x10
-            -5.0,      # par_x19              10**par_x11
-            0.5,       # par_x29 NEW          par_x12
-            0.0,       # par_x09              par_x13
-            0.01,      # par_x10              par_x13+x14
-            0.005,     # par_x11              par_x15
-            -5.0,      # par_x12              par_x16
-            0.0,       # par_x14              par_x17
-            0.0,       # par_x13              par_x18
-            0.0,       # par_x30 NEW          par_x19
-            0.3,       # par_x01              par_x20
-            0.01,      # par_x02              par_x21
-            0.5,       # par_x03              par_x22
-            0.15,      # par_x04              par_x23
-            1.5,       # par_x05              par_x24
-            0.0,       # par_x06              par_x24+x25
-            -1.0,      # par_x07              par_x26
-            0.01,      # par_x08              par_x27
-            0.00001,   # par_x17              par_x28
-            0.0,       # par_x20              par_x29
-            0.0,       # par_x21              par_x30
-            -3.0,      # par_x31 NEW          par_x31
-            0.5,       # par_x32 NEW          par_x32
-            0.8,       # par_x33 NEW          par_x33
-            0.8,       # par_x34 NEW          par_x34
-            0.0,       # par_x35 NEW          par_x35
-            0.0,       # par_x36 NEW          par_r01
-            0.0,       # par_x37 NEW          par_r02
-            0.0,       # par_x38 NEW          par_r03
-            0.0,       # par_x39 NEW          par_r04
-            0.0,       # par_x40 NEW          par_r05
-            0.0,       # par_x41 NEW          par_r06
-            0.0,       # par_x42 NEW          par_r07
-            0.0,       # par_x43 NEW          par_r08
+            0.0,       # par_x01
+            0.1,       # par_x02
+            0.5,       # par_x03
+            -5.0,      # 10**par_x04
+            0.0,       # par_x05
+            0.5,       # par_x06
+            5.0,       # par_x07
+            0.0,       # par_x08
+            0.0,       # par_x09
+            0.0,       # par_x09+x10
+            -5.0,      # 10**par_x11
+            0.5,       # par_x12
+            0.0,       # par_x13
+            0.01,      # par_x13+x14
+            0.005,     # par_x15
+            -5.0,      # par_x16
+            0.0,       # par_x17
+            0.0,       # par_x18
+            0.0,       # par_x19
+            0.3,       # par_x20
+            0.01,      # par_x21
+            0.5,       # par_x22
+            0.15,      # par_x23
+            1.5,       # par_x24
+            0.0,       # par_x24+x25
+            -1.0,      # par_x26
+            0.01,      # par_x27
+            0.00001,   # par_x28
+            0.0,       # par_x29
+            0.0,       # par_x30
+            -3.0,      # par_x31
+            0.5,       # par_x32
+            0.8,       # par_x33
+            0.8,       # par_x34
+            0.0,       # par_x35
+            0.0,       # par_r01
+            0.0,       # par_r02
+            0.0,       # par_r03
+            0.0,       # par_r04
+            0.0,       # par_r05
+            0.0,       # par_r06
+            0.0,       # par_r07
+            0.0,       # par_r08
         )
         high = (
-            1.0,       # par_x16              par_x01
-            3.0,       # par_x22 NEW          par_x02
-            3.0,       # par_x23 NEW          par_x03
-            -1.0,      # par_x18              10**par_x04
-            100.0,     # par_x24 NEW          par_x05
-            2.0,       # par_x25 NEW          par_x06
-            10.0,      # par_x26 NEW          par_x07
-            3.0,       # par_x15              par_x08
-            0.05,      # par_x27 NEW          par_x09
-            0.45,      # par_x28 NEW          par_x09+x10
-            -2.0,      # par_x19              10**par_x11
-            2.0,       # par_x29 NEW          par_x12
-            0.1,       # par_x09              par_x13
-            0.3,       # par_x10              par_x13+x14
-            0.1,       # par_x11              par_x15
-            2.0,       # par_x12              par_x16
-            1.0,       # par_x14              par_x17
-            5.0,       # par_x13              par_x18
-            0.4,       # par_x30 NEW          par_x19
-            20.0,      # par_x01              par_x20
-            5.0,       # par_x02              par_x21
-            13.0,      # par_x03              par_x22
-            1.5,       # par_x04              par_x23
-            3.0,       # par_x05              par_x24
-            5.0,       # par_x06              par_x24+x25
-            1.0,       # par_x07              par_x26
-            0.2,       # par_x08              par_x27
-            0.02,      # par_x17              par_x28
-            0.5,       # par_x20              par_x29
-            2.0,       # par_x21              par_x30
-            3.0,       # par_x31 NEW          par_x31
-            4.0,       # par_x32 NEW          par_x32
-            1.2,       # par_x33 NEW          par_x33
-            1.2,       # par_x34 NEW          par_x34
-            0.02,      # par_x35 NEW          par_x35
-            1.0,       # par_x36 NEW          par_r01
-            1.0,       # par_x37 NEW          par_r02
-            1.0,       # par_x38 NEW          par_r03
-            1.0,       # par_x39 NEW          par_r04
-            1.0,       # par_x40 NEW          par_r05
-            1.0,       # par_x41 NEW          par_r06
-            1.0,       # par_x42 NEW          par_r07
-            1.0,       # par_x43 NEW          par_r08
+            1.0,       # par_x01
+            3.0,       # par_x02
+            3.0,       # par_x03
+            -1.0,      # 10**par_x04
+            100.0,     # par_x05
+            2.0,       # par_x06
+            10.0,      # par_x07
+            3.0,       # par_x08
+            0.05,      # par_x09
+            0.45,      # par_x09+x10
+            -2.0,      # 10**par_x11
+            2.0,       # par_x12
+            0.1,       # par_x13
+            0.3,       # par_x13+x14
+            0.1,       # par_x15
+            2.0,       # par_x16
+            1.0,       # par_x17
+            5.0,       # par_x18
+            0.4,       # par_x19
+            20.0,      # par_x20
+            5.0,       # par_x21
+            13.0,      # par_x22
+            1.5,       # par_x23
+            3.0,       # par_x24
+            5.0,       # par_x24+x25
+            1.0,       # par_x26
+            0.2,       # par_x27
+            0.02,      # par_x28
+            0.5,       # par_x29
+            2.0,       # par_x30
+            3.0,       # par_x31
+            4.0,       # par_x32
+            1.2,       # par_x33
+            1.2,       # par_x34
+            0.02,      # par_x35
+            1.0,       # par_r01
+            1.0,       # par_r02
+            1.0,       # par_r03
+            1.0,       # par_r04
+            1.0,       # par_r05
+            1.0,       # par_r06
+            1.0,       # par_r07
+            1.0,       # par_r08
         )
 
         model(
@@ -317,7 +317,6 @@ class TestBLENDED_OST:
             latitude=54.4848,
             longitude=-123.3659,
             params=model.calibrated_params,
-            #params=model.optimized_parameters,           # why is that "calibrated_params" for other tests??
         )
 
         np.testing.assert_almost_equal(
