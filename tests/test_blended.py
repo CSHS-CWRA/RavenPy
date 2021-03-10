@@ -63,9 +63,9 @@ class TestBLENDED:
             9.415693E-01,  # par_x30
             -1.856108E+00, # par_x31
             2.356995E+00,  # par_x32
-            1.110496E+00,  # par_x33
-            1.042556E+00,  # par_x34      <<<<<<<<<<< NOT TEMPLATED YET: IS :RainCorrection in RVT
-            7.510967E-03,  # par_x35      <<<<<<<<<<< NOT TEMPLATED YET: IS :SnowCorrection in RVT
+            1.0E+00,       # par_x33
+            1.0E+00,       # par_x34
+            7.510967E-03,  # par_x35
             5.321608E-01,  # par_r01
             2.891977E-02,  # par_r02
             9.605330E-01,  # par_r03
@@ -129,9 +129,9 @@ class TestBLENDED_OST:
             9.415693E-01,  # par_x30
             -1.856108E+00, # par_x31
             2.356995E+00,  # par_x32
-            1.110496E+00,  # par_x33
-            1.042556E+00,  # par_x34      <<<<<<<<<<< NOT TEMPLATED YET: IS :RainCorrection in RVT
-            7.510967E-03,  # par_x35      <<<<<<<<<<< NOT TEMPLATED YET: IS :SnowCorrection in RVT
+            1.110496E+00,  # par_x33     <<<<<<<<<<< NOT TEMPLATED YET: IS :RainCorrection in RVT
+            1.042556E+00,  # par_x34     <<<<<<<<<<< NOT TEMPLATED YET: IS :SnowCorrection in RVT
+            7.510967E-03,  # par_x35
             5.321608E-01,  # par_r01
             2.891977E-02,  # par_r02
             9.605330E-01,  # par_r03
