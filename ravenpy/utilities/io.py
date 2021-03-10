@@ -10,7 +10,7 @@ from pathlib import Path
 from re import search
 from typing import Iterable, List, Optional, Sequence, Union
 
-from . import gis_error_message
+from . import gis_import_error_message
 
 try:
     import fiona
@@ -18,7 +18,7 @@ try:
     from pyproj import CRS
     from shapely.geometry import shape
 except (ImportError, ModuleNotFoundError) as e:
-    msg = gis_error_message.format(Path(__file__).stem)
+    msg = gis_import_error_message.format(Path(__file__).stem)
     raise ImportError(msg) from e
 
 LOGGER = logging.getLogger("RavenPy")
