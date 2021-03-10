@@ -507,6 +507,9 @@ class BLENDED(Raven):
             )
             self.rvc.hru_state = HRUState(soil0=soil0, soil1=soil1)
 
+        self.rvt.raincorrection = self.rvp.params.par_x33
+        self.rvt.snowcorrection = self.rvp.params.par_x34
+
 
 class BLENDED_OST(Ostrich, BLENDED):
     _p = Path(__file__).parent / "ostrich-blended"
