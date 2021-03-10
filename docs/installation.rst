@@ -9,7 +9,9 @@ Full Installation (Anaconda)
 
 For many reasons, we recommend using a `Conda environment
 <https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_
-to work with the full RavenPy installation.
+to work with the full RavenPy installation. This implementation is able to manage
+the harder to install GIS dependencies, like `GDAL`.
+
 
 .. code-block:: console
 
@@ -21,13 +23,23 @@ The newly created environment must then be activated:
 
    $ conda activate ravenpy-env
 
-`RavenPy` relies for its runtime usage on the `Raven <http://raven.uwaterloo.ca>`_ and `OSTRICH
-<http://www.civil.uwaterloo.ca/envmodelling/Ostrich.html>`_ binaries, which can be conveniently
+To install the remaining Python dependencies, run:
+
+.. code-block::
+
+   (ravenpy-env) $ pip install ravenpy[gis]
+
+`RavenPy` relies on the `Raven <http://raven.uwaterloo.ca>`_ and `OSTRICH <http://www.civil.uwaterloo.ca/envmodelling/Ostrich.html>`_ binaries, which can be conveniently
 downloaded, compiled, and placed in the `bin` folder of your environment, with this command:
 
 .. code-block:: console
 
    (ravenpy-env) $ pip install ravenpy[gis] --verbose --install-option="--with-binaries"
+
+.. warning::
+
+  It is imperative that the Python dependencies are pre-installed before running the `--with-binaries`
+  option; This install step will fail otherwise.
 
 If successful, this should install ``raven`` and ``ostrich`` binaries in the ``bin``
 folder of your environment, which should then be already available in your
@@ -53,6 +65,7 @@ variables (both as absolute paths) at runtime.
 
   The `virtualenv <https://virtualenv.pypa.io/en/latest/>`_ implementation also works well, but the
   GIS system libraries it depends on (specifically `GDAL` and `GEOS`) can be more difficult to configure.
+
 
 Light Installation
 ------------------
@@ -88,7 +101,10 @@ You can then install RavenPy with:
 
 .. code-block:: console
 
-   (ravenpy-env) $ pip install --editable ".[dev]" --install-option="--with-binaries"
+   # for the python dependencies
+   (ravenpy-env) $ pip install --editable ".[dev]"
+   # for the Raven and OSTRICH binaries
+   (ravenpy-env) $ pip install --editable "." --install-option="--with-binaries"
 
 Then clone the Raven Test Data repo somewhere on your disk:
 

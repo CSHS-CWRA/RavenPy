@@ -16,7 +16,7 @@ dependencies:
   - owslib
   - pandas
   - pip
-  - pyproj
+  - pyproj>=3.0.0
   - rasterio
   - requests
   - rioxarray
