@@ -31,14 +31,14 @@
                 :Infiltration    INF_VIC_ARNO            PONDED_WATER   MULTIPLE
                 :Infiltration    INF_HBV                 PONDED_WATER   MULTIPLE
   :EndProcessGroup CALCULATE_WTS {params.par_r01} {params.par_r02}
-  #                              5.321608E-01 2.891977E-02
+  #                              para_r01 para_r02
                   :Overflow      OVERFLOW_RAVEN          SOIL[0]        DELAYED_RUNOFF
   :ProcessGroup #quickflow group
                 :Baseflow        BASE_LINEAR_ANALYTIC    SOIL[0]        SURFACE_WATER   # interflow, really
                 :Baseflow        BASE_VIC                SOIL[0]        SURFACE_WATER
                 :Baseflow        BASE_TOPMODEL           SOIL[0]        SURFACE_WATER
   :EndProcessGroup CALCULATE_WTS {params.par_r03} {params.par_r04}
-  #                              9.605330E-01 6.128669E-01
+  #                              para_r03 para_r04
   :Percolation                   PERC_LINEAR             SOIL[0]        SOIL[1]         # recharge
     :Overflow                    OVERFLOW_RAVEN          SOIL[1]        DELAYED_RUNOFF
   :Percolation                   PERC_LINEAR             SOIL[1]        SOIL[2]         # loss to deep groundwater (simplifies to HMETS when PERC_COEFF DEEP_GW=0)
@@ -46,21 +46,21 @@
                 :SoilEvaporation SOILEVAP_ALL            SOIL[0]        ATMOSPHERE      # AET
                 :SoilEvaporation SOILEVAP_TOPMODEL       SOIL[0]        ATMOSPHERE      # AET
   :EndProcessGroup CALCULATE_WTS {params.par_r05}
-  #                              9.558293E-01
+  #                              para_r05
   :Convolve                      CONVOL_GAMMA            CONVOLUTION[0] SURFACE_WATER   # 'surface runoff'
   :Convolve                      CONVOL_GAMMA_2          DELAYED_RUNOFF SURFACE_WATER   # 'delayed runoff'
   :ProcessGroup #quickflow group
                 :Baseflow        BASE_LINEAR_ANALYTIC    SOIL[1]        SURFACE_WATER
                 :Baseflow        BASE_POWER_LAW          SOIL[1]        SURFACE_WATER
   :EndProcessGroup CALCULATE_WTS {params.par_r06}
-  #                              1.008196E-01
+  #                              para_r06
   :ProcessGroup #snow balance group
                 :SnowBalance     SNOBAL_HMETS            MULTIPLE       MULTIPLE
                 :SnowBalance     SNOBAL_SIMPLE_MELT      SNOW           PONDED_WATER
                 :SnowBalance     SNOBAL_HBV              MULTIPLE       MULTIPLE
                 #:SnowBalance    SNOBAL_GAWSER           MULTIPLE       MULTIPLE
   :EndProcessGroup CALCULATE_WTS {params.par_r07} {params.par_r08}
-  #                              9.275730E-02 7.469583E-01
+  #                              para_r07 para_r08
 :EndHydrologicProcesses
 
 #:CreateRVPTemplate

@@ -61,7 +61,6 @@
          LAKE, 0
          ROCK, 0
 	 DEFAULT_P, 3, TOPSOIL,  {params.par_x29}, PHREATIC, {params.par_x30}, DEEP_GW, 1e6
-#        DEFAULT_P, 3, TOPSOIL,  4.080660E-01, PHREATIC, 9.415693E-01, DEEP_GW, 1e6
 #        DEFAULT_P, 3, TOPSOIL,         x(29), PHREATIC,        x(30), DEEP_GW, 1e6
 :EndSoilProfiles
 
@@ -72,20 +71,19 @@
   :Attributes,        hillslope_len, drainage_dens,                 lambda,
        :Units,                   ??,            ??,                     ??
     DEFAULT_T,                  1.0,           1.0,           {params.par_x07}
-    #                                                         6.211146E+00
 #                                                     TOPMODEL_LAMBDA x(7)
 :EndTerrainClasses
 
 #-----------------------------------------------------------------
 # Global Parameters
 #-----------------------------------------------------------------
-:GlobalParameter         SNOW_SWI_MIN {params.par_x13}  # 4.736668E-02   # x(13)
-:GlobalParameter         SNOW_SWI_MAX {SUM_X13_X14} # 2.070342E-01   # x(13)+x(14)
-:GlobalParameter     SWI_REDUCT_COEFF {params.par_x15}  # 7.806324E-02   # x(15)
-:GlobalParameter             SNOW_SWI {params.par_x19}  # 2.950022E-01   # x(19)
-:GlobalParameter        RAINSNOW_TEMP {params.par_x31}  # -1.856108E+00  # x(31)
-:GlobalParameter       RAINSNOW_DELTA {params.par_x32}  # 2.356995E+00   # x(32)
-#:GlobalParameter      TOC_MULTIPLIER 1.0                   #
+:GlobalParameter         SNOW_SWI_MIN {params.par_x13}  #  x(13)
+:GlobalParameter         SNOW_SWI_MAX {SUM_X13_X14}     #  x(13)+x(14)
+:GlobalParameter     SWI_REDUCT_COEFF {params.par_x15}  #  x(15)
+:GlobalParameter             SNOW_SWI {params.par_x19}  #  x(19)
+:GlobalParameter        RAINSNOW_TEMP {params.par_x31}  #  x(31)
+:GlobalParameter       RAINSNOW_DELTA {params.par_x32}  #  x(32)
+#:GlobalParameter      TOC_MULTIPLIER 1.0               #
 
 
 #-----------------------------------------------------------------
@@ -97,9 +95,6 @@
       TOPSOIL,             1.0,         {params.par_x28},    {params.par_x08},       {POW_X04}, {params.par_x02}, {params.par_x03}, 	 {params.par_x05}, {params.par_x06},  {SUM_X09_X10}, {params.par_x09},
      PHREATIC,             1.0,         {params.par_x35},             0.0,       {POW_X11},          0.0,          0.0, 	          0.0, {params.par_x12},            0.0,          0.0,
       DEEP_GW,             1.0,             0.0,                  0.0,             0.0,          0.0,          0.0, 	          0.0,          0.0,            0.0,          0.0,
- #    TOPSOIL,             1.0,         1.906440E-02,    9.313578E-01,    2.254976E-04, 2.211166E+00, 2.166229E+00, 	 2.173976E+01, 1.565091E+00,   2.518350E-01, 3.486263E-02,
- #   PHREATIC,             1.0,         7.510967E-03,             0.0,    2.279250E-04,          0.0,          0.0, 	          0.0, 1.214339E+00,            0.0,          0.0,
- #    DEEP_GW,             1.0,             0.0,                  0.0,             0.0,          0.0,          0.0, 	          0.0,          0.0,            0.0,          0.0,
  #    TOPSOIL,             1.0,           x(28),                x(08),           x(04),        x(02),        x(03), 	        x(05),        x(06),    x(09)+x(10),        x(09),
  #   PHREATIC,             1.0,           x(35),                  0.0,           x(11),          0.0,          0.0, 	          0.0,        x(12),            0.0,          0.0,
  #    DEEP_GW,             1.0,             0.0,                  0.0,             0.0,          0.0,          0.0, 	          0.0,          0.0,            0.0,          0.0,
@@ -112,14 +107,12 @@
   :Parameters, MIN_MELT_FACTOR,     MAX_MELT_FACTOR,    DD_MELT_TEMP,  DD_AGGRADATION, REFREEZE_FACTOR, REFREEZE_EXP, DD_REFREEZE_TEMP, HMETS_RUNOFF_COEFF,
        :Units,          mm/d/C,              mm/d/C,               C,            1/mm,          mm/d/C,            -,                C,                  -,
     [DEFAULT],    {params.par_x24},       {SUM_X24_X25},    {params.par_x26},    {params.par_x27},    {params.par_x18}, {params.par_x17},     {params.par_x16},       {params.par_x01},
-#   [DEFAULT],    1.651588E+00,        1.705806E+00,    3.719308E-01,    7.121015E-02,    3.845617E+00, 2.189741E-01,    -1.336429E+00,       2.930702E-02,
 #                        x(24),         x(24)+x(25),           x(26),           x(27),           x(18),        x(17),            x(16),              x(01),
 :EndLandUseParameterList
 :LandUseParameterList
   :Parameters,   GAMMA_SHAPE,     GAMMA_SCALE,    GAMMA_SHAPE2,    GAMMA_SCALE2,    FOREST_SPARSENESS,
        :Units,             -,               -,               -,               -,                    -,
     [DEFAULT],  {params.par_x20},    {params.par_x21},    {params.par_x22},    {params.par_x23},                  0.0,
-#   [DEFAULT],  4.827523E-01,    4.099820E+00,    1.283144E+01,    5.937894E-01,                  0.0,
     #                  x(20),           x(21),           x(22),           x(23),                  0.0,
 :EndLandUseParameterList
 
