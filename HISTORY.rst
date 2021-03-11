@@ -2,6 +2,11 @@
 History
 =======
 
+0.4.0
+-----
+
+* Add new emulator mixing different model formulations.
+
 0.3.0
 -----
 

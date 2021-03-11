@@ -56,12 +56,12 @@ class HRUsCommand(RavenConfig):
     class Record(RavenConfig):
         """Record to populate :HRUs command internal table (RVH)."""
 
-        hru_id: int = 0
+        hru_id: int = 1
         area: float = 0  # km^2
         elevation: float = 0  # meters
         latitude: float = 0
         longitude: float = 0
-        subbasin_id: int = 0
+        subbasin_id: int = 1
         land_use_class: str = ""
         veg_class: str = ""
         soil_profile: str = ""
@@ -275,6 +275,10 @@ class BaseValueCommand(RavenConfig):
     value: Any = None
 
     template = ":{tag} {value}"
+
+    # Overloading init to freeze the tag.
+    def __init__(self, value):
+        self.value = value
 
     def to_rv(self):
         return self.template.format(**asdict(self))
@@ -670,3 +674,13 @@ class ObservationDataCommand(RavenConfig):
         dns = d["dim_names_nc"]
         d["dim_names_nc"] = f"{dns[0]} {dns[1]}"
         return dedent(self.template).format(**d)
+
+
+class RainCorrection(BaseValueCommand):
+    tag: str = "RainCorrection"
+    value: float = 1.0
+
+
+class SnowCorrection(BaseValueCommand):
+    tag: str = "SnowCorrection"
+    value: float = 1.0

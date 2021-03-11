@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 import ravenpy
-from ravenpy.models.commands import GriddedForcingCommand
+from ravenpy.models.commands import GriddedForcingCommand, BaseValueCommand, RainCorrection
 from ravenpy.models.rv import (  # RVT,
     RV,
     RVC,
@@ -310,3 +310,9 @@ def test_isinstance_namedtuple():
     x = X(1, 2, 3)
     assert isinstance_namedtuple(x)
     assert not isinstance_namedtuple([1, 2, 3])
+
+
+class TestBaseValueCommand:
+    def test_raincorrection(self):
+        rc = RainCorrection(3)
+        assert f"{rc}" == ":RainCorrection 3"
