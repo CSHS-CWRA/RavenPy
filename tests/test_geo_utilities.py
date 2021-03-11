@@ -254,7 +254,7 @@ class TestGenericGeoOperations:
             data = gt.read(1)  # read band 1 (red)
             assert data.min() == 0
             assert data.max() == 255
-            np.testing.assert_almost_equal(data.mean(), 60.7291936)
+            np.testing.assert_almost_equal(data.mean(), 60.729, 3)
 
     def test_warped_raster_slope(self, tmp_path):
         reproj_file = tempfile.NamedTemporaryFile(
