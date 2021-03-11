@@ -83,7 +83,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "RavenPy"
-copyright = "2020, David Huard"
+copyright = "2021, David Huard"
 author = "David Huard"
 
 # The version info for the project you're documenting, acts as replacement

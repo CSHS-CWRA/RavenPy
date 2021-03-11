@@ -8,7 +8,7 @@ import logging
 from pathlib import Path
 from typing import List, Union
 
-from . import gis_error_message
+from . import gis_import_error_message
 
 try:
     import fiona
@@ -26,7 +26,7 @@ try:
     )
     from shapely.ops import transform
 except (ImportError, ModuleNotFoundError) as e:
-    msg = gis_error_message.format(Path(__file__).stem)
+    msg = gis_import_error_message.format(Path(__file__).stem)
     raise ImportError(msg) from e
 
 RASTERIO_TIFF_COMPRESSION = "lzw"

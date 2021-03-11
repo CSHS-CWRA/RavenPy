@@ -159,18 +159,18 @@ class TestGdalOgrFunctions:
     # Slope values are high due to data values using Geographic CRS
     def test_dem_properties(self):
         dem_properties = self.analysis.dem_prop(self.raster_file)
-        np.testing.assert_almost_equal(dem_properties["aspect"], 10.9119033)
-        np.testing.assert_almost_equal(dem_properties["elevation"], 79.0341721)
-        np.testing.assert_almost_equal(dem_properties["slope"], 64.4365427)
+        np.testing.assert_almost_equal(dem_properties["aspect"], 10.911, 3)
+        np.testing.assert_almost_equal(dem_properties["elevation"], 79.0341, 4)
+        np.testing.assert_almost_equal(dem_properties["slope"], 64.43654, 5)
 
         with self.fiona.open(self.geojson_file) as gj:
             feature = next(iter(gj))
             geom = self.sgeo.shape(feature["geometry"])
 
         region_dem_properties = self.analysis.dem_prop(self.raster_file, geom=geom)
-        np.testing.assert_almost_equal(region_dem_properties["aspect"], 280.6814208)
-        np.testing.assert_almost_equal(region_dem_properties["elevation"], 145.8899082)
-        np.testing.assert_almost_equal(region_dem_properties["slope"], 61.2650882)
+        np.testing.assert_almost_equal(region_dem_properties["aspect"], 280.681, 3)
+        np.testing.assert_almost_equal(region_dem_properties["elevation"], 145.8899, 4)
+        np.testing.assert_almost_equal(region_dem_properties["slope"], 61.26508, 5)
 
     # Slope values are high due to data values using Geographic CRS
     def test_geom_properties(self):
@@ -243,17 +243,18 @@ class TestGenericGeoOperations:
             self.raster_file, output=reproj_file, target_crs="EPSG:3348"
         )
 
+        # EPSG:3348 is a very general transformation; Some tolerance should be allowed.
         with self.rasterio.open(reproj_file) as gt:
             assert gt.crs.to_epsg() == 3348
-            np.testing.assert_almost_equal(gt.bounds.left, -2077535.25979486)
-            np.testing.assert_almost_equal(gt.bounds.right, 15591620.75098695)
-            np.testing.assert_almost_equal(gt.bounds.bottom, -4167898.76317739)
-            np.testing.assert_almost_equal(gt.bounds.top, 5817014.91999878)
+            np.testing.assert_allclose(gt.bounds.left, -2077535, atol=3)
+            np.testing.assert_allclose(gt.bounds.right, 15591620, atol=3)
+            np.testing.assert_allclose(gt.bounds.bottom, -4167898, atol=3)
+            np.testing.assert_allclose(gt.bounds.top, 5817014, atol=3)
 
             data = gt.read(1)  # read band 1 (red)
             assert data.min() == 0
             assert data.max() == 255
-            np.testing.assert_almost_equal(data.mean(), 60.7291936)
+            np.testing.assert_almost_equal(data.mean(), 60.729, 3)
 
     def test_warped_raster_slope(self, tmp_path):
         reproj_file = tempfile.NamedTemporaryFile(
@@ -278,7 +279,7 @@ class TestGenericGeoOperations:
         aspect_grid = self.analysis.gdal_aspect_analysis(reproj_file)
 
         np.testing.assert_almost_equal(
-            self.analysis.circular_mean_aspect(aspect_grid), 7.7805879
+            self.analysis.circular_mean_aspect(aspect_grid), 7.780, decimal=3
         )
 
     def test_raster_clip(self, tmp_path):

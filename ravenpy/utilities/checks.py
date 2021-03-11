@@ -8,7 +8,7 @@ import warnings
 from pathlib import Path
 from typing import Any, List, Sequence, Tuple, Union
 
-from . import gis_error_message
+from . import gis_import_error_message
 
 try:
     import fiona
@@ -17,7 +17,7 @@ try:
     from pyproj.exceptions import CRSError
     from shapely.geometry import GeometryCollection, MultiPolygon, Point, shape
 except (ImportError, ModuleNotFoundError) as e:
-    msg = gis_error_message.format(Path(__file__).stem)
+    msg = gis_import_error_message.format(Path(__file__).stem)
     raise ImportError(msg) from e
 
 import ravenpy.utilities.io as io

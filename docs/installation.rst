@@ -111,7 +111,13 @@ Then clone the Raven Test Data repo somewhere on your disk:
 
    (ravenpy-env) $ git clone git@github.com:Ouranosinc/raven-testdata.git
 
-You can then run the test suite by doing:
+Install the pre-commit hook (to make sure that any code you contribute is properly formatted):
+
+.. code-block:: console
+
+   (ravenpy-env) $ pre-commit install
+
+If everything was properly installed the test suite should run successfully:
 
 .. code-block:: console
 

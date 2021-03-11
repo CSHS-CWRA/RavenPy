@@ -15,6 +15,8 @@ from urllib.parse import urljoin
 
 from requests import Request
 
+from . import gis_import_error_message
+
 try:
     import fiona
     import pandas as pd
@@ -24,11 +26,7 @@ try:
     from owslib.wfs import WebFeatureService
     from shapely.geometry import Point, shape
 except (ImportError, ModuleNotFoundError) as e:
-    msg = (
-        f"`{Path(__file__).stem}` requires installation of the RavenPy GIS libraries. These can be installed using the"
-        " `pip install ravenpy[gis]` recipe or via Anaconda (`conda env -n ravenpy-env -f environment.yml`)"
-        " from the RavenPy repository source files."
-    )
+    msg = gis_import_error_message.format(Path(__file__).stem)
     raise ImportError(msg) from e
 
 # Do not remove the trailing / otherwise `urljoin` will remove the geoserver path.
