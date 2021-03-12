@@ -118,8 +118,15 @@ class TestGR4JCN:
             GR4JCN.LandHRU(hru_id=2, subbasin_id=2, **salmon_hru),
         )
         model.rvh.subbasins = (
-            Sub(subbasin_id=1, downstream_id=-1, profile="chn_1", gauged=True),
             Sub(
+                name="headwater",
+                subbasin_id=1,
+                downstream_id=2,
+                profile="chn_1",
+                gauged=True,
+            ),
+            Sub(
+                name="plains",
                 subbasin_id=2,
                 downstream_id=-1,
                 profile="chn_2",
@@ -174,6 +181,8 @@ class TestGR4JCN:
         model(TS)
         hds = model.q_sim
         assert len(hds.nbasins == 2)
+        # Sub1 flows into Sub2
+        np.testing.assert_array_less(hds.sel(nbasins=0), hds.sel(nbasins=1))
 
     def test_tags(self):
         model = GR4JCN(tempfile.mkdtemp())
