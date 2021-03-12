@@ -22,6 +22,7 @@ from ravenpy.models import (
     Sub,
 )
 from ravenpy.models.commands import (
+    ChannelProfileCommand,
     GriddedForcingCommand,
     HRUStateVariableTableCommand,
     LandUseClassesCommand,
@@ -81,7 +82,12 @@ class TestGR4JCN:
         model.rvt.pr.deaccumulate = False
 
         model.rvp.params = model.params(0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
+
+        # TODO: compute this!
+        model.rvp.avg_annual_runoff = 594
+
         assert model.rvi.suppress_output == ""
+
         model(TS)
 
         d = model.diagnostics
@@ -112,16 +118,58 @@ class TestGR4JCN:
             GR4JCN.LandHRU(hru_id=2, subbasin_id=2, **salmon_hru),
         )
         model.rvh.subbasins = (
-            Sub(subbasin_id=1, downstream_id=-1, profile="None", gauged=True),
+            Sub(subbasin_id=1, downstream_id=-1, profile="chn_1", gauged=True),
             Sub(
                 subbasin_id=2,
                 downstream_id=-1,
-                profile="None",
+                profile="chn_2",
                 gauged=True,
             ),
         )
         model.rvp.params = model.params(0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
         model.rvp.avg_annual_runoff = 594
+
+        model.rvp.channel_profiles = [
+            ChannelProfileCommand(
+                name="chn_1",
+                bed_slope=7.62066e-05,
+                survey_points=[
+                    (0, 463.647),
+                    (16.0, 459.647),
+                    (90.9828, 459.647),
+                    (92.9828, 458.647),
+                    (126.4742, 458.647),
+                    (128.4742, 459.647),
+                    (203.457, 459.647),
+                    (219.457, 463.647),
+                ],
+                roughness_zones=[
+                    (0, 0.0909167),
+                    (90.9828, 0.035),
+                    (128.4742, 0.0909167),
+                ],
+            ),
+            ChannelProfileCommand(
+                name="chn_2",
+                bed_slope=9.95895e-05,
+                survey_points=[
+                    (0, 450.657),
+                    (16.0, 446.657),
+                    (85.0166, 446.657),
+                    (87.0166, 445.657),
+                    (117.5249, 445.657),
+                    (119.5249, 446.657),
+                    (188.54149999999998, 446.657),
+                    (204.54149999999998, 450.657),
+                ],
+                roughness_zones=[
+                    (0, 0.0915769),
+                    (85.0166, 0.035),
+                    (119.5249, 0.0915769),
+                ],
+            ),
+        ]
+
         model.rvi.routing = "ROUTE_DIFFUSIVE_WAVE"
         model(TS)
         hds = model.q_sim

@@ -61,3 +61,6 @@
 :EndLandUseParameterList
 
 :AvgAnnualRunoff 		{avg_annual_runoff}
+
+# List of channel profiles
+{channel_profile_cmd_list}

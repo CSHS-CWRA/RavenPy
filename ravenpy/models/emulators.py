@@ -91,7 +91,7 @@ class GR4JCN(Raven):
     def __init__(self, *args, **kwds):
         super().__init__(*args, **kwds)
 
-        self.rvp = RV(params=GR4JCN.params(None, None, None, None, None, None))
+        self.rvp = RVP(params=GR4JCN.params(None, None, None, None, None, None))
         self.rvt = RVT(**{k: nc() for k in std_vars})
         self.rvi = RVI(rain_snow_fraction="RAINSNOW_DINGMAN", evaporation="PET_OUDIN")
         self.rvh = RVH(
