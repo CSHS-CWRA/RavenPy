@@ -23,6 +23,7 @@
    SOIL_ROUT
    SOIL_TEMP
    SOIL_GW
+   AQUIFER
 :EndSoilClasses
 :SoilParameterList
  :Parameters, POROSITY ,  GR4J_X3, GR4J_X2
@@ -35,6 +36,7 @@
 #     GR4J_X1 is thickness of first layer (SOIL_PROD), here {params.GR4J_X1}
 :SoilProfiles
   DEFAULT_P,      4, SOIL_PROD   ,   {params.GR4J_X1}, SOIL_ROUT  ,   0.300, SOIL_TEMP  ,   1.000, SOIL_GW  ,   1.000,
+  LAKE,           0
 :EndSoilProfiles
 
 # ----Vegetation Classes---------------------------------------
@@ -42,6 +44,7 @@
    :Attributes,       MAX_HT,       MAX_LAI,      MAX_LEAF_COND
         :Units,            m,          none,           mm_per_s
        VEG_ALL,           0.0,          0.0,                0.0
+       VEG_WATER,         0.0,          0.0,                0.0
 :EndVegetationClasses
 
 # --Land Use Classes------------------------------------------
@@ -49,9 +52,12 @@
   :Attributes, IMPERM, FOREST_COV
   :Units     ,   frac,       frac
        LU_ALL,    0.0,        0.0
+       LU_WATER,  0.0,        0.0
 :EndLandUseClasses
 :LandUseParameterList
  :Parameters, GR4J_X4, MELT_FACTOR
  :Units     ,       d,      mm/d/C
    [DEFAULT],    {params.GR4J_X4},        7.73
 :EndLandUseParameterList
+
+:AvgAnnualRunoff 		{avg_annual_runoff}

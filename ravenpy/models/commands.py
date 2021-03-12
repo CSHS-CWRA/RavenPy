@@ -2,7 +2,7 @@ import itertools
 import re
 from dataclasses import asdict, dataclass, field
 from textwrap import dedent
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple, Union
 
 INDENT = " " * 4
 VALUE_PADDING = 10
@@ -689,3 +689,9 @@ class RainCorrection(BaseValueCommand):
 class SnowCorrection(BaseValueCommand):
     tag: str = "SnowCorrection"
     value: float = 1.0
+
+
+class Routing(BaseValueCommand):
+    """ROUTE_NONE, ROUTE_DIFFUSIVE_WAVE"""
+    tag: str = "Routing"
+    value: str = "ROUTE_NONE"

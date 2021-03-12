@@ -26,12 +26,14 @@ from .commands import (
     SubBasinsCommand,
     VegetationClassesCommand,
     RainCorrection,
-    SnowCorrection
+    SnowCorrection,
+    Routing
 )
 
 HRU = HRUsCommand.Record
 HRUState = HRUStateVariableTableCommand.Record
 LU = LandUseClassesCommand.Record
+Sub = SubBasinsCommand.Record
 
 """
 Raven configuration
@@ -491,6 +493,7 @@ class RVI(RV):
         self.longitude = None
         self.run_index = 0
         self.raven_version = "3.0.1 rev#275"
+        self.routing = "ROUTE_NONE"
 
         self._run_name = "run"
         self._start_date = None
@@ -623,6 +626,10 @@ class RVI(RV):
         if not isinstance(value, bool):
             raise ValueError
         self._suppress_output = value
+
+    @property
+    def routing_cmd(self):
+        return Routing(self.routing)
 
     @property
     def rain_snow_fraction(self):

@@ -6,7 +6,7 @@ import xarray as xr
 
 from .base import Ostrich, Raven
 from .commands import BasinIndexCommand
-from .rv import RV, RVC, RVH, RVI, RVP, RVT, MonthlyAverage, Ost, RavenNcData, HRU, HRUState, LU
+from .rv import RV, RVC, RVH, RVI, RVP, RVT, MonthlyAverage, Ost, RavenNcData, HRU, HRUState, LU, Sub
 
 __all__ = [
     "GR4JCN",
@@ -58,18 +58,36 @@ class GR4JCN(Raven):
         ("GR4J_X1", "GR4J_X2", "GR4J_X3", "GR4J_X4", "CEMANEIGE_X1", "CEMANEIGE_X2"),
     )
 
+    @dataclass
+    class LandHRU(HRU):
+        land_use_class: str = "LU_ALL"
+        veg_class: str = "VEG_ALL"
+        soil_profile: str = "DEFAULT_P"
+        aquifer_profile: str = "[NONE]"
+        terrain_class: str = "[NONE]"
+
+    @dataclass
+    class LakeHRU(HRU):
+        land_use_class: str = "LU_WATER"
+        veg_class: str = "VEG_WATER"
+        soil_profile: str = "LAKE"
+        aquifer_profile: str = "[NONE]"
+        terrain_class: str = "[NONE]"
+
     def __init__(self, *args, **kwds):
         super().__init__(*args, **kwds)
 
         self.rvp = RV(params=GR4JCN.params(None, None, None, None, None, None))
         self.rvt = RVT(**{k: nc() for k in std_vars})
         self.rvi = RVI(rain_snow_fraction="RAINSNOW_DINGMAN", evaporation="PET_OUDIN")
-        self.rvh = RV(
-            name=None, area=None, elevation=None, latitude=None, longitude=None
-        )
+        self.rvh = RVH(hrus=(GR4JCN.LandHRU(), ),
+                       subbasins=(Sub(subbasin_id=1,
+                                      downstream_id=-1,
+                                      profile="None",
+                                      gauged=True
+                                      ),))
 
         # Initialize the stores to 1/2 full. Declare the parameters that can be user-modified
-        # TODO: Is this really setting soil0 and soil1 ? I think it needs to be set inside HRUStateVariable.
         self.rvc = RVC(soil0=None, soil1=15, basin_state=BasinIndexCommand())
         self.rvd = RV(one_minus_CEMANEIGE_X2=None, GR4J_X1_hlf=None)
 
@@ -82,7 +100,8 @@ class GR4JCN(Raven):
             soil0 = self.rvd.GR4J_X1_hlf if self.rvc.soil0 is None else self.rvc.soil0
             soil1 = self.rvc.soil1
 
-            self.rvc.hru_state = HRUState(index=1, soil0=soil0, soil1=soil1)
+        for hru in self.rvh.hrus:
+            self.rvc.hru_states[hru.hru_id] = HRUState(index=hru.hru_id, soil0=soil0, soil1=soil1)
 
 
 class GR4JCN_OST(Ostrich, GR4JCN):

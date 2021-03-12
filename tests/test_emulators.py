@@ -19,7 +19,10 @@ from ravenpy.models import (
     MOHYSE_OST,
     Raven,
     Routing,
+    Sub
 )
+
+
 from ravenpy.models.commands import (
     GriddedForcingCommand,
     HRUStateVariableTableCommand,
@@ -59,6 +62,12 @@ def test_race():
     assert ost.rvi.suppress_output.startswith(":SuppressOutput")
 
 
+salmon_hru = dict(area="4250.6", elevation="843.0", latitude=54.4848, longitude=-123.3659)
+
+# something like that ?
+lake_hru = dict(area="1000", elevation="700", latitude=54, longitude=-123)
+
+
 class TestGR4JCN:
     def test_simple(self):
         model = GR4JCN(tempfile.mkdtemp())
@@ -68,11 +77,7 @@ class TestGR4JCN:
         model.rvi.run_name = "test"
 
         model.rvh.name = "Salmon"
-        model.rvh.area = "4250.6"
-        model.rvh.elevation = "843.0"
-        model.rvh.latitude = 54.4848
-        model.rvh.longitude = -123.3659
-
+        model.rvh.hrus = (GR4JCN.LandHRU(**salmon_hru), )
         model.rvt.pr.deaccumulate = False
 
         model.rvp.params = model.params(0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
@@ -92,6 +97,33 @@ class TestGR4JCN:
 
         # Check attributes
         assert model.hydrograph.attrs["model_id"] == "gr4jcn"
+
+    def test_routing(self):
+        """We need at least 2 subbasins to activate routing."""
+        model = GR4JCN("/tmp/test_gr4jcn_routing")
+
+        model.rvi.start_date = dt.datetime(2000, 1, 1)
+        model.rvi.end_date = dt.datetime(2001, 2, 1)
+        model.rvi.run_name = "test_routing"
+
+        model.rvh.name = "Salmon"
+        model.rvh.hrus = (GR4JCN.LandHRU(hru_id=1, subbasin_id=1, **salmon_hru),
+                          GR4JCN.LandHRU(hru_id=2, subbasin_id=2, **salmon_hru))
+        model.rvh.subbasins = (Sub(subbasin_id=1,
+                                   downstream_id=-1,
+                                   profile="None",
+                                   gauged=True),
+                               Sub(subbasin_id=2,
+                                   downstream_id=-1,
+                                   profile="None",
+                                   gauged=True,
+                                   ))
+        model.rvp.params = model.params(0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
+        model.rvp.avg_annual_runoff = 594
+        model.rvi.routing = "ROUTE_DIFFUSIVE_WAVE"
+        model(TS)
+        hds = model.q_sim
+        assert len(hds.nbasins == 2)
 
     def test_tags(self):
         model = GR4JCN(tempfile.mkdtemp())
