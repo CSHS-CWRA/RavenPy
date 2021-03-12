@@ -9,13 +9,14 @@ dependencies:
   - clisops>=0.5.1
   - fiona
   - gdal>=3.0.0
+  - geopandas>=0.9.0
   - lxml
   - matplotlib
   - numpy
   - owslib
   - pandas
   - pip
-  - pyproj
+  - pyproj>=3.0.0
   - rasterio
   - requests
   - rioxarray
@@ -24,4 +25,6 @@ dependencies:
   - xarray
   - xclim>=0.23
   - xskillscore
+  - pre-commit
+  - setuptools>50.0
   - wheel

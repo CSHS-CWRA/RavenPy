@@ -6,31 +6,26 @@ Created on Fri Jul 17 09:11:58 2020
 @author: ets
 """
 
-"""
-Tools for hydrological forecasting
-"""
-
 import datetime as dt
 import logging
 import re
 import warnings
 from pathlib import Path
+from typing import List, Tuple
 
-import climpred
+# import climpred
 import numpy as np
 import pandas as pd
 import xarray as xr
-from climpred import HindcastEnsemble, PerfectModelEnsemble
+from climpred import HindcastEnsemble
+
+from . import gis_import_error_message
 
 try:
     import rioxarray
     from clisops.core import subset
 except (ImportError, ModuleNotFoundError) as e:
-    msg = (
-        f"`{Path(__file__).stem}` requires installation of the RavenPy GIS libraries. These can be installed using the"
-        " `pip install ravenpy[gis]` recipe or via Anaconda (`conda env -n ravenpy-env -f environment.yml`)"
-        " from the RavenPy repository source files."
-    )
+    msg = gis_import_error_message.format(Path(__file__).stem)
     raise ImportError(msg) from e
 
 from ravenpy.models import get_model
@@ -84,7 +79,8 @@ def perform_forecasting_step(rvc, model, workdir=None, **kwds):
 
 
 def perform_climatology_esp(
-    model_name, forecast_date, forecast_duration, workdir=None, **kwds):
+    model_name, forecast_date, forecast_duration, workdir=None, **kwds
+):
     """
     This function takes the model setup and name as well as forecast data and duration and returns
     an ESP forecast netcdf. The data comes from the climatology data and thus there is a mechanism
@@ -207,8 +203,7 @@ def get_hindcast_day(region_coll, date, climate_model="GEPS"):
     all members.
 
     The code takes the region shapefile, the forecast date required, and the
-    climate_model to use, here GEPS by default, but eventually could be
-    GEPS, GDPS, REPS or RDPS.
+    climate_model to use, here GEPS by default, but eventually could be GEPS, GDPS, REPS or RDPS.
     """
 
     # Get the file locations and filenames as a function of the climate model and date
@@ -329,7 +324,7 @@ def get_subsetted_forecast(region_coll, ds, times, is_caspar):
 
     # Rioxarray requires CRS definitions for variables
     # Get CRS, e.g. 4326
-    crs = int(re.match("epsg:(\d+)", region_coll.crs["init"]).group(1))
+    crs = int(re.match(r"epsg:(\d+)", region_coll.crs["init"]).group(1))
 
     # Here the name of the variable could differ based on the Caspar file processing
     tas = ds.tas.rio.write_crs(crs)
@@ -337,7 +332,7 @@ def get_subsetted_forecast(region_coll, ds, times, is_caspar):
     ds = xr.merge([tas, pr])
 
     # Now apply the mask of the basin contour and average the values to get a single time series
-    if is_caspar == True:
+    if is_caspar:
         ds.rio.set_spatial_dims("rlon", "rlat")
         ds["rlon"] = ds["rlon"] - 360
         # clip the netcdf and average across space.
@@ -355,12 +350,13 @@ def get_subsetted_forecast(region_coll, ds, times, is_caspar):
 
     return forecast
 
-def make_climpred_hindcast_object(hindcast,observations):
+
+def make_climpred_hindcast_object(hindcast, observations):
     """
     This function takes a hindcasting dataset of streamflow as well as associated
-    observations and creates a hindcasting object that can be used by the 
+    observations and creates a hindcasting object that can be used by the
     climpred toolbox for hindcast verification.
-    
+
     Parameters
     ----------
     hindcast : xarray.Dataset
@@ -374,89 +370,105 @@ def make_climpred_hindcast_object(hindcast,observations):
       The hindcast ensemble formatted to be used in climpred.
 
     """
-    
+
     # Todo: Add verification that the variable names are the same
     # Todo: Add verification of sizes, catch and return message.
-    
+
     # Make the hindcastEnsemble object for the hindcast data
-    hindcast_obj=HindcastEnsemble(hindcast)
+    hindcast_obj = HindcastEnsemble(hindcast)
     # Add the observations to that hindcastEnsemble object for verification.
-    hindcast_obj=hindcast_obj.add_observations(observations)
-    
+    hindcast_obj = hindcast_obj.add_observations(observations)
+
     return hindcast_obj
 
-def make_ESP_hindcast_dataset(model_name,forecast_date, included_years,
-                              forecast_duration,**kwargs):
-    """
+
+def make_ESP_hindcast_dataset(
+    model_name, forecast_date, included_years, forecast_duration, **kwargs
+) -> Tuple[xr.Dataset, xr.Dataset]:
+    """Make a hindcast using ESP dataset.
+
     This function takes the required information to run a RAVEN model run in ESP
     mode, and runs RAVEN for a series of queried initialization dates. For each
-    requested date, it will perform an ESP forecast using all climate data at 
-    its disposal. Returns the hindcast and observations datasets required by 
-    climpred.
-    
+    requested date, it will perform an ESP forecast using all climate data at
+    its disposal. Returns the hindcast and observations datasets required by climpred.
+
     Parameters
     ----------
     model_name: string
-        Name of the RAVEN model setup (GR4JCN, MOHYSE, HMETS or HBVEC)
+      Name of the RAVEN model setup (GR4JCN, MOHYSE, HMETS or HBVEC).
     forecast_date: datetime.datetime
-        Calendar date that is used as the base to perform hindcasts. The year 
-        component is updated for each initialization date.
-    included_years: list of integers
-        the years that we want to perform a hindcasting for, on the calendar date
-        in "foreacast_date"
+      Calendar date that is used as the base to perform hindcasts.
+      The year component is updated for each initialization date.
+    included_years: List[int]
+      the years that we want to perform a hindcasting for, on the calendar date in "foreacast_date"
     forecast_duration: int
-        Duration of the forecast, in days. Refers to the longest lead-time required.
-    kwargs: All other parameters needed to run RAVEN.
-    
+      Duration of the forecast, in days. Refers to the longest lead-time required.
+    kwargs: dict
+      All other parameters needed to run RAVEN.
+
     Returns
     -------
-    qsims : xarray.Dataset
-        The dataset containing the (init, member, lead) dimensions ready for 
-        using in climpred. Here:
-            init = hindcast issue date
-            member = ESP members of the hindcasting experiment
-            lead = number of lead days of the forecast.
-    qobs : xarray.Dataset
-        The dataset containing all observations over the verification period. 
-        The only dimension is 'time', as required by climpred. No other processing
-        is required as climpred will find corresponding verification dates on its own.
+    xarray.Dataset
+      The dataset containing the (init, member, lead) dimensions ready for using in climpred. (qsim)
+    xarray.Dataset
+      The dataset containing all observations over the verification period.
+      The only dimension is 'time', as required by climpred. No other processing
+      is required as climpred will find corresponding verification dates on its own. (qobs)
+
+    Notes
+    -----
+    init = hindcast issue date
+    member = ESP members of the hindcasting experiment
+    lead = number of lead days of the forecast.
     """
 
     # Use the ESP functions to generate the ESP hindcasts for the first period (first initialization)
-    qsims=perform_climatology_esp(model_name, forecast_date.replace(year=included_years[0]), forecast_duration, **kwargs)
-    
+    qsims = perform_climatology_esp(
+        model_name,
+        forecast_date.replace(year=included_years[0]),
+        forecast_duration,
+        **kwargs,
+    )
+
     # climpred needs the 'time' variable name to be 'lead' for the hindcasts.
     # Also add the coordinates for the lead and member dimensions.
-    qsims=qsims.rename({'time':'lead'})
-    qsims=qsims.assign_coords(lead=list(range(1,forecast_duration+1)))
-    qsims=qsims.assign_coords(member=list(range(1,qsims.data.shape[0]+1)))
-    
+    qsims = qsims.rename({"time": "lead"})
+    qsims = qsims.assign_coords(lead=list(range(1, forecast_duration + 1)))
+    qsims = qsims.assign_coords(member=list(range(1, qsims.data.shape[0] + 1)))
+
     # Repeat the process for all hindcast years required. Could be parallelized by a pro!
     for i in included_years[1:]:
-        
-        qsims_tmp=perform_climatology_esp(model_name, forecast_date.replace(year=i), forecast_duration, **kwargs)
-        qsims_tmp=qsims_tmp.rename({'time':'lead'})
-        qsims_tmp=qsims_tmp.assign_coords(lead=list(range(1,forecast_duration+1)))
-        qsims_tmp=qsims_tmp.assign_coords(member=list(range(1,qsims_tmp.data.shape[0]+1)))
-        
-        # Concatenate in the 'init' dimension.
-        qsims=xr.concat([qsims,qsims_tmp],dim="init")
-    
-    # Make the list of hindcast dates for populating the 'init' dimension coordinates.
-    date_list=[forecast_date.replace(year=included_years[x]) for x in range(len(included_years))]
 
-    #Other processing required by climpred.
-    qsims=qsims.assign_coords(init=pd.to_datetime(date_list))
-    qsims=qsims.to_dataset(name="flow")
-    
-    #Here units are days and always will be!
-    qsims["lead"].attrs["units"]="days"
-    
+        qsims_tmp = perform_climatology_esp(
+            model_name, forecast_date.replace(year=i), forecast_duration, **kwargs
+        )
+        qsims_tmp = qsims_tmp.rename({"time": "lead"})
+        qsims_tmp = qsims_tmp.assign_coords(lead=list(range(1, forecast_duration + 1)))
+        qsims_tmp = qsims_tmp.assign_coords(
+            member=list(range(1, qsims_tmp.data.shape[0] + 1))
+        )
+
+        # Concatenate in the 'init' dimension.
+        qsims = xr.concat([qsims, qsims_tmp], dim="init")
+
+    # Make the list of hindcast dates for populating the 'init' dimension coordinates.
+    date_list = [
+        forecast_date.replace(year=included_years[x])
+        for x in range(len(included_years))
+    ]
+
+    # Other processing required by climpred.
+    qsims = qsims.assign_coords(init=pd.to_datetime(date_list))
+    qsims = qsims.to_dataset(name="flow")
+
+    # Here units are days and always will be!
+    qsims["lead"].attrs["units"] = "days"
+
     # Extract and prepare the observations for verification.
-    qobs=xr.open_dataset(kwargs["ts"]).qobs
-    
+    qobs = xr.open_dataset(kwargs["ts"]).qobs
+
     # The hindcast and observation variable names MUST be the same. Here we
     # use "flow" but it could be abything else, really.
-    qobs=qobs.to_dataset(name="flow")
-    
+    qobs = qobs.to_dataset(name="flow")
+
     return qsims, qobs

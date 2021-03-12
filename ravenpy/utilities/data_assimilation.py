@@ -4,6 +4,10 @@ Created on Sun Nov  1 20:48:03 2020
 @author: Richard
 """
 
+from copy import deepcopy
+
+import numpy as np
+import xarray as xr
 
 """
 model = Raven model instance, preset with parameters etc.
@@ -17,13 +21,6 @@ precip = standard deviation used to sample precip, uses gamma distribution (frac
 temperature = standard deviation used to sample temperature, normal dist (degrees Celcius)
 qobs = standard deviation used to sample observed streamflow, normal dist (fraction of observed value)
 """
-
-# import tempfile
-from copy import deepcopy
-# from pathlib import Path
-
-import numpy as np
-import xarray as xr
 
 
 """

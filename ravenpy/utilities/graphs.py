@@ -5,7 +5,6 @@ The following graphs can be plotted:
     - hydrograph
     - mean_annual_hydrograph
     - spaghetti_annual_hydrograph
-
 """
 
 import numpy as np
