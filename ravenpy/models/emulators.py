@@ -14,11 +14,13 @@ __all__ = [
     "HMETS",
     "HBVEC",
     "BLENDED",
+    "SACSMA",
     "GR4JCN_OST",
     "MOHYSE_OST",
     "HMETS_OST",
     "HBVEC_OST",
     "BLENDED_OST",
+    "SACSMA_OST",
     "get_model",
     "Routing",
 ]
@@ -440,6 +442,10 @@ class HBVEC_OST(Ostrich, HBVEC):
 
 
 class BLENDED(Raven):
+
+    # Details about blended model:
+    # https://doi.org/10.5194/hess-24-5835-2020
+
     identifier = "blended"
     templates = tuple((Path(__file__).parent / "raven-blended").glob("*.rv?"))
 
@@ -640,6 +646,158 @@ class BLENDED_OST(Ostrich, BLENDED):
         out = [ops[n] for n in names]
         return self.params(*out)
 
+class SACSMA(Raven):
+
+    # Details about SAC-SMA:
+    # https://wiki.ewater.org.au/display/SD41/Sacramento+Model+-+SRG
+
+    identifier = "sacsma"
+    templates = tuple((Path(__file__).parent / "raven-sacsma").glob("*.rv?"))
+
+    params = namedtuple(
+        "SACSMAParams", ", ".join(["par_x{:02}".format(i) for i in range(1, 22)])
+    )
+
+    @dataclass
+    class HRU(HRU):
+        land_use_class: str = "FOREST"
+        veg_class: str = "FOREST"
+        soil_profile: str = "DEFAULT_P"
+        aquifer_profile: str = "[NONE]"
+        terrain_class: str = "[NONE]"
+
+    def __init__(self, *args, **kwds):
+        super().__init__(*args, **kwds)
+        self.rvp = RVP(params=SACSMA.params(*((None,) * len(SACSMA.params._fields))),
+                       land_use_classes=(LU("FOREST", impermeable_frac=0.0, forest_coverage=0.02345),)
+                       )
+        self.rvh = RVH(hrus=(SACSMA.HRU(),))
+        self.rvt = RVT(**{k: nc() for k in std_vars})
+        self.rvi = RVI(evaporation="PET_OUDIN", rain_snow_fraction="RAINSNOW_DATA")  # would like to use RAINSNOW_HBV??
+        self.rvc = RVC(soil0=None, soil2=None, basin_state=BasinIndexCommand())
+        self.rvd = RV(
+            par_soil0_mm=None,
+            par_soil2_mm=None,
+            PAR_BF_LOSS_FRAC=None,
+            POW_X01=None,
+            POW_X02=None,
+            POW_X03=None,
+        )
+
+    def derived_parameters(self):
+        self.rvd["par_soil0_mm"] = self.rvp.params.par_x04 * 1000.0
+        self.rvd["par_soil2_mm"] = self.rvp.params.par_x06 * 1000.0
+        self.rvd[
+            "PAR_BF_LOSS_FRAC"
+        ] = self.rvp.params.par_x12  # PAR_BF_LOSS_FRAC = par_x12/(1+par_x12)
+        self.rvd[
+            "POW_X01"
+        ] = self.rvp.params.par_x01  # 10.0**self.rvp.params.par_x01  #
+        self.rvd[
+            "POW_X02"
+        ] = self.rvp.params.par_x02  # 10.0**self.rvp.params.par_x02  #
+        self.rvd[
+            "POW_X03"
+        ] = self.rvp.params.par_x03  # 10.0**self.rvp.params.par_x03  #
+
+        # Default initial conditions if none are given
+        if self.rvc.hru_state is None:
+            soil0 = (
+                self.rvd["par_soil0_mm"] if self.rvc.soil0 is None else self.rvc.soil0
+            )
+            soil2 = (
+                self.rvd["par_soil2_mm"] if self.rvc.soil2 is None else self.rvc.soil2
+            )
+            self.rvc.hru_state = HRUState(soil0=soil0, soil2=soil2)
+
+        self.rvt.raincorrection = self.rvp.params.par_x20
+        self.rvt.snowcorrection = self.rvp.params.par_x21
+
+
+class SACSMA_OST(Ostrich, SACSMA):
+    _p = Path(__file__).parent / "ostrich-sacsma"
+    templates = tuple(_p.glob("model/*.rv?")) + tuple(_p.glob("*.t??"))
+
+    def __init__(self, *args, **kwds):
+        super().__init__(*args, **kwds)
+        self.rvi.suppress_output = True
+        self.txt = Ost(
+            algorithm="DDS",
+            max_iterations=50,
+            lowerBounds=SACSMA.params(
+                None,       # 10**par_x01
+                None,       # 10**par_x02
+                None,       # 10**par_x03
+                None,       # par_x04
+                None,       # par_x05
+                None,       # par_x06
+                None,       # par_x07
+                None,       # par_x08
+                None,       # par_x09
+                None,       # par_x10
+                None,       # par_x11
+                None,       # par_x12/(1+par_x12)
+                None,       # par_x13
+                None,       # par_x14
+                None,       # par_x15
+                None,       # par_x16
+                None,       # par_x17
+                None,       # par_x18
+                None,       # par_x19
+                None,       # par_x20
+                None,       # par_x21
+            ),
+            upperBounds=SACSMA.params(
+                None,       # 10**par_x01
+                None,       # 10**par_x02
+                None,       # 10**par_x03
+                None,       # par_x04
+                None,       # par_x05
+                None,       # par_x06
+                None,       # par_x07
+                None,       # par_x08
+                None,       # par_x09
+                None,       # par_x10
+                None,       # par_x11
+                None,       # par_x12/(1+par_x12)
+                None,       # par_x13
+                None,       # par_x14
+                None,       # par_x15
+                None,       # par_x16
+                None,       # par_x17
+                None,       # par_x18
+                None,       # par_x19
+                None,       # par_x20
+                None,       # par_x21
+            ),
+        )
+
+    def derived_parameters(self):
+        """Derived parameters are computed by Ostrich."""
+        pass
+
+    def ost2raven(self, ops):
+        """Return a list of parameter names calibrated by Ostrich that match Raven's parameters.
+
+        Parameters
+        ----------
+        ops: dict
+          Optimal parameter set returned by Ostrich.
+
+        Returns
+        -------
+        SACSMAParams named tuple
+          Parameters expected by Raven.
+        """
+        names = ["par_x{:02}".format(i) for i in range(1, 22)]
+        names[0]  = "pow_x01"
+        names[1]  = "pow_x02"
+        names[2]  = "pow_x03"
+        names[11] = "par_bf_loss_frac"
+
+        out = [ops[n] for n in names]
+        return self.params(*out)
+
 
 class Routing(Raven):
     """Routing model - no hydrological modeling"""
@@ -683,7 +841,7 @@ def get_model(name):
     model_cls = getattr(emulators, name, None)
 
     if model_cls is None:
-        for m in [GR4JCN, MOHYSE, HMETS, HBVEC, BLENDED]:
+        for m in [GR4JCN, MOHYSE, HMETS, HBVEC, BLENDED, SACSMA]:
             if m.identifier == name:
                 model_cls = m
 
