@@ -693,5 +693,6 @@ class SnowCorrection(BaseValueCommand):
 
 class Routing(BaseValueCommand):
     """ROUTE_NONE, ROUTE_DIFFUSIVE_WAVE"""
+
     tag: str = "Routing"
     value: str = "ROUTE_NONE"

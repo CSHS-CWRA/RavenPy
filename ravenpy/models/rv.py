@@ -1,10 +1,10 @@
 import collections
 import datetime as dt
+from collections import namedtuple
 from dataclasses import dataclass
 from pathlib import Path
 from textwrap import dedent
 from typing import Dict, List, Tuple
-from collections import namedtuple
 
 import cftime
 import six
@@ -17,17 +17,17 @@ from .commands import (
     HRUsCommand,
     HRUStateVariableTableCommand,
     LandUseClassesCommand,
+    RainCorrection,
     RavenConfig,
     ReservoirCommand,
+    Routing,
     SBGroupPropertyMultiplierCommand,
+    SnowCorrection,
     SoilClassesCommand,
     SoilProfilesCommand,
     SubBasinGroupCommand,
     SubBasinsCommand,
     VegetationClassesCommand,
-    RainCorrection,
-    SnowCorrection,
-    Routing
 )
 
 HRU = HRUsCommand.Record

@@ -3,7 +3,7 @@ import os
 from .base import Ostrich, Raven
 from .emulators import *
 from .multimodel import RavenMultiModel
-from .rv import RV, RVI, HRU, HRUState, LU, Sub
+from .rv import HRU, LU, RV, RVI, HRUState, Sub
 
 _dir = os.path.abspath(os.path.dirname(__file__))
 
