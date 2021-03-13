@@ -61,12 +61,13 @@ def test_race():
     assert ost.rvi.suppress_output.startswith(":SuppressOutput")
 
 
-salmon_hru = dict(
-    area="4250.6", elevation="843.0", latitude=54.4848, longitude=-123.3659
+# salmon catchment is now split into land- and lake-part
+salmon_land_hru = dict(
+    area="2100.0", elevation="842.0", latitude=54.4848, longitude=-123.3659
 )
-
-# something like that ?
-lake_hru = dict(area="1000", elevation="700", latitude=54, longitude=-123)
+salmon_lake_hru = dict(
+    area="2150.6", elevation="839.0", latitude=54.0, longitude=-123.4
+)
 
 
 class TestGR4JCN:
@@ -78,7 +79,7 @@ class TestGR4JCN:
         model.rvi.run_name = "test"
 
         model.rvh.name = "Salmon"
-        model.rvh.hrus = (GR4JCN.LandHRU(**salmon_hru),)
+        model.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru),)
         model.rvt.pr.deaccumulate = False
 
         model.rvp.params = model.params(0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
@@ -112,21 +113,37 @@ class TestGR4JCN:
         model.rvi.end_date = dt.datetime(2001, 2, 1)
         model.rvi.run_name = "test_routing"
 
+        # Here we assume that each subbasin is exactly one HRU (that's a valid assumption)
+        # The entire watershed is upstream land (i.e. solid ground).
+        # Here: salmon_land_hru = hru_id=1 = subbasin_id=1.
+        #
+        # Just before the outlet there is a lake (i.e. pretty wet ground).
+        # The outlet of the lake is the outlet of the entire watershed.
+        # There is no land-hru downstream of that.
+        # Here: salmon_lake_hru = hru_id=2 = subbasin_id=2.
         model.rvh.name = "Salmon"
         model.rvh.hrus = (
-            GR4JCN.LandHRU(hru_id=1, subbasin_id=1, **salmon_hru),
-            GR4JCN.LandHRU(hru_id=2, subbasin_id=2, **salmon_hru),
+            GR4JCN.LandHRU(hru_id=1, subbasin_id=1, **salmon_land_hru),
+            GR4JCN.LakeHRU(hru_id=2, subbasin_id=2, **salmon_lake_hru),
         )
         model.rvh.subbasins = (
+            # gauged = True:
+            # Usually this output would only be written for user's convenience.
+            # There is usually no observation of streamflow available within
+            # catchments; only at the outlet. That's most commonly the reason
+            # why a catchment is defined as it is defined.
             Sub(
-                name="headwater",
+                name="upstream_land",
                 subbasin_id=1,
                 downstream_id=2,
                 profile="chn_1",
                 gauged=True,
             ),
+            # gauged = True:
+            # Since this is the outlet, this would usually be what we calibrate
+            # against (i.e. we try to match this to Qobs).
             Sub(
-                name="plains",
+                name="outlet_lake",
                 subbasin_id=2,
                 downstream_id=-1,
                 profile="chn_2",
@@ -181,8 +198,55 @@ class TestGR4JCN:
         model(TS)
         hds = model.q_sim
         assert len(hds.nbasins == 2)
-        # Sub1 flows into Sub2
-        np.testing.assert_array_less(hds.sel(nbasins=0), hds.sel(nbasins=1))
+
+        # Sub1 flows into Sub2 :: Sub1 < Sub2
+        # --> not necessarily; imagine the lake (sub2) is empty and
+        #     needs to be filled first before it will release water again...
+        # np.testing.assert_array_less(hds.sel(nbasins=0), hds.sel(nbasins=1))
+
+        # q_sim = array([[ 0.      , 80.007871],
+        #                [ 0.081907, 41.382373],
+        #                [ 0.276354,  3.680208],
+        #                ...,
+        #                [ 6.120611, 16.65698 ],
+        #                [ 6.100473, 14.913719],
+        #                [ 6.080387, 16.598288]])
+        np.testing.assert_almost_equal(
+            hds.sel(nbasins=0, time="2000-01-01"), 0.000000, 4
+        )
+        np.testing.assert_almost_equal(
+            hds.sel(nbasins=0, time="2000-01-02"), 0.081907, 4
+        )
+        np.testing.assert_almost_equal(
+            hds.sel(nbasins=0, time="2000-01-03"), 0.276354, 4
+        )
+        np.testing.assert_almost_equal(
+            hds.sel(nbasins=0, time="2001-01-30"), 6.120611, 4
+        )
+        np.testing.assert_almost_equal(
+            hds.sel(nbasins=0, time="2001-01-31"), 6.100473, 4
+        )
+        np.testing.assert_almost_equal(
+            hds.sel(nbasins=0, time="2001-02-01"), 6.080387, 4
+        )
+        np.testing.assert_almost_equal(
+            hds.sel(nbasins=1, time="2000-01-01"), 80.007871, 4
+        )
+        np.testing.assert_almost_equal(
+            hds.sel(nbasins=1, time="2000-01-02"), 41.382373, 4
+        )
+        np.testing.assert_almost_equal(
+            hds.sel(nbasins=1, time="2000-01-03"), 3.680208, 4
+        )
+        np.testing.assert_almost_equal(
+            hds.sel(nbasins=1, time="2001-01-30"), 16.656980, 4
+        )
+        np.testing.assert_almost_equal(
+            hds.sel(nbasins=1, time="2001-01-31"), 14.913719, 4
+        )
+        np.testing.assert_almost_equal(
+            hds.sel(nbasins=1, time="2001-02-01"), 16.598288, 4
+        )
 
     def test_tags(self):
         model = GR4JCN(tempfile.mkdtemp())
