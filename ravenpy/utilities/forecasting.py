@@ -141,8 +141,12 @@ def perform_climatology_esp(
     # So forecasts warm-up will be from day 1 in the dataset to the forecast date.
     kwds["end_date"] = forecast_date - dt.timedelta(days=1)
 
-    # Run model to get rvc file after warm-up using base meteo.
-    rvc = get_raven_states(model_name, workdir=workdir, **kwds)
+     # Get RVC file if it exists, else compute it.
+    if len(kwds['rvc']) > 0:
+       rvc=kwds.pop('rvc')
+    else:
+       # Run model to get rvc file after warm-up using base meteo
+       rvc = get_raven_states(model_name, workdir=workdir, **kwds)
 
     # We need to check which years are long enough (ex: wrapping years, 365-day forecast starting in
     # September 2015 will need data up to August 2016 at least)
