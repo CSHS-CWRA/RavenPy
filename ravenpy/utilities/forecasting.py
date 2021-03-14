@@ -10,25 +10,35 @@ Created on Fri Jul 17 09:11:58 2020
 Tools for hydrological forecasting
 """
 
-# TODO: Complete docstrings
-
 import datetime as dt
 import logging
 import re
 import warnings
-import pdb
-    
+from pathlib import Path
+
+import climpred
 import numpy as np
 import pandas as pd
-import rioxarray
 import xarray as xr
-from xclim import subset
-import climpred
 from climpred import HindcastEnsemble, PerfectModelEnsemble
+
+try:
+    import rioxarray
+    from clisops.core import subset
+except (ImportError, ModuleNotFoundError) as e:
+    msg = (
+        f"`{Path(__file__).stem}` requires installation of the RavenPy GIS libraries. These can be installed using the"
+        " `pip install ravenpy[gis]` recipe or via Anaconda (`conda env -n ravenpy-env -f environment.yml`)"
+        " from the RavenPy repository source files."
+    )
+    raise ImportError(msg) from e
+
 from ravenpy.models import get_model
 
 LOGGER = logging.getLogger("PYWPS")
 
+
+# TODO: Complete docstrings
 
 # This function gets model states after running the model (i.e. states at the end of the run).
 def get_raven_states(model, workdir=None, **kwds):

@@ -13,20 +13,36 @@ from re import search
 from string import ascii_letters
 from typing import Any, List, Optional, Sequence, Tuple, Union
 
-import fiona
-import fiona.crs
-import numpy as np
-import pyproj
-import rasterio
-import rasterio.mask
-import rasterio.vrt
-import rasterio.warp
-from affine import Affine
-from gdal import DEMProcessing
-from rasterio.crs import CRS
-from shapely.geometry import GeometryCollection, MultiPolygon, Polygon, mapping, shape
-from shapely.ops import transform
+try:
+    import fiona
+    import fiona.crs
+    import pyproj
+    import rasterio
+    import rasterio.mask
+    import rasterio.vrt
+    import rasterio.warp
+    from affine import Affine
+    from gdal import DEMProcessing
+    from rasterio.crs import CRS
+    from shapely.geometry import (
+        GeometryCollection,
+        MultiPolygon,
+        Polygon,
+        mapping,
+        shape,
+    )
+    from shapely.ops import transform
+except (ImportError, ModuleNotFoundError) as e:
+    msg = (
+        f"`{Path(__file__).stem}` requires installation of the RavenPy GIS libraries. These can be installed using the"
+        " `pip install ravenpy[gis]` recipe or via Anaconda (`conda env -n ravenpy-env -f environment.yml`)"
+        " from the RavenPy repository source files."
+    )
+    raise ImportError(msg) from e
 
+import numpy as np
+
+# FIXME: Changes for this file currently in RAVEN need to be ported here. Everything below this line is not current.
 LOGGER = logging.getLogger("RAVEN")
 
 # See: https://kokoalberti.com/articles/geotiff-compression-optimization-guide/

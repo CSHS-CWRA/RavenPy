@@ -3,13 +3,25 @@ channels:
 - conda-forge
 - defaults
 dependencies:
+  - affine
   - click
-  - gdal
+  - climpred>=2.1
+  - clisops>=0.5.1
+  - fiona
+  - gdal>=3.0.0
+  - lxml
   - matplotlib
+  - numpy
+  - owslib
+  - pandas
   - pip
+  - pyproj
   - rasterio
+  - requests
   - rioxarray
+  - shapely
   - statsmodels
   - xarray
-  - xclim>=0.22
+  - xclim>=0.23
+  - xskillscore
   - wheel

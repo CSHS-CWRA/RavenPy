@@ -3,12 +3,12 @@ Tools for hydrological regionalization
 """
 
 import logging
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 import xarray as xr
+from pathlib import Path
 
 from ravenpy.models import get_model
 

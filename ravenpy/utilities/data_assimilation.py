@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Sun Nov  1 20:48:03 2020
 
@@ -19,14 +18,13 @@ temperature = standard deviation used to sample temperature, normal dist (degree
 qobs = standard deviation used to sample observed streamflow, normal dist (fraction of observed value)
 """
 
-import tempfile
+# import tempfile
 from copy import deepcopy
-from pathlib import Path
+# from pathlib import Path
 
 import numpy as np
 import xarray as xr
 
-from ravenpy.models.state import HRU_NC_MAP
 
 """
 Suggestion:

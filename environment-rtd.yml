@@ -3,6 +3,7 @@ channels:
 - conda-forge
 - defaults
 dependencies:
+  - pip
   - pip:
     - .
     - sphinx-rtd-theme
@@ -13,7 +14,7 @@ dependencies:
   - rioxarray
   - statsmodels
   - xarray
-  - xclim
+  - xclim>=0.23
   - wheel
   - sphinx
   - nbsphinx

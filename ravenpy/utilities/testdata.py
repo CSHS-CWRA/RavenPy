@@ -69,7 +69,7 @@ def _get(
         urlretrieve(url, local_file)
         try:
             url = "/".join((github_url, "raw", branch, md5name.as_posix()))
-            LOGGER.info("Fetching remote file md5: %s" % fullname.as_posix())
+            LOGGER.info("Fetching remote file md5: %s" % md5name.as_posix())
             urlretrieve(url, md5file)
         except HTTPError as e:
             msg = f"{md5name.as_posix()} not found. Aborting file retrieval."

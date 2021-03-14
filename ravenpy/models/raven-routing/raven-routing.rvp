@@ -1,0 +1,20 @@
+# ----------------------------------------------
+# Raven Input file
+# Walkthrough #6: Grid-based routing example
+# ----------------------------------------------
+
+# Soil/Vegetation/Land use class definitions ------
+{soil_classes_cmd}
+
+{soil_profiles_cmd}
+
+# the vegetation and land use parameters unused in routing
+{vegetation_classes_cmd}
+
+{land_use_classes_cmd}
+
+# Global Parameters-----------------------------
+:AvgAnnualRunoff 		{avg_annual_runoff}
+
+# List of channel profiles
+{channel_profile_cmd_list}
