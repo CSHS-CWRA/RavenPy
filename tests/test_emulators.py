@@ -202,51 +202,30 @@ class TestGR4JCN:
         # Sub1 flows into Sub2 :: Sub1 < Sub2
         # --> not necessarily; imagine the lake (sub2) is empty and
         #     needs to be filled first before it will release water again...
-        # np.testing.assert_array_less(hds.sel(nbasins=0), hds.sel(nbasins=1))
 
-        # q_sim = array([[ 0.      , 80.007871],
-        #                [ 0.081907, 41.382373],
-        #                [ 0.276354,  3.680208],
-        #                ...,
-        #                [ 6.120611, 16.65698 ],
-        #                [ 6.100473, 14.913719],
-        #                [ 6.080387, 16.598288]])
-        np.testing.assert_almost_equal(
-            hds.sel(nbasins=0, time="2000-01-01"), 0.000000, 4
+        dates = (
+            "2000-01-01",
+            "2000-01-02",
+            "2000-01-03",
+            "2001-01-30",
+            "2001-01-31",
+            "2001-02-01",
         )
-        np.testing.assert_almost_equal(
-            hds.sel(nbasins=0, time="2000-01-02"), 0.081907, 4
+        q_sim = np.asarray(
+            [
+                [0.0, 80.007871],
+                [0.081907, 41.382373],
+                [0.276354, 3.680208],
+                [6.120611, 16.65698],
+                [6.100473, 14.913719],
+                [6.080387, 16.598288],
+            ]
         )
-        np.testing.assert_almost_equal(
-            hds.sel(nbasins=0, time="2000-01-03"), 0.276354, 4
-        )
-        np.testing.assert_almost_equal(
-            hds.sel(nbasins=0, time="2001-01-30"), 6.120611, 4
-        )
-        np.testing.assert_almost_equal(
-            hds.sel(nbasins=0, time="2001-01-31"), 6.100473, 4
-        )
-        np.testing.assert_almost_equal(
-            hds.sel(nbasins=0, time="2001-02-01"), 6.080387, 4
-        )
-        np.testing.assert_almost_equal(
-            hds.sel(nbasins=1, time="2000-01-01"), 80.007871, 4
-        )
-        np.testing.assert_almost_equal(
-            hds.sel(nbasins=1, time="2000-01-02"), 41.382373, 4
-        )
-        np.testing.assert_almost_equal(
-            hds.sel(nbasins=1, time="2000-01-03"), 3.680208, 4
-        )
-        np.testing.assert_almost_equal(
-            hds.sel(nbasins=1, time="2001-01-30"), 16.656980, 4
-        )
-        np.testing.assert_almost_equal(
-            hds.sel(nbasins=1, time="2001-01-31"), 14.913719, 4
-        )
-        np.testing.assert_almost_equal(
-            hds.sel(nbasins=1, time="2001-02-01"), 16.598288, 4
-        )
+        for t in range(6):
+            for b in range(2):
+                np.testing.assert_almost_equal(
+                    hds.sel(nbasins=b, time=dates[t]), q_sim[t][b], 4
+                )
 
     def test_tags(self):
         model = GR4JCN(tempfile.mkdtemp())
