@@ -56,8 +56,6 @@ class TestClimpredHindcastVerification:
         crps_verif=hindcast_object.verify(metric='crps', comparison='m2o', dim=['member','init'], alignment='same_inits')
         reliability_verif=hindcast_object.verify(metric='reliability', comparison='m2o', dim=['member','init'], alignment='same_inits', logical=pos)
 
-        import pdb
-        pdb.set_trace()
         assert 'flow' in rank_histo_verif
         assert 'flow' in crps_verif
         assert 'flow' in reliability_verif
