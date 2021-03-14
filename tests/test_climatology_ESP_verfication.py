@@ -19,7 +19,7 @@ class TestClimpredHindcastVerification:
         params = (0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
         forecast_duration=3
         ts=get_local_testdata("raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc")
-        
+        rvc=get_local_testdata("gr4j_cemaneige/solution.rvc")
         # Make the hindcasts for each initialization date. Here we will extract
         # ESP forecasts for a given calendar date for the years in "included_years"
         # as hindcast dates. Each ESP hindcast uses all available data in the ts dataset,
@@ -39,6 +39,7 @@ class TestClimpredHindcastVerification:
                                                  latitude=54.4848,
                                                  longitude=-123.3659,
                                                  params=params,
+                                                 rvc=str(rvc),
                                                  )
         
         
@@ -55,6 +56,8 @@ class TestClimpredHindcastVerification:
         crps_verif=hindcast_object.verify(metric='crps', comparison='m2o', dim=['member','init'], alignment='same_inits')
         reliability_verif=hindcast_object.verify(metric='reliability', comparison='m2o', dim=['member','init'], alignment='same_inits', logical=pos)
 
+        import pdb
+        pdb.set_trace()
         assert 'flow' in rank_histo_verif
         assert 'flow' in crps_verif
         assert 'flow' in reliability_verif
