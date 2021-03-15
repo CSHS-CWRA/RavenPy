@@ -270,6 +270,86 @@ class GriddedForcingCommand(RavenConfig):
 
 
 @dataclass
+class StationForcingCommand(RavenConfig):
+    """StationForcing command (RVT)."""
+
+    @dataclass
+    class GridWeightsCommand(RavenConfig):
+        """GridWeights command."""
+
+        number_hrus: int = 0
+        number_stations: int = 0
+        data: Tuple[Tuple[int, int, float]] = ()
+
+        template = """
+        {indent}:GridWeights
+        {indent}    :NumberHRUs {number_hrus}
+        {indent}    :NumberStations {number_stations}
+        {data}
+        {indent}:EndGridWeights
+        """
+
+        @classmethod
+        def parse(cls, s):
+            pat = r"""
+            :GridWeights
+                :NumberHRUs (\d+)
+                :NumberStations (\d+)
+                (.+)
+            :EndGridWeights
+            """
+            m = re.match(dedent(pat).strip(), s, re.DOTALL)
+            n_hrus, n_stations, data = m.groups()
+            data = [d.strip().split() for d in data.split("\n")]
+            data = tuple((int(h), int(c), float(w)) for h, c, w in data)
+            return cls(
+                number_hrus=int(n_hrus), number_stations=int(n_stations), data=data
+            )
+
+        def to_rv(self, indent_level=0):
+            indent = INDENT * indent_level
+            d = asdict(self)
+            d["indent"] = indent
+            d["data"] = "\n".join(
+                f"{indent}    {p[0]} {p[1]} {p[2]}" for p in self.data
+            )
+            return dedent(self.template).strip().format(**d)
+
+    name: str = ""
+    forcing_type: str = ""
+    file_name_nc: str = ""
+    var_name_nc: str = ""
+    dim_names_nc: Tuple[str, str] = ("station", "time")
+    time_shift: Optional[int] = None  # in days
+    linear_transform: Optional[Tuple[float, float]] = None
+    grid_weights: GridWeightsCommand = None
+
+    template = """
+    :StationForcing {name}
+        :ForcingType {forcing_type}
+        :FileNameNC {file_name_nc}
+        :VarNameNC {var_name_nc}
+        :DimNamesNC {dim_names_nc}
+        {time_shift}
+        {linear_transform}
+        {grid_weights}
+    :EndStationForcing
+    """
+
+    def to_rv(self):
+        d = asdict(self)
+        d["dim_names_nc"] = " ".join(self.dim_names_nc)
+        d["time_shift"] = f":TimeShift {self.time_shift}" if self.time_shift else ""
+        if self.linear_transform:
+            slope, intercept = self.linear_transform
+            d["linear_transform"] = f":LinearTransform {slope} {intercept}"
+        else:
+            d["linear_transform"] = ""
+        d["grid_weights"] = self.grid_weights.to_rv(indent_level=1)
+        return dedent(self.template).format(**d)
+
+
+@dataclass
 class BaseValueCommand(RavenConfig):
     """BaseValueCommand."""
 
