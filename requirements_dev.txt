@@ -1,5 +1,6 @@
 pip
 bump2version
+setuptools
 wheel
 watchdog
 flake8
@@ -13,3 +14,6 @@ Click
 pytest
 pytest-runner
 pytest-cov
+black
+isort
+pre-commit

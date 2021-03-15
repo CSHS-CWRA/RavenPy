@@ -14,7 +14,7 @@ class RavenConfig:
 
 @dataclass
 class SubBasinsCommand(RavenConfig):
-    """:SubBasins command (RVH)."""
+    """SubBasins command (RVH)."""
 
     @dataclass
     class Record(RavenConfig):
@@ -50,18 +50,18 @@ class SubBasinsCommand(RavenConfig):
 
 @dataclass
 class HRUsCommand(RavenConfig):
-    """:HRUs command (RVH)."""
+    """HRUs command (RVH)."""
 
     @dataclass
     class Record(RavenConfig):
         """Record to populate :HRUs command internal table (RVH)."""
 
-        hru_id: int = 0
+        hru_id: int = 1
         area: float = 0  # km^2
         elevation: float = 0  # meters
         latitude: float = 0
         longitude: float = 0
-        subbasin_id: int = 0
+        subbasin_id: int = 1
         land_use_class: str = ""
         veg_class: str = ""
         soil_profile: str = ""
@@ -91,7 +91,7 @@ class HRUsCommand(RavenConfig):
 
 @dataclass
 class ReservoirCommand(RavenConfig):
-    """:Reservoir command (RVH)."""
+    """Reservoir command (RVH)."""
 
     subbasin_id: int = 0
     hru_id: int = 0
@@ -120,7 +120,7 @@ class ReservoirCommand(RavenConfig):
 
 @dataclass
 class SubBasinGroupCommand(RavenConfig):
-    """:SubBasinGroup command (RVH)."""
+    """SubBasinGroup command (RVH)."""
 
     name: str = ""
     subbasin_ids: Tuple[int] = ()
@@ -158,7 +158,7 @@ class SBGroupPropertyMultiplierCommand(RavenConfig):
 
 @dataclass
 class ChannelProfileCommand(RavenConfig):
-    """:ChannelProfile command (RVP)."""
+    """ChannelProfile command (RVP)."""
 
     name: str = "chn_XXX"
     bed_slope: float = 0
@@ -190,7 +190,7 @@ class ChannelProfileCommand(RavenConfig):
 
 @dataclass
 class GridWeightsCommand(RavenConfig):
-    """:GridWeights command."""
+    """GridWeights command."""
 
     number_hrus: int = 0
     number_grid_cells: int = 0
@@ -206,7 +206,7 @@ class GridWeightsCommand(RavenConfig):
 
     @classmethod
     def parse(cls, s):
-        pat = """
+        pat = r"""
         :GridWeights
             :NumberHRUs (\d+)
             :NumberGridCells (\d+)
@@ -231,7 +231,7 @@ class GridWeightsCommand(RavenConfig):
 
 @dataclass
 class GriddedForcingCommand(RavenConfig):
-    """:GriddedForcing command (RVT)."""
+    """GriddedForcing command (RVT)."""
 
     name: str = ""
     forcing_type: str = ""
@@ -269,10 +269,16 @@ class GriddedForcingCommand(RavenConfig):
 
 @dataclass
 class BaseValueCommand(RavenConfig):
+    """BaseValueCommand."""
+
     tag: str = ""
     value: Any = None
 
     template = ":{tag} {value}"
+
+    # Overloading init to freeze the tag.
+    def __init__(self, value):
+        self.value = value
 
     def to_rv(self):
         return self.template.format(**asdict(self))
@@ -668,3 +674,13 @@ class ObservationDataCommand(RavenConfig):
         dns = d["dim_names_nc"]
         d["dim_names_nc"] = f"{dns[0]} {dns[1]}"
         return dedent(self.template).format(**d)
+
+
+class RainCorrection(BaseValueCommand):
+    tag: str = "RainCorrection"
+    value: float = 1.0
+
+
+class SnowCorrection(BaseValueCommand):
+    tag: str = "SnowCorrection"
+    value: float = 1.0

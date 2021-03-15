@@ -1,20 +1,21 @@
 """
-Working assumptions for this module
------------------------------------
+GeoServer interaction operations.
 
+Working assumptions for this module:
 * Point coordinates are passed as shapely.geometry.Point instances.
 * BBox coordinates are passed as (lon1, lat1, lon2, lat2).
-* Shapes (polygons) are passed as ?
-* All functions that require a CRS have a CRS argument with a default set to WSG84.
-* GEO_URL points to the GeoSever hosting all files.
+* Shapes (polygons) are passed as shapely.geometry.shape parsable objects.
+* All functions that require a CRS have a CRS argument with a default set to WGS84.
+* GEO_URL points to the GeoServer instance hosting all files.
 
 """
-import collections
 from pathlib import Path
-from typing import Iterable, List, Optional, Sequence, Tuple, Union
+from typing import Iterable, Optional, Sequence, Tuple, Union
 from urllib.parse import urljoin
 
 from requests import Request
+
+from . import gis_import_error_message
 
 try:
     import fiona
@@ -25,14 +26,8 @@ try:
     from owslib.wfs import WebFeatureService
     from shapely.geometry import Point, shape
 except (ImportError, ModuleNotFoundError) as e:
-    msg = (
-        f"`{Path(__file__).stem}` requires installation of the RavenPy GIS libraries. These can be installed using the"
-        " `pip install ravenpy[gis]` recipe or via Anaconda (`conda env -n ravenpy-env -f environment.yml`)"
-        " from the RavenPy repository source files."
-    )
+    msg = gis_import_error_message.format(Path(__file__).stem)
     raise ImportError(msg) from e
-
-from ravenpy.utils import crs_sniffer, single_file_check
 
 # Do not remove the trailing / otherwise `urljoin` will remove the geoserver path.
 GEO_URL = "http://pavics.ouranos.ca/geoserver/"
@@ -68,7 +63,7 @@ def _get_location_wfs(
     layer : str
       The WFS/WMS layer name requested.
     geoserver: str
-      The address of the geoserver housing the layer to be queried. Default: http://boreas.ouranos.ca/geoserver.
+      The address of the geoserver housing the layer to be queried. Default: http://pavics.ouranos.ca/geoserver/.
 
     Returns
     -------
@@ -103,7 +98,7 @@ def _get_feature_attributes_wfs(
     value: Union[str, float, int]
       Value for attribute queried.
     geoserver: str
-      The address of the geoserver housing the layer to be queried. Default: http://boreas.ouranos.ca/geoserver.
+      The address of the geoserver housing the layer to be queried. Default: http://pavics.ouranos.ca/geoserver/.
 
     Returns
     -------
@@ -112,7 +107,7 @@ def _get_feature_attributes_wfs(
 
     """
     if attribute is None or value is None:
-        raise NotImplementedError
+        raise NotImplementedError()
 
     try:
         attribute = str(attribute)
@@ -168,12 +163,19 @@ def _determine_upstream_ids(
     def upstream_ids(bdf, bid):
         return bdf[bdf[downstream_field] == bid][basin_field]
 
-    sub = None
+    # Note: Hydro Routing `SubId` is a float for some reason and Python float != GeoServer double. Cast them to int.
+    if isinstance(fid, float):
+        fid = int(fid)
+        df[basin_field] = df[basin_field].astype(int)
+        df[downstream_field] = df[downstream_field].astype(int)
+
     # Locate the downstream feature
     ds = df.set_index(basin_field).loc[fid]
     if basin_family is not None:
         # Do a first selection on the main basin ID of the downstream feature.
         sub = df[df[basin_family] == ds[basin_family]]
+    else:
+        sub = None
 
     # Find upstream basins
     up = [fid]
@@ -182,82 +184,11 @@ def _determine_upstream_ids(
         if len(tmp):
             up.extend(tmp)
 
-    return sub[sub[basin_field].isin(up)]
-
-
-def feature_contains(
-    point: Union[Tuple[Union[int, float, str], Union[str, float, int]], Point],
-    shp: Union[str, Path, List[Union[str, Path]]],
-) -> Union[dict, bool]:
-    """Return the first feature containing a location.
-
-    Parameters
-    ----------
-    point : Union[Tuple[Union[int, float, str], Union[str, float, int]], Point]
-      Geographic coordinates of a point (lon, lat) or a shapely Point.
-    shp : Union[str, Path, List[str, Path]]
-      Path to the file storing the geometries.
-
-    Returns
-    -------
-    Union[dict, bool]
-      The feature found.
-
-    Notes
-    -----
-    This is really slow. Another approach is to use the `fiona.Collection.filter` method.
-    """
-
-    if isinstance(point, collections.abc.Sequence) and not isinstance(point, str):
-        for coord in point:
-            if isinstance(coord, (int, float)):
-                pass
-        point = Point(point)
-    elif isinstance(point, Point):
-        pass
-    else:
-        raise ValueError(
-            f"point should be shapely.Point or tuple of coordinates, got : {point} of type({type(point)})"
-        )
-
-    shape_crs = crs_sniffer(single_file_check(shp))
-
-    if isinstance(shp, list):
-        shp = shp[0]
-
-    for i, layer_name in enumerate(fiona.listlayers(str(shp))):
-        with fiona.open(shp, "r", crs=shape_crs, layer=i) as vector:
-            for f in vector.filter(bbox=(point.x, point.y, point.x, point.y)):
-                return f
-
-    return False
-
-
-def get_bbox(vector: Union[str, Path], all_features: bool = True) -> tuple:
-    """Return bounding box of all features or the first feature in file.
-
-    Parameters
-    ----------
-    vector : str
-      Path to file storing vector features.
-    all_features : bool
-      Return the bounding box for all features. Default: True.
-
-    Returns
-    -------
-    tuple
-      Geographic coordinates of the bounding box (lon0, lat0, lon1, lat1).
-
-    """
-
-    if not all_features:
-        with fiona.open(vector, "r") as src:
-            for feature in src:
-                geom = shape(feature["geometry"])
-                return geom.bounds
-
-    with fiona.open(vector, "r") as src:
-        return src.bounds
+    return (
+        sub[sub[basin_field].isin(up)]
+        if sub is not None
+        else df[df[basin_field].isin(up)]
+    )
 
 
 def get_raster_wcs(
@@ -278,9 +209,9 @@ def get_raster_wcs(
     geographic : bool
       If True, uses "Long" and "Lat" in WCS call. Otherwise uses "E" and "N".
     layer : str
-      Layer name of raster exposed on GeoServer instance. E.g. 'public:CEC_NALCMS_LandUse_2010'
+      Layer name of raster exposed on GeoServer instance, e.g. 'public:CEC_NALCMS_LandUse_2010'
     geoserver: str
-      The address of the geoserver housing the layer to be queried. Default: http://boreas.ouranos.ca/geoserver.
+      The address of the geoserver housing the layer to be queried. Default: http://pavics.ouranos.ca/geoserver/.
 
     Returns
     -------
@@ -302,7 +233,7 @@ def get_raster_wcs(
             identifier=[layer],
             format="image/tiff",
             subsets=[(x, left, right), (y, down, up)],
-            timeout=120
+            timeout=120,
         )
 
     except Exception as e:
@@ -416,7 +347,7 @@ def select_hybas_domain(
             for _ in coll.filter(bbox=bbox):
                 return dom
 
-    raise LookupError(f"Could not find feature containing bbox {bbox}.")
+    raise LookupError(f"Could not find feature containing bbox: {bbox}.")
 
 
 def get_hydrobasins_attributes_wfs(
@@ -445,7 +376,7 @@ def get_hydrobasins_attributes_wfs(
     domain : str
       The domain of the HydroBASINS data. Possible values:"na", "ar".
     geoserver: str
-      The address of the geoserver housing the layer to be queried. Default: http://boreas.ouranos.ca/geoserver.
+      The address of the geoserver housing the layer to be queried. Default: http://pavics.ouranos.ca/geoserver/.
 
     Returns
     -------
@@ -453,7 +384,7 @@ def get_hydrobasins_attributes_wfs(
       URL to the GeoJSON-encoded WFS response.
 
     """
-    layer = f"public:USGS_HydroBASINS_{'lake_' if lakes else ''}{domain}_lev{level}"
+    layer = f"public:USGS_HydroBASINS_{'lake_' if lakes else ''}{domain}_lev{str(level).zfill(2)}"
     q = _get_feature_attributes_wfs(
         attribute=attribute, value=value, layer=layer, geoserver=geoserver
     )
@@ -463,7 +394,7 @@ def get_hydrobasins_attributes_wfs(
 
 def get_hydrobasins_location_wfs(
     coordinates: Tuple[
-        Union[int, float, str],
+        Union[str, float, int],
         Union[str, float, int],
         Union[str, float, int],
         Union[str, float, int],
@@ -489,7 +420,7 @@ def get_hydrobasins_location_wfs(
     domain : str
       The domain of the HydroBASINS data. Possible values:"na", "ar".
     geoserver: str
-      The address of the geoserver housing the layer to be queried. Default: http://boreas.ouranos.ca/geoserver.
+      The address of the geoserver housing the layer to be queried. Default: http://pavics.ouranos.ca/geoserver/.
 
     Returns
     -------
@@ -497,7 +428,7 @@ def get_hydrobasins_location_wfs(
       A GML-encoded vector feature.
 
     """
-    layer = f"public:USGS_HydroBASINS_{'lake_' if lakes else ''}{domain}_lev{level}"
+    layer = f"public:USGS_HydroBASINS_{'lake_' if lakes else ''}{domain}_lev{str(level).zfill(2)}"
     data = _get_location_wfs(coordinates, layer=layer, geoserver=geoserver)
 
     return data
@@ -506,17 +437,45 @@ def get_hydrobasins_location_wfs(
 # ~~~~ Hydro Routing ~~~~ #
 
 
+def hydro_routing_aggregate(gdf: pd.DataFrame) -> pd.Series:
+    """Aggregate multiple hydro routing watersheds into a single geometry.
+
+    Parameters
+    ----------
+    gdf : pd.DataFrame
+      Watershed attributes indexed by HYBAS_ID
+
+    Returns
+    -------
+    pd.Series
+    """
+
+    # TODO: @huard this needs to be discussed/reviewed. Dependent on ingesting the entire dataset. Very slow.
+    def aggfunc(x):
+        if x.name in ["area"]:
+            return x.sum()
+        elif x.name in ["MeanElev"]:
+            return x.mean()
+        else:
+            return x[0]
+
+    # Buffer function to fix invalid geometries
+    gdf["geometry"] = gdf.buffer(0)
+
+    return gdf.dissolve(aggfunc=aggfunc)
+
+
 def hydro_routing_upstream_ids(
-    fid: str,
+    fid: Union[str, float, int],
     df: pd.DataFrame,
     basin_field="SubId",
     downstream_field="DowSubId",
 ) -> pd.Series:
-    """Return a list of hydrobasins features located upstream.
+    """Return a list of hydro routing features located upstream.
 
     Parameters
     ----------
-    fid : str
+    fid : Union[str, float, int]
       Basin feature ID code of the downstream feature.
     df : pd.DataFrame
       Watershed attributes.
@@ -563,7 +522,7 @@ def get_hydro_routing_attributes_wfs(
     lakes : bool
       Query the version of dataset with lakes under 1km in width removed ("1km") or return all lakes ("all").
     geoserver: str
-      The address of the geoserver housing the layer to be queried. Default: http://boreas.ouranos.ca/geoserver.
+      The address of the geoserver housing the layer to be queried. Default: http://pavics.ouranos.ca/geoserver/.
 
     Returns
     -------
@@ -571,7 +530,7 @@ def get_hydro_routing_attributes_wfs(
       URL to the GeoJSON-encoded WFS response.
 
     """
-    layer = f"public:routing_{lakes}Lake_{level}"
+    layer = f"public:routing_{lakes}Lakes_{str(level).zfill(2)}"
     q = _get_feature_attributes_wfs(
         attribute=attribute, value=value, layer=layer, geoserver=geoserver
     )
@@ -604,7 +563,7 @@ def get_hydro_routing_location_wfs(
     level : int
       Level of granularity requested for the lakes vector (range(7,13)). Default: 12.
     geoserver: str
-      The address of the geoserver housing the layer to be queried. Default: http://boreas.ouranos.ca/geoserver.
+      The address of the geoserver housing the layer to be queried. Default: http://pavics.ouranos.ca/geoserver/.
 
     Returns
     -------
@@ -612,7 +571,7 @@ def get_hydro_routing_location_wfs(
       A GML-encoded vector feature.
 
     """
-    layer = f"public:routing_{lakes}Lakes_{level}"
+    layer = f"public:routing_{lakes}Lakes_{str(level).zfill(2)}"
     data = _get_location_wfs(coordinates, layer=layer, geoserver=geoserver)
 
     return data

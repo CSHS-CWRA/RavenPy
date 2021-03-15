@@ -18,8 +18,8 @@ except (ImportError, ModuleNotFoundError) as e:
 
 import netCDF4 as nc4
 import numpy as np
-# import xarray
 
+from . import grid_weight_importer_params
 from .commands import (
     ChannelProfileCommand,
     GridWeightsCommand,
@@ -27,6 +27,9 @@ from .commands import (
     ReservoirCommand,
     SubBasinsCommand,
 )
+
+# import xarray
+
 
 HRU_ASPECT_CONVENTION = "GRASS"  # GRASS | ArcGIS
 
@@ -123,9 +126,9 @@ class RoutingProductShapefileImporter:
         subbasin_id = int(row["SubId"])
         # is_lake = row["HRU_IsLake"] >= 0
         river_length_in_kms = 0 if is_lake else round(row["Rivlen"] / 1000, 5)
-        river_slope = max(
-            row["RivSlope"], RoutingProductShapefileImporter.MAX_RIVER_SLOPE
-        )
+        # river_slope = max(
+        #     row["RivSlope"], RoutingProductShapefileImporter.MAX_RIVER_SLOPE
+        # )
         # downstream_id
         downstream_id = int(row["DowSubId"])
         if downstream_id == subbasin_id:
@@ -265,24 +268,18 @@ class RoutingProductGridWeightImporter:
 
     CRS_LLDEG = 4326  # EPSG id of lat/lon (deg) coordinate reference system (CRS)
     CRS_CAEA = 3573  # EPSG id of equal-area coordinate reference system (CRS)
-    ROUTING_ID_FIELD = "HRU_ID"
-    NETCDF_INPUT_FIELD = "NetCDF_col"
-    # Renamed because xarray doesn't like when they're the same as vars
-    DIM_NAMES = ("lon_dim", "lat_dim")
-    VAR_NAMES = ("lon", "lat")
-    AREA_ERROR_THRESHOLD = 0.05
 
     def __init__(
         self,
         input_file_path,
         routing_file_path,
-        dim_names=DIM_NAMES,
-        var_names=VAR_NAMES,
-        routing_id_field=ROUTING_ID_FIELD,
-        netcdf_input_field=NETCDF_INPUT_FIELD,
+        dim_names=grid_weight_importer_params["DIM_NAMES"],
+        var_names=grid_weight_importer_params["VAR_NAMES"],
+        routing_id_field=grid_weight_importer_params["ROUTING_ID_FIELD"],
+        netcdf_input_field=grid_weight_importer_params["NETCDF_INPUT_FIELD"],
         gauge_ids=None,
         sub_ids=None,
-        area_error_threshold=AREA_ERROR_THRESHOLD,
+        area_error_threshold=grid_weight_importer_params["AREA_ERROR_THRESHOLD"],
     ):
         self._dim_names = tuple(dim_names)
         self._var_names = tuple(var_names)
@@ -427,7 +424,7 @@ class RoutingProductGridWeightImporter:
             enve_basin = poly.GetEnvelope()
 
             area_all = 0.0
-            ncells = 0
+            # ncells = 0
 
             row_grid_weights = []
 
@@ -445,7 +442,7 @@ class RoutingProductGridWeightImporter:
                     if not grid_is_close:
                         continue
 
-                    grid_cell_area = grid_cell_geom_gpd_wkt[ilat][ilon].Area()
+                    # grid_cell_area = grid_cell_geom_gpd_wkt[ilat][ilon].Area()
 
                     # "fake" buffer to avoid invalid polygons and weirdos dumped by ArcGIS
                     inter = grid_cell_geom_gpd_wkt[ilat][ilon].Intersection(

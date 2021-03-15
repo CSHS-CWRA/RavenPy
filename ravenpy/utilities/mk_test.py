@@ -3,6 +3,7 @@
 Created on Wed Jul 29 09:16:06 2015
 @author: Michael Schramm
 """
+from typing import Tuple
 
 import numpy as np
 from scipy.stats import norm
@@ -10,8 +11,9 @@ from scipy.stats import norm
 # TODO: This utility is written in python2 and will fail in python3 (e.g. no xrange)
 
 
-def mk_test_calc(x, alpha=0.05):
-    """
+def mk_test_calc(x: np.array, alpha: float = 0.05) -> Tuple[str, float, float, float]:
+    """make test calculation.
+
     This function is derived from code originally posted by Sat Kumar Tomer
     (satkumartomer@gmail.com)
     See also: http://vsp.pnnl.gov/help/Vsample/Design_Trend_Mann_Kendall.htm
@@ -29,18 +31,29 @@ def mk_test_calc(x, alpha=0.05):
     viewed as an exploratory analysis and is most appropriately used to
     identify stations where changes are significant or of large magnitude and
     to quantify these findings.
-    Input:
-        x:   a vector of data
-        alpha: significance level (0.05 default)
-    Output:
-        trend: tells the trend (increasing, decreasing or no trend)
-        h: True (if trend is present) or False (if trend is absence)
-        p: p value of the significance test
-        z: normalized test statistics
+
+    Parameters
+    ----------
+    x: np.array
+      a vector of data.
+    alpha: float
+      significance level (0.05 default)
+
+    Returns
+    -------
+    Tuple[str, float, float, float]
+
+    Notes
+    -----
+    trend: tells the trend (increasing, decreasing or no trend)
+    h: True (if trend is present) or False (if trend is absence)
+    p: p value of the significance test
+    z: normalized test statistics
+
     Examples
     --------
-      >>> x = np.random.rand(100)
-      >>> trend,h,p,z = mk_test(x,0.05)
+    >>> x = np.random.rand(100)
+    >>> trend, h, p, z = mk_test(x,0.05)
     """
     n = len(x)
 
@@ -75,18 +88,28 @@ def mk_test_calc(x, alpha=0.05):
     h = abs(z) > norm.ppf(1 - alpha / 2)
 
     if (z < 0) and h:
-        trend = 'decreasing'
+        trend = "decreasing"
     elif (z > 0) and h:
-        trend = 'increasing'
+        trend = "increasing"
     else:
-        trend = 'no trend'
+        trend = "no trend"
 
     return trend, h, p, z
 
 
-def check_num_samples(beta, delta, std_dev, alpha=0.05, n=4, num_iter=1000,
-                      tol=1e-6, num_cycles=10000, m=5):
-    """
+def check_num_samples(
+    beta: float,
+    delta: float,
+    std_dev: float,
+    alpha: float = 0.05,
+    n: float = 4,
+    num_iter: int = 1000,
+    tol: float = 1e-6,
+    num_cycles: int = 10000,
+    m: int = 5,
+) -> int:
+    """Check number of samples.
+
     This function is an implementation of the "Calculation of Number of Samples
     Required to Detect a Trend" section written by Sat Kumar Tomer
     (satkumartomer@gmail.com) which can be found at:
@@ -100,28 +123,35 @@ def check_num_samples(beta, delta, std_dev, alpha=0.05, n=4, num_iter=1000,
     resulting data, then the value of n computed by VSP is only an
     approximation to the correct n, and this approximation will tend to be less
     accurate as the number of non-detects increases.
-    Input:
-        beta: probability of falsely accepting the null hypothesis
-        delta: change per sample period, i.e., the change that occurs between
-               two adjacent sampling times
-        std_dev: standard deviation of the sample points.
-        alpha: significance level (0.05 default)
-        n: initial number of sample points (4 default).
-        num_iter: number of iterations of the Monte-Carlo simulation (1000
-                  default).
-        tol: tolerance level to decide if the predicted probability is close
-             enough to the required statistical power value (1e-6 default).
-        num_cycles: Total number of cycles of the simulation. This is to ensure
-                    that the simulation does finish regardless of convergence
-                    or not (10000 default).
-        m: if the tolerance is too small then the simulation could continue to
-           cycle through the same sample numbers over and over. This parameter
-           determines how many cycles to look back. If the same number of
-           samples was been determined m cycles ago then the simulation will
-           stop.
-        Examples
-        --------
-          >>> num_samples = check_num_samples(0.2, 1, 0.1)
+
+    Parameters
+    ----------
+    beta: float
+      probability of falsely accepting the null hypothesis
+    delta: float
+      change per sample period, i.e., the change that occurs between two adjacent sampling times
+    std_dev: float
+      standard deviation of the sample points.
+    alpha: float
+      significance level (0.05 default)
+    n: int
+      initial number of sample points (4 default).
+    num_iter: int
+      number of iterations of the Monte-Carlo simulation (1000 default).
+    tol: float
+      tolerance level to decide if the predicted probability is close enough to the required
+      statistical power value (1e-6 default).
+    num_cycles: int
+      Total number of cycles of the simulation. This is to ensure that the simulation does finish
+      regardless of convergence or not (10000 default).
+    m: int
+      if the tolerance is too small then the simulation could continue to cycle through the same sample
+      numbers over and over. This parameter determines how many cycles to look back. If the same number of
+      samples was been determined m cycles ago then the simulation will stop.
+
+    Examples
+    --------
+    >>> num_samples = check_num_samples(0.2, 1, 0.1)
     """
     # Initialize the parameters
     power = 1.0 - beta
@@ -134,16 +164,16 @@ def check_num_samples(beta, delta, std_dev, alpha=0.05, n=4, num_iter=1000,
     max_n_cycle = 1
     min_n_cycle = 1
     # Print information for user
-    print("Delta (gradient): {}".format(delta))
-    print("Standard deviation: {}".format(std_dev))
-    print("Statistical power: {}".format(power))
+    print(f"Delta (gradient): {delta}")
+    print(f"Standard deviation: {std_dev}")
+    print(f"Statistical power: {power}")
 
     # Compute an estimate of probability of detecting a trend if the estimate
     # Is not close enough to the specified statistical power value or if the
     # number of iterations exceeds the number of defined cycles.
     while abs(p_d - power) > tol and cycle_num < num_cycles:
         cycle_num += 1
-        print("Cycle Number: {}".format(cycle_num))
+        print(f"Cycle Number: {cycle_num}")
         count_of_trend_detections = 0
 
         # Perform MK test for random sample.
@@ -157,8 +187,8 @@ def check_num_samples(beta, delta, std_dev, alpha=0.05, n=4, num_iter=1000,
 
         # Determine if p_d is close to the power value.
         if abs(p_d - power) < tol:
-            print("P_d: {}".format(p_d))
-            print("{} samples are required".format(n))
+            print(f"P_d: {p_d}")
+            print(f"{n} samples are required")
             return n
 
         # Determine if the calculated probability is closest to the statistical
@@ -177,25 +207,27 @@ def check_num_samples(beta, delta, std_dev, alpha=0.05, n=4, num_iter=1000,
 
         # In case the tolerance is too small we'll stop the cycling when the
         # number of cycles, n, is cycling between the same values.
-        elif (abs(max_n - n) == 0
-              and cycle_num - max_n_cycle >= m
-              or abs(min_n - n) == 0
-              and cycle_num - min_n_cycle >= m):
+        elif (
+            abs(max_n - n) == 0
+            and cycle_num - max_n_cycle >= m
+            or abs(min_n - n) == 0
+            and cycle_num - min_n_cycle >= m
+        ):
             print("Number of samples required has converged.")
-            print("P_d: {}".format(p_d))
-            print("Approximately {} samples are required".format(n))
+            print(f"P_d: {p_d}")
+            print(f"Approximately {n} samples are required")
             return n
 
         # Determine whether to increase or decrease the number of samples.
         if p_d < power:
             n += 1
-            print("P_d: {}".format(p_d))
-            print("Increasing n to {}".format(n))
+            print(f"P_d: {p_d}")
+            print(f"Increasing n to {n}")
             print("")
         else:
             n -= 1
-            print("P_d: {}".format(p_d))
-            print("Decreasing n to {}".format(n))
+            print(f"P_d: {p_d}")
+            print(f"Decreasing n to {n}")
             print("")
             if n == 0:
                 raise ValueError("Number of samples = 0. This should not happen.")

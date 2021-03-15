@@ -1,0 +1,16 @@
+#########################################################################
+:FileType          rvh ASCII Raven 2.8.2
+:WrittenBy         Juliane Mai & James Craig
+:CreationDate      Mar 2021
+#
+# Emulation of BLENDED simulation of Salmon River near Prince George
+#------------------------------------------------------------------------
+#
+#
+:SubBasins
+        :Attributes     NAME    DOWNSTREAM_ID   PROFILE   REACH_LENGTH    GAUGED
+        :Units          none    none            none      km              none
+        1,             {name},   -1,             NONE,     _AUTO,          1
+:EndSubBasins
+
+{hrus_cmd}

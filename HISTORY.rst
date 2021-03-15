@@ -2,6 +2,21 @@
 History
 =======
 
+0.4.0
+-----
+
+* Add new emulator mixing different model formulations.
+
+0.3.0
+-----
+
+* Migration and refactoring of GIS and IO utilities (`utils.py`, `utilities/gis.py`) from RavenWPS to RavenPy.
+* RavenPy can now be installed from PyPI without GIS dependencies (limited functionality).
+* Hydro routing product is now supported from `geoserver.py` (a notebook has been added to demonstrate the new functions).
+* New script `ravenpy aggregate-forcings-to-hrus` to aggregate NetCDF files and compute updated grid weights.
+* Add the basis for a new routing emulator option (WIP).
+* Add climpred verification capabilities.
+
 0.2.3
 -----
 

@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from textwrap import dedent
 from typing import Dict, List, Tuple
+from collections import namedtuple
 
 import cftime
 import six
@@ -24,9 +25,13 @@ from .commands import (
     SubBasinGroupCommand,
     SubBasinsCommand,
     VegetationClassesCommand,
+    RainCorrection,
+    SnowCorrection
 )
 
+HRU = HRUsCommand.Record
 HRUState = HRUStateVariableTableCommand.Record
+LU = LandUseClassesCommand.Record
 
 """
 Raven configuration
@@ -427,6 +432,9 @@ class RVT(RV):
     def __init__(self, **kwargs):
         self._nc_index = None
         self.gridded_forcings = ()
+        self.raincorrection = 1
+        self.snowcorrection = 1
+
         super(RVT, self).__init__(**kwargs)
 
     @property
@@ -447,6 +455,14 @@ class RVT(RV):
     @gridded_forcing_list.setter
     def gridded_forcing_list(self, value):
         self.gridded_forcings = value
+
+    @property
+    def raincorrection_cmd(self):
+        return RainCorrection(self.raincorrection)
+
+    @property
+    def snowcorrection_cmd(self):
+        return SnowCorrection(self.snowcorrection)
 
     def update(self, items, force=False):
         """Update values from dictionary items.
@@ -769,12 +785,13 @@ class RVH(RV):
         return "\n\n".join(map(str, self.sb_group_property_multipliers))
 
     def to_rv(self):
-        params = self.items()
+        # params = self.items()
         return dedent(self.template).format(**dict(self.items()))
 
 
 @dataclass
 class RVP(RV):
+    params: Tuple[namedtuple] = ()
     soil_classes: Tuple[SoilClassesCommand.Record] = ()
     soil_profiles: Tuple[SoilProfilesCommand.Record] = ()
     vegetation_classes: Tuple[VegetationClassesCommand.Record] = ()
@@ -801,7 +818,7 @@ class RVP(RV):
     def channel_profile_cmd_list(self):
         return "\n\n".join(map(str, self.channel_profiles))
 
-    ## Note sure about this!
+    # Note sure about this!
     # def to_rv(self):
     #     params = self.items()
     #     return dedent(self.template).format(**dict(self.items()))
