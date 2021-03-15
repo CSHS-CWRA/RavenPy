@@ -432,6 +432,7 @@ def make_ESP_hindcast_dataset(model_name,forecast_date, included_years,
     # climpred needs the 'time' variable name to be 'lead' for the hindcasts.
     # Also add the coordinates for the lead and member dimensions.
     qsims=qsims.rename({'time':'lead'})
+
     qsims=qsims.assign_coords(lead=list(range(1,forecast_duration+1)))
     qsims=qsims.assign_coords(member=list(range(1,qsims.data.shape[0]+1)))
     
@@ -445,6 +446,8 @@ def make_ESP_hindcast_dataset(model_name,forecast_date, included_years,
         
         # Concatenate in the 'init' dimension.
         qsims=xr.concat([qsims,qsims_tmp],dim="init")
+    
+    qsims['lead']=list(range(1,forecast_duration+1))
     
     # Make the list of hindcast dates for populating the 'init' dimension coordinates.
     date_list=[forecast_date.replace(year=included_years[x]) for x in range(len(included_years))]
