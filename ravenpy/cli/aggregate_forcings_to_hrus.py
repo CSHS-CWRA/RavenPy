@@ -3,7 +3,7 @@ from pathlib import Path
 import click
 
 from ravenpy.models import grid_weight_importer_params
-from ravenpy.models.commands import GridWeightsCommand
+from ravenpy.models.commands import GriddedForcingCommand
 
 
 @click.command()
@@ -67,7 +67,9 @@ def aggregate_forcings_to_hrus(
     import netCDF4 as nc4
     import numpy as np
 
-    gws = GridWeightsCommand.parse(Path(input_weight_file).read_text())
+    gws = GriddedForcingCommand.GridWeightsCommand.parse(
+        Path(input_weight_file).read_text()
+    )
 
     nHRU = gws.number_hrus
     # nCells = gws.number_grid_cells
@@ -207,7 +209,7 @@ def aggregate_forcings_to_hrus(
     # the return should actually look exactly like the return of "RoutingProductGridWeightImporter"
     # not sure how to do that
 
-    gws_new = GridWeightsCommand(
+    gws_new = GriddedForcingCommand.GridWeightsCommand(
         number_hrus=nHRU,
         number_grid_cells=nHRU,
         data=new_weights,

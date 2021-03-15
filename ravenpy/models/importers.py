@@ -22,7 +22,7 @@ import numpy as np
 from . import grid_weight_importer_params
 from .commands import (
     ChannelProfileCommand,
-    GridWeightsCommand,
+    GriddedForcingCommand,
     HRUsCommand,
     ReservoirCommand,
     SubBasinsCommand,
@@ -316,7 +316,7 @@ class RoutingProductGridWeightImporter:
             routing_file_path = f"zip://{routing_file_path}"
         self._routing_data = geopandas.read_file(routing_file_path)
 
-    def extract(self) -> GridWeightsCommand:
+    def extract(self) -> GriddedForcingCommand.GridWeightsCommand:
         self._prepare_input_data()
 
         # Read routing data
@@ -477,7 +477,7 @@ class RoutingProductGridWeightImporter:
                 #     area_all *= 1.0 / (1.0 - error)
                 # error = 0.0
 
-        return GridWeightsCommand(
+        return GriddedForcingCommand.GridWeightsCommand(
             number_hrus=len(self._routing_data),
             number_grid_cells=self._nlon * self._nlat,
             data=grid_weights,
