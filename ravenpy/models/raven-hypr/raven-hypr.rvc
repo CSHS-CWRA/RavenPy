@@ -1,0 +1,13 @@
+#########################################################################
+:FileType          rvc ASCII Raven 3.0.4
+:WrittenBy         Mahkameh Taheri, Juliane Mai & James Craig
+:CreationDate      Feb 2021
+#
+# Emulation of the HYPR model for Salmon River near Prince George
+#------------------------------------------------------------------------
+
+#  Raven Initial Conditions file
+
+:UniformInitialConditions SOIL[0] 10
+:UniformInitialConditions SOIL[1] 10
+:UniformInitialConditions DEPRESSION 20

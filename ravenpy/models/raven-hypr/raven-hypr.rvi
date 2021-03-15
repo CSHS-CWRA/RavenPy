@@ -1,0 +1,82 @@
+#########################################################################
+:FileType          rvi ASCII Raven 2.8.2
+:WrittenBy         James Craig & Juliane Mai
+:CreationDate      Mar 2021
+#
+# Emulation of BLENDED simulation of Salmon River near Prince George
+#------------------------------------------------------------------------
+#
+#
+
+:Calendar              {calendar}
+:RunName               {run_name}-{run_index}
+:StartDate             {start_date}
+:EndDate               {end_date}
+:TimeStep              {time_step}
+:Method                ORDERED_SERIES
+
+:Routing                     ROUTE_NONE
+:CatchmentRoute              TRIANGULAR_UH
+
+:Evaporation                 {evaporation}         # PET_FROMMONTHLY
+:OW_Evaporation              {ow_evaporation}      # PET_FROMMONTHLY
+:RainSnowFraction            {rain_snow_fraction}  # RAINSNOW_HBV
+:SWRadiationMethod           SW_RAD_DEFAULT
+:SWCloudCorrect              SW_CLOUD_CORR_NONE
+:SWCanopyCorrect             SW_CANOPY_CORR_NONE
+:LWRadiationMethod           LW_RAD_DEFAULT
+:PotentialMeltMethod         POTMELT_HBV
+:CloudCoverMethod            CLOUDCOV_NONE
+:PrecipIceptFract            PRECIP_ICEPT_USER
+:MonthlyInterpolationMethod  MONTHINT_LINEAR_21
+
+:SoilModel               SOIL_MULTILAYER 3
+
+#------------------------------------------------------------------------
+# Soil Layer Alias Definitions
+#
+:Alias       FAST_RESERVOIR SOIL[1]
+:Alias       SLOW_RESERVOIR SOIL[2]
+:LakeStorage SLOW_RESERVOIR
+
+#------------------------------------------------------------------------
+# Hydrologic process order for HYPR Emulation
+#
+:HydrologicProcesses
+  :SnowRefreeze      FREEZE_DEGREE_DAY  SNOW_LIQ        SNOW
+  :Precipitation     PRECIP_RAVEN       ATMOS_PRECIP    MULTIPLE
+  :CanopyEvaporation CANEVP_ALL         CANOPY          ATMOSPHERE
+  :CanopySnowEvap    CANEVP_ALL         CANOPY_SNOW     ATMOSPHERE
+  :SnowBalance       SNOBAL_SIMPLE_MELT SNOW            PONDED_WATER
+  :Infiltration      INF_HBV            PONDED_WATER    MULTIPLE
+  :Flush             RAVEN_DEFAULT      SURFACE_WATER   PONDED_WATER
+  :Abstraction       ABST_PDMROF        PONDED_WATER    DEPRESSION
+  :Flush             RAVEN_DEFAULT      SURFACE_WATER   FAST_RESERVOIR
+  :SoilEvaporation   SOILEVAP_HYPR      MULTIPLE        ATMOSPHERE    #ET from both soils and depressions
+  :Baseflow          BASE_LINEAR        FAST_RESERVOIR  SURFACE_WATER
+  :Baseflow          BASE_THRESH_STOR   FAST_RESERVOIR  SURFACE_WATER
+:EndHydrologicProcesses
+
+#:CreateRVPTemplate
+
+#---------------------------------------------------------
+# Output Options
+#
+#:WriteForcingFunctions
+:EvaluationMetrics {evaluation_metrics}
+:WriteNetcdfFormat  yes
+#:NoisyMode
+:SilentMode
+:PavicsMode
+{suppress_output}
+
+:NetCDFAttribute title Simulated river discharge
+:NetCDFAttribute history Created on {now} by Raven
+:NetCDFAttribute references  Craig, J.R., and the Raven Development Team, Raven user's and developer's manual (Version 2.8), URL: http://raven.uwaterloo.ca/ (2018).
+:NetCDFAttribute comment Raven Hydrological Framework version {raven_version}
+
+:NetCDFAttribute model_id hmets
+
+:NetCDFAttribute time_frequency day
+:NetCDFAttribute time_coverage_start {start_date}
+:NetCDFAttribute time_coverage_end {end_date}
