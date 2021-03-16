@@ -643,7 +643,7 @@ class Raven:
         return ncvars
 
     def _assign_files(self, fns):
-        """Find for each variable the file storing it's data and the name of the netCDF variable.
+        """Find for each variable the file storing its data and the name of the netCDF variable.
 
         Parameters
         ----------
