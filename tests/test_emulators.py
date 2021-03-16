@@ -30,6 +30,7 @@ from ravenpy.models.commands import (
     SBGroupPropertyMultiplierCommand,
     SoilClassesCommand,
     SoilProfilesCommand,
+    StationForcingCommand,
     VegetationClassesCommand,
 )
 from ravenpy.utilities.testdata import get_local_testdata
@@ -72,7 +73,7 @@ salmon_lake_hru = dict(
 
 class TestGR4JCN:
     def test_simple(self):
-        model = GR4JCN(tempfile.mkdtemp())
+        model = GR4JCN("/tmp/test_GR4JCN_simple")  # tempfile.mkdtemp())
 
         model.rvi.start_date = dt.datetime(2000, 1, 1)
         model.rvi.end_date = dt.datetime(2002, 1, 1)
@@ -80,7 +81,38 @@ class TestGR4JCN:
 
         model.rvh.name = "Salmon"
         model.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru),)
-        model.rvt.pr.deaccumulate = False
+
+        station_forcings = []
+        for var_name, forcing_type, units in [
+            ("rain", "RAINFALL", "mm/d"),
+            ("snow", "SNOWFALL", "mm/d"),
+            ("tmin", "TEMP_MIN", "degC"),
+            ("tmax", "TEMP_MAX", "degC"),
+            ("pet", "PET", "mm/d"),
+        ]:
+            station_forcings.append(
+                StationForcingCommand(
+                    name=var_name,
+                    units=units,
+                    forcing_type=forcing_type,
+                    file_name_nc=TS,
+                    dim_names_nc=("nstations", "time"),
+                    var_name_nc=var_name,
+                    grid_weights=StationForcingCommand.GridWeightsCommand(
+                        number_hrus=1, number_stations=1, data=((1, 1, 1),)
+                    ),
+                )
+            )
+        model.rvt.station_forcings = station_forcings
+        model.rvt.observation_data = ObservationDataCommand(
+            data_type="HYDROGRAPH",
+            subbasin_or_hru_id=1,
+            units="m**3/s",
+            file_name_nc=TS,
+            var_name_nc="qobs",
+            dim_names_nc=("nstations", "time"),
+            station_idx=1,
+        )
 
         model.rvp.params = model.params(0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
 
@@ -195,7 +227,22 @@ class TestGR4JCN:
         ]
 
         model.rvi.routing = "ROUTE_DIFFUSIVE_WAVE"
+
+        # model.rvt.station_forcings = [
+        #     StationForcingCommand(
+        #         name="rain",
+        #         file_name_nc=TODO,
+        #         var_name_nc=TODO,
+        #         dim_names_nc=("nstations", "ntime"),
+        #         linear_transform=(1.0, 0),
+        #         grid_weights=StationForcingCommand.GridWeightsCommand(
+        #             number_hrus=2, number_stations=1, data=()
+        #         ),
+        #     )
+        # ]
+
         model(TS)
+
         hds = model.q_sim
         assert len(hds.nbasins == 2)
 

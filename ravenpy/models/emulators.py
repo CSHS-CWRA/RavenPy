@@ -5,7 +5,7 @@ from pathlib import Path
 import xarray as xr
 
 from .base import Ostrich, Raven
-from .commands import BasinIndexCommand
+from .commands import BasinIndexCommand, ObservationDataCommand, StationForcingCommand
 from .rv import (
     HRU,
     LU,
@@ -92,7 +92,7 @@ class GR4JCN(Raven):
         super().__init__(*args, **kwds)
 
         self.rvp = RVP(params=GR4JCN.params(None, None, None, None, None, None))
-        self.rvt = RVT(**{k: nc() for k in std_vars})
+        self.rvt = RVT()  # **{k: nc() for k in std_vars})
         self.rvi = RVI(rain_snow_fraction="RAINSNOW_DINGMAN", evaporation="PET_OUDIN")
         self.rvh = RVH(
             hrus=(GR4JCN.LandHRU(),),

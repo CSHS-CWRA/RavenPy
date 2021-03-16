@@ -315,7 +315,8 @@ class StationForcingCommand(RavenConfig):
             )
             return dedent(self.template).strip().format(**d)
 
-    name: str = ""
+    name: Optional[str] = ""
+    units: Optional[str] = ""
     forcing_type: str = ""
     file_name_nc: str = ""
     var_name_nc: str = ""
@@ -325,14 +326,14 @@ class StationForcingCommand(RavenConfig):
     grid_weights: GridWeightsCommand = None
 
     template = """
-    :StationForcing {name}
+    :StationForcing {name} {units}
         :ForcingType {forcing_type}
         :FileNameNC {file_name_nc}
         :VarNameNC {var_name_nc}
         :DimNamesNC {dim_names_nc}
         {time_shift}
         {linear_transform}
-        {grid_weights}
+    {grid_weights}
     :EndStationForcing
     """
 
@@ -737,15 +738,15 @@ class LandUseClassesCommand(RavenConfig):
 class ObservationDataCommand(RavenConfig):
 
     data_type: str = "HYDROGRAPH"
-    subbasin_id: int = None
-    units: str = "m3/s"
+    subbasin_or_hru_id: Optional[int] = None
+    units: Optional[str] = ""  # e.g. "m**3/s"
     file_name_nc: str = None
-    var_name_nc: str = None
+    var_name_nc: str = "qobs"
     dim_names_nc: Tuple[str, str] = ("?", "?")
     station_idx: int = None
 
     template = """
-    :ObservationData {data_type} {subbasin_id} {units}
+    :ObservationData {data_type} {subbasin_or_hru_id} {units}
         :ReadFromNetCDF
              :FileNameNC     {file_name_nc}
              :VarNameNC      {var_name_nc}

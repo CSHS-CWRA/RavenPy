@@ -434,6 +434,7 @@ class RVT(RV):
     def __init__(self, **kwargs):
         self._nc_index = None
         self.gridded_forcings = ()
+        self.station_forcings = ()
         self.raincorrection = 1
         self.snowcorrection = 1
 
@@ -452,11 +453,18 @@ class RVT(RV):
     @property
     def gridded_forcing_list(self):
         return "\n\n".join(map(str, self.gridded_forcings))
-        # return GriddedForcingList(self.gridded_forcings)
 
     @gridded_forcing_list.setter
     def gridded_forcing_list(self, value):
         self.gridded_forcings = value
+
+    @property
+    def station_forcing_list(self):
+        return "\n\n".join(map(str, self.station_forcings))
+
+    @station_forcing_list.setter
+    def station_forcing_list(self, value):
+        self.station_forcings = value
 
     @property
     def raincorrection_cmd(self):
