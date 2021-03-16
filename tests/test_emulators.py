@@ -82,38 +82,6 @@ class TestGR4JCN:
         model.rvh.name = "Salmon"
         model.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru),)
 
-        station_forcings = []
-        for var_name, forcing_type, units in [
-            ("rain", "RAINFALL", "mm/d"),
-            ("snow", "SNOWFALL", "mm/d"),
-            ("tmin", "TEMP_MIN", "degC"),
-            ("tmax", "TEMP_MAX", "degC"),
-            ("pet", "PET", "mm/d"),
-        ]:
-            station_forcings.append(
-                StationForcingCommand(
-                    name=var_name,
-                    units=units,
-                    forcing_type=forcing_type,
-                    file_name_nc=TS,
-                    dim_names_nc=("nstations", "time"),
-                    var_name_nc=var_name,
-                    grid_weights=StationForcingCommand.GridWeightsCommand(
-                        number_hrus=1, number_stations=1, data=((1, 1, 1),)
-                    ),
-                )
-            )
-        model.rvt.station_forcings = station_forcings
-        model.rvt.observation_data = ObservationDataCommand(
-            data_type="HYDROGRAPH",
-            subbasin_or_hru_id=1,
-            units="m**3/s",
-            file_name_nc=TS,
-            var_name_nc="qobs",
-            dim_names_nc=("nstations", "time"),
-            station_idx=1,
-        )
-
         model.rvp.params = model.params(0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
 
         # TODO: compute this!

@@ -62,6 +62,7 @@ Simulation end date and duration are updated automatically when duration, start 
 
 """
 
+# CF standard names used for mappings
 default_input_variables = (
     "pr",
     "rainfall",
@@ -72,6 +73,19 @@ default_input_variables = (
     "evspsbl",
     "water_volume_transport_in_river_channel",
 )
+
+# Map CF-Convention standard name to Raven Forcing name.
+forcing_names = {
+    "tasmin": "TEMP_MIN",
+    "tasmax": "TEMP_MAX",
+    "tas": "TEMP_AVE",
+    "rainfall": "RAINFALL",
+    "pr": "PRECIP",
+    "prsn": "SNOWFALL",
+    "evspsbl": "PET",
+    "water_volume_transport_in_river_channel": "HYDROGRAPH",
+}
+
 
 rain_snow_fraction_options = (
     "RAINSNOW_DATA",
@@ -433,8 +447,9 @@ class MonthlyAverage(RV):
 class RVT(RV):
     def __init__(self, **kwargs):
         self._nc_index = None
-        self.gridded_forcings = ()
-        self.station_forcings = ()
+        self.gridded_forcings = {}
+        self.station_forcings = {}
+        self.observation_data = {}
         self.raincorrection = 1
         self.snowcorrection = 1
 
@@ -452,19 +467,15 @@ class RVT(RV):
 
     @property
     def gridded_forcing_list(self):
-        return "\n\n".join(map(str, self.gridded_forcings))
-
-    @gridded_forcing_list.setter
-    def gridded_forcing_list(self, value):
-        self.gridded_forcings = value
+        return "\n\n".join(map(str, self.gridded_forcings.values()))
 
     @property
     def station_forcing_list(self):
-        return "\n\n".join(map(str, self.station_forcings))
+        return "\n\n".join(map(str, self.station_forcings.values()))
 
-    @station_forcing_list.setter
-    def station_forcing_list(self, value):
-        self.station_forcings = value
+    @property
+    def observation_data_list(self):
+        return "\n\n".join(map(str, self.observation_data.values()))
 
     @property
     def raincorrection_cmd(self):

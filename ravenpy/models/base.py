@@ -23,12 +23,19 @@ import xarray as xr
 
 import ravenpy
 
+from .commands import (
+    DataCommand,
+    GriddedForcingCommand,
+    ObservationDataCommand,
+    StationForcingCommand,
+)
 from .rv import (
     RV,
     RVI,
     Ost,
     RavenNcData,
     RVFile,
+    forcing_names,
     get_states,
     isinstance_namedtuple,
     parse_solution,
@@ -336,10 +343,23 @@ class Raven:
           Run index.
         """
         # Create configuration information from input files
-        ncvars = self._assign_files(ts)
-        self.rvt.update(ncvars)
-        self.check_units()
-        self.check_inputs()
+        # ncvars = self._assign_files(ts)
+        # self.rvt.update(ncvars)
+
+        ncvars = self._infer_forcing_config(ts)
+        for key, val in ncvars.items():
+            if key == "water_volume_transport_in_river_channel":
+                self.rvt.observation_data[key] = ObservationDataCommand(**val)
+            elif len(val["dim_names_nc"]) == 1:
+                self.rvt.station_forcings[key] = DataCommand(**val)
+            elif len(val["dim_names_nc"]) == 2:
+                self.rvt.station_forcings[key] = StationForcingCommand(**val)
+            else:
+                self.rvt.station_forcings[key] = GriddedForcingCommand(**val)
+
+        # TODO: Re-enable those checks
+        # self.check_units()
+        # self.check_inputs()
 
         # Compute derived parameters
         self.derived_parameters()
@@ -582,6 +602,46 @@ class Raven:
             out += f.read_text()
         return out
 
+    def _infer_forcing_config(self, fns):
+        """Find for each variable the file storing it's data and the name of the netCDF variable.
+
+        Parameters
+        ----------
+        fns : sequence
+          Paths to netCDF files.
+
+        Returns
+        -------
+        dict
+          A dictionary keyed by variable storing the `StationForcingCommand` configuration information.
+        """
+        ncvars = {}
+        for fn in fns:
+            if ".nc" in fn.suffix:
+                with xr.open_dataset(fn) as ds:
+                    for var, alt_names in self._variable_names.items():
+                        # Check that the emulator is expecting that variable.
+                        # if var not in self.rvt.keys():
+                        #    continue
+
+                        # Check if any alternate variable name is in the file.
+                        for var_name in alt_names:
+                            if var_name in ds.data_vars:
+                                ncvars[var] = dict(
+                                    name=var,
+                                    data_type=forcing_names[var],
+                                    file_name_nc=fn,
+                                    var_name_nc=var_name,
+                                    dim_names_nc=ds[var_name].dims,
+                                    units=ds[var_name].attrs.get("units"),
+                                )
+                                if "GRIB_stepType" in ds[var_name].attrs:
+                                    ncvars[var]["deaccumulate"] = (
+                                        ds[var_name].attrs["GRIB_stepType"] == "accum"
+                                    )
+                                break
+        return ncvars
+
     def _assign_files(self, fns):
         """Find for each variable the file storing it's data and the name of the netCDF variable.
 
@@ -596,6 +656,7 @@ class Raven:
           A dictionary keyed by variable storing the `RavenNcData` instance storing each variable's configuration
           information.
         """
+        raise DeprecationWarning
         ncvars = {}
         for fn in fns:
             if ".nc" in fn.suffix:

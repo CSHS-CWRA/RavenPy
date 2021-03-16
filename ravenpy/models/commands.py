@@ -235,8 +235,9 @@ class GriddedForcingCommand(RavenConfig):
             )
             return dedent(self.template).strip().format(**d)
 
-    name: str = ""
-    forcing_type: str = ""
+    name: Optional[str] = ""
+    units: Optional[str] = ""
+    data_type: str = ""
     file_name_nc: str = ""
     var_name_nc: str = ""
     dim_names_nc: Tuple[str, str, str] = ("x", "y", "t")
@@ -246,7 +247,7 @@ class GriddedForcingCommand(RavenConfig):
 
     template = """
     :GriddedForcing {name}
-        :ForcingType {forcing_type}
+        :ForcingType {data_type}
         :FileNameNC {file_name_nc}
         :VarNameNC {var_name_nc}
         :DimNamesNC {dim_names_nc}
@@ -277,9 +278,9 @@ class StationForcingCommand(RavenConfig):
     class GridWeightsCommand(RavenConfig):
         """GridWeights command."""
 
-        number_hrus: int = 0
-        number_stations: int = 0
-        data: Tuple[Tuple[int, int, float]] = ()
+        number_hrus: int = 1
+        number_stations: int = 1
+        data: Tuple[Tuple[int, int, float]] = ((1, 0, 1),)
 
         template = """
         {indent}:GridWeights
@@ -317,22 +318,24 @@ class StationForcingCommand(RavenConfig):
 
     name: Optional[str] = ""
     units: Optional[str] = ""
-    forcing_type: str = ""
+    data_type: str = ""
     file_name_nc: str = ""
     var_name_nc: str = ""
     dim_names_nc: Tuple[str, str] = ("station", "time")
     time_shift: Optional[int] = None  # in days
     linear_transform: Optional[Tuple[float, float]] = None
-    grid_weights: GridWeightsCommand = None
+    deaccumulate: Optional[bool] = False
+    grid_weights: GridWeightsCommand = GridWeightsCommand()
 
     template = """
     :StationForcing {name} {units}
-        :ForcingType {forcing_type}
+        :ForcingType {data_type}
         :FileNameNC {file_name_nc}
         :VarNameNC {var_name_nc}
         :DimNamesNC {dim_names_nc}
         {time_shift}
         {linear_transform}
+        {deaccumulate}
     {grid_weights}
     :EndStationForcing
     """
@@ -346,6 +349,7 @@ class StationForcingCommand(RavenConfig):
             d["linear_transform"] = f":LinearTransform {slope} {intercept}"
         else:
             d["linear_transform"] = ""
+        d["deaccumulate"] = ":Deaccumulate" if self.deaccumulate else ""
         d["grid_weights"] = self.grid_weights.to_rv(indent_level=1)
         return dedent(self.template).format(**d)
 
@@ -391,6 +395,7 @@ class LinearTransform(RavenConfig):
 
 @dataclass
 class DataCommand(RavenConfig):
+    name: Optional[str] = ""
     var = None
     path = None
     var_name = None
@@ -401,14 +406,13 @@ class DataCommand(RavenConfig):
     dimensions = None
     index = None
     linear_transform = None
-
     runits = None
-    raven_name = None
+    data_type = None
     site = None
     deaccumulate = None
 
     template = """
-    :{kind} {raven_name} {site} {runits}
+    :{kind} {data_type} {site} {runits}
         :ReadFromNetCDF
             :FileNameNC      {path}
             :VarNameNC       {var_name}
@@ -737,6 +741,7 @@ class LandUseClassesCommand(RavenConfig):
 @dataclass
 class ObservationDataCommand(RavenConfig):
 
+    name: Optional[str] = ""
     data_type: str = "HYDROGRAPH"
     subbasin_or_hru_id: Optional[int] = None
     units: Optional[str] = ""  # e.g. "m**3/s"
@@ -758,8 +763,14 @@ class ObservationDataCommand(RavenConfig):
 
     def to_rv(self):
         d = asdict(self)
-        dns = d["dim_names_nc"]
-        d["dim_names_nc"] = f"{dns[0]} {dns[1]}"
+
+        dims = list(d["dim_names_nc"])
+
+        # Move the time dimension at the end
+        dims.remove("time")
+        dims.append("time")
+        d["dim_names_nc"] = " ".join(dims)
+
         return dedent(self.template).format(**d)
 
 
