@@ -293,6 +293,43 @@ class DataCommand(BaseDataCommand):
 
 
 @dataclass
+class GaugeCommand(RavenConfig):
+    data: Tuple[DataCommand]
+    latitude: float = 0
+    longitude: float = 0
+    elevation: float = 0
+    raincorrection: float = 1
+    snowcorrection: float = 1
+
+    template = """
+    :Gauge
+        :Latitude {latitude}
+        :Longitude {longitude}
+        :Elevation {elevation}
+        {raincorrection_cmd}
+        {snowcorrection_cmd}
+
+        {data_list}
+    :EndGauge
+    """
+
+    @property
+    def raincorrection_cmd(self):
+        return RainCorrection(self.raincorrection)
+
+    @property
+    def snowcorrection_cmd(self):
+        return SnowCorrection(self.snowcorrection)
+
+    def to_rv(self):
+        d = asdict(self)
+        d["raincorrection_cmd"] = self.raincorrection_cmd
+        d["snowcorrection_cmd"] = self.snowcorrection_cmd
+        d["data_list"] = "\n\n".join(map(str, self.data))
+        return dedent(self.template).format(**d)
+
+
+@dataclass
 class ObservationDataCommand(DataCommand):
     site: str = "1"
 
@@ -397,43 +434,6 @@ class StationForcingCommand(GriddedForcingCommand):
         {grid_weights}
     :EndStationForcing
     """
-
-
-@dataclass
-class GaugeCommand(RavenConfig):
-    data: Tuple[DataCommand]
-    latitude: float = 0
-    longitude: float = 0
-    elevation: float = 0
-    raincorrection: float = 1
-    snowcorrection: float = 1
-
-    template = """
-    :Gauge
-        :Latitude {latitude}
-        :Longitude {longitude}
-        :Elevation {elevation}
-        {raincorrection_cmd}
-        {snowcorrection_cmd}
-
-        {data_list}
-    :EndGauge
-    """
-
-    @property
-    def raincorrection_cmd(self):
-        return RainCorrection(self.raincorrection)
-
-    @property
-    def snowcorrection_cmd(self):
-        return SnowCorrection(self.snowcorrection)
-
-    def to_rv(self):
-        d = asdict(self)
-        d["raincorrection_cmd"] = self.raincorrection_cmd
-        d["snowcorrection_cmd"] = self.snowcorrection_cmd
-        d["data_list"] = "\n\n".join(map(str, self.data))
-        return dedent(self.template).format(**d)
 
 
 @dataclass
