@@ -64,7 +64,7 @@ def test_race():
 
 # salmon catchment is now split into land- and lake-part
 salmon_land_hru = dict(
-    area="2100.0", elevation="842.0", latitude=54.4848, longitude=-123.3659
+    area="4250.6", elevation="843.0", latitude=54.4848, longitude=-123.3659
 )
 salmon_lake_hru = dict(
     area="2150.6", elevation="839.0", latitude=54.0, longitude=-123.4
