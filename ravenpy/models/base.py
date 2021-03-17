@@ -353,7 +353,6 @@ class Raven:
                     self.rvt[key] = ObservationDataCommand(**val)
                 else:
                     self.rvt[key] = DataCommand(**val)
-
             elif len(val["dim_names_nc"]) == 2:
                 self.rvt[key] = StationForcingCommand(**val)
             else:
