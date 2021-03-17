@@ -395,43 +395,38 @@ class LinearTransform(RavenConfig):
 
 @dataclass
 class DataCommand(RavenConfig):
-    name: Optional[str] = ""
-    var = None
-    path = None
-    var_name = None
-    units = None
-    scale_factor = None
-    add_offset = None
-    time_shift = None
-    dimensions = None
-    index = None
-    linear_transform = None
-    runits = None
-    data_type = None
-    site = None
-    deaccumulate = None
+    data_type: str = ""
+    units: Optional[str] = ""
+    file_name_nc: str = ""
+    var_name_nc: str = ""
+    # In RavenPy this is only used for 1D (time) inputs
+    dim_names_nc: Tuple[str] = ("time",)
+    station_idx: int = 1
+    time_shift: Optional[float] = None
+    linear_transform: Optional[Tuple[float, float]] = None
 
     template = """
-    :{kind} {data_type} {site} {runits}
+    :Data {data_type} {units}
         :ReadFromNetCDF
-            :FileNameNC      {path}
-            :VarNameNC       {var_name}
-            :DimNamesNC      {dimensions}
-            :StationIdx      {index}
+            :FileNameNC      {file_name_nc}
+            :VarNameNC       {var_name_nc}
+            :DimNamesNC      {dim_names_nc}
+            :StationIdx      {station_idx}
             {time_shift}
             {linear_transform}
-            {deaccumulate}
         :EndReadFromNetCDF
-    :End{kind}
+    :EndData
     """
 
     def to_rv(self):
         d = asdict(self)
-        d["kind"] = (
-            "ObservationData"
-            if self.var == "water_volume_transport_in_river_channel"
-            else "Data"
-        )
+        d["dim_names_nc"] = d["dim_names_nc"][0]
+        d["time_shift"] = f":TimeShift {self.time_shift}" if self.time_shift else ""
+        if self.linear_transform:
+            slope, intercept = self.linear_transform
+            d["linear_transform"] = f":LinearTransform {slope} {intercept}"
+        else:
+            d["linear_transform"] = ""
         return dedent(self.template).format(**d)
 
 

@@ -351,6 +351,7 @@ class Raven:
             if key == "water_volume_transport_in_river_channel":
                 self.rvt.observation_data[key] = ObservationDataCommand(**val)
             elif len(val["dim_names_nc"]) == 1:
+                del val["name"]
                 self.rvt.station_forcings[key] = DataCommand(**val)
             elif len(val["dim_names_nc"]) == 2:
                 self.rvt.station_forcings[key] = StationForcingCommand(**val)
