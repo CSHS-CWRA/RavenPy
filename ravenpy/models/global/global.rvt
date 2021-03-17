@@ -1,3 +1,7 @@
-{station_forcing_list}
+{gauge_cmd}
 
-{observation_data_list}
+{station_cmds}
+
+{gridded_cmds}
+
+{water_volume_transport_in_river_channel}

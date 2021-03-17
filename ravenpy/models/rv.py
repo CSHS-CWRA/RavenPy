@@ -14,9 +14,13 @@ from .commands import (
     BasinIndexCommand,
     BasinStateVariablesCommand,
     ChannelProfileCommand,
+    DataCommand,
+    GaugeCommand,
+    GriddedForcingCommand,
     HRUsCommand,
     HRUStateVariableTableCommand,
     LandUseClassesCommand,
+    ObservationDataCommand,
     RainCorrection,
     RavenConfig,
     ReservoirCommand,
@@ -25,6 +29,7 @@ from .commands import (
     SnowCorrection,
     SoilClassesCommand,
     SoilProfilesCommand,
+    StationForcingCommand,
     SubBasinGroupCommand,
     SubBasinsCommand,
     VegetationClassesCommand,
@@ -446,13 +451,28 @@ class MonthlyAverage(RV):
 
 class RVT(RV):
     def __init__(self, **kwargs):
-        self._nc_index = None
-        self.gridded_forcings = {}
-        self.station_forcings = {}
-        self.observation_data = {}
+        self.pr = ""
+        self.rainfall = ""
+        self.prsn = ""
+        self.tasmin = ""
+        self.tasmax = ""
+        self.tas = ""
+        self.evspsbl = ""
+        self.water_volume_transport_in_river_channel = ""
+        self._nc_index = ""
         self.raincorrection = 1
         self.snowcorrection = 1
 
+        self._nc_vars = (
+            "pr",
+            "rainfall",
+            "prsn",
+            "tasmin",
+            "tasmax",
+            "tas",
+            "evspsbl",
+            "water_volume_transport_in_river_channel",
+        )
         super(RVT, self).__init__(**kwargs)
 
     @property
@@ -466,16 +486,23 @@ class RVT(RV):
                 setattr(val, "index", value)
 
     @property
-    def gridded_forcing_list(self):
-        return "\n\n".join(map(str, self.gridded_forcings.values()))
+    def variables(self):
+        return (getattr(self, name) for name in self._nc_vars)
 
     @property
-    def station_forcing_list(self):
-        return "\n\n".join(map(str, self.station_forcings.values()))
+    def gauge_cmd(self):
+        data = [o for o in self.variables if type(o) is DataCommand]
+        return GaugeCommand(data=data)
 
     @property
-    def observation_data_list(self):
-        return "\n\n".join(map(str, self.observation_data.values()))
+    def station_cmds(self):
+        data = [o for o in self.variables if type(o) is StationForcingCommand]
+        return "\n\n".join(map(str, data))
+
+    @property
+    def gridded_cmds(self):
+        data = [o for o in self.variables if type(o) is GriddedForcingCommand]
+        return "\n\n".join(map(str, data))
 
     @property
     def raincorrection_cmd(self):

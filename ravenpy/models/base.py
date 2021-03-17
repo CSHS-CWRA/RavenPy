@@ -348,14 +348,16 @@ class Raven:
 
         ncvars = self._infer_forcing_config(ts)
         for key, val in ncvars.items():
-            if key == "water_volume_transport_in_river_channel":
-                self.rvt.observation_data[key] = ObservationDataCommand(**val)
-            elif len(val["dim_names_nc"]) == 1:
-                self.rvt.station_forcings[key] = DataCommand(**val)
+            if len(val["dim_names_nc"]) == 1:
+                if key == "water_volume_transport_in_river_channel":
+                    self.rvt[key] = ObservationDataCommand(**val)
+                else:
+                    self.rvt[key] = DataCommand(**val)
+
             elif len(val["dim_names_nc"]) == 2:
-                self.rvt.station_forcings[key] = StationForcingCommand(**val)
+                self.rvt[key] = StationForcingCommand(**val)
             else:
-                self.rvt.station_forcings[key] = GriddedForcingCommand(**val)
+                self.rvt[key] = GriddedForcingCommand(**val)
 
         # TODO: Re-enable those checks
         # self.check_units()

@@ -85,7 +85,7 @@ class TestGR4JCN:
         model.rvp.params = model.params(0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
 
         # TODO: compute this!
-        model.rvp.avg_annual_runoff = 594
+        model.rvp.avg_annual_runoff = 0
 
         assert model.rvi.suppress_output == ""
 

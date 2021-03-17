@@ -14,6 +14,47 @@ class RavenConfig:
 
 
 @dataclass
+class BaseValueCommand(RavenConfig):
+    """BaseValueCommand."""
+
+    tag: str = ""
+    value: Any = None
+
+    template = ":{tag} {value}"
+
+    # Overloading init to freeze the tag.
+    def __init__(self, value):
+        self.value = value
+
+    def to_rv(self):
+        return self.template.format(**asdict(self))
+
+
+@dataclass
+class BaseBooleanCommand(RavenConfig):
+    tag: str = ""
+    value: bool = False
+
+    template = ":{tag}"
+
+    def to_rv(self):
+        return self.template.format(tag=self.tag) if self.value else ""
+
+
+@dataclass
+class LinearTransform(RavenConfig):
+    scale: float = 1
+    offset: float = 0
+
+    template = ":LinearTransform {slope:.15f} {intercept:.15f}"
+
+    def to_rv(self):
+        if (self.scale is not None) or (self.offset is not None):
+            return self.template.format(**asdict(self))
+        return ""
+
+
+@dataclass
 class SubBasinsCommand(RavenConfig):
     """SubBasins command (RVH)."""
 
@@ -190,7 +231,88 @@ class ChannelProfileCommand(RavenConfig):
 
 
 @dataclass
-class GriddedForcingCommand(RavenConfig):
+class BaseDataCommand(RavenConfig):
+    """Do not use directly. Subclass."""
+
+    name: Optional[str] = ""
+    units: Optional[str] = ""
+    data_type: str = ""
+    file_name_nc: str = ""
+    var_name_nc: str = ""
+    dim_names_nc: Tuple[str] = ("time",)
+    time_shift: Optional[int] = None  # in days
+    scale: Optional[float] = None
+    offset: Optional[float] = None
+    deaccumulate: Optional[bool] = False
+
+    @property
+    def dimensions(self):
+        """Return dimensions with time as the last dimension."""
+        dims = list(self.dim_names_nc)
+        dims.remove("time")
+        dims.append("time")
+        return " ".join(dims)
+
+    @property
+    def linear_transform(self):
+        return LinearTransform(scale=self.scale, offset=self.offset)
+
+    def asdict(self):
+        d = asdict(self)
+        d["dimensions"] = self.dimensions
+        d["linear_transform"] = self.linear_transform
+        d["deaccumulate"] = Deaccumulate(self.deaccumulate)
+        d["time_shift"] = f":TimeShift {self.time_shift}" if self.time_shift else ""
+        return d
+
+
+@dataclass
+class DataCommand(BaseDataCommand):
+    index: int = 1
+    data_type: str = ""
+    site: str = ""
+    var: str = ""
+
+    template = """
+    :Data {data_type} {site} {units}
+        :ReadFromNetCDF
+            :FileNameNC      {file_name_nc}
+            :VarNameNC       {var_name_nc}
+            :DimNamesNC      {dimensions}
+            :StationIdx      {index}
+            {time_shift}
+            {linear_transform}
+            {deaccumulate}
+        :EndReadFromNetCDF
+    :EndData
+    """
+
+    def to_rv(self):
+        d = self.asdict()
+        return dedent(self.template).format(**d)
+
+
+@dataclass
+class ObservationDataCommand(DataCommand):
+    site: str = "1"
+
+    template = """
+    :ObservationData {data_type} {site} {units}
+        :ReadFromNetCDF
+            :FileNameNC      {file_name_nc}
+            :VarNameNC       {var_name_nc}
+            :DimNamesNC      {dimensions}
+            :StationIdx      {index}
+            {time_shift}
+            {linear_transform}
+            {deaccumulate}
+        :EndReadFromNetCDF
+    :EndObservationData
+    """
+
+
+@dataclass
+class GriddedForcingCommand(BaseDataCommand):
     """GriddedForcing command (RVT)."""
 
     @dataclass
@@ -235,15 +357,8 @@ class GriddedForcingCommand(RavenConfig):
             )
             return dedent(self.template).strip().format(**d)
 
-    name: Optional[str] = ""
-    units: Optional[str] = ""
-    data_type: str = ""
-    file_name_nc: str = ""
-    var_name_nc: str = ""
     dim_names_nc: Tuple[str, str, str] = ("x", "y", "t")
-    time_shift: Optional[int] = None  # in days
-    linear_transform: Optional[Tuple[float, float]] = None
-    grid_weights: GridWeightsCommand = None
+    grid_weights: GridWeightsCommand = GridWeightsCommand()
 
     template = """
     :GriddedForcing {name}
@@ -253,79 +368,22 @@ class GriddedForcingCommand(RavenConfig):
         :DimNamesNC {dim_names_nc}
         {time_shift}
         {linear_transform}
+        {deaccumulate}
         {grid_weights}
     :EndGriddedForcing
     """
 
     def to_rv(self):
-        d = asdict(self)
-        d["dim_names_nc"] = " ".join(self.dim_names_nc)
-        d["time_shift"] = f":TimeShift {self.time_shift}" if self.time_shift else ""
-        if self.linear_transform:
-            slope, intercept = self.linear_transform
-            d["linear_transform"] = f":LinearTransform {slope} {intercept}"
-        else:
-            d["linear_transform"] = ""
+        d = self.asdict()
         d["grid_weights"] = self.grid_weights.to_rv(indent_level=1)
         return dedent(self.template).format(**d)
 
 
 @dataclass
-class StationForcingCommand(RavenConfig):
+class StationForcingCommand(GriddedForcingCommand):
     """StationForcing command (RVT)."""
 
-    @dataclass
-    class GridWeightsCommand(RavenConfig):
-        """GridWeights command."""
-
-        number_hrus: int = 1
-        number_stations: int = 1
-        data: Tuple[Tuple[int, int, float]] = ((1, 0, 1),)
-
-        template = """
-        {indent}:GridWeights
-        {indent}    :NumberHRUs {number_hrus}
-        {indent}    :NumberStations {number_stations}
-        {data}
-        {indent}:EndGridWeights
-        """
-
-        @classmethod
-        def parse(cls, s):
-            pat = r"""
-            :GridWeights
-                :NumberHRUs (\d+)
-                :NumberStations (\d+)
-                (.+)
-            :EndGridWeights
-            """
-            m = re.match(dedent(pat).strip(), s, re.DOTALL)
-            n_hrus, n_stations, data = m.groups()
-            data = [d.strip().split() for d in data.split("\n")]
-            data = tuple((int(h), int(c), float(w)) for h, c, w in data)
-            return cls(
-                number_hrus=int(n_hrus), number_stations=int(n_stations), data=data
-            )
-
-        def to_rv(self, indent_level=0):
-            indent = INDENT * indent_level
-            d = asdict(self)
-            d["indent"] = indent
-            d["data"] = "\n".join(
-                f"{indent}    {p[0]} {p[1]} {p[2]}" for p in self.data
-            )
-            return dedent(self.template).strip().format(**d)
-
-    name: Optional[str] = ""
-    units: Optional[str] = ""
-    data_type: str = ""
-    file_name_nc: str = ""
-    var_name_nc: str = ""
     dim_names_nc: Tuple[str, str] = ("station", "time")
-    time_shift: Optional[int] = None  # in days
-    linear_transform: Optional[Tuple[float, float]] = None
-    deaccumulate: Optional[bool] = False
-    grid_weights: GridWeightsCommand = GridWeightsCommand()
 
     template = """
     :StationForcing {name} {units}
@@ -336,102 +394,45 @@ class StationForcingCommand(RavenConfig):
         {time_shift}
         {linear_transform}
         {deaccumulate}
-    {grid_weights}
+        {grid_weights}
     :EndStationForcing
     """
 
-    def to_rv(self):
-        d = asdict(self)
-        d["dim_names_nc"] = " ".join(self.dim_names_nc)
-        d["time_shift"] = f":TimeShift {self.time_shift}" if self.time_shift else ""
-        if self.linear_transform:
-            slope, intercept = self.linear_transform
-            d["linear_transform"] = f":LinearTransform {slope} {intercept}"
-        else:
-            d["linear_transform"] = ""
-        d["deaccumulate"] = ":Deaccumulate" if self.deaccumulate else ""
-        d["grid_weights"] = self.grid_weights.to_rv(indent_level=1)
-        return dedent(self.template).format(**d)
-
 
 @dataclass
-class BaseValueCommand(RavenConfig):
-    """BaseValueCommand."""
-
-    tag: str = ""
-    value: Any = None
-
-    template = ":{tag} {value}"
-
-    # Overloading init to freeze the tag.
-    def __init__(self, value):
-        self.value = value
-
-    def to_rv(self):
-        return self.template.format(**asdict(self))
-
-
-@dataclass
-class BaseBooleanCommand(RavenConfig):
-    tag: str = ""
-    value: bool = False
-
-    template = ":{tag}"
-
-    def to_rv(self):
-        return self.template.format(tag=self.tag) if self.value else ""
-
-
-@dataclass
-class LinearTransform(RavenConfig):
-    scale: float = 1
-    offset: float = 0
-
-    template = ":LinearTransform {slope:.15f} {intercept:.15f}"
-
-    def to_rv(self):
-        return self.template.format(**asdict(self))
-
-
-@dataclass
-class DataCommand(RavenConfig):
-    name: Optional[str] = ""
-    var = None
-    path = None
-    var_name = None
-    units = None
-    scale_factor = None
-    add_offset = None
-    time_shift = None
-    dimensions = None
-    index = None
-    linear_transform = None
-    runits = None
-    data_type = None
-    site = None
-    deaccumulate = None
+class GaugeCommand(RavenConfig):
+    data: Tuple[DataCommand]
+    latitude: float = 0
+    longitude: float = 0
+    elevation: float = 0
+    raincorrection: float = 1
+    snowcorrection: float = 1
 
     template = """
-    :{kind} {data_type} {site} {runits}
-        :ReadFromNetCDF
-            :FileNameNC      {path}
-            :VarNameNC       {var_name}
-            :DimNamesNC      {dimensions}
-            :StationIdx      {index}
-            {time_shift}
-            {linear_transform}
-            {deaccumulate}
-        :EndReadFromNetCDF
-    :End{kind}
+    :Gauge
+        :Latitude {latitude}
+        :Longitude {longitude}
+        :Elevation {elevation}
+        {raincorrection_cmd}
+        {snowcorrection_cmd}
+
+        {data_list}
+    :EndGauge
     """
+
+    @property
+    def raincorrection_cmd(self):
+        return RainCorrection(self.raincorrection)
+
+    @property
+    def snowcorrection_cmd(self):
+        return SnowCorrection(self.snowcorrection)
 
     def to_rv(self):
         d = asdict(self)
-        d["kind"] = (
-            "ObservationData"
-            if self.var == "water_volume_transport_in_river_channel"
-            else "Data"
-        )
+        d["raincorrection_cmd"] = self.raincorrection_cmd
+        d["snowcorrection_cmd"] = self.snowcorrection_cmd
+        d["data_list"] = "\n\n".join(map(str, self.data))
         return dedent(self.template).format(**d)
 
 
@@ -738,42 +739,6 @@ class LandUseClassesCommand(RavenConfig):
         )
 
 
-@dataclass
-class ObservationDataCommand(RavenConfig):
-
-    name: Optional[str] = ""
-    data_type: str = "HYDROGRAPH"
-    subbasin_or_hru_id: Optional[int] = None
-    units: Optional[str] = ""  # e.g. "m**3/s"
-    file_name_nc: str = None
-    var_name_nc: str = "qobs"
-    dim_names_nc: Tuple[str, str] = ("?", "?")
-    station_idx: int = None
-
-    template = """
-    :ObservationData {data_type} {subbasin_or_hru_id} {units}
-        :ReadFromNetCDF
-             :FileNameNC     {file_name_nc}
-             :VarNameNC      {var_name_nc}
-             :DimNamesNC     {dim_names_nc}
-             :StationIdx     {station_idx}
-        :EndReadFromNetCDF
-    :EndObservationData
-    """
-
-    def to_rv(self):
-        d = asdict(self)
-
-        dims = list(d["dim_names_nc"])
-
-        # Move the time dimension at the end
-        dims.remove("time")
-        dims.append("time")
-        d["dim_names_nc"] = " ".join(dims)
-
-        return dedent(self.template).format(**d)
-
-
 class RainCorrection(BaseValueCommand):
     tag: str = "RainCorrection"
     value: float = 1.0
@@ -789,3 +754,7 @@ class Routing(BaseValueCommand):
 
     tag: str = "Routing"
     value: str = "ROUTE_NONE"
+
+
+class Deaccumulate(BaseBooleanCommand):
+    tag: str = "Deaccumulate"
