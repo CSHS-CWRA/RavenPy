@@ -1,0 +1,25 @@
+#########################################################################
+:FileType          rvc ASCII Raven 3.0.4
+:WrittenBy         Robert Chlumsky, James Craig & Juliane Mai
+:CreationDate      Feb 2021
+#
+# Emulation of Canadian Shield simulation of Salmon River near Prince George
+#------------------------------------------------------------------------
+#
+
+# tied parameters:
+# (it is important for OSTRICH to find every parameter place holder somewhere in this file)
+# (without this "4.723043E-01", "8.163922E-01", and "9.861976E-02" wouldn't be detectable)
+#    para_half_x01 = {X01_HLF} [mm] = para_x01 [m] * 1000. / 2. = {params.par_x01} * 1000. / 2.
+#    para_half_x02 = {X02_HLF} [mm] = para_x02 [m] * 1000. / 2. = {params.par_x02} * 1000. / 2.
+#    para_half_x03 = {X03_HLF} [mm] = para_x03 [m] * 1000. / 2. = {params.par_x03} * 1000. / 2.
+
+
+:HRUStateVariableTable # (formerly :IntialConditionsTable)
+   :Attributes 	       SOIL[0]       SOIL[1]       SOIL[2]
+        :Units 	            mm            mm            mm
+             1 	     {X01_HLF}     {X02_HLF}     {X03_HLF}
+             2 	     {X01_HLF}          0.00     {X03_HLF}
+#            1   para_half_x01 para_half_x02 para_half_x03
+#            2   para_half_x01          0.00 para_half_x03
+:EndHRUStateVariableTable

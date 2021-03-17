@@ -1,12 +1,25 @@
 from collections import namedtuple
-from pathlib import Path
 from dataclasses import dataclass
+from pathlib import Path
 
 import xarray as xr
 
 from .base import Ostrich, Raven
 from .commands import BasinIndexCommand
-from .rv import RV, RVC, RVH, RVI, RVP, RVT, MonthlyAverage, Ost, RavenNcData, HRU, HRUState, LU
+from .rv import (
+    HRU,
+    LU,
+    RV,
+    RVC,
+    RVH,
+    RVI,
+    RVP,
+    RVT,
+    HRUState,
+    MonthlyAverage,
+    Ost,
+    RavenNcData,
+)
 
 __all__ = [
     "GR4JCN",
@@ -14,11 +27,13 @@ __all__ = [
     "HMETS",
     "HBVEC",
     "BLENDED",
+    "CANADIANSHIELD",
     "GR4JCN_OST",
     "MOHYSE_OST",
     "HMETS_OST",
     "HBVEC_OST",
     "BLENDED_OST",
+    "CANADIANSHIELD_OST",
     "get_model",
     "Routing",
 ]
@@ -444,7 +459,11 @@ class BLENDED(Raven):
     templates = tuple((Path(__file__).parent / "raven-blended").glob("*.rv?"))
 
     params = namedtuple(
-        "BLENDEDParams", ", ".join(["par_x{:02}".format(i) for i in range(1, 36)]+["par_r{:02}".format(i) for i in range(1, 9)])
+        "BLENDEDParams",
+        ", ".join(
+            ["par_x{:02}".format(i) for i in range(1, 36)]
+            + ["par_r{:02}".format(i) for i in range(1, 9)]
+        ),
     )
 
     @dataclass
@@ -457,9 +476,12 @@ class BLENDED(Raven):
 
     def __init__(self, *args, **kwds):
         super().__init__(*args, **kwds)
-        self.rvp = RVP(params=BLENDED.params(*((None,) * len(BLENDED.params._fields))),
-                       land_use_classes=(LU("FOREST", impermeable_frac=0.0, forest_coverage=0.02345),)
-                       )
+        self.rvp = RVP(
+            params=BLENDED.params(*((None,) * len(BLENDED.params._fields))),
+            land_use_classes=(
+                LU("FOREST", impermeable_frac=0.0, forest_coverage=0.02345),
+            ),
+        )
         self.rvh = RVH(hrus=(BLENDED.HRU(),))
         self.rvt = RVT(**{k: nc() for k in std_vars})
         self.rvi = RVI(evaporation="PET_OUDIN", rain_snow_fraction="RAINSNOW_HBV")
@@ -481,15 +503,9 @@ class BLENDED(Raven):
         self.rvd["PHREATIC_hlf"] = self.rvp.params.par_x30 * 0.5 * 1000.0
         self.rvd["TOPSOIL_mm"] = self.rvp.params.par_x29 * 1000.0
         self.rvd["PHREATIC_mm"] = self.rvp.params.par_x30 * 1000.0
-        self.rvd[
-            "SUM_X09_X10"
-        ] = self.rvp.params.par_x10  # + self.rvp.params.par_x09
-        self.rvd[
-            "SUM_X13_X14"
-        ] = self.rvp.params.par_x14  # + self.rvp.params.par_x13
-        self.rvd[
-            "SUM_X24_X25"
-        ] = self.rvp.params.par_x25  # + self.rvp.params.par_x24
+        self.rvd["SUM_X09_X10"] = self.rvp.params.par_x10  # + self.rvp.params.par_x09
+        self.rvd["SUM_X13_X14"] = self.rvp.params.par_x14  # + self.rvp.params.par_x13
+        self.rvd["SUM_X24_X25"] = self.rvp.params.par_x25  # + self.rvp.params.par_x24
         self.rvd[
             "POW_X04"
         ] = self.rvp.params.par_x04  # 10.0**self.rvp.params.par_x04  #
@@ -522,94 +538,94 @@ class BLENDED_OST(Ostrich, BLENDED):
             algorithm="DDS",
             max_iterations=50,
             lowerBounds=BLENDED.params(
-                None,       # par_x01
-                None,       # par_x02
-                None,       # par_x03
-                None,       # 10**par_x04
-                None,       # par_x05
-                None,       # par_x06
-                None,       # par_x07
-                None,       # par_x08
-                None,       # par_x09
-                None,       # par_x09+par_x10
-                None,       # 10**par_x11
-                None,       # par_x12
-                None,       # par_x13
-                None,       # par_x13+par_x14
-                None,       # par_x15
-                None,       # par_x16
-                None,       # par_x17
-                None,       # par_x18
-                None,       # par_x19
-                None,       # par_x20
-                None,       # par_x21
-                None,       # par_x22
-                None,       # par_x23
-                None,       # par_x24
-                None,       # par_x24+par_x25
-                None,       # par_x26
-                None,       # par_x27
-                None,       # par_x28
-                None,       # par_x29
-                None,       # par_x30
-                None,       # par_x31
-                None,       # par_x32
-                None,       # par_x33
-                None,       # par_x34
-                None,       # par_x35
-                None,       # par_r01
-                None,       # par_r02
-                None,       # par_r03
-                None,       # par_r04
-                None,       # par_r05
-                None,       # par_r06
-                None,       # par_r07
-                None,       # par_r08
+                None,  # par_x01
+                None,  # par_x02
+                None,  # par_x03
+                None,  # 10**par_x04
+                None,  # par_x05
+                None,  # par_x06
+                None,  # par_x07
+                None,  # par_x08
+                None,  # par_x09
+                None,  # par_x09+par_x10
+                None,  # 10**par_x11
+                None,  # par_x12
+                None,  # par_x13
+                None,  # par_x13+par_x14
+                None,  # par_x15
+                None,  # par_x16
+                None,  # par_x17
+                None,  # par_x18
+                None,  # par_x19
+                None,  # par_x20
+                None,  # par_x21
+                None,  # par_x22
+                None,  # par_x23
+                None,  # par_x24
+                None,  # par_x24+par_x25
+                None,  # par_x26
+                None,  # par_x27
+                None,  # par_x28
+                None,  # par_x29
+                None,  # par_x30
+                None,  # par_x31
+                None,  # par_x32
+                None,  # par_x33
+                None,  # par_x34
+                None,  # par_x35
+                None,  # par_r01
+                None,  # par_r02
+                None,  # par_r03
+                None,  # par_r04
+                None,  # par_r05
+                None,  # par_r06
+                None,  # par_r07
+                None,  # par_r08
             ),
             upperBounds=BLENDED.params(
-                None,       # par_x01
-                None,       # par_x02
-                None,       # par_x03
-                None,       # 10**par_x04
-                None,       # par_x05
-                None,       # par_x06
-                None,       # par_x07
-                None,       # par_x08
-                None,       # par_x09
-                None,       # par_x09+par_x10
-                None,       # 10**par_x11
-                None,       # par_x12
-                None,       # par_x13
-                None,       # par_x13+par_x14
-                None,       # par_x15
-                None,       # par_x16
-                None,       # par_x17
-                None,       # par_x18
-                None,       # par_x19
-                None,       # par_x20
-                None,       # par_x21
-                None,       # par_x22
-                None,       # par_x23
-                None,       # par_x24
-                None,       # par_x24+par_x25
-                None,       # par_x26
-                None,       # par_x27
-                None,       # par_x28
-                None,       # par_x29
-                None,       # par_x30
-                None,       # par_x31
-                None,       # par_x32
-                None,       # par_x33
-                None,       # par_x34
-                None,       # par_x35
-                None,       # par_r01
-                None,       # par_r02
-                None,       # par_r03
-                None,       # par_r04
-                None,       # par_r05
-                None,       # par_r06
-                None,       # par_r07
-                None,       # par_r08
+                None,  # par_x01
+                None,  # par_x02
+                None,  # par_x03
+                None,  # 10**par_x04
+                None,  # par_x05
+                None,  # par_x06
+                None,  # par_x07
+                None,  # par_x08
+                None,  # par_x09
+                None,  # par_x09+par_x10
+                None,  # 10**par_x11
+                None,  # par_x12
+                None,  # par_x13
+                None,  # par_x13+par_x14
+                None,  # par_x15
+                None,  # par_x16
+                None,  # par_x17
+                None,  # par_x18
+                None,  # par_x19
+                None,  # par_x20
+                None,  # par_x21
+                None,  # par_x22
+                None,  # par_x23
+                None,  # par_x24
+                None,  # par_x24+par_x25
+                None,  # par_x26
+                None,  # par_x27
+                None,  # par_x28
+                None,  # par_x29
+                None,  # par_x30
+                None,  # par_x31
+                None,  # par_x32
+                None,  # par_x33
+                None,  # par_x34
+                None,  # par_x35
+                None,  # par_r01
+                None,  # par_r02
+                None,  # par_r03
+                None,  # par_r04
+                None,  # par_r05
+                None,  # par_r06
+                None,  # par_r07
+                None,  # par_r08
             ),
         )
 
@@ -630,12 +646,234 @@ class BLENDED_OST(Ostrich, BLENDED):
         BLENDEDParams named tuple
           Parameters expected by Raven.
         """
-        names = ["par_x{:02}".format(i) for i in range(1, 36)]+["par_r{:02}".format(i) for i in range(1, 9)]
-        names[3]  = "pow_x04"
-        names[9]  = "sum_x09_x10"
+        names = ["par_x{:02}".format(i) for i in range(1, 36)] + [
+            "par_r{:02}".format(i) for i in range(1, 9)
+        ]
+        names[3] = "pow_x04"
+        names[9] = "sum_x09_x10"
         names[10] = "pow_x11"
         names[13] = "sum_x13_x14"
         names[24] = "sum_x24_x25"
+
+        out = [ops[n] for n in names]
+        return self.params(*out)
+
+
+class CANADIANSHIELD(Raven):
+    """
+    The Canadian Shield model is a useful configuration of Raven for Canadian shield basins characterized by shallow soils atop rock, with ample exposed rock and lakes.
+
+    References
+    ----------
+    None
+    """
+
+    identifier = "canadianshield"
+    templates = tuple((Path(__file__).parent / "raven-canadianshield").glob("*.rv?"))
+
+    params = namedtuple(
+        "CANADIANSHIELDParams",
+        ", ".join(["par_x{:02}".format(i) for i in range(1, 35)]),
+    )
+
+    @dataclass
+    class HRU_ORGANIC(HRU):
+        hru_id: int = 1
+        land_use_class: str = "FOREST"
+        veg_class: str = "FOREST"
+        soil_profile: str = "SOILP_ORG"
+        aquifer_profile: str = "[NONE]"
+        terrain_class: str = "[NONE]"
+
+    @dataclass
+    class HRU_BEDROCK(HRU):
+        hru_id: int = 2
+        land_use_class: str = "FOREST"
+        veg_class: str = "FOREST"
+        soil_profile: str = "SOILP_BEDROCK"
+        aquifer_profile: str = "[NONE]"
+        terrain_class: str = "[NONE]"
+
+    def __init__(self, *args, **kwds):
+        super().__init__(*args, **kwds)
+        self.rvp = RVP(
+            params=CANADIANSHIELD.params(
+                *((None,) * len(CANADIANSHIELD.params._fields))
+            ),
+            # TODO:: use here LU set by user in test_candianshield
+            land_use_classes=(
+                LU("FOREST", impermeable_frac=0.0, forest_coverage=0.02345),
+            ),
+        )
+
+        self.rvh = RVH()
+        self.rvt = RVT(**{k: nc() for k in std_vars})
+        self.rvi = RVI(
+            evaporation="PET_HARGREAVES_1985",
+            rain_snow_fraction="RAINSNOW_DINGMAN",
+            ow_evaporation="PET_HARGREAVES_1985",
+        )
+        self.rvc = RVC(
+            soil0=None, soil1=None, soil2=None, basin_state=BasinIndexCommand()
+        )
+        self.rvd = RV(
+            X01_MM=None,
+            X02_MM=None,
+            X03_MM=None,
+            X01_HLF=None,
+            X02_HLF=None,
+            X03_HLF=None,
+            POW_X08=None,
+            POW_X09=None,
+            SUM_X05_X06=None,
+            SUM_X16_X17=None,
+            area_frac_organic=None,
+            area_frac_bedrock=None,
+        )
+
+    def derived_parameters(self):
+        self.rvd["X01_MM"] = self.rvp.params.par_x01 * 1000.0
+        self.rvd["X02_MM"] = self.rvp.params.par_x02 * 1000.0
+        self.rvd["X03_MM"] = self.rvp.params.par_x03 * 1000.0
+        self.rvd["X01_HLF"] = self.rvp.params.par_x01 * 1000.0 * 0.5
+        self.rvd["X02_HLF"] = self.rvp.params.par_x02 * 1000.0 * 0.5
+        self.rvd["X03_HLF"] = self.rvp.params.par_x03 * 1000.0 * 0.5
+        self.rvd["SUM_X05_X06"] = self.rvp.params.par_x06  # + self.rvp.params.par_x05
+        self.rvd["SUM_X16_X17"] = self.rvp.params.par_x17  # + self.rvp.params.par_x16
+        self.rvd[
+            "POW_X08"
+        ] = self.rvp.params.par_x08  # 10.0**self.rvp.params.par_x08  #
+        self.rvd[
+            "POW_X09"
+        ] = self.rvp.params.par_x09  # 10.0**self.rvp.params.par_x09  #
+        #
+        # check that there is indeed two HRUs
+        assert len(self.rvh.hrus) == 2
+        # check that areas of two HRUs are equal
+        assert self.rvh.hrus[0].area == self.rvh.hrus[1].area
+        # fill in areas of HRUs
+        self.rvh.hrus[0].area *= self.rvp.params.par_x34
+        self.rvh.hrus[1].area *= 1.0 - self.rvp.params.par_x34
+
+        # Default initial conditions if none are given
+        if self.rvc.hru_state is None:
+            soil0 = self.rvd["X01_HLF"] if self.rvc.soil0 is None else self.rvc.soil0
+            soil1 = self.rvd["X02_HLF"] if self.rvc.soil1 is None else self.rvc.soil1
+            soil2 = self.rvd["X03_HLF"] if self.rvc.soil2 is None else self.rvc.soil2
+            self.rvc.hru_state = HRUState(soil0=soil0, soil1=soil1, soil2=soil2)
+
+        self.rvt.raincorrection = self.rvp.params.par_x32
+        self.rvt.snowcorrection = self.rvp.params.par_x33
+
+
+class CANADIANSHIELD_OST(Ostrich, CANADIANSHIELD):
+    _p = Path(__file__).parent / "ostrich-canadianshield"
+    templates = tuple(_p.glob("model/*.rv?")) + tuple(_p.glob("*.t??"))
+
+    def __init__(self, *args, **kwds):
+        super().__init__(*args, **kwds)
+        self.rvi.suppress_output = True
+        self.txt = Ost(
+            algorithm="DDS",
+            max_iterations=10,
+            # TODO: This needs to receive the area (hru_default_values["area"])
+            area=4250.6,
+            lowerBounds=CANADIANSHIELD.params(
+                None,  # par_x01
+                None,  # par_x02
+                None,  # par_x03
+                None,  # par_x04
+                None,  # par_x05
+                None,  # par_x05+par_x06
+                None,  # par_x07
+                None,  # 10**par_x08
+                None,  # 10**par_x09
+                None,  # par_x10
+                None,  # par_x11
+                None,  # par_x12
+                None,  # par_x13
+                None,  # par_x14
+                None,  # par_x15
+                None,  # par_x16
+                None,  # par_x16+par_x17
+                None,  # par_x18
+                None,  # par_x19
+                None,  # par_x20
+                None,  # par_x21
+                None,  # par_x22
+                None,  # par_x23
+                None,  # par_x24
+                None,  # par_x25
+                None,  # par_x26
+                None,  # par_x27
+                None,  # par_x28
+                None,  # par_x29
+                None,  # par_x30
+                None,  # par_x31
+                None,  # par_x32
+                None,  # par_x33
+                None,  # par_x34
+            ),
+            upperBounds=CANADIANSHIELD.params(
+                None,  # par_x01
+                None,  # par_x02
+                None,  # par_x03
+                None,  # par_x04
+                None,  # par_x05
+                None,  # par_x05+par_x06
+                None,  # par_x07
+                None,  # 10**par_x08
+                None,  # 10**par_x09
+                None,  # par_x10
+                None,  # par_x11
+                None,  # par_x12
+                None,  # par_x13
+                None,  # par_x14
+                None,  # par_x15
+                None,  # par_x16
+                None,  # par_x16+par_x17
+                None,  # par_x18
+                None,  # par_x19
+                None,  # par_x20
+                None,  # par_x21
+                None,  # par_x22
+                None,  # par_x23
+                None,  # par_x24
+                None,  # par_x25
+                None,  # par_x26
+                None,  # par_x27
+                None,  # par_x28
+                None,  # par_x29
+                None,  # par_x30
+                None,  # par_x31
+                None,  # par_x32
+                None,  # par_x33
+                None,  # par_x34
+            ),
+        )
+
+    def derived_parameters(self):
+        """Derived parameters are computed by Ostrich."""
+        pass
+
+    def ost2raven(self, ops):
+        """Return a list of parameter names calibrated by Ostrich that match Raven's parameters.
+
+        Parameters
+        ----------
+        ops: dict
+          Optimal parameter set returned by Ostrich.
+
+        Returns
+        -------
+        CANADIANSHIELDParams named tuple
+          Parameters expected by Raven.
+        """
+        names = ["par_x{:02}".format(i) for i in range(1, 35)]
+        names[7] = "par_pow_x08"
+        names[8] = "par_pow_x09"
+        names[5] = "par_sum_x05_x06"
+        names[16] = "par_sum_x16_x17"
 
         out = [ops[n] for n in names]
         return self.params(*out)
@@ -683,7 +921,7 @@ def get_model(name):
     model_cls = getattr(emulators, name, None)
 
     if model_cls is None:
-        for m in [GR4JCN, MOHYSE, HMETS, HBVEC, BLENDED]:
+        for m in [GR4JCN, MOHYSE, HMETS, HBVEC, BLENDED, CANADIANSHIELD]:
             if m.identifier == name:
                 model_cls = m
 

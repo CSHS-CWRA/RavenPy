@@ -3,7 +3,7 @@ import os
 from .base import Ostrich, Raven
 from .emulators import *
 from .multimodel import RavenMultiModel
-from .rv import RV, RVI, HRU, HRUState, LU
+from .rv import HRU, LU, RV, RVI, HRUState
 
 _dir = os.path.abspath(os.path.dirname(__file__))
 
@@ -13,6 +13,7 @@ raven_templates = {
     "raven-hmets": os.path.join(_dir, "raven-hmets"),
     "raven-hbv-ec": os.path.join(_dir, "raven-hbv-ec"),
     "raven-blended": os.path.join(_dir, "raven-blended"),
+    "raven-canadianshield": os.path.join(_dir, "raven-canadianshield"),
 }
 
 ostrich_templates = {
@@ -21,6 +22,7 @@ ostrich_templates = {
     "ostrich-hmets": os.path.join(_dir, "ostrich-hmets"),
     "ostrich-hbv-ec": os.path.join(_dir, "ostrich-hbv-ec"),
     "ostrich-blended": os.path.join(_dir, "ostrich-blended"),
+    "ostrich-canadianshield": os.path.join(_dir, "ostrich-canadianshield"),
 }
 
 grid_weight_importer_params = dict(

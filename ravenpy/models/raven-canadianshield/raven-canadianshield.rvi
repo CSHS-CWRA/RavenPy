@@ -1,0 +1,78 @@
+#########################################################################
+:FileType          rvi ASCII Raven 3.0.4
+:WrittenBy         Robert Chlumsky, James Craig & Juliane Mai
+:CreationDate      Feb 2021
+#
+# Emulation of Canadian Shield simulation of Salmon River near Prince George
+#------------------------------------------------------------------------
+#
+#
+
+:Calendar              {calendar}
+:RunName               {run_name}-{run_index}
+:StartDate             {start_date}
+:EndDate               {end_date}
+:TimeStep              {time_step}
+:Method                ORDERED_SERIES
+
+:Routing               ROUTE_NONE
+:CatchmentRoute        ROUTE_TRI_CONVOLUTION
+:Evaporation           {evaporation}           # PET_HARGREAVES_1985
+:OW_Evaporation        {ow_evaporation}        # PET_HARGREAVES_1985
+:SWCanopyCorrect       SW_CANOPY_CORR_STATIC
+:RainSnowFraction      {rain_snow_fraction}    # RAINSNOW_DINGMAN
+:PotentialMeltMethod   POTMELT_DEGREE_DAY
+:PrecipIceptFract      PRECIP_ICEPT_LAI
+:SoilModel             SOIL_MULTILAYER 3
+
+:MonthlyInterpolationMethod MONTHINT_LINEAR_MID
+
+:Alias TOPSOIL          SOIL[0]
+:Alias VADOSE           SOIL[1]
+:Alias FRACBEDROCK      SOIL[2]
+
+:HydrologicProcesses
+    :SnowRefreeze             FREEZE_DEGREE_DAY    SNOW_LIQ        SNOW
+    :Precipitation            PRECIP_RAVEN         ATMOS_PRECIP    MULTIPLE
+    :CanopyEvaporation        CANEVP_MAXIMUM       CANOPY          ATMOSPHERE
+    :CanopySnowEvap           CANEVP_MAXIMUM       CANOPY_SNOW     ATMOSPHERE
+    :SnowBalance              SNOBAL_TWO_LAYER     MULTIPLE        MULTIPLE
+    :Abstraction              ABST_FILL            PONDED_WATER    DEPRESSION
+    :OpenWaterEvaporation     OPEN_WATER_EVAP      DEPRESSION      ATMOSPHERE
+    :Infiltration             INF_HBV              PONDED_WATER    MULTIPLE
+    :Interflow                INTERFLOW_PRMS       TOPSOIL         SURFACE_WATER
+    :Baseflow                 BASE_POWER_LAW       VADOSE          SURFACE_WATER
+          :-->Conditional HRU_TYPE IS SOIL_ORG
+    :Baseflow                 BASE_POWER_LAW       FRACBEDROCK     SURFACE_WATER
+        :Percolation          PERC_GAWSER          TOPSOIL         VADOSE
+          :-->Conditional HRU_TYPE IS SOIL_ORG
+    :Percolation              PERC_GAWSER          VADOSE          FRACBEDROCK
+          :-->Conditional HRU_TYPE IS SOIL_ORG
+        :Percolation          PERC_GAWSER          TOPSOIL         FRACBEDROCK
+          :-->Conditional HRU_TYPE IS SOIL_BEDROCK
+    :SoilEvaporation          SOILEVAP_ROOT        TOPSOIL         ATMOSPHERE
+:EndHydrologicProcesses
+
+#:CreateRVPTemplate
+
+#---------------------------------------------------------
+# Output Options
+#
+#:WriteForcingFunctions
+:EvaluationMetrics {evaluation_metrics}
+:WriteNetcdfFormat  yes
+#:NoisyMode
+:SilentMode
+:PavicsMode
+{suppress_output}
+
+:NetCDFAttribute title Simulated river discharge
+:NetCDFAttribute history Created on {now} by Raven
+:NetCDFAttribute references  Craig, J.R., and the Raven Development Team, Raven user's and developer's manual (Version 2.8), URL: http://raven.uwaterloo.ca/ (2018).
+:NetCDFAttribute comment Raven Hydrological Framework version {raven_version}
+
+:NetCDFAttribute model_id hmets
+
+:NetCDFAttribute time_frequency day
+:NetCDFAttribute time_coverage_start {start_date}
+:NetCDFAttribute time_coverage_end {end_date}
