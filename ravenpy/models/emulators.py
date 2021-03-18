@@ -693,9 +693,7 @@ class SACSMA(Raven):
         )
         self.rvh = RVH(hrus=(SACSMA.HRU(),))
         self.rvt = RVT(**{k: nc() for k in std_vars})
-        self.rvi = RVI(
-            evaporation="PET_OUDIN", rain_snow_fraction="RAINSNOW_DATA"
-        )  # would like to use RAINSNOW_HBV??
+        self.rvi = RVI(evaporation="PET_OUDIN", rain_snow_fraction="RAINSNOW_DATA")
         self.rvc = RVC(soil0=None, soil2=None, basin_state=BasinIndexCommand())
         self.rvd = RV(
             par_soil0_mm=None,
