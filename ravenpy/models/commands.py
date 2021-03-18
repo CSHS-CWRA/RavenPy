@@ -350,7 +350,11 @@ class ObservationDataCommand(DataCommand):
 
 @dataclass
 class GridWeightsCommand(RavenConfig):
-    """GridWeights command."""
+    """GridWeights command.
+
+    Important note: this command can be embedded in both a `GriddedForcingCommand`
+    or a `StationForcingCommand`.
+    """
 
     number_hrus: int = 0
     number_grid_cells: int = 0
