@@ -115,9 +115,16 @@ class GR4JCN(Raven):
             soil1 = self.rvc.soil1
 
         for hru in self.rvh.hrus:
-            self.rvc.hru_states[hru.hru_id] = HRUState(
-                index=hru.hru_id, soil0=soil0, soil1=soil1
-            )
+            if isinstance(hru, GR4JCN.LandHRU):
+                self.rvc.hru_states[hru.hru_id] = HRUState(
+                    index=hru.hru_id, soil0=soil0, soil1=soil1
+                )
+            elif isinstance(hru, GR4JCN.LakeHRU):
+                self.rvc.hru_states[hru.hru_id] = HRUState(index=hru.hru_id)
+            else:
+                raise Exception(
+                    "Type of HRU must be either GR4JCN.LandHRU or GR4JCN.LakeHRU"
+                )
 
 
 class GR4JCN_OST(Ostrich, GR4JCN):
