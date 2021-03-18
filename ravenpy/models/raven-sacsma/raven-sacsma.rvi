@@ -1,0 +1,62 @@
+#########################################################################
+:FileType          rvi ASCII Raven 3.0.4
+:WrittenBy         James Craig & Juliane Mai
+:CreationDate      Feb 2021
+#
+# Emulation of Sac-SMA simulation of Salmon River near Prince George
+#------------------------------------------------------------------------
+#
+#
+
+:Calendar              {calendar}
+:RunName               {run_name}-{run_index}
+:StartDate             {start_date}
+:EndDate               {end_date}
+:TimeStep              {time_step}
+:Method                ORDERED_SERIES
+
+:PotentialMeltMethod     POTMELT_DEGREE_DAY
+:RainSnowFraction        {rain_snow_fraction}  # RAINSNOW_DATA ; maybe RAINSNOW_HBV??
+:Evaporation             {evaporation}         # PET_OUDIN
+:CatchmentRoute          ROUTE_GAMMA_CONVOLUTION
+:Routing                 ROUTE_NONE
+
+:SoilModel               SOIL_MULTILAYER 7
+
+:Alias UZ_T  SOIL[0]
+:Alias UZ_F  SOIL[1]
+:Alias LZ_T  SOIL[2]
+:Alias LZ_PF SOIL[3]
+:Alias LZ_PS SOIL[4]
+
+:HydrologicProcesses
+  :SnowBalance           SNOBAL_SIMPLE_MELT   SNOW          PONDED_WATER
+  :Precipitation         RAVEN_DEFAULT        ATMOS_PRECIP  MULTIPLE
+  :SoilEvaporation       SOILEVAP_SACSMA      MULTIPLE      ATMOSPHERE
+  :SoilBalance           SOILBAL_SACSMA       MULTIPLE      MULTIPLE
+  :OpenWaterEvaporation  OPEN_WATER_RIPARIAN  SURFACE_WATER ATMOSPHERE
+:EndHydrologicProcesses
+
+#:CreateRVPTemplate
+
+#---------------------------------------------------------
+# Output Options
+#
+#:WriteForcingFunctions
+:EvaluationMetrics {evaluation_metrics}
+:WriteNetcdfFormat  yes
+#:NoisyMode
+:SilentMode
+:PavicsMode
+{suppress_output}
+
+:NetCDFAttribute title Simulated river discharge
+:NetCDFAttribute history Created on {now} by Raven
+:NetCDFAttribute references  Craig, J.R., and the Raven Development Team, Raven user's and developer's manual (Version 2.8), URL: http://raven.uwaterloo.ca/ (2018).
+:NetCDFAttribute comment Raven Hydrological Framework version {raven_version}
+
+:NetCDFAttribute model_id hmets
+
+:NetCDFAttribute time_frequency day
+:NetCDFAttribute time_coverage_start {start_date}
+:NetCDFAttribute time_coverage_end {end_date}

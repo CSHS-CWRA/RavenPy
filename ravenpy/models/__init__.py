@@ -13,6 +13,7 @@ raven_templates = {
     "raven-hmets": os.path.join(_dir, "raven-hmets"),
     "raven-hbv-ec": os.path.join(_dir, "raven-hbv-ec"),
     "raven-blended": os.path.join(_dir, "raven-blended"),
+    "raven-sacsma": os.path.join(_dir, "raven-sacsma"),
 }
 
 ostrich_templates = {
@@ -21,6 +22,7 @@ ostrich_templates = {
     "ostrich-hmets": os.path.join(_dir, "ostrich-hmets"),
     "ostrich-hbv-ec": os.path.join(_dir, "ostrich-hbv-ec"),
     "ostrich-blended": os.path.join(_dir, "ostrich-blended"),
+    "ostrich-sacsma": os.path.join(_dir, "ostrich-sacsma"),
 }
 
 grid_weight_importer_params = dict(
