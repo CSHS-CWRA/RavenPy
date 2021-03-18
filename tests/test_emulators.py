@@ -173,14 +173,6 @@ class TestGR4JCN:
         model.rvi.routing = "ROUTE_DIFFUSIVE_WAVE"
 
         #########
-        # R V C #
-        #########
-
-        # In this test the HRU IDs range from 0 to 2, and the subbasin IDs are 10, 20
-        model.rvc.basin_state.index = 10  # <<<<<<< THIS NEEDS TO BE TWO INSTANCES
-        model.rvc.basin_state.index = 20  # <<<<<<< THIS NEEDS TO BE TWO INSTANCES
-
-        #########
         # R V H #
         #########
 

@@ -591,35 +591,21 @@ class BasinIndexCommand(RavenConfig):
 
     index: int = 1
     name: str = "watershed"
-    channelstorage: float = 0
-    rivuletstorage: float = 0
-    qout: tuple = (0,)
-    qoutlast: float = 0
-    qlat: tuple = (0, 0, 0)
-    qlatlast: float = 0
-    qin: tuple = 20 * (0,)
+    channel_storage: float = 0
+    rivulet_storage: float = 0
+    q_out: Tuple[int] = (1, 0, 0)
 
     template = """
-    :BasinIndex {index}, {name}
-        :ChannelStorage, {channelstorage}
-        :RivuletStorage, {rivuletstorage}
-        :Qout,{nsegs},{qout},{qoutlast}
-        :Qlat,{nQlatHist},{qlat},{qlatlast}
-        :Qin ,{nQinHist}, {qin}
+    :BasinIndex {index} {name}
+        :ChannelStorage {channel_storage}
+        :RivuletStorage {rivulet_storage}
+        :Qout {q_out}
         """
 
     def to_rv(self):
-        return (
-            dedent(self.template)
-            .format(
-                **asdict(self),
-                nsegs=len(self.qout),
-                nQlatHist=len(self.qlat),
-                nQinHist=len(self.qin),
-            )
-            .replace("(", "")
-            .replace(")", "")
-        )
+        d = asdict(self)
+        d["q_out"] = " ".join(map(str, d["q_out"]))
+        return dedent(self.template).format(**d)
 
 
 @dataclass

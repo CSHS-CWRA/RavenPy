@@ -102,7 +102,7 @@ class GR4JCN(Raven):
         )
 
         # Initialize the stores to 1/2 full. Declare the parameters that can be user-modified
-        self.rvc = RVC(soil0=None, soil1=15, basin_state=BasinIndexCommand())
+        self.rvc = RVC(soil0=None, soil1=15)
         self.rvd = RV(one_minus_CEMANEIGE_X2=None, GR4J_X1_hlf=None)
 
     def derived_parameters(self):
@@ -125,6 +125,11 @@ class GR4JCN(Raven):
                 raise Exception(
                     "Type of HRU must be either GR4JCN.LandHRU or GR4JCN.LakeHRU"
                 )
+
+        for sb in self.rvh.subbasins:
+            self.rvc.basin_states[sb.subbasin_id] = BasinIndexCommand(
+                index=sb.subbasin_id
+            )
 
 
 class GR4JCN_OST(Ostrich, GR4JCN):
