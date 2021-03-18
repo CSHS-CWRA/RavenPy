@@ -251,7 +251,10 @@ class TestGR4JCN:
         ###########
 
         hds = model.q_sim
+
         assert len(hds.nbasins == 2)
+        # We only have one SB with gauged=True, so the output has a single column
+        assert hds.shape == (398, 1)
 
         # Sub1 flows into Sub2 :: Sub1 < Sub2
         # --> not necessarily; imagine the lake (sub2) is empty and
@@ -266,11 +269,11 @@ class TestGR4JCN:
             "2001-02-01",
         )
         # Not sure what should be these values!
-        target_qsim = [80.007871, 41.382373, 3.680208, 16.65698, 14.913719, 16.598288]
+        target_q_sim = [80.007871, 41.382373, 3.680208, 16.65698, 14.913719, 16.598288]
 
         for t in range(6):
             np.testing.assert_almost_equal(
-                hds.sel(nbasins=0, time=dates[t]), target_qsim[t], 4
+                hds.sel(nbasins=0, time=dates[t]), target_q_sim[t], 4
             )
 
         # d = model.diagnostics

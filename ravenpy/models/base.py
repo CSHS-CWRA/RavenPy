@@ -355,6 +355,8 @@ class Raven:
                     self.rvt[key] = DataCommand(**val)
             elif len(val["dim_names_nc"]) == 2:
                 if key == "water_volume_transport_in_river_channel":
+                    # Search for the gauged SB, not sure what should happen when there are
+                    # more than one (should it be even supported?)
                     for sb in self.rvh.subbasins:
                         if sb.gauged:
                             val["subbasin_id"] = sb.subbasin_id
