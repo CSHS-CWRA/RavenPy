@@ -133,8 +133,6 @@ class TestGR4JCN:
 
         target_q_sim = [0.0, 0.165788, 0.559366, 12.388717, 12.347956, 12.307299]
 
-        print("hds.sel(nbasins=0) = ", hds.sel(nbasins=0))
-
         for t in range(6):
             np.testing.assert_almost_equal(
                 hds.sel(nbasins=0, time=dates[t]), target_q_sim[t], 4
@@ -329,8 +327,6 @@ class TestGR4JCN:
         )
 
         target_q_sim = [0.0, 0.304073, 0.980807, 17.54049, 17.409493, 17.437954]
-
-        print("hds.sel(nbasins=0) = ", hds.sel(nbasins=0))
 
         for t in range(6):
             np.testing.assert_almost_equal(
