@@ -63,12 +63,20 @@ def test_race():
     assert ost.rvi.suppress_output.startswith(":SuppressOutput")
 
 
-# salmon catchment is now split into land- and lake-part
-salmon_land_hru = dict(
+# Salmon catchment is now split into land- and lake-part.
+# The areas do not sum up to overall area of 4250.6 [km2].
+# This is the reason the "test_routing" will give differnt
+# results compared to "test_simple". The "salmon_land_hru"
+# however is kept at the overall area of 4250.6 [km2] such
+# that other tests still obtain same results as before.
+salmon_land_hru_1 = dict(
     area="4250.6", elevation="843.0", latitude=54.4848, longitude=-123.3659
 )
-salmon_lake_hru = dict(
-    area="2150.6", elevation="839.0", latitude=54.0, longitude=-123.4
+salmon_lake_hru_1 = dict(
+    area="100.0", elevation="839.0", latitude=54.0, longitude=-123.4
+)
+salmon_land_hru_2 = dict(
+    area="2000.0", elevation="835.0", latitude=54.123, longitude=-123.4234
 )
 
 
@@ -81,7 +89,7 @@ class TestGR4JCN:
         model.rvi.run_name = "test"
 
         model.rvh.name = "Salmon"
-        model.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru),)
+        model.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
 
         model.rvp.params = model.params(0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
 
@@ -92,18 +100,59 @@ class TestGR4JCN:
 
         model(TS)
 
+        # ------------
+        # Check quality (diagnostic) of simulated streamflow values
+        # ------------
         d = model.diagnostics
-        # yields NSE=0.???? for full period 1954-2010
-        assert model.rvi.calendar == "GREGORIAN"
-        # Check parser
-        assert 1 in model.solution["HRUStateVariableTable"]["data"]
+        np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.116971, 4)
 
-        np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.117301, 2)
-
+        # ------------
+        # Check simulated streamflow values q_sim
+        # ------------
         hds = model.q_sim
+
         assert hds.attrs["long_name"] == "Simulated outflows"
 
+        assert len(hds.nbasins == 2)  # ??? WHY IS THAT 2??
+
+        # We only have one SB with gauged=True, so the output has a single column.
+        # The number of time steps simulated between (2000, 1, 1) and
+        # (2002, 1, 1) is 732.
+        assert hds.shape == (732, 1)
+
+        # Check simulated streamflow at first three timesteps and three simulated
+        # timesteps in the middle of the simulation period.
+        dates = (
+            "2000-01-01",
+            "2000-01-02",
+            "2000-01-03",
+            "2001-01-30",
+            "2001-01-31",
+            "2001-02-01",
+        )
+
+        target_q_sim = [0.0, 0.165788, 0.559366, 12.388717, 12.347956, 12.307299]
+
+        print("hds.sel(nbasins=0) = ", hds.sel(nbasins=0))
+
+        for t in range(6):
+            np.testing.assert_almost_equal(
+                hds.sel(nbasins=0, time=dates[t]), target_q_sim[t], 4
+            )
+
+        # ------------
+        # Check parser
+        # ------------
+        assert model.rvi.calendar == "GREGORIAN"
+
+        # ------------
+        # Check saved HRU states saved in RVC
+        # ------------
+        assert 1 in model.solution["HRUStateVariableTable"]["data"]
+
+        # ------------
         # Check attributes
+        # ------------
         assert model.hydrograph.attrs["model_id"] == "gr4jcn"
 
     def test_routing(self):
@@ -119,7 +168,7 @@ class TestGR4JCN:
         #########
 
         model.rvi.start_date = dt.datetime(2000, 1, 1)
-        model.rvi.end_date = dt.datetime(2001, 2, 1)
+        model.rvi.end_date = dt.datetime(2002, 1, 1)
         model.rvi.run_name = "test_gr4jcn_routing"
         model.rvi.routing = "ROUTE_DIFFUSIVE_WAVE"
 
@@ -128,27 +177,31 @@ class TestGR4JCN:
         #########
 
         # In this test the HRU IDs range from 0 to 2, and the subbasin IDs are 10, 20
-        model.rvc.basin_state.index = 10
+        model.rvc.basin_state.index = 10  # <<<<<<< THIS NEEDS TO BE TWO INSTANCES
+        model.rvc.basin_state.index = 20  # <<<<<<< THIS NEEDS TO BE TWO INSTANCES
 
         #########
         # R V H #
         #########
 
-        # Here we assume that each subbasin is exactly one HRU (that's a valid assumption)
-        # The entire watershed is upstream land (i.e. solid ground).
-        # Here: salmon_land_hru = hru_id=1 = subbasin_id=1.
+        # Here we assume that we have two subbasins. The first one (subbasin_id=10)
+        # has a lake (hru_id=2; area-100km2) and the rest is covered by land (hru_id=1;
+        # area=4250.6km2). The second subbasin (subbasin_id=20) does not contain a
+        # lake and is hence only land (hru_id=3; area=2000km2).
         #
-        # Just before the outlet there is a lake (i.e. pretty wet ground).
-        # The outlet of the lake is the outlet of the entire watershed.
-        # There is no land-hru downstream of that.
-        # Here: salmon_lake_hru = hru_id=2 = subbasin_id=2.
+        # Later the routing product will tell us which basin flows into which. Here
+        # we assume that the first subbasin (subbasin_id=10) drains into the second
+        # (subbasin_id=20). At the outlet of this second one we have an observation
+        # station (see :ObservationData in RVT). We will compare these observations
+        # with the simulated streamflow. That is the reason why "gauged=True" for
+        # the second basin.
         model.rvh.name = "Salmon"
 
         # HRU IDs are 1 to 3
         model.rvh.hrus = (
-            GR4JCN.LandHRU(hru_id=1, subbasin_id=10, **salmon_land_hru),
-            GR4JCN.LakeHRU(hru_id=2, subbasin_id=10, **salmon_lake_hru),
-            GR4JCN.LandHRU(hru_id=3, subbasin_id=20, **salmon_land_hru),
+            GR4JCN.LandHRU(hru_id=1, subbasin_id=10, **salmon_land_hru_1),
+            GR4JCN.LakeHRU(hru_id=2, subbasin_id=10, **salmon_lake_hru_1),
+            GR4JCN.LandHRU(hru_id=3, subbasin_id=20, **salmon_land_hru_2),
         )
 
         # Sub-basin IDs are 10 and 20 (not 1 and 2), to help disambiguate
@@ -185,7 +238,7 @@ class TestGR4JCN:
             number_hrus=3,
             number_grid_cells=1,
             # Here we have a special case: station is 0 for every row because the example NC
-            # has only one region/station (which is 0)
+            # has only one region/station (which is column 0)
             data=((1, 0, 1.0), (2, 0, 1.0), (3, 0, 1.0)),
         )
         model.rvt.grid_weights = gws
@@ -197,8 +250,21 @@ class TestGR4JCN:
         model.rvp.params = model.params(0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
 
         # TODO: compute this??
+
+        # model.rvp.avg_annual_runoff = function_to_derive_this(area_as_sum_of_all_hrus, q_obs_most_down_stream_means_with_down_sub_id=-1)
         model.rvp.avg_annual_runoff = 594
 
+        # These channel profiles describe the geometry of the actual river crossection.
+        # The eight points (x) to describe the following geometry are given in each
+        # profile:
+        #
+        # ----x                                     x---
+        #      \           FLOODPLAIN             /
+        #       x----x                     x----x
+        #             \                  /
+        #               \   RIVERBED   /
+        #                 x----------x
+        #
         model.rvp.channel_profiles = [
             ChannelProfileCommand(
                 name="chn_10",
@@ -253,13 +319,14 @@ class TestGR4JCN:
         hds = model.q_sim
 
         assert len(hds.nbasins == 2)
-        # We only have one SB with gauged=True, so the output has a single column
-        assert hds.shape == (398, 1)
 
-        # Sub1 flows into Sub2 :: Sub1 < Sub2
-        # --> not necessarily; imagine the lake (sub2) is empty and
-        #     needs to be filled first before it will release water again...
+        # We only have one SB with gauged=True, so the output has a single column.
+        # The number of time steps simulated between (2000, 1, 1) and
+        # (2002, 1, 1) is 732.
+        assert hds.shape == (732, 1)
 
+        # Check simulated streamflow at first three timesteps and three simulated
+        # timesteps in the middle of the simulation period.
         dates = (
             "2000-01-01",
             "2000-01-02",
@@ -268,16 +335,27 @@ class TestGR4JCN:
             "2001-01-31",
             "2001-02-01",
         )
-        # Not sure what should be these values!
-        target_q_sim = [80.007871, 41.382373, 3.680208, 16.65698, 14.913719, 16.598288]
+
+        target_q_sim = [0.0, 0.304073, 0.980807, 17.54049, 17.409493, 17.437954]
+
+        print("hds.sel(nbasins=0) = ", hds.sel(nbasins=0))
 
         for t in range(6):
             np.testing.assert_almost_equal(
                 hds.sel(nbasins=0, time=dates[t]), target_q_sim[t], 4
             )
 
-        # d = model.diagnostics
+        # For lumped GR4J model we have 1 subbasin and 1 HRU as well as no routing, no
+        # channel profiles, and the area of the entire basin is 4250.6 [km2]. Comparison
+        # of simulated and observed streamflow at outlet yielded:
         # np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.117301, 2)
+        #
+        # This is now a different value due to:
+        # - basin we have here is larger (4250.6 [km2] + 100 [km2] + 2000.0 [km2])
+        # - we do routing: so water from subbasin 1 needs some time to arrive at the
+        #   outlet of subbasin 2
+        d = model.diagnostics
+        np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.0141168, 4)
 
     def test_routing_next_step():
         pass
