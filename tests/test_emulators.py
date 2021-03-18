@@ -24,6 +24,7 @@ from ravenpy.models import (
 from ravenpy.models.commands import (
     ChannelProfileCommand,
     GriddedForcingCommand,
+    GridWeightsCommand,
     HRUStateVariableTableCommand,
     LandUseClassesCommand,
     ObservationDataCommand,
@@ -109,9 +110,29 @@ class TestGR4JCN:
         """We need at least 2 subbasins to activate routing."""
         model = GR4JCN("/tmp/test_gr4jcn_routing")
 
+        ts_2d = get_local_testdata(
+            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_2d.nc"
+        )
+
+        #########
+        # R V I #
+        #########
+
         model.rvi.start_date = dt.datetime(2000, 1, 1)
         model.rvi.end_date = dt.datetime(2001, 2, 1)
-        model.rvi.run_name = "test_routing"
+        model.rvi.run_name = "test_gr4jcn_routing"
+        model.rvi.routing = "ROUTE_DIFFUSIVE_WAVE"
+
+        #########
+        # R V C #
+        #########
+
+        # In this test the HRU IDs range from 0 to 2, and the subbasin IDs are 10, 20
+        model.rvc.basin_state.index = 10
+
+        #########
+        # R V H #
+        #########
 
         # Here we assume that each subbasin is exactly one HRU (that's a valid assumption)
         # The entire watershed is upstream land (i.e. solid ground).
@@ -122,40 +143,65 @@ class TestGR4JCN:
         # There is no land-hru downstream of that.
         # Here: salmon_lake_hru = hru_id=2 = subbasin_id=2.
         model.rvh.name = "Salmon"
+
+        # HRU IDs are 1 to 3
         model.rvh.hrus = (
-            GR4JCN.LandHRU(hru_id=1, subbasin_id=1, **salmon_land_hru),
-            GR4JCN.LakeHRU(hru_id=2, subbasin_id=2, **salmon_lake_hru),
+            GR4JCN.LandHRU(hru_id=1, subbasin_id=10, **salmon_land_hru),
+            GR4JCN.LakeHRU(hru_id=2, subbasin_id=10, **salmon_lake_hru),
+            GR4JCN.LandHRU(hru_id=3, subbasin_id=20, **salmon_land_hru),
         )
+
+        # Sub-basin IDs are 10 and 20 (not 1 and 2), to help disambiguate
         model.rvh.subbasins = (
-            # gauged = True:
+            # gauged = False:
             # Usually this output would only be written for user's convenience.
             # There is usually no observation of streamflow available within
             # catchments; only at the outlet. That's most commonly the reason
             # why a catchment is defined as it is defined.
             Sub(
-                name="upstream_land",
-                subbasin_id=1,
-                downstream_id=2,
-                profile="chn_1",
-                gauged=True,
+                name="upstream",
+                subbasin_id=10,
+                downstream_id=20,
+                profile="chn_10",
+                gauged=False,
             ),
             # gauged = True:
             # Since this is the outlet, this would usually be what we calibrate
             # against (i.e. we try to match this to Qobs).
             Sub(
-                name="outlet_lake",
-                subbasin_id=2,
+                name="downstream",
+                subbasin_id=20,
                 downstream_id=-1,
-                profile="chn_2",
+                profile="chn_20",
                 gauged=True,
             ),
         )
+
+        #########
+        # R V T #
+        #########
+
+        gws = GridWeightsCommand(
+            number_hrus=3,
+            number_grid_cells=1,
+            # Here we have a special case: station is 0 for every row because the example NC
+            # has only one region/station (which is 0)
+            data=((1, 0, 1.0), (2, 0, 1.0), (3, 0, 1.0)),
+        )
+        model.rvt.grid_weights = gws
+
+        #########
+        # R V P #
+        #########
+
         model.rvp.params = model.params(0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
+
+        # TODO: compute this??
         model.rvp.avg_annual_runoff = 594
 
         model.rvp.channel_profiles = [
             ChannelProfileCommand(
-                name="chn_1",
+                name="chn_10",
                 bed_slope=7.62066e-05,
                 survey_points=[
                     (0, 463.647),
@@ -174,7 +220,7 @@ class TestGR4JCN:
                 ],
             ),
             ChannelProfileCommand(
-                name="chn_2",
+                name="chn_20",
                 bed_slope=9.95895e-05,
                 survey_points=[
                     (0, 450.657),
@@ -194,22 +240,15 @@ class TestGR4JCN:
             ),
         ]
 
-        model.rvi.routing = "ROUTE_DIFFUSIVE_WAVE"
+        #############
+        # Run model #
+        #############
 
-        # model.rvt.station_forcings = [
-        #     StationForcingCommand(
-        #         name="rain",
-        #         file_name_nc=TODO,
-        #         var_name_nc=TODO,
-        #         dim_names_nc=("nstations", "ntime"),
-        #         linear_transform=(1.0, 0),
-        #         grid_weights=StationForcingCommand.GridWeightsCommand(
-        #             number_hrus=2, number_stations=1, data=()
-        #         ),
-        #     )
-        # ]
+        model(ts_2d)
 
-        model(TS)
+        ###########
+        # Verify  #
+        ###########
 
         hds = model.q_sim
         assert len(hds.nbasins == 2)
@@ -226,21 +265,19 @@ class TestGR4JCN:
             "2001-01-31",
             "2001-02-01",
         )
-        q_sim = np.asarray(
-            [
-                [0.0, 80.007871],
-                [0.081907, 41.382373],
-                [0.276354, 3.680208],
-                [6.120611, 16.65698],
-                [6.100473, 14.913719],
-                [6.080387, 16.598288],
-            ]
-        )
+        # Not sure what should be these values!
+        target_qsim = [80.007871, 41.382373, 3.680208, 16.65698, 14.913719, 16.598288]
+
         for t in range(6):
-            for b in range(2):
-                np.testing.assert_almost_equal(
-                    hds.sel(nbasins=b, time=dates[t]), q_sim[t][b], 4
-                )
+            np.testing.assert_almost_equal(
+                hds.sel(nbasins=0, time=dates[t]), target_qsim[t], 4
+            )
+
+        # d = model.diagnostics
+        # np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.117301, 2)
+
+    def test_routing_next_step():
+        pass
 
     def test_tags(self):
         model = GR4JCN(tempfile.mkdtemp())

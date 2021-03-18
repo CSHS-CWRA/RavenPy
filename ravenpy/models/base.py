@@ -354,7 +354,20 @@ class Raven:
                 else:
                     self.rvt[key] = DataCommand(**val)
             elif len(val["dim_names_nc"]) == 2:
-                self.rvt[key] = StationForcingCommand(**val)
+                if key == "water_volume_transport_in_river_channel":
+                    for sb in self.rvh.subbasins:
+                        if sb.gauged:
+                            val["subbasin_id"] = sb.subbasin_id
+                            break
+                    else:
+                        raise Exception(
+                            "Could not find an outlet subbasin for observation data"
+                        )
+                    self.rvt[key] = ObservationDataCommand(**val)
+                else:
+                    if self.rvt.grid_weights:
+                        val["grid_weights"] = self.rvt.grid_weights
+                    self.rvt[key] = StationForcingCommand(**val)
             else:
                 self.rvt[key] = GriddedForcingCommand(**val)
 

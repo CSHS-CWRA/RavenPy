@@ -331,10 +331,10 @@ class GaugeCommand(RavenConfig):
 
 @dataclass
 class ObservationDataCommand(DataCommand):
-    site: str = "1"
+    subbasin_id: int = 1
 
     template = """
-    :ObservationData {data_type} {site} {units}
+    :ObservationData {data_type} {subbasin_id} {units}
         :ReadFromNetCDF
             :FileNameNC      {file_name_nc}
             :VarNameNC       {var_name_nc}
@@ -349,50 +349,49 @@ class ObservationDataCommand(DataCommand):
 
 
 @dataclass
+class GridWeightsCommand(RavenConfig):
+    """GridWeights command."""
+
+    number_hrus: int = 0
+    number_grid_cells: int = 0
+    data: Tuple[Tuple[int, int, float]] = ()
+
+    template = """
+    {indent}:GridWeights
+    {indent}    :NumberHRUs {number_hrus}
+    {indent}    :NumberGridCells {number_grid_cells}
+    {data}
+    {indent}:EndGridWeights
+    """
+
+    @classmethod
+    def parse(cls, s):
+        pat = r"""
+        :GridWeights
+            :NumberHRUs (\d+)
+            :NumberGridCells (\d+)
+            (.+)
+        :EndGridWeights
+        """
+        m = re.match(dedent(pat).strip(), s, re.DOTALL)
+        n_hrus, n_grid_cells, data = m.groups()
+        data = [d.strip().split() for d in data.split("\n")]
+        data = tuple((int(h), int(c), float(w)) for h, c, w in data)
+        return cls(
+            number_hrus=int(n_hrus), number_grid_cells=int(n_grid_cells), data=data
+        )
+
+    def to_rv(self, indent_level=0):
+        indent = INDENT * indent_level
+        d = asdict(self)
+        d["indent"] = indent
+        d["data"] = "\n".join(f"{indent}    {p[0]} {p[1]} {p[2]}" for p in self.data)
+        return dedent(self.template).strip().format(**d)
+
+
+@dataclass
 class GriddedForcingCommand(BaseDataCommand):
     """GriddedForcing command (RVT)."""
-
-    @dataclass
-    class GridWeightsCommand(RavenConfig):
-        """GridWeights command."""
-
-        number_hrus: int = 0
-        number_grid_cells: int = 0
-        data: Tuple[Tuple[int, int, float]] = ()
-
-        template = """
-        {indent}:GridWeights
-        {indent}    :NumberHRUs {number_hrus}
-        {indent}    :NumberGridCells {number_grid_cells}
-        {data}
-        {indent}:EndGridWeights
-        """
-
-        @classmethod
-        def parse(cls, s):
-            pat = r"""
-            :GridWeights
-                :NumberHRUs (\d+)
-                :NumberGridCells (\d+)
-                (.+)
-            :EndGridWeights
-            """
-            m = re.match(dedent(pat).strip(), s, re.DOTALL)
-            n_hrus, n_grid_cells, data = m.groups()
-            data = [d.strip().split() for d in data.split("\n")]
-            data = tuple((int(h), int(c), float(w)) for h, c, w in data)
-            return cls(
-                number_hrus=int(n_hrus), number_grid_cells=int(n_grid_cells), data=data
-            )
-
-        def to_rv(self, indent_level=0):
-            indent = INDENT * indent_level
-            d = asdict(self)
-            d["indent"] = indent
-            d["data"] = "\n".join(
-                f"{indent}    {p[0]} {p[1]} {p[2]}" for p in self.data
-            )
-            return dedent(self.template).strip().format(**d)
 
     dim_names_nc: Tuple[str, str, str] = ("x", "y", "t")
     grid_weights: GridWeightsCommand = GridWeightsCommand()
@@ -402,11 +401,11 @@ class GriddedForcingCommand(BaseDataCommand):
         :ForcingType {data_type}
         :FileNameNC {file_name_nc}
         :VarNameNC {var_name_nc}
-        :DimNamesNC {dim_names_nc}
+        :DimNamesNC {dimensions}
         {time_shift}
         {linear_transform}
         {deaccumulate}
-        {grid_weights}
+    {grid_weights}
     :EndGriddedForcing
     """
 
@@ -417,23 +416,29 @@ class GriddedForcingCommand(BaseDataCommand):
 
 
 @dataclass
-class StationForcingCommand(GriddedForcingCommand):
+class StationForcingCommand(BaseDataCommand):
     """StationForcing command (RVT)."""
 
     dim_names_nc: Tuple[str, str] = ("station", "time")
+    grid_weights: GridWeightsCommand = GridWeightsCommand()
 
     template = """
     :StationForcing {name} {units}
         :ForcingType {data_type}
         :FileNameNC {file_name_nc}
         :VarNameNC {var_name_nc}
-        :DimNamesNC {dim_names_nc}
+        :DimNamesNC {dimensions}
         {time_shift}
         {linear_transform}
         {deaccumulate}
-        {grid_weights}
+    {grid_weights}
     :EndStationForcing
     """
+
+    def to_rv(self):
+        d = self.asdict()
+        d["grid_weights"] = self.grid_weights.to_rv(indent_level=1)
+        return dedent(self.template).format(**d)
 
 
 @dataclass
@@ -572,7 +577,7 @@ class HRUStateVariableTableCommand(RavenConfig):
 
     def to_rv(self):
         return dedent(self.template).format(
-            hru_states="\n".join(map(str, self.hru_states.values()))
+            hru_states="\n    ".join(map(str, self.hru_states.values()))
         )
 
 
@@ -591,7 +596,7 @@ class BasinIndexCommand(RavenConfig):
     qin: tuple = 20 * (0,)
 
     template = """
-    :BasinIndex {index},{name}
+    :BasinIndex {index}, {name}
         :ChannelStorage, {channelstorage}
         :RivuletStorage, {rivuletstorage}
         :Qout,{nsegs},{qout},{qoutlast}

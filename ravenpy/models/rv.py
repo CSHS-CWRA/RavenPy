@@ -462,6 +462,7 @@ class RVT(RV):
         self._nc_index = ""
         self.raincorrection = 1
         self.snowcorrection = 1
+        self.grid_weights = None  # will be shared among all the StationForcing commands
 
         self._nc_vars = (
             "pr",
@@ -492,7 +493,7 @@ class RVT(RV):
     @property
     def gauge_cmd(self):
         data = [o for o in self.variables if type(o) is DataCommand]
-        return GaugeCommand(data=data)
+        return GaugeCommand(data=data) if data else ""
 
     @property
     def station_cmds(self):
