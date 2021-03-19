@@ -20,6 +20,7 @@ from ravenpy.models import (
     Raven,
     Routing,
     Sub,
+    get_average_annual_runoff,
 )
 from ravenpy.models.commands import (
     ChannelProfileCommand,
@@ -70,13 +71,11 @@ def test_race():
 # however is kept at the overall area of 4250.6 [km2] such
 # that other tests still obtain same results as before.
 salmon_land_hru_1 = dict(
-    area="4250.6", elevation="843.0", latitude=54.4848, longitude=-123.3659
+    area=4250.6, elevation=843.0, latitude=54.4848, longitude=-123.3659
 )
-salmon_lake_hru_1 = dict(
-    area="100.0", elevation="839.0", latitude=54.0, longitude=-123.4
-)
+salmon_lake_hru_1 = dict(area=100.0, elevation=839.0, latitude=54.0, longitude=-123.4)
 salmon_land_hru_2 = dict(
-    area="2000.0", elevation="835.0", latitude=54.123, longitude=-123.4234
+    area=2000.0, elevation=835.0, latitude=54.123, longitude=-123.4234
 )
 
 
@@ -93,8 +92,8 @@ class TestGR4JCN:
 
         model.rvp.params = model.params(0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
 
-        # TODO: compute this!
-        model.rvp.avg_annual_runoff = 0
+        total_area_in_m2 = model.rvh.hrus[0].area * 1000 * 1000
+        model.rvp.avg_annual_runoff = get_average_annual_runoff(TS, total_area_in_m2)
 
         assert model.rvi.suppress_output == ""
 
@@ -247,10 +246,9 @@ class TestGR4JCN:
 
         model.rvp.params = model.params(0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
 
-        # TODO: compute this??
-
-        # model.rvp.avg_annual_runoff = function_to_derive_this(area_as_sum_of_all_hrus, q_obs_most_down_stream_means_with_down_sub_id=-1)
-        model.rvp.avg_annual_runoff = 594
+        total_area_in_km2 = sum(hru.area for hru in model.rvh.hrus)
+        total_area_in_m2 = total_area_in_km2 * 1000 * 1000
+        model.rvp.avg_annual_runoff = get_average_annual_runoff(ts_2d, total_area_in_m2)
 
         # These channel profiles describe the geometry of the actual river crossection.
         # The eight points (x) to describe the following geometry are given in each
@@ -353,9 +351,6 @@ class TestGR4JCN:
         d = model.diagnostics
         np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.0141168, 4)
 
-    def test_routing_next_step():
-        pass
-
     def test_tags(self):
         model = GR4JCN(tempfile.mkdtemp())
 
@@ -383,6 +378,7 @@ class TestGR4JCN:
 
     def test_run(self):
         model = GR4JCN()
+
         model(
             TS,
             start_date=dt.datetime(2000, 1, 1),
@@ -1450,17 +1446,19 @@ class TestRouting:
 
         streaminputs_gf = GriddedForcingCommand(
             name="StreamInputs",
-            forcing_type="PRECIP",
+            data_type="PRECIP",
             file_name_nc=vic_streaminputs_nc_path.name,
             var_name_nc="Streaminputs",
             dim_names_nc=("lon_dim", "lat_dim", "time"),
-            linear_transform=(4.0, 0),
+            # linear_transform=(4.0, 0),
+            scale=4.0,
+            offset=0,
             grid_weights=streaminputs_importer.extract(),
         )
 
         temperatures_gf = GriddedForcingCommand(
             name="AverageTemp",
-            forcing_type="TEMP_AVE",
+            data_type="TEMP_AVE",
             file_name_nc=vic_temperatures_nc_path.name,
             var_name_nc="Avg_temp",
             dim_names_nc=("lon_dim", "lat_dim", "time"),
@@ -1476,7 +1474,7 @@ class TestRouting:
             file_name_nc=observation_data_nc_path.name,
             var_name_nc="Q",
             dim_names_nc=("nstations", "time"),
-            station_idx=1,
+            index=1,  # StationIdx
         )
 
         #############

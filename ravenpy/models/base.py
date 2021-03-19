@@ -44,6 +44,8 @@ from .rv import (
 RAVEN_EXEC_PATH = os.getenv("RAVENPY_RAVEN_BINARY_PATH") or shutil.which("raven")
 OSTRICH_EXEC_PATH = os.getenv("RAVENPY_OSTRICH_BINARY_PATH") or shutil.which("ostrich")
 
+RAVEN_NO_DATA_VALUE = -1.2345
+
 
 class Raven:
     """RAVEN hydrological model wrapper.
@@ -1063,6 +1065,24 @@ def make_executable(fn):
     """Make file executable."""
     st = os.stat(fn)
     os.chmod(fn, st.st_mode | stat.S_IEXEC)
+
+
+def get_average_annual_runoff(
+    nc_file_path, area_in_m2, time_dim="time", na_value=RAVEN_NO_DATA_VALUE
+):
+    """
+    Compute the average annual runoff from observed data.
+    """
+    with xr.open_dataset(nc_file_path) as ds:
+        qobs = ds.where(ds["qobs"] != na_value)["qobs"]
+        qobs *= 86400.0
+        axis = qobs.dims.index(time_dim)
+        # avg daily runoff [m3/d] for each year in record
+        qyear = np.nanmean(qobs.groupby("time.year").mean("time"), axis=axis)
+        qyear = qyear / area_in_m2 * 365 * 1000.0  # [mm/yr] for each year in record
+        qyear = np.mean(qyear)  # [mm/yr] mean over all years in record
+
+    return qyear
 
 
 # TODO: Configure this according to the model_path and output_path.
