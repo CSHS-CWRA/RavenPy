@@ -797,10 +797,11 @@ class RVC(RV):
 class RVH(RV):
     subbasins: Tuple[SubBasinsCommand.Record] = (SubBasinsCommand.Record(),)
     land_subbasins: Tuple[int] = ()
+    land_subbasin_property_multiplier: SBGroupPropertyMultiplierCommand = ""
     lake_subbasins: Tuple[int] = ()
+    lake_subbasin_property_multiplier: SBGroupPropertyMultiplierCommand = ""
     reservoirs: Tuple[ReservoirCommand] = ()
     hrus: Tuple[HRUsCommand.Record] = ()
-    sb_group_property_multipliers: Tuple[SBGroupPropertyMultiplierCommand] = ()
 
     template = """
     {subbasins_cmd}
@@ -833,10 +834,6 @@ class RVH(RV):
     @property
     def hrus_cmd(self):
         return HRUsCommand(self.hrus)
-
-    @property
-    def sb_group_property_multiplier_list(self):
-        return "\n\n".join(map(str, self.sb_group_property_multipliers))
 
     def to_rv(self):
         # params = self.items()

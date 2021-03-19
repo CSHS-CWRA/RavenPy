@@ -82,7 +82,7 @@ salmon_land_hru_2 = dict(
 
 class TestGR4JCN:
     def test_simple(self):
-        model = GR4JCN("/tmp/test_GR4JCN_simple")  # tempfile.mkdtemp())
+        model = GR4JCN("/tmp/test_gr4jcn_simple")  # tempfile.mkdtemp())
 
         model.rvi.start_date = dt.datetime(2000, 1, 1)
         model.rvi.end_date = dt.datetime(2002, 1, 1)
@@ -220,6 +220,13 @@ class TestGR4JCN:
             ),
         )
 
+        model.rvh.land_subbasin_property_multiplier = SBGroupPropertyMultiplierCommand(
+            "Land", "MANNINGS_N", 1.0
+        )
+        model.rvh.lake_subbasin_property_multiplier = SBGroupPropertyMultiplierCommand(
+            "Lakes", "RESERVOIR_CREST_WIDTH", 1.0
+        )
+
         #########
         # R V T #
         #########
@@ -231,6 +238,7 @@ class TestGR4JCN:
             # has only one region/station (which is column 0)
             data=((1, 0, 1.0), (2, 0, 1.0), (3, 0, 1.0)),
         )
+        # These will be shared (inline) to all the StationForcing commands in the RVT
         model.rvt.grid_weights = gws
 
         #########
@@ -1397,9 +1405,11 @@ class TestRouting:
 
         model.rvh.update(rvh_config)
 
-        model.rvh["sb_group_property_multipliers"] = (
-            SBGroupPropertyMultiplierCommand("Land", "MANNINGS_N", 1.0),
-            SBGroupPropertyMultiplierCommand("Lakes", "RESERVOIR_CREST_WIDTH", 1.0),
+        model.rvh.land_subbasin_property_multiplier = SBGroupPropertyMultiplierCommand(
+            "Land", "MANNINGS_N", 1.0
+        )
+        model.rvh.lake_subbasin_property_multiplier = SBGroupPropertyMultiplierCommand(
+            "Lakes", "RESERVOIR_CREST_WIDTH", 1.0
         )
 
         #######
