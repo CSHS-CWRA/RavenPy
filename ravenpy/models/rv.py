@@ -491,17 +491,17 @@ class RVT(RV):
         return (getattr(self, name) for name in self._nc_vars)
 
     @property
-    def gauge_cmd(self):
+    def gauge(self):
         data = [o for o in self.variables if type(o) is DataCommand]
         return GaugeCommand(data=data) if data else ""
 
     @property
-    def station_cmds(self):
+    def station_forcing_list(self):
         data = [o for o in self.variables if type(o) is StationForcingCommand]
         return "\n\n".join(map(str, data))
 
     @property
-    def gridded_cmds(self):
+    def gridded_forcing_list(self):
         data = [o for o in self.variables if type(o) is GriddedForcingCommand]
         return "\n\n".join(map(str, data))
 
