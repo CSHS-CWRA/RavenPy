@@ -115,7 +115,7 @@ class GR4JCN(Raven):
             soil1 = self.rvc.soil1
 
         # subbassin_id -> has at least one LakeHRU
-        sb_is_lake = defaultdict(lambda: False)
+        sb_contains_lake = defaultdict(lambda: False)
 
         for hru in self.rvh.hrus:
             if isinstance(hru, GR4JCN.LandHRU):
@@ -124,7 +124,7 @@ class GR4JCN(Raven):
                 )
             elif isinstance(hru, GR4JCN.LakeHRU):
                 self.rvc.hru_states[hru.hru_id] = HRUState(index=hru.hru_id)
-                sb_is_lake[hru.subbasin_id] = True
+                sb_contains_lake[hru.subbasin_id] = True
             else:
                 raise Exception(
                     "Type of HRU must be either GR4JCN.LandHRU or GR4JCN.LakeHRU"
@@ -136,13 +136,17 @@ class GR4JCN(Raven):
             )
 
         self.rvh.lake_subbasins = tuple(
-            [sb.subbasin_id for sb in self.rvh.subbasins if sb_is_lake[sb.subbasin_id]]
+            [
+                sb.subbasin_id
+                for sb in self.rvh.subbasins
+                if sb_contains_lake[sb.subbasin_id]
+            ]
         )
         self.rvh.land_subbasins = tuple(
             [
                 sb.subbasin_id
                 for sb in self.rvh.subbasins
-                if not sb_is_lake[sb.subbasin_id]
+                if not sb_contains_lake[sb.subbasin_id]
             ]
         )
 
