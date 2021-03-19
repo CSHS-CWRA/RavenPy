@@ -367,6 +367,8 @@ class Raven:
                         )
                     self.rvt[key] = ObservationDataCommand(**val)
                 else:
+                    # TODO: implement a RedirectToFile mechanism to avoid inlining the grid weights
+                    # multiple times as we do here
                     if self.rvt.grid_weights:
                         val["grid_weights"] = self.rvt.grid_weights
                     self.rvt[key] = StationForcingCommand(**val)
