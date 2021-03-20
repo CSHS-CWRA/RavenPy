@@ -1075,7 +1075,7 @@ def get_average_annual_runoff(
     """
     with xr.open_dataset(nc_file_path) as ds:
         qobs = ds.where(ds["qobs"] != na_value)["qobs"]
-        qobs *= 86400.0
+        qobs *= 86400.0  # convert m**3/s to m**3/d
         axis = qobs.dims.index(time_dim)
         # avg daily runoff [m3/d] for each year in record
         qyear = np.nanmean(qobs.groupby("time.year").mean("time"), axis=axis)
