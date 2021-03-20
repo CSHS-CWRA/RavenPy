@@ -848,6 +848,7 @@ class RVP(RV):
     vegetation_classes: Tuple[VegetationClassesCommand.Record] = ()
     land_use_classes: Tuple[LandUseClassesCommand.Record] = ()
     channel_profiles: Tuple[ChannelProfileCommand] = ()
+    avg_annual_runoff: float = 0
 
     @property
     def soil_classes_cmd(self):

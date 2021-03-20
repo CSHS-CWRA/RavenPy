@@ -113,6 +113,9 @@ class GR4JCN(Raven):
         if self.rvc.hru_state is None:
             soil0 = self.rvd.GR4J_X1_hlf if self.rvc.soil0 is None else self.rvc.soil0
             soil1 = self.rvc.soil1
+        else:
+            soil0 = self.rvc.hru_state.soil0
+            soil1 = self.rvc.hru_state.soil1
 
         # subbassin_id -> has at least one LakeHRU
         sb_contains_lake = defaultdict(lambda: False)
