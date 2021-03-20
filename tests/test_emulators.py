@@ -95,6 +95,8 @@ class TestGR4JCN:
         total_area_in_m2 = model.rvh.hrus[0].area * 1000 * 1000
         model.rvp.avg_annual_runoff = get_average_annual_runoff(TS, total_area_in_m2)
 
+        np.testing.assert_almost_equal(model.rvp.avg_annual_runoff, 208.4805694844741)
+
         assert model.rvi.suppress_output == ""
 
         model(TS)
@@ -249,6 +251,8 @@ class TestGR4JCN:
         total_area_in_km2 = sum(hru.area for hru in model.rvh.hrus)
         total_area_in_m2 = total_area_in_km2 * 1000 * 1000
         model.rvp.avg_annual_runoff = get_average_annual_runoff(ts_2d, total_area_in_m2)
+
+        np.testing.assert_almost_equal(model.rvp.avg_annual_runoff, 139.5407534171111)
 
         # These channel profiles describe the geometry of the actual river crossection.
         # The eight points (x) to describe the following geometry are given in each
