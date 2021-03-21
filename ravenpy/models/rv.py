@@ -998,13 +998,13 @@ def _parser(lines, indent="", fmt=str):
                     out[key][i] = dict(
                         index=i, name=name, **_parser(lines, new_indent + "  ", float)
                     )
-                elif key in ["Qlat", "Qout"]:
-                    n, *values, last = value.split(",")
-                    out[key] = list(map(float, values))
-                    out[key + "Last"] = float(last)
-                elif key == "Qin":
+                # elif key in ["Qlat", "Qout"]:
+                #     n, *values, last = value.split(",")
+                #     out[key] = list(map(float, values))
+                #     out[key + "Last"] = float(last)
+                elif key in ["Qin", "Qout", "Qlat"]:
                     n, *values = value.split(",")
-                    out[key] = list(map(float, values))
+                    out[key] = (int(n),) + tuple(map(float, values))
                 else:
                     out[key] = (
                         list(map(fmt, value.split(","))) if "," in value else fmt(value)
