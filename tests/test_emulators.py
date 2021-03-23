@@ -114,7 +114,7 @@ class TestGR4JCN:
 
         assert hds.attrs["long_name"] == "Simulated outflows"
 
-        assert len(hds.nbasins == 2)  # ??? WHY IS THAT 2??
+        assert len(hds.nbasins) == 1  # number of "gauged" basins is 1
 
         # We only have one SB with gauged=True, so the output has a single column.
         # The number of time steps simulated between (2000, 1, 1) and
@@ -318,7 +318,7 @@ class TestGR4JCN:
 
         hds = model.q_sim
 
-        assert len(hds.nbasins == 2)
+        assert len(hds.nbasins) == 1  # number of "gauged" basins is 1
 
         # We only have one SB with gauged=True, so the output has a single column.
         # The number of time steps simulated between (2000, 1, 1) and
@@ -346,7 +346,7 @@ class TestGR4JCN:
         # For lumped GR4J model we have 1 subbasin and 1 HRU as well as no routing, no
         # channel profiles, and the area of the entire basin is 4250.6 [km2]. Comparison
         # of simulated and observed streamflow at outlet yielded:
-        # np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.117301, 2)
+        # np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.116971, 4)
         #
         # This is now a different value due to:
         # - basin we have here is larger (4250.6 [km2] + 100 [km2] + 2000.0 [km2])
@@ -398,7 +398,7 @@ class TestGR4JCN:
         )
         d = model.diagnostics
 
-        np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.116971, 2)
+        np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.116971, 4)
 
     # @pytest.mark.skip
     def test_overwrite(self):
@@ -440,7 +440,7 @@ class TestGR4JCN:
 
         d = model.diagnostics
 
-        np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.117315, 2)
+        np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.116971, 4)
 
         # Set initial conditions explicitly
         model(
