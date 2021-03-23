@@ -463,6 +463,8 @@ class RVT(RV):
         self.raincorrection = 1
         self.snowcorrection = 1
 
+        self.gridded_forcings = ()
+
         # For a distributed model these weights will be shared among all the StationForcing commands
         self.grid_weights = None
 
@@ -520,6 +522,9 @@ class RVT(RV):
     @property
     def gridded_forcing_list(self):
         data = [o for o in self.variables if type(o) is GriddedForcingCommand]
+        # This is really a hack for now, as model.rvt.gridded_forcings are set
+        # directly by the user in TestRouting.test_lievre_tutorial
+        data += self.gridded_forcings
         return "\n\n".join(map(str, data))
 
     @property

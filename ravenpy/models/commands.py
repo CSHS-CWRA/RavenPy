@@ -46,7 +46,7 @@ class LinearTransform(RavenConfig):
     scale: float = 1
     offset: float = 0
 
-    template = ":LinearTransform {slope:.15f} {intercept:.15f}"
+    template = ":LinearTransform {scale:.15f} {offset:.15f}"
 
     def to_rv(self):
         if (self.scale is not None) or (self.offset is not None):

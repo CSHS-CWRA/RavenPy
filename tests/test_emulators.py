@@ -1354,7 +1354,7 @@ class TestRouting:
         # Model #
         #########
 
-        model = Routing("/tmp/ravenpy_routing_emu_dev/")
+        model = Routing()
 
         #######
         # RVI #
@@ -1438,7 +1438,6 @@ class TestRouting:
             file_name_nc=vic_streaminputs_nc_path.name,
             var_name_nc="Streaminputs",
             dim_names_nc=("lon_dim", "lat_dim", "time"),
-            # linear_transform=(4.0, 0),
             scale=4.0,
             offset=0,
             grid_weights=streaminputs_importer.extract(),
@@ -1475,7 +1474,6 @@ class TestRouting:
                 vic_temperatures_nc_path,
                 observation_data_nc_path,
             ],
-            overwrite=True,
         )
 
         ##########
