@@ -187,7 +187,7 @@ class GR4JCN_OST(Ostrich, GR4JCN):
 
     def derived_parameters(self):
         """Derived parameters are computed by Ostrich."""
-        pass
+        GR4JCN.derived_parameters(self)
 
 
 class MOHYSE(Raven):

@@ -642,6 +642,7 @@ class TestGR4JCN:
 class TestGR4JCN_OST:
     def test_simple(self):
         model = GR4JCN_OST()
+        model.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
         params = (0.529, -3.396, 407.29, 1.072, 16.9, 0.053)
         low = (0.01, -15.0, 10.0, 0.0, 1.0, 0.0)
         high = (2.5, 10.0, 700.0, 7.0, 30.0, 1.0)
@@ -650,10 +651,6 @@ class TestGR4JCN_OST:
             TS,
             start_date=dt.datetime(1954, 1, 1),
             duration=208,
-            area=4250.6,
-            elevation=843.0,
-            latitude=54.4848,
-            longitude=-123.3659,
             params=params,
             lowerBounds=low,
             upperBounds=high,
@@ -697,14 +694,11 @@ class TestGR4JCN_OST:
         # np.testing.assert_almost_equal( opt_func, -0.5779910, 4,
         #                                 err_msg='calibrated NSE is not matching expected value')
         gr4j = GR4JCN()
+        gr4j.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
         gr4j(
             TS,
             start_date=dt.datetime(1954, 1, 1),
             duration=208,
-            area=4250.6,
-            elevation=843.0,
-            latitude=54.4848,
-            longitude=-123.3659,
             params=model.calibrated_params,
         )
         np.testing.assert_almost_equal(
