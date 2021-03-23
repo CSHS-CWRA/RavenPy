@@ -441,12 +441,18 @@ class HBVEC(GR4JCN):
             if self.rvt.tas.path is not None:
                 tas = xr.open_dataset(self.rvt.tas.path)
             else:
-                tasmax = xr.open_dataset(self.rvt.tasmax.path)[self.rvt.tasmax.var_name]
-                tasmin = xr.open_dataset(self.rvt.tasmin.path)[self.rvt.tasmin.var_name]
+                tasmax = xr.open_dataset(self.rvt.tasmax.file_name_nc)[
+                    self.rvt.tasmax.var_name_nc
+                ]
+                tasmin = xr.open_dataset(self.rvt.tasmin.file_name_nc)[
+                    self.rvt.tasmin.var_name_nc
+                ]
                 tas = (tasmax + tasmin) / 2.0
 
-            if self.rvt.evspsbl.path is not None:
-                evap = xr.open_dataset(self.rvt.evspsbl.path)[self.rvt.evspsbl.var_name]
+            if self.rvt.evspsbl.file_name_nc is not None:
+                evap = xr.open_dataset(self.rvt.evspsbl.file_name_nc)[
+                    self.rvt.evspsbl.var_name_nc
+                ]
 
             mat = tas.groupby("time.month").mean().values
             mae = evap.groupby("time.month").mean().values
