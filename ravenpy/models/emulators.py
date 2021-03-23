@@ -97,7 +97,13 @@ class GR4JCN(Raven):
         self.rvh = RVH(
             hrus=(GR4JCN.LandHRU(),),
             subbasins=(
-                Sub(subbasin_id=1, downstream_id=-1, profile="None", gauged=True),
+                Sub(
+                    subbasin_id=1,
+                    name="sub_001",
+                    downstream_id=-1,
+                    profile="None",
+                    gauged=True,
+                ),
             ),
         )
 
@@ -113,30 +119,41 @@ class GR4JCN(Raven):
         if self.rvc.hru_state is None:
             soil0 = self.rvd.GR4J_X1_hlf if self.rvc.soil0 is None else self.rvc.soil0
             soil1 = self.rvc.soil1
-        else:
-            soil0 = self.rvc.hru_state.soil0
-            soil1 = self.rvc.hru_state.soil1
 
         # subbassin_id -> has at least one LakeHRU
         sb_contains_lake = defaultdict(lambda: False)
 
-        for hru in self.rvh.hrus:
-            if isinstance(hru, GR4JCN.LandHRU):
-                self.rvc.hru_states[hru.hru_id] = HRUState(
-                    index=hru.hru_id, soil0=soil0, soil1=soil1
-                )
-            elif isinstance(hru, GR4JCN.LakeHRU):
-                self.rvc.hru_states[hru.hru_id] = HRUState(index=hru.hru_id)
-                sb_contains_lake[hru.subbasin_id] = True
-            else:
-                raise Exception(
-                    "Type of HRU must be either GR4JCN.LandHRU or GR4JCN.LakeHRU"
+        if not self.rvc.hru_states:
+            # If self.rvc.hru_states is set, it means that we are using `resume()` and we don't
+            # want to interfere
+            for hru in self.rvh.hrus:
+                if isinstance(hru, GR4JCN.LandHRU):
+                    self.rvc.hru_states[hru.hru_id] = HRUState(
+                        index=hru.hru_id, soil0=soil0, soil1=soil1
+                    )
+                elif isinstance(hru, GR4JCN.LakeHRU):
+                    self.rvc.hru_states[hru.hru_id] = HRUState(index=hru.hru_id)
+                    sb_contains_lake[hru.subbasin_id] = True
+                else:
+                    raise Exception(
+                        "Type of HRU must be either GR4JCN.LandHRU or GR4JCN.LakeHRU"
+                    )
+
+        if not self.rvc.basin_states:
+            # If self.rvc.basin_states is set, it means that we are using `resume()` and we don't
+            # want to interfere
+            for sb in self.rvh.subbasins:
+                self.rvc.basin_states[sb.subbasin_id] = BasinIndexCommand(
+                    index=sb.subbasin_id
                 )
 
-        for sb in self.rvh.subbasins:
-            self.rvc.basin_states[sb.subbasin_id] = BasinIndexCommand(
-                index=sb.subbasin_id
-            )
+        if len(self.rvh.hrus) == 1:
+            # For a lumped model there will be a single Gauge commands (with multiple Data commands inside,
+            # corresponding to each input variable) and lat/lon/elevation of the Gauge itself must be known,
+            # so we use the single HRU for it
+            self.rvt.entire_basin_latitude = self.rvh.hrus[0].latitude
+            self.rvt.entire_basin_longitude = self.rvh.hrus[0].longitude
+            self.rvt.entire_basin_elevation = self.rvh.hrus[0].elevation
 
         self.rvh.lake_subbasins = tuple(
             [

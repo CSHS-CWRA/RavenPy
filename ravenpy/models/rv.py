@@ -462,7 +462,16 @@ class RVT(RV):
         self._nc_index = ""
         self.raincorrection = 1
         self.snowcorrection = 1
-        self.grid_weights = None  # will be shared among all the StationForcing commands
+
+        # For a distributed model these weights will be shared among all the StationForcing commands
+        self.grid_weights = None
+
+        # For a lumped model there will be a single Gauge commands (with multiple Data commands inside,
+        # corresponding to each input variable) and lat/lon/elevation of the Gauge itself must be known
+        # (the values come from the single HRU that was specified)
+        self.entire_basin_latitude = None
+        self.entire_basin_longitude = None
+        self.entire_basin_elevation = None
 
         self._nc_vars = (
             "pr",
@@ -493,7 +502,15 @@ class RVT(RV):
     @property
     def gauge(self):
         data = [o for o in self.variables if type(o) is DataCommand]
-        return GaugeCommand(data=data) if data else ""
+        if data:
+            return GaugeCommand(
+                latitude=self.entire_basin_latitude,
+                longitude=self.entire_basin_longitude,
+                elevation=self.entire_basin_elevation,
+                data=data,
+            )
+        else:
+            return ""
 
     @property
     def station_forcing_list(self):
