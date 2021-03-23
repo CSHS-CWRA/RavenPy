@@ -81,7 +81,7 @@ salmon_land_hru_2 = dict(
 
 class TestGR4JCN:
     def test_simple(self):
-        model = GR4JCN()  # "/tmp/test_gr4jcn_simple")  # tempfile.mkdtemp())
+        model = GR4JCN()
 
         model.rvi.start_date = dt.datetime(2000, 1, 1)
         model.rvi.end_date = dt.datetime(2002, 1, 1)
@@ -105,7 +105,7 @@ class TestGR4JCN:
         # Check quality (diagnostic) of simulated streamflow values
         # ------------
         d = model.diagnostics
-        np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.116971, 4)
+        np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.117301, 4)
 
         # ------------
         # Check simulated streamflow values q_sim
@@ -132,7 +132,7 @@ class TestGR4JCN:
             "2001-02-01",
         )
 
-        target_q_sim = [0.0, 0.165788, 0.559366, 12.388717, 12.347956, 12.307299]
+        target_q_sim = [0.0, 0.165788, 0.559366, 12.374606, 12.33398, 12.293458]
 
         for t in range(6):
             np.testing.assert_almost_equal(
@@ -156,7 +156,7 @@ class TestGR4JCN:
 
     def test_routing(self):
         """We need at least 2 subbasins to activate routing."""
-        model = GR4JCN("/tmp/test_gr4jcn_routing")
+        model = GR4JCN()
 
         ts_2d = get_local_testdata(
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_2d.nc"
@@ -381,7 +381,7 @@ class TestGR4JCN:
         assert model.rvp.params.GR4J_X1 == 0.529
 
     def test_run(self):
-        model = GR4JCN("/tmp/test_gr4jcn_test_run")
+        model = GR4JCN()
 
         model.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
 
@@ -389,16 +389,12 @@ class TestGR4JCN:
             TS,
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2002, 1, 1),
-            area=4250.6,
-            elevation=843.0,
-            latitude=54.4848,
-            longitude=-123.3659,
             params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
             suppress_output=False,
         )
         d = model.diagnostics
 
-        np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.116971, 4)
+        np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.117301, 4)
 
     # @pytest.mark.skip
     def test_overwrite(self):
@@ -410,10 +406,6 @@ class TestGR4JCN:
             TS,
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2002, 1, 1),
-            area=4250.6,
-            elevation=843.0,
-            latitude=54.4848,
-            longitude=-123.3659,
             params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
         )
         assert model.rvi.suppress_output == ""
@@ -440,7 +432,7 @@ class TestGR4JCN:
 
         d = model.diagnostics
 
-        np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.116971, 4)
+        np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.117315, 4)
 
         # Set initial conditions explicitly
         model(
@@ -451,14 +443,10 @@ class TestGR4JCN:
         )
         assert model.q_sim.isel(time=1).values[0] < qsim2.isel(time=1).values[0]
 
-    def _test_resume(self):
+    def test_resume(self):
         model_ab = GR4JCN()
         model_ab.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
         kwargs = dict(
-            area=4250.6,
-            elevation=843.0,
-            latitude=54.4848,
-            longitude=-123.3659,
             params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
         )
         # Reference run
@@ -471,6 +459,7 @@ class TestGR4JCN:
         )
 
         model_a = GR4JCN()
+
         model_a.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
         model_a(
             TS,
@@ -526,13 +515,7 @@ class TestGR4JCN:
     def test_resume_earlier(self):
         """Check that we can resume a run with the start date set at another date than the time stamp in the
         solution."""
-        kwargs = dict(
-            area=4250.6,
-            elevation=843.0,
-            latitude=54.4848,
-            longitude=-123.3659,
-            params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
-        )
+        params = (0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
         # Reference run
         model = GR4JCN()
         model.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
@@ -541,7 +524,7 @@ class TestGR4JCN:
             run_name="run_a",
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2000, 2, 1),
-            **kwargs,
+            params=params,
         )
 
         s_a = model.storage["Soil Water[0]"].isel(time=-1)
@@ -562,28 +545,23 @@ class TestGR4JCN:
             run_name="run_b",
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2000, 2, 1),
-            **kwargs,
+            params=params,
         )
 
         s_b = model.storage["Soil Water[0]"].isel(time=-1)
         assert s_a != s_b
 
     def test_update_soil_water(self):
-        kwargs = dict(
-            area=4250.6,
-            elevation=843.0,
-            latitude=54.4848,
-            longitude=-123.3659,
-            params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
-        )
+        params = (0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
         # Reference run
         model = GR4JCN()
+        model.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
         model(
             TS,
             run_name="run_a",
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2000, 2, 1),
-            **kwargs,
+            params=params,
         )
 
         s_0 = float(model.storage["Soil Water[0]"].isel(time=-1).values)
@@ -597,7 +575,7 @@ class TestGR4JCN:
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2000, 2, 1),
             hru_state=hru_state,
-            **kwargs,
+            params=params,
         )
 
         assert s_0 != model.storage["Soil Water[0]"].isel(time=-1)
@@ -612,14 +590,12 @@ class TestGR4JCN:
 
     def test_parallel_params(self):
         model = GR4JCN()
+        model.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
+
         model(
             TS,
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2002, 1, 1),
-            area=4250.6,
-            elevation=843.0,
-            latitude=54.4848,
-            longitude=-123.3659,
             params=[
                 (0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
                 (0.528, -3.4, 407.3, 1.07, 17, 0.95),
@@ -635,24 +611,29 @@ class TestGR4JCN:
     def test_parallel_basins(self, input2d):
         ts = input2d
         model = GR4JCN()
+        model.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
+
+        gws = GridWeightsCommand(
+            number_hrus=1,
+            number_grid_cells=1,
+            data=((1, 0, 1.0),),
+        )
+        model.rvt.grid_weights = gws
+
         model(
             ts,
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2002, 1, 1),
-            area=4250.6,
-            elevation=843.0,
-            latitude=54.4848,
-            longitude=-123.3659,
             params=[0.529, -3.396, 407.29, 1.072, 16.9, 0.947],
             nc_index=[0, 0],
-            name=["basin1", "basin2"],
+            # name=["basin1", "basin2"],  # Not sure about this..
             suppress_output=False,
         )
 
         assert len(model.diagnostics) == 2
         assert len(model.hydrograph.nbasins) == 2
         np.testing.assert_array_equal(
-            model.hydrograph.basin_name[:], ["basin1", "basin2"]
+            model.hydrograph.basin_name[:], ["sub_001", "sub_001"]
         )
         z = zipfile.ZipFile(model.outputs["rv_config"])
         assert len(z.filelist) == 10
