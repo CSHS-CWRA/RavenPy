@@ -509,6 +509,8 @@ class RVT(RV):
                 latitude=self.entire_basin_latitude,
                 longitude=self.entire_basin_longitude,
                 elevation=self.entire_basin_elevation,
+                raincorrection=self.raincorrection,
+                snowcorrection=self.snowcorrection,
                 data=data,
             )
         else:
