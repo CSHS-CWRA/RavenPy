@@ -32,6 +32,7 @@ from .commands import (
 from .rv import (
     RV,
     RVI,
+    RVT,
     Ost,
     RavenNcData,
     RVFile,
@@ -121,7 +122,7 @@ class Raven:
         self.rvi = RV()
         self.rvp = RV()
         self.rvc = RV()
-        self.rvt = RV()
+        self.rvt = RVT()
         self.rvh = RV()
         self.rvd = RV()  # rvd is for derived parameters
 
