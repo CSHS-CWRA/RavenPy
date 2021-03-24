@@ -588,12 +588,10 @@ class BLENDED(Raven):
         self.rvd["SUM_X09_X10"] = self.rvp.params.par_x10  # + self.rvp.params.par_x09
         self.rvd["SUM_X13_X14"] = self.rvp.params.par_x14  # + self.rvp.params.par_x13
         self.rvd["SUM_X24_X25"] = self.rvp.params.par_x25  # + self.rvp.params.par_x24
-        self.rvd[
-            "POW_X04"
-        ] = self.rvp.params.par_x04  # 10.0**self.rvp.params.par_x04  #
-        self.rvd[
-            "POW_X11"
-        ] = self.rvp.params.par_x11  # 10.0**self.rvp.params.par_x11  #
+        # 10.0**self.rvp.params.par_x04  #
+        self.rvd["POW_X04"] = self.rvp.params.par_x04
+        # 10.0**self.rvp.params.par_x11  #
+        self.rvd["POW_X11"] = self.rvp.params.par_x11
 
         # Default initial conditions if none are given
         if self.rvc.hru_state is None:
