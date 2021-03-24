@@ -11,7 +11,7 @@ To do so will need to add the actual data from ECCC but this is a proof of conce
 
 
 class TestECCCForecast:
-    def test_forecasting_GEPS(self, tmpdir):
+    def test_forecasting_GEPS(self):
 
         # Prepare a RAVEN model run using historical data, GR4JCN in this case.
         # This is a dummy run to get initial states. In a real forecast situation,
@@ -19,15 +19,16 @@ class TestECCCForecast:
         ts = get_local_testdata(
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
         )
-        model = GR4JCN(workdir=tmpdir)
+        model = GR4JCN()
+        model.rvh.hrus = (
+            GR4JCN.LandHRU(
+                area=44250.6, elevation=843.0, latitude=54.4848, longitude=-123.3659
+            ),
+        )
         model(
             ts,
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2002, 6, 1),
-            area=44250.6,
-            elevation=843.0,
-            latitude=54.4848,
-            longitude=-123.3659,
             params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
         )
 
@@ -44,6 +45,13 @@ class TestECCCForecast:
         # data provided in the testdata above. Then the dates will not work, and the model errors.
 
         model = GR4JCN()
+        model.use_station_forcings_for_2d_data = False
+
+        model.rvh.hrus = (
+            GR4JCN.LandHRU(
+                area=44250.6, elevation=843.0, latitude=54.4848, longitude=-123.3659
+            ),
+        )
 
         model.rvc.parse(rvc.read_text())
 
@@ -51,10 +59,6 @@ class TestECCCForecast:
             ts=(ts20,),
             nc_index=range(nm),
             duration=9,
-            area=44250.6,
-            elevation=843.0,
-            latitude=54.4848,
-            longitude=-123.3659,
             params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
             overwrite=True,
             pr={"time_shift": -0.25, "deaccumulate": True},
