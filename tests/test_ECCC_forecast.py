@@ -9,6 +9,10 @@ Currently only runs GEPS, eventually will run GEPS, GDPS, REPS and RDPS.
 To do so will need to add the actual data from ECCC but this is a proof of concept.
 """
 
+hru = GR4JCN.LandHRU(
+    area=44250.6, elevation=843.0, latitude=54.4848, longitude=-123.3659
+)
+
 
 class TestECCCForecast:
     def test_forecasting_GEPS(self):
@@ -20,11 +24,7 @@ class TestECCCForecast:
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
         )
         model = GR4JCN()
-        model.rvh.hrus = (
-            GR4JCN.LandHRU(
-                area=44250.6, elevation=843.0, latitude=54.4848, longitude=-123.3659
-            ),
-        )
+        model.rvh.hrus = (hru,)
         model(
             ts,
             start_date=dt.datetime(2000, 1, 1),
@@ -45,13 +45,8 @@ class TestECCCForecast:
         # data provided in the testdata above. Then the dates will not work, and the model errors.
 
         model = GR4JCN()
-        model.use_station_forcings_for_2d_data = False
-
-        model.rvh.hrus = (
-            GR4JCN.LandHRU(
-                area=44250.6, elevation=843.0, latitude=54.4848, longitude=-123.3659
-            ),
-        )
+        # model.use_station_forcings_for_2d_data = False
+        model.rvh.hrus = (hru,)
 
         model.rvc.parse(rvc.read_text())
 

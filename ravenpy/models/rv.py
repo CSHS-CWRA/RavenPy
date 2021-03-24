@@ -17,6 +17,7 @@ from .commands import (
     DataCommand,
     GaugeCommand,
     GriddedForcingCommand,
+    GridWeightsCommand,
     HRUsCommand,
     HRUStateVariableTableCommand,
     LandUseClassesCommand,
@@ -494,8 +495,11 @@ class RVT(RV):
     @nc_index.setter
     def nc_index(self, value):
         for key, val in self.items():
-            if isinstance(val, RavenNcData):
+            if isinstance(val, (RavenNcData, DataCommand)):
                 setattr(val, "index", value)
+            elif isinstance(val, StationForcingCommand):
+                hru_id, cell_id, w = val.grid_weights.data[0]
+                setattr(val.grid_weights.data, "index", ((hru_id, value, w),))
 
     @property
     def variables(self):

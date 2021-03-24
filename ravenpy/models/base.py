@@ -335,7 +335,7 @@ class Raven:
         if not self.final_path.exists():
             os.makedirs(str(self.final_path))  # workdir/final
 
-    def setup_model_run(self, ts, index=None):
+    def setup_model_run(self, ts):
         """Create directory structure to store model input files, executable and output results.
 
         Parameters
@@ -351,14 +351,10 @@ class Raven:
 
         ncvars = self._infer_forcing_config(ts)
         for key, val in ncvars.items():
-            if len(val["dim_names_nc"]) == 1 or not getattr(
-                self, "use_station_forcings_for_2d_data", True
-            ):
+            if len(val["dim_names_nc"]) == 1:
                 if key == "water_volume_transport_in_river_channel":
                     self.rvt[key] = ObservationDataCommand(**val)
                 else:
-                    if index is not None:
-                        val["index"] = index
                     self.rvt[key] = DataCommand(**val)
             elif len(val["dim_names_nc"]) == 2:
                 if key == "water_volume_transport_in_river_channel":
@@ -504,7 +500,7 @@ class Raven:
                 if val[self.psim] is not None:
                     self.assign(key, val[self.psim])
 
-            cmd = self.setup_model_run(tuple(map(Path, ts)), index=idx + 1)
+            cmd = self.setup_model_run(tuple(map(Path, ts)))
             procs.append(
                 subprocess.Popen(cmd, cwd=self.cmd_path, stdout=subprocess.PIPE)
             )
