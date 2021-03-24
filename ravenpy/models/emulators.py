@@ -92,7 +92,7 @@ class GR4JCN(Raven):
         super().__init__(*args, **kwds)
 
         self.rvp = RVP(params=GR4JCN.params(None, None, None, None, None, None))
-        self.rvt = RVT()  # **{k: nc() for k in std_vars})
+        self.rvt = RVT()
         self.rvi = RVI(rain_snow_fraction="RAINSNOW_DINGMAN", evaporation="PET_OUDIN")
         self.rvh = RVH(
             hrus=(GR4JCN.LandHRU(),),
