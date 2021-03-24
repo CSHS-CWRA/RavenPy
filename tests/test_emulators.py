@@ -613,13 +613,6 @@ class TestGR4JCN:
         model = GR4JCN()
         model.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
 
-        gws = GridWeightsCommand(
-            number_hrus=1,
-            number_grid_cells=1,
-            data=((1, 0, 1.0),),
-        )
-        model.rvt.grid_weights = gws
-
         model(
             ts,
             start_date=dt.datetime(2000, 1, 1),

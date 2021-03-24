@@ -354,11 +354,14 @@ class GridWeightsCommand(RavenConfig):
 
     Important note: this command can be embedded in both a `GriddedForcingCommand`
     or a `StationForcingCommand`.
+
+    The default is to have a single cell that covers an entire single HRU, with a
+    weight of 1.
     """
 
-    number_hrus: int = 0
-    number_grid_cells: int = 0
-    data: Tuple[Tuple[int, int, float]] = ()
+    number_hrus: int = 1
+    number_grid_cells: int = 1
+    data: Tuple[Tuple[int, int, float]] = ((1, 0, 1.0),)
 
     template = """
     {indent}:GridWeights
