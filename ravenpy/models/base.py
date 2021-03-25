@@ -456,7 +456,7 @@ class Raven:
 
             # Forcing commands
             fc = ncdata.extract(
-                hrus=self.rvh.hrus,
+                hrus=self.rvh,
                 nc_index=pdict["nc_index"][self.psim],
                 gw=self.rvt.grid_weights,
             )

@@ -805,7 +805,7 @@ class NcDataImporter:
 
                                 self.attrs[var] = attrs
 
-    def _create_command(self, var, attrs, hrus, nc_index=0, gw=None):
+    def _create_command(self, var, attrs, rvh, nc_index=0, gw=None):
         dims = attrs["dim_names_nc"]
         number_grid_cells = attrs.pop("number_grid_cells")
 
@@ -819,23 +819,25 @@ class NcDataImporter:
             if var == "water_volume_transport_in_river_channel":
                 # Search for the gauged SB, not sure what should happen when there are
                 # more than one (should it be even supported?)
-                # for sb in self.rvh.subbasins:
-                #     if sb.gauged:
-                #         val["subbasin_id"] = sb.subbasin_id
-                #         break
-                # else:
-                #     raise Exception(
-                #         "Could not find an outlet subbasin for observation data"
-                #     )
+                for sb in rvh.subbasins:
+                    if sb.gauged:
+                        attrs["subbasin_id"] = sb.subbasin_id
+                        break
+                else:
+                    raise Exception(
+                        "Could not find an outlet subbasin for observation data"
+                    )
                 return ObservationDataCommand(**attrs)
 
             # TODO: implement a RedirectToFile mechanism to avoid inlining the grid weights
             # multiple times as we do here
             # Construct default grid weights applying equally to all HRUs
-            data = [(hru.hru_id, nc_index, 1.0) for hru in hrus]
+            data = [(hru.hru_id, nc_index, 1.0) for hru in rvh.hrus]
 
             gw = gw or GridWeightsCommand(
-                number_hrus=len(hrus), number_grid_cells=number_grid_cells, data=data
+                number_hrus=len(rvh.hrus),
+                number_grid_cells=number_grid_cells,
+                data=data,
             )
 
             return StationForcingCommand(**attrs, grid_weights=gw)
