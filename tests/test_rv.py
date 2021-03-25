@@ -210,14 +210,11 @@ class TestRVC:
 
     def test_parse(self):
         assert self.r.hru_state.atmosphere == 821.98274
-        assert self.r.basin_state.qout == [
-            13.21660,
-        ]
-        assert self.r.basin_state.qoutlast == 13.29232
+        assert self.r.basin_state.qout == (1, 13.2166, 13.29232)
 
     def test_write(self):
         assert "1,0.0,821.98274" in self.r.hru_states_cmd.to_rv()
-        assert ":BasinIndex 1,watershed" in self.r.basin_states_cmd.to_rv()
+        assert ":BasinIndex 1 watershed" in self.r.basin_states_cmd.to_rv()
 
     def test_format(self):
         rvc_template = Path(ravenpy.models.__file__).parent / "global" / "global.rvc"
@@ -306,7 +303,7 @@ class TestRVT:
         assert ":NumberHRUs 51" in res
         assert ":NumberGridCells 100" in res
         # FIXME: This test is not superb.
-        assert len(res.split("\n")) == 225
+        assert len(res.split("\n")) == 226
 
 
 def test_isinstance_namedtuple():
