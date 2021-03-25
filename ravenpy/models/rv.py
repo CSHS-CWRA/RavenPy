@@ -568,13 +568,10 @@ class RVT(RV):
             if isinstance(val, (RavenNcData, DataCommand)):
                 setattr(val, "index", value)
             elif isinstance(val, StationForcingCommand):
-                setattr(
-                    val,
-                    "grid_weights",
-                    GridWeightsCommand(
-                        number_grid_cells=nc_index_max, data=((1, value, 1.0),)
-                    ),
+                gws = GridWeightsCommand(
+                    number_grid_cells=nc_index_max, data=((1, value, 1.0),)
                 )
+                setattr(val, "grid_weights", gws)
 
     @property
     def variables(self):
