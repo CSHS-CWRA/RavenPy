@@ -477,6 +477,9 @@ class RVT(RV):
         self.entire_basin_longitude = None
         self.entire_basin_elevation = None
 
+        # This must be set in the ObservationData command for a routing-enabled model
+        self.gauged_subbasin_id = None
+
         # Dictionary of potential variable names, keyed by CF standard name.
         # http://cfconventions.org/Data/cf-standard-names/60/build/cf-standard-name-table.html
         # PET is the potential evapotranspiration, while evspsbl is the actual evap.
@@ -532,16 +535,8 @@ class RVT(RV):
                                         self[var] = DataCommand(**val)
                                 elif len(val["dim_names_nc"]) == 2:
                                     if var == "water_volume_transport_in_river_channel":
-                                        # Search for the gauged SB, not sure what should happen when there are
-                                        # more than one (should it be even supported?)
-                                        # for sb in self.rvh.subbasins:
-                                        #     if sb.gauged:
-                                        #         val["subbasin_id"] = sb.subbasin_id
-                                        #         break
-                                        # else:
-                                        #     raise Exception(
-                                        #         "Could not find an outlet subbasin for observation data"
-                                        #     )
+                                        if self.gauged_subbasin_id:
+                                            val["subbasin_id"] = self.gauged_subbasin_id
                                         self[var] = ObservationDataCommand(**val)
                                     else:
                                         # TODO: implement a RedirectToFile mechanism to avoid inlining the grid weights

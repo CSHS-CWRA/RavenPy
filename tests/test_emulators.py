@@ -242,6 +242,8 @@ class TestGR4JCN:
         # These will be shared (inline) to all the StationForcing commands in the RVT
         model.rvt.grid_weights = gws
 
+        model.rvt.gauged_subbasin_id = 20
+
         #########
         # R V P #
         #########
