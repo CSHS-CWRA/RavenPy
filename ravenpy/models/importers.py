@@ -2,6 +2,7 @@ import warnings
 from collections import defaultdict
 from pathlib import Path
 
+import cf_xarray
 import xarray as xr
 
 try:
@@ -784,23 +785,29 @@ class NcDataImporter:
                 with xr.open_dataset(fn) as ds:
                     # Check if any alternate variable name is in the file.
                     for var, alt_names in rv.alternate_nc_names.items():
-                        for var_name in alt_names:
-                            if var_name in ds.data_vars:
+                        for name in alt_names:
+                            if name in ds.data_vars:
+                                v = ds[name]
                                 # Parse common attributes to all data models
                                 attrs = dict(
                                     name=var,
                                     file_name_nc=fn,
                                     data_type=rv.forcing_names[var],
-                                    var_name_nc=var_name,
-                                    dim_names_nc=ds[var_name].dims,
-                                    units=ds[var_name].attrs.get("units"),
-                                    number_grid_cells=ds[var_name].size
-                                    / len(ds["time"]),
+                                    var_name_nc=name,
+                                    dim_names_nc=v.dims,
+                                    units=v.attrs.get("units"),
+                                    number_grid_cells=v.size / len(ds["time"]),
                                 )
+                                try:
+                                    attrs["latitude"] = ds.cf["latitude"]
+                                    attrs["longitude"] = ds.cf["longitude"]
+                                    attrs["elevation"] = ds.cf["vertical"]
+                                except KeyError:
+                                    pass
 
-                                if "GRIB_stepType" in ds[var_name].attrs:
+                                if "GRIB_stepType" in v.attrs:
                                     attrs["deaccumulate"] = (
-                                        ds[var_name].attrs["GRIB_stepType"] == "accum"
+                                        v.attrs["GRIB_stepType"] == "accum"
                                     )
 
                                 self.attrs[var] = attrs
@@ -844,8 +851,22 @@ class NcDataImporter:
 
         return GriddedForcingCommand(**attrs, grid_weights=gw)
 
-    def extract(self, hrus, nc_index=0, gw=None):
+    def extract(self, rvh, nc_index=0, gw=None):
         out = {}
+
         for var, attrs in self.attrs.items():
-            out[var] = self._create_command(var, attrs.copy(), hrus, nc_index, gw)
+            out[var] = self._create_command(var, attrs.copy(), rvh, nc_index, gw)
+            if type(out[var]) is DataCommand:
+                # Try extracting the gauge location from the netCDF coordinates.
+                try:
+                    out["gauge_latitude"] = attrs["latitude"][nc_index]
+                    out["gauge_longitude"] = attrs["longitude"][nc_index]
+                    out["gauge_elevation"] = attrs["elevation"][nc_index]
+
+                # Revert to RHU coordinates
+                except Exception:
+                    out["gauge_latitude"] = rvh.hrus[0].latitude
+                    out["gauge_longitude"] = rvh.hrus[0].longitude
+                    out["gauge_elevation"] = rvh.hrus[0].elevation
+
         return out

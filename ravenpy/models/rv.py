@@ -513,9 +513,9 @@ class RVT(RV):
         data = [o for o in self.variables if type(o) is DataCommand]
         if data:
             return GaugeCommand(
-                latitude=self.entire_basin_latitude,
-                longitude=self.entire_basin_longitude,
-                elevation=self.entire_basin_elevation,
+                latitude=self.gauge_latitude,
+                longitude=self.gauge_longitude,
+                elevation=self.gauge_elevation,
                 raincorrection=self.raincorrection,
                 snowcorrection=self.snowcorrection,
                 data=data,

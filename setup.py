@@ -28,6 +28,7 @@ requirements = [
     "scipy",
     "statsmodels",
     "xarray",
+    "cf-xarray",
     "xclim>=0.23",
     "wheel",
     "xskillscore",
