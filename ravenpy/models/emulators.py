@@ -152,14 +152,6 @@ class GR4JCN(Raven):
                     index=sb.subbasin_id
                 )
 
-        if len(self.rvh.hrus) == 1:
-            # For a lumped model there will be a single Gauge commands (with multiple Data commands inside,
-            # corresponding to each input variable) and lat/lon/elevation of the Gauge itself must be known,
-            # so we use the single HRU for it
-            self.rvt.entire_basin_latitude = self.rvh.hrus[0].latitude
-            self.rvt.entire_basin_longitude = self.rvh.hrus[0].longitude
-            self.rvt.entire_basin_elevation = self.rvh.hrus[0].elevation
-
         self.rvh.lake_subbasins = tuple(
             [
                 sb.subbasin_id
