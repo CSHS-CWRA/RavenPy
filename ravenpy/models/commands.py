@@ -17,8 +17,8 @@ class RavenConfig:
 class BaseValueCommand(RavenConfig):
     """BaseValueCommand."""
 
-    tag: str = ""
     value: Any = None
+    tag: str = ""
 
     template = ":{tag} {value}"
 
@@ -747,16 +747,19 @@ class LandUseClassesCommand(RavenConfig):
         )
 
 
+@dataclass
 class RainCorrection(BaseValueCommand):
     tag: str = "RainCorrection"
     value: float = 1.0
 
 
+@dataclass
 class SnowCorrection(BaseValueCommand):
     tag: str = "SnowCorrection"
     value: float = 1.0
 
 
+@dataclass
 class Routing(BaseValueCommand):
     """ROUTE_NONE, ROUTE_DIFFUSIVE_WAVE"""
 
@@ -764,5 +767,6 @@ class Routing(BaseValueCommand):
     value: str = "ROUTE_NONE"
 
 
+@dataclass
 class Deaccumulate(BaseBooleanCommand):
     tag: str = "Deaccumulate"

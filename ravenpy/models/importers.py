@@ -2,6 +2,8 @@ import warnings
 from collections import defaultdict
 from pathlib import Path
 
+import xarray as xr
+
 try:
     import geopandas
     from osgeo import __version__ as osgeo_version  # noqa
@@ -19,16 +21,26 @@ except (ImportError, ModuleNotFoundError) as e:
 import netCDF4 as nc4
 import numpy as np
 
-from . import grid_weight_importer_params
+from . import rv
 from .commands import (
     ChannelProfileCommand,
+    DataCommand,
+    GriddedForcingCommand,
     GridWeightsCommand,
     HRUsCommand,
+    ObservationDataCommand,
     ReservoirCommand,
+    StationForcingCommand,
     SubBasinsCommand,
 )
 
-# import xarray
+grid_weight_importer_params = dict(
+    DIM_NAMES=("lon_dim", "lat_dim"),
+    VAR_NAMES=("lon", "lat"),
+    ROUTING_ID_FIELD="HRU_ID",
+    NETCDF_INPUT_FIELD="NetCDF_col",
+    AREA_ERROR_THRESHOLD=0.05,
+)
 
 
 HRU_ASPECT_CONVENTION = "GRASS"  # GRASS | ArcGIS
@@ -758,3 +770,80 @@ class RoutingProductGridWeightImporter:
             and min_lon_cell <= max_lon_shape
             and max_lon_cell >= min_lon_shape
         )
+
+
+class NcDataImporter:
+    def __init__(self, fns):
+        self.fns = map(Path, fns)
+        self.attrs = {}
+        self._extract_nc_attrs(self.fns)
+
+    def _extract_nc_attrs(self, fns):
+        for fn in fns:
+            if ".nc" in fn.suffix:
+                with xr.open_dataset(fn) as ds:
+                    # Check if any alternate variable name is in the file.
+                    for var, alt_names in rv.alternate_nc_names.items():
+                        for var_name in alt_names:
+                            if var_name in ds.data_vars:
+                                # Parse common attributes to all data models
+                                attrs = dict(
+                                    name=var,
+                                    file_name_nc=fn,
+                                    data_type=rv.forcing_names[var],
+                                    var_name_nc=var_name,
+                                    dim_names_nc=ds[var_name].dims,
+                                    units=ds[var_name].attrs.get("units"),
+                                    number_grid_cells=ds[var_name].size
+                                    / len(ds["time"]),
+                                )
+
+                                if "GRIB_stepType" in ds[var_name].attrs:
+                                    attrs["deaccumulate"] = (
+                                        ds[var_name].attrs["GRIB_stepType"] == "accum"
+                                    )
+
+                                self.attrs[var] = attrs
+
+    def _create_command(self, var, attrs, hrus, nc_index=0, gw=None):
+        dims = attrs["dim_names_nc"]
+        number_grid_cells = attrs.pop("number_grid_cells")
+
+        if len(dims) == 1:
+            if var == "water_volume_transport_in_river_channel":
+                return ObservationDataCommand(**attrs)
+
+            return DataCommand(**attrs)
+
+        if len(dims) == 2:
+            if var == "water_volume_transport_in_river_channel":
+                # Search for the gauged SB, not sure what should happen when there are
+                # more than one (should it be even supported?)
+                # for sb in self.rvh.subbasins:
+                #     if sb.gauged:
+                #         val["subbasin_id"] = sb.subbasin_id
+                #         break
+                # else:
+                #     raise Exception(
+                #         "Could not find an outlet subbasin for observation data"
+                #     )
+                return ObservationDataCommand(**attrs)
+
+            # TODO: implement a RedirectToFile mechanism to avoid inlining the grid weights
+            # multiple times as we do here
+            # Construct default grid weights applying equally to all HRUs
+            data = [(hru.hru_id, nc_index, 1.0) for hru in hrus]
+
+            gw = gw or GridWeightsCommand(
+                number_hrus=len(hrus), number_grid_cells=number_grid_cells, data=data
+            )
+
+            return StationForcingCommand(**attrs, grid_weights=gw)
+
+        return GriddedForcingCommand(**attrs, grid_weights=gw)
+
+    def extract(self, hrus, nc_index=0, gw=None):
+        out = {}
+        for var, attrs in self.attrs.items():
+            out[var] = self._create_command(var, attrs.copy(), hrus, nc_index, gw)
+        return out

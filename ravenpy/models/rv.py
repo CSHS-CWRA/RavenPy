@@ -81,7 +81,7 @@ default_input_variables = (
     "water_volume_transport_in_river_channel",
 )
 
-# Map CF-Convention standard name to Raven Forcing name.
+# Map CF-Convention standard name to Raven Forcing name
 forcing_names = {
     "tasmin": "TEMP_MIN",
     "tasmax": "TEMP_MAX",
@@ -93,6 +93,23 @@ forcing_names = {
     "water_volume_transport_in_river_channel": "HYDROGRAPH",
 }
 
+
+# Alternate typical variable names found in netCDF files, keyed by CF standard name
+alternate_nc_names = {
+    "tasmin": ["tasmin", "tmin"],
+    "tasmax": ["tasmax", "tmax"],
+    "tas": ["tas", "t2m"],
+    "rainfall": ["rainfall", "rain"],
+    "pr": ["pr", "precip", "prec", "precipitation", "tp"],
+    "prsn": ["prsn", "snow", "snowfall", "solid_precip"],
+    "evspsbl": ["pet", "evap", "evapotranspiration"],
+    "water_volume_transport_in_river_channel": [
+        "qobs",
+        "discharge",
+        "streamflow",
+        "dis",
+    ],
+}
 
 rain_snow_fraction_options = (
     "RAINSNOW_DATA",
@@ -461,7 +478,7 @@ class RVT(RV):
         self.tas = ""
         self.evspsbl = ""
         self.water_volume_transport_in_river_channel = ""
-        self._nc_index = ""
+        self.nc_index = None
         self.raincorrection = 1
         self.snowcorrection = 1
 
@@ -481,101 +498,12 @@ class RVT(RV):
         # http://cfconventions.org/Data/cf-standard-names/60/build/cf-standard-name-table.html
         # PET is the potential evapotranspiration, while evspsbl is the actual evap.
         # TODO: Check we're not mixing precip and rainfall.
-        self._nc_vars = {
-            "tasmin": ["tasmin", "tmin"],
-            "tasmax": ["tasmax", "tmax"],
-            "tas": ["tas", "t2m"],
-            "rainfall": ["rainfall", "rain"],
-            "pr": ["pr", "precip", "prec", "precipitation", "tp"],
-            "prsn": ["prsn", "snow", "snowfall", "solid_precip"],
-            "evspsbl": ["pet", "evap", "evapotranspiration"],
-            "water_volume_transport_in_river_channel": [
-                "qobs",
-                "discharge",
-                "streamflow",
-                "dis",
-            ],
-        }
 
         super(RVT, self).__init__(**kwargs)
 
-    def _configure_nc_variables(self, fns):
-        for fn in fns:
-            if ".nc" in fn.suffix:
-                with xr.open_dataset(fn) as ds:
-                    for var, alt_names in self._nc_vars.items():
-                        # Check that the emulator is expecting that variable.
-                        # if var not in self.rvt.keys():
-                        #    continue
-
-                        # Check if any alternate variable name is in the file.
-                        for var_name in alt_names:
-                            if var_name in ds.data_vars:
-                                val = dict(
-                                    name=var,
-                                    data_type=forcing_names[var],
-                                    file_name_nc=fn,
-                                    var_name_nc=var_name,
-                                    dim_names_nc=ds[var_name].dims,
-                                    units=ds[var_name].attrs.get("units"),
-                                )
-
-                                if "GRIB_stepType" in ds[var_name].attrs:
-                                    val["deaccumulate"] = (
-                                        ds[var_name].attrs["GRIB_stepType"] == "accum"
-                                    )
-
-                                if len(val["dim_names_nc"]) == 1:
-                                    if var == "water_volume_transport_in_river_channel":
-                                        self[var] = ObservationDataCommand(**val)
-                                    else:
-                                        self[var] = DataCommand(**val)
-                                elif len(val["dim_names_nc"]) == 2:
-                                    if var == "water_volume_transport_in_river_channel":
-                                        # Search for the gauged SB, not sure what should happen when there are
-                                        # more than one (should it be even supported?)
-                                        # for sb in self.rvh.subbasins:
-                                        #     if sb.gauged:
-                                        #         val["subbasin_id"] = sb.subbasin_id
-                                        #         break
-                                        # else:
-                                        #     raise Exception(
-                                        #         "Could not find an outlet subbasin for observation data"
-                                        #     )
-                                        self[var] = ObservationDataCommand(**val)
-                                    else:
-                                        # TODO: implement a RedirectToFile mechanism to avoid inlining the grid weights
-                                        # multiple times as we do here
-                                        if self.grid_weights:
-                                            val["grid_weights"] = replace(
-                                                self.grid_weights
-                                            )
-                                        self[var] = StationForcingCommand(**val)
-                                else:
-                                    self[var] = GriddedForcingCommand(**val)
-
-                                break
-
-    @property
-    def nc_index(self):
-        return self._nc_index
-
-    @nc_index.setter
-    def nc_index(self, values):
-        value = values["value"]
-        nc_index_max = values["nc_index_max"]
-        for key, val in self.items():
-            if isinstance(val, (RavenNcData, DataCommand)):
-                setattr(val, "index", value)
-            elif isinstance(val, StationForcingCommand):
-                gws = GridWeightsCommand(
-                    number_grid_cells=nc_index_max, data=((1, value, 1.0),)
-                )
-                setattr(val, "grid_weights", gws)
-
     @property
     def variables(self):
-        return (getattr(self, name) for name in self._nc_vars)
+        return (getattr(self, name) for name in default_input_variables)
 
     @property
     def gauge(self):
@@ -776,7 +704,7 @@ class RVI(RV):
 
     @property
     def routing_cmd(self):
-        return Routing(self.routing)
+        return Routing(value=self.routing)
 
     @property
     def rain_snow_fraction(self):

@@ -29,6 +29,7 @@ from .commands import (
     ObservationDataCommand,
     StationForcingCommand,
 )
+from .importers import NcDataImporter
 from .rv import (
     RV,
     RVI,
@@ -444,23 +445,23 @@ class Raven:
             self.handle_date_defaults(ts)
             self.set_calendar(ts)
 
-        self.rvt._configure_nc_variables(ts)
+        ncdata = NcDataImporter(ts)
 
         # Loop over parallel parameters - sets self.rvi.run_index
         procs = []
         for self.psim in range(nloops):
-
             for key, val in pdict.items():
                 if val[self.psim] is not None:
-                    if key == "nc_index":
-                        value = {
-                            "value": val[self.psim] + 1,
-                            "nc_index_max": max(val) + 1,
-                        }
-                    else:
-                        value = val[self.psim]
-                    self.assign(key, value)
+                    self.assign(key, val[self.psim])
 
+            # Forcing commands
+            fc = ncdata.extract(
+                hrus=self.rvh.hrus,
+                nc_index=pdict["nc_index"][self.psim],
+                gw=self.rvt.grid_weights,
+            )
+            for key, val in fc.items():
+                setattr(self.rvt, key, val)
             cmd = self.setup_model_run(tuple(map(Path, ts)))
 
             procs.append(
