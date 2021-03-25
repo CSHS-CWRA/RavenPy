@@ -1,5 +1,6 @@
 import datetime as dt
 
+from ravenpy.models import GR4JCN
 from ravenpy.utilities import regionalization as reg
 from ravenpy.utilities.testdata import get_local_testdata
 
@@ -19,6 +20,12 @@ def test_regionalization():
         "forest": 0.4,
     }
 
+    hrus = (
+        GR4JCN.LandHRU(
+            area=4250.6, elevation=843.0, latitude=40.4848, longitude=-103.3659
+        ),
+    )
+
     qsim, ens = reg.regionalize(
         "SP_IDW",
         model,
@@ -28,11 +35,7 @@ def test_regionalization():
         ungauged_props,
         start_date=dt.datetime(2000, 1, 1),
         end_date=dt.datetime(2002, 1, 1),
-        name="Salmon",
-        run_name="test",
-        area="4250.6",
-        elevation="843.0",
-        latitude=40.4848,
+        hrus=hrus,
         longitude=-103.3659,
         min_NSE=0.6,
         size=2,

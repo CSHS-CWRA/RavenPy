@@ -494,6 +494,9 @@ class RVT(RV):
         self.entire_basin_longitude = None
         self.entire_basin_elevation = None
 
+        # This must be set in the ObservationData command for a routing-enabled model
+        self.gauged_subbasin_id = None
+
         # Dictionary of potential variable names, keyed by CF standard name.
         # http://cfconventions.org/Data/cf-standard-names/60/build/cf-standard-name-table.html
         # PET is the potential evapotranspiration, while evspsbl is the actual evap.

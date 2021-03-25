@@ -249,8 +249,13 @@ class BaseDataCommand(RavenConfig):
     def dimensions(self):
         """Return dimensions with time as the last dimension."""
         dims = list(self.dim_names_nc)
-        dims.remove("time")
-        dims.append("time")
+        for time_dim in ("t", "time"):
+            if time_dim in dims:
+                dims.remove(time_dim)
+                dims.append(time_dim)
+                break
+        else:
+            raise Exception("No time dimension found in dim_names_nc tuple")
         return " ".join(dims)
 
     @property

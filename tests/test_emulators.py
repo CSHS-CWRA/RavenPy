@@ -3,6 +3,7 @@ import os
 import tempfile
 import zipfile
 from dataclasses import replace
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -50,7 +51,7 @@ def input2d(tmpdir):
     ds = _convert_2d(TS)
     fn_out = os.path.join(tmpdir, "input2d.nc")
     ds.to_netcdf(fn_out)
-    return fn_out
+    return Path(fn_out)
 
 
 def test_race():
@@ -241,6 +242,8 @@ class TestGR4JCN:
         )
         # These will be shared (inline) to all the StationForcing commands in the RVT
         model.rvt.grid_weights = gws
+
+        model.rvt.gauged_subbasin_id = 20
 
         #########
         # R V P #
