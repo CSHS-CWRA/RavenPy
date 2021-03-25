@@ -444,11 +444,11 @@ class Raven:
             self.handle_date_defaults(ts)
             self.set_calendar(ts)
 
+        self.rvt._configure_nc_variables(ts)
+
         # Loop over parallel parameters - sets self.rvi.run_index
         procs = []
         for self.psim in range(nloops):
-
-            self.rvt._configure_nc_variables(ts)
 
             for key, val in pdict.items():
                 if val[self.psim] is not None:
