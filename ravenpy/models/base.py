@@ -452,7 +452,14 @@ class Raven:
 
             for key, val in pdict.items():
                 if val[self.psim] is not None:
-                    self.assign(key, val[self.psim])
+                    if key == "nc_index":
+                        value = {
+                            "value": val[self.psim] + 1,
+                            "nc_index_max": max(val) + 1,
+                        }
+                    else:
+                        value = val[self.psim]
+                    self.assign(key, value)
 
             cmd = self.setup_model_run(tuple(map(Path, ts)))
 

@@ -561,17 +561,18 @@ class RVT(RV):
         return self._nc_index
 
     @nc_index.setter
-    def nc_index(self, value):
+    def nc_index(self, values):
+        value = values["value"]
+        nc_index_max = values["nc_index_max"]
         for key, val in self.items():
             if isinstance(val, (RavenNcData, DataCommand)):
                 setattr(val, "index", value)
             elif isinstance(val, StationForcingCommand):
-                hru_id, cell_id, w = val.grid_weights.data[0]
                 setattr(
                     val,
                     "grid_weights",
                     GridWeightsCommand(
-                        number_grid_cells=20, data=((1, value + 1, 1.0),)
+                        number_grid_cells=nc_index_max, data=((1, value, 1.0),)
                     ),
                 )
 
