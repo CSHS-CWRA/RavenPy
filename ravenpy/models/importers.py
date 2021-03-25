@@ -813,6 +813,10 @@ class NcDataImporter:
                                 self.attrs[var] = attrs
 
     def _create_command(self, var, attrs, rvh, nc_index=0, gw=None):
+        def _clean(attrs):
+            ks = {"latitude", "longitude", "elevation"}
+            return {k: v for k, v in attrs.items() if k not in ks}
+
         dims = attrs["dim_names_nc"]
         number_grid_cells = attrs.pop("number_grid_cells")
 
@@ -820,7 +824,7 @@ class NcDataImporter:
             if var == "water_volume_transport_in_river_channel":
                 return ObservationDataCommand(**attrs)
 
-            return DataCommand(**attrs)
+            return DataCommand(**_clean(attrs))
 
         if len(dims) == 2:
             if var == "water_volume_transport_in_river_channel":
@@ -834,7 +838,7 @@ class NcDataImporter:
                     raise Exception(
                         "Could not find an outlet subbasin for observation data"
                     )
-                return ObservationDataCommand(**attrs)
+                return ObservationDataCommand(**_clean(attrs))
 
             # TODO: implement a RedirectToFile mechanism to avoid inlining the grid weights
             # multiple times as we do here
@@ -847,7 +851,7 @@ class NcDataImporter:
                 data=data,
             )
 
-            return StationForcingCommand(**attrs, grid_weights=gw)
+            return StationForcingCommand(**_clean(attrs), grid_weights=gw)
 
         return GriddedForcingCommand(**attrs, grid_weights=gw)
 
@@ -865,8 +869,13 @@ class NcDataImporter:
 
                 # Revert to RHU coordinates
                 except Exception:
-                    out["gauge_latitude"] = rvh.hrus[0].latitude
-                    out["gauge_longitude"] = rvh.hrus[0].longitude
-                    out["gauge_elevation"] = rvh.hrus[0].elevation
+                    if isinstance(rvh, rv.RVH):
+                        out["gauge_latitude"] = rvh.hrus[0].latitude
+                        out["gauge_longitude"] = rvh.hrus[0].longitude
+                        out["gauge_elevation"] = rvh.hrus[0].elevation
+                    else:
+                        out["gauge_latitude"] = getattr(rvh, "latitude", None)
+                        out["gauge_longitude"] = getattr(rvh, "longitude", None)
+                        out["gauge_elevation"] = getattr(rvh, "elevation", None)
 
         return out
