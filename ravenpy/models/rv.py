@@ -535,7 +535,7 @@ class RVT(RV):
 
     @property
     def observed_data_cmd(self):
-        return self.var_cmds["water_volume_transport_in_river_channel"]
+        return self.var_cmds.get("water_volume_transport_in_river_channel", "")
 
     @property
     def raincorrection_cmd(self):
