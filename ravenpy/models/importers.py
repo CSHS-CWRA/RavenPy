@@ -812,19 +812,26 @@ class NcDataImporter:
 
                                 self.attrs[var] = attrs
 
-    def _create_command(self, var, attrs, rvh, nc_index=0, gw=None):
-        def _clean(attrs):
-            ks = {"latitude", "longitude", "elevation"}
-            return {k: v for k, v in attrs.items() if k not in ks}
-
+    def _create_command(self, var, attrs, rvh, rvt=None, nc_index=0):
+        coords = {"latitude", "longitude", "elevation"}
         dims = attrs["dim_names_nc"]
+
+        # Remove extra attributes
         number_grid_cells = attrs.pop("number_grid_cells")
+        for k in coords:
+            attrs.pop(k, None)
+
+        # Add options from rvt
+        rvt_attrs = ["scale", "offset", "time_shift"]
+        for a in rvt_attrs:
+            if a in rvt[var]:
+                attrs[a] = rvt[var][a]
 
         if len(dims) == 1:
             if var == "water_volume_transport_in_river_channel":
                 return ObservationDataCommand(**attrs)
 
-            return DataCommand(**_clean(attrs))
+            return DataCommand(**attrs)
 
         if len(dims) == 2:
             if var == "water_volume_transport_in_river_channel":
@@ -838,29 +845,31 @@ class NcDataImporter:
                     raise Exception(
                         "Could not find an outlet subbasin for observation data"
                     )
-                return ObservationDataCommand(**_clean(attrs))
+                return ObservationDataCommand(**attrs)
 
             # TODO: implement a RedirectToFile mechanism to avoid inlining the grid weights
             # multiple times as we do here
             # Construct default grid weights applying equally to all HRUs
             data = [(hru.hru_id, nc_index, 1.0) for hru in rvh.hrus]
 
-            gw = gw or GridWeightsCommand(
+            gw = rvt.grid_weights or GridWeightsCommand(
                 number_hrus=len(rvh.hrus),
                 number_grid_cells=number_grid_cells,
                 data=data,
             )
 
-            return StationForcingCommand(**_clean(attrs), grid_weights=gw)
+            return StationForcingCommand(**attrs, grid_weights=gw)
 
-        return GriddedForcingCommand(**attrs, grid_weights=gw)
+        return GriddedForcingCommand(**attrs, grid_weights=rvt.grid_weights)
 
-    def extract(self, rvh, nc_index=0, gw=None):
-        out = {}
+    def extract(self, rvh, rvt=None, nc_index=0):
+        out = {"var_cmds": {}}
 
         for var, attrs in self.attrs.items():
-            out[var] = self._create_command(var, attrs.copy(), rvh, nc_index, gw)
-            if type(out[var]) is DataCommand:
+            out["var_cmds"][var] = self._create_command(
+                var, attrs.copy(), rvh, rvt, nc_index
+            )
+            if type(out["var_cmds"][var]) is DataCommand:
                 # Try extracting the gauge location from the netCDF coordinates.
                 try:
                     out["gauge_latitude"] = attrs["latitude"][nc_index]

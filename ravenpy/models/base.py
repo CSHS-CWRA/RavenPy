@@ -265,7 +265,7 @@ class Raven:
                     p = att.__class__(*value)
                     setattr(obj, key, p)
                 # If att is a RavenNcData, we expect a dict
-                elif isinstance(att, RavenNcData):
+                elif isinstance(att, dict):
                     att.update(value)
                 else:
                     setattr(obj, key, value)
@@ -455,13 +455,14 @@ class Raven:
                     self.assign(key, val[self.psim])
 
             # Forcing commands
-            fc = ncdata.extract(
-                rvh=self.rvh,
-                nc_index=pdict["nc_index"][self.psim],
-                gw=self.rvt.grid_weights,
+            self.rvt.update(
+                ncdata.extract(
+                    rvh=self.rvh,
+                    rvt=self.rvt,
+                    nc_index=pdict["nc_index"][self.psim],
+                )
             )
-            for key, val in fc.items():
-                setattr(self.rvt, key, val)
+
             cmd = self.setup_model_run(tuple(map(Path, ts)))
 
             procs.append(
@@ -585,47 +586,6 @@ class Raven:
         for f in files:
             out += f.read_text()
         return out
-
-    def _assign_files(self, fns):
-        """Find for each variable the file storing its data and the name of the netCDF variable.
-
-        Parameters
-        ----------
-        fns : sequence
-          Paths to netCDF files.
-
-        Returns
-        -------
-        dict
-          A dictionary keyed by variable storing the `RavenNcData` instance storing each variable's configuration
-          information.
-        """
-        raise DeprecationWarning
-        ncvars = {}
-        for fn in fns:
-            if ".nc" in fn.suffix:
-                with xr.open_dataset(fn) as ds:
-                    for var, alt_names in self._variable_names.items():
-                        # Check that the emulator is expecting that variable.
-                        if var not in self.rvt.keys():
-                            continue
-
-                        # Check if any alternate variable name is in the file.
-                        for alt_name in alt_names:
-                            if alt_name in ds.data_vars:
-                                ncvars[var] = dict(
-                                    var=var,
-                                    path=fn,
-                                    var_name=alt_name,
-                                    dimensions=ds[alt_name].dims,
-                                    units=ds[alt_name].attrs.get("units"),
-                                )
-                                if "GRIB_stepType" in ds[alt_name].attrs:
-                                    ncvars[var]["deaccumulate"] = (
-                                        ds[alt_name].attrs["GRIB_stepType"] == "accum"
-                                    )
-                                break
-        return ncvars
 
     def _get_output(self, pattern, path):
         """Match actual output files to known expected files.

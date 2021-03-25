@@ -470,15 +470,19 @@ class MonthlyAverage(RV):
 
 class RVT(RV):
     def __init__(self, **kwargs):
-        self.pr = ""
-        self.rainfall = ""
-        self.prsn = ""
-        self.tasmin = ""
-        self.tasmax = ""
-        self.tas = ""
-        self.evspsbl = ""
-        self.water_volume_transport_in_river_channel = ""
+        self.pr = {}
+        self.rainfall = {}
+        self.prsn = {}
+        self.tasmin = {}
+        self.tasmax = {}
+        self.tas = {}
+        self.evspsbl = {}
+        self.water_volume_transport_in_river_channel = {}
+
         self.nc_index = None
+        self.gauge_latitude = None
+        self.gauge_longitude = None
+        self.gauge_elevation = None
         self.raincorrection = 1
         self.snowcorrection = 1
 
@@ -489,7 +493,7 @@ class RVT(RV):
 
         # This must be set in the ObservationData command for a routing-enabled model
         self.gauged_subbasin_id = None
-
+        self.var_cmds = {}
         # Dictionary of potential variable names, keyed by CF standard name.
         # http://cfconventions.org/Data/cf-standard-names/60/build/cf-standard-name-table.html
         # PET is the potential evapotranspiration, while evspsbl is the actual evap.
@@ -503,7 +507,7 @@ class RVT(RV):
 
     @property
     def gauge(self):
-        data = [o for o in self.variables if type(o) is DataCommand]
+        data = [o for o in self.var_cmds.values() if type(o) is DataCommand]
         if data:
             return GaugeCommand(
                 latitude=self.gauge_latitude,
@@ -518,16 +522,20 @@ class RVT(RV):
 
     @property
     def station_forcing_list(self):
-        data = [o for o in self.variables if type(o) is StationForcingCommand]
+        data = [o for o in self.var_cmds.values() if type(o) is StationForcingCommand]
         return "\n\n".join(map(str, data))
 
     @property
     def gridded_forcing_list(self):
-        data = [o for o in self.variables if type(o) is GriddedForcingCommand]
+        data = [o for o in self.var_cmds.values() if type(o) is GriddedForcingCommand]
         # This is really a hack for now, as model.rvt.gridded_forcings are set
         # directly by the user in TestRouting.test_lievre_tutorial
         data += self.gridded_forcings
         return "\n\n".join(map(str, data))
+
+    @property
+    def observed_data_cmd(self):
+        return self.var_cmds["water_volume_transport_in_river_channel"]
 
     @property
     def raincorrection_cmd(self):
@@ -536,23 +544,6 @@ class RVT(RV):
     @property
     def snowcorrection_cmd(self):
         return SnowCorrection(self.snowcorrection)
-
-    def update(self, items, force=False):
-        """Update values from dictionary items.
-
-        Parameters
-        ----------
-        items : dict
-          Dictionary of values.
-        force : bool
-          If True, un-initialized keys can be set.
-        """
-        if force:
-            raise ValueError("Cannot add a new variable at run-time.")
-        else:
-            for key, val in items.items():
-                if isinstance(val, dict):
-                    self[key].update(val, force=True)
 
 
 class RVI(RV):
