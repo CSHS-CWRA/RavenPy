@@ -1,13 +1,14 @@
 import collections
 import datetime as dt
 from collections import namedtuple
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from textwrap import dedent
 from typing import Dict, List, Tuple
 
 import cftime
 import six
+import xarray as xr
 from xclim.core.units import units2pint
 
 from .commands import (
@@ -476,17 +477,84 @@ class RVT(RV):
         self.entire_basin_longitude = None
         self.entire_basin_elevation = None
 
-        self._nc_vars = (
-            "pr",
-            "rainfall",
-            "prsn",
-            "tasmin",
-            "tasmax",
-            "tas",
-            "evspsbl",
-            "water_volume_transport_in_river_channel",
-        )
+        # Dictionary of potential variable names, keyed by CF standard name.
+        # http://cfconventions.org/Data/cf-standard-names/60/build/cf-standard-name-table.html
+        # PET is the potential evapotranspiration, while evspsbl is the actual evap.
+        # TODO: Check we're not mixing precip and rainfall.
+        self._nc_vars = {
+            "tasmin": ["tasmin", "tmin"],
+            "tasmax": ["tasmax", "tmax"],
+            "tas": ["tas", "t2m"],
+            "rainfall": ["rainfall", "rain"],
+            "pr": ["pr", "precip", "prec", "precipitation", "tp"],
+            "prsn": ["prsn", "snow", "snowfall", "solid_precip"],
+            "evspsbl": ["pet", "evap", "evapotranspiration"],
+            "water_volume_transport_in_river_channel": [
+                "qobs",
+                "discharge",
+                "streamflow",
+                "dis",
+            ],
+        }
+
         super(RVT, self).__init__(**kwargs)
+
+    def _configure_nc_variables(self, fns):
+        for fn in fns:
+            if ".nc" in fn.suffix:
+                with xr.open_dataset(fn) as ds:
+                    for var, alt_names in self._nc_vars.items():
+                        # Check that the emulator is expecting that variable.
+                        # if var not in self.rvt.keys():
+                        #    continue
+
+                        # Check if any alternate variable name is in the file.
+                        for var_name in alt_names:
+                            if var_name in ds.data_vars:
+                                val = dict(
+                                    name=var,
+                                    data_type=forcing_names[var],
+                                    file_name_nc=fn,
+                                    var_name_nc=var_name,
+                                    dim_names_nc=ds[var_name].dims,
+                                    units=ds[var_name].attrs.get("units"),
+                                )
+
+                                if "GRIB_stepType" in ds[var_name].attrs:
+                                    val["deaccumulate"] = (
+                                        ds[var_name].attrs["GRIB_stepType"] == "accum"
+                                    )
+
+                                if len(val["dim_names_nc"]) == 1:
+                                    if var == "water_volume_transport_in_river_channel":
+                                        self[var] = ObservationDataCommand(**val)
+                                    else:
+                                        self[var] = DataCommand(**val)
+                                elif len(val["dim_names_nc"]) == 2:
+                                    if var == "water_volume_transport_in_river_channel":
+                                        # Search for the gauged SB, not sure what should happen when there are
+                                        # more than one (should it be even supported?)
+                                        # for sb in self.rvh.subbasins:
+                                        #     if sb.gauged:
+                                        #         val["subbasin_id"] = sb.subbasin_id
+                                        #         break
+                                        # else:
+                                        #     raise Exception(
+                                        #         "Could not find an outlet subbasin for observation data"
+                                        #     )
+                                        self[var] = ObservationDataCommand(**val)
+                                    else:
+                                        # TODO: implement a RedirectToFile mechanism to avoid inlining the grid weights
+                                        # multiple times as we do here
+                                        if self.grid_weights:
+                                            val["grid_weights"] = replace(
+                                                self.grid_weights
+                                            )
+                                        self[var] = StationForcingCommand(**val)
+                                else:
+                                    self[var] = GriddedForcingCommand(**val)
+
+                                break
 
     @property
     def nc_index(self):
@@ -499,7 +567,13 @@ class RVT(RV):
                 setattr(val, "index", value)
             elif isinstance(val, StationForcingCommand):
                 hru_id, cell_id, w = val.grid_weights.data[0]
-                setattr(val.grid_weights.data, "index", ((hru_id, value, w),))
+                setattr(
+                    val,
+                    "grid_weights",
+                    GridWeightsCommand(
+                        number_grid_cells=20, data=((1, value + 1, 1.0),)
+                    ),
+                )
 
     @property
     def variables(self):

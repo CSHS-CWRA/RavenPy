@@ -64,26 +64,6 @@ class Raven:
     # Allowed configuration file extensions
     _rvext = ("rvi", "rvp", "rvc", "rvh", "rvt")
 
-    # Dictionary of potential variable names, keyed by CF standard name.
-    # http://cfconventions.org/Data/cf-standard-names/60/build/cf-standard-name-table.html
-    # PET is the potential evapotranspiration, while evspsbl is the actual evap.
-    # TODO: Check we're not mixing precip and rainfall.
-    _variable_names = {
-        "tasmin": ["tasmin", "tmin"],
-        "tasmax": ["tasmax", "tmax"],
-        "tas": ["tas", "t2m"],
-        "rainfall": ["rainfall", "rain"],
-        "pr": ["pr", "precip", "prec", "precipitation", "tp"],
-        "prsn": ["prsn", "snow", "snowfall", "solid_precip"],
-        "evspsbl": ["pet", "evap", "evapotranspiration"],
-        "water_volume_transport_in_river_channel": [
-            "qobs",
-            "discharge",
-            "streamflow",
-            "dis",
-        ],
-    }
-
     _parallel_parameters = [
         "params",
         "hru_state",
@@ -349,35 +329,6 @@ class Raven:
         # ncvars = self._assign_files(ts)
         # self.rvt.update(ncvars)
 
-        ncvars = self._infer_forcing_config(ts)
-        for key, val in ncvars.items():
-            if len(val["dim_names_nc"]) == 1:
-                if key == "water_volume_transport_in_river_channel":
-                    self.rvt[key] = ObservationDataCommand(**val)
-                else:
-                    self.rvt[key] = DataCommand(**val)
-            elif len(val["dim_names_nc"]) == 2:
-                if key == "water_volume_transport_in_river_channel":
-                    # Search for the gauged SB, not sure what should happen when there are
-                    # more than one (should it be even supported?)
-                    for sb in self.rvh.subbasins:
-                        if sb.gauged:
-                            val["subbasin_id"] = sb.subbasin_id
-                            break
-                    else:
-                        raise Exception(
-                            "Could not find an outlet subbasin for observation data"
-                        )
-                    self.rvt[key] = ObservationDataCommand(**val)
-                else:
-                    # TODO: implement a RedirectToFile mechanism to avoid inlining the grid weights
-                    # multiple times as we do here
-                    if self.rvt.grid_weights:
-                        val["grid_weights"] = self.rvt.grid_weights
-                    self.rvt[key] = StationForcingCommand(**val)
-            else:
-                self.rvt[key] = GriddedForcingCommand(**val)
-
         # TODO: Re-enable those checks
         # self.check_units()
         # self.check_inputs()
@@ -495,12 +446,16 @@ class Raven:
 
         # Loop over parallel parameters - sets self.rvi.run_index
         procs = []
-        for idx, self.psim in enumerate(range(nloops)):
+        for self.psim in range(nloops):
+
+            self.rvt._configure_nc_variables(ts)
+
             for key, val in pdict.items():
                 if val[self.psim] is not None:
                     self.assign(key, val[self.psim])
 
             cmd = self.setup_model_run(tuple(map(Path, ts)))
+
             procs.append(
                 subprocess.Popen(cmd, cwd=self.cmd_path, stdout=subprocess.PIPE)
             )
@@ -622,46 +577,6 @@ class Raven:
         for f in files:
             out += f.read_text()
         return out
-
-    def _infer_forcing_config(self, fns):
-        """Find for each variable the file storing it's data and the name of the netCDF variable.
-
-        Parameters
-        ----------
-        fns : sequence
-          Paths to netCDF files.
-
-        Returns
-        -------
-        dict
-          A dictionary keyed by variable storing the `StationForcingCommand` configuration information.
-        """
-        ncvars = {}
-        for fn in fns:
-            if ".nc" in fn.suffix:
-                with xr.open_dataset(fn) as ds:
-                    for var, alt_names in self._variable_names.items():
-                        # Check that the emulator is expecting that variable.
-                        # if var not in self.rvt.keys():
-                        #    continue
-
-                        # Check if any alternate variable name is in the file.
-                        for var_name in alt_names:
-                            if var_name in ds.data_vars:
-                                ncvars[var] = dict(
-                                    name=var,
-                                    data_type=forcing_names[var],
-                                    file_name_nc=fn,
-                                    var_name_nc=var_name,
-                                    dim_names_nc=ds[var_name].dims,
-                                    units=ds[var_name].attrs.get("units"),
-                                )
-                                if "GRIB_stepType" in ds[var_name].attrs:
-                                    ncvars[var]["deaccumulate"] = (
-                                        ds[var_name].attrs["GRIB_stepType"] == "accum"
-                                    )
-                                break
-        return ncvars
 
     def _assign_files(self, fns):
         """Find for each variable the file storing its data and the name of the netCDF variable.
