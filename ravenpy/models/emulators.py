@@ -201,7 +201,7 @@ class MOHYSE(Raven):
         self.rvh = RV(
             name=None, area=None, elevation=None, latitude=None, longitude=None
         )
-        self.rvt = RVT(**{k: nc() for k in std_vars})
+        self.rvt = RVT()
         self.rvi = RVI(evaporation="PET_MOHYSE", rain_snow_fraction="RAINSNOW_DATA")
         self.rvc = RVC(
             hru_state=HRUState(),
@@ -270,7 +270,7 @@ class HMETS(GR4JCN):
     def __init__(self, *args, **kwds):
         super().__init__(*args, **kwds)
         self.rvp = RV(params=HMETS.params(*((None,) * len(HMETS.params._fields))))
-        self.rvt = RVT(**{k: nc() for k in std_vars})
+        self.rvt = RVT()
         self.rvi = RVI(evaporation="PET_OUDIN", rain_snow_fraction="RAINSNOW_DATA")
         self.rvc = RVC(soil0=None, soil1=None, basin_state=BasinIndexCommand())
         self.rvd = RV(
@@ -405,7 +405,7 @@ class HBVEC(GR4JCN):
             monthly_ave_evaporation=MonthlyAverage(),
             monthly_ave_temperature=MonthlyAverage(),
         )
-        self.rvt = RVT(**{k: nc() for k in std_vars})
+        self.rvt = RVT()
         self.rvh = RV(
             name=None, area=None, elevation=None, latitude=None, longitude=None
         )
