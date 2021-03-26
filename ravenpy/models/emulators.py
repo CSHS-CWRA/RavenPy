@@ -704,7 +704,7 @@ class BLENDED_OST(Ostrich, BLENDED):
     def derived_parameters(self):
         """Derived parameters are computed by Ostrich."""
         self.rvt.raincorrection = "par_x33"
-        self.rvt.snowcorrection = "par_x44"
+        self.rvt.snowcorrection = "par_x34"
 
     def ost2raven(self, ops):
         """Return a list of parameter names calibrated by Ostrich that match Raven's parameters.
