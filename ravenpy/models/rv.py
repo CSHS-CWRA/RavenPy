@@ -138,8 +138,6 @@ evaporation_options = (
     "PET_OUDIN",
 )
 
-state_variables = ()
-
 calendar_options = (
     "PROLEPTIC_GREGORIAN",
     "JULIAN",
@@ -305,8 +303,6 @@ class RVT(RV):
         # For a distributed model these weights will be shared among all the StationForcing commands
         self.grid_weights = None
 
-        # This must be set in the ObservationData command for a routing-enabled model
-        self.gauged_subbasin_id = None
         self.var_cmds = {}
         # Dictionary of potential variable names, keyed by CF standard name.
         # http://cfconventions.org/Data/cf-standard-names/60/build/cf-standard-name-table.html

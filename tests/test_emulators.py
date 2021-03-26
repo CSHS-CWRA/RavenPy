@@ -157,7 +157,7 @@ class TestGR4JCN:
 
     def test_routing(self):
         """We need at least 2 subbasins to activate routing."""
-        model = GR4JCN("/tmp/test_routing")
+        model = GR4JCN()
 
         ts_2d = get_local_testdata(
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_2d.nc"
@@ -242,8 +242,6 @@ class TestGR4JCN:
         )
         # These will be shared (inline) to all the StationForcing commands in the RVT
         model.rvt.grid_weights = gws
-
-        model.rvt.gauged_subbasin_id = 20
 
         #########
         # R V P #
