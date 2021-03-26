@@ -865,7 +865,7 @@ class Ostrich(Raven):
 
         try:
             self.outputs["calibparams"] = ", ".join(map(str, self.calibrated_params))
-        except AttributeError:
+        except (AttributeError, TypeError):
             err = self.parse_errors()
             raise UserWarning(err)
 

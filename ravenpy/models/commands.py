@@ -303,8 +303,10 @@ class GaugeCommand(RavenConfig):
     latitude: float = 0
     longitude: float = 0
     elevation: float = 0
-    raincorrection: float = 1
-    snowcorrection: float = 1
+
+    # Accept strings to embed parameter names into Ostrich templates
+    raincorrection: Union[float, str] = 1
+    snowcorrection: Union[float, str] = 1
 
     template = """
     :Gauge
@@ -755,13 +757,13 @@ class LandUseClassesCommand(RavenConfig):
 @dataclass
 class RainCorrection(BaseValueCommand):
     tag: str = "RainCorrection"
-    value: float = 1.0
+    value: Union[float, str] = 1.0
 
 
 @dataclass
 class SnowCorrection(BaseValueCommand):
     tag: str = "SnowCorrection"
-    value: float = 1.0
+    value: Union[float, str] = 1.0
 
 
 @dataclass

@@ -557,7 +557,7 @@ class BLENDED(Raven):
             ),
         )
         self.rvh = RVH(hrus=(BLENDED.HRU(),))
-        self.rvt = RVT(**{k: nc() for k in std_vars})
+        self.rvt = RVT()
         self.rvi = RVI(evaporation="PET_OUDIN", rain_snow_fraction="RAINSNOW_HBV")
         self.rvc = RVC(soil0=None, soil1=None, basin_state=BasinIndexCommand())
         self.rvd = RV(
@@ -703,7 +703,8 @@ class BLENDED_OST(Ostrich, BLENDED):
 
     def derived_parameters(self):
         """Derived parameters are computed by Ostrich."""
-        pass
+        self.rvt.raincorrection = "par_x33"
+        self.rvt.snowcorrection = "par_x44"
 
     def ost2raven(self, ops):
         """Return a list of parameter names calibrated by Ostrich that match Raven's parameters.

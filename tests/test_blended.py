@@ -85,7 +85,7 @@ class TestBLENDED:
 
 class TestBLENDED_OST:
     def test_simple(self):
-        model = BLENDED_OST()
+        model = BLENDED_OST("/tmp/blended_ost")
         params = (
             2.930702e-02,  # par_x01
             2.211166e00,  # par_x02
