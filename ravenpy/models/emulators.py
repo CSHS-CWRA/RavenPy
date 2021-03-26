@@ -435,20 +435,25 @@ class HBVEC(GR4JCN):
             or self.rvi.ow_evaporation == "PET_FROMMONTHLY"
         ):
             # If this fails, it's likely the input data is missing some necessary variables (e.g. evap).
-            if self.rvt.tas.path is not None:
-                tas = xr.open_dataset(self.rvt.tas.path)
+            tas_cmd = self.rvt.var_cmds.get("tas")
+            tasmin_cmd = self.rvt.var_cmds.get("tasmin")
+            tasmax_cmd = self.rvt.var_cmds.get("tasmax")
+            evspsbl_cmd = self.rvt.var_cmds.get("evspsbl")
+
+            if tas_cmd:
+                tas = xr.open_dataset(tas_cmd.file_name_nc)[tas_cmd.var_name_nc]
             else:
-                tasmax = xr.open_dataset(self.rvt.tasmax.file_name_nc)[
-                    self.rvt.tasmax.var_name_nc
+                tasmax = xr.open_dataset(tasmax_cmd.file_name_nc)[
+                    tasmax_cmd.var_name_nc
                 ]
-                tasmin = xr.open_dataset(self.rvt.tasmin.file_name_nc)[
-                    self.rvt.tasmin.var_name_nc
+                tasmin = xr.open_dataset(tasmin_cmd.file_name_nc)[
+                    tasmin_cmd.var_name_nc
                 ]
                 tas = (tasmax + tasmin) / 2.0
 
-            if self.rvt.evspsbl.file_name_nc is not None:
-                evap = xr.open_dataset(self.rvt.evspsbl.file_name_nc)[
-                    self.rvt.evspsbl.var_name_nc
+            if evspsbl_cmd:
+                evap = xr.open_dataset(evspsbl_cmd.file_name_nc)[
+                    evspsbl_cmd.var_name_nc
                 ]
 
             mat = tas.groupby("time.month").mean().values
