@@ -5,22 +5,8 @@ from pathlib import Path
 import xarray as xr
 
 from .base import Ostrich, Raven
-from .commands import BasinIndexCommand, StationForcingCommand
-from .rv import (
-    HRU,
-    LU,
-    RV,
-    RVC,
-    RVH,
-    RVI,
-    RVP,
-    RVT,
-    HRUState,
-    MonthlyAverage,
-    Ost,
-    RavenNcData,
-    Sub,
-)
+from .commands import BasinIndexCommand, MonthlyAverageCommand, StationForcingCommand
+from .rv import HRU, LU, RV, RVC, RVH, RVI, RVP, RVT, HRUState, Ost, RavenNcData, Sub
 
 __all__ = [
     "GR4JCN",
@@ -402,8 +388,6 @@ class HBVEC(GR4JCN):
         self.rvd = RV(
             one_plus_par_x15=None,
             par_x11_half=None,
-            monthly_ave_evaporation=MonthlyAverage(),
-            monthly_ave_temperature=MonthlyAverage(),
         )
         self.rvt = RVT()
         self.rvh = RV(
@@ -419,6 +403,10 @@ class HBVEC(GR4JCN):
     def derived_parameters(self):
         self.rvd["one_plus_par_x15"] = self.rvp.params.par_x15 + 1.0
         self.rvd["par_x11_half"] = self.rvp.params.par_x11 / 2.0
+
+        self.rvt["raincorrection"] = self.rvp.params.par_x20
+        self.rvt["snowcorrection"] = self.rvp.params.par_x21
+
         self._monthly_average()
 
         # Default initial conditions if none are given
@@ -459,13 +447,8 @@ class HBVEC(GR4JCN):
             mat = tas.groupby("time.month").mean().values
             mae = evap.groupby("time.month").mean().values
 
-            self.rvd.update(
-                {
-                    "monthly_ave_temperature": MonthlyAverage("Temperature", mat),
-                    "monthly_ave_evaporation": MonthlyAverage("Evaporation", mae),
-                },
-                force=True,
-            )
+            self.rvt["monthly_ave_evaporation"] = tuple(mae)
+            self.rvt["monthly_ave_temperature"] = tuple(mat)
 
 
 class HBVEC_OST(Ostrich, HBVEC):

@@ -22,6 +22,7 @@ from .commands import (
     HRUsCommand,
     HRUStateVariableTableCommand,
     LandUseClassesCommand,
+    MonthlyAverageCommand,
     ObservationDataCommand,
     RainCorrection,
     RavenConfig,
@@ -483,8 +484,12 @@ class RVT(RV):
         self.gauge_latitude = None
         self.gauge_longitude = None
         self.gauge_elevation = None
+
         self.raincorrection = 1
         self.snowcorrection = 1
+
+        self.monthly_ave_evaporation = ()
+        self.monthly_ave_temperature = ()
 
         self.gridded_forcings = ()
 
@@ -515,6 +520,8 @@ class RVT(RV):
                 elevation=self.gauge_elevation,
                 raincorrection=self.raincorrection,
                 snowcorrection=self.snowcorrection,
+                monthly_ave_evaporation=self.monthly_ave_evaporation,
+                monthly_ave_temperature=self.monthly_ave_temperature,
                 data=data,
             )
         else:

@@ -55,6 +55,23 @@ class LinearTransform(RavenConfig):
 
 
 @dataclass
+class MonthlyAverageCommand(RavenConfig):
+    var_name: str = ""
+    data: Tuple[float] = ()
+
+    template = ":MonthlyAve{var_name} {data}"
+
+    def to_rv(self):
+        if self.data:
+            d = asdict(self)
+            d["var_name"] = self.var_name.lower().capitalize()
+            d["data"] = " ".join(map(str, self.data))
+            return self.template.format(**d)
+        else:
+            return ""
+
+
+@dataclass
 class SubBasinsCommand(RavenConfig):
     """SubBasins command (RVH)."""
 
@@ -308,6 +325,9 @@ class GaugeCommand(RavenConfig):
     raincorrection: Union[float, str] = 1
     snowcorrection: Union[float, str] = 1
 
+    monthly_ave_evaporation: Tuple[float] = ()
+    monthly_ave_temperature: Tuple[float] = ()
+
     template = """
     :Gauge
         :Latitude {latitude}
@@ -315,7 +335,8 @@ class GaugeCommand(RavenConfig):
         :Elevation {elevation}
         {raincorrection_cmd}
         {snowcorrection_cmd}
-
+        {monthly_ave_evaporation_cmd}
+        {monthly_ave_temperature_cmd}
         {data_list}
     :EndGauge
     """
@@ -328,10 +349,20 @@ class GaugeCommand(RavenConfig):
     def snowcorrection_cmd(self):
         return SnowCorrection(self.snowcorrection)
 
+    @property
+    def monthly_ave_evaporation_cmd(self):
+        return MonthlyAverageCommand("evaporation", self.monthly_ave_evaporation)
+
+    @property
+    def monthly_ave_temperature_cmd(self):
+        return MonthlyAverageCommand("temperature", self.monthly_ave_temperature)
+
     def to_rv(self):
         d = asdict(self)
         d["raincorrection_cmd"] = self.raincorrection_cmd
         d["snowcorrection_cmd"] = self.snowcorrection_cmd
+        d["monthly_ave_evaporation_cmd"] = self.monthly_ave_evaporation_cmd
+        d["monthly_ave_temperature_cmd"] = self.monthly_ave_temperature_cmd
         d["data_list"] = "\n\n".join(map(str, self.data))
         return dedent(self.template).format(**d)
 
