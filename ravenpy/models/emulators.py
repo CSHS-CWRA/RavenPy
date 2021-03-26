@@ -513,6 +513,8 @@ class HBVEC_OST(Ostrich, HBVEC):
 
     # TODO: Support index specification and unit changes.
     def derived_parameters(self):
+        self.rvt.raincorrection = "par_x20"
+        self.rvt.snowcorrection = "par_x21"
         self._monthly_average()
 
 
