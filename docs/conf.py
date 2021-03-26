@@ -48,7 +48,7 @@ nbsphinx_execute = "auto"
 autodoc_mock_imports = [
     "affine",
     "cftime",
-    "cf-xarray",
+    "cf_xarray",
     "click",
     "climpred",
     "clisops",
