@@ -278,20 +278,6 @@ class RV(collections.abc.Mapping, RavenConfig):
                 self[key] = val
 
 
-class MonthlyAverage(RV):
-    pat = ":MonthlyAve{var}, {data}"
-
-    def __init__(self, var=None, data=None):
-        self.var = var
-        self.data = data
-
-    def __str__(self):
-        if self.var is None:
-            return ""
-        out = self.pat.format(var=self.var, data=", ".join([str(d) for d in self.data]))
-        return out
-
-
 class RVT(RV):
     def __init__(self, **kwargs):
         self.pr = {}

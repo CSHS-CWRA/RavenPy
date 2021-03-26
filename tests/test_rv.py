@@ -11,17 +11,7 @@ from ravenpy.models.commands import (
     GriddedForcingCommand,
     RainCorrection,
 )
-from ravenpy.models.rv import (
-    RV,
-    RVC,
-    RVH,
-    RVI,
-    RVP,
-    MonthlyAverage,
-    Ost,
-    RVFile,
-    isinstance_namedtuple,
-)
+from ravenpy.models.rv import RV, RVC, RVH, RVI, RVP, Ost, RVFile, isinstance_namedtuple
 from ravenpy.utilities.testdata import get_local_testdata
 
 
@@ -126,12 +116,6 @@ def compare(a, b):
     import re
 
     return re.sub(r"\s*", "", a) == re.sub(r"\s*", "", b)
-
-
-class TestMonthlyAve:
-    def test_simple(self):
-        ave = str(MonthlyAverage("Evaporation", range(12)))
-        assert ave.startswith(":MonthlyAveEvaporation, 0, 1, 2")
 
 
 class TestOst:
