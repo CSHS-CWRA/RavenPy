@@ -35,7 +35,6 @@ from .rv import (
     RVI,
     RVT,
     Ost,
-    RavenNcData,
     RVFile,
     forcing_names,
     get_states,
@@ -265,8 +264,8 @@ class Raven:
                     p = att.__class__(*value)
                     setattr(obj, key, p)
                 # If att is a RavenNcData, we expect a dict
-                elif isinstance(att, dict):
-                    att.update(value)
+                # elif isinstance(att, dict):
+                #     att.update(value)
                 else:
                     setattr(obj, key, value)
                 assigned = True
@@ -743,9 +742,11 @@ class Raven:
 
     def check_units(self):
         """Check that the input file units match expectations."""
-        for var, nc in self.rvt.items():
-            if isinstance(nc, RavenNcData) and nc.var is not None:
-                nc._check_units()
+        # TODO: make compliant with the new RVT implementation
+        pass
+        # for var, nc in self.rvt.items():
+        #     if isinstance(nc, RavenNcData) and nc.var is not None:
+        #         nc._check_units()
 
     def check_inputs(self):
         """Check that necessary variables are defined."""

@@ -6,7 +6,7 @@ import xarray as xr
 
 from .base import Ostrich, Raven
 from .commands import BasinIndexCommand, MonthlyAverageCommand, StationForcingCommand
-from .rv import HRU, LU, RV, RVC, RVH, RVI, RVP, RVT, HRUState, Ost, RavenNcData, Sub
+from .rv import HRU, LU, RV, RVC, RVH, RVI, RVP, RVT, HRUState, Ost, Sub
 
 __all__ = [
     "GR4JCN",
@@ -22,18 +22,6 @@ __all__ = [
     "get_model",
     "Routing",
 ]
-
-nc = RavenNcData
-std_vars = (
-    "pr",
-    "rainfall",
-    "prsn",
-    "tasmin",
-    "tasmax",
-    "tas",
-    "evspsbl",
-    "water_volume_transport_in_river_channel",
-)
 
 
 class GR4JCN(Raven):

@@ -11,7 +11,7 @@ from ravenpy.models.commands import (
     GriddedForcingCommand,
     RainCorrection,
 )
-from ravenpy.models.rv import (  # RVT,
+from ravenpy.models.rv import (
     RV,
     RVC,
     RVH,
@@ -19,7 +19,6 @@ from ravenpy.models.rv import (  # RVT,
     RVP,
     MonthlyAverage,
     Ost,
-    RavenNcData,
     RVFile,
     isinstance_namedtuple,
 )
@@ -127,54 +126,6 @@ def compare(a, b):
     import re
 
     return re.sub(r"\s*", "", a) == re.sub(r"\s*", "", b)
-
-
-class TestRavenNcData:
-    def test_simple(self):
-        v = RavenNcData(
-            var="tasmin",
-            path="/path/tasmin.nc",
-            var_name="tn",
-            unit="degC",
-            dimensions=["time"],
-        )
-        tmp = str(v)
-
-        assert compare(
-            tmp,
-            """:Data TEMP_MIN degC
-                                  :ReadFromNetCDF
-                                     :FileNameNC      /path/tasmin.nc
-                                     :VarNameNC       tn
-                                     :DimNamesNC      time
-                                     :StationIdx      1
-                                  :EndReadFromNetCDF
-                               :EndData""",
-        )
-
-    def test_linear_transform(self):
-        v = RavenNcData(
-            var="tasmin",
-            path="/path/tasmin.nc",
-            var_name="tn",
-            unit="degC",
-            dimensions=["time"],
-            linear_transform=(24000.0, 0.0),
-        )
-
-        assert ":LinearTransform 24000.000000000000000 0.000000000000000" in str(v)
-
-    def test_deaccumulate(self):
-        v = RavenNcData(
-            var="tasmin",
-            path="/path/tasmin.nc",
-            var_name="tn",
-            unit="degC",
-            dimensions=["time"],
-            deaccumulate=True,
-        )
-
-        assert ":Deaccumulate" in str(v)
 
 
 class TestMonthlyAve:
