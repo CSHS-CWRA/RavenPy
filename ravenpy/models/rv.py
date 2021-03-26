@@ -317,7 +317,7 @@ class RVT(RV):
 
     @property
     def gauge(self):
-        data = [o for o in self.var_cmds.values() if type(o) is DataCommand]
+        data = [o for o in self.var_cmds.values() if isinstance(o, DataCommand)]
         if data:
             return GaugeCommand(
                 latitude=self.gauge_latitude,
@@ -334,12 +334,16 @@ class RVT(RV):
 
     @property
     def station_forcing_list(self):
-        data = [o for o in self.var_cmds.values() if type(o) is StationForcingCommand]
+        data = [
+            o for o in self.var_cmds.values() if isinstance(o, StationForcingCommand)
+        ]
         return "\n\n".join(map(str, data))
 
     @property
     def gridded_forcing_list(self):
-        data = [o for o in self.var_cmds.values() if type(o) is GriddedForcingCommand]
+        data = [
+            o for o in self.var_cmds.values() if isinstance(o, GriddedForcingCommand)
+        ]
         # This is really a hack for now, as model.rvt.gridded_forcings are set
         # directly by the user in TestRouting.test_lievre_tutorial
         data += self.gridded_forcings
