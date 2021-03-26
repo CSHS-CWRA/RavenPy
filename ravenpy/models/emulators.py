@@ -58,11 +58,6 @@ class GR4JCN(Raven):
         ("GR4J_X1", "GR4J_X2", "GR4J_X3", "GR4J_X4", "CEMANEIGE_X1", "CEMANEIGE_X2"),
     )
 
-    # Affects RVT when using 2D input data:
-    #   True: each variable is associated to a StationForcing command
-    #   False: each variable is associated to a Data command (wrapped in a Gauge command)
-    use_station_forcings_for_2d_data = True
-
     @dataclass
     class LandHRU(HRU):
         land_use_class: str = "LU_ALL"

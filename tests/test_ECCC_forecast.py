@@ -24,12 +24,12 @@ class TestECCCForecast:
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
         )
         model = GR4JCN()
-        model.rvh.hrus = (hru,)
         model(
             ts,
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2002, 6, 1),
             params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
+            hrus=(hru,),
         )
 
         # Extract the final states that will be used as the next initial states
@@ -45,8 +45,6 @@ class TestECCCForecast:
         # data provided in the testdata above. Then the dates will not work, and the model errors.
 
         model = GR4JCN()
-        # model.use_station_forcings_for_2d_data = False
-        model.rvh.hrus = (hru,)
 
         model.rvc.parse(rvc.read_text())
 
@@ -55,6 +53,7 @@ class TestECCCForecast:
             nc_index=range(nm),
             duration=9,
             params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
+            hrus=(hru,),
             overwrite=True,
             pr={"time_shift": -0.25, "deaccumulate": True},
             tas={"time_shift": -0.25},
