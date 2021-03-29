@@ -1,8 +1,11 @@
 name: ravenpy-env
 channels:
+- zeitsperre
 - conda-forge
 - defaults
 dependencies:
+  - raven
+  - ostrich
   - affine
   - click
   - climpred>=2.1
