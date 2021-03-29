@@ -6,6 +6,7 @@ channels:
 dependencies:
   - raven
   - ostrich
+  - python>=3.7
   - affine
   - click
   - climpred>=2.1
@@ -19,14 +20,17 @@ dependencies:
   - owslib
   - pandas
   - pip
-  - proj<8.0.0
+  - proj
+  - pyparsing
   - pyproj>=3.0.0
   - rasterio
   - requests
   - rioxarray
+  - scipy
+  - scikit-learn=0.24.1
   - shapely
   - statsmodels
-  - xarray
+  - xarray>=0.17
   - xclim>=0.23
   - xskillscore
   - pre-commit

@@ -2,6 +2,7 @@
 
 """The setup script."""
 
+import os
 import shutil
 import subprocess
 import urllib.request
@@ -100,7 +101,9 @@ def create_external_deps_install_class(command_cls):
         def finalize_options(self):
             command_cls.finalize_options(self)
 
-        def install_binary_dep(self, url, name, rev_name, binary_name, make_target=""):
+        def install_binary_dep(
+            self, url, name, rev_name, binary_name, make_target="", dir=""
+        ):
             print(f"Downloading {name} source code..")
             urllib.request.urlretrieve(
                 f"{url}/{rev_name}.zip", self.external_deps_path / f"{name}.zip"
@@ -113,9 +116,10 @@ def create_external_deps_install_class(command_cls):
                 zip_ref.extractall(self.external_deps_path)
 
             print(f"Compiling {name}..")
+
             try:
                 subprocess.check_call(
-                    f"make {make_target}",
+                    f"make --directory==./{dir} {make_target}",
                     cwd=self.external_deps_path / rev_name,
                     shell=True,
                 )
@@ -142,13 +146,11 @@ def create_external_deps_install_class(command_cls):
                 self.external_deps_path.mkdir(exist_ok=True)
 
                 url = "http://www.civil.uwaterloo.ca/jmai/raven/"
-                self.install_binary_dep(url, "raven", "Raven-rev288", "Raven.exe")
+                self.install_binary_dep(url, "raven", "Raven-rev312", "Raven.exe")
+
+                url = "https://github.com/usbr/ostrich/archive/refs/tags/"
                 self.install_binary_dep(
-                    url,
-                    "ostrich",
-                    "Ostrich_2017-12-19_plus_progressJSON",
-                    "OstrichGCC",
-                    "GCC",
+                    url, "ostrich", "ostrich-21.03.16", "OstrichGCC", "GCC", "make"
                 )
 
             # This works with python setup.py install, but produces this error with pip install:
