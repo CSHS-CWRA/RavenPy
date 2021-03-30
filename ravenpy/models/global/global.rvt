@@ -1,7 +1,5 @@
 {gauge}
 
-{station_forcing_list}
+{forcing_list}
 
-{gridded_forcing_list}
-
-{observed_data_cmd}
+{observed_data}

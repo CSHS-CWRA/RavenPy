@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
 
+from ravenpy.config.commands import BasinIndexCommand
 from ravenpy.models import GR4JCN
-from ravenpy.models.commands import BasinIndexCommand
 from ravenpy.models.rv import RVC
 from ravenpy.utilities.data_assimilation import assimilate, perturbation
 from ravenpy.utilities.testdata import get_local_testdata

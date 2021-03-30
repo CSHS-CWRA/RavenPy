@@ -22,8 +22,7 @@ except (ImportError, ModuleNotFoundError) as e:
 import netCDF4 as nc4
 import numpy as np
 
-from . import rv
-from .commands import (
+from ravenpy.config.commands import (
     ChannelProfileCommand,
     DataCommand,
     GriddedForcingCommand,
@@ -34,6 +33,7 @@ from .commands import (
     StationForcingCommand,
     SubBasinsCommand,
 )
+from ravenpy.models import rv
 
 grid_weight_importer_params = dict(
     DIM_NAMES=("lon_dim", "lat_dim"),
@@ -823,9 +823,9 @@ class NcDataImporter:
 
         # Add options from rvt
         rvt_attrs = ["scale", "offset", "time_shift"]
-        for a in rvt_attrs:
-            if a in rvt[var]:
-                attrs[a] = rvt[var][a]
+        # for a in rvt_attrs:
+        #     if a in rvt[var]:
+        #         attrs[a] = rvt[var][a]
 
         if len(dims) == 1:
             if var == "water_volume_transport_in_river_channel":
@@ -852,7 +852,7 @@ class NcDataImporter:
             # Construct default grid weights applying equally to all HRUs
             data = [(hru.hru_id, nc_index, 1.0) for hru in rvh.hrus]
 
-            gw = rvt.grid_weights or GridWeightsCommand(
+            gw = rvt["grid_weights"] or GridWeightsCommand(
                 number_hrus=len(rvh.hrus),
                 number_grid_cells=number_grid_cells,
                 data=data,
@@ -886,5 +886,101 @@ class NcDataImporter:
                         out["gauge_latitude"] = getattr(rvh, "latitude", None)
                         out["gauge_longitude"] = getattr(rvh, "longitude", None)
                         out["gauge_elevation"] = getattr(rvh, "elevation", None)
+
+        return out
+
+
+#################################################
+
+
+def extract_nc_data(fns):
+    fns = filter(lambda fn: ".nc" in fn.suffix, map(Path, fns))
+    var_cmds = {}
+    out = {
+        "var_cmds": {},
+        "latitude": None,
+        "longitude": None,
+        "elevation": None,
+        "number_grid_cells": None,
+    }
+    for fn in fns:
+        with xr.open_dataset(fn) as ds:
+
+            try:
+                out["latitude"] = ds.cf["latitude"]
+                out["longitude"] = ds.cf["longitude"]
+                out["elevation"] = ds.cf["vertical"]
+            except KeyError:
+                pass
+
+            # Check if any alternate variable name is in the file.
+            for var, alt_names in rv.alternate_nc_names.items():
+                for alt_name in alt_names:
+                    if alt_name not in ds.data_vars:
+                        continue
+
+                    v = ds[alt_name]
+
+                    attrs = dict(
+                        name=var,
+                        file_name_nc=fn,
+                        data_type=rv.forcing_names[var],
+                        var_name_nc=alt_name,
+                        dim_names_nc=v.dims,
+                        units=v.attrs.get("units"),
+                        # number_grid_cells=v.size / len(ds["time"]),
+                    )
+
+                    number_grid_cells = int(v.size / len(ds["time"]))
+                    out["number_grid_cells"] = number_grid_cells
+
+                    if len(attrs["dim_names_nc"]) == 1:
+                        if var == "water_volume_transport_in_river_channel":
+                            cmd = ObservationDataCommand(**attrs)
+                        else:
+                            cmd = DataCommand(**attrs)
+
+                    elif len(attrs["dim_names_nc"]) == 2:
+                        if var == "water_volume_transport_in_river_channel":
+                            # Search for the gauged SB, not sure what should happen when there are
+                            # more than one (should it be even supported?)
+                            # for sb in rvh.subbasins:
+                            #     if sb.gauged:
+                            #         attrs["subbasin_id"] = sb.subbasin_id
+                            #         break
+                            # else:
+                            #     raise Exception(
+                            #         "Could not find an outlet subbasin for observation data"
+                            #     )
+                            cmd = ObservationDataCommand(**attrs)
+                        else:
+                            # TODO: implement a RedirectToFile mechanism to avoid inlining the grid weights
+                            # multiple times as we do here
+                            # Construct default grid weights applying equally to all HRUs
+                            # data = [(hru.hru_id, nc_index, 1.0) for hru in rvh.hrus]
+                            # gw = rvt["grid_weights"] or GridWeightsCommand(
+                            #     number_hrus=len(rvh.hrus),
+                            #     number_grid_cells=numb1er_grid_cells,
+                            #     data=data,
+                            # )
+                            cmd = StationForcingCommand(**attrs)  # , grid_weights=gw)
+
+                    else:
+                        cmd = GriddedForcingCommand(
+                            **attrs, grid_weights=rvt.grid_weights
+                        )
+
+                    out["var_cmds"][var] = cmd
+                    break
+
+        # if out['latitude'] is None:
+        #     if isinstance(rvh, rv.RVH):
+        #         out["latitude"] = [rvh.hrus[0].latitude]
+        #         out["longitude"] = [rvh.hrus[0].longitude]
+        #         out["elevation"] = [rvh.hrus[0].elevation]
+        #     else:
+        #         out["latitude"] = [getattr(rvh, "latitude", None)]
+        #         out["longitude"] = [getattr(rvh, "longitude", None)]
+        #         out["elevation"] = [getattr(rvh, "elevation", None)]
 
         return out

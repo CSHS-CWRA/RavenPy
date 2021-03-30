@@ -316,7 +316,7 @@ class DataCommand(BaseDataCommand):
 
 @dataclass
 class GaugeCommand(RavenConfig):
-    data: Tuple[DataCommand]
+    data: Tuple[DataCommand] = ()
     latitude: float = 0
     longitude: float = 0
     elevation: float = 0

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import click
 
-from ravenpy.models.importers import grid_weight_importer_params
+from ravenpy.config.importers import grid_weight_importer_params
 
 
 @click.command()
@@ -109,7 +109,7 @@ def generate_grid_weights(
     is then free to embed or reference, in her own config context).
     """
     # NOTE: This is in order to make sphinx-click happy. Magic. Do not touch.
-    from ravenpy.models.importers import RoutingProductGridWeightImporter
+    from ravenpy.config.importers import RoutingProductGridWeightImporter
 
     importer = RoutingProductGridWeightImporter(
         input_file,

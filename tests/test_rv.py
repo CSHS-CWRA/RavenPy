@@ -6,11 +6,7 @@ from pathlib import Path
 import pytest
 
 import ravenpy
-from ravenpy.models.commands import (
-    BaseValueCommand,
-    GriddedForcingCommand,
-    RainCorrection,
-)
+from ravenpy.config.commands import GriddedForcingCommand, RainCorrection
 from ravenpy.models.rv import RV, RVC, RVH, RVI, RVP, Ost, RVFile, isinstance_namedtuple
 from ravenpy.utilities.testdata import get_local_testdata
 

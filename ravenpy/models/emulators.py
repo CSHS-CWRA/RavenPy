@@ -4,8 +4,10 @@ from pathlib import Path
 
 import xarray as xr
 
+from ravenpy.config.commands import BasinIndexCommand
+from ravenpy.config.rvs import Config
+
 from .base import Ostrich, Raven
-from .commands import BasinIndexCommand, MonthlyAverageCommand, StationForcingCommand
 from .rv import HRU, LU, RV, RVC, RVH, RVI, RVP, RVT, HRUState, Ost, Sub
 
 __all__ = [
@@ -66,9 +68,9 @@ class GR4JCN(Raven):
         super().__init__(*args, **kwds)
 
         self.rvp = RVP(params=GR4JCN.params(None, None, None, None, None, None))
-        self.rvt = RVT()
-        self.rvi = RVI(rain_snow_fraction="RAINSNOW_DINGMAN", evaporation="PET_OUDIN")
-        self.rvh = RVH(
+        # self.rvt = RVT()
+        # self.rvh = RVH(
+        self.config = Config(
             hrus=(GR4JCN.LandHRU(),),
             subbasins=(
                 Sub(
@@ -80,6 +82,7 @@ class GR4JCN(Raven):
                 ),
             ),
         )
+        self.rvi = RVI(rain_snow_fraction="RAINSNOW_DINGMAN", evaporation="PET_OUDIN")
 
         # Initialize the stores to 1/2 full. Declare the parameters that can be user-modified
         self.rvc = RVC(soil0=None, soil1=15)
@@ -100,7 +103,7 @@ class GR4JCN(Raven):
         if not self.rvc.hru_states:
             # If self.rvc.hru_states is set, it means that we are using `resume()` and we don't
             # want to interfere
-            for hru in self.rvh.hrus:
+            for hru in self.config.rvh.hrus:
                 if isinstance(hru, GR4JCN.LandHRU):
                     self.rvc.hru_states[hru.hru_id] = HRUState(
                         index=hru.hru_id, soil0=soil0, soil1=soil1
@@ -116,22 +119,22 @@ class GR4JCN(Raven):
         if not self.rvc.basin_states:
             # If self.rvc.basin_states is set, it means that we are using `resume()` and we don't
             # want to interfere
-            for sb in self.rvh.subbasins:
+            for sb in self.config.rvh.subbasins:
                 self.rvc.basin_states[sb.subbasin_id] = BasinIndexCommand(
                     index=sb.subbasin_id
                 )
 
-        self.rvh.lake_subbasins = tuple(
+        self.config.rvh.lake_subbasins = tuple(
             [
                 sb.subbasin_id
-                for sb in self.rvh.subbasins
+                for sb in self.config.rvh.subbasins
                 if sb_contains_lake[sb.subbasin_id]
             ]
         )
-        self.rvh.land_subbasins = tuple(
+        self.config.rvh.land_subbasins = tuple(
             [
                 sb.subbasin_id
-                for sb in self.rvh.subbasins
+                for sb in self.config.rvh.subbasins
                 if not sb_contains_lake[sb.subbasin_id]
             ]
         )

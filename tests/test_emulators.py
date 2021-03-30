@@ -9,6 +9,18 @@ import numpy as np
 import pytest
 import xarray as xr
 
+from ravenpy.config.commands import (
+    ChannelProfileCommand,
+    GriddedForcingCommand,
+    GridWeightsCommand,
+    HRUStateVariableTableCommand,
+    LandUseClassesCommand,
+    ObservationDataCommand,
+    SBGroupPropertyMultiplierCommand,
+    SoilClassesCommand,
+    SoilProfilesCommand,
+    VegetationClassesCommand,
+)
 from ravenpy.models import (
     GR4JCN,
     GR4JCN_OST,
@@ -22,19 +34,6 @@ from ravenpy.models import (
     Routing,
     Sub,
     get_average_annual_runoff,
-)
-from ravenpy.models.commands import (
-    ChannelProfileCommand,
-    GriddedForcingCommand,
-    GridWeightsCommand,
-    HRUStateVariableTableCommand,
-    LandUseClassesCommand,
-    ObservationDataCommand,
-    SBGroupPropertyMultiplierCommand,
-    SoilClassesCommand,
-    SoilProfilesCommand,
-    StationForcingCommand,
-    VegetationClassesCommand,
 )
 from ravenpy.utilities.testdata import get_local_testdata
 
@@ -82,18 +81,18 @@ salmon_land_hru_2 = dict(
 
 class TestGR4JCN:
     def test_simple(self):
-        model = GR4JCN()
+        model = GR4JCN("/tmp/ravenpy_debug/new_config_simple")
 
         model.rvi.start_date = dt.datetime(2000, 1, 1)
         model.rvi.end_date = dt.datetime(2002, 1, 1)
         model.rvi.run_name = "test"
 
-        model.rvh.name = "Salmon"
-        model.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
+        # model.rvh.name = "Salmon"
+        model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
 
         model.rvp.params = model.params(0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
 
-        total_area_in_m2 = model.rvh.hrus[0].area * 1000 * 1000
+        total_area_in_m2 = model.config.rvh.hrus[0].area * 1000 * 1000
         model.rvp.avg_annual_runoff = get_average_annual_runoff(TS, total_area_in_m2)
 
         np.testing.assert_almost_equal(model.rvp.avg_annual_runoff, 208.4805694844741)
@@ -101,6 +100,8 @@ class TestGR4JCN:
         assert model.rvi.suppress_output == ""
 
         model(TS)
+
+        return
 
         # ------------
         # Check quality (diagnostic) of simulated streamflow values
@@ -157,7 +158,7 @@ class TestGR4JCN:
 
     def test_routing(self):
         """We need at least 2 subbasins to activate routing."""
-        model = GR4JCN()
+        model = GR4JCN("/tmp/ravenpy_debug/new_config_routing")
 
         ts_2d = get_local_testdata(
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_2d.nc"
@@ -187,17 +188,17 @@ class TestGR4JCN:
         # station (see :ObservationData in RVT). We will compare these observations
         # with the simulated streamflow. That is the reason why "gauged=True" for
         # the second basin.
-        model.rvh.name = "Salmon"
+        # model.rvh.name = "Salmon"
 
         # HRU IDs are 1 to 3
-        model.rvh.hrus = (
+        model.config.rvh.hrus = (
             GR4JCN.LandHRU(hru_id=1, subbasin_id=10, **salmon_land_hru_1),
             GR4JCN.LakeHRU(hru_id=2, subbasin_id=10, **salmon_lake_hru_1),
             GR4JCN.LandHRU(hru_id=3, subbasin_id=20, **salmon_land_hru_2),
         )
 
         # Sub-basin IDs are 10 and 20 (not 1 and 2), to help disambiguate
-        model.rvh.subbasins = (
+        model.config.rvh.subbasins = (
             # gauged = False:
             # Usually this output would only be written for user's convenience.
             # There is usually no observation of streamflow available within
@@ -222,11 +223,11 @@ class TestGR4JCN:
             ),
         )
 
-        model.rvh.land_subbasin_property_multiplier = SBGroupPropertyMultiplierCommand(
-            "Land", "MANNINGS_N", 1.0
+        model.config.rvh.land_subbasin_property_multiplier = (
+            SBGroupPropertyMultiplierCommand("Land", "MANNINGS_N", 1.0)
         )
-        model.rvh.lake_subbasin_property_multiplier = SBGroupPropertyMultiplierCommand(
-            "Lakes", "RESERVOIR_CREST_WIDTH", 1.0
+        model.config.rvh.lake_subbasin_property_multiplier = (
+            SBGroupPropertyMultiplierCommand("Lakes", "RESERVOIR_CREST_WIDTH", 1.0)
         )
 
         #########
@@ -241,7 +242,7 @@ class TestGR4JCN:
             data=((1, 0, 1.0), (2, 0, 1.0), (3, 0, 1.0)),
         )
         # These will be shared (inline) to all the StationForcing commands in the RVT
-        model.rvt.grid_weights = gws
+        model.config.rvt.grid_weights = gws
 
         #########
         # R V P #
@@ -249,7 +250,7 @@ class TestGR4JCN:
 
         model.rvp.params = model.params(0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
 
-        total_area_in_km2 = sum(hru.area for hru in model.rvh.hrus)
+        total_area_in_km2 = sum(hru.area for hru in model.config.rvh.hrus)
         total_area_in_m2 = total_area_in_km2 * 1000 * 1000
         model.rvp.avg_annual_runoff = get_average_annual_runoff(ts_2d, total_area_in_m2)
 
@@ -382,9 +383,9 @@ class TestGR4JCN:
         assert model.rvp.params.GR4J_X1 == 0.529
 
     def test_run(self):
-        model = GR4JCN()
+        model = GR4JCN("/tmp/ravenpy_debug/test_run")
 
-        model.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
+        model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
 
         model(
             TS,
@@ -401,7 +402,7 @@ class TestGR4JCN:
     def test_overwrite(self):
         model = GR4JCN()
 
-        model.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
+        model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
 
         model(
             TS,
@@ -446,7 +447,7 @@ class TestGR4JCN:
 
     def test_resume(self):
         model_ab = GR4JCN()
-        model_ab.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
+        model_ab.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
         kwargs = dict(
             params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
         )
@@ -461,7 +462,7 @@ class TestGR4JCN:
 
         model_a = GR4JCN()
 
-        model_a.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
+        model_a.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
         model_a(
             TS,
             run_name="run_a",
@@ -491,7 +492,7 @@ class TestGR4JCN:
 
         # Resume with final state from saved solution file
         model_b = GR4JCN()
-        model_b.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
+        model_b.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
         model_b.resume(
             rvc
         )  # <--------- And this is how you feed it to a brand new model.
@@ -519,7 +520,7 @@ class TestGR4JCN:
         params = (0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
         # Reference run
         model = GR4JCN()
-        model.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
+        model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
         model(
             TS,
             run_name="run_a",
@@ -556,7 +557,7 @@ class TestGR4JCN:
         params = (0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
         # Reference run
         model = GR4JCN()
-        model.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
+        model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
         model(
             TS,
             run_name="run_a",
@@ -591,7 +592,7 @@ class TestGR4JCN:
 
     def test_parallel_params(self):
         model = GR4JCN()
-        model.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
+        model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
 
         model(
             TS,
@@ -607,12 +608,12 @@ class TestGR4JCN:
         assert len(model.diagnostics) == 2
         assert model.hydrograph.dims["params"] == 2
         z = zipfile.ZipFile(model.outputs["rv_config"])
-        assert len(z.filelist) == 10
+        assert len(z.filelist) == 6
 
     def test_parallel_basins(self, input2d):
         ts = input2d
-        model = GR4JCN()
-        model.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
+        model = GR4JCN("/tmp/ravenpy_debug/test_parallel_basins")
+        model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
 
         model(
             ts,
@@ -630,13 +631,13 @@ class TestGR4JCN:
             model.hydrograph.basin_name[:], ["sub_001", "sub_001"]
         )
         z = zipfile.ZipFile(model.outputs["rv_config"])
-        assert len(z.filelist) == 10
+        assert len(z.filelist) == 6
 
 
 class TestGR4JCN_OST:
     def test_simple(self):
         model = GR4JCN_OST()
-        model.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
+        model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
         params = (0.529, -3.396, 407.29, 1.072, 16.9, 0.053)
         low = (0.01, -15.0, 10.0, 0.0, 1.0, 0.0)
         high = (2.5, 10.0, 700.0, 7.0, 30.0, 1.0)
@@ -688,7 +689,7 @@ class TestGR4JCN_OST:
         # np.testing.assert_almost_equal( opt_func, -0.5779910, 4,
         #                                 err_msg='calibrated NSE is not matching expected value')
         gr4j = GR4JCN()
-        gr4j.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
+        gr4j.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
         gr4j(
             TS,
             start_date=dt.datetime(1954, 1, 1),
@@ -1315,7 +1316,7 @@ class TestHBVEC_OST:
 
 
 class TestRouting:
-    importers = pytest.importorskip("ravenpy.models.importers")
+    importers = pytest.importorskip("ravenpy.config.importers")
 
     def test_lievre_tutorial(self):
         """

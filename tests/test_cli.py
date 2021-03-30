@@ -4,7 +4,7 @@ import netCDF4 as nc4
 from click.testing import CliRunner
 
 from ravenpy.cli import aggregate_forcings_to_hrus, generate_grid_weights
-from ravenpy.models.commands import GridWeightsCommand
+from ravenpy.config.commands import GridWeightsCommand
 from ravenpy.utilities.testdata import get_local_testdata
 
 

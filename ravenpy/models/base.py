@@ -22,25 +22,9 @@ import numpy as np
 import xarray as xr
 
 import ravenpy
+from ravenpy.config.importers import extract_nc_data
 
-from .commands import (
-    DataCommand,
-    GriddedForcingCommand,
-    ObservationDataCommand,
-    StationForcingCommand,
-)
-from .importers import NcDataImporter
-from .rv import (
-    RV,
-    RVI,
-    RVT,
-    Ost,
-    RVFile,
-    forcing_names,
-    get_states,
-    isinstance_namedtuple,
-    parse_solution,
-)
+from .rv import RV, RVI, Ost, RVFile, get_states, isinstance_namedtuple, parse_solution
 
 RAVEN_EXEC_PATH = os.getenv("RAVENPY_RAVEN_BINARY_PATH") or shutil.which("raven")
 OSTRICH_EXEC_PATH = os.getenv("RAVENPY_OSTRICH_BINARY_PATH") or shutil.which("ostrich")
@@ -62,7 +46,7 @@ class Raven:
     templates = ()
 
     # Allowed configuration file extensions
-    _rvext = ("rvi", "rvp", "rvc", "rvh", "rvt")
+    _rvext = ("rvi", "rvp", "rvc")  # "rvh" , "rvt")
 
     _parallel_parameters = [
         "params",
@@ -102,8 +86,8 @@ class Raven:
         self.rvi = RV()
         self.rvp = RV()
         self.rvc = RV()
-        self.rvt = RVT()
-        self.rvh = RV()
+        # self.rvt = RVT()
+        # self.rvh = RV()
         self.rvd = RV()  # rvd is for derived parameters
 
         self.workdir = Path(workdir)
@@ -234,6 +218,8 @@ class Raven:
         """Read configuration files."""
         for fn in fns:
             rvf = RVFile(fn)
+            if rvf.ext in ["rvt", "rvh"]:
+                continue
             if rvf.ext not in self._rvext + ("txt",):
                 raise ValueError(
                     "rv contains unrecognized configuration file keys : {}.".format(
@@ -270,8 +256,8 @@ class Raven:
                     setattr(obj, key, value)
                 assigned = True
 
-        if not assigned:
-            raise AttributeError("No configuration key named {}".format(key))
+        # if not assigned:
+        #     raise AttributeError("No configuration key named {}".format(key))
 
     def derived_parameters(self):
         """Subclassed by emulators. Defines model parameters that are a function of other parameters."""
@@ -281,6 +267,12 @@ class Raven:
         """Write configuration files to disk."""
 
         params = self.parameters
+
+        with open(self.model_path / "raven-gr4j-cemaneige.rvt", "w") as f:
+            f.write(self.config.rvt.to_rv())
+
+        with open(self.model_path / "raven-gr4j-cemaneige.rvh", "w") as f:
+            f.write(self.config.rvh.to_rv())
 
         for rvf in self.rvfiles.values():
             p = self.exec_path if rvf.is_tpl else self.model_path
@@ -426,6 +418,8 @@ class Raven:
         # Update non-parallel parameter objects
         for key, val in kwds.items():
 
+            self.config.update(key, val)
+
             if key in self._rvext:
                 obj = getattr(self, key)
                 if isinstance(val, dict):
@@ -444,7 +438,8 @@ class Raven:
             self.handle_date_defaults(ts)
             self.set_calendar(ts)
 
-        ncdata = NcDataImporter(ts)
+        nc_data = extract_nc_data(ts)
+        self.config.hydrate("rvt", nc_data)
 
         # Loop over parallel parameters - sets self.rvi.run_index
         procs = []
@@ -452,15 +447,7 @@ class Raven:
             for key, val in pdict.items():
                 if val[self.psim] is not None:
                     self.assign(key, val[self.psim])
-
-            # Forcing commands
-            self.rvt.update(
-                ncdata.extract(
-                    rvh=self.rvh,
-                    rvt=self.rvt,
-                    nc_index=pdict["nc_index"][self.psim],
-                )
-            )
+                    self.config.update(key, val[self.psim])
 
             cmd = self.setup_model_run(tuple(map(Path, ts)))
 
