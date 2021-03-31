@@ -26,6 +26,7 @@ import ravenpy
 from .commands import (
     DataCommand,
     GriddedForcingCommand,
+    HRUsCommand,
     ObservationDataCommand,
     StationForcingCommand,
 )
@@ -384,6 +385,15 @@ class Raven:
         """
         if isinstance(ts, (str, Path)):
             ts = [ts]
+
+        # This is a temporary mechanism to support the legacy HRU keywords for
+        # `model.__call__`
+        hru_attrs = {}
+        for k in ["area", "latitude", "longitude", "elevation"]:
+            if v := kwds.pop(k, None):
+                hru_attrs[k] = v
+        if hru_attrs:
+            self.rvh.hrus = (HRUsCommand.Record(**hru_attrs),)
 
         # Case for potentially parallel parameters
         pdict = {}
