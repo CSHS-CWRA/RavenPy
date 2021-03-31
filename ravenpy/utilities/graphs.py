@@ -5,7 +5,6 @@ The following graphs can be plotted:
     - hydrograph
     - mean_annual_hydrograph
     - spaghetti_annual_hydrograph
-
 """
 
 import numpy as np
@@ -377,6 +376,7 @@ def ts_fit_graph(ts, params):
 def forecast(file, fcst_var="q_sim"):
     """Return forecast graphic.
     Create a graphic of the hydrograph for each member
+
     Parameters
     ----------
     file : str, Path
@@ -412,6 +412,7 @@ def forecast(file, fcst_var="q_sim"):
 def hindcast(file, fcst_var, qobs, qobs_var):
     """Return forecast graphic.
     Create a graphic of the hydrograph for each member
+
     Parameters
     ----------
     file : str, Path

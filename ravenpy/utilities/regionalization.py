@@ -1,5 +1,5 @@
 """
-Tools for hydrological regionalization
+Tools for hydrological regionalization.
 """
 
 import logging
@@ -10,7 +10,7 @@ import pandas as pd
 import statsmodels.api as sm
 import xarray as xr
 
-from ravenpy.models import get_model
+import ravenpy.models as models
 
 from . import coords
 
@@ -113,8 +113,8 @@ def regionalize(
     )
 
     # Run the model over all parameters and create ensemble DataArray
-    m = get_model(model)()
-    qsims = []
+    m = models.get_model(model)()
+    qsims = list()
 
     for i, params in enumerate(reg_params):
         kwds["params"] = params

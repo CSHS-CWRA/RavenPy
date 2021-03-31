@@ -2,6 +2,7 @@ import datetime as dt
 import os
 import tempfile
 import zipfile
+from dataclasses import replace
 
 import numpy as np
 import pytest
@@ -17,8 +18,18 @@ from ravenpy.models import (
     MOHYSE,
     MOHYSE_OST,
     Raven,
+    Routing,
 )
-from ravenpy.models.state import HRUStateVariables
+from ravenpy.models.commands import (
+    GriddedForcingCommand,
+    HRUStateVariableTableCommand,
+    LandUseClassesCommand,
+    ObservationDataCommand,
+    SBGroupPropertyMultiplierCommand,
+    SoilClassesCommand,
+    SoilProfilesCommand,
+    VegetationClassesCommand,
+)
 from ravenpy.utilities.testdata import get_local_testdata
 
 from .common import _convert_2d
@@ -167,7 +178,7 @@ class TestGR4JCN:
         model(
             TS,
             end_date=dt.datetime(2001, 2, 1),
-            hru_state=HRUStateVariables(soil0=0),
+            hru_state=HRUStateVariableTableCommand.Record(soil0=0),
             overwrite=True,
         )
         assert model.q_sim.isel(time=1).values[0] < qsim2.isel(time=1).values[0]
@@ -187,7 +198,7 @@ class TestGR4JCN:
             run_name="run_ab",
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2001, 1, 1),
-            **kwargs
+            **kwargs,
         )
 
         model_a = GR4JCN()
@@ -196,7 +207,7 @@ class TestGR4JCN:
             run_name="run_a",
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2000, 7, 1),
-            **kwargs
+            **kwargs,
         )
 
         # Path to solution file from run A
@@ -210,7 +221,7 @@ class TestGR4JCN:
             run_name="run_2",
             start_date=dt.datetime(2000, 7, 1),
             end_date=dt.datetime(2001, 1, 1),
-            **kwargs
+            **kwargs,
         )
 
         for key in ["Soil Water[0]", "Soil Water[1]"]:
@@ -228,7 +239,7 @@ class TestGR4JCN:
             run_name="run_2",
             start_date=dt.datetime(2000, 7, 1),
             end_date=dt.datetime(2001, 1, 1),
-            **kwargs
+            **kwargs,
         )
 
         for key in ["Soil Water[0]", "Soil Water[1]"]:
@@ -258,7 +269,7 @@ class TestGR4JCN:
             run_name="run_a",
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2000, 2, 1),
-            **kwargs
+            **kwargs,
         )
 
         s_a = model.storage["Soil Water[0]"].isel(time=-1)
@@ -279,7 +290,7 @@ class TestGR4JCN:
             run_name="run_b",
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2000, 2, 1),
-            **kwargs
+            **kwargs,
         )
 
         s_b = model.storage["Soil Water[0]"].isel(time=-1)
@@ -300,13 +311,13 @@ class TestGR4JCN:
             run_name="run_a",
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2000, 2, 1),
-            **kwargs
+            **kwargs,
         )
 
         s_0 = float(model.storage["Soil Water[0]"].isel(time=-1).values)
         s_1 = float(model.storage["Soil Water[1]"].isel(time=-1).values)
 
-        hru_state = model.rvc.hru_state._replace(soil0=s_0, soil1=s_1)
+        hru_state = replace(model.rvc.hru_state, soil0=s_0, soil1=s_1)
 
         model(
             TS,
@@ -314,7 +325,7 @@ class TestGR4JCN:
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2000, 2, 1),
             hru_state=hru_state,
-            **kwargs
+            **kwargs,
         )
 
         assert s_0 != model.storage["Soil Water[0]"].isel(time=-1)
@@ -1060,3 +1071,184 @@ class TestHBVEC_OST:
         np.testing.assert_almost_equal(
             hbvec.diagnostics["DIAG_NASH_SUTCLIFFE"], d["DIAG_NASH_SUTCLIFFE"], 4
         )
+
+
+class TestRouting:
+    importers = pytest.importorskip("ravenpy.models.importers")
+
+    def test_lievre_tutorial(self):
+        """
+        This test reproduces the Lievre tutorial setup:
+
+        http://raven.uwaterloo.ca/files/RavenTutorial6.zip
+
+        """
+
+        ###############
+        # Input files #
+        ###############
+
+        routing_product_shp_path = get_local_testdata(
+            "raven-routing-sample/finalcat_hru_info.zip"
+        )
+
+        vic_streaminputs_nc_path = get_local_testdata(
+            "raven-routing-sample/VIC_streaminputs.nc"
+        )
+        vic_temperatures_nc_path = get_local_testdata(
+            "raven-routing-sample/VIC_temperatures.nc"
+        )
+
+        observation_data_nc_path = get_local_testdata(
+            "raven-routing-sample/WSC02LE024.nc"
+        )
+
+        #########
+        # Model #
+        #########
+
+        model = Routing("/tmp/ravenpy_routing_emu_dev/")
+
+        #######
+        # RVI #
+        #######
+
+        streaminputs = xr.open_dataset(vic_streaminputs_nc_path)
+
+        start = streaminputs.indexes["time"][0]
+        end = streaminputs.indexes["time"][-4]  # to match the tutorial end date
+
+        model.rvi.start_date = start.to_pydatetime()
+        model.rvi.end_date = end.to_pydatetime()
+
+        # Raven will use 24h even though the NC inputs are 6h
+        model.rvi.time_step = "24:00:00"
+
+        model.rvi.evaluation_metrics = "NASH_SUTCLIFFE PCT_BIAS KLING_GUPTA"
+
+        #######
+        # RVH #
+        #######
+
+        rvh_importer = self.importers.RoutingProductShapefileImporter(
+            routing_product_shp_path, hru_aspect_convention="ArcGIS"
+        )
+        rvh_config = rvh_importer.extract()
+        channel_profiles = rvh_config.pop("channel_profiles")
+
+        gauge = [sb for sb in rvh_config["subbasins"] if sb.gauged]
+        assert len(gauge) == 1
+        gauge = gauge[0]
+
+        model.rvh.update(rvh_config)
+
+        model.rvh["sb_group_property_multipliers"] = (
+            SBGroupPropertyMultiplierCommand("Land", "MANNINGS_N", 1.0),
+            SBGroupPropertyMultiplierCommand("Lakes", "RESERVOIR_CREST_WIDTH", 1.0),
+        )
+
+        #######
+        # RVP #
+        #######
+
+        # The labels used for the following commands ("Lake_Soil_Lake_HRU", "Soil_Land_HRU", etc)
+        # must correspond to the values of certain fields of the Routing Product:
+        # LAND_USE_C, VEG_C, SOIL_PROF
+
+        model.rvp.avg_annual_runoff = 594
+        model.rvp.soil_classes = [SoilClassesCommand.Record("AQUIFER")]
+        model.rvp.soil_profiles = [
+            SoilProfilesCommand.Record("Lake_Soil_Lake_HRU", 1, "AQUIFER", 5),
+            SoilProfilesCommand.Record("Soil_Land_HRU", 1, "AQUIFER", 5),
+        ]
+        model.rvp.vegetation_classes = [
+            VegetationClassesCommand.Record("Veg_Land_HRU", 25, 5.0, 5.0),
+            VegetationClassesCommand.Record("Veg_Lake_HRU", 0, 0, 0),
+        ]
+        model.rvp.land_use_classes = [
+            LandUseClassesCommand.Record("Landuse_Land_HRU", 0, 1),
+            LandUseClassesCommand.Record("Landuse_Lake_HRU", 0, 0),
+        ]
+        model.rvp.channel_profiles = channel_profiles
+
+        #######
+        # RVT #
+        #######
+
+        streaminputs_importer = self.importers.RoutingProductGridWeightImporter(
+            vic_streaminputs_nc_path, routing_product_shp_path
+        )
+
+        temperatures_importer = self.importers.RoutingProductGridWeightImporter(
+            vic_temperatures_nc_path, routing_product_shp_path
+        )
+
+        streaminputs_gf = GriddedForcingCommand(
+            name="StreamInputs",
+            forcing_type="PRECIP",
+            file_name_nc=vic_streaminputs_nc_path.name,
+            var_name_nc="Streaminputs",
+            dim_names_nc=("lon_dim", "lat_dim", "time"),
+            linear_transform=(4.0, 0),
+            grid_weights=streaminputs_importer.extract(),
+        )
+
+        temperatures_gf = GriddedForcingCommand(
+            name="AverageTemp",
+            forcing_type="TEMP_AVE",
+            file_name_nc=vic_temperatures_nc_path.name,
+            var_name_nc="Avg_temp",
+            dim_names_nc=("lon_dim", "lat_dim", "time"),
+            grid_weights=temperatures_importer.extract(),
+        )
+
+        model.rvt.gridded_forcings = [streaminputs_gf, temperatures_gf]
+
+        model.rvt.observation_data = ObservationDataCommand(
+            data_type="HYDROGRAPH",
+            subbasin_id=gauge.subbasin_id,
+            units="m3/s",
+            file_name_nc=observation_data_nc_path.name,
+            var_name_nc="Q",
+            dim_names_nc=("nstations", "time"),
+            station_idx=1,
+        )
+
+        #############
+        # Run model #
+        #############
+
+        model(
+            [
+                vic_streaminputs_nc_path,
+                vic_temperatures_nc_path,
+                observation_data_nc_path,
+            ],
+            overwrite=True,
+        )
+
+        ##########
+        # Verify #
+        ##########
+
+        assert len(model.hydrograph.time) == (end - start).days + 1
+
+        assert model.hydrograph.basin_name.item() == gauge.name
+
+        csv_lines = model.outputs["diagnostics"].read_text().split("\n")
+        assert csv_lines[1].split(",")[:-1] == [
+            "HYDROGRAPH_ALL",
+            observation_data_nc_path.name,
+            "0.311049",
+            "-11.9514",
+            "0.471256",
+        ]
+
+        for d, q_sim in [
+            (0, 85.97869699520872),
+            (1000, 78.9516829670743),
+            (2000, 70.29412760595676),
+            (3000, 44.711237489482755),
+            (4000, 129.98874279175033),
+        ]:
+            assert model.hydrograph.q_sim[d].item() == pytest.approx(q_sim)
