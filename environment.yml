@@ -29,3 +29,5 @@ dependencies:
   - pre-commit
   - setuptools>50.0
   - wheel
+  - holoviews
+  - hvplot
