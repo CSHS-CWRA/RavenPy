@@ -207,7 +207,7 @@ class MOHYSE_OST(Ostrich, MOHYSE):
         pass
 
 
-class HMETS(GR4JCN):
+class HMETS(Raven):
     identifier = "hmets"
     templates = tuple((Path(__file__).parent / "raven-hmets").glob("*.rv?"))
 
@@ -364,7 +364,7 @@ class HMETS_OST(Ostrich, HMETS):
         return self.params(*out)
 
 
-class HBVEC(GR4JCN):
+class HBVEC(Raven):
     identifier = "hbvec"
     templates = tuple((Path(__file__).parent / "raven-hbv-ec").glob("*.rv?"))
 
