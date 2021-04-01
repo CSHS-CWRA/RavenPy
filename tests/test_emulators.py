@@ -88,7 +88,6 @@ class TestGR4JCN:
         model.rvi.end_date = dt.datetime(2002, 1, 1)
         model.rvi.run_name = "test"
 
-        model.rvh.name = "Salmon"
         model.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
 
         model.rvp.params = model.params(0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
@@ -187,7 +186,6 @@ class TestGR4JCN:
         # station (see :ObservationData in RVT). We will compare these observations
         # with the simulated streamflow. That is the reason why "gauged=True" for
         # the second basin.
-        model.rvh.name = "Salmon"
 
         # HRU IDs are 1 to 3
         model.rvh.hrus = (
