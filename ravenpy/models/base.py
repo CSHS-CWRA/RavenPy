@@ -397,7 +397,9 @@ class Raven:
             ts = [ts]
 
         # This is a temporary mechanism to support the legacy HRU keywords for
-        # `model.__call__`
+        # `model.__call__`.
+        # Note that this mechanism can be overridden by more specialized logic
+        # in the subclasses (as it is in the `run` method of `emulators.GR4JCN`).
         hru_attrs = {}
         for k in ["area", "latitude", "longitude", "elevation"]:
             v = kwds.pop(k, None)
