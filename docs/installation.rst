@@ -30,9 +30,9 @@ To install the remaining Python dependencies, run:
 
 `RavenPy` relies on the `Raven <http://raven.uwaterloo.ca>`_ and `OSTRICH
 <http://www.civil.uwaterloo.ca/envmodelling/Ostrich.html>`_ binaries, which can be conveniently
-downloaded, compiled, and made available on you `PATH`. There are currently two options available:
+downloaded, compiled, and made available on your `PATH`. There are currently two options available:
 
-* To directly download, compile and place them in the `bin` folder of your environment, use this command:
+* To directly download, compile, and place them in the `bin` folder of your environment, use this command:
 
 .. code-block:: console
 
