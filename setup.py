@@ -112,7 +112,7 @@ def create_external_deps_install_class(command_cls):
             command_cls.finalize_options(self)
 
         def install_binary_dep(
-            self, url, name, rev_name, binary_name, make_target="", dir=""
+            self, url, name, rev_name, binary_name, make_target="", directory=None
         ):
             print(f"Downloading {name} source code..")
             urllib.request.urlretrieve(
@@ -127,9 +127,11 @@ def create_external_deps_install_class(command_cls):
 
             print(f"Compiling {name}..")
 
+            dir_flag = f"--directory=={directory}" if directory else ""
+
             try:
                 subprocess.check_call(
-                    f"make --directory==./{dir} {make_target}",
+                    f"make {dir_flag} {make_target}",
                     cwd=self.external_deps_path / rev_name,
                     shell=True,
                 )
@@ -160,7 +162,12 @@ def create_external_deps_install_class(command_cls):
 
                 url = "https://github.com/usbr/ostrich/archive/refs/tags/"
                 self.install_binary_dep(
-                    url, "ostrich", "ostrich-21.03.16", "OstrichGCC", "GCC", "make"
+                    url,
+                    "ostrich",
+                    "ostrich-21.03.16",
+                    "OstrichGCC",
+                    "GCC",
+                    directory="make",
                 )
 
             # This works with python setup.py install, but produces this error with pip install:
