@@ -138,6 +138,29 @@ class GR4JCN(Raven):
             ]
         )
 
+    def run(self, ts, overwrite=False, **kwds):
+        """
+        Override the corresponding method in Raven.run to replace the legacy
+        hru support interface by this variation, where we know we have an `RVH`
+        with which we can use a `GR4JCN.LandHRU`. Since this method pops the
+        required keys from `kwds`, it's safe to fall back on the parent method
+        when done.
+        """
+
+        # This is a temporary mechanism to support the legacy HRU keywords for
+        # `model.__call__`
+        hru_attrs = {}
+        for k in ["area", "latitude", "longitude", "elevation"]:
+            v = kwds.pop(k, None)
+            if v:
+                # It seems that `v` is a list when running via a WPS interface
+                hru_attrs[k] = v[0] if isinstance(v, list) else v
+        if hru_attrs:
+            assert isinstance(self.rvh, RVH)
+            self.rvh.hrus = (GR4JCN.LandHRU(**hru_attrs),)
+
+        return super().run(ts, overwrite=overwrite, **kwds)
+
 
 class GR4JCN_OST(Ostrich, GR4JCN):
     _p = Path(__file__).parent / "ostrich-gr4j-cemaneige"
