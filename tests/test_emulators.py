@@ -384,7 +384,23 @@ class TestGR4JCN:
     def test_run(self):
         model = GR4JCN()
 
-        model.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
+        model(
+            TS,
+            area=4250.6,
+            elevation=843.0,
+            latitude=54.4848,
+            longitude=-123.3659,
+            start_date=dt.datetime(2000, 1, 1),
+            end_date=dt.datetime(2002, 1, 1),
+            params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
+            suppress_output=False,
+        )
+        d = model.diagnostics
+
+        np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.117301, 4)
+
+    def test_run_new_hrus_param(self):
+        model = GR4JCN()
 
         model(
             TS,
@@ -392,6 +408,7 @@ class TestGR4JCN:
             end_date=dt.datetime(2002, 1, 1),
             params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
             suppress_output=False,
+            hrus=(GR4JCN.LandHRU(**salmon_land_hru_1),),
         )
         d = model.diagnostics
 
