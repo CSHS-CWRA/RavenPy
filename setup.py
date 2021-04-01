@@ -2,7 +2,6 @@
 
 """The setup script."""
 
-import os
 import shutil
 import subprocess
 import urllib.request
@@ -18,6 +17,8 @@ with open("README.rst") as readme_file:
 
 with open("HISTORY.rst") as history_file:
     history = history_file.read()
+
+setup_requirements = ["pip<20", "wheel"]
 
 requirements = [
     "click",
@@ -46,6 +47,14 @@ docs_requirements = [
 gis_requirements = [
     dependency for dependency in open("requirements_gis.txt").readlines()
 ]
+# Special GDAL handling
+try:
+    gdal_version = subprocess.run(
+        ["gdal-config", "--version"], capture_output=True
+    ).stdout.decode("utf-8")
+    gis_requirements.append(f"gdal=={gdal_version}")
+except subprocess.CalledProcessError:
+    pass
 
 dev_requirements = [
     dependency for dependency in open("requirements_dev.txt").readlines()
@@ -198,6 +207,7 @@ setup(
             "ravenpy.*",
         ],
     ),
+    setup_requires=setup_requirements,
     test_suite="tests",
     tests_require=test_requirements,
     extras_require=dict(
