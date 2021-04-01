@@ -435,6 +435,11 @@ class Raven:
             if len(val) == 1:
                 pdict[key] = val.repeat(nloops, axis=0)
 
+        # Use rvc file to set model state, if any
+        rvc = kwds.pop("rvc", None)
+        if rvc:
+            self.resume(solution=rvc)
+
         # Update non-parallel parameter objects
         for key, val in kwds.items():
 
