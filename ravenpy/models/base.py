@@ -390,7 +390,8 @@ class Raven:
         # `model.__call__`
         hru_attrs = {}
         for k in ["area", "latitude", "longitude", "elevation"]:
-            if v := kwds.pop(k, None):
+            v = kwds.pop(k, None)
+            if v:
                 # It seems that `v` is a list when running via a WPS interface
                 hru_attrs[k] = v[0] if isinstance(v, list) else v
         if hru_attrs:
