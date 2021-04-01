@@ -55,6 +55,7 @@ class GR4JCN(Raven):
         soil_profile: str = "DEFAULT_P"
         aquifer_profile: str = "[NONE]"
         terrain_class: str = "[NONE]"
+        _hru_type: str = "land"
 
     @dataclass
     class LakeHRU(HRU):
@@ -63,6 +64,7 @@ class GR4JCN(Raven):
         soil_profile: str = "LAKE"
         aquifer_profile: str = "[NONE]"
         terrain_class: str = "[NONE]"
+        _hru_type: str = "lake"
 
     def __init__(self, *args, **kwds):
         super().__init__(*args, **kwds)
@@ -104,16 +106,16 @@ class GR4JCN(Raven):
             # If self.rvc.hru_states is set, it means that we are using `resume()` and we don't
             # want to interfere
             for hru in self.config.rvh.hrus:
-                if isinstance(hru, GR4JCN.LandHRU):
+                if isinstance(hru, GR4JCN.LandHRU) or hru._hru_type == "land":
                     self.rvc.hru_states[hru.hru_id] = HRUState(
                         index=hru.hru_id, soil0=soil0, soil1=soil1
                     )
-                elif isinstance(hru, GR4JCN.LakeHRU):
+                elif isinstance(hru, GR4JCN.LakeHRU) or hru._hru_type == "lake":
                     self.rvc.hru_states[hru.hru_id] = HRUState(index=hru.hru_id)
                     sb_contains_lake[hru.subbasin_id] = True
                 else:
                     raise Exception(
-                        "Type of HRU must be either GR4JCN.LandHRU or GR4JCN.LakeHRU"
+                        "Type of HRU must be either `GR4JCN.LandHRU` or `GR4JCN.LakeHRU` (or its `_hru_type` must be either 'land' or 'lake')"
                     )
 
         if not self.rvc.basin_states:
@@ -156,7 +158,7 @@ class GR4JCN_OST(Ostrich, GR4JCN):
 
     def derived_parameters(self):
         """Derived parameters are computed by Ostrich."""
-        GR4JCN.derived_parameters(self)
+        pass
 
 
 class MOHYSE(Raven):
@@ -208,7 +210,7 @@ class MOHYSE_OST(Ostrich, MOHYSE):
         pass
 
 
-class HMETS(GR4JCN):
+class HMETS(Raven):
     identifier = "hmets"
     templates = tuple((Path(__file__).parent / "raven-hmets").glob("*.rv?"))
 
@@ -243,6 +245,9 @@ class HMETS(GR4JCN):
         super().__init__(*args, **kwds)
         self.rvp = RV(params=HMETS.params(*((None,) * len(HMETS.params._fields))))
         self.rvt = RVT()
+        self.rvh = RV(
+            name=None, area=None, elevation=None, latitude=None, longitude=None
+        )
         self.rvi = RVI(evaporation="PET_OUDIN", rain_snow_fraction="RAINSNOW_DATA")
         self.rvc = RVC(soil0=None, soil1=None, basin_state=BasinIndexCommand())
         self.rvd = RV(
@@ -362,7 +367,7 @@ class HMETS_OST(Ostrich, HMETS):
         return self.params(*out)
 
 
-class HBVEC(GR4JCN):
+class HBVEC(Raven):
     identifier = "hbvec"
     templates = tuple((Path(__file__).parent / "raven-hbv-ec").glob("*.rv?"))
 

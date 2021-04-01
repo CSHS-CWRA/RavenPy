@@ -87,7 +87,6 @@ class TestGR4JCN:
         model.rvi.end_date = dt.datetime(2002, 1, 1)
         model.rvi.run_name = "test"
 
-        # model.rvh.name = "Salmon"
         model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
 
         model.rvp.params = model.params(0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
@@ -188,7 +187,6 @@ class TestGR4JCN:
         # station (see :ObservationData in RVT). We will compare these observations
         # with the simulated streamflow. That is the reason why "gauged=True" for
         # the second basin.
-        # model.rvh.name = "Salmon"
 
         # HRU IDs are 1 to 3
         model.config.rvh.hrus = (
@@ -389,10 +387,29 @@ class TestGR4JCN:
 
         model(
             TS,
+            area=4250.6,
+            elevation=843.0,
+            latitude=54.4848,
+            longitude=-123.3659,
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2002, 1, 1),
             params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
             suppress_output=False,
+        )
+        d = model.diagnostics
+
+        np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.117301, 4)
+
+    def test_run_new_hrus_param(self):
+        model = GR4JCN()
+
+        model(
+            TS,
+            start_date=dt.datetime(2000, 1, 1),
+            end_date=dt.datetime(2002, 1, 1),
+            params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
+            suppress_output=False,
+            hrus=(GR4JCN.LandHRU(**salmon_land_hru_1),),
         )
         d = model.diagnostics
 

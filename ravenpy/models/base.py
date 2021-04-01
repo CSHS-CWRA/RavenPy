@@ -24,7 +24,26 @@ import xarray as xr
 import ravenpy
 from ravenpy.config.importers import extract_nc_data
 
-from .rv import RV, RVI, Ost, RVFile, get_states, isinstance_namedtuple, parse_solution
+from .commands import (
+    DataCommand,
+    GriddedForcingCommand,
+    HRUsCommand,
+    ObservationDataCommand,
+    StationForcingCommand,
+)
+from .importers import NcDataImporter
+from .rv import (
+    RV,
+    RVH,
+    RVI,
+    RVT,
+    Ost,
+    RVFile,
+    forcing_names,
+    get_states,
+    isinstance_namedtuple,
+    parse_solution,
+)
 
 RAVEN_EXEC_PATH = os.getenv("RAVENPY_RAVEN_BINARY_PATH") or shutil.which("raven")
 OSTRICH_EXEC_PATH = os.getenv("RAVENPY_OSTRICH_BINARY_PATH") or shutil.which("ostrich")
@@ -256,8 +275,8 @@ class Raven:
                     setattr(obj, key, value)
                 assigned = True
 
-        # if not assigned:
-        #     raise AttributeError("No configuration key named {}".format(key))
+        if not assigned:
+            raise AttributeError("No configuration key named {}".format(key))
 
     def derived_parameters(self):
         """Subclassed by emulators. Defines model parameters that are a function of other parameters."""
@@ -377,6 +396,23 @@ class Raven:
         if isinstance(ts, (str, Path)):
             ts = [ts]
 
+        # This is a temporary mechanism to support the legacy HRU keywords for
+        # `model.__call__`
+        hru_attrs = {}
+        for k in ["area", "latitude", "longitude", "elevation"]:
+            v = kwds.pop(k, None)
+            if v:
+                # It seems that `v` is a list when running via a WPS interface
+                hru_attrs[k] = v[0] if isinstance(v, list) else v
+        if hru_attrs:
+            if isinstance(self.rvh, RVH):
+                # New case
+                self.rvh.hrus = (HRUsCommand.Record(**hru_attrs),)
+            else:
+                # Legacy case
+                assert isinstance(self.rvh, RV)
+                self.rvh.update(hru_attrs)
+
         # Case for potentially parallel parameters
         pdict = {}
         for p in self._parallel_parameters:
@@ -414,6 +450,11 @@ class Raven:
         for key, val in pdict.items():
             if len(val) == 1:
                 pdict[key] = val.repeat(nloops, axis=0)
+
+        # Use rvc file to set model state, if any
+        rvc = kwds.pop("rvc", None)
+        if rvc:
+            self.resume(solution=rvc)
 
         # Update non-parallel parameter objects
         for key, val in kwds.items():
