@@ -33,6 +33,7 @@ from .commands import (
 from .importers import NcDataImporter
 from .rv import (
     RV,
+    RVH,
     RVI,
     RVT,
     Ost,
@@ -395,7 +396,13 @@ class Raven:
                 # It seems that `v` is a list when running via a WPS interface
                 hru_attrs[k] = v[0] if isinstance(v, list) else v
         if hru_attrs:
-            self.rvh.hrus = (HRUsCommand.Record(**hru_attrs),)
+            if isinstance(self.rvh, RVH):
+                # New case
+                self.rvh.hrus = (HRUsCommand.Record(**hru_attrs),)
+            else:
+                # Legacy case
+                assert isinstance(self.rvh, RV)
+                self.rvh.update(hru_attrs)
 
         # Case for potentially parallel parameters
         pdict = {}

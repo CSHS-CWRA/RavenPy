@@ -242,6 +242,9 @@ class HMETS(GR4JCN):
         super().__init__(*args, **kwds)
         self.rvp = RV(params=HMETS.params(*((None,) * len(HMETS.params._fields))))
         self.rvt = RVT()
+        self.rvh = RV(
+            name=None, area=None, elevation=None, latitude=None, longitude=None
+        )
         self.rvi = RVI(evaporation="PET_OUDIN", rain_snow_fraction="RAINSNOW_DATA")
         self.rvc = RVC(soil0=None, soil1=None, basin_state=BasinIndexCommand())
         self.rvd = RV(
