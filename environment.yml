@@ -16,6 +16,7 @@ dependencies:
   - owslib
   - pandas
   - pip
+  - proj<8.0.0
   - pyproj>=3.0.0
   - rasterio
   - requests
