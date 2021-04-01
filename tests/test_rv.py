@@ -6,7 +6,11 @@ from pathlib import Path
 import pytest
 
 import ravenpy
-from ravenpy.models.commands import GriddedForcingCommand, BaseValueCommand, RainCorrection
+from ravenpy.models.commands import (
+    BaseValueCommand,
+    GriddedForcingCommand,
+    RainCorrection,
+)
 from ravenpy.models.rv import (  # RVT,
     RV,
     RVC,
