@@ -81,7 +81,7 @@ salmon_land_hru_2 = dict(
 
 class TestGR4JCN:
     def test_simple(self):
-        model = GR4JCN("/tmp/ravenpy_debug/new_config_simple")
+        model = GR4JCN()  # "/tmp/ravenpy_debug/new_config_simple")
 
         model.rvi.start_date = dt.datetime(2000, 1, 1)
         model.rvi.end_date = dt.datetime(2002, 1, 1)
@@ -99,8 +99,6 @@ class TestGR4JCN:
         assert model.rvi.suppress_output == ""
 
         model(TS)
-
-        return
 
         # ------------
         # Check quality (diagnostic) of simulated streamflow values
@@ -157,7 +155,7 @@ class TestGR4JCN:
 
     def test_routing(self):
         """We need at least 2 subbasins to activate routing."""
-        model = GR4JCN("/tmp/ravenpy_debug/new_config_routing")
+        model = GR4JCN()  # "/tmp/ravenpy_debug/new_config_routing")
 
         ts_2d = get_local_testdata(
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_2d.nc"
@@ -381,7 +379,7 @@ class TestGR4JCN:
         assert model.rvp.params.GR4J_X1 == 0.529
 
     def test_run(self):
-        model = GR4JCN("/tmp/ravenpy_debug/test_run")
+        model = GR4JCN()  # "/tmp/ravenpy_debug/test_run")
 
         model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
 
@@ -1366,7 +1364,7 @@ class TestRouting:
         # Model #
         #########
 
-        model = Routing()
+        model = Routing("/tmp/ravenpy_debug/test_lievre")
 
         #######
         # RVI #
@@ -1399,14 +1397,19 @@ class TestRouting:
         assert len(gauge) == 1
         gauge = gauge[0]
 
-        model.rvh.update(rvh_config)
+        rvh_config.update(
+            {
+                "land_subbasin_property_multiplier": SBGroupPropertyMultiplierCommand(
+                    "Land", "MANNINGS_N", 1.0
+                ),
+                "lake_subbasin_property_multiplier": SBGroupPropertyMultiplierCommand(
+                    "Lakes", "RESERVOIR_CREST_WIDTH", 1.0
+                ),
+            }
+        )
 
-        model.rvh.land_subbasin_property_multiplier = SBGroupPropertyMultiplierCommand(
-            "Land", "MANNINGS_N", 1.0
-        )
-        model.rvh.lake_subbasin_property_multiplier = SBGroupPropertyMultiplierCommand(
-            "Lakes", "RESERVOIR_CREST_WIDTH", 1.0
-        )
+        for k, v in rvh_config.items():
+            model.config.rvh.update(k, v)
 
         #######
         # RVP #
@@ -1444,7 +1447,7 @@ class TestRouting:
             vic_temperatures_nc_path, routing_product_shp_path
         )
 
-        streaminputs_gf = GriddedForcingCommand(
+        model.config.rvt.add_nc_variable(
             name="StreamInputs",
             data_type="PRECIP",
             file_name_nc=vic_streaminputs_nc_path.name,
@@ -1455,7 +1458,7 @@ class TestRouting:
             grid_weights=streaminputs_importer.extract(),
         )
 
-        temperatures_gf = GriddedForcingCommand(
+        model.config.rvt.add_nc_variable(
             name="AverageTemp",
             data_type="TEMP_AVE",
             file_name_nc=vic_temperatures_nc_path.name,
@@ -1464,9 +1467,8 @@ class TestRouting:
             grid_weights=temperatures_importer.extract(),
         )
 
-        model.rvt.gridded_forcings = [streaminputs_gf, temperatures_gf]
-
-        model.rvt.observation_data = ObservationDataCommand(
+        model.config.rvt.add_nc_variable(
+            is_observation=True,
             data_type="HYDROGRAPH",
             subbasin_id=gauge.subbasin_id,
             units="m3/s",

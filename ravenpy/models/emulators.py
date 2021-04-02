@@ -8,7 +8,7 @@ from ravenpy.config.commands import BasinIndexCommand
 from ravenpy.config.rvs import Config
 
 from .base import Ostrich, Raven
-from .rv import HRU, LU, RV, RVC, RVH, RVI, RVP, RVT, HRUState, Ost, Sub
+from .rv import HRU, LU, RV, RVC, RVI, RVP, HRUState, Ost, Sub
 
 __all__ = [
     "GR4JCN",
@@ -154,8 +154,7 @@ class GR4JCN(Raven):
                 # It seems that `v` is a list when running via a WPS interface
                 hru_attrs[k] = v[0] if isinstance(v, list) else v
         if hru_attrs:
-            assert isinstance(self.rvh, RVH)
-            self.rvh.hrus = (GR4JCN.LandHRU(**hru_attrs),)
+            self.config.rvh.hrus = (GR4JCN.LandHRU(**hru_attrs),)
 
         return super().run(ts, overwrite=overwrite, **kwds)
 
@@ -746,8 +745,9 @@ class Routing(Raven):
 
         self.rvi = RVI()
         self.rvp = RVP()
-        self.rvh = RVH()
-        self.rvt = RVT()
+        self.config = Config()
+        # self.rvh = RVH()
+        # self.rvt = RVT()
 
     def derived_parameters(self):
         pass

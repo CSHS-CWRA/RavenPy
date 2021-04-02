@@ -77,35 +77,34 @@ default_input_variables = (
     "water_volume_transport_in_river_channel",
 )
 
-# Map CF-Convention standard name to Raven Forcing name
-forcing_names = {
-    "tasmin": "TEMP_MIN",
-    "tasmax": "TEMP_MAX",
-    "tas": "TEMP_AVE",
-    "rainfall": "RAINFALL",
-    "pr": "PRECIP",
-    "prsn": "SNOWFALL",
-    "evspsbl": "PET",
-    "water_volume_transport_in_river_channel": "HYDROGRAPH",
-}
+# # Map CF-Convention standard name to Raven Forcing name
+# forcing_names = {
+#     "tasmin": "TEMP_MIN",
+#     "tasmax": "TEMP_MAX",
+#     "tas": "TEMP_AVE",
+#     "rainfall": "RAINFALL",
+#     "pr": "PRECIP",
+#     "prsn": "SNOWFALL",
+#     "evspsbl": "PET",
+#     "water_volume_transport_in_river_channel": "HYDROGRAPH",
+# }
 
-
-# Alternate typical variable names found in netCDF files, keyed by CF standard name
-alternate_nc_names = {
-    "tasmin": ["tasmin", "tmin"],
-    "tasmax": ["tasmax", "tmax"],
-    "tas": ["tas", "t2m"],
-    "rainfall": ["rainfall", "rain"],
-    "pr": ["pr", "precip", "prec", "precipitation", "tp"],
-    "prsn": ["prsn", "snow", "snowfall", "solid_precip"],
-    "evspsbl": ["pet", "evap", "evapotranspiration"],
-    "water_volume_transport_in_river_channel": [
-        "qobs",
-        "discharge",
-        "streamflow",
-        "dis",
-    ],
-}
+# # Alternate typical variable names found in netCDF files, keyed by CF standard name
+# alternate_nc_names = {
+#     "tasmin": ["tasmin", "tmin"],
+#     "tasmax": ["tasmax", "tmax"],
+#     "tas": ["tas", "t2m"],
+#     "rainfall": ["rainfall", "rain"],
+#     "pr": ["pr", "precip", "prec", "precipitation", "tp"],
+#     "prsn": ["prsn", "snow", "snowfall", "solid_precip"],
+#     "evspsbl": ["pet", "evap", "evapotranspiration"],
+#     "water_volume_transport_in_river_channel": [
+#         "qobs",
+#         "discharge",
+#         "streamflow",
+#         "dis",
+#     ],
+# }
 
 rain_snow_fraction_options = (
     "RAINSNOW_DATA",
@@ -271,90 +270,90 @@ class RV(collections.abc.Mapping, RavenConfig):
                 self[key] = val
 
 
-class RVT(RV):
-    def __init__(self, **kwargs):
-        self.pr = {}
-        self.rainfall = {}
-        self.prsn = {}
-        self.tasmin = {}
-        self.tasmax = {}
-        self.tas = {}
-        self.evspsbl = {}
-        self.water_volume_transport_in_river_channel = {}
+# class RVT(RV):
+#     def __init__(self, **kwargs):
+#         self.pr = {}
+#         self.rainfall = {}
+#         self.prsn = {}
+#         self.tasmin = {}
+#         self.tasmax = {}
+#         self.tas = {}
+#         self.evspsbl = {}
+#         self.water_volume_transport_in_river_channel = {}
 
-        self.nc_index = None
-        self.gauge_latitude = None
-        self.gauge_longitude = None
-        self.gauge_elevation = None
+#         self.nc_index = None
+#         self.gauge_latitude = None
+#         self.gauge_longitude = None
+#         self.gauge_elevation = None
 
-        self.raincorrection = 1
-        self.snowcorrection = 1
+#         self.raincorrection = 1
+#         self.snowcorrection = 1
 
-        self.monthly_ave_evaporation = ()
-        self.monthly_ave_temperature = ()
+#         self.monthly_ave_evaporation = ()
+#         self.monthly_ave_temperature = ()
 
-        self.gridded_forcings = ()
+#         self.gridded_forcings = ()
 
-        # For a distributed model these weights will be shared among all the StationForcing commands
-        self.grid_weights = None
+#         # For a distributed model these weights will be shared among all the StationForcing commands
+#         self.grid_weights = None
 
-        self.var_cmds = {}
-        # Dictionary of potential variable names, keyed by CF standard name.
-        # http://cfconventions.org/Data/cf-standard-names/60/build/cf-standard-name-table.html
-        # PET is the potential evapotranspiration, while evspsbl is the actual evap.
-        # TODO: Check we're not mixing precip and rainfall.
+#         self.var_cmds = {}
+#         # Dictionary of potential variable names, keyed by CF standard name.
+#         # http://cfconventions.org/Data/cf-standard-names/60/build/cf-standard-name-table.html
+#         # PET is the potential evapotranspiration, while evspsbl is the actual evap.
+#         # TODO: Check we're not mixing precip and rainfall.
 
-        super(RVT, self).__init__(**kwargs)
+#         super(RVT, self).__init__(**kwargs)
 
-    @property
-    def variables(self):
-        return (getattr(self, name) for name in default_input_variables)
+#     @property
+#     def variables(self):
+#         return (getattr(self, name) for name in default_input_variables)
 
-    @property
-    def gauge(self):
-        data = [o for o in self.var_cmds.values() if isinstance(o, DataCommand)]
-        if data:
-            return GaugeCommand(
-                latitude=self.gauge_latitude,
-                longitude=self.gauge_longitude,
-                elevation=self.gauge_elevation,
-                raincorrection=self.raincorrection,
-                snowcorrection=self.snowcorrection,
-                monthly_ave_evaporation=self.monthly_ave_evaporation,
-                monthly_ave_temperature=self.monthly_ave_temperature,
-                data=data,
-            )
-        else:
-            return ""
+#     @property
+#     def gauge(self):
+#         data = [o for o in self.var_cmds.values() if isinstance(o, DataCommand)]
+#         if data:
+#             return GaugeCommand(
+#                 latitude=self.gauge_latitude,
+#                 longitude=self.gauge_longitude,
+#                 elevation=self.gauge_elevation,
+#                 raincorrection=self.raincorrection,
+#                 snowcorrection=self.snowcorrection,
+#                 monthly_ave_evaporation=self.monthly_ave_evaporation,
+#                 monthly_ave_temperature=self.monthly_ave_temperature,
+#                 data=data,
+#             )
+#         else:
+#             return ""
 
-    @property
-    def station_forcing_list(self):
-        data = [
-            o for o in self.var_cmds.values() if isinstance(o, StationForcingCommand)
-        ]
-        return "\n\n".join(map(str, data))
+#     @property
+#     def station_forcing_list(self):
+#         data = [
+#             o for o in self.var_cmds.values() if isinstance(o, StationForcingCommand)
+#         ]
+#         return "\n\n".join(map(str, data))
 
-    @property
-    def gridded_forcing_list(self):
-        data = [
-            o for o in self.var_cmds.values() if isinstance(o, GriddedForcingCommand)
-        ]
-        # This is really a hack for now, as model.rvt.gridded_forcings are set
-        # directly by the user in TestRouting.test_lievre_tutorial
-        data += self.gridded_forcings
-        return "\n\n".join(map(str, data))
+#     @property
+#     def gridded_forcing_list(self):
+#         data = [
+#             o for o in self.var_cmds.values() if isinstance(o, GriddedForcingCommand)
+#         ]
+#         # This is really a hack for now, as model.rvt.gridded_forcings are set
+#         # directly by the user in TestRouting.test_lievre_tutorial
+#         data += self.gridded_forcings
+#         return "\n\n".join(map(str, data))
 
-    @property
-    def observed_data_cmd(self):
-        return self.var_cmds.get("water_volume_transport_in_river_channel", "")
+#     @property
+#     def observed_data_cmd(self):
+#         return self.var_cmds.get("water_volume_transport_in_river_channel", "")
 
-    @property
-    def raincorrection_cmd(self):
-        return RainCorrection(self.raincorrection)
+#     @property
+#     def raincorrection_cmd(self):
+#         return RainCorrection(self.raincorrection)
 
-    @property
-    def snowcorrection_cmd(self):
-        return SnowCorrection(self.snowcorrection)
+#     @property
+#     def snowcorrection_cmd(self):
+#         return SnowCorrection(self.snowcorrection)
 
 
 class RVI(RV):
@@ -619,51 +618,51 @@ class RVC(RV):
         return BasinStateVariablesCommand(self.basin_states)
 
 
-@dataclass
-class RVH(RV):
-    subbasins: Tuple[SubBasinsCommand.Record] = (SubBasinsCommand.Record(),)
-    land_subbasins: Tuple[int] = ()
-    land_subbasin_property_multiplier: SBGroupPropertyMultiplierCommand = ""
-    lake_subbasins: Tuple[int] = ()
-    lake_subbasin_property_multiplier: SBGroupPropertyMultiplierCommand = ""
-    reservoirs: Tuple[ReservoirCommand] = ()
-    hrus: Tuple[HRUsCommand.Record] = ()
+# @dataclass
+# class RVH(RV):
+#     subbasins: Tuple[SubBasinsCommand.Record] = (SubBasinsCommand.Record(),)
+#     land_subbasins: Tuple[int] = ()
+#     land_subbasin_property_multiplier: SBGroupPropertyMultiplierCommand = ""
+#     lake_subbasins: Tuple[int] = ()
+#     lake_subbasin_property_multiplier: SBGroupPropertyMultiplierCommand = ""
+#     reservoirs: Tuple[ReservoirCommand] = ()
+#     hrus: Tuple[HRUsCommand.Record] = ()
 
-    template = """
-    {subbasins_cmd}
+#     template = """
+#     {subbasins_cmd}
 
-    {hrus_cmd}
+#     {hrus_cmd}
 
-    {land_subbasin_group_cmd}
+#     {land_subbasin_group_cmd}
 
-    {lake_subbasin_group_cmd}
+#     {lake_subbasin_group_cmd}
 
-    {reservoir_cmd_list}
-    """
+#     {reservoir_cmd_list}
+#     """
 
-    @property
-    def subbasins_cmd(self):
-        return SubBasinsCommand(self.subbasins)
+#     @property
+#     def subbasins_cmd(self):
+#         return SubBasinsCommand(self.subbasins)
 
-    @property
-    def land_subbasin_group_cmd(self):
-        return SubBasinGroupCommand("Land", self.land_subbasins)
+#     @property
+#     def land_subbasin_group_cmd(self):
+#         return SubBasinGroupCommand("Land", self.land_subbasins)
 
-    @property
-    def lake_subbasin_group_cmd(self):
-        return SubBasinGroupCommand("Lakes", self.lake_subbasins)
+#     @property
+#     def lake_subbasin_group_cmd(self):
+#         return SubBasinGroupCommand("Lakes", self.lake_subbasins)
 
-    @property
-    def reservoir_cmd_list(self):
-        return "\n\n".join(map(str, self.reservoirs))
+#     @property
+#     def reservoir_cmd_list(self):
+#         return "\n\n".join(map(str, self.reservoirs))
 
-    @property
-    def hrus_cmd(self):
-        return HRUsCommand(self.hrus)
+#     @property
+#     def hrus_cmd(self):
+#         return HRUsCommand(self.hrus)
 
-    def to_rv(self):
-        # params = self.items()
-        return dedent(self.template).format(**dict(self.items()))
+#     def to_rv(self):
+#         # params = self.items()
+#         return dedent(self.template).format(**dict(self.items()))
 
 
 @dataclass

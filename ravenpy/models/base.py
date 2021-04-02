@@ -22,28 +22,15 @@ import numpy as np
 import xarray as xr
 
 import ravenpy
-from ravenpy.config.importers import extract_nc_data
-
-from .commands import (
+from ravenpy.config.commands import (
     DataCommand,
     GriddedForcingCommand,
     HRUsCommand,
     ObservationDataCommand,
     StationForcingCommand,
 )
-from .importers import NcDataImporter
-from .rv import (
-    RV,
-    RVH,
-    RVI,
-    RVT,
-    Ost,
-    RVFile,
-    forcing_names,
-    get_states,
-    isinstance_namedtuple,
-    parse_solution,
-)
+
+from .rv import RV, RVI, Ost, RVFile, get_states, isinstance_namedtuple, parse_solution
 
 RAVEN_EXEC_PATH = os.getenv("RAVENPY_RAVEN_BINARY_PATH") or shutil.which("raven")
 OSTRICH_EXEC_PATH = os.getenv("RAVENPY_OSTRICH_BINARY_PATH") or shutil.which("ostrich")
@@ -276,6 +263,9 @@ class Raven:
                 assigned = True
 
         if not assigned:
+            assigned = self.config.update(key, value)
+
+        if not assigned:
             raise AttributeError("No configuration key named {}".format(key))
 
     def derived_parameters(self):
@@ -287,10 +277,13 @@ class Raven:
 
         params = self.parameters
 
-        with open(self.model_path / "raven-gr4j-cemaneige.rvt", "w") as f:
+        stem = "raven-gr4j-cemaneige"
+        # stem = "raven-routing"
+
+        with open(self.model_path / f"{stem}.rvt", "w") as f:
             f.write(self.config.rvt.to_rv())
 
-        with open(self.model_path / "raven-gr4j-cemaneige.rvh", "w") as f:
+        with open(self.model_path / f"{stem}.rvh", "w") as f:
             f.write(self.config.rvh.to_rv())
 
         for rvf in self.rvfiles.values():
@@ -462,8 +455,7 @@ class Raven:
             self.handle_date_defaults(ts)
             self.set_calendar(ts)
 
-        nc_data = extract_nc_data(ts)
-        self.config.hydrate("rvt", nc_data)
+        self.config.rvt.configure_from_nc_data(ts)
 
         # Loop over parallel parameters - sets self.rvi.run_index
         procs = []
