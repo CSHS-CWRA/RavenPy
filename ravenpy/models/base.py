@@ -387,25 +387,6 @@ class Raven:
         if isinstance(ts, (str, Path)):
             ts = [ts]
 
-        # This is a temporary mechanism to support the legacy HRU keywords for
-        # `model.__call__`.
-        # Note that this mechanism can be overridden by more specialized logic
-        # in the subclasses (as it is in the `run` method of `emulators.GR4JCN`).
-        hru_attrs = {}
-        for k in ["area", "latitude", "longitude", "elevation"]:
-            v = kwds.pop(k, None)
-            if v:
-                # It seems that `v` is a list when running via a WPS interface
-                hru_attrs[k] = v[0] if isinstance(v, list) else v
-        if hru_attrs:
-            if isinstance(self.rvh, RVH):
-                # New case
-                self.rvh.hrus = (HRUsCommand.Record(**hru_attrs),)
-            else:
-                # Legacy case
-                assert isinstance(self.rvh, RV)
-                self.rvh.update(hru_attrs)
-
         # Case for potentially parallel parameters
         pdict = {}
         for p in self._parallel_parameters:

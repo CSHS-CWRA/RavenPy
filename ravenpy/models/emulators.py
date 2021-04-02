@@ -140,15 +140,10 @@ class GR4JCN(Raven):
 
     def run(self, ts, overwrite=False, **kwds):
         """
-        Override the corresponding method in Raven.run to replace the legacy
-        hru support interface by this variation, where we know we have an `RVH`
-        with which we can use a `GR4JCN.LandHRU`. Since this method pops the
-        required keys from `kwds`, it's safe to fall back on the parent method
-        when done.
+        This is a hook into `Raven.run` for this particular subclass, which
+        allows the support of legacy HRU-related keywords in the model.__call__
+        interface.
         """
-
-        # This is a temporary mechanism to support the legacy HRU keywords for
-        # `model.__call__`
         hru_attrs = {}
         for k in ["area", "latitude", "longitude", "elevation"]:
             v = kwds.pop(k, None)
