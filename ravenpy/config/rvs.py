@@ -22,7 +22,18 @@ from ravenpy.config.commands import (
 #########
 
 
-class RVH:
+class RVV:
+    def update(self, key, value):
+        if hasattr(self, key):
+            setattr(self, key, value)
+            return True
+        return False
+
+    def to_rv(self):
+        pass
+
+
+class RVH(RVV):
 
     tmpl = """
     {subbasins}
@@ -50,12 +61,6 @@ class RVH:
         self.reservoirs = ()
         self.tmpl = tmpl or RVH.tmpl
 
-    def update(self, key, value):
-        if hasattr(self, key):
-            setattr(self, key, value)
-            return True
-        return False
-
     def to_rv(self):
         d = {
             "subbasins": SubBasinsCommand(self.subbasins),
@@ -73,12 +78,56 @@ class RVH:
         return dedent(self.tmpl).format(**d)
 
 
+##########
+# R V P  #
+##########
+
+
+class RVP(RVV):
+    def __init__(self):
+        self.params: Tuple[namedtuple] = ()
+        self.soil_classes: Tuple[SoilClassesCommand.Record] = ()
+        self.soil_profiles: Tuple[SoilProfilesCommand.Record] = ()
+        self.vegetation_classes: Tuple[VegetationClassesCommand.Record] = ()
+        self.land_use_classes: Tuple[LandUseClassesCommand.Record] = ()
+        self.channel_profiles: Tuple[ChannelProfileCommand] = ()
+        self.avg_annual_runoff: float = 0
+        self.tmpl = None
+
+    def to_rv(self):
+        d = {
+            "params": self.params,
+            "channel_profiles": "\n\n".join(map(str, self.channel_profiles)),
+        }
+        return dedent(self.tmpl).format(**d)
+
+    # @property
+    # def soil_classes_cmd(self):
+    #     return SoilClassesCommand(self.soil_classes)
+
+    # @property
+    # def soil_profiles_cmd(self):
+    #     return SoilProfilesCommand(self.soil_profiles)
+
+    # @property
+    # def vegetation_classes_cmd(self):
+    #     return VegetationClassesCommand(self.vegetation_classes)
+
+    # @property
+    # def land_use_classes_cmd(self):
+    #     return LandUseClassesCommand(self.land_use_classes)
+
+    # @property
+    # def channel_profile_cmd_list(self):
+    #     return "\n\n".join(map(str, self.channel_profiles))
+
+
 #########
 # R V T #
 #########
 
 
-class RVT:
+class RVT(RVV):
 
     tmpl = """
     {gauge}
@@ -282,11 +331,12 @@ class Config:
     def __init__(self, **kwargs):  # , hrus, subbasins):
         self.rvh = RVH()  # hrus, subbasins)
         self.rvt = RVT(self.rvh)
+        self.rvp = RVP()
         for k, v in kwargs.items():
             self.update(k, v)
 
     def update(self, key, value):
-        for rv in [self.rvh, self.rvt]:
+        for rv in [self.rvh, self.rvp, self.rvt]:
             if rv.update(key, value):
                 return True
         return False

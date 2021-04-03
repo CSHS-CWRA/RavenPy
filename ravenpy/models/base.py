@@ -52,7 +52,7 @@ class Raven:
     templates = ()
 
     # Allowed configuration file extensions
-    _rvext = ("rvi", "rvp", "rvc")  # "rvh" , "rvt")
+    _rvext = ("rvi", "rvc")
 
     _parallel_parameters = [
         "params",
@@ -224,7 +224,7 @@ class Raven:
         """Read configuration files."""
         for fn in fns:
             rvf = RVFile(fn)
-            if rvf.ext in ["rvt", "rvh"]:
+            if rvf.ext in ["rvt", "rvh", "rvp"]:
                 continue
             if rvf.ext not in self._rvext + ("txt",):
                 raise ValueError(
@@ -277,14 +277,18 @@ class Raven:
 
         params = self.parameters
 
-        stem = "raven-gr4j-cemaneige"
+        # stem = "raven-gr4j-cemaneige"
         # stem = "raven-routing"
+        stem = self.identifier
 
         with open(self.model_path / f"{stem}.rvt", "w") as f:
             f.write(self.config.rvt.to_rv())
 
         with open(self.model_path / f"{stem}.rvh", "w") as f:
             f.write(self.config.rvh.to_rv())
+
+        with open(self.model_path / f"{stem}.rvp", "w") as f:
+            f.write(self.config.rvp.to_rv())
 
         for rvf in self.rvfiles.values():
             p = self.exec_path if rvf.is_tpl else self.model_path

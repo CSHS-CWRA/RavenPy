@@ -8,7 +8,7 @@ from ravenpy.config.commands import BasinIndexCommand
 from ravenpy.config.rvs import Config
 
 from .base import Ostrich, Raven
-from .rv import HRU, LU, RV, RVC, RVI, RVP, HRUState, Ost, Sub
+from .rv import HRU, LU, RV, RVC, RVI, HRUState, Ost, Sub
 
 __all__ = [
     "GR4JCN",
@@ -69,7 +69,7 @@ class GR4JCN(Raven):
     def __init__(self, *args, **kwds):
         super().__init__(*args, **kwds)
 
-        self.rvp = RVP(params=GR4JCN.params(None, None, None, None, None, None))
+        # self.rvp = RVP(params=GR4JCN.params(None, None, None, None, None, None))
         # self.rvt = RVT()
         # self.rvh = RVH(
         self.config = Config(
@@ -83,7 +83,70 @@ class GR4JCN(Raven):
                     gauged=True,
                 ),
             ),
+            params=GR4JCN.params(None, None, None, None, None, None),
         )
+
+        self.config.rvp.tmpl = """
+# -Global snow parameters-------------------------------------
+:RainSnowTransition 0 1.0
+:AirSnowCoeff       {one_minus_CEMANEIGE_X2}  # [1/d] = 1.0 - CEMANEIGE_X2 = 1.0 - x6
+:AvgAnnualSnow      {params.CEMANEIGE_X1}            # [mm]  =       CEMANEIGE_X1 =       x5
+
+# -Orographic Corrections-------------------------------------
+:PrecipitationLapseRate 0.0004
+:AdiabaticLapseRate 0.0065
+
+# - Soil classes ---------------------------------------------
+:SoilClasses
+  :Attributes
+  :Units
+   SOIL_PROD
+   SOIL_ROUT
+   SOIL_TEMP
+   SOIL_GW
+   AQUIFER
+:EndSoilClasses
+:SoilParameterList
+ :Parameters, POROSITY ,  GR4J_X3, GR4J_X2
+ :Units     ,     none ,       mm,    mm/d
+   [DEFAULT],      1.0 ,     {params.GR4J_X3},     {params.GR4J_X2}
+:EndSoilParameterList
+
+# ----Soil Profiles--------------------------------------------
+#     name,#horizons,(soiltype,thickness)x(#horizons)
+#     GR4J_X1 is thickness of first layer (SOIL_PROD), here {params.GR4J_X1}
+:SoilProfiles
+  DEFAULT_P,      4, SOIL_PROD   ,   {params.GR4J_X1}, SOIL_ROUT  ,   0.300, SOIL_TEMP  ,   1.000, SOIL_GW  ,   1.000,
+  LAKE,           0
+:EndSoilProfiles
+
+# ----Vegetation Classes---------------------------------------
+:VegetationClasses
+   :Attributes,       MAX_HT,       MAX_LAI,      MAX_LEAF_COND
+        :Units,            m,          none,           mm_per_s
+       VEG_ALL,           0.0,          0.0,                0.0
+       VEG_WATER,         0.0,          0.0,                0.0
+:EndVegetationClasses
+
+# --Land Use Classes------------------------------------------
+:LandUseClasses
+  :Attributes, IMPERM, FOREST_COV
+  :Units     ,   frac,       frac
+       LU_ALL,    0.0,        0.0
+       LU_WATER,  0.0,        0.0
+:EndLandUseClasses
+:LandUseParameterList
+ :Parameters, GR4J_X4, MELT_FACTOR
+ :Units     ,       d,      mm/d/C
+   [DEFAULT],    {params.GR4J_X4},        7.73
+:EndLandUseParameterList
+
+:AvgAnnualRunoff 		{avg_annual_runoff}
+
+# List of channel profiles
+{channel_profiles}
+"""
+
         self.rvi = RVI(rain_snow_fraction="RAINSNOW_DINGMAN", evaporation="PET_OUDIN")
 
         # Initialize the stores to 1/2 full. Declare the parameters that can be user-modified
