@@ -93,7 +93,7 @@ class RVC(RVV):
                             out[key][i] = dict(
                                 index=i,
                                 name=name,
-                                **_parser(lines, new_indent + "  ", float)
+                                **_parser(lines, new_indent + "  ", float),
                             )
                         # elif key in ["Qlat", "Qout"]:
                         #     n, *values, last = value.split(",")
