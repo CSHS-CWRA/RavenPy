@@ -15,6 +15,7 @@ import stat
 import subprocess
 import tempfile
 from collections import OrderedDict
+from dataclasses import replace
 from pathlib import Path
 from typing import Union
 
@@ -368,6 +369,17 @@ class Raven:
         if isinstance(ts, (str, Path)):
             ts = [ts]
 
+        # Support legacy interface for single HRU emulator
+        hru_attrs = {}
+        for k in ["area", "latitude", "longitude", "elevation"]:
+            v = kwds.pop(k, None)
+            if v:
+                # It seems that `v` is a list when running via a WPS interface
+                hru_attrs[k] = v[0] if isinstance(v, list) else v
+        if hru_attrs:
+            assert len(self.config.rvh.hrus) == 1
+            self.config.rvh.hrus = (replace(self.config.rvh.hrus[0], **hru_attrs),)
+
         # Case for potentially parallel parameters
         pdict = {}
         for p in self._parallel_parameters:
@@ -576,7 +588,9 @@ class Raven:
         files = list(path.rglob(pattern))
 
         if len(files) == 0:
-            if not (isinstance(self.config.rvi, RVI) and self.rvi.suppress_output):
+            if not (
+                isinstance(self.config.rvi, RVI) and self.config.rvi.suppress_output
+            ):
                 raise UserWarning("No output files for {} in {}.".format(pattern, path))
 
         return [f.absolute() for f in files]
