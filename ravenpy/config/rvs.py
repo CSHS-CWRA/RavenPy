@@ -1,9 +1,11 @@
 import collections
+import datetime as dt
 from dataclasses import is_dataclass, replace
 from pathlib import Path
 from textwrap import dedent
 
 import cf_xarray
+import cftime
 import numpy as np
 import xarray as xr
 
@@ -20,6 +22,7 @@ from ravenpy.config.commands import (
     HRUStateVariableTableCommand,
     LandUseClassesCommand,
     ObservationDataCommand,
+    RoutingCommand,
     SoilClassesCommand,
     SoilProfilesCommand,
     StationForcingCommand,
@@ -31,20 +34,13 @@ from ravenpy.config.commands import (
 
 class RVV:
     def update(self, key, value):
+        """
+        This is the general mechanism, see for more specialized ones in derived classes.
+        """
         if hasattr(self, key):
-            # Special case: the user might be trying to set a dataclass param by
-            # supplying a list of values (either a list, tuple of numpy array);
-            # if that's the case, cast those values into a new instance of that
-            # dataclass
-            attr = getattr(self, key)
-            if is_dataclass(attr) and isinstance(value, (list, tuple, np.ndarray)):
-                value = attr.__class__(*value)
             setattr(self, key, value)
             return True
         return False
-
-    def to_rv(self):
-        pass
 
 
 #########
@@ -192,13 +188,299 @@ class RVH(RVV):
         return dedent(self.tmpl).format(**d)
 
 
+#########
+# R V I #
+#########
+
+
+class RVI(RVV):
+
+    tmpl = """
+    """
+
+    rain_snow_fraction_options = (
+        "RAINSNOW_DATA",
+        "RAINSNOW_DINGMAN",
+        "RAINSNOW_UBC",
+        "RAINSNOW_HBV",
+        "RAINSNOW_HARDER",
+        "RAINSNOW_HSPF",
+    )
+
+    evaporation_options = (
+        "PET_CONSTANT",
+        "PET_PENMAN_MONTEITH",
+        "PET_PENMAN_COMBINATION",
+        "PET_PRIESTLEY_TAYLOR",
+        "PET_HARGREAVES",
+        "PET_HARGREAVES_1985",
+        "PET_FROMMONTHLY",
+        "PET_DATA",
+        "PET_HAMON_1961",
+        "PET_TURC_1961",
+        "PET_MAKKINK_1957",
+        "PET_MONTHLY_FACTOR",
+        "PET_MOHYSE",
+        "PET_OUDIN",
+    )
+
+    calendar_options = (
+        "PROLEPTIC_GREGORIAN",
+        "JULIAN",
+        "GREGORIAN",
+        "STANDARD",
+        "NOLEAP",
+        "365_DAY",
+        "ALL_LEAP",
+        "366_DAY",
+    )
+
+    def __init__(self, tmpl=None):
+        self.name = None
+        self.area = None
+        self.elevation = None
+        self.latitude = None
+        self.longitude = None
+        self.run_index = 0
+        self.raven_version = "3.0.1 rev#275"
+
+        self._routing = "ROUTE_NONE"
+        self._run_name = "run"
+        self._start_date = None
+        self._end_date = None
+        self._now = None
+        self._rain_snow_fraction = "RAINSNOW_DATA"
+        self._evaporation = None
+        self._ow_evaporation = None
+        self._duration = 1
+        self._time_step = 1.0
+        self._evaluation_metrics = "NASH_SUTCLIFFE RMSE"
+        self._suppress_output = False
+        self._calendar = "standard"
+
+        self.tmpl = tmpl or RVI.tmpl
+
+    @property
+    def run_name(self):
+        return self._run_name
+
+    @run_name.setter
+    def run_name(self, x):
+        if isinstance(x, str):
+            self._run_name = x
+        else:
+            raise ValueError("Must be string")
+
+    @property
+    def start_date(self):
+        return self._start_date
+
+    @start_date.setter
+    def start_date(self, x):
+        if isinstance(x, dt.datetime):
+            self._start_date = self._dt2cf(x)
+        else:
+            raise ValueError("Must be datetime")
+
+        if x == dt.datetime(1, 1, 1):
+            return
+
+        if self._duration is None:
+            self._update_duration()
+        else:
+            self._update_end_date()
+
+    @property
+    def end_date(self):
+        return self._end_date
+
+    @end_date.setter
+    def end_date(self, x):
+        if isinstance(x, dt.datetime):
+            self._end_date = self._dt2cf(x)
+        else:
+            raise ValueError("Must be datetime")
+
+        if x != dt.datetime(1, 1, 1):
+            self._update_duration()
+
+    @property
+    def duration(self):
+        return self._duration
+
+    @duration.setter
+    def duration(self, x):
+        if isinstance(x, int):
+            if x > 0:
+                self._duration = x
+        else:
+            raise ValueError("Must be int")
+
+        if x > 0:
+            self._update_end_date()
+
+    @property
+    def time_step(self):
+        return self._time_step
+
+    @time_step.setter
+    def time_step(self, x):
+        self._time_step = x
+
+    @property
+    def evaluation_metrics(self):
+        return self._evaluation_metrics
+
+    @evaluation_metrics.setter
+    def evaluation_metrics(self, x):
+        if not isinstance(x, str):
+            raise ValueError("Evaluation metrics must be string.")
+
+        for metric in x.split():
+            if metric not in {
+                "NASH_SUTCLIFFE",
+                "LOG_NASH",
+                "RMSE",
+                "PCT_BIAS",
+                "ABSERR",
+                "ABSMAX",
+                "PDIFF",
+                "TMVOL",
+                "RCOEFF",
+                "NSC",
+                "KLING_GUPTA",
+            }:
+                raise ValueError("{} is not a metric recognized by Raven.")
+
+        self._evaluation_metrics = x
+
+    def _update_duration(self):
+        if self.end_date is not None and self.start_date is not None:
+            self._duration = (self.end_date - self.start_date).days
+
+    def _update_end_date(self):
+        if self.start_date is not None and self.duration is not None:
+            self._end_date = self.start_date + dt.timedelta(days=self.duration)
+
+    @property
+    def now(self):
+        return dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    @property
+    def suppress_output(self):
+        tag = ":SuppressOutput\n:DontWriteWatershedStorage"
+        return tag if self._suppress_output else ""
+
+    @suppress_output.setter
+    def suppress_output(self, value):
+        if not isinstance(value, bool):
+            raise ValueError
+        self._suppress_output = value
+
+    @property
+    def routing(self):
+        return RoutingCommand(value=self._routing)
+
+    @routing.setter
+    def routing(self, value):
+        self._routing = value
+
+    @property
+    def rain_snow_fraction(self):
+        """Rain snow partitioning."""
+        return self._rain_snow_fraction
+
+    @rain_snow_fraction.setter
+    def rain_snow_fraction(self, value):
+        """Can be one of
+
+        - RAINSNOW_DATA
+        - RAINSNOW_DINGMAN
+        - RAINSNOW_UBC
+        - RAINSNOW_HBV
+        - RAINSNOW_HARDER
+        - RAINSNOW_HSPF
+        """
+        v = value.upper()
+
+        if v in RVI.rain_snow_fraction_options:
+            self._rain_snow_fraction = v
+        else:
+            raise ValueError(
+                f"Value should be one of {RVI.rain_snow_fraction_options}."
+            )
+
+    @property
+    def evaporation(self):
+        """Evaporation scheme"""
+        return self._evaporation
+
+    @evaporation.setter
+    def evaporation(self, value):
+        v = value.upper()
+        if v in RVI.evaporation_options:
+            self._evaporation = v
+        else:
+            raise ValueError(f"Value {v} should be one of {RVI.evaporation_options}.")
+
+    @property
+    def ow_evaporation(self):
+        """Open-water evaporation scheme"""
+        return self._ow_evaporation
+
+    @ow_evaporation.setter
+    def ow_evaporation(self, value):
+        v = value.upper()
+        if v in RVI.evaporation_options:
+            self._ow_evaporation = v
+        else:
+            raise ValueError(f"Value {v} should be one of {RVI.evaporation_options}.")
+
+    @property
+    def calendar(self):
+        """Calendar"""
+        return self._calendar.upper()
+
+    @calendar.setter
+    def calendar(self, value):
+        if value.upper() in RVI.calendar_options:
+            self._calendar = value
+        else:
+            raise ValueError(f"Value should be one of {RVI.calendar_options}.")
+
+    def _dt2cf(self, date):
+        """Convert datetime to cftime datetime."""
+        return cftime._cftime.DATE_TYPES[self._calendar.lower()](*date.timetuple()[:6])
+
+    def to_rv(self):
+
+        # Attributes
+        a = list(filter(lambda x: not x.startswith("_"), self.__dict__))
+
+        # Properties
+        p = list(
+            filter(
+                lambda x: isinstance(getattr(self.__class__, x, None), property),
+                dir(self),
+            )
+        )
+
+        d = {attr: getattr(self, attr) for attr in a + p}
+
+        return dedent(self.tmpl).format(**d)
+
+
 ##########
 # R V P  #
 ##########
 
 
 class RVP(RVV):
-    def __init__(self):
+
+    tmpl = """
+    """
+
+    def __init__(self, tmpl=None):
         # Model specific params and derived params
         self.params = None
         self.derived_params = None
@@ -210,7 +492,20 @@ class RVP(RVV):
         self.channel_profiles: Tuple[ChannelProfileCommand] = ()
         self.avg_annual_runoff: float = None
 
-        self.tmpl = None
+        self.tmpl = tmpl or RVP.tmpl
+
+    def update(self, key, value):
+        if hasattr(self, key):
+            # Special case: the user might be trying to update `params` or `derived_params`,
+            # (which are dataclasses) by supplying a list of values (either a list, tuple of
+            # numpy array); if that's the case, cast those values into a new instance of the
+            # corresponding dataclass.
+            attr = getattr(self, key)
+            if is_dataclass(attr) and isinstance(value, (list, tuple, np.ndarray)):
+                value = attr.__class__(*value)
+            setattr(self, key, value)
+            return True
+        return False
 
     def to_rv(self):
         d = {
@@ -432,16 +727,18 @@ class RVT(RVV):
 
 
 class Config:
-    def __init__(self, **kwargs):  # , hrus, subbasins):
-        self.rvh = RVH()  # hrus, subbasins)
-        self.rvt = RVT(self.rvh)
-        self.rvp = RVP()
+    def __init__(self, **kwargs):
         self.rvc = RVC()
+        self.rvh = RVH()
+        self.rvi = RVI()
+        self.rvp = RVP()
+        self.rvt = RVT(self.rvh)
+
         for k, v in kwargs.items():
             self.update(k, v)
 
     def update(self, key, value):
-        for rv in [self.rvh, self.rvp, self.rvt]:
+        for rv in [self.rvc, self.rvi, self.rvh, self.rvp, self.rvt]:
             if rv.update(key, value):
                 return True
-        return False
+        raise AttributeError(f"No field named `{key}` found in any RV* conf class")

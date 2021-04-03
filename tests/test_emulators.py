@@ -83,9 +83,9 @@ class TestGR4JCN:
     def test_simple(self):
         model = GR4JCN("/tmp/ravenpy_debug/test_simple")
 
-        model.rvi.start_date = dt.datetime(2000, 1, 1)
-        model.rvi.end_date = dt.datetime(2002, 1, 1)
-        model.rvi.run_name = "test"
+        model.config.rvi.start_date = dt.datetime(2000, 1, 1)
+        model.config.rvi.end_date = dt.datetime(2002, 1, 1)
+        model.config.rvi.run_name = "test"
 
         model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
 
@@ -98,7 +98,7 @@ class TestGR4JCN:
 
         # np.testing.assert_almost_equal(model.rvp.avg_annual_runoff, 208.4805694844741)
 
-        assert model.rvi.suppress_output == ""
+        assert model.config.rvi.suppress_output == ""
 
         model(TS)
 
@@ -143,7 +143,7 @@ class TestGR4JCN:
         # ------------
         # Check parser
         # ------------
-        assert model.rvi.calendar == "GREGORIAN"
+        assert model.config.rvi.calendar == "GREGORIAN"
 
         # ------------
         # Check saved HRU states saved in RVC
@@ -167,10 +167,10 @@ class TestGR4JCN:
         # R V I #
         #########
 
-        model.rvi.start_date = dt.datetime(2000, 1, 1)
-        model.rvi.end_date = dt.datetime(2002, 1, 1)
-        model.rvi.run_name = "test_gr4jcn_routing"
-        model.rvi.routing = "ROUTE_DIFFUSIVE_WAVE"
+        model.config.rvi.start_date = dt.datetime(2000, 1, 1)
+        model.config.rvi.end_date = dt.datetime(2002, 1, 1)
+        model.config.rvi.run_name = "test_gr4jcn_routing"
+        model.config.rvi.routing = "ROUTE_DIFFUSIVE_WAVE"
 
         #########
         # R V H #
@@ -361,30 +361,41 @@ class TestGR4JCN:
         d = model.diagnostics
         np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.0141168, 4)
 
-    def test_tags(self):
+    def _test_tags(self):
         model = GR4JCN(tempfile.mkdtemp())
 
         tags = model.tags
         assert "run_name" in tags
 
-    def test_rvobjs(self):
+    def _test_rvobjs(self):
         model = GR4JCN(tempfile.mkdtemp())
         a = model.rvobjs
         assert a
 
-    def test_assign(self):
+    def test_config_update(self):
         model = GR4JCN()
-        model.assign("run_name", "test")
-        assert model.rvi.run_name == "test"
 
-        model.assign("params", np.array([0.529, -3.396, 407.29, 1.072, 16.9, 0.947]))
+        # This is a regular member
+        model.config.update("area", 123)
+        assert model.config.rvi.area == 123
+
+        # This is a property
+        model.config.update("run_name", "test")
+        assert model.config.rvi.run_name == "test"
+
+        model.config.update(
+            "params", np.array([0.529, -3.396, 407.29, 1.072, 16.9, 0.947])
+        )
         assert model.config.rvp.params.GR4J_X1 == 0.529
 
-        model.assign("params", [0.529, -3.396, 407.29, 1.072, 16.9, 0.947])
+        model.config.update("params", [0.529, -3.396, 407.29, 1.072, 16.9, 0.947])
         assert model.config.rvp.params.GR4J_X1 == 0.529
 
-        model.assign("params", (0.529, -3.396, 407.29, 1.072, 16.9, 0.947))
+        model.config.update("params", (0.529, -3.396, 407.29, 1.072, 16.9, 0.947))
         assert model.config.rvp.params.GR4J_X1 == 0.529
+
+        with pytest.raises(AttributeError):
+            model.config.update("why", "not?")
 
     def test_run(self):
         model = GR4JCN()  # "/tmp/ravenpy_debug/test_run")
@@ -433,7 +444,7 @@ class TestGR4JCN:
             end_date=dt.datetime(2002, 1, 1),
             params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
         )
-        assert model.rvi.suppress_output == ""
+        assert model.config.rvi.suppress_output == ""
 
         qsim1 = model.q_sim.copy(deep=True)
         m1 = qsim1.mean()
@@ -640,7 +651,7 @@ class TestGR4JCN:
 
     def test_parallel_basins(self, input2d):
         ts = input2d
-        model = GR4JCN("/tmp/ravenpy_debug/test_parallel_basins")
+        model = GR4JCN()  # "/tmp/ravenpy_debug/test_parallel_basins")
         model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
 
         model(
@@ -1388,13 +1399,13 @@ class TestRouting:
         start = streaminputs.indexes["time"][0]
         end = streaminputs.indexes["time"][-4]  # to match the tutorial end date
 
-        model.rvi.start_date = start.to_pydatetime()
-        model.rvi.end_date = end.to_pydatetime()
+        model.config.rvi.start_date = start.to_pydatetime()
+        model.config.rvi.end_date = end.to_pydatetime()
 
         # Raven will use 24h even though the NC inputs are 6h
-        model.rvi.time_step = "24:00:00"
+        model.config.rvi.time_step = "24:00:00"
 
-        model.rvi.evaluation_metrics = "NASH_SUTCLIFFE PCT_BIAS KLING_GUPTA"
+        model.config.rvi.evaluation_metrics = "NASH_SUTCLIFFE PCT_BIAS KLING_GUPTA"
 
         #######
         # RVH #

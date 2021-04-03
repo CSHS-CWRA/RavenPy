@@ -1,21 +1,22 @@
 from .base import Raven
 from .emulators import GR4JCN, HBVEC, HMETS, MOHYSE, get_model
-from .rv import RV, RVI
+
+# from .rv import RV
 
 
 class RavenMultiModel(Raven):
     identifier = "raven-multi-model"
 
-    rvt = RV(
-        pr=None,
-        prsn=None,
-        tasmin=None,
-        tasmax=None,
-        evspsbl=None,
-        water_volume_transport_in_river_channel=None,
-    )
-    rvi = RVI()
-    rvh = RV(name=None, area=None, elevation=None, latitude=None, longitude=None)
+    # rvt = RV(
+    #     pr=None,
+    #     prsn=None,
+    #     tasmin=None,
+    #     tasmax=None,
+    #     evspsbl=None,
+    #     water_volume_transport_in_river_channel=None,
+    # )
+    # rvi = RVI()
+    # rvh = RV(name=None, area=None, elevation=None, latitude=None, longitude=None)
 
     def __init__(self, models, workdir=None):
         """Create multi-model raven instance.

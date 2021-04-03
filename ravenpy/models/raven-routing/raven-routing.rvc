@@ -1,6 +1,0 @@
-# ----------------------------------------------
-# Raven Input file
-# Walkthrough #6: Grid-based routing example
-# ----------------------------------------------
-
-:UniformInitialConditions SOIL[0] 15            # Initial conditions for the groundwater storage, in mm. DEFAULT 15 mm.

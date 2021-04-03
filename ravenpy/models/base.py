@@ -29,9 +29,9 @@ from ravenpy.config.commands import (
     ObservationDataCommand,
     StationForcingCommand,
 )
-from ravenpy.config.rvs import RVC
+from ravenpy.config.rvs import RVC, RVI
 
-from .rv import RV, RVI, Ost, RVFile, isinstance_namedtuple
+from .rv import RV, Ost, RVFile, isinstance_namedtuple
 
 RAVEN_EXEC_PATH = os.getenv("RAVENPY_RAVEN_BINARY_PATH") or shutil.which("raven")
 OSTRICH_EXEC_PATH = os.getenv("RAVENPY_OSTRICH_BINARY_PATH") or shutil.which("ostrich")
@@ -53,7 +53,7 @@ class Raven:
     templates = ()
 
     # Allowed configuration file extensions
-    _rvext = ("rvi",)
+    _rvext = []
 
     _parallel_parameters = [
         "params",
@@ -89,13 +89,6 @@ class Raven:
 
         workdir = workdir or tempfile.mkdtemp()
         self._rvs = []
-
-        self.rvi = RV()
-        # self.rvp = RV()
-        self.rvc = RV()
-        # self.rvt = RVT()
-        # self.rvh = RV()
-        # self.rvd = RV()  # rvd is for derived parameters
 
         self.workdir = Path(workdir)
         self.ind_outputs = {}  # Individual files for all simulations
@@ -161,8 +154,8 @@ class Raven:
     def psim(self, value):
         if not isinstance(value, int):
             raise ValueError
-        if isinstance(self.rvi, RVI):
-            self.rvi.run_index = value
+        if isinstance(self.config.rvi, RVI):
+            self.config.rvi.run_index = value
         self._psim = value
 
     @property
@@ -225,10 +218,10 @@ class Raven:
         """Read configuration files."""
         for fn in fns:
             rvf = RVFile(fn)
-            if rvf.ext in ["rvt", "rvh", "rvp", "rvc"]:
+            if rvf.ext in ["rvt", "rvh", "rvp", "rvc", "rvi"]:
                 continue
 
-            if rvf.ext not in self._rvext + ("txt",):
+            if rvf.ext not in ("txt",):
                 raise ValueError(
                     "rv contains unrecognized configuration file keys : {}.".format(
                         rvf.ext
@@ -243,30 +236,6 @@ class Raven:
                 else:
                     raise ValueError
 
-    def assign(self, key, value):
-        """Assign parameter to rv object that has a key with the same name."""
-
-        assigned = False
-        for ext, obj in self.rvobjs.items():
-            if hasattr(obj, key):
-                att = getattr(obj, key)
-
-                # If att is a namedtuple, we get its class and try to instantiate it with the values passed.
-                if isinstance_namedtuple(att) and isinstance(
-                    value, (list, tuple, np.ndarray)
-                ):
-                    p = att.__class__(*value)
-                    setattr(obj, key, p)
-                else:
-                    setattr(obj, key, value)
-                assigned = True
-
-        if not assigned:
-            assigned = self.config.update(key, value)
-
-        if not assigned:
-            raise AttributeError("No configuration key named {}".format(key))
-
     def derived_parameters(self):
         """Subclassed by emulators. Defines model parameters that are a function of other parameters."""
         return
@@ -276,8 +245,10 @@ class Raven:
 
         params = self.parameters
 
-        # stem = "raven-gr4j-cemaneige"
-        stem = "raven-routing"
+        stem = "raven-gr4j-cemaneige"
+        # stem = "raven-routing"
+
+        self.name = stem
 
         with open(self.model_path / f"{stem}.rvt", "w") as f:
             f.write(self.config.rvt.to_rv())
@@ -290,6 +261,9 @@ class Raven:
 
         with open(self.model_path / f"{stem}.rvc", "w") as f:
             f.write(self.config.rvc.to_rv())
+
+        with open(self.model_path / f"{stem}.rvi", "w") as f:
+            f.write(self.config.rvi.to_rv())
 
         for rvf in self.rvfiles.values():
             p = self.exec_path if rvf.is_tpl else self.model_path
@@ -442,21 +416,21 @@ class Raven:
 
             self.config.update(key, val)
 
-            if key in self._rvext:
-                obj = getattr(self, key)
-                if isinstance(val, dict):
-                    obj.update(val)
-                elif isinstance(val, RV):
-                    setattr(self, key, val)
-                else:
-                    raise ValueError(
-                        "A dictionary or an RV instance is expected to update the values "
-                        "for {}.".format(key)
-                    )
-            else:
-                self.assign(key, val)
+            # if key in self._rvext:
+            #     obj = getattr(self, key)
+            #     if isinstance(val, dict):
+            #         obj.update(val)
+            #     elif isinstance(val, RV):
+            #         setattr(self, key, val)
+            #     else:
+            #         raise ValueError(
+            #             "A dictionary or an RV instance is expected to update the values "
+            #             "for {}.".format(key)
+            #         )
+            # else:
+            #     self.assign(key, val)
 
-        if self.rvi:
+        if self.config.rvi:
             self.handle_date_defaults(ts)
             self.set_calendar(ts)
 
@@ -467,7 +441,7 @@ class Raven:
         for self.psim in range(nloops):
             for key, val in pdict.items():
                 if val[self.psim] is not None:
-                    self.assign(key, val[self.psim])
+                    # self.assign(key, val[self.psim])
                     self.config.update(key, val[self.psim])
 
             cmd = self.setup_model_run(tuple(map(Path, ts)))
@@ -526,7 +500,7 @@ class Raven:
         # Output files default names. The actual output file names will be composed of the run_name and the default
         # name.
         path = path or self.exec_path
-        run_name = run_name or getattr(self.rvi, "run_name", "")
+        run_name = run_name or getattr(self.config.rvi, "run_name", "")
         patterns = {
             "hydrograph": f"{run_name}*Hydrographs.nc",
             "storage": f"{run_name}*WatershedStorage.nc",
@@ -602,7 +576,7 @@ class Raven:
         files = list(path.rglob(pattern))
 
         if len(files) == 0:
-            if not (isinstance(self.rvi, RVI) and self.rvi.suppress_output):
+            if not (isinstance(self.config.rvi, RVI) and self.rvi.suppress_output):
                 raise UserWarning("No output files for {} in {}.".format(pattern, path))
 
         return [f.absolute() for f in files]
@@ -635,13 +609,13 @@ class Raven:
 
     def set_calendar(self, ts):
         """Set the calendar in the RVI configuration."""
-        self.rvi.calendar = self.get_calendar(ts)
+        self.config.rvi.calendar = self.get_calendar(ts)
 
     def handle_date_defaults(self, ts):
         # Get start and end date from file
         start, end = self.start_end_date(ts)
 
-        rvi = self.rvi
+        rvi = self.config.rvi
         if rvi.start_date in [None, dt.datetime(1, 1, 1)]:
             rvi.start_date = start
 

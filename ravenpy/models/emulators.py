@@ -8,7 +8,7 @@ from ravenpy.config.commands import BasinIndexCommand
 from ravenpy.config.rvs import Config
 
 from .base import Ostrich, Raven
-from .rv import HRU, LU, RV, RVI, HRUState, Ost, Sub
+from .rv import HRU, LU, RV, HRUState, Ost, Sub
 
 __all__ = [
     "GR4JCN",
@@ -41,7 +41,6 @@ class GR4JCN(Raven):
     """
 
     identifier = "gr4jcn"
-    templates = tuple((Path(__file__).parent / "raven-gr4j-cemaneige").glob("*.rv?"))
 
     @dataclass
     class Params:
@@ -78,9 +77,6 @@ class GR4JCN(Raven):
     def __init__(self, *args, **kwds):
         super().__init__(*args, **kwds)
 
-        # self.rvp = RVP(params=GR4JCN.params(None, None, None, None, None, None))
-        # self.rvt = RVT()
-        # self.rvh = RVH(
         self.config = Config(
             hrus=(GR4JCN.LandHRU(),),
             subbasins=(
@@ -97,67 +93,138 @@ class GR4JCN(Raven):
         )
 
         self.config.rvp.tmpl = """
-# -Global snow parameters-------------------------------------
-:RainSnowTransition 0 1.0
-:AirSnowCoeff       {derived_params.one_minus_CEMANEIGE_X2}  # [1/d] = 1.0 - CEMANEIGE_X2 = 1.0 - x6
-:AvgAnnualSnow      {params.CEMANEIGE_X1}            # [mm]  =       CEMANEIGE_X1 =       x5
+        # -Global snow parameters-------------------------------------
+        :RainSnowTransition 0 1.0
+        :AirSnowCoeff       {derived_params.one_minus_CEMANEIGE_X2}  # [1/d] = 1.0 - CEMANEIGE_X2 = 1.0 - x6
+        :AvgAnnualSnow      {params.CEMANEIGE_X1}            # [mm]  =       CEMANEIGE_X1 =       x5
 
-# -Orographic Corrections-------------------------------------
-:PrecipitationLapseRate 0.0004
-:AdiabaticLapseRate 0.0065
+        # -Orographic Corrections-------------------------------------
+        :PrecipitationLapseRate 0.0004
+        :AdiabaticLapseRate 0.0065
 
-# - Soil classes ---------------------------------------------
-:SoilClasses
-  :Attributes
-  :Units
-   SOIL_PROD
-   SOIL_ROUT
-   SOIL_TEMP
-   SOIL_GW
-   AQUIFER
-:EndSoilClasses
-:SoilParameterList
- :Parameters, POROSITY ,  GR4J_X3, GR4J_X2
- :Units     ,     none ,       mm,    mm/d
-   [DEFAULT],      1.0 ,     {params.GR4J_X3},     {params.GR4J_X2}
-:EndSoilParameterList
+        # - Soil classes ---------------------------------------------
+        :SoilClasses
+          :Attributes
+          :Units
+           SOIL_PROD
+           SOIL_ROUT
+           SOIL_TEMP
+           SOIL_GW
+           AQUIFER
+        :EndSoilClasses
+        :SoilParameterList
+         :Parameters, POROSITY ,  GR4J_X3, GR4J_X2
+         :Units     ,     none ,       mm,    mm/d
+           [DEFAULT],      1.0 ,     {params.GR4J_X3},     {params.GR4J_X2}
+        :EndSoilParameterList
 
-# ----Soil Profiles--------------------------------------------
-#     name,#horizons,(soiltype,thickness)x(#horizons)
-#     GR4J_X1 is thickness of first layer (SOIL_PROD), here {params.GR4J_X1}
-:SoilProfiles
-  DEFAULT_P,      4, SOIL_PROD   ,   {params.GR4J_X1}, SOIL_ROUT  ,   0.300, SOIL_TEMP  ,   1.000, SOIL_GW  ,   1.000,
-  LAKE,           0
-:EndSoilProfiles
+        # ----Soil Profiles--------------------------------------------
+        #     name,#horizons,(soiltype,thickness)x(#horizons)
+        #     GR4J_X1 is thickness of first layer (SOIL_PROD), here {params.GR4J_X1}
+        :SoilProfiles
+          DEFAULT_P,      4, SOIL_PROD   ,   {params.GR4J_X1}, SOIL_ROUT  ,   0.300, SOIL_TEMP  ,   1.000, SOIL_GW  ,   1.000,
+          LAKE,           0
+        :EndSoilProfiles
 
-# ----Vegetation Classes---------------------------------------
-:VegetationClasses
-   :Attributes,       MAX_HT,       MAX_LAI,      MAX_LEAF_COND
-        :Units,            m,          none,           mm_per_s
-       VEG_ALL,           0.0,          0.0,                0.0
-       VEG_WATER,         0.0,          0.0,                0.0
-:EndVegetationClasses
+        # ----Vegetation Classes---------------------------------------
+        :VegetationClasses
+           :Attributes,       MAX_HT,       MAX_LAI,      MAX_LEAF_COND
+                :Units,            m,          none,           mm_per_s
+               VEG_ALL,           0.0,          0.0,                0.0
+               VEG_WATER,         0.0,          0.0,                0.0
+        :EndVegetationClasses
 
-# --Land Use Classes------------------------------------------
-:LandUseClasses
-  :Attributes, IMPERM, FOREST_COV
-  :Units     ,   frac,       frac
-       LU_ALL,    0.0,        0.0
-       LU_WATER,  0.0,        0.0
-:EndLandUseClasses
-:LandUseParameterList
- :Parameters, GR4J_X4, MELT_FACTOR
- :Units     ,       d,      mm/d/C
-   [DEFAULT],    {params.GR4J_X4},        7.73
-:EndLandUseParameterList
+        # --Land Use Classes------------------------------------------
+        :LandUseClasses
+          :Attributes, IMPERM, FOREST_COV
+          :Units     ,   frac,       frac
+               LU_ALL,    0.0,        0.0
+               LU_WATER,  0.0,        0.0
+        :EndLandUseClasses
+        :LandUseParameterList
+         :Parameters, GR4J_X4, MELT_FACTOR
+         :Units     ,       d,      mm/d/C
+           [DEFAULT],    {params.GR4J_X4},        7.73
+        :EndLandUseParameterList
 
-{avg_annual_runoff}
+        {avg_annual_runoff}
 
-# List of channel profiles
-{channel_profiles}
-"""
+        # List of channel profiles
+        {channel_profiles}
+        """
 
-        self.rvi = RVI(rain_snow_fraction="RAINSNOW_DINGMAN", evaporation="PET_OUDIN")
+        self.config.rvi.tmpl = """
+        :Calendar              {calendar}
+        :RunName               {run_name}-{run_index}
+        :StartDate             {start_date}
+        :EndDate               {end_date}
+        :TimeStep              {time_step}
+        :Method                ORDERED_SERIES
+
+        :SoilModel             SOIL_MULTILAYER  4
+        {routing}
+        :CatchmentRoute        ROUTE_DUMP
+        :Evaporation           {evaporation}  # PET_OUDIN
+        :RainSnowFraction      {rain_snow_fraction}  # RAINSNOW_DINGMAN
+        :PotentialMeltMethod   POTMELT_DEGREE_DAY
+        :OroTempCorrect        OROCORR_SIMPLELAPSE
+        :OroPrecipCorrect      OROCORR_SIMPLELAPSE
+
+        #------------------------------------------------------------------------
+        # Soil Layer Alias Definitions
+        #
+        :Alias PRODUCT_STORE      SOIL[0]
+        :Alias ROUTING_STORE      SOIL[1]
+        :Alias TEMP_STORE         SOIL[2]
+        :Alias GW_STORE           SOIL[3]
+
+        #------------------------------------------------------------------------
+        # Hydrologic process order for GR4J Emulation
+        #
+        :HydrologicProcesses
+         :Precipitation            PRECIP_RAVEN       ATMOS_PRECIP    MULTIPLE
+         :SnowTempEvolve           SNOTEMP_NEWTONS    SNOW_TEMP
+         :SnowBalance              SNOBAL_CEMA_NIEGE  SNOW            PONDED_WATER
+         :OpenWaterEvaporation     OPEN_WATER_EVAP    PONDED_WATER    ATMOSPHERE     			 # Pn
+         :Infiltration             INF_GR4J           PONDED_WATER    MULTIPLE       			 # Ps-
+         :SoilEvaporation          SOILEVAP_GR4J      PRODUCT_STORE   ATMOSPHERE     			 # Es
+         :Percolation              PERC_GR4J          PRODUCT_STORE   TEMP_STORE     			 # Perc
+         :Flush                    RAVEN_DEFAULT      SURFACE_WATER   TEMP_STORE     			 # Pn-Ps
+         :Split                    RAVEN_DEFAULT      TEMP_STORE      CONVOLUTION[0] CONVOLUTION[1] 0.9  # Split Pr
+         :Convolve                 CONVOL_GR4J_1      CONVOLUTION[0]  ROUTING_STORE  			 # Q9
+         :Convolve                 CONVOL_GR4J_2      CONVOLUTION[1]  TEMP_STORE     			 # Q1
+         :Percolation              PERC_GR4JEXCH      ROUTING_STORE   GW_STORE       			 # F(x1)
+         :Percolation              PERC_GR4JEXCH2     TEMP_STORE      GW_STORE       			 # F(x1)
+         :Flush                    RAVEN_DEFAULT      TEMP_STORE      SURFACE_WATER  			 # Qd
+         :Baseflow                 BASE_GR4J          ROUTING_STORE   SURFACE_WATER  			 # Qr
+        :EndHydrologicProcesses
+        #------------------------------------------------------------------------
+
+        #---------------------------------------------------------
+        # Output Options
+        #
+        :WriteForcingFunctions
+        :EvaluationMetrics {evaluation_metrics}
+        :WriteNetcdfFormat  yes
+        #:NoisyMode
+        :SilentMode
+        :PavicsMode
+        {suppress_output}
+
+        :NetCDFAttribute title Simulated river discharge
+        :NetCDFAttribute history Created on {now} by Raven
+        :NetCDFAttribute references  Craig, J.R., and the Raven Development Team, Raven user's and developer's manual (Version 2.8), URL: http://raven.uwaterloo.ca/ (2018).
+        :NetCDFAttribute comment Raven Hydrological Framework version {raven_version}
+
+        :NetCDFAttribute model_id gr4jcn
+
+        :NetCDFAttribute time_frequency day
+        :NetCDFAttribute time_coverage_start {start_date}
+        :NetCDFAttribute time_coverage_end {end_date}
+        """
+
+        self.config.rvi.rain_snow_fraction = "RAINSNOW_DINGMAN"
+        self.config.rvi.evaporation = "PET_OUDIN"
 
         # Initialize the stores to 1/2 full. Declare the parameters that can be user-modified
         # self.rvc = RVC(soil0=None, soil1=15)
@@ -818,16 +885,14 @@ class Routing(Raven):
     """Routing model - no hydrological modeling"""
 
     identifier = "routing"
-    templates = tuple((Path(__file__).parent / "raven-routing").glob("*.rv?"))
 
-    params = namedtuple("RoutingParams", ())
+    # params = namedtuple("RoutingParams", ())
 
     def __init__(self, *args, **kwds):
         super().__init__(*args, **kwds)
 
         # Declare the parameters that can be user-modified.
 
-        self.rvi = RVI()
         self.config = Config()
         self.config.rvp.tmpl = """
         {soil_classes}
@@ -841,6 +906,49 @@ class Routing(Raven):
         {avg_annual_runoff}
 
         {channel_profiles}
+        """
+
+        self.config.rvi.tmpl = """
+        :Calendar              {calendar}
+        :RunName               {run_name}-{run_index}
+        :StartDate             {start_date}
+        :EndDate               {end_date}
+        :TimeStep              {time_step}
+        :Method                ORDERED_SERIES                # Numerical method used for simulation
+
+        :CatchmentRoute        ROUTE_DUMP                    # Catchment routing method, used to convey water from the catchment tributaries and rivulets to the subbasin outlets. DEFAULT ROUTE_DUMP, which instantly ‘dumps’ all water in the subbasin stream reach.
+        :Routing               ROUTE_DIFFUSIVE_WAVE          # Channel routing method which is used to transport water from upstream to downstream within the main subbasin channels. DEFAULT ROUTE_DIFFUSIVE_WAVE, which analytically solves the diffusive wave equation along the reach using a constant reference celerity.
+        :PrecipIceptFract      PRECIP_ICEPT_NONE             # Estimation of the precipitation interception fraction. In this routing model, stream input(s) are "pretending" to be precipitation going into Raven, thus using DEFAULT PRECIP_ICEPT_NONE to indicate no interception processes are adopted.
+        :PotentialMeltMethod   POTMELT_NONE                  # Estimation of the potential snow melt. In this routing model, snow melt processes are not relevant, thus using DEFAULT POTMELT_NONE method.
+        :SoilModel             SOIL_ONE_LAYER                # In this routing model, use DEFAULT SOIL_ONE_LAYER to define single soil layer structure.
+
+        :HydrologicProcesses
+          :Precipitation     PRECIP_RAVEN             ATMOS_PRECIP     PONDED_WATER          # Moves stream input(s) from ATMOS_PRECIP to PONDED_WATER storage (waiting for runoff). Use DEFAULT PRECIP_RAVEN method.
+          :Flush             RAVEN_DEFAULT            PONDED_WATER     SURFACE_WATER         # Moves water from PONDED_WATER to SURFACE_WATER (routed to outlet). Use DEFAULT RAVEN_DEFAULT method.
+        :EndHydrologicProcesses
+
+
+        # Output Options
+        #
+        #:WriteForcingFunctions
+        # Defines the hydrograph performance metrics output by Raven. Either one or multiple is acceptable.
+        :EvaluationMetrics {evaluation_metrics}
+        :WriteNetcdfFormat  yes
+        #:NoisyMode
+        :SilentMode
+        :PavicsMode
+        {suppress_output}
+
+        :NetCDFAttribute title Simulated river discharge
+        :NetCDFAttribute history Created on {now} by Raven
+        :NetCDFAttribute references  Craig, J.R., and the Raven Development Team, Raven user's and developer's manual (Version 2.8), URL: http://raven.uwaterloo.ca/ (2018).
+        :NetCDFAttribute comment Raven Hydrological Framework version {raven_version}
+
+        :NetCDFAttribute model_id routing
+
+        :NetCDFAttribute time_frequency day
+        :NetCDFAttribute time_coverage_start {start_date}
+        :NetCDFAttribute time_coverage_end {end_date}
         """
 
     def derived_parameters(self):
