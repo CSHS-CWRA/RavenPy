@@ -29,8 +29,9 @@ from ravenpy.config.commands import (
     ObservationDataCommand,
     StationForcingCommand,
 )
+from ravenpy.config.rvs import RVC
 
-from .rv import RV, RVI, Ost, RVFile, get_states, isinstance_namedtuple, parse_solution
+from .rv import RV, RVI, Ost, RVFile, isinstance_namedtuple
 
 RAVEN_EXEC_PATH = os.getenv("RAVENPY_RAVEN_BINARY_PATH") or shutil.which("raven")
 OSTRICH_EXEC_PATH = os.getenv("RAVENPY_OSTRICH_BINARY_PATH") or shutil.which("ostrich")
@@ -52,7 +53,7 @@ class Raven:
     templates = ()
 
     # Allowed configuration file extensions
-    _rvext = ("rvi", "rvc")
+    _rvext = ("rvi",)
 
     _parallel_parameters = [
         "params",
@@ -224,8 +225,9 @@ class Raven:
         """Read configuration files."""
         for fn in fns:
             rvf = RVFile(fn)
-            if rvf.ext in ["rvt", "rvh", "rvp"]:
+            if rvf.ext in ["rvt", "rvh", "rvp", "rvc"]:
                 continue
+
             if rvf.ext not in self._rvext + ("txt",):
                 raise ValueError(
                     "rv contains unrecognized configuration file keys : {}.".format(
@@ -274,9 +276,8 @@ class Raven:
 
         params = self.parameters
 
-        stem = "raven-gr4j-cemaneige"
-        # stem = "raven-routing"
-        # stem = self.identifier
+        # stem = "raven-gr4j-cemaneige"
+        stem = "raven-routing"
 
         with open(self.model_path / f"{stem}.rvt", "w") as f:
             f.write(self.config.rvt.to_rv())
@@ -286,6 +287,9 @@ class Raven:
 
         with open(self.model_path / f"{stem}.rvp", "w") as f:
             f.write(self.config.rvp.to_rv())
+
+        with open(self.model_path / f"{stem}.rvc", "w") as f:
+            f.write(self.config.rvc.to_rv())
 
         for rvf in self.rvfiles.values():
             p = self.exec_path if rvf.is_tpl else self.model_path
@@ -515,7 +519,7 @@ class Raven:
         else:
             fn = solution
 
-        self.rvc.parse(Path(fn).read_text())
+        self.config.rvc.set_from_solution(Path(fn).read_text())
 
     def parse_results(self, path=None, run_name=None):
         """Store output files in the self.outputs dictionary."""
@@ -686,10 +690,11 @@ class Raven:
     @property
     def solution(self):
         if self.outputs["solution"].suffix == ".rvc":
-            return parse_solution(self.outputs["solution"].read_text())
+            return RVC.parse_solution(self.outputs["solution"].read_text())
         elif self.outputs["solution"].suffix == ".zip":
             return [
-                parse_solution(fn.read_text()) for fn in self.ind_outputs["solution"]
+                RVC.parse_solution(fn.read_text())
+                for fn in self.ind_outputs["solution"]
             ]
 
     def get_final_state(self, hru_index=1, basin_index=1):

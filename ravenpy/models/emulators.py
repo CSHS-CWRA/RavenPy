@@ -8,7 +8,7 @@ from ravenpy.config.commands import BasinIndexCommand
 from ravenpy.config.rvs import Config
 
 from .base import Ostrich, Raven
-from .rv import HRU, LU, RV, RVC, RVI, HRUState, Ost, Sub
+from .rv import HRU, LU, RV, RVI, HRUState, Ost, Sub
 
 __all__ = [
     "GR4JCN",
@@ -42,11 +42,6 @@ class GR4JCN(Raven):
 
     identifier = "gr4jcn"
     templates = tuple((Path(__file__).parent / "raven-gr4j-cemaneige").glob("*.rv?"))
-
-    # params = namedtuple(
-    #     "GR4JParams",
-    #     ("GR4J_X1", "GR4J_X2", "GR4J_X3", "GR4J_X4", "CEMANEIGE_X1", "CEMANEIGE_X2"),
-    # )
 
     @dataclass
     class Params:
@@ -165,7 +160,10 @@ class GR4JCN(Raven):
         self.rvi = RVI(rain_snow_fraction="RAINSNOW_DINGMAN", evaporation="PET_OUDIN")
 
         # Initialize the stores to 1/2 full. Declare the parameters that can be user-modified
-        self.rvc = RVC(soil0=None, soil1=15)
+        # self.rvc = RVC(soil0=None, soil1=15)
+        self.config.rvc.soil0 = None
+        self.config.rvc.soil1 = 15
+
         # self.rvd = RV(one_minus_CEMANEIGE_X2=None, GR4J_X1_hlf=None)
 
     def derived_parameters(self):
@@ -177,38 +175,38 @@ class GR4JCN(Raven):
         )
 
         # Default initial conditions if none are given
-        if self.rvc.hru_state is None:
+        if not self.config.rvc.hru_states:
             soil0 = (
                 self.config.rvp.derived_params.GR4J_X1_hlf
-                if self.rvc.soil0 is None
-                else self.rvc.soil0
+                if self.config.rvc.soil0 is None
+                else self.config.rvc.soil0
             )
-            soil1 = self.rvc.soil1
+            soil1 = self.config.rvc.soil1
 
         # subbassin_id -> has at least one LakeHRU
         sb_contains_lake = defaultdict(lambda: False)
 
-        if not self.rvc.hru_states:
+        if not self.config.rvc.hru_states:
             # If self.rvc.hru_states is set, it means that we are using `resume()` and we don't
             # want to interfere
             for hru in self.config.rvh.hrus:
                 if isinstance(hru, GR4JCN.LandHRU) or hru._hru_type == "land":
-                    self.rvc.hru_states[hru.hru_id] = HRUState(
+                    self.config.rvc.hru_states[hru.hru_id] = HRUState(
                         index=hru.hru_id, soil0=soil0, soil1=soil1
                     )
                 elif isinstance(hru, GR4JCN.LakeHRU) or hru._hru_type == "lake":
-                    self.rvc.hru_states[hru.hru_id] = HRUState(index=hru.hru_id)
+                    self.config.rvc.hru_states[hru.hru_id] = HRUState(index=hru.hru_id)
                     sb_contains_lake[hru.subbasin_id] = True
                 else:
                     raise Exception(
                         "Type of HRU must be either `GR4JCN.LandHRU` or `GR4JCN.LakeHRU` (or its `_hru_type` must be either 'land' or 'lake')"
                     )
 
-        if not self.rvc.basin_states:
+        if not self.config.rvc.basin_states:
             # If self.rvc.basin_states is set, it means that we are using `resume()` and we don't
             # want to interfere
             for sb in self.config.rvh.subbasins:
-                self.rvc.basin_states[sb.subbasin_id] = BasinIndexCommand(
+                self.config.rvc.basin_states[sb.subbasin_id] = BasinIndexCommand(
                     index=sb.subbasin_id
                 )
 
@@ -830,16 +828,23 @@ class Routing(Raven):
         # Declare the parameters that can be user-modified.
 
         self.rvi = RVI()
-        self.rvp = RVP()
         self.config = Config()
-        # self.rvh = RVH()
-        # self.rvt = RVT()
+        self.config.rvp.tmpl = """
+        {soil_classes}
+
+        {soil_profiles}
+
+        {vegetation_classes}
+
+        {land_use_classes}
+
+        {avg_annual_runoff}
+
+        {channel_profiles}
+        """
 
     def derived_parameters(self):
         pass
-
-        # TODO: Compute this from the input file
-        # self.rvd["avg_annual_runoff"] = ?
 
 
 def get_model(name):

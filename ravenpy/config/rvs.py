@@ -1,3 +1,4 @@
+import collections
 from dataclasses import is_dataclass, replace
 from pathlib import Path
 from textwrap import dedent
@@ -8,20 +9,24 @@ import xarray as xr
 
 from ravenpy.config.commands import (
     AvgAnnualRunoffCommand,
+    BasinIndexCommand,
+    BasinStateVariablesCommand,
+    ChannelProfileCommand,
     DataCommand,
     GaugeCommand,
     GriddedForcingCommand,
     GridWeightsCommand,
     HRUsCommand,
+    HRUStateVariableTableCommand,
+    LandUseClassesCommand,
     ObservationDataCommand,
+    SoilClassesCommand,
+    SoilProfilesCommand,
     StationForcingCommand,
     SubBasinGroupCommand,
     SubBasinsCommand,
+    VegetationClassesCommand,
 )
-
-#########
-# R V H #
-#########
 
 
 class RVV:
@@ -40,6 +45,106 @@ class RVV:
 
     def to_rv(self):
         pass
+
+
+#########
+# R V C #
+#########
+
+
+class RVC(RVV):
+
+    tmpl = """
+    {hru_states}
+
+    {basin_states}
+    """
+
+    def __init__(self, tmpl=None):
+        self.hru_states = {}
+        self.basin_states = {}
+
+        self.tmpl = tmpl or RVC.tmpl
+
+    @staticmethod
+    def parse_solution(solution_str):
+        def _parser(lines, indent="", fmt=str):
+            import itertools
+            import re
+
+            header_pat = re.compile(r"(\s*):(\w+)\s?,?\s*(.*)")
+
+            out = collections.defaultdict(dict)
+            old_key = None
+            for line in lines:
+                header = header_pat.match(line)
+                if header:
+                    new_indent, key, value = header.groups()
+                    if new_indent > indent:
+                        out[old_key] = _parser(
+                            itertools.chain([line], lines), new_indent
+                        )
+                    elif new_indent < indent:
+                        return out
+                    else:
+                        if key == "BasinIndex":
+                            i, name = value.split(",")
+                            i = int(i)
+                            out[key][i] = dict(
+                                index=i,
+                                name=name,
+                                **_parser(lines, new_indent + "  ", float)
+                            )
+                        # elif key in ["Qlat", "Qout"]:
+                        #     n, *values, last = value.split(",")
+                        #     out[key] = list(map(float, values))
+                        #     out[key + "Last"] = float(last)
+                        elif key in ["Qin", "Qout", "Qlat"]:
+                            n, *values = value.split(",")
+                            out[key] = (int(n),) + tuple(map(float, values))
+                        else:
+                            out[key] = (
+                                list(map(fmt, value.split(",")))
+                                if "," in value
+                                else fmt(value)
+                            )
+
+                    old_key = key
+                else:
+                    data = line.split(",")
+                    i = int(data.pop(0))
+                    out["data"][i] = [i] + list(map(float, data))
+
+            return out
+
+        lines = iter(solution_str.splitlines())
+        return _parser(lines)
+
+    def set_from_solution(self, solution_str):
+
+        solution_objs = RVC.parse_solution(solution_str)
+
+        self.hru_states = {}
+        self.basin_states = {}
+
+        for index, params in solution_objs["HRUStateVariableTable"]["data"].items():
+            self.hru_states[index] = HRUStateVariableTableCommand.Record(*params)
+
+        for index, raw in solution_objs["BasinStateVariables"]["BasinIndex"].items():
+            params = {k.lower(): v for (k, v) in raw.items()}
+            self.basin_states[index] = BasinIndexCommand(**params)
+
+    def to_rv(self):
+        d = {
+            "hru_states": HRUStateVariableTableCommand(self.hru_states),
+            "basin_states": BasinStateVariablesCommand(self.basin_states),
+        }
+        return dedent(self.tmpl).format(**d)
+
+
+#########
+# R V H #
+#########
 
 
 class RVH(RVV):
@@ -94,6 +199,7 @@ class RVH(RVV):
 
 class RVP(RVV):
     def __init__(self):
+        # Model specific params and derived params
         self.params = None
         self.derived_params = None
 
@@ -103,36 +209,21 @@ class RVP(RVV):
         self.land_use_classes: Tuple[LandUseClassesCommand.Record] = ()
         self.channel_profiles: Tuple[ChannelProfileCommand] = ()
         self.avg_annual_runoff: float = None
+
         self.tmpl = None
 
     def to_rv(self):
         d = {
             "params": self.params,
             "derived_params": self.derived_params,
+            "soil_classes": SoilClassesCommand(self.soil_classes),
+            "soil_profiles": SoilProfilesCommand(self.soil_profiles),
+            "vegetation_classes": VegetationClassesCommand(self.vegetation_classes),
+            "land_use_classes": LandUseClassesCommand(self.land_use_classes),
             "channel_profiles": "\n\n".join(map(str, self.channel_profiles)),
             "avg_annual_runoff": AvgAnnualRunoffCommand(self.avg_annual_runoff),
         }
         return dedent(self.tmpl).format(**d)
-
-    # @property
-    # def soil_classes_cmd(self):
-    #     return SoilClassesCommand(self.soil_classes)
-
-    # @property
-    # def soil_profiles_cmd(self):
-    #     return SoilProfilesCommand(self.soil_profiles)
-
-    # @property
-    # def vegetation_classes_cmd(self):
-    #     return VegetationClassesCommand(self.vegetation_classes)
-
-    # @property
-    # def land_use_classes_cmd(self):
-    #     return LandUseClassesCommand(self.land_use_classes)
-
-    # @property
-    # def channel_profile_cmd_list(self):
-    #     return "\n\n".join(map(str, self.channel_profiles))
 
 
 #########
@@ -345,6 +436,7 @@ class Config:
         self.rvh = RVH()  # hrus, subbasins)
         self.rvt = RVT(self.rvh)
         self.rvp = RVP()
+        self.rvc = RVC()
         for k, v in kwargs.items():
             self.update(k, v)
 
