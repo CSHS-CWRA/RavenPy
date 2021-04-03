@@ -1,11 +1,13 @@
-from dataclasses import replace
+from dataclasses import is_dataclass, replace
 from pathlib import Path
 from textwrap import dedent
 
 import cf_xarray
+import numpy as np
 import xarray as xr
 
 from ravenpy.config.commands import (
+    AvgAnnualRunoffCommand,
     DataCommand,
     GaugeCommand,
     GriddedForcingCommand,
@@ -25,6 +27,13 @@ from ravenpy.config.commands import (
 class RVV:
     def update(self, key, value):
         if hasattr(self, key):
+            # Special case: the user might be trying to set a dataclass param by
+            # supplying a list of values (either a list, tuple of numpy array);
+            # if that's the case, cast those values into a new instance of that
+            # dataclass
+            attr = getattr(self, key)
+            if is_dataclass(attr) and isinstance(value, (list, tuple, np.ndarray)):
+                value = attr.__class__(*value)
             setattr(self, key, value)
             return True
         return False
@@ -85,19 +94,23 @@ class RVH(RVV):
 
 class RVP(RVV):
     def __init__(self):
-        self.params: Tuple[namedtuple] = ()
+        self.params = None
+        self.derived_params = None
+
         self.soil_classes: Tuple[SoilClassesCommand.Record] = ()
         self.soil_profiles: Tuple[SoilProfilesCommand.Record] = ()
         self.vegetation_classes: Tuple[VegetationClassesCommand.Record] = ()
         self.land_use_classes: Tuple[LandUseClassesCommand.Record] = ()
         self.channel_profiles: Tuple[ChannelProfileCommand] = ()
-        self.avg_annual_runoff: float = 0
+        self.avg_annual_runoff: float = None
         self.tmpl = None
 
     def to_rv(self):
         d = {
             "params": self.params,
+            "derived_params": self.derived_params,
             "channel_profiles": "\n\n".join(map(str, self.channel_profiles)),
+            "avg_annual_runoff": AvgAnnualRunoffCommand(self.avg_annual_runoff),
         }
         return dedent(self.tmpl).format(**d)
 

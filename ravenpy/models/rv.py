@@ -19,12 +19,10 @@ from ravenpy.config.commands import (
     HRUsCommand,
     HRUStateVariableTableCommand,
     LandUseClassesCommand,
-    RainCorrection,
     RavenConfig,
     ReservoirCommand,
-    Routing,
+    RoutingCommand,
     SBGroupPropertyMultiplierCommand,
-    SnowCorrection,
     SoilClassesCommand,
     SoilProfilesCommand,
     StationForcingCommand,
@@ -415,7 +413,7 @@ class RVI(RV):
 
     @property
     def routing_cmd(self):
-        return Routing(value=self.routing)
+        return RoutingCommand(value=self.routing)
 
     @property
     def rain_snow_fraction(self):

@@ -90,11 +90,11 @@ class Raven:
         self._rvs = []
 
         self.rvi = RV()
-        self.rvp = RV()
+        # self.rvp = RV()
         self.rvc = RV()
         # self.rvt = RVT()
         # self.rvh = RV()
-        self.rvd = RV()  # rvd is for derived parameters
+        # self.rvd = RV()  # rvd is for derived parameters
 
         self.workdir = Path(workdir)
         self.ind_outputs = {}  # Individual files for all simulations
@@ -106,7 +106,7 @@ class Raven:
         self.rvfiles = {}
 
         # Configuration file extensions + rvd for derived parameters.
-        self._rvext = self._rvext + ("rvd",)
+        self._rvext = self._rvext  # + ("rvd",)
 
         # For subclasses where the configuration file templates are known in advance.
         if self.templates:
@@ -255,9 +255,6 @@ class Raven:
                 ):
                     p = att.__class__(*value)
                     setattr(obj, key, p)
-                # If att is a RavenNcData, we expect a dict
-                # elif isinstance(att, dict):
-                #     att.update(value)
                 else:
                     setattr(obj, key, value)
                 assigned = True
@@ -277,9 +274,9 @@ class Raven:
 
         params = self.parameters
 
-        # stem = "raven-gr4j-cemaneige"
+        stem = "raven-gr4j-cemaneige"
         # stem = "raven-routing"
-        stem = self.identifier
+        # stem = self.identifier
 
         with open(self.model_path / f"{stem}.rvt", "w") as f:
             f.write(self.config.rvt.to_rv())

@@ -27,6 +27,8 @@ class BaseValueCommand(RavenConfig):
         self.value = value
 
     def to_rv(self):
+        if self.value is None:
+            return ""
         return self.template.format(**asdict(self))
 
 
@@ -285,7 +287,7 @@ class BaseDataCommand(RavenConfig):
         d = asdict(self)
         d["dimensions"] = self.dimensions
         d["linear_transform"] = self.linear_transform
-        d["deaccumulate"] = Deaccumulate(self.deaccumulate)
+        d["deaccumulate"] = DeaccumulateCommand(self.deaccumulate)
         d["time_shift"] = f":TimeShift {self.time_shift}" if self.time_shift else ""
         return d
 
@@ -324,8 +326,8 @@ class GaugeCommand(RavenConfig):
     elevation: float = 0
 
     # Accept strings to embed parameter names into Ostrich templates
-    raincorrection: Union[float, str] = 1
-    snowcorrection: Union[float, str] = 1
+    rain_correction: Union[float, str] = 1
+    snow_correction: Union[float, str] = 1
 
     monthly_ave_evaporation: Tuple[float] = ()
     monthly_ave_temperature: Tuple[float] = ()
@@ -335,8 +337,8 @@ class GaugeCommand(RavenConfig):
         :Latitude {latitude}
         :Longitude {longitude}
         :Elevation {elevation}
-        {raincorrection_cmd}
-        {snowcorrection_cmd}
+        {rain_correction_cmd}
+        {snow_correction_cmd}
         {monthly_ave_evaporation_cmd}
         {monthly_ave_temperature_cmd}
         {data_list}
@@ -344,12 +346,12 @@ class GaugeCommand(RavenConfig):
     """
 
     @property
-    def raincorrection_cmd(self):
-        return RainCorrection(self.raincorrection)
+    def rain_correction_cmd(self):
+        return RainCorrectionCommand(self.rain_correction)
 
     @property
-    def snowcorrection_cmd(self):
-        return SnowCorrection(self.snowcorrection)
+    def snow_correction_cmd(self):
+        return SnowCorrectionCommand(self.snow_correction)
 
     @property
     def monthly_ave_evaporation_cmd(self):
@@ -361,8 +363,8 @@ class GaugeCommand(RavenConfig):
 
     def to_rv(self):
         d = asdict(self)
-        d["raincorrection_cmd"] = self.raincorrection_cmd
-        d["snowcorrection_cmd"] = self.snowcorrection_cmd
+        d["rain_correction_cmd"] = self.rain_correction_cmd
+        d["snow_correction_cmd"] = self.snow_correction_cmd
         d["monthly_ave_evaporation_cmd"] = self.monthly_ave_evaporation_cmd
         d["monthly_ave_temperature_cmd"] = self.monthly_ave_temperature_cmd
         d["data_list"] = "\n\n".join(map(str, self.data))
@@ -788,19 +790,19 @@ class LandUseClassesCommand(RavenConfig):
 
 
 @dataclass
-class RainCorrection(BaseValueCommand):
+class RainCorrectionCommand(BaseValueCommand):
     tag: str = "RainCorrection"
     value: Union[float, str] = 1.0
 
 
 @dataclass
-class SnowCorrection(BaseValueCommand):
+class SnowCorrectionCommand(BaseValueCommand):
     tag: str = "SnowCorrection"
     value: Union[float, str] = 1.0
 
 
 @dataclass
-class Routing(BaseValueCommand):
+class RoutingCommand(BaseValueCommand):
     """ROUTE_NONE, ROUTE_DIFFUSIVE_WAVE"""
 
     tag: str = "Routing"
@@ -808,5 +810,11 @@ class Routing(BaseValueCommand):
 
 
 @dataclass
-class Deaccumulate(BaseBooleanCommand):
+class DeaccumulateCommand(BaseBooleanCommand):
     tag: str = "Deaccumulate"
+
+
+@dataclass
+class AvgAnnualRunoffCommand(BaseValueCommand):
+    tag: str = "AvgAnnualRunoff"
+    value: float = None

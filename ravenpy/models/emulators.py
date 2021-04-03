@@ -43,10 +43,24 @@ class GR4JCN(Raven):
     identifier = "gr4jcn"
     templates = tuple((Path(__file__).parent / "raven-gr4j-cemaneige").glob("*.rv?"))
 
-    params = namedtuple(
-        "GR4JParams",
-        ("GR4J_X1", "GR4J_X2", "GR4J_X3", "GR4J_X4", "CEMANEIGE_X1", "CEMANEIGE_X2"),
-    )
+    # params = namedtuple(
+    #     "GR4JParams",
+    #     ("GR4J_X1", "GR4J_X2", "GR4J_X3", "GR4J_X4", "CEMANEIGE_X1", "CEMANEIGE_X2"),
+    # )
+
+    @dataclass
+    class Params:
+        GR4J_X1: float = None
+        GR4J_X2: float = None
+        GR4J_X3: float = None
+        GR4J_X4: float = None
+        CEMANEIGE_X1: float = None
+        CEMANEIGE_X2: float = None
+
+    @dataclass
+    class DerivedParams:
+        one_minus_CEMANEIGE_X2: float = None
+        GR4J_X1_hlf: float = None
 
     @dataclass
     class LandHRU(HRU):
@@ -83,13 +97,14 @@ class GR4JCN(Raven):
                     gauged=True,
                 ),
             ),
-            params=GR4JCN.params(None, None, None, None, None, None),
+            params=GR4JCN.Params(),
+            derived_params=GR4JCN.DerivedParams(),
         )
 
         self.config.rvp.tmpl = """
 # -Global snow parameters-------------------------------------
 :RainSnowTransition 0 1.0
-:AirSnowCoeff       {one_minus_CEMANEIGE_X2}  # [1/d] = 1.0 - CEMANEIGE_X2 = 1.0 - x6
+:AirSnowCoeff       {derived_params.one_minus_CEMANEIGE_X2}  # [1/d] = 1.0 - CEMANEIGE_X2 = 1.0 - x6
 :AvgAnnualSnow      {params.CEMANEIGE_X1}            # [mm]  =       CEMANEIGE_X1 =       x5
 
 # -Orographic Corrections-------------------------------------
@@ -141,7 +156,7 @@ class GR4JCN(Raven):
    [DEFAULT],    {params.GR4J_X4},        7.73
 :EndLandUseParameterList
 
-:AvgAnnualRunoff 		{avg_annual_runoff}
+{avg_annual_runoff}
 
 # List of channel profiles
 {channel_profiles}
@@ -151,15 +166,23 @@ class GR4JCN(Raven):
 
         # Initialize the stores to 1/2 full. Declare the parameters that can be user-modified
         self.rvc = RVC(soil0=None, soil1=15)
-        self.rvd = RV(one_minus_CEMANEIGE_X2=None, GR4J_X1_hlf=None)
+        # self.rvd = RV(one_minus_CEMANEIGE_X2=None, GR4J_X1_hlf=None)
 
     def derived_parameters(self):
-        self.rvd.GR4J_X1_hlf = self.rvp.params.GR4J_X1 * 1000.0 / 2.0
-        self.rvd.one_minus_CEMANEIGE_X2 = 1.0 - self.rvp.params.CEMANEIGE_X2
+        self.config.rvp.derived_params.GR4J_X1_hlf = (
+            self.config.rvp.params.GR4J_X1 * 1000.0 / 2.0
+        )
+        self.config.rvp.derived_params.one_minus_CEMANEIGE_X2 = (
+            1.0 - self.config.rvp.params.CEMANEIGE_X2
+        )
 
         # Default initial conditions if none are given
         if self.rvc.hru_state is None:
-            soil0 = self.rvd.GR4J_X1_hlf if self.rvc.soil0 is None else self.rvc.soil0
+            soil0 = (
+                self.config.rvp.derived_params.GR4J_X1_hlf
+                if self.rvc.soil0 is None
+                else self.rvc.soil0
+            )
             soil1 = self.rvc.soil1
 
         # subbassin_id -> has at least one LakeHRU
