@@ -966,7 +966,7 @@ class TestHMETS_OST:
 
 class TestMOHYSE:
     def test_simple(self):
-        model = MOHYSE()
+        model = MOHYSE("/tmp/ravenpy_debug/test_mohyse")
         params = (
             1.0,
             0.0468,
