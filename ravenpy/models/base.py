@@ -246,8 +246,9 @@ class Raven:
 
         params = self.parameters
 
-        stem = "raven-gr4j-cemaneige"
+        # stem = "raven-gr4j-cemaneige"
         # stem = "raven-routing"
+        stem = "toto"
 
         self.name = stem
 

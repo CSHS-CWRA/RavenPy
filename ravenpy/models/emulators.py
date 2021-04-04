@@ -490,17 +490,23 @@ class MOHYSE(Raven):
         :NetCDFAttribute time_coverage_end {end_date}
         """
 
+        self.config.rvh.tmpl = """
+        {subbasins}
+
+        {hrus}
+
+        :SubBasinProperties
+        #                  1.0 / MOHYSE_PARA_10,   MOHYSE_PARA_9
+           :Parameters,             GAMMA_SCALE,     GAMMA_SHAPE,
+           :Units,                          1/d,               -
+                      1,         {par_rezi_x10},       {par_x09}
+        :EndSubBasinProperties
+        """
+
         self.config.rvi.rain_snow_fraction = "RAINSNOW_DATA"
         self.config.rvi.evaporation = "PET_MOHYSE"
 
-        self.config.rvc.tmpl = """
-        :UniformInitialConditions SOIL[0] 15            # Initial conditions for the groundwater storage, in mm. DEFAULT 15 mm.
-
-        {hru_states}
-
-        {basin_states}
-        """
-
+        # This is not stricly necessary it seems
         self.config.rvc.hru_states[1] = HRUState()
         self.config.rvc.basin_states[1] = BasinIndexCommand()
 
@@ -508,6 +514,10 @@ class MOHYSE(Raven):
         self.config.rvp.derived_params.par_rezi_x10 = (
             1.0 / self.config.rvp.params.par_x10
         )
+
+        # These need to be injected in the RVH
+        self.config.rvh.par_rezi_x10 = self.config.rvp.derived_params.par_rezi_x10
+        self.config.rvh.par_x09 = self.config.rvp.params.par_x09
 
 
 class MOHYSE_OST(Ostrich, MOHYSE):

@@ -42,6 +42,19 @@ class RVV:
             return True
         return False
 
+    def get_extra_attributes(self, d):
+        """
+        Not sure about this: for the moment I use it only for certain params that must
+        be injected in the RVH by the MOHYSE emulator. The idea is to complete the `d`
+        dict used in the `to_rv` method for the template with extra attributes that have
+        been added in the emulator.
+        """
+        e = {}
+        for k, v in self.__dict__.items():
+            if k not in d:
+                e[k] = v
+        return e
+
 
 #########
 # R V C #
@@ -185,6 +198,9 @@ class RVH(RVV):
             or "",
             "reservoirs": "\n\n".join(map(str, self.reservoirs)),
         }
+
+        d.update(self.get_extra_attributes(d))
+
         return dedent(self.tmpl).format(**d)
 
 
