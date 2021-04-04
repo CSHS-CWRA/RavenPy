@@ -21,8 +21,11 @@ from ravenpy.config.commands import (
     HRUsCommand,
     HRUStateVariableTableCommand,
     LandUseClassesCommand,
+    MonthlyAverageCommand,
     ObservationDataCommand,
+    RainCorrectionCommand,
     RoutingCommand,
+    SnowCorrectionCommand,
     SoilClassesCommand,
     SoilProfilesCommand,
     StationForcingCommand,
@@ -596,6 +599,10 @@ class RVT(RVV):
 
         self.nc_index = 0
         self.grid_weights = None
+        self.rain_correction = None
+        self.snow_correction = None
+        self.monthly_ave_evaporation = None
+        self.monthly_ave_temperature = None
 
         self._nc_latitude = []
         self._nc_longitude = []
@@ -702,6 +709,10 @@ class RVT(RVV):
                 latitude=lat,
                 longitude=lon,
                 elevation=elev,
+                rain_correction=self.rain_correction,
+                snow_correction=self.snow_correction,
+                monthly_ave_evaporation=self.monthly_ave_evaporation,
+                monthly_ave_temperature=self.monthly_ave_temperature,
                 data=data,
             )
         else:
