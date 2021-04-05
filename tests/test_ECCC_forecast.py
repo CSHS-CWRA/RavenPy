@@ -46,7 +46,7 @@ class TestECCCForecast:
 
         model = GR4JCN("/tmp/ravenpy_debug/test_forecasting_GEPS")
 
-        model.rvc.parse(rvc.read_text())
+        model.config.rvc.set_from_solution(rvc.read_text())
 
         model(
             ts=(ts20,),

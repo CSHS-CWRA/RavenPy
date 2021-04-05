@@ -12,7 +12,7 @@ TS = get_local_testdata(
     "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
 )
 
-hru = BLENDED.HRU(
+hru = BLENDED.ForestHRU(
     area=4250.6, elevation=843.0, latitude=54.4848, longitude=-123.3659, slope=0.01234
 )
 

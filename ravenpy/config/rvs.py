@@ -35,12 +35,16 @@ from ravenpy.config.commands import (
 )
 
 
-class RVV:
+class RV:
     def update(self, key, value):
-        """
-        This is the general mechanism, see for more specialized ones in derived classes.
-        """
         if hasattr(self, key):
+            # Special case: the user might be trying to update `params` or `derived_params`,
+            # (which are dataclasses) by supplying a list of values (either a list, tuple of
+            # numpy array); if that's the case, cast those values into a new instance of the
+            # corresponding dataclass.
+            attr = getattr(self, key)
+            if is_dataclass(attr) and isinstance(value, (list, tuple, np.ndarray)):
+                value = attr.__class__(*value)
             setattr(self, key, value)
             return True
         return False
@@ -64,7 +68,7 @@ class RVV:
 #########
 
 
-class RVC(RVV):
+class RVC(RV):
 
     tmpl = """
     {hru_states}
@@ -151,6 +155,9 @@ class RVC(RVV):
             "hru_states": HRUStateVariableTableCommand(self.hru_states),
             "basin_states": BasinStateVariablesCommand(self.basin_states),
         }
+
+        d.update(self.get_extra_attributes(d))
+
         return dedent(self.tmpl).format(**d)
 
 
@@ -159,7 +166,7 @@ class RVC(RVV):
 #########
 
 
-class RVH(RVV):
+class RVH(RV):
 
     tmpl = """
     {subbasins}
@@ -212,7 +219,7 @@ class RVH(RVV):
 #########
 
 
-class RVI(RVV):
+class RVI(RV):
 
     tmpl = """
     """
@@ -494,7 +501,7 @@ class RVI(RVV):
 ##########
 
 
-class RVP(RVV):
+class RVP(RV):
 
     tmpl = """
     """
@@ -512,19 +519,6 @@ class RVP(RVV):
         self.avg_annual_runoff: float = None
 
         self.tmpl = tmpl or RVP.tmpl
-
-    def update(self, key, value):
-        if hasattr(self, key):
-            # Special case: the user might be trying to update `params` or `derived_params`,
-            # (which are dataclasses) by supplying a list of values (either a list, tuple of
-            # numpy array); if that's the case, cast those values into a new instance of the
-            # corresponding dataclass.
-            attr = getattr(self, key)
-            if is_dataclass(attr) and isinstance(value, (list, tuple, np.ndarray)):
-                value = attr.__class__(*value)
-            setattr(self, key, value)
-            return True
-        return False
 
     def to_rv(self):
         d = {
@@ -545,7 +539,7 @@ class RVP(RVV):
 #########
 
 
-class RVT(RVV):
+class RVT(RV):
 
     tmpl = """
     {gauge}
@@ -765,7 +759,11 @@ class Config:
             self.update(k, v)
 
     def update(self, key, value):
+        updated = False
         for rv in [self.rvc, self.rvi, self.rvh, self.rvp, self.rvt]:
+            # Note that in certain cases we might need to update a key
+            # for more than one rv object.
             if rv.update(key, value):
-                return True
-        raise AttributeError(f"No field named `{key}` found in any RV* conf class")
+                updated = True
+        if not updated:
+            raise AttributeError(f"No field named `{key}` found in any RV* conf class")
