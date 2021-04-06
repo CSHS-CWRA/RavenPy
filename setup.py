@@ -112,9 +112,11 @@ def create_external_deps_install_class(command_cls):
             command_cls.finalize_options(self)
 
         def install_binary_dep(
-            self, url, name, rev_name, binary_name, make_target="", directory=None
+            self, url, name, rev_name, binary_name, make_target="", src_folder=None
         ):
             print(f"Downloading {name} source code..")
+            print(f"{url}/{rev_name}.zip", self.external_deps_path / f"{name}.zip")
+
             urllib.request.urlretrieve(
                 f"{url}/{rev_name}.zip", self.external_deps_path / f"{name}.zip"
             )
@@ -127,17 +129,18 @@ def create_external_deps_install_class(command_cls):
 
             print(f"Compiling {name}..")
 
-            dir_flag = f"--directory=={directory}" if directory else ""
+            folder = src_folder if src_folder else rev_name
 
             try:
+                print(self.external_deps_path / folder)
+
                 subprocess.check_call(
-                    f"make {dir_flag} {make_target}",
-                    cwd=self.external_deps_path / rev_name,
+                    f"make {make_target}",
+                    cwd=self.external_deps_path / folder,
                     shell=True,
                 )
             except subprocess.CalledProcessError as e:
-                print(e)
-                raise RuntimeError(f"There was an error while compiling {name}")
+                raise RuntimeError(f"There was an error while compiling {name}") from e
 
             # Copy binary in a location which should be available on the PATH
             # Note 1: if command_cls==install, self.install_scripts should correspond to <venv>/bin or ~/.local/bin
@@ -145,9 +148,17 @@ def create_external_deps_install_class(command_cls):
             #         it would have with the install command
             scripts_dir = self.install_scripts or get_setuptools_install_scripts_dir()
             target_bin_path = Path(scripts_dir) / name
-            print(f"Copying binary to {target_bin_path}")
+
+            print(
+                f"Copying binary from "
+                f"{self.external_deps_path.joinpath(src_folder if src_folder else rev_name).joinpath(binary_name)}"
+            )
+            print(f"To {target_bin_path}")
+
             shutil.copy(
-                self.external_deps_path / rev_name / binary_name,
+                self.external_deps_path.joinpath(
+                    src_folder if src_folder else rev_name
+                ).joinpath(binary_name),
                 target_bin_path,
             )
 
@@ -164,10 +175,10 @@ def create_external_deps_install_class(command_cls):
                 self.install_binary_dep(
                     url,
                     "ostrich",
-                    "ostrich-21.03.16",
-                    "OstrichGCC",
+                    "v21.03.16",
+                    "Ostrich",
                     "GCC",
-                    directory="make",
+                    src_folder="ostrich-21.03.16/make",
                 )
 
             # This works with python setup.py install, but produces this error with pip install:
@@ -192,7 +203,6 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Natural Language :: English",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
     ],
