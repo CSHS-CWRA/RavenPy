@@ -27,11 +27,13 @@ __all__ = [
     "HMETS",
     "HBVEC",
     "BLENDED",
+    "HYPR",
     "GR4JCN_OST",
     "MOHYSE_OST",
     "HMETS_OST",
     "HBVEC_OST",
     "BLENDED_OST",
+    "HYPR_OST",
     "get_model",
     "Routing",
 ]
@@ -657,6 +659,185 @@ class BLENDED_OST(Ostrich, BLENDED):
         return self.params(*out)
 
 
+class HYPR(Raven):
+    """
+    The HYdrological model for Prairie Region (HYPR) is based on the
+    conceptual Hydrologiska Byrans Vattenbalansavdelning (HBV)-light
+    model. HBV is modified to work in the prairies by incorporating a
+    conceptual lateral-flow component to represent the pothole storage
+    complexities. HYPR can be used for prairie streamflow simulation.
+
+    References
+    ----------
+    Mohamed I. Ahmed, Amin Elshorbagy, and Alain Pietroniro (2020).
+    Toward Simple Modeling Practices in the Complex Canadian Prairie
+    Watersheds. Journal of Hydrologic Engineering, 25(6), 04020024.
+    doi: 10.1061/(ASCE)HE.1943-5584.0001922.
+    """
+
+    identifier = "hypr"
+    templates = tuple((Path(__file__).parent / "raven-hypr").glob("*.rv?"))
+
+    params = namedtuple(
+        "HYPRParams", ", ".join(["par_x{:02}".format(i) for i in range(1, 22)])
+    )
+
+    @dataclass
+    class HRU(HRU):
+        land_use_class: str = "OPEN_1"
+        veg_class: str = "FOREST"
+        soil_profile: str = "DEFAULT_P"
+        aquifer_profile: str = "[NONE]"
+        terrain_class: str = "[NONE]"
+
+    def __init__(self, *args, **kwds):
+        super().__init__(*args, **kwds)
+
+        self.rvp = RVP(
+            params=HYPR.params(*((None,) * len(HYPR.params._fields))),
+            land_use_classes=(
+                LU("FOREST", impermeable_frac=0.0, forest_coverage=0.02345),
+            ),
+        )
+        self.rvh = RVH(hrus=(HYPR.HRU(),))
+        self.rvt = RVT(**{k: nc() for k in std_vars})
+        self.rvi = RVI(
+            evaporation="PET_FROMMONTHLY",
+            ow_evaporation="PET_FROMMONTHLY",
+            rain_snow_fraction="RAINSNOW_HBV",
+        )
+        # self.rvc = RVC(soil2=0.50657, qout=1)         # ask James
+        self.rvd = RV(
+            POW_X05=None,
+            POW_X06=None,
+            monthly_ave_evaporation=MonthlyAverage(),
+            monthly_ave_temperature=MonthlyAverage(),
+        )
+
+    def derived_parameters(self):
+        self.rvd[
+            "POW_X05"
+        ] = self.rvp.params.par_x05  # 10.0**self.rvp.params.par_x05  #
+        self.rvd[
+            "POW_X06"
+        ] = self.rvp.params.par_x06  # 10.0**self.rvp.params.par_x06  #
+
+        self.rvt.snowcorrection = self.rvp.params.par_x21
+        self._monthly_average()
+
+    # TODO: Support index specification and unit changes.
+    def _monthly_average(self):
+
+        if (
+            self.rvi.evaporation == "PET_FROMMONTHLY"
+            or self.rvi.ow_evaporation == "PET_FROMMONTHLY"
+        ):
+            # If this fails, it's likely the input data is missing some necessary variables (e.g. evap).
+            if self.rvt.tas.path is not None:
+                tas = xr.open_dataset(self.rvt.tas.path)
+            else:
+                tasmax = xr.open_dataset(self.rvt.tasmax.path)[self.rvt.tasmax.var_name]
+                tasmin = xr.open_dataset(self.rvt.tasmin.path)[self.rvt.tasmin.var_name]
+                tas = (tasmax + tasmin) / 2.0
+
+            if self.rvt.evspsbl.path is not None:
+                evap = xr.open_dataset(self.rvt.evspsbl.path)[self.rvt.evspsbl.var_name]
+
+            mat = tas.groupby("time.month").mean().values
+            mae = evap.groupby("time.month").mean().values
+
+            self.rvd.update(
+                {
+                    "monthly_ave_temperature": MonthlyAverage("Temperature", mat),
+                    "monthly_ave_evaporation": MonthlyAverage("Evaporation", mae),
+                },
+                force=True,
+            )
+
+
+class HYPR_OST(Ostrich, HYPR):
+    _p = Path(__file__).parent / "ostrich-hypr"
+    templates = tuple(_p.glob("model/*.rv?")) + tuple(_p.glob("*.t??"))
+
+    def __init__(self, *args, **kwds):
+        super().__init__(*args, **kwds)
+        self.rvi.suppress_output = True
+        self.txt = Ost(
+            algorithm="DDS",
+            max_iterations=50,
+            lowerBounds=HYPR.params(
+                None,  # par_x01
+                None,  # par_x02
+                None,  # par_x03
+                None,  # par_x04
+                None,  # 10**par_x05
+                None,  # 10**par_x06
+                None,  # par_x07
+                None,  # par_x08
+                None,  # par_x09
+                None,  # par_x10
+                None,  # par_x11
+                None,  # par_x12
+                None,  # par_x13
+                None,  # par_x14
+                None,  # par_x15
+                None,  # par_x16
+                None,  # par_x17
+                None,  # par_x18
+                None,  # par_x19
+                None,  # par_x20
+                None,  # par_x21
+            ),
+            upperBounds=HYPR.params(
+                None,  # par_x01
+                None,  # par_x02
+                None,  # par_x03
+                None,  # par_x04
+                None,  # 10**par_x05
+                None,  # 10**par_x06
+                None,  # par_x07
+                None,  # par_x08
+                None,  # par_x09
+                None,  # par_x10
+                None,  # par_x11
+                None,  # par_x12
+                None,  # par_x13
+                None,  # par_x14
+                None,  # par_x15
+                None,  # par_x16
+                None,  # par_x17
+                None,  # par_x18
+                None,  # par_x19
+                None,  # par_x20
+                None,  # par_x21
+            ),
+        )
+
+    def derived_parameters(self):
+        """Derived parameters are computed by Ostrich."""
+        self._monthly_average()
+
+    def ost2raven(self, ops):
+        """Return a list of parameter names calibrated by Ostrich that match Raven's parameters.
+
+        Parameters
+        ----------
+        ops: dict
+          Optimal parameter set returned by Ostrich.
+
+        Returns
+        -------
+        HYPRParams named tuple
+          Parameters expected by Raven.
+        """
+        names = ["par_x{:02}".format(i) for i in range(1, 22)]
+        names[4] = "pow_x05"
+        names[5] = "pow_x06"
+
+        out = [ops[n] for n in names]
+        return self.params(*out)
+
+
 class Routing(Raven):
     """Routing model - no hydrological modeling"""
 
@@ -699,7 +880,7 @@ def get_model(name):
     model_cls = getattr(emulators, name, None)
 
     if model_cls is None:
-        for m in [GR4JCN, MOHYSE, HMETS, HBVEC, BLENDED]:
+        for m in [GR4JCN, MOHYSE, HMETS, HBVEC, BLENDED, HYPR]:
             if m.identifier == name:
                 model_cls = m
 
