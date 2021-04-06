@@ -53,4 +53,4 @@ Indices and tables
 .. _`Raven`: http://raven.uwaterloo.ca
 .. _`CANARIE`: https://www.canarie.ca
 .. _`docs`: http://raven.uwaterloo.ca/files/v3.0.1/RavenManual_v3.0.1.pdf
-.. _`Ouranos`_: http://ouranos.ca
+.. _`Ouranos`: http://ouranos.ca
