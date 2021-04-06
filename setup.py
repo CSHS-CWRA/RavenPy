@@ -18,8 +18,12 @@ with open("README.rst") as readme_file:
 with open("HISTORY.rst") as history_file:
     history = history_file.read()
 
+setup_requirements = ["pip<20", "wheel"]
+
 requirements = [
     "click",
+    "climpred>=2.1",
+    "dask<=2021.02.0",
     "matplotlib",
     "netCDF4",
     "numpy",
@@ -31,7 +35,6 @@ requirements = [
     "xclim>=0.23",
     "wheel",
     "xskillscore",
-    "climpred>=2.1",
 ]
 
 test_requirements = [
@@ -45,6 +48,14 @@ docs_requirements = [
 gis_requirements = [
     dependency for dependency in open("requirements_gis.txt").readlines()
 ]
+# Special GDAL handling
+try:
+    gdal_version = subprocess.run(
+        ["gdal-config", "--version"], capture_output=True
+    ).stdout.decode("utf-8")
+    gis_requirements.append(f"gdal=={gdal_version}")
+except subprocess.CalledProcessError:
+    pass
 
 dev_requirements = [
     dependency for dependency in open("requirements_dev.txt").readlines()
@@ -100,8 +111,12 @@ def create_external_deps_install_class(command_cls):
         def finalize_options(self):
             command_cls.finalize_options(self)
 
-        def install_binary_dep(self, url, name, rev_name, binary_name, make_target=""):
+        def install_binary_dep(
+            self, url, name, rev_name, binary_name, make_target="", src_folder=None
+        ):
             print(f"Downloading {name} source code..")
+            print(f"{url}/{rev_name}.zip", self.external_deps_path / f"{name}.zip")
+
             urllib.request.urlretrieve(
                 f"{url}/{rev_name}.zip", self.external_deps_path / f"{name}.zip"
             )
@@ -113,15 +128,19 @@ def create_external_deps_install_class(command_cls):
                 zip_ref.extractall(self.external_deps_path)
 
             print(f"Compiling {name}..")
+
+            folder = src_folder if src_folder else rev_name
+
             try:
+                print(self.external_deps_path / folder)
+
                 subprocess.check_call(
                     f"make {make_target}",
-                    cwd=self.external_deps_path / rev_name,
+                    cwd=self.external_deps_path / folder,
                     shell=True,
                 )
             except subprocess.CalledProcessError as e:
-                print(e)
-                raise RuntimeError(f"There was an error while compiling {name}")
+                raise RuntimeError(f"There was an error while compiling {name}") from e
 
             # Copy binary in a location which should be available on the PATH
             # Note 1: if command_cls==install, self.install_scripts should correspond to <venv>/bin or ~/.local/bin
@@ -129,9 +148,17 @@ def create_external_deps_install_class(command_cls):
             #         it would have with the install command
             scripts_dir = self.install_scripts or get_setuptools_install_scripts_dir()
             target_bin_path = Path(scripts_dir) / name
-            print(f"Copying binary to {target_bin_path}")
+
+            print(
+                f"Copying binary from "
+                f"{self.external_deps_path.joinpath(src_folder if src_folder else rev_name).joinpath(binary_name)}"
+            )
+            print(f"To {target_bin_path}")
+
             shutil.copy(
-                self.external_deps_path / rev_name / binary_name,
+                self.external_deps_path.joinpath(
+                    src_folder if src_folder else rev_name
+                ).joinpath(binary_name),
                 target_bin_path,
             )
 
@@ -142,13 +169,16 @@ def create_external_deps_install_class(command_cls):
                 self.external_deps_path.mkdir(exist_ok=True)
 
                 url = "http://www.civil.uwaterloo.ca/jmai/raven/"
-                self.install_binary_dep(url, "raven", "Raven-rev288", "Raven.exe")
+                self.install_binary_dep(url, "raven", "Raven-rev312", "Raven.exe")
+
+                url = "https://github.com/usbr/ostrich/archive/refs/tags/"
                 self.install_binary_dep(
                     url,
                     "ostrich",
-                    "Ostrich_2017-12-19_plus_progressJSON",
-                    "OstrichGCC",
+                    "v21.03.16",
+                    "Ostrich",
                     "GCC",
+                    src_folder="ostrich-21.03.16/make",
                 )
 
             # This works with python setup.py install, but produces this error with pip install:
@@ -173,7 +203,6 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Natural Language :: English",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
     ],
@@ -196,6 +225,7 @@ setup(
             "ravenpy.*",
         ],
     ),
+    setup_requires=setup_requirements,
     test_suite="tests",
     tests_require=test_requirements,
     extras_require=dict(

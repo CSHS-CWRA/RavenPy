@@ -27,9 +27,11 @@ class TestClimpredHindcastVerification:
         model = "GR4JCN"
         params = (0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
 
-        forecast_duration=3
-        ts=get_local_testdata("raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc")
-        rvc=get_local_testdata("gr4j_cemaneige/solution.rvc")
+        forecast_duration = 3
+        ts = get_local_testdata(
+            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
+        )
+        rvc = get_local_testdata("gr4j_cemaneige/solution.rvc")
 
         # Make the hindcasts for each initialization date. Here we will extract
         # ESP forecasts for a given calendar date for the years in "included_years"
@@ -41,21 +43,21 @@ class TestClimpredHindcastVerification:
         # sort it all out during its processing. Note that the format of these datasets
         # is tailor-made to be used in climpred, and thus has specific dimension names.
 
-        hindcasts,qobs=make_ESP_hindcast_dataset(model_name=model,
-                                                 forecast_date=dt.datetime(1955, 6, 30),                                                              
-                                                 included_years=list(range(1957,1959)),
-                                                 forecast_duration=forecast_duration,
-                                                 ts=ts,  
-                                                 area="4250.6",
-                                                 elevation="843.0",
-                                                 latitude=54.4848,
-                                                 longitude=-123.3659,
-                                                 params=params,
-                                                 rvc=str(rvc),
-                                                 )
-        
-        
-        # Once we have the correctly formatted datasets, Make the hindcast object for climpred        
+        hindcasts, qobs = make_ESP_hindcast_dataset(
+            model_name=model,
+            forecast_date=dt.datetime(1955, 6, 30),
+            included_years=list(range(1957, 1959)),
+            forecast_duration=forecast_duration,
+            ts=ts,
+            area="4250.6",
+            elevation="843.0",
+            latitude=54.4848,
+            longitude=-123.3659,
+            params=params,
+            rvc=str(rvc),
+        )
+
+        # Once we have the correctly formatted datasets, Make the hindcast object for climpred
 
         hindcast_object = make_climpred_hindcast_object(hindcasts, qobs)
 
