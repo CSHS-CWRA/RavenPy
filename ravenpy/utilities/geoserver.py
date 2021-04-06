@@ -73,7 +73,10 @@ def _get_location_wfs(
     """
     wfs = WebFeatureService(url=urljoin(geoserver, "wfs"), version="1.1.0", timeout=30)
     resp = wfs.getfeature(
-        typename=layer, bbox=coordinates, srsname="urn:x-ogc:def:crs:EPSG:4326"
+        typename=layer,
+        bbox=coordinates,
+        srsname="urn:x-ogc:def:crs:EPSG:4326",
+        outputFormat="application/json",
     )
 
     data = resp.read()
@@ -123,7 +126,7 @@ def _get_feature_attributes_wfs(
         version="1.1.0",
         request="GetFeature",
         typename=layer,
-        outputFormat="json",
+        outputFormat="application/json",
         filter=filterxml,
     )
 
