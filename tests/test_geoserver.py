@@ -212,7 +212,7 @@ class TestWFS:
         state_name = "Nevada"
         usa_admin_bounds = "public:usa_admin_boundaries"
 
-        vector_url = self.geoserver._get_feature_attributes_wfs(
+        vector_url = self.geoserver._filter_feature_attributes_wfs(
             attribute="STATE_NAME", value=state_name, layer=usa_admin_bounds
         )
         gdf = self.gpd.read_file(vector_url)

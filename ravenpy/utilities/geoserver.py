@@ -84,33 +84,69 @@ def _get_location_wfs(
 
 
 def _get_feature_attributes_wfs(
-    attribute: str = None,
-    value: Union[str, float, int] = None,
-    layer: str = None,
+    attribute: list,
+    layer: str,
     geoserver: str = GEO_URL,
 ) -> str:
-    """Return a URL that formats and returns remote GetFeatures request from a hosted WFS dataset.
+    """Return WFS GetFeature URL request for attribute values.
 
-    For geographic rasters, subsetting is based on WGS84 (Long, Lat) boundaries. If not geographic, subsetting based
-    on projected coordinate system (Easting, Northing) boundaries.
+    Making this request will return a JSON response.
 
     Parameters
     ----------
-    attribute : str
-      Attribute/field to be queried.
-    value: Union[str, float, int]
-      Value for attribute queried.
+    attribute : list
+      Attribute/field names.
+    layer : str
+      Name of geographic layer queried.
     geoserver: str
       The address of the geoserver housing the layer to be queried. Default: http://pavics.ouranos.ca/geoserver/.
 
     Returns
     -------
     str
-      URL to the GeoJSON-encoded WFS response.
+      WFS request URL.
+
+    Notes
+    -----
+    Non-existent attributes will raise a cryptic DriverError from fiona.
 
     """
-    if attribute is None or value is None:
-        raise NotImplementedError()
+    params = dict(
+        service="WFS",
+        version="2.0.0",
+        request="GetFeature",
+        typename=layer,
+        outputFormat="application/json",
+        propertyName=",".join(attribute),
+    )
+
+    return Request("GET", url=urljoin(geoserver, "wfs"), params=params).prepare().url
+
+
+def _filter_feature_attributes_wfs(
+    attribute: str,
+    value: Union[str, float, int],
+    layer: str,
+    geoserver: str = GEO_URL,
+) -> str:
+    """Return WFS GetFeature URL request filtering geographic features based on a property's value.
+
+    Parameters
+    ----------
+    attribute : str
+      Attribute/field name.
+    value: Union[str, float, int]
+      Value for attribute queried.
+    layer : str
+      Name of geographic layer queried.
+    geoserver: str
+      The address of the geoserver housing the layer to be queried. Default: http://pavics.ouranos.ca/geoserver/.
+
+    Returns
+    -------
+    str
+      WFS request URL.
+    """
 
     try:
         attribute = str(attribute)
@@ -130,9 +166,7 @@ def _get_feature_attributes_wfs(
         filter=filterxml,
     )
 
-    q = Request("GET", url=urljoin(geoserver, "wfs"), params=params).prepare().url
-
-    return q
+    return Request("GET", url=urljoin(geoserver, "wfs"), params=params).prepare().url
 
 
 def _determine_upstream_ids(
@@ -522,7 +556,7 @@ def get_hydro_routing_attributes_wfs(
       Value for attribute queried.
     level : int
       Level of granularity requested for the lakes vector (range(7,13)). Default: 12.
-    lakes : bool
+    lakes : {"1km", "all"}
       Query the version of dataset with lakes under 1km in width removed ("1km") or return all lakes ("all").
     geoserver: str
       The address of the geoserver housing the layer to be queried. Default: http://pavics.ouranos.ca/geoserver/.
