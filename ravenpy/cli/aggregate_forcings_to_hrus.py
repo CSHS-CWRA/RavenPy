@@ -185,16 +185,63 @@ def aggregate_forcings_to_hrus(
             # filter all weights for current HRU
             idx = np.where(weights_data_lon_lat_ids[:, 0] == hru)[0]
 
-            for ii in idx:
+            # create an array that contains weights for each time step
+            # --> weights need to be rescaled if NODATA values appear
+            # --> transpose such that we can broadcast during rescaling later
+            # --> shape = (ncells,ntime) with ncells = len(idx)
+            weights_nodata = np.transpose(
+                np.tile(weights_data_lon_lat_ids[idx, 3], (ntime, 1))
+            )
+
+            # go through all time steps and zero out weights where grid cell is NODATA
+            for iii, ii in enumerate(idx):
 
                 # bring idx for input_var in appropriate order
                 idx_input = [slice(0, ntime, 1), slice(0, ntime, 1), slice(0, ntime, 1)]
                 idx_input[idx_lon_dim] = int(weights_data_lon_lat_ids[ii, 1]) - min_lon
                 idx_input[idx_lat_dim] = int(weights_data_lon_lat_ids[ii, 2]) - min_lat
                 idx_input = tuple(idx_input)
-                agg_var[:, ihru] += (
-                    input_var_bb[idx_input] * weights_data_lon_lat_ids[ii, 3]
+
+                weights_nodata[iii] = np.where(
+                    input_var_bb[idx_input].mask, 0.0, weights_nodata[iii]
                 )
+
+            # rescale
+            # --> columns where all grid cells are nan might cause a warning:
+            #     "RuntimeWarning: invalid value encountered in true_divide"
+            old_settings = np.seterr()
+            np.seterr(invalid="ignore")
+            # "nan_to_num" automatically converts NaN's to 0
+            weights_nodata = np.nan_to_num(
+                weights_nodata / np.sum(weights_nodata, axis=0)
+            )
+            np.seterr(**old_settings)  # reset to default
+
+            # derive aggregate
+            for iii, ii in enumerate(idx):
+
+                # bring idx for input_var in appropriate order
+                idx_input = [slice(0, ntime, 1), slice(0, ntime, 1), slice(0, ntime, 1)]
+                idx_input[idx_lon_dim] = int(weights_data_lon_lat_ids[ii, 1]) - min_lon
+                idx_input[idx_lat_dim] = int(weights_data_lon_lat_ids[ii, 2]) - min_lat
+                idx_input = tuple(idx_input)
+
+                # this does not work when NODATA values occur
+                # agg_var[:, ihru] += (
+                #     input_var_bb[idx_input] * weights_data_lon_lat_ids[ii, 3]
+                # )
+
+                # this makes sure to handle NODATA cells properly
+                agg_var[:, ihru] += input_var_bb[idx_input].data * weights_nodata[iii]
+
+            # if all grid cells have weight 0.0 (i.e., all invalid) set value to NODATA
+            idx_t_all_cells_nodata = np.where(
+                np.sum(weights_nodata[:, :], axis=0) == 0.0
+            )
+            if len(idx_t_all_cells_nodata[0]) > 0:
+                # only if such cells are found
+                # otherwise "input_var.missing_value" might not even exist
+                agg_var[idx_t_all_cells_nodata, ihru] = input_var.missing_value
 
             # create new weights: now each HRU is exactly one "grid-cell"
             new_weights.append(tuple([hru, ihru, 1.0]))
