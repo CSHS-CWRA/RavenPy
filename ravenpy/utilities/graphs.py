@@ -337,14 +337,14 @@ def ts_fit_graph(ts, params):
 
         # Plot histogram of time series as density then as a normal count.
         density, bins, patches = ax.hist(
-            ts.isel(nbasins=i).dropna(dim="time"),
+            t,
             alpha=0.5,
             density=True,
             bins="auto",
             label="__nolabel__",
         )
         ax2.hist(
-            ts.isel(nbasins=i).dropna(dim="time"),
+            t,
             bins=bins,
             facecolor=(1, 1, 1, 0.01),
             edgecolor="gray",
@@ -370,7 +370,6 @@ def ts_fit_graph(ts, params):
 
     plt.tight_layout()
     return fig
-
 
 
 def forecast(file, fcst_var="q_sim"):
