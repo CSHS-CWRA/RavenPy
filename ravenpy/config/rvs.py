@@ -36,6 +36,10 @@ from ravenpy.config.commands import (
 
 
 class RV:
+    def __init__(self, **kwds):
+        # TODO: find something better than this!
+        self.is_ostrich_tmpl = False
+
     def update(self, key, value):
         if hasattr(self, key):
             # Special case: the user might be trying to update `params` or `derived_params`,
@@ -77,6 +81,7 @@ class RVC(RV):
     """
 
     def __init__(self, tmpl=None):
+        super().__init__()
         self.hru_states = {}
         self.basin_states = {}
 
@@ -185,6 +190,7 @@ class RVH(RV):
     """
 
     def __init__(self, tmpl=None):
+        super().__init__()
         self.hrus = ()
         self.subbasins = ()
         self.land_subbasin_ids = ()
@@ -262,16 +268,18 @@ class RVI(RV):
     )
 
     def __init__(self, tmpl=None):
+        super().__init__()
         self.name = None
         self.area = None
         self.elevation = None
         self.latitude = None
         self.longitude = None
+        self.run_name = "run"
         self.run_index = 0
         self.raven_version = "3.0.1 rev#275"
+        self.time_step = 1.0
 
         self._routing = "ROUTE_NONE"
-        self._run_name = "run"
         self._start_date = None
         self._end_date = None
         self._now = None
@@ -279,23 +287,11 @@ class RVI(RV):
         self._evaporation = None
         self._ow_evaporation = None
         self._duration = 1
-        self._time_step = 1.0
         self._evaluation_metrics = "NASH_SUTCLIFFE RMSE"
         self._suppress_output = False
         self._calendar = "standard"
 
         self.tmpl = tmpl or RVI.tmpl
-
-    @property
-    def run_name(self):
-        return self._run_name
-
-    @run_name.setter
-    def run_name(self, x):
-        if isinstance(x, str):
-            self._run_name = x
-        else:
-            raise ValueError("Must be string")
 
     @property
     def start_date(self):
@@ -344,14 +340,6 @@ class RVI(RV):
 
         if x > 0:
             self._update_end_date()
-
-    @property
-    def time_step(self):
-        return self._time_step
-
-    @time_step.setter
-    def time_step(self, x):
-        self._time_step = x
 
     @property
     def evaluation_metrics(self):
@@ -507,6 +495,8 @@ class RVP(RV):
     """
 
     def __init__(self, tmpl=None):
+        super().__init__()
+
         # Model specific params and derived params
         self.params = None
         self.derived_params = None
@@ -578,6 +568,7 @@ class RVT(RV):
     }
 
     def __init__(self, rvh, tmpl=None):
+        super().__init__()
 
         self._rvh = rvh
         self._var_cmds = {
@@ -747,23 +738,97 @@ class RVT(RV):
         return dedent(self.tmpl).format(**d)
 
 
+#########
+# O s t #
+#########
+
+
+class Ost(RV):
+
+    tmpl = """
+    """
+
+    def __init__(self, tmpl=None, identifier=None):
+        super().__init__()
+
+        self._max_iterations = None
+        self._random_seed = None
+        self.lowerBounds = None
+        self.upperBounds = None
+        self.algorithm = None
+
+        # TODO: find something better than this
+        self.identifier = identifier
+
+        self.tmpl = tmpl or Ost.tmpl
+
+    @property
+    def max_iterations(self):
+        return self._max_iterations
+
+    @max_iterations.setter
+    def max_iterations(self, x):
+        if x < 1:
+            raise ValueError("Max iteration should be a positive integer: {}".format(x))
+        else:
+            self._max_iterations = x
+
+    @property
+    def random_seed(self):
+        if self._random_seed is not None:
+            return "RandomSeed {}".format(self._random_seed)
+        return ""
+
+    @random_seed.setter
+    def random_seed(self, value):
+        if value >= 0:
+            self._random_seed = value
+        else:
+            self._random_seed = None
+
+    def to_rv(self):
+        # Attributes
+        a = list(filter(lambda x: not x.startswith("_"), self.__dict__))
+
+        # Properties
+        p = list(
+            filter(
+                lambda x: isinstance(getattr(self.__class__, x, None), property),
+                dir(self),
+            )
+        )
+
+        d = {attr: getattr(self, attr) for attr in a + p}
+
+        return dedent(self.tmpl).format(**d)
+
+
 class Config:
-    def __init__(self, **kwargs):
+    def __init__(self, identifier, **kwargs):
         self.rvc = RVC()
         self.rvh = RVH()
         self.rvi = RVI()
         self.rvp = RVP()
         self.rvt = RVT(self.rvh)
+        self.ost = Ost(identifier=identifier)
+        self.identifier = identifier
+        self.update(**kwargs)
 
-        for k, v in kwargs.items():
-            self.update(k, v)
+    def update(self, key=None, value=None, **kwargs):
+        def _update_single(key, value):
+            updated = False
+            for rv in [self.rvc, self.rvi, self.rvh, self.rvp, self.rvt, self.ost]:
+                # Note that in certain cases we might need to update a key
+                # for more than one rv object.
+                if rv.update(key, value):
+                    updated = True
+            if not updated:
+                raise AttributeError(
+                    f"No field named `{key}` found in any RV* conf class"
+                )
 
-    def update(self, key, value):
-        updated = False
-        for rv in [self.rvc, self.rvi, self.rvh, self.rvp, self.rvt]:
-            # Note that in certain cases we might need to update a key
-            # for more than one rv object.
-            if rv.update(key, value):
-                updated = True
-        if not updated:
-            raise AttributeError(f"No field named `{key}` found in any RV* conf class")
+        if key is None and value is None:
+            for k, v in kwargs.items():
+                _update_single(k, v)
+        else:
+            _update_single(key, value)

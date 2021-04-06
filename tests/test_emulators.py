@@ -2,7 +2,7 @@ import datetime as dt
 import os
 import tempfile
 import zipfile
-from dataclasses import replace
+from dataclasses import astuple, replace
 from pathlib import Path
 
 import numpy as np
@@ -31,7 +31,7 @@ from ravenpy.models import (
     MOHYSE,
     MOHYSE_OST,
     Raven,
-    Routing,
+    RavenMultiModel,
     Sub,
     get_average_annual_runoff,
 )
@@ -55,13 +55,13 @@ def input2d(tmpdir):
 
 def test_race():
     model1 = GR4JCN()
-    model1.rvi.suppress_output = True
+    model1.config.rvi.suppress_output = True
     model2 = GR4JCN()
     ost = GR4JCN_OST()
 
-    assert model1.rvi.suppress_output.startswith(":SuppressOutput")
-    assert model2.rvi.suppress_output == ""
-    assert ost.rvi.suppress_output.startswith(":SuppressOutput")
+    assert model1.config.rvi.suppress_output.startswith(":SuppressOutput")
+    assert model2.config.rvi.suppress_output == ""
+    assert ost.config.rvi.suppress_output.startswith(":SuppressOutput")
 
 
 # Salmon catchment is now split into land- and lake-part.
@@ -80,8 +80,14 @@ salmon_land_hru_2 = dict(
 
 
 class TestGR4JCN:
+    def test_identifier(self):
+        assert GR4JCN().config.identifier == "gr4jcn"
+        assert GR4JCN(identifier="toto").config.identifier == "toto"
+        assert Raven().config.identifier == "raven"
+        assert Raven(identifier="toto").config.identifier == "toto"
+
     def test_simple(self):
-        model = GR4JCN("/tmp/ravenpy_debug/test_simple")
+        model = GR4JCN()  # "/tmp/ravenpy_debug/test_simple")
 
         model.config.rvi.start_date = dt.datetime(2000, 1, 1)
         model.config.rvi.end_date = dt.datetime(2002, 1, 1)
@@ -675,7 +681,7 @@ class TestGR4JCN:
 
 class TestGR4JCN_OST:
     def test_simple(self):
-        model = GR4JCN_OST()
+        model = GR4JCN_OST()  # "/tmp/ravenpy_debug/test_gr4j_ost")
         model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
         params = (0.529, -3.396, 407.29, 1.072, 16.9, 0.053)
         low = (0.01, -15.0, 10.0, 0.0, 1.0, 0.0)
@@ -702,7 +708,8 @@ class TestGR4JCN_OST:
         # Algorithm:          DDS
         # :StartDate          1954-01-01 00:00:00
         # :Duration           208
-        opt_para = model.calibrated_params
+        a = model.calibrated_params
+        opt_para = astuple(model.calibrated_params)
         opt_func = model.obj_func
 
         np.testing.assert_almost_equal(
@@ -711,6 +718,7 @@ class TestGR4JCN_OST:
             4,
             err_msg="calibrated parameter set is not matching expected value",
         )
+
         np.testing.assert_almost_equal(
             opt_func,
             -0.50717,
@@ -729,12 +737,14 @@ class TestGR4JCN_OST:
         #                                 err_msg='calibrated NSE is not matching expected value')
         gr4j = GR4JCN()
         gr4j.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
+
         gr4j(
             TS,
             start_date=dt.datetime(1954, 1, 1),
             duration=208,
             params=model.calibrated_params,
         )
+
         np.testing.assert_almost_equal(
             gr4j.diagnostics["DIAG_NASH_SUTCLIFFE"], d["DIAG_NASH_SUTCLIFFE"]
         )
@@ -786,7 +796,7 @@ class TestHMETS:
 
 class TestHMETS_OST:
     def test_simple(self):
-        model = HMETS_OST()
+        model = HMETS_OST()  # "/tmp/ravenpy_debug/test_hmets_ost")
         params = (
             9.5019,
             0.2774,
@@ -1189,7 +1199,7 @@ class TestHBVEC:
 
 class TestHBVEC_OST:
     def test_simple(self):
-        model = HBVEC_OST()
+        model = HBVEC_OST()  # "/tmp/ravenpy_debug/test_hbvec_ost")
         params = (
             0.05984519,
             4.072232,
@@ -1280,7 +1290,7 @@ class TestHBVEC_OST:
         d = model.diagnostics
         np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -2.25991e-01, 4)
 
-        opt_para = model.calibrated_params
+        opt_para = astuple(model.calibrated_params)
         opt_func = model.obj_func
 
         # Random number seed: 123                         #

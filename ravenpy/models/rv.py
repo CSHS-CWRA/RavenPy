@@ -190,42 +190,42 @@ class RV(collections.abc.Mapping, RavenConfig):
                 self[key] = val
 
 
-class Ost(RV):
-    def __init__(self, **kwargs):
-        self._max_iterations = None
-        self._random_seed = None
+# class Ost(RV):
+#     def __init__(self, **kwargs):
+#         self._max_iterations = None
+#         self._random_seed = None
 
-        super(Ost, self).__init__(**kwargs)
+#         super(Ost, self).__init__(**kwargs)
 
-    @property
-    def max_iterations(self):
-        return self._max_iterations
+#     @property
+#     def max_iterations(self):
+#         return self._max_iterations
 
-    @max_iterations.setter
-    def max_iterations(self, x):
-        if x < 1:
-            raise ValueError("Max iteration should be a positive integer: {}".format(x))
-        else:
-            self._max_iterations = x
+#     @max_iterations.setter
+#     def max_iterations(self, x):
+#         if x < 1:
+#             raise ValueError("Max iteration should be a positive integer: {}".format(x))
+#         else:
+#             self._max_iterations = x
 
-    @property
-    def random_seed(self):
-        if self._random_seed is not None:
-            return "RandomSeed {}".format(self._random_seed)
-        return ""
+#     @property
+#     def random_seed(self):
+#         if self._random_seed is not None:
+#             return "RandomSeed {}".format(self._random_seed)
+#         return ""
 
-    @random_seed.setter
-    def random_seed(self, value):
-        if value >= 0:
-            self._random_seed = value
-        else:
-            self._random_seed = None
+#     @random_seed.setter
+#     def random_seed(self, value):
+#         if value >= 0:
+#             self._random_seed = value
+#         else:
+#             self._random_seed = None
 
 
-def isinstance_namedtuple(x):
-    a = isinstance(x, tuple)
-    b = getattr(x, "_fields", None) is not None
-    return a and b
+# def isinstance_namedtuple(x):
+#     a = isinstance(x, tuple)
+#     b = getattr(x, "_fields", None) is not None
+#     return a and b
 
 
 def guess_linear_transform(actual, expected):
