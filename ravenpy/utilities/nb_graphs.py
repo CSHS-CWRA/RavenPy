@@ -4,14 +4,23 @@ This module contains functions creating web-friendly interactive graphics using 
 The graphic outputs are meant to be displayed in a notebook.
 In a console, use `hvplot.show(fig)` to render the figures.
 """
-import holoviews as hv
-import hvplot.xarray
+from pathlib import Path
+
 import numpy as np
 import xarray as xr
-
-# from holoviews.streams import Buffer
-# from bokeh.models import Range1d, LinearAxis
 from matplotlib import pyplot as plt
+
+from . import docs_import_error_message
+
+try:
+    import holoviews as hv
+    import hvplot.xarray
+
+    # from holoviews.streams import Buffer
+    # from bokeh.models import Range1d, LinearAxis
+except (ImportError, ModuleNotFoundError) as e:
+    msg = docs_import_error_message.format(Path(__file__).stem)
+    raise ImportError(msg) from e
 
 hv.extension("bokeh")
 
