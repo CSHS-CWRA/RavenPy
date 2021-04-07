@@ -187,17 +187,38 @@ class Raven:
         """Subclassed by emulators. Defines model parameters that are a function of other parameters."""
         return
 
+    def configure(self, fns):
+        """Read configuration files."""
+        # for fn in fns:
+        # shutil.copy(fn, self.model_path / fn.name)
+        # self.rvfiles =
+        # rvf = RVFile(fn)
+        # if rvf.ext not in self._rvext + ("txt",):
+        #     raise ValueError(
+        #         "rv contains unrecognized configuration file keys : {}.".format(
+        #             rvf.ext
+        #         )
+        #     )
+        # else:
+        #     if rvf.ext.startswith("rv"):
+        #         setattr(self, "name", rvf.stem)
+        #         self.rvfiles[rvf.ext] = rvf
+        #     elif rvf.ext == "txt":
+        #         self.rvfiles[rvf.stem] = rvf
+        #     else:
+        #         raise ValueError
+
     def _dump_rv(self):
         """Write configuration files to disk."""
 
         identifier = self.config.identifier
 
-        for rvs in ["rvt", "rvh", "rvp", "rvc", "rvi"]:
-            rvo = getattr(self.config, rvs)
+        for rvx in ["rvt", "rvh", "rvp", "rvc", "rvi"]:
+            rvo = getattr(self.config, rvx)
             if rvo.is_ostrich_tmpl:
-                fn = self.exec_path / f"{identifier}.{rvs}.tpl"
+                fn = self.exec_path / f"{identifier}.{rvx}.tpl"
             else:
-                fn = self.model_path / f"{identifier}.{rvs}"
+                fn = self.model_path / f"{identifier}.{rvx}"
             with open(fn, "w") as f:
                 f.write(rvo.to_rv())
 
@@ -610,9 +631,9 @@ class Raven:
         """
         solution = self.solution
         if isinstance(solution, dict):
-            return get_states(solution, hru_index, basin_index)
+            return RVC.get_states(solution, hru_index, basin_index)
         else:
-            return zip(*[get_states(s, hru_index, basin_index) for s in solution])
+            return zip(*[RVC.get_states(s, hru_index, basin_index) for s in solution])
 
     @property
     def diagnostics(self):

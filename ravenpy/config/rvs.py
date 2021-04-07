@@ -19,6 +19,7 @@ from ravenpy.config.commands import (
     GriddedForcingCommand,
     GridWeightsCommand,
     HRUsCommand,
+    HRUState,
     HRUStateVariableTableCommand,
     LandUseClassesCommand,
     MonthlyAverageCommand,
@@ -140,6 +141,32 @@ class RVC(RV):
 
         lines = iter(solution_str.splitlines())
         return _parser(lines)
+
+    @staticmethod
+    def get_states(solution, hru_index=None, basin_index=None):
+        """Return state variables.
+        Parameters
+        ----------
+        solution : dict
+          `solution.rvc` parsed content.
+        """
+        hru_state = {}
+        basin_state = {}
+
+        for index, params in solution["HRUStateVariableTable"]["data"].items():
+            hru_state[index] = HRUState(*params)
+
+        for index, raw in solution["BasinStateVariables"]["BasinIndex"].items():
+            params = {k.lower(): v for (k, v) in raw.items()}
+            basin_state[index] = BasinIndexCommand(**params)
+
+        if hru_index is not None:
+            hru_state = hru_state[hru_index]
+
+        if basin_index is not None:
+            basin_state = basin_state[basin_index]
+
+        return hru_state, basin_state
 
     def set_from_solution(self, solution_str):
 
