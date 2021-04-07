@@ -18,7 +18,7 @@ with open("README.rst") as readme_file:
 with open("HISTORY.rst") as history_file:
     history = history_file.read()
 
-setup_requirements = ["pip<20", "wheel"]
+setup_requirements = ["pip", "wheel"]
 
 requirements = [
     "click",
