@@ -19,9 +19,11 @@ from ravenpy.config.commands import (
     SBGroupPropertyMultiplierCommand,
     SoilClassesCommand,
     SoilProfilesCommand,
+    Sub,
     VegetationClassesCommand,
 )
-from ravenpy.models import (
+from ravenpy.config.importers import *
+from ravenpy.models import (  # Sub,
     GR4JCN,
     GR4JCN_OST,
     HBVEC,
@@ -32,7 +34,6 @@ from ravenpy.models import (
     MOHYSE_OST,
     Raven,
     RavenMultiModel,
-    Sub,
     get_average_annual_runoff,
 )
 from ravenpy.utilities.testdata import get_local_testdata
@@ -1365,7 +1366,7 @@ class TestHBVEC_OST:
 
 
 class TestRouting:
-    importers = pytest.importorskip("ravenpy.config.importers")
+    # importers = pytest.importorskip("ravenpy.config.importers")
 
     def test_lievre_tutorial(self):
         """
@@ -1398,11 +1399,54 @@ class TestRouting:
         # Model #
         #########
 
-        model = Routing("/tmp/ravenpy_debug/test_lievre")
+        model = Raven(identifier="raven-lievre-routing")
 
         #######
         # RVI #
         #######
+
+        model.config.rvi.tmpl = """
+        :Calendar              {calendar}
+        :RunName               {run_name}-{run_index}
+        :StartDate             {start_date}
+        :EndDate               {end_date}
+        :TimeStep              {time_step}
+        :Method                ORDERED_SERIES                # Numerical method used for simulation
+
+        :CatchmentRoute        ROUTE_DUMP                    # Catchment routing method, used to convey water from the catchment tributaries and rivulets to the subbasin outlets. DEFAULT ROUTE_DUMP, which instantly ‘dumps’ all water in the subbasin stream reach.
+        :Routing               ROUTE_DIFFUSIVE_WAVE          # Channel routing method which is used to transport water from upstream to downstream within the main subbasin channels. DEFAULT ROUTE_DIFFUSIVE_WAVE, which analytically solves the diffusive wave equation along the reach using a constant reference celerity.
+        :PrecipIceptFract      PRECIP_ICEPT_NONE             # Estimation of the precipitation interception fraction. In this routing model, stream input(s) are "pretending" to be precipitation going into Raven, thus using DEFAULT PRECIP_ICEPT_NONE to indicate no interception processes are adopted.
+        :PotentialMeltMethod   POTMELT_NONE                  # Estimation of the potential snow melt. In this routing model, snow melt processes are not relevant, thus using DEFAULT POTMELT_NONE method.
+        :SoilModel             SOIL_ONE_LAYER                # In this routing model, use DEFAULT SOIL_ONE_LAYER to define single soil layer structure.
+
+        :HydrologicProcesses
+          :Precipitation     PRECIP_RAVEN             ATMOS_PRECIP     PONDED_WATER          # Moves stream input(s) from ATMOS_PRECIP to PONDED_WATER storage (waiting for runoff). Use DEFAULT PRECIP_RAVEN method.
+          :Flush             RAVEN_DEFAULT            PONDED_WATER     SURFACE_WATER         # Moves water from PONDED_WATER to SURFACE_WATER (routed to outlet). Use DEFAULT RAVEN_DEFAULT method.
+        :EndHydrologicProcesses
+
+
+        # Output Options
+        #
+        #:WriteForcingFunctions
+        # Defines the hydrograph performance metrics output by Raven. Either one or multiple is acceptable.
+        :EvaluationMetrics {evaluation_metrics}
+        :WriteNetcdfFormat  yes
+        #:NoisyMode
+        :SilentMode
+        :PavicsMode
+        {suppress_output}
+
+        :NetCDFAttribute title Simulated river discharge
+        :NetCDFAttribute history Created on {now} by Raven
+        :NetCDFAttribute references  Craig, J.R., and the Raven Development Team, Raven user's and developer's manual (Version 2.8), URL: http://raven.uwaterloo.ca/ (2018).
+        :NetCDFAttribute comment Raven Hydrological Framework version {raven_version}
+
+        :NetCDFAttribute model_id routing
+
+        :NetCDFAttribute time_frequency day
+        :NetCDFAttribute time_coverage_start {start_date}
+        :NetCDFAttribute time_coverage_end {end_date}
+        """
 
         streaminputs = xr.open_dataset(vic_streaminputs_nc_path)
 
@@ -1421,7 +1465,7 @@ class TestRouting:
         # RVH #
         #######
 
-        rvh_importer = self.importers.RoutingProductShapefileImporter(
+        rvh_importer = RoutingProductShapefileImporter(
             routing_product_shp_path, hru_aspect_convention="ArcGIS"
         )
         rvh_config = rvh_importer.extract()
@@ -1453,6 +1497,20 @@ class TestRouting:
         # must correspond to the values of certain fields of the Routing Product:
         # LAND_USE_C, VEG_C, SOIL_PROF
 
+        model.config.rvp.tmpl = """
+        {soil_classes}
+
+        {soil_profiles}
+
+        {vegetation_classes}
+
+        {land_use_classes}
+
+        {avg_annual_runoff}
+
+        {channel_profiles}
+        """
+
         model.config.rvp.avg_annual_runoff = 594
         model.config.rvp.soil_classes = [SoilClassesCommand.Record("AQUIFER")]
         model.config.rvp.soil_profiles = [
@@ -1473,11 +1531,11 @@ class TestRouting:
         # RVT #
         #######
 
-        streaminputs_importer = self.importers.RoutingProductGridWeightImporter(
+        streaminputs_importer = RoutingProductGridWeightImporter(
             vic_streaminputs_nc_path, routing_product_shp_path
         )
 
-        temperatures_importer = self.importers.RoutingProductGridWeightImporter(
+        temperatures_importer = RoutingProductGridWeightImporter(
             vic_temperatures_nc_path, routing_product_shp_path
         )
 

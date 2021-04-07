@@ -32,8 +32,6 @@ from ravenpy.config.commands import (
 )
 from ravenpy.config.rvs import RVC, RVI, Config
 
-from .rv import RV, RVFile
-
 RAVEN_EXEC_PATH = os.getenv("RAVENPY_RAVEN_BINARY_PATH") or shutil.which("raven")
 OSTRICH_EXEC_PATH = os.getenv("RAVENPY_OSTRICH_BINARY_PATH") or shutil.which("ostrich")
 
@@ -194,7 +192,6 @@ class Raven:
 
         identifier = self.config.identifier
 
-        # RVs
         for rvs in ["rvt", "rvh", "rvp", "rvc", "rvi"]:
             rvo = getattr(self.config, rvs)
             if rvo.is_ostrich_tmpl:
@@ -203,17 +200,6 @@ class Raven:
                 fn = self.model_path / f"{identifier}.{rvs}"
             with open(fn, "w") as f:
                 f.write(rvo.to_rv())
-
-        # OST
-        with open(self.exec_path / f"ostIn.txt", "w") as f:
-            f.write(self.config.ost.to_rv())
-
-        import shutil
-
-        shutil.copy(
-            "/home/christian/gh/RavenPy/ravenpy/models/ostrich-gr4j-cemaneige/OstRandomNumbers.txt",
-            self.exec_path / "OstRandomNumbers.txt",
-        )
 
     def setup(self, overwrite=False):
         """Create directory structure to store model input files, executable and output results.
@@ -765,6 +751,22 @@ class Ostrich(Raven):
 
         # Create symbolic link to executable
         os.symlink(self.ostrich_exec, str(self.cmd))
+
+    def _dump_rv(self):
+        """Write configuration files to disk."""
+
+        super()._dump_rv()
+
+        # OST
+        with open(self.exec_path / f"ostIn.txt", "w") as f:
+            f.write(self.config.ost.to_rv())
+
+        import shutil
+
+        shutil.copy(
+            "/home/christian/gh/RavenPy/ravenpy/models/ostrich-gr4j-cemaneige/OstRandomNumbers.txt",
+            self.exec_path / "OstRandomNumbers.txt",
+        )
 
     def parse_results(self):
         """Store output files in the self.outputs dictionary."""

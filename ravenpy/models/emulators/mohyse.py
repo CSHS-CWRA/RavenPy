@@ -2,9 +2,8 @@ from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 
-from ravenpy.config.commands import BasinIndexCommand
+from ravenpy.config.commands import HRU, LU, BasinIndexCommand, HRUState, Sub
 from ravenpy.models.base import Ostrich, Raven
-from ravenpy.models.rv import HRU, LU, RV, HRUState, Sub
 
 from .gr4jcn import GR4JCN
 
@@ -416,10 +415,6 @@ class MOHYSE_OST(Ostrich, MOHYSE):
                 # above intializes DDS to parameter values IN the initial model input files
         EndDDSAlg
         """
-
-        # TODO: find a better way to implement inter-RV value sharing/injection
-        self.config.ost.run_name = self.config.rvi.run_name
-        self.config.ost.run_index = self.config.rvi.run_index
 
     def derived_parameters(self):
         """  Derived parameters are computed by Ostrich.  """

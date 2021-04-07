@@ -748,8 +748,10 @@ class Ost(RV):
     tmpl = """
     """
 
-    def __init__(self, tmpl=None, identifier=None):
+    def __init__(self, rvi, tmpl=None, identifier=None):
         super().__init__()
+
+        self._rvi = rvi
 
         self._max_iterations = None
         self._random_seed = None
@@ -787,6 +789,10 @@ class Ost(RV):
             self._random_seed = None
 
     def to_rv(self):
+        # Get those from RVI (there's probably a better way to do this!)
+        self.run_name = self._rvi.run_name
+        self.run_index = self._rvi.run_index
+
         # Attributes
         a = list(filter(lambda x: not x.startswith("_"), self.__dict__))
 
@@ -810,7 +816,7 @@ class Config:
         self.rvi = RVI()
         self.rvp = RVP()
         self.rvt = RVT(self.rvh)
-        self.ost = Ost(identifier=identifier)
+        self.ost = Ost(self.rvi, identifier=identifier)
         self.identifier = identifier
         self.update(**kwargs)
 

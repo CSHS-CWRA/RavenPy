@@ -109,6 +109,10 @@ class SubBasinsCommand(RavenConfig):
         return dedent(self.template).format(subbasin_records="\n".join(recs))
 
 
+# For convenience
+Sub = SubBasinsCommand.Record
+
+
 @dataclass
 class HRUsCommand(RavenConfig):
     """HRUs command (RVH)."""
@@ -150,6 +154,10 @@ class HRUsCommand(RavenConfig):
     def to_rv(self):
         recs = [f"    {hru}" for hru in self.hrus]
         return dedent(self.template).format(hru_records="\n".join(recs))
+
+
+# For convenience
+HRU = HRUsCommand.Record
 
 
 @dataclass
@@ -630,6 +638,10 @@ class HRUStateVariableTableCommand(RavenConfig):
         )
 
 
+# For convenience
+HRUState = HRUStateVariableTableCommand.Record
+
+
 @dataclass
 class BasinIndexCommand(RavenConfig):
     """Initial conditions for a flow segment."""
@@ -787,6 +799,10 @@ class LandUseClassesCommand(RavenConfig):
         return dedent(self.template).format(
             land_use_class_records="\n".join(map(str, self.land_use_classes))
         )
+
+
+# For convenience
+LU = LandUseClassesCommand.Record
 
 
 @dataclass

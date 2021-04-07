@@ -3,7 +3,8 @@ import tempfile
 
 import numpy as np
 
-from ravenpy.models import BLENDED, BLENDED_OST, HRU, LU
+from ravenpy.config.commands import LU
+from ravenpy.models import BLENDED, BLENDED_OST
 from ravenpy.utilities.testdata import get_local_testdata
 
 from .common import _convert_2d
