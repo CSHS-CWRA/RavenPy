@@ -1,7 +1,6 @@
 affine
 clisops>=0.5.1
 fiona
-gdal
 geopandas>=0.9.0
 lxml
 owslib

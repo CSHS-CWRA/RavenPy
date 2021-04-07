@@ -2,10 +2,10 @@
 History
 =======
 
-0.4.0
+0.3.1
 -----
 
-* Add new emulator mixing different model formulations.
+* Update external dependencies (Raven, OSTRICH) to facilitate Conda packaging.
 
 0.3.0
 -----
