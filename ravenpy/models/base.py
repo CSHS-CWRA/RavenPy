@@ -761,10 +761,9 @@ class Ostrich(Raven):
         with open(self.exec_path / f"ostIn.txt", "w") as f:
             f.write(self.config.ost.to_rv())
 
-        import shutil
-
+        # Not sure about this
         shutil.copy(
-            "/home/christian/gh/RavenPy/ravenpy/models/ostrich-gr4j-cemaneige/OstRandomNumbers.txt",
+            Path(__file__).parent.parent / "data" / "OstRandomNumbers.txt",
             self.exec_path / "OstRandomNumbers.txt",
         )
 
