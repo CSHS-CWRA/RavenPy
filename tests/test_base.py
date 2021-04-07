@@ -11,6 +11,8 @@ from ravenpy.utilities.testdata import get_local_testdata
 
 has_singularity = False  # ravenpy.raven_simg.exists()
 
+pytestmark = pytest.mark.skip
+
 
 class TestRaven:
     def test_gr4j(self):

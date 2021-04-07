@@ -1,5 +1,6 @@
 import collections
 import datetime as dt
+from abc import ABC, abstractmethod
 from dataclasses import is_dataclass, replace
 from pathlib import Path
 from textwrap import dedent
@@ -36,7 +37,7 @@ from ravenpy.config.commands import (
 )
 
 
-class RV:
+class RV(ABC):
     def __init__(self, **kwds):
         # TODO: find something better than this!
         self.is_ostrich_tmpl = False
@@ -66,6 +67,15 @@ class RV:
             if k not in d:
                 e[k] = v
         return e
+
+    @property
+    @abstractmethod
+    def tmpl(self):
+        pass
+
+    @abstractmethod
+    def to_rv(self) -> str:
+        pass
 
 
 #########

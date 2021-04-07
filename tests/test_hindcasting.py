@@ -46,7 +46,7 @@ class TestHindcasting:
         # data provided in the testdata above. Then the dates will not work, and the model errors.
         model = GR4JCN()
 
-        model.rvc.parse(rvc.read_text())
+        model.config.rvc.set_from_solution(rvc.read_text())
 
         # And run the model with the forecast data.
         model(
@@ -58,7 +58,8 @@ class TestHindcasting:
             params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
             overwrite=True,
             pr={
-                "linear_transform": (1000.0, 0.0),
+                "scale": 1.0,
+                "offset": 0.0,
                 "time_shift": -0.25,
                 "deaccumulate": True,
             },

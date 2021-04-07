@@ -3,13 +3,16 @@ from dataclasses import replace
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pytest
 import xarray as xr
 
 from ravenpy.config.commands import BasinIndexCommand
+from ravenpy.config.rvs import RVC
 from ravenpy.models import GR4JCN
-from ravenpy.models.rv import RVC
 from ravenpy.utilities.data_assimilation import assimilate, perturbation
 from ravenpy.utilities.testdata import get_local_testdata
+
+# pytestmark = pytest.mark.skip
 
 
 def test_perturbation():
@@ -81,22 +84,22 @@ class TestAssimilationGR4JCN:
 
         # Set model options
 
-        model.rvh.hrus = (
+        model.config.rvh.hrus = (
             GR4JCN.LandHRU(
                 area=4250.6, elevation=843.0, latitude=54.4848, longitude=-123.3659
             ),
         )
 
-        model.rvp.params = model.params(
+        model.config.rvp.params = GR4JCN.Params(
             0.1353389, -0.005067198, 576.8007, 6.986121, 1.102917, 0.9224778
         )  # SALMON
 
         # ==== Initialization (just to get reasonable states) ====
         # Set initialization run options
-        model.rvi.run_name = "init"
-        model.rvi.start_date = start_date
+        model.config.rvi.run_name = "init"
+        model.config.rvi.start_date = start_date
         # Richard: what is the end date policy for the init run ?
-        model.rvi.end_date = start_date + dt.timedelta(days=assim_days[0])
+        model.config.rvi.end_date = start_date + dt.timedelta(days=assim_days[0])
 
         # Run the model
         model([ts])
@@ -104,13 +107,15 @@ class TestAssimilationGR4JCN:
         # Extract final model states
         hru_state, basin_state = model.get_final_state()
         xa = n_members * [getattr(hru_state, key) for key in assim_var]
-        hru_states = n_members * [hru_state]
-        basin_states = n_members * [basin_state]
+        # hru_states = n_members * [hru_state]
+        hru_states = {i: hru_state for i in range(n_members)}
+        # basin_states = n_members * [basin_state]
+        basin_states = {i: basin_state for i in range(n_members)}
 
         # === Create perturbed time series for full assimilation period ====
         perturbed = {}
         for key, s in std.items():
-            nc = model.rvt.var_cmds[key]
+            nc = model.config.rvt._var_cmds[key]
 
             with xr.open_dataset(nc.file_name_nc) as ds:
                 da = ds.get(nc.var_name_nc).sel(time=slice(start_date, end_date))
@@ -135,11 +140,12 @@ class TestAssimilationGR4JCN:
         # ==== Assimilation ====
         q_assim = []
         sd = start_date
+
         for i, ndays in enumerate(assim_days):
 
             dates = [sd + dt.timedelta(days=x) for x in range(ndays)]
-            model.rvi.end_date = dates[-1]
-            model.rvi.run_name = f"assim_{i}"
+            model.config.rvi.end_date = dates[-1]
+            model.config.rvi.run_name = f"assim_{i}"
 
             # Perform the first assimilation step here
             [xa, model] = assimilate(
@@ -151,7 +157,7 @@ class TestAssimilationGR4JCN:
 
             # Update the start-time for the next loop
             sd += dt.timedelta(days=ndays)
-            model.rvi.start_date = sd
+            model.config.rvi.start_date = sd
 
             # Get new initial conditions and feed assimilated values
             hru_states, basin_states = model.get_final_state()
@@ -163,10 +169,10 @@ class TestAssimilationGR4JCN:
         q_assim = xr.concat(q_assim, dim="time")
 
         # ==== Reference run ====
-        model.rvi.run_name = "ref"
-        model.rvi.start_date = start_date
-        model.rvi.end_date = end_date
-        model.rvc = RVC(soil0=None, soil1=15, basin_state=BasinIndexCommand())
+        model.config.rvi.run_name = "ref"
+        model.config.rvi.start_date = start_date
+        model.config.rvi.end_date = end_date
+        model.config.rvc = RVC(soil0=None, soil1=15, basin_state=BasinIndexCommand())
         model([ts])
 
         # We can now plot everything!

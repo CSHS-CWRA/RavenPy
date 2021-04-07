@@ -1,3 +1,5 @@
+from dataclasses import astuple
+
 import numpy as np
 import xarray as xr
 
@@ -35,7 +37,7 @@ def param(model):
     model = models.get_model(model)
     return xr.IndexVariable(
         "param",
-        data=np.array(model.params._fields),
+        data=np.array(astuple(model.config.rvp.params)),
         attrs={
             "standard_name": "parameter",
             "long_name": "{} model parameter name".format(model),
