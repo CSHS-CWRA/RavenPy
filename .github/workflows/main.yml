@@ -1,0 +1,61 @@
+name: RavenPy
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  black:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        tox-env: [black]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.7
+      - name: Install tox
+        run: pip install tox
+      - name: Run linting suite
+        run: tox -e ${{ matrix.tox-env }}
+
+  doctests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        tox-env: [doctests]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.7
+      - name: Install tox
+        run: pip install tox
+      - name: Run lint
+        run: tox -e ${{ matrix.tox-env }}
+
+  test:
+    needs: black
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - tox-env: py37
+            python-version: 3.7
+          - tox-env: py38
+            python-version: 3.8
+          - tox-env: py39
+            python-version: 3.9
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install tox
+      run: pip install tox
+    - name: Test with tox
+      run: tox -e ${{ matrix.tox-env }}
