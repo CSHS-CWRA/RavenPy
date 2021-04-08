@@ -659,10 +659,7 @@ class TestGR4JCN:
             end_date=dt.datetime(2002, 1, 1),
             run_name="test",
             name="Salmon",
-            area="4250.6",
-            elevation="843.0",
-            latitude=54.4848,
-            longitude=-123.3659,
+            hrus=(GR4JCN.LandHRU(**salmon_land_hru_1),),
             params=model.params(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
         )
 
