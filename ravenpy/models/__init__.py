@@ -1,9 +1,9 @@
 import os
 
-from .base import Ostrich, Raven
+from .base import Ostrich, Raven, get_average_annual_runoff
 from .emulators import *
 from .multimodel import RavenMultiModel
-from .rv import HRU, LU, RV, RVI, HRUState
+from .rv import HRU, LU, RV, RVI, HRUState, Sub
 
 _dir = os.path.abspath(os.path.dirname(__file__))
 
@@ -22,11 +22,3 @@ ostrich_templates = {
     "ostrich-hbv-ec": os.path.join(_dir, "ostrich-hbv-ec"),
     "ostrich-blended": os.path.join(_dir, "ostrich-blended"),
 }
-
-grid_weight_importer_params = dict(
-    DIM_NAMES=("lon_dim", "lat_dim"),
-    VAR_NAMES=("lon", "lat"),
-    ROUTING_ID_FIELD="HRU_ID",
-    NETCDF_INPUT_FIELD="NetCDF_col",
-    AREA_ERROR_THRESHOLD=0.05,
-)

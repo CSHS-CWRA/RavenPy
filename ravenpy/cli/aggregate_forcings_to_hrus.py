@@ -2,8 +2,8 @@ from pathlib import Path
 
 import click
 
-from ravenpy.models import grid_weight_importer_params
 from ravenpy.models.commands import GridWeightsCommand
+from ravenpy.models.importers import grid_weight_importer_params
 
 
 @click.command()

@@ -9,20 +9,10 @@ import ravenpy
 from ravenpy.models.commands import (
     BaseValueCommand,
     GriddedForcingCommand,
+    MonthlyAverageCommand,
     RainCorrection,
 )
-from ravenpy.models.rv import (  # RVT,
-    RV,
-    RVC,
-    RVH,
-    RVI,
-    RVP,
-    MonthlyAverage,
-    Ost,
-    RavenNcData,
-    RVFile,
-    isinstance_namedtuple,
-)
+from ravenpy.models.rv import RV, RVC, RVH, RVI, RVP, Ost, RVFile, isinstance_namedtuple
 from ravenpy.utilities.testdata import get_local_testdata
 
 
@@ -129,60 +119,6 @@ def compare(a, b):
     return re.sub(r"\s*", "", a) == re.sub(r"\s*", "", b)
 
 
-class TestRavenNcData:
-    def test_simple(self):
-        v = RavenNcData(
-            var="tasmin",
-            path="/path/tasmin.nc",
-            var_name="tn",
-            unit="degC",
-            dimensions=["time"],
-        )
-        tmp = str(v)
-
-        assert compare(
-            tmp,
-            """:Data TEMP_MIN degC
-                                  :ReadFromNetCDF
-                                     :FileNameNC      /path/tasmin.nc
-                                     :VarNameNC       tn
-                                     :DimNamesNC      time
-                                     :StationIdx      1
-                                  :EndReadFromNetCDF
-                               :EndData""",
-        )
-
-    def test_linear_transform(self):
-        v = RavenNcData(
-            var="tasmin",
-            path="/path/tasmin.nc",
-            var_name="tn",
-            unit="degC",
-            dimensions=["time"],
-            linear_transform=(24000.0, 0.0),
-        )
-
-        assert ":LinearTransform 24000.000000000000000 0.000000000000000" in str(v)
-
-    def test_deaccumulate(self):
-        v = RavenNcData(
-            var="tasmin",
-            path="/path/tasmin.nc",
-            var_name="tn",
-            unit="degC",
-            dimensions=["time"],
-            deaccumulate=True,
-        )
-
-        assert ":Deaccumulate" in str(v)
-
-
-class TestMonthlyAve:
-    def test_simple(self):
-        ave = str(MonthlyAverage("Evaporation", range(12)))
-        assert ave.startswith(":MonthlyAveEvaporation, 0, 1, 2")
-
-
 class TestOst:
     def test_random(self):
         o = Ost()
@@ -210,14 +146,11 @@ class TestRVC:
 
     def test_parse(self):
         assert self.r.hru_state.atmosphere == 821.98274
-        assert self.r.basin_state.qout == [
-            13.21660,
-        ]
-        assert self.r.basin_state.qoutlast == 13.29232
+        assert self.r.basin_state.qout == (1, 13.2166, 13.29232)
 
     def test_write(self):
         assert "1,0.0,821.98274" in self.r.hru_states_cmd.to_rv()
-        assert ":BasinIndex 1,watershed" in self.r.basin_states_cmd.to_rv()
+        assert ":BasinIndex 1 watershed" in self.r.basin_states_cmd.to_rv()
 
     def test_format(self):
         rvc_template = Path(ravenpy.models.__file__).parent / "global" / "global.rvc"
@@ -306,7 +239,7 @@ class TestRVT:
         assert ":NumberHRUs 51" in res
         assert ":NumberGridCells 100" in res
         # FIXME: This test is not superb.
-        assert len(res.split("\n")) == 225
+        assert len(res.split("\n")) == 226
 
 
 def test_isinstance_namedtuple():

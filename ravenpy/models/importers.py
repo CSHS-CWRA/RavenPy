@@ -2,6 +2,9 @@ import warnings
 from collections import defaultdict
 from pathlib import Path
 
+import cf_xarray
+import xarray as xr
+
 try:
     import geopandas
     from osgeo import __version__ as osgeo_version  # noqa
@@ -19,16 +22,26 @@ except (ImportError, ModuleNotFoundError) as e:
 import netCDF4 as nc4
 import numpy as np
 
-from . import grid_weight_importer_params
+from . import rv
 from .commands import (
     ChannelProfileCommand,
+    DataCommand,
+    GriddedForcingCommand,
     GridWeightsCommand,
     HRUsCommand,
+    ObservationDataCommand,
     ReservoirCommand,
+    StationForcingCommand,
     SubBasinsCommand,
 )
 
-# import xarray
+grid_weight_importer_params = dict(
+    DIM_NAMES=("lon_dim", "lat_dim"),
+    VAR_NAMES=("lon", "lat"),
+    ROUTING_ID_FIELD="HRU_ID",
+    NETCDF_INPUT_FIELD="NetCDF_col",
+    AREA_ERROR_THRESHOLD=0.05,
+)
 
 
 HRU_ASPECT_CONVENTION = "GRASS"  # GRASS | ArcGIS
@@ -758,3 +771,120 @@ class RoutingProductGridWeightImporter:
             and min_lon_cell <= max_lon_shape
             and max_lon_cell >= min_lon_shape
         )
+
+
+class NcDataImporter:
+    def __init__(self, fns):
+        self.fns = map(Path, fns)
+        self.attrs = {}
+        self._extract_nc_attrs(self.fns)
+
+    def _extract_nc_attrs(self, fns):
+        for fn in fns:
+            if ".nc" in fn.suffix:
+                with xr.open_dataset(fn) as ds:
+                    # Check if any alternate variable name is in the file.
+                    for var, alt_names in rv.alternate_nc_names.items():
+                        for name in alt_names:
+                            if name in ds.data_vars:
+                                v = ds[name]
+                                # Parse common attributes to all data models
+                                attrs = dict(
+                                    name=var,
+                                    file_name_nc=fn,
+                                    data_type=rv.forcing_names[var],
+                                    var_name_nc=name,
+                                    dim_names_nc=v.dims,
+                                    units=v.attrs.get("units"),
+                                    number_grid_cells=v.size / len(ds["time"]),
+                                )
+                                try:
+                                    attrs["latitude"] = ds.cf["latitude"]
+                                    attrs["longitude"] = ds.cf["longitude"]
+                                    attrs["elevation"] = ds.cf["vertical"]
+                                except KeyError:
+                                    pass
+
+                                if "GRIB_stepType" in v.attrs:
+                                    attrs["deaccumulate"] = (
+                                        v.attrs["GRIB_stepType"] == "accum"
+                                    )
+
+                                self.attrs[var] = attrs
+
+    def _create_command(self, var, attrs, rvh, rvt=None, nc_index=0):
+        coords = {"latitude", "longitude", "elevation"}
+        dims = attrs["dim_names_nc"]
+
+        # Remove extra attributes
+        number_grid_cells = attrs.pop("number_grid_cells")
+        for k in coords:
+            attrs.pop(k, None)
+
+        # Add options from rvt
+        rvt_attrs = ["scale", "offset", "time_shift"]
+        for a in rvt_attrs:
+            if a in rvt[var]:
+                attrs[a] = rvt[var][a]
+
+        if len(dims) == 1:
+            if var == "water_volume_transport_in_river_channel":
+                return ObservationDataCommand(**attrs)
+
+            return DataCommand(**attrs)
+
+        if len(dims) == 2:
+            if var == "water_volume_transport_in_river_channel":
+                # Search for the gauged SB, not sure what should happen when there are
+                # more than one (should it be even supported?)
+                for sb in rvh.subbasins:
+                    if sb.gauged:
+                        attrs["subbasin_id"] = sb.subbasin_id
+                        break
+                else:
+                    raise Exception(
+                        "Could not find an outlet subbasin for observation data"
+                    )
+                return ObservationDataCommand(**attrs)
+
+            # TODO: implement a RedirectToFile mechanism to avoid inlining the grid weights
+            # multiple times as we do here
+            # Construct default grid weights applying equally to all HRUs
+            data = [(hru.hru_id, nc_index, 1.0) for hru in rvh.hrus]
+
+            gw = rvt.grid_weights or GridWeightsCommand(
+                number_hrus=len(rvh.hrus),
+                number_grid_cells=number_grid_cells,
+                data=data,
+            )
+
+            return StationForcingCommand(**attrs, grid_weights=gw)
+
+        return GriddedForcingCommand(**attrs, grid_weights=rvt.grid_weights)
+
+    def extract(self, rvh, rvt=None, nc_index=0):
+        out = {"var_cmds": {}}
+
+        for var, attrs in self.attrs.items():
+            out["var_cmds"][var] = self._create_command(
+                var, attrs.copy(), rvh, rvt, nc_index
+            )
+            if type(out["var_cmds"][var]) is DataCommand:
+                # Try extracting the gauge location from the netCDF coordinates.
+                try:
+                    out["gauge_latitude"] = attrs["latitude"][nc_index]
+                    out["gauge_longitude"] = attrs["longitude"][nc_index]
+                    out["gauge_elevation"] = attrs["elevation"][nc_index]
+
+                # Revert to RHU coordinates
+                except Exception:
+                    if isinstance(rvh, rv.RVH):
+                        out["gauge_latitude"] = rvh.hrus[0].latitude
+                        out["gauge_longitude"] = rvh.hrus[0].longitude
+                        out["gauge_elevation"] = rvh.hrus[0].elevation
+                    else:
+                        out["gauge_latitude"] = getattr(rvh, "latitude", None)
+                        out["gauge_longitude"] = getattr(rvh, "longitude", None)
+                        out["gauge_elevation"] = getattr(rvh, "elevation", None)
+
+        return out

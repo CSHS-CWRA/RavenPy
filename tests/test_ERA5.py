@@ -47,6 +47,6 @@ class TestRavenERA5:
             latitude=54.4848,
             longitude=-123.3659,
             rain_snow_fraction="RAINSNOW_DINGMAN",
-            tas={"linear_transform": (1.0, -273.15), "time_shift": -0.25},
-            pr={"linear_transform": (24000.0, 0.0), "time_shift": -0.25},
+            tas={"scale": 1.0, "offset": -273.15, "time_shift": -0.25},
+            pr={"scale": 24000.0, "offset": 0.0, "time_shift": -0.25},
         )

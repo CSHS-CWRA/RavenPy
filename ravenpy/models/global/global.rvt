@@ -1,26 +1,7 @@
-#########################################################################
-:FileType          rvt ASCII Raven 2.8.2
-:WrittenBy         Juliane Mai & James Craig
-:CreationDate      Sep 2018
-#
-# Generic input file for global models with area averaged series
-#---------------------------------------------------------------
+{gauge}
 
-:Gauge meteorological forcings
-   :Latitude    {latitude}
-   :Longitude   {longitude}
-   :Elevation   {elevation}
-   {raincorrection_cmd}
-   {snowcorrection_cmd}
+{station_forcing_list}
 
-   {pr}
-   {rainfall}
-   {prsn}
-   {tasmin}
-   {tasmax}
-   {tas}
-   {evspsbl}
-:EndGauge
+{gridded_forcing_list}
 
-# observed streamflow
-{water_volume_transport_in_river_channel}
+{observed_data_cmd}

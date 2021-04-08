@@ -115,14 +115,14 @@ def multipolygon_check(geom: GeometryCollection) -> None:
     -------
     None
     """
-    if not isinstance(type(geom), GeometryCollection):
+    if not isinstance(geom, GeometryCollection):
         try:
             geom = shape(geom)
         except AttributeError:
             LOGGER.error("Unable to load argument as shapely.geometry.shape().")
             raise
 
-    if isinstance(type(geom), MultiPolygon):
+    if isinstance(geom, MultiPolygon):
         LOGGER.warning("Shape is a Multipolygon.")
     return
 

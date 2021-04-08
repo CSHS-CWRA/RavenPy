@@ -1,7 +1,8 @@
+import itertools
 import re
 from dataclasses import asdict, dataclass, field
 from textwrap import dedent
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple, Union
 
 INDENT = " " * 4
 VALUE_PADDING = 10
@@ -10,6 +11,64 @@ VALUE_PADDING = 10
 class RavenConfig:
     def __str__(self):
         return self.to_rv()
+
+
+@dataclass
+class BaseValueCommand(RavenConfig):
+    """BaseValueCommand."""
+
+    value: Any = None
+    tag: str = ""
+
+    template = ":{tag} {value}"
+
+    # Overloading init to freeze the tag.
+    def __init__(self, value):
+        self.value = value
+
+    def to_rv(self):
+        return self.template.format(**asdict(self))
+
+
+@dataclass
+class BaseBooleanCommand(RavenConfig):
+    tag: str = ""
+    value: bool = False
+
+    template = ":{tag}"
+
+    def to_rv(self):
+        return self.template.format(tag=self.tag) if self.value else ""
+
+
+@dataclass
+class LinearTransform(RavenConfig):
+    scale: float = 1
+    offset: float = 0
+
+    template = ":LinearTransform {scale:.15f} {offset:.15f}"
+
+    def to_rv(self):
+        if (self.scale is not None) or (self.offset is not None):
+            return self.template.format(**asdict(self))
+        return ""
+
+
+@dataclass
+class MonthlyAverageCommand(RavenConfig):
+    var_name: str = ""
+    data: Tuple[float] = ()
+
+    template = ":MonthlyAve{var_name} {data}"
+
+    def to_rv(self):
+        if self.data:
+            d = asdict(self)
+            d["var_name"] = self.var_name.lower().capitalize()
+            d["data"] = " ".join(map(str, self.data))
+            return self.template.format(**d)
+        else:
+            return ""
 
 
 @dataclass
@@ -69,6 +128,8 @@ class HRUsCommand(RavenConfig):
         terrain_class: str = ""
         slope: float = 0.0
         aspect: float = 0.0
+        # This can be used instead of sub-typing in serialization contexts
+        _hru_type: Optional[str] = "land"  # land | lake
 
         def to_rv(self):
             d = asdict(self)
@@ -189,12 +250,158 @@ class ChannelProfileCommand(RavenConfig):
 
 
 @dataclass
-class GridWeightsCommand(RavenConfig):
-    """GridWeights command."""
+class BaseDataCommand(RavenConfig):
+    """Do not use directly. Subclass."""
 
-    number_hrus: int = 0
-    number_grid_cells: int = 0
-    data: Tuple[Tuple[int, int, float]] = ()
+    name: Optional[str] = ""
+    units: Optional[str] = ""
+    data_type: str = ""
+    file_name_nc: str = ""
+    var_name_nc: str = ""
+    dim_names_nc: Tuple[str] = ("time",)
+    time_shift: Optional[int] = None  # in days
+    scale: Optional[float] = None
+    offset: Optional[float] = None
+    deaccumulate: Optional[bool] = False
+
+    @property
+    def dimensions(self):
+        """Return dimensions with time as the last dimension."""
+        dims = list(self.dim_names_nc)
+        for time_dim in ("t", "time"):
+            if time_dim in dims:
+                dims.remove(time_dim)
+                dims.append(time_dim)
+                break
+        else:
+            raise Exception("No time dimension found in dim_names_nc tuple")
+        return " ".join(dims)
+
+    @property
+    def linear_transform(self):
+        return LinearTransform(scale=self.scale, offset=self.offset)
+
+    def asdict(self):
+        d = asdict(self)
+        d["dimensions"] = self.dimensions
+        d["linear_transform"] = self.linear_transform
+        d["deaccumulate"] = Deaccumulate(self.deaccumulate)
+        d["time_shift"] = f":TimeShift {self.time_shift}" if self.time_shift else ""
+        return d
+
+
+@dataclass
+class DataCommand(BaseDataCommand):
+    index: int = 1
+    data_type: str = ""
+    site: str = ""
+    var: str = ""
+
+    template = """
+    :Data {data_type} {site} {units}
+        :ReadFromNetCDF
+            :FileNameNC      {file_name_nc}
+            :VarNameNC       {var_name_nc}
+            :DimNamesNC      {dimensions}
+            :StationIdx      {index}
+            {time_shift}
+            {linear_transform}
+            {deaccumulate}
+        :EndReadFromNetCDF
+    :EndData
+    """
+
+    def to_rv(self):
+        d = self.asdict()
+        return dedent(self.template).format(**d)
+
+
+@dataclass
+class GaugeCommand(RavenConfig):
+    data: Tuple[DataCommand]
+    latitude: float = 0
+    longitude: float = 0
+    elevation: float = 0
+
+    # Accept strings to embed parameter names into Ostrich templates
+    raincorrection: Union[float, str] = 1
+    snowcorrection: Union[float, str] = 1
+
+    monthly_ave_evaporation: Tuple[float] = ()
+    monthly_ave_temperature: Tuple[float] = ()
+
+    template = """
+    :Gauge
+        :Latitude {latitude}
+        :Longitude {longitude}
+        :Elevation {elevation}
+        {raincorrection_cmd}
+        {snowcorrection_cmd}
+        {monthly_ave_evaporation_cmd}
+        {monthly_ave_temperature_cmd}
+        {data_list}
+    :EndGauge
+    """
+
+    @property
+    def raincorrection_cmd(self):
+        return RainCorrection(self.raincorrection)
+
+    @property
+    def snowcorrection_cmd(self):
+        return SnowCorrection(self.snowcorrection)
+
+    @property
+    def monthly_ave_evaporation_cmd(self):
+        return MonthlyAverageCommand("evaporation", self.monthly_ave_evaporation)
+
+    @property
+    def monthly_ave_temperature_cmd(self):
+        return MonthlyAverageCommand("temperature", self.monthly_ave_temperature)
+
+    def to_rv(self):
+        d = asdict(self)
+        d["raincorrection_cmd"] = self.raincorrection_cmd
+        d["snowcorrection_cmd"] = self.snowcorrection_cmd
+        d["monthly_ave_evaporation_cmd"] = self.monthly_ave_evaporation_cmd
+        d["monthly_ave_temperature_cmd"] = self.monthly_ave_temperature_cmd
+        d["data_list"] = "\n\n".join(map(str, self.data))
+        return dedent(self.template).format(**d)
+
+
+@dataclass
+class ObservationDataCommand(DataCommand):
+    subbasin_id: int = 1
+
+    template = """
+    :ObservationData {data_type} {subbasin_id} {units}
+        :ReadFromNetCDF
+            :FileNameNC      {file_name_nc}
+            :VarNameNC       {var_name_nc}
+            :DimNamesNC      {dimensions}
+            :StationIdx      {index}
+            {time_shift}
+            {linear_transform}
+            {deaccumulate}
+        :EndReadFromNetCDF
+    :EndObservationData
+    """
+
+
+@dataclass
+class GridWeightsCommand(RavenConfig):
+    """GridWeights command.
+
+    Important note: this command can be embedded in both a `GriddedForcingCommand`
+    or a `StationForcingCommand`.
+
+    The default is to have a single cell that covers an entire single HRU, with a
+    weight of 1.
+    """
+
+    number_hrus: int = 1
+    number_grid_cells: int = 1
+    data: Tuple[Tuple[int, int, float]] = ((1, 0, 1.0),)
 
     template = """
     {indent}:GridWeights
@@ -230,121 +437,54 @@ class GridWeightsCommand(RavenConfig):
 
 
 @dataclass
-class GriddedForcingCommand(RavenConfig):
+class GriddedForcingCommand(BaseDataCommand):
     """GriddedForcing command (RVT)."""
 
-    name: str = ""
-    forcing_type: str = ""
-    file_name_nc: str = ""
-    var_name_nc: str = ""
     dim_names_nc: Tuple[str, str, str] = ("x", "y", "t")
-    time_shift: Optional[int] = None  # in days
-    linear_transform: Optional[Tuple[float, float]] = None
-    grid_weights: GridWeightsCommand = None
+    grid_weights: GridWeightsCommand = GridWeightsCommand()
 
     template = """
     :GriddedForcing {name}
-        :ForcingType {forcing_type}
+        :ForcingType {data_type}
         :FileNameNC {file_name_nc}
         :VarNameNC {var_name_nc}
-        :DimNamesNC {dim_names_nc}
+        :DimNamesNC {dimensions}
         {time_shift}
         {linear_transform}
-        {grid_weights}
+        {deaccumulate}
+    {grid_weights}
     :EndGriddedForcing
     """
 
     def to_rv(self):
-        d = asdict(self)
-        d["dim_names_nc"] = " ".join(self.dim_names_nc)
-        d["time_shift"] = f":TimeShift {self.time_shift}" if self.time_shift else ""
-        if self.linear_transform:
-            slope, intercept = self.linear_transform
-            d["linear_transform"] = f":LinearTransform {slope} {intercept}"
-        else:
-            d["linear_transform"] = ""
+        d = self.asdict()
         d["grid_weights"] = self.grid_weights.to_rv(indent_level=1)
         return dedent(self.template).format(**d)
 
 
 @dataclass
-class BaseValueCommand(RavenConfig):
-    """BaseValueCommand."""
+class StationForcingCommand(BaseDataCommand):
+    """StationForcing command (RVT)."""
 
-    tag: str = ""
-    value: Any = None
-
-    template = ":{tag} {value}"
-
-    # Overloading init to freeze the tag.
-    def __init__(self, value):
-        self.value = value
-
-    def to_rv(self):
-        return self.template.format(**asdict(self))
-
-
-@dataclass
-class BaseBooleanCommand(RavenConfig):
-    tag: str = ""
-    value: bool = False
-
-    template = ":{tag}"
-
-    def to_rv(self):
-        return self.template.format(tag=self.tag) if self.value else ""
-
-
-@dataclass
-class LinearTransform(RavenConfig):
-    scale: float = 1
-    offset: float = 0
-
-    template = ":LinearTransform {slope:.15f} {intercept:.15f}"
-
-    def to_rv(self):
-        return self.template.format(**asdict(self))
-
-
-@dataclass
-class DataCommand(RavenConfig):
-    var = None
-    path = None
-    var_name = None
-    units = None
-    scale_factor = None
-    add_offset = None
-    time_shift = None
-    dimensions = None
-    index = None
-    linear_transform = None
-
-    runits = None
-    raven_name = None
-    site = None
-    deaccumulate = None
+    dim_names_nc: Tuple[str, str] = ("station", "time")
+    grid_weights: GridWeightsCommand = GridWeightsCommand()
 
     template = """
-    :{kind} {raven_name} {site} {runits}
-        :ReadFromNetCDF
-            :FileNameNC      {path}
-            :VarNameNC       {var_name}
-            :DimNamesNC      {dimensions}
-            :StationIdx      {index}
-            {time_shift}
-            {linear_transform}
-            {deaccumulate}
-        :EndReadFromNetCDF
-    :End{kind}
+    :StationForcing {name} {units}
+        :ForcingType {data_type}
+        :FileNameNC {file_name_nc}
+        :VarNameNC {var_name_nc}
+        :DimNamesNC {dimensions}
+        {time_shift}
+        {linear_transform}
+        {deaccumulate}
+    {grid_weights}
+    :EndStationForcing
     """
 
     def to_rv(self):
-        d = asdict(self)
-        d["kind"] = (
-            "ObservationData"
-            if self.var == "water_volume_transport_in_river_channel"
-            else "Data"
-        )
+        d = self.asdict()
+        d["grid_weights"] = self.grid_weights.to_rv(indent_level=1)
         return dedent(self.template).format(**d)
 
 
@@ -484,7 +624,7 @@ class HRUStateVariableTableCommand(RavenConfig):
 
     def to_rv(self):
         return dedent(self.template).format(
-            hru_states="\n".join(map(str, self.hru_states.values()))
+            hru_states="\n    ".join(map(str, self.hru_states.values()))
         )
 
 
@@ -496,33 +636,29 @@ class BasinIndexCommand(RavenConfig):
     name: str = "watershed"
     channelstorage: float = 0
     rivuletstorage: float = 0
-    qout: tuple = (0,)
-    qoutlast: float = 0
-    qlat: tuple = (0, 0, 0)
-    qlatlast: float = 0
-    qin: tuple = 20 * (0,)
+    qout: Tuple[float] = (1, 0, 0)
+    qin: Optional[Tuple[float]] = None
+    qlat: Optional[Tuple[float]] = None
 
     template = """
-    :BasinIndex {index},{name}
-        :ChannelStorage, {channelstorage}
-        :RivuletStorage, {rivuletstorage}
-        :Qout,{nsegs},{qout},{qoutlast}
-        :Qlat,{nQlatHist},{qlat},{qlatlast}
-        :Qin ,{nQinHist}, {qin}
+    :BasinIndex {index} {name}
+        :ChannelStorage {channelstorage}
+        :RivuletStorage {rivuletstorage}
+        {qout}
+        {qin}
+        {qlat}
         """
 
     def to_rv(self):
-        return (
-            dedent(self.template)
-            .format(
-                **asdict(self),
-                nsegs=len(self.qout),
-                nQlatHist=len(self.qlat),
-                nQinHist=len(self.qin),
-            )
-            .replace("(", "")
-            .replace(")", "")
-        )
+        d = asdict(self)
+        for k in ["qout", "qin", "qlat"]:
+            if d[k]:
+                v = " ".join(map(str, d[k]))
+                q = k.capitalize()
+                d[k] = f":{q} {v}"
+            else:
+                d[k] = ""
+        return dedent(self.template).format(**d)
 
 
 @dataclass
@@ -569,19 +705,23 @@ class SoilClassesCommand(RavenConfig):
 class SoilProfilesCommand(RavenConfig):
     @dataclass
     class Record(RavenConfig):
-        name: str = ""
-        number_of_layers: int = 1
-        soil_class: str = ""
-        thickness: float = 0
+        profile_name: str = ""
+        soil_class_names: Tuple[str] = ()
+        thicknesses: Tuple[float] = ()
 
         def to_rv(self):
-            return " ".join(map(str, asdict(self).values()))
+            # From the Raven manual: {profile_name,#horizons,{soil_class_name,thick.}x{#horizons}}x[NP]
+            n_horizons = len(self.soil_class_names)
+            horizon_data = itertools.chain(
+                *zip(self.soil_class_names, self.thicknesses)
+            )
+            horizon_data = ", ".join(map(str, horizon_data))
+            return f"{self.profile_name}, {n_horizons}, {horizon_data}"
 
     soil_profiles: Tuple[Record] = ()
 
     template = """
     :SoilProfiles
-        # name, number of layers, soil class, thickness [m]
         {soil_profile_records}
     :EndSoilProfiles
     """
@@ -648,39 +788,25 @@ class LandUseClassesCommand(RavenConfig):
 
 
 @dataclass
-class ObservationDataCommand(RavenConfig):
-
-    data_type: str = "HYDROGRAPH"
-    subbasin_id: int = None
-    units: str = "m3/s"
-    file_name_nc: str = None
-    var_name_nc: str = None
-    dim_names_nc: Tuple[str, str] = ("?", "?")
-    station_idx: int = None
-
-    template = """
-    :ObservationData {data_type} {subbasin_id} {units}
-        :ReadFromNetCDF
-             :FileNameNC     {file_name_nc}
-             :VarNameNC      {var_name_nc}
-             :DimNamesNC     {dim_names_nc}
-             :StationIdx     {station_idx}
-        :EndReadFromNetCDF
-    :EndObservationData
-    """
-
-    def to_rv(self):
-        d = asdict(self)
-        dns = d["dim_names_nc"]
-        d["dim_names_nc"] = f"{dns[0]} {dns[1]}"
-        return dedent(self.template).format(**d)
-
-
 class RainCorrection(BaseValueCommand):
     tag: str = "RainCorrection"
-    value: float = 1.0
+    value: Union[float, str] = 1.0
 
 
+@dataclass
 class SnowCorrection(BaseValueCommand):
     tag: str = "SnowCorrection"
-    value: float = 1.0
+    value: Union[float, str] = 1.0
+
+
+@dataclass
+class Routing(BaseValueCommand):
+    """ROUTE_NONE, ROUTE_DIFFUSIVE_WAVE"""
+
+    tag: str = "Routing"
+    value: str = "ROUTE_NONE"
+
+
+@dataclass
+class Deaccumulate(BaseBooleanCommand):
+    tag: str = "Deaccumulate"

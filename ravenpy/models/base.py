@@ -23,12 +23,22 @@ import xarray as xr
 
 import ravenpy
 
+from .commands import (
+    DataCommand,
+    GriddedForcingCommand,
+    HRUsCommand,
+    ObservationDataCommand,
+    StationForcingCommand,
+)
+from .importers import NcDataImporter
 from .rv import (
     RV,
+    RVH,
     RVI,
+    RVT,
     Ost,
-    RavenNcData,
     RVFile,
+    forcing_names,
     get_states,
     isinstance_namedtuple,
     parse_solution,
@@ -36,6 +46,8 @@ from .rv import (
 
 RAVEN_EXEC_PATH = os.getenv("RAVENPY_RAVEN_BINARY_PATH") or shutil.which("raven")
 OSTRICH_EXEC_PATH = os.getenv("RAVENPY_OSTRICH_BINARY_PATH") or shutil.which("ostrich")
+
+RAVEN_NO_DATA_VALUE = -1.2345
 
 
 class Raven:
@@ -53,26 +65,6 @@ class Raven:
 
     # Allowed configuration file extensions
     _rvext = ("rvi", "rvp", "rvc", "rvh", "rvt")
-
-    # Dictionary of potential variable names, keyed by CF standard name.
-    # http://cfconventions.org/Data/cf-standard-names/60/build/cf-standard-name-table.html
-    # PET is the potential evapotranspiration, while evspsbl is the actual evap.
-    # TODO: Check we're not mixing precip and rainfall.
-    _variable_names = {
-        "tasmin": ["tasmin", "tmin"],
-        "tasmax": ["tasmax", "tmax"],
-        "tas": ["tas", "t2m"],
-        "rainfall": ["rainfall", "rain"],
-        "pr": ["pr", "precip", "prec", "precipitation", "tp"],
-        "prsn": ["prsn", "snow", "snowfall", "solid_precip"],
-        "evspsbl": ["pet", "evap", "evapotranspiration"],
-        "water_volume_transport_in_river_channel": [
-            "qobs",
-            "discharge",
-            "streamflow",
-            "dis",
-        ],
-    }
 
     _parallel_parameters = [
         "params",
@@ -112,7 +104,7 @@ class Raven:
         self.rvi = RV()
         self.rvp = RV()
         self.rvc = RV()
-        self.rvt = RV()
+        self.rvt = RVT()
         self.rvh = RV()
         self.rvd = RV()  # rvd is for derived parameters
 
@@ -274,8 +266,8 @@ class Raven:
                     p = att.__class__(*value)
                     setattr(obj, key, p)
                 # If att is a RavenNcData, we expect a dict
-                elif isinstance(att, RavenNcData):
-                    att.update(value)
+                # elif isinstance(att, dict):
+                #     att.update(value)
                 else:
                     setattr(obj, key, value)
                 assigned = True
@@ -333,13 +325,15 @@ class Raven:
         ts : sequence
           Paths to input forcing files.
         index : int
-          Run index.
+          Run index (starts at 1)
         """
         # Create configuration information from input files
-        ncvars = self._assign_files(ts)
-        self.rvt.update(ncvars)
-        self.check_units()
-        self.check_inputs()
+        # ncvars = self._assign_files(ts)
+        # self.rvt.update(ncvars)
+
+        # TODO: Re-enable those checks
+        # self.check_units()
+        # self.check_inputs()
 
         # Compute derived parameters
         self.derived_parameters()
@@ -431,6 +425,11 @@ class Raven:
             if len(val) == 1:
                 pdict[key] = val.repeat(nloops, axis=0)
 
+        # Use rvc file to set model state, if any
+        rvc = kwds.pop("rvc", None)
+        if rvc:
+            self.resume(solution=rvc)
+
         # Update non-parallel parameter objects
         for key, val in kwds.items():
 
@@ -452,6 +451,8 @@ class Raven:
             self.handle_date_defaults(ts)
             self.set_calendar(ts)
 
+        ncdata = NcDataImporter(ts)
+
         # Loop over parallel parameters - sets self.rvi.run_index
         procs = []
         for self.psim in range(nloops):
@@ -459,7 +460,17 @@ class Raven:
                 if val[self.psim] is not None:
                     self.assign(key, val[self.psim])
 
+            # Forcing commands
+            self.rvt.update(
+                ncdata.extract(
+                    rvh=self.rvh,
+                    rvt=self.rvt,
+                    nc_index=pdict["nc_index"][self.psim],
+                )
+            )
+
             cmd = self.setup_model_run(tuple(map(Path, ts)))
+
             procs.append(
                 subprocess.Popen(cmd, cwd=self.cmd_path, stdout=subprocess.PIPE)
             )
@@ -581,46 +592,6 @@ class Raven:
         for f in files:
             out += f.read_text()
         return out
-
-    def _assign_files(self, fns):
-        """Find for each variable the file storing it's data and the name of the netCDF variable.
-
-        Parameters
-        ----------
-        fns : sequence
-          Paths to netCDF files.
-
-        Returns
-        -------
-        dict
-          A dictionary keyed by variable storing the `RavenNcData` instance storing each variable's configuration
-          information.
-        """
-        ncvars = {}
-        for fn in fns:
-            if ".nc" in fn.suffix:
-                with xr.open_dataset(fn) as ds:
-                    for var, alt_names in self._variable_names.items():
-                        # Check that the emulator is expecting that variable.
-                        if var not in self.rvt.keys():
-                            continue
-
-                        # Check if any alternate variable name is in the file.
-                        for alt_name in alt_names:
-                            if alt_name in ds.data_vars:
-                                ncvars[var] = dict(
-                                    var=var,
-                                    path=fn,
-                                    var_name=alt_name,
-                                    dimensions=ds[alt_name].dims,
-                                    units=ds[alt_name].attrs.get("units"),
-                                )
-                                if "GRIB_stepType" in ds[alt_name].attrs:
-                                    ncvars[var]["deaccumulate"] = (
-                                        ds[alt_name].attrs["GRIB_stepType"] == "accum"
-                                    )
-                                break
-        return ncvars
 
     def _get_output(self, pattern, path):
         """Match actual output files to known expected files.
@@ -778,9 +749,11 @@ class Raven:
 
     def check_units(self):
         """Check that the input file units match expectations."""
-        for var, nc in self.rvt.items():
-            if isinstance(nc, RavenNcData) and nc.var is not None:
-                nc._check_units()
+        # TODO: make compliant with the new RVT implementation
+        pass
+        # for var, nc in self.rvt.items():
+        #     if isinstance(nc, RavenNcData) and nc.var is not None:
+        #         nc._check_units()
 
     def check_inputs(self):
         """Check that necessary variables are defined."""
@@ -900,7 +873,7 @@ class Ostrich(Raven):
 
         try:
             self.outputs["calibparams"] = ", ".join(map(str, self.calibrated_params))
-        except AttributeError:
+        except (AttributeError, TypeError):
             err = self.parse_errors()
             raise UserWarning(err)
 
@@ -984,6 +957,24 @@ def make_executable(fn):
     """Make file executable."""
     st = os.stat(fn)
     os.chmod(fn, st.st_mode | stat.S_IEXEC)
+
+
+def get_average_annual_runoff(
+    nc_file_path, area_in_m2, time_dim="time", na_value=RAVEN_NO_DATA_VALUE
+):
+    """
+    Compute the average annual runoff from observed data.
+    """
+    with xr.open_dataset(nc_file_path) as ds:
+        qobs = ds.where(ds["qobs"] != na_value)["qobs"]
+        qobs *= 86400.0  # convert m**3/s to m**3/d
+        axis = qobs.dims.index(time_dim)
+        # avg daily runoff [m3/d] for each year in record
+        qyear = np.nanmean(qobs.groupby("time.year").mean("time"), axis=axis)
+        qyear = qyear / area_in_m2 * 365 * 1000.0  # [mm/yr] for each year in record
+        qyear = np.mean(qyear)  # [mm/yr] mean over all years in record
+
+    return qyear
 
 
 # TODO: Configure this according to the model_path and output_path.

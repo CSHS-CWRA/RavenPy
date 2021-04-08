@@ -1,25 +1,12 @@
-from collections import namedtuple
-from dataclasses import dataclass
+from collections import defaultdict, namedtuple
 from pathlib import Path
 
 import xarray as xr
+from dataclasses import dataclass
 
 from .base import Ostrich, Raven
-from .commands import BasinIndexCommand
-from .rv import (
-    HRU,
-    LU,
-    RV,
-    RVC,
-    RVH,
-    RVI,
-    RVP,
-    RVT,
-    HRUState,
-    MonthlyAverage,
-    Ost,
-    RavenNcData,
-)
+from .commands import BasinIndexCommand, MonthlyAverageCommand
+from .rv import HRU, LU, RV, RVC, RVH, RVI, RVP, RVT, HRUState, Ost, Sub
 
 __all__ = [
     "GR4JCN",
@@ -35,18 +22,6 @@ __all__ = [
     "get_model",
     "Routing",
 ]
-
-nc = RavenNcData
-std_vars = (
-    "pr",
-    "rainfall",
-    "prsn",
-    "tasmin",
-    "tasmax",
-    "tas",
-    "evspsbl",
-    "water_volume_transport_in_river_channel",
-)
 
 
 class GR4JCN(Raven):
@@ -71,19 +46,45 @@ class GR4JCN(Raven):
         ("GR4J_X1", "GR4J_X2", "GR4J_X3", "GR4J_X4", "CEMANEIGE_X1", "CEMANEIGE_X2"),
     )
 
+    @dataclass
+    class LandHRU(HRU):
+        land_use_class: str = "LU_ALL"
+        veg_class: str = "VEG_ALL"
+        soil_profile: str = "DEFAULT_P"
+        aquifer_profile: str = "[NONE]"
+        terrain_class: str = "[NONE]"
+        _hru_type: str = "land"
+
+    @dataclass
+    class LakeHRU(HRU):
+        land_use_class: str = "LU_WATER"
+        veg_class: str = "VEG_WATER"
+        soil_profile: str = "LAKE"
+        aquifer_profile: str = "[NONE]"
+        terrain_class: str = "[NONE]"
+        _hru_type: str = "lake"
+
     def __init__(self, *args, **kwds):
         super().__init__(*args, **kwds)
 
-        self.rvp = RV(params=GR4JCN.params(None, None, None, None, None, None))
-        self.rvt = RVT(**{k: nc() for k in std_vars})
+        self.rvp = RVP(params=GR4JCN.params(None, None, None, None, None, None))
+        self.rvt = RVT()
         self.rvi = RVI(rain_snow_fraction="RAINSNOW_DINGMAN", evaporation="PET_OUDIN")
-        self.rvh = RV(
-            name=None, area=None, elevation=None, latitude=None, longitude=None
+        self.rvh = RVH(
+            hrus=(GR4JCN.LandHRU(),),
+            subbasins=(
+                Sub(
+                    subbasin_id=1,
+                    name="sub_001",
+                    downstream_id=-1,
+                    profile="None",
+                    gauged=True,
+                ),
+            ),
         )
 
         # Initialize the stores to 1/2 full. Declare the parameters that can be user-modified
-        # TODO: Is this really setting soil0 and soil1 ? I think it needs to be set inside HRUStateVariable.
-        self.rvc = RVC(soil0=None, soil1=15, basin_state=BasinIndexCommand())
+        self.rvc = RVC(soil0=None, soil1=15)
         self.rvd = RV(one_minus_CEMANEIGE_X2=None, GR4J_X1_hlf=None)
 
     def derived_parameters(self):
@@ -95,7 +96,65 @@ class GR4JCN(Raven):
             soil0 = self.rvd.GR4J_X1_hlf if self.rvc.soil0 is None else self.rvc.soil0
             soil1 = self.rvc.soil1
 
-            self.rvc.hru_state = HRUState(index=1, soil0=soil0, soil1=soil1)
+        # subbassin_id -> has at least one LakeHRU
+        sb_contains_lake = defaultdict(lambda: False)
+
+        if not self.rvc.hru_states:
+            # If self.rvc.hru_states is set, it means that we are using `resume()` and we don't
+            # want to interfere
+            for hru in self.rvh.hrus:
+                if isinstance(hru, GR4JCN.LandHRU) or hru._hru_type == "land":
+                    self.rvc.hru_states[hru.hru_id] = HRUState(
+                        index=hru.hru_id, soil0=soil0, soil1=soil1
+                    )
+                elif isinstance(hru, GR4JCN.LakeHRU) or hru._hru_type == "lake":
+                    self.rvc.hru_states[hru.hru_id] = HRUState(index=hru.hru_id)
+                    sb_contains_lake[hru.subbasin_id] = True
+                else:
+                    raise Exception(
+                        "Type of HRU must be either `GR4JCN.LandHRU` or `GR4JCN.LakeHRU` (or its `_hru_type` must be either 'land' or 'lake')"
+                    )
+
+        if not self.rvc.basin_states:
+            # If self.rvc.basin_states is set, it means that we are using `resume()` and we don't
+            # want to interfere
+            for sb in self.rvh.subbasins:
+                self.rvc.basin_states[sb.subbasin_id] = BasinIndexCommand(
+                    index=sb.subbasin_id
+                )
+
+        self.rvh.lake_subbasins = tuple(
+            [
+                sb.subbasin_id
+                for sb in self.rvh.subbasins
+                if sb_contains_lake[sb.subbasin_id]
+            ]
+        )
+        self.rvh.land_subbasins = tuple(
+            [
+                sb.subbasin_id
+                for sb in self.rvh.subbasins
+                if not sb_contains_lake[sb.subbasin_id]
+            ]
+        )
+
+    def run(self, ts, overwrite=False, **kwds):
+        """
+        This is a hook into `Raven.run` for this particular subclass, which
+        allows the support of legacy HRU-related keywords in the model.__call__
+        interface.
+        """
+        hru_attrs = {}
+        for k in ["area", "latitude", "longitude", "elevation"]:
+            v = kwds.pop(k, None)
+            if v:
+                # It seems that `v` is a list when running via a WPS interface
+                hru_attrs[k] = v[0] if isinstance(v, list) else v
+        if hru_attrs:
+            assert isinstance(self.rvh, RVH)
+            self.rvh.hrus = (GR4JCN.LandHRU(**hru_attrs),)
+
+        return super().run(ts, overwrite=overwrite, **kwds)
 
 
 class GR4JCN_OST(Ostrich, GR4JCN):
@@ -131,7 +190,7 @@ class MOHYSE(Raven):
         self.rvh = RV(
             name=None, area=None, elevation=None, latitude=None, longitude=None
         )
-        self.rvt = RVT(**{k: nc() for k in std_vars})
+        self.rvt = RVT()
         self.rvi = RVI(evaporation="PET_MOHYSE", rain_snow_fraction="RAINSNOW_DATA")
         self.rvc = RVC(
             hru_state=HRUState(),
@@ -166,7 +225,7 @@ class MOHYSE_OST(Ostrich, MOHYSE):
         pass
 
 
-class HMETS(GR4JCN):
+class HMETS(Raven):
     identifier = "hmets"
     templates = tuple((Path(__file__).parent / "raven-hmets").glob("*.rv?"))
 
@@ -200,7 +259,10 @@ class HMETS(GR4JCN):
     def __init__(self, *args, **kwds):
         super().__init__(*args, **kwds)
         self.rvp = RV(params=HMETS.params(*((None,) * len(HMETS.params._fields))))
-        self.rvt = RVT(**{k: nc() for k in std_vars})
+        self.rvt = RVT()
+        self.rvh = RV(
+            name=None, area=None, elevation=None, latitude=None, longitude=None
+        )
         self.rvi = RVI(evaporation="PET_OUDIN", rain_snow_fraction="RAINSNOW_DATA")
         self.rvc = RVC(soil0=None, soil1=None, basin_state=BasinIndexCommand())
         self.rvd = RV(
@@ -320,7 +382,7 @@ class HMETS_OST(Ostrich, HMETS):
         return self.params(*out)
 
 
-class HBVEC(GR4JCN):
+class HBVEC(Raven):
     identifier = "hbvec"
     templates = tuple((Path(__file__).parent / "raven-hbv-ec").glob("*.rv?"))
 
@@ -332,10 +394,8 @@ class HBVEC(GR4JCN):
         self.rvd = RV(
             one_plus_par_x15=None,
             par_x11_half=None,
-            monthly_ave_evaporation=MonthlyAverage(),
-            monthly_ave_temperature=MonthlyAverage(),
         )
-        self.rvt = RVT(**{k: nc() for k in std_vars})
+        self.rvt = RVT()
         self.rvh = RV(
             name=None, area=None, elevation=None, latitude=None, longitude=None
         )
@@ -349,6 +409,10 @@ class HBVEC(GR4JCN):
     def derived_parameters(self):
         self.rvd["one_plus_par_x15"] = self.rvp.params.par_x15 + 1.0
         self.rvd["par_x11_half"] = self.rvp.params.par_x11 / 2.0
+
+        self.rvt["raincorrection"] = self.rvp.params.par_x20
+        self.rvt["snowcorrection"] = self.rvp.params.par_x21
+
         self._monthly_average()
 
         # Default initial conditions if none are given
@@ -365,26 +429,32 @@ class HBVEC(GR4JCN):
             or self.rvi.ow_evaporation == "PET_FROMMONTHLY"
         ):
             # If this fails, it's likely the input data is missing some necessary variables (e.g. evap).
-            if self.rvt.tas.path is not None:
-                tas = xr.open_dataset(self.rvt.tas.path)
+            tas_cmd = self.rvt.var_cmds.get("tas")
+            tasmin_cmd = self.rvt.var_cmds.get("tasmin")
+            tasmax_cmd = self.rvt.var_cmds.get("tasmax")
+            evspsbl_cmd = self.rvt.var_cmds.get("evspsbl")
+
+            if tas_cmd:
+                tas = xr.open_dataset(tas_cmd.file_name_nc)[tas_cmd.var_name_nc]
             else:
-                tasmax = xr.open_dataset(self.rvt.tasmax.path)[self.rvt.tasmax.var_name]
-                tasmin = xr.open_dataset(self.rvt.tasmin.path)[self.rvt.tasmin.var_name]
+                tasmax = xr.open_dataset(tasmax_cmd.file_name_nc)[
+                    tasmax_cmd.var_name_nc
+                ]
+                tasmin = xr.open_dataset(tasmin_cmd.file_name_nc)[
+                    tasmin_cmd.var_name_nc
+                ]
                 tas = (tasmax + tasmin) / 2.0
 
-            if self.rvt.evspsbl.path is not None:
-                evap = xr.open_dataset(self.rvt.evspsbl.path)[self.rvt.evspsbl.var_name]
+            if evspsbl_cmd:
+                evap = xr.open_dataset(evspsbl_cmd.file_name_nc)[
+                    evspsbl_cmd.var_name_nc
+                ]
 
             mat = tas.groupby("time.month").mean().values
             mae = evap.groupby("time.month").mean().values
 
-            self.rvd.update(
-                {
-                    "monthly_ave_temperature": MonthlyAverage("Temperature", mat),
-                    "monthly_ave_evaporation": MonthlyAverage("Evaporation", mae),
-                },
-                force=True,
-            )
+            self.rvt["monthly_ave_evaporation"] = tuple(mae)
+            self.rvt["monthly_ave_temperature"] = tuple(mat)
 
 
 class HBVEC_OST(Ostrich, HBVEC):
@@ -449,6 +519,8 @@ class HBVEC_OST(Ostrich, HBVEC):
 
     # TODO: Support index specification and unit changes.
     def derived_parameters(self):
+        self.rvt.raincorrection = "par_x20"
+        self.rvt.snowcorrection = "par_x21"
         self._monthly_average()
 
 
@@ -481,7 +553,7 @@ class BLENDED(Raven):
             ),
         )
         self.rvh = RVH(hrus=(BLENDED.HRU(),))
-        self.rvt = RVT(**{k: nc() for k in std_vars})
+        self.rvt = RVT()
         self.rvi = RVI(evaporation="PET_OUDIN", rain_snow_fraction="RAINSNOW_HBV")
         self.rvc = RVC(soil0=None, soil1=None, basin_state=BasinIndexCommand())
         self.rvd = RV(
@@ -504,12 +576,10 @@ class BLENDED(Raven):
         self.rvd["SUM_X09_X10"] = self.rvp.params.par_x10  # + self.rvp.params.par_x09
         self.rvd["SUM_X13_X14"] = self.rvp.params.par_x14  # + self.rvp.params.par_x13
         self.rvd["SUM_X24_X25"] = self.rvp.params.par_x25  # + self.rvp.params.par_x24
-        self.rvd[
-            "POW_X04"
-        ] = self.rvp.params.par_x04  # 10.0**self.rvp.params.par_x04  #
-        self.rvd[
-            "POW_X11"
-        ] = self.rvp.params.par_x11  # 10.0**self.rvp.params.par_x11  #
+        # 10.0**self.rvp.params.par_x04  #
+        self.rvd["POW_X04"] = self.rvp.params.par_x04
+        # 10.0**self.rvp.params.par_x11  #
+        self.rvd["POW_X11"] = self.rvp.params.par_x11
 
         # Default initial conditions if none are given
         if self.rvc.hru_state is None:
@@ -629,7 +699,8 @@ class BLENDED_OST(Ostrich, BLENDED):
 
     def derived_parameters(self):
         """Derived parameters are computed by Ostrich."""
-        pass
+        self.rvt.raincorrection = "par_x33"
+        self.rvt.snowcorrection = "par_x34"
 
     def ost2raven(self, ops):
         """Return a list of parameter names calibrated by Ostrich that match Raven's parameters.

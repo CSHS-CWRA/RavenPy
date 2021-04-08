@@ -3,6 +3,7 @@ import os
 import tempfile
 import zipfile
 from dataclasses import replace
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -19,15 +20,20 @@ from ravenpy.models import (
     MOHYSE_OST,
     Raven,
     Routing,
+    Sub,
+    get_average_annual_runoff,
 )
 from ravenpy.models.commands import (
+    ChannelProfileCommand,
     GriddedForcingCommand,
+    GridWeightsCommand,
     HRUStateVariableTableCommand,
     LandUseClassesCommand,
     ObservationDataCommand,
     SBGroupPropertyMultiplierCommand,
     SoilClassesCommand,
     SoilProfilesCommand,
+    StationForcingCommand,
     VegetationClassesCommand,
 )
 from ravenpy.utilities.testdata import get_local_testdata
@@ -45,7 +51,7 @@ def input2d(tmpdir):
     ds = _convert_2d(TS)
     fn_out = os.path.join(tmpdir, "input2d.nc")
     ds.to_netcdf(fn_out)
-    return fn_out
+    return Path(fn_out)
 
 
 def test_race():
@@ -59,39 +65,294 @@ def test_race():
     assert ost.rvi.suppress_output.startswith(":SuppressOutput")
 
 
+# Salmon catchment is now split into land- and lake-part.
+# The areas do not sum up to overall area of 4250.6 [km2].
+# This is the reason the "test_routing" will give differnt
+# results compared to "test_simple". The "salmon_land_hru"
+# however is kept at the overall area of 4250.6 [km2] such
+# that other tests still obtain same results as before.
+salmon_land_hru_1 = dict(
+    area=4250.6, elevation=843.0, latitude=54.4848, longitude=-123.3659
+)
+salmon_lake_hru_1 = dict(area=100.0, elevation=839.0, latitude=54.0, longitude=-123.4)
+salmon_land_hru_2 = dict(
+    area=2000.0, elevation=835.0, latitude=54.123, longitude=-123.4234
+)
+
+
 class TestGR4JCN:
     def test_simple(self):
-        model = GR4JCN(tempfile.mkdtemp())
+        model = GR4JCN()
 
         model.rvi.start_date = dt.datetime(2000, 1, 1)
         model.rvi.end_date = dt.datetime(2002, 1, 1)
         model.rvi.run_name = "test"
 
-        model.rvh.name = "Salmon"
-        model.rvh.area = "4250.6"
-        model.rvh.elevation = "843.0"
-        model.rvh.latitude = 54.4848
-        model.rvh.longitude = -123.3659
-
-        model.rvt.pr.deaccumulate = False
+        model.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
 
         model.rvp.params = model.params(0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
+
+        total_area_in_m2 = model.rvh.hrus[0].area * 1000 * 1000
+        model.rvp.avg_annual_runoff = get_average_annual_runoff(TS, total_area_in_m2)
+
+        np.testing.assert_almost_equal(model.rvp.avg_annual_runoff, 208.4805694844741)
+
         assert model.rvi.suppress_output == ""
+
         model(TS)
 
+        # ------------
+        # Check quality (diagnostic) of simulated streamflow values
+        # ------------
         d = model.diagnostics
-        # yields NSE=0.???? for full period 1954-2010
-        assert model.rvi.calendar == "GREGORIAN"
-        # Check parser
-        assert 1 in model.solution["HRUStateVariableTable"]["data"]
+        np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.117301, 4)
 
-        np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.117301, 2)
-
+        # ------------
+        # Check simulated streamflow values q_sim
+        # ------------
         hds = model.q_sim
+
         assert hds.attrs["long_name"] == "Simulated outflows"
 
+        assert len(hds.nbasins) == 1  # number of "gauged" basins is 1
+
+        # We only have one SB with gauged=True, so the output has a single column.
+        # The number of time steps simulated between (2000, 1, 1) and
+        # (2002, 1, 1) is 732.
+        assert hds.shape == (732, 1)
+
+        # Check simulated streamflow at first three timesteps and three simulated
+        # timesteps in the middle of the simulation period.
+        dates = (
+            "2000-01-01",
+            "2000-01-02",
+            "2000-01-03",
+            "2001-01-30",
+            "2001-01-31",
+            "2001-02-01",
+        )
+
+        target_q_sim = [0.0, 0.165788, 0.559366, 12.374606, 12.33398, 12.293458]
+
+        for t in range(6):
+            np.testing.assert_almost_equal(
+                hds.sel(nbasins=0, time=dates[t]), target_q_sim[t], 4
+            )
+
+        # ------------
+        # Check parser
+        # ------------
+        assert model.rvi.calendar == "GREGORIAN"
+
+        # ------------
+        # Check saved HRU states saved in RVC
+        # ------------
+        assert 1 in model.solution["HRUStateVariableTable"]["data"]
+
+        # ------------
         # Check attributes
+        # ------------
         assert model.hydrograph.attrs["model_id"] == "gr4jcn"
+
+    def test_routing(self):
+        """We need at least 2 subbasins to activate routing."""
+        model = GR4JCN()
+
+        ts_2d = get_local_testdata(
+            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_2d.nc"
+        )
+
+        #########
+        # R V I #
+        #########
+
+        model.rvi.start_date = dt.datetime(2000, 1, 1)
+        model.rvi.end_date = dt.datetime(2002, 1, 1)
+        model.rvi.run_name = "test_gr4jcn_routing"
+        model.rvi.routing = "ROUTE_DIFFUSIVE_WAVE"
+
+        #########
+        # R V H #
+        #########
+
+        # Here we assume that we have two subbasins. The first one (subbasin_id=10)
+        # has a lake (hru_id=2; area-100km2) and the rest is covered by land (hru_id=1;
+        # area=4250.6km2). The second subbasin (subbasin_id=20) does not contain a
+        # lake and is hence only land (hru_id=3; area=2000km2).
+        #
+        # Later the routing product will tell us which basin flows into which. Here
+        # we assume that the first subbasin (subbasin_id=10) drains into the second
+        # (subbasin_id=20). At the outlet of this second one we have an observation
+        # station (see :ObservationData in RVT). We will compare these observations
+        # with the simulated streamflow. That is the reason why "gauged=True" for
+        # the second basin.
+
+        # HRU IDs are 1 to 3
+        model.rvh.hrus = (
+            GR4JCN.LandHRU(hru_id=1, subbasin_id=10, **salmon_land_hru_1),
+            GR4JCN.LakeHRU(hru_id=2, subbasin_id=10, **salmon_lake_hru_1),
+            GR4JCN.LandHRU(hru_id=3, subbasin_id=20, **salmon_land_hru_2),
+        )
+
+        # Sub-basin IDs are 10 and 20 (not 1 and 2), to help disambiguate
+        model.rvh.subbasins = (
+            # gauged = False:
+            # Usually this output would only be written for user's convenience.
+            # There is usually no observation of streamflow available within
+            # catchments; only at the outlet. That's most commonly the reason
+            # why a catchment is defined as it is defined.
+            Sub(
+                name="upstream",
+                subbasin_id=10,
+                downstream_id=20,
+                profile="chn_10",
+                gauged=False,
+            ),
+            # gauged = True:
+            # Since this is the outlet, this would usually be what we calibrate
+            # against (i.e. we try to match this to Qobs).
+            Sub(
+                name="downstream",
+                subbasin_id=20,
+                downstream_id=-1,
+                profile="chn_20",
+                gauged=True,
+            ),
+        )
+
+        model.rvh.land_subbasin_property_multiplier = SBGroupPropertyMultiplierCommand(
+            "Land", "MANNINGS_N", 1.0
+        )
+        model.rvh.lake_subbasin_property_multiplier = SBGroupPropertyMultiplierCommand(
+            "Lakes", "RESERVOIR_CREST_WIDTH", 1.0
+        )
+
+        #########
+        # R V T #
+        #########
+
+        gws = GridWeightsCommand(
+            number_hrus=3,
+            number_grid_cells=1,
+            # Here we have a special case: station is 0 for every row because the example NC
+            # has only one region/station (which is column 0)
+            data=((1, 0, 1.0), (2, 0, 1.0), (3, 0, 1.0)),
+        )
+        # These will be shared (inline) to all the StationForcing commands in the RVT
+        model.rvt.grid_weights = gws
+
+        #########
+        # R V P #
+        #########
+
+        model.rvp.params = model.params(0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
+
+        total_area_in_km2 = sum(hru.area for hru in model.rvh.hrus)
+        total_area_in_m2 = total_area_in_km2 * 1000 * 1000
+        model.rvp.avg_annual_runoff = get_average_annual_runoff(ts_2d, total_area_in_m2)
+
+        np.testing.assert_almost_equal(model.rvp.avg_annual_runoff, 139.5407534171111)
+
+        # These channel profiles describe the geometry of the actual river crossection.
+        # The eight points (x) to describe the following geometry are given in each
+        # profile:
+        #
+        # ----x                                     x---
+        #      \           FLOODPLAIN             /
+        #       x----x                     x----x
+        #             \                  /
+        #               \   RIVERBED   /
+        #                 x----------x
+        #
+        model.rvp.channel_profiles = [
+            ChannelProfileCommand(
+                name="chn_10",
+                bed_slope=7.62066e-05,
+                survey_points=[
+                    (0, 463.647),
+                    (16.0, 459.647),
+                    (90.9828, 459.647),
+                    (92.9828, 458.647),
+                    (126.4742, 458.647),
+                    (128.4742, 459.647),
+                    (203.457, 459.647),
+                    (219.457, 463.647),
+                ],
+                roughness_zones=[
+                    (0, 0.0909167),
+                    (90.9828, 0.035),
+                    (128.4742, 0.0909167),
+                ],
+            ),
+            ChannelProfileCommand(
+                name="chn_20",
+                bed_slope=9.95895e-05,
+                survey_points=[
+                    (0, 450.657),
+                    (16.0, 446.657),
+                    (85.0166, 446.657),
+                    (87.0166, 445.657),
+                    (117.5249, 445.657),
+                    (119.5249, 446.657),
+                    (188.54149999999998, 446.657),
+                    (204.54149999999998, 450.657),
+                ],
+                roughness_zones=[
+                    (0, 0.0915769),
+                    (85.0166, 0.035),
+                    (119.5249, 0.0915769),
+                ],
+            ),
+        ]
+
+        #############
+        # Run model #
+        #############
+
+        model(ts_2d)
+
+        ###########
+        # Verify  #
+        ###########
+
+        hds = model.q_sim
+
+        assert len(hds.nbasins) == 1  # number of "gauged" basins is 1
+
+        # We only have one SB with gauged=True, so the output has a single column.
+        # The number of time steps simulated between (2000, 1, 1) and
+        # (2002, 1, 1) is 732.
+        assert hds.shape == (732, 1)
+
+        # Check simulated streamflow at first three timesteps and three simulated
+        # timesteps in the middle of the simulation period.
+        dates = (
+            "2000-01-01",
+            "2000-01-02",
+            "2000-01-03",
+            "2001-01-30",
+            "2001-01-31",
+            "2001-02-01",
+        )
+
+        target_q_sim = [0.0, 0.304073, 0.980807, 17.54049, 17.409493, 17.437954]
+
+        for t in range(6):
+            np.testing.assert_almost_equal(
+                hds.sel(nbasins=0, time=dates[t]), target_q_sim[t], 4
+            )
+
+        # For lumped GR4J model we have 1 subbasin and 1 HRU as well as no routing, no
+        # channel profiles, and the area of the entire basin is 4250.6 [km2]. Comparison
+        # of simulated and observed streamflow at outlet yielded:
+        # np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.116971, 4)
+        #
+        # This is now a different value due to:
+        # - basin we have here is larger (4250.6 [km2] + 100 [km2] + 2000.0 [km2])
+        # - we do routing: so water from subbasin 1 needs some time to arrive at the
+        #   outlet of subbasin 2
+        d = model.diagnostics
+        np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.0141168, 4)
 
     def test_tags(self):
         model = GR4JCN(tempfile.mkdtemp())
@@ -120,32 +381,47 @@ class TestGR4JCN:
 
     def test_run(self):
         model = GR4JCN()
+
         model(
             TS,
-            start_date=dt.datetime(2000, 1, 1),
-            end_date=dt.datetime(2002, 1, 1),
             area=4250.6,
             elevation=843.0,
             latitude=54.4848,
             longitude=-123.3659,
+            start_date=dt.datetime(2000, 1, 1),
+            end_date=dt.datetime(2002, 1, 1),
             params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
             suppress_output=False,
         )
         d = model.diagnostics
 
-        np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.117301, 2)
+        np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.117301, 4)
 
-    # @pytest.mark.skip
-    def test_overwrite(self):
+    def test_run_new_hrus_param(self):
         model = GR4JCN()
+
         model(
             TS,
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2002, 1, 1),
-            area=4250.6,
-            elevation=843.0,
-            latitude=54.4848,
-            longitude=-123.3659,
+            params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
+            suppress_output=False,
+            hrus=(GR4JCN.LandHRU(**salmon_land_hru_1),),
+        )
+        d = model.diagnostics
+
+        np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.117301, 4)
+
+    # @pytest.mark.skip
+    def test_overwrite(self):
+        model = GR4JCN()
+
+        model.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
+
+        model(
+            TS,
+            start_date=dt.datetime(2000, 1, 1),
+            end_date=dt.datetime(2002, 1, 1),
             params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
         )
         assert model.rvi.suppress_output == ""
@@ -172,7 +448,7 @@ class TestGR4JCN:
 
         d = model.diagnostics
 
-        np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.117315, 2)
+        np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.117315, 4)
 
         # Set initial conditions explicitly
         model(
@@ -185,11 +461,8 @@ class TestGR4JCN:
 
     def test_resume(self):
         model_ab = GR4JCN()
+        model_ab.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
         kwargs = dict(
-            area=4250.6,
-            elevation=843.0,
-            latitude=54.4848,
-            longitude=-123.3659,
             params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
         )
         # Reference run
@@ -202,6 +475,8 @@ class TestGR4JCN:
         )
 
         model_a = GR4JCN()
+
+        model_a.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
         model_a(
             TS,
             run_name="run_a",
@@ -231,6 +506,7 @@ class TestGR4JCN:
 
         # Resume with final state from saved solution file
         model_b = GR4JCN()
+        model_b.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
         model_b.resume(
             rvc
         )  # <--------- And this is how you feed it to a brand new model.
@@ -255,21 +531,16 @@ class TestGR4JCN:
     def test_resume_earlier(self):
         """Check that we can resume a run with the start date set at another date than the time stamp in the
         solution."""
-        kwargs = dict(
-            area=4250.6,
-            elevation=843.0,
-            latitude=54.4848,
-            longitude=-123.3659,
-            params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
-        )
+        params = (0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
         # Reference run
         model = GR4JCN()
+        model.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
         model(
             TS,
             run_name="run_a",
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2000, 2, 1),
-            **kwargs,
+            params=params,
         )
 
         s_a = model.storage["Soil Water[0]"].isel(time=-1)
@@ -290,28 +561,23 @@ class TestGR4JCN:
             run_name="run_b",
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2000, 2, 1),
-            **kwargs,
+            params=params,
         )
 
         s_b = model.storage["Soil Water[0]"].isel(time=-1)
         assert s_a != s_b
 
     def test_update_soil_water(self):
-        kwargs = dict(
-            area=4250.6,
-            elevation=843.0,
-            latitude=54.4848,
-            longitude=-123.3659,
-            params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
-        )
+        params = (0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
         # Reference run
         model = GR4JCN()
+        model.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
         model(
             TS,
             run_name="run_a",
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2000, 2, 1),
-            **kwargs,
+            params=params,
         )
 
         s_0 = float(model.storage["Soil Water[0]"].isel(time=-1).values)
@@ -325,7 +591,7 @@ class TestGR4JCN:
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2000, 2, 1),
             hru_state=hru_state,
-            **kwargs,
+            params=params,
         )
 
         assert s_0 != model.storage["Soil Water[0]"].isel(time=-1)
@@ -340,14 +606,12 @@ class TestGR4JCN:
 
     def test_parallel_params(self):
         model = GR4JCN()
+        model.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
+
         model(
             TS,
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2002, 1, 1),
-            area=4250.6,
-            elevation=843.0,
-            latitude=54.4848,
-            longitude=-123.3659,
             params=[
                 (0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
                 (0.528, -3.4, 407.3, 1.07, 17, 0.95),
@@ -363,24 +627,22 @@ class TestGR4JCN:
     def test_parallel_basins(self, input2d):
         ts = input2d
         model = GR4JCN()
+        model.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
+
         model(
             ts,
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2002, 1, 1),
-            area=4250.6,
-            elevation=843.0,
-            latitude=54.4848,
-            longitude=-123.3659,
             params=[0.529, -3.396, 407.29, 1.072, 16.9, 0.947],
             nc_index=[0, 0],
-            name=["basin1", "basin2"],
+            # name=["basin1", "basin2"],  # Not sure about this..
             suppress_output=False,
         )
 
         assert len(model.diagnostics) == 2
         assert len(model.hydrograph.nbasins) == 2
         np.testing.assert_array_equal(
-            model.hydrograph.basin_name[:], ["basin1", "basin2"]
+            model.hydrograph.basin_name[:], ["sub_001", "sub_001"]
         )
         z = zipfile.ZipFile(model.outputs["rv_config"])
         assert len(z.filelist) == 10
@@ -389,6 +651,7 @@ class TestGR4JCN:
 class TestGR4JCN_OST:
     def test_simple(self):
         model = GR4JCN_OST()
+        model.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
         params = (0.529, -3.396, 407.29, 1.072, 16.9, 0.053)
         low = (0.01, -15.0, 10.0, 0.0, 1.0, 0.0)
         high = (2.5, 10.0, 700.0, 7.0, 30.0, 1.0)
@@ -397,10 +660,6 @@ class TestGR4JCN_OST:
             TS,
             start_date=dt.datetime(1954, 1, 1),
             duration=208,
-            area=4250.6,
-            elevation=843.0,
-            latitude=54.4848,
-            longitude=-123.3659,
             params=params,
             lowerBounds=low,
             upperBounds=high,
@@ -444,14 +703,11 @@ class TestGR4JCN_OST:
         # np.testing.assert_almost_equal( opt_func, -0.5779910, 4,
         #                                 err_msg='calibrated NSE is not matching expected value')
         gr4j = GR4JCN()
+        gr4j.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
         gr4j(
             TS,
             start_date=dt.datetime(1954, 1, 1),
             duration=208,
-            area=4250.6,
-            elevation=843.0,
-            latitude=54.4848,
-            longitude=-123.3659,
             params=model.calibrated_params,
         )
         np.testing.assert_almost_equal(
@@ -1107,7 +1363,7 @@ class TestRouting:
         # Model #
         #########
 
-        model = Routing("/tmp/ravenpy_routing_emu_dev/")
+        model = Routing()
 
         #######
         # RVI #
@@ -1142,9 +1398,11 @@ class TestRouting:
 
         model.rvh.update(rvh_config)
 
-        model.rvh["sb_group_property_multipliers"] = (
-            SBGroupPropertyMultiplierCommand("Land", "MANNINGS_N", 1.0),
-            SBGroupPropertyMultiplierCommand("Lakes", "RESERVOIR_CREST_WIDTH", 1.0),
+        model.rvh.land_subbasin_property_multiplier = SBGroupPropertyMultiplierCommand(
+            "Land", "MANNINGS_N", 1.0
+        )
+        model.rvh.lake_subbasin_property_multiplier = SBGroupPropertyMultiplierCommand(
+            "Lakes", "RESERVOIR_CREST_WIDTH", 1.0
         )
 
         #######
@@ -1158,8 +1416,8 @@ class TestRouting:
         model.rvp.avg_annual_runoff = 594
         model.rvp.soil_classes = [SoilClassesCommand.Record("AQUIFER")]
         model.rvp.soil_profiles = [
-            SoilProfilesCommand.Record("Lake_Soil_Lake_HRU", 1, "AQUIFER", 5),
-            SoilProfilesCommand.Record("Soil_Land_HRU", 1, "AQUIFER", 5),
+            SoilProfilesCommand.Record("Lake_Soil_Lake_HRU", ("AQUIFER",), (5,)),
+            SoilProfilesCommand.Record("Soil_Land_HRU", ("AQUIFER",), (5,)),
         ]
         model.rvp.vegetation_classes = [
             VegetationClassesCommand.Record("Veg_Land_HRU", 25, 5.0, 5.0),
@@ -1185,17 +1443,18 @@ class TestRouting:
 
         streaminputs_gf = GriddedForcingCommand(
             name="StreamInputs",
-            forcing_type="PRECIP",
+            data_type="PRECIP",
             file_name_nc=vic_streaminputs_nc_path.name,
             var_name_nc="Streaminputs",
             dim_names_nc=("lon_dim", "lat_dim", "time"),
-            linear_transform=(4.0, 0),
+            scale=4.0,
+            offset=0,
             grid_weights=streaminputs_importer.extract(),
         )
 
         temperatures_gf = GriddedForcingCommand(
             name="AverageTemp",
-            forcing_type="TEMP_AVE",
+            data_type="TEMP_AVE",
             file_name_nc=vic_temperatures_nc_path.name,
             var_name_nc="Avg_temp",
             dim_names_nc=("lon_dim", "lat_dim", "time"),
@@ -1211,7 +1470,7 @@ class TestRouting:
             file_name_nc=observation_data_nc_path.name,
             var_name_nc="Q",
             dim_names_nc=("nstations", "time"),
-            station_idx=1,
+            index=1,  # StationIdx
         )
 
         #############
@@ -1224,7 +1483,6 @@ class TestRouting:
                 vic_temperatures_nc_path,
                 observation_data_nc_path,
             ],
-            overwrite=True,
         )
 
         ##########

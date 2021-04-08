@@ -9,6 +9,7 @@ Created on Tue Feb 23 22:25:32 2021
 import datetime as dt
 import logging
 
+from ravenpy.models import GR4JCN
 from ravenpy.utilities.forecasting import (
     make_climpred_hindcast_object,
     make_ESP_hindcast_dataset,
@@ -49,10 +50,11 @@ class TestClimpredHindcastVerification:
             included_years=list(range(1957, 1959)),
             forecast_duration=forecast_duration,
             ts=ts,
-            area="4250.6",
-            elevation="843.0",
-            latitude=54.4848,
-            longitude=-123.3659,
+            hrus=(
+                GR4JCN.LandHRU(
+                    area=4250.6, elevation=843.0, latitude=54.4848, longitude=-123.3659
+                ),
+            ),
             params=params,
             rvc=str(rvc),
         )

@@ -5,8 +5,10 @@
 
 {land_subbasin_group_cmd}
 
+{land_subbasin_property_multiplier}
+
 {lake_subbasin_group_cmd}
 
-{sb_group_property_multiplier_list}
+{lake_subbasin_property_multiplier}
 
 {reservoir_cmd_list}

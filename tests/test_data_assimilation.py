@@ -80,11 +80,12 @@ class TestAssimilationGR4JCN:
         end_date = start_date + dt.timedelta(days=sum(assim_days))
 
         # Set model options
-        model.rvh.name = "Salmon"
-        model.rvh.area = "4250.6"
-        model.rvh.elevation = "843.0"
-        model.rvh.latitude = 54.4848
-        model.rvh.longitude = -123.3659
+
+        model.rvh.hrus = (
+            GR4JCN.LandHRU(
+                area=4250.6, elevation=843.0, latitude=54.4848, longitude=-123.3659
+            ),
+        )
 
         model.rvp.params = model.params(
             0.1353389, -0.005067198, 576.8007, 6.986121, 1.102917, 0.9224778
@@ -109,10 +110,10 @@ class TestAssimilationGR4JCN:
         # === Create perturbed time series for full assimilation period ====
         perturbed = {}
         for key, s in std.items():
-            nc = model.rvt.get(key)
+            nc = model.rvt.var_cmds[key]
 
-            with xr.open_dataset(nc.path) as ds:
-                da = ds.get(nc.var_name).sel(time=slice(start_date, end_date))
+            with xr.open_dataset(nc.file_name_nc) as ds:
+                da = ds.get(nc.var_name_nc).sel(time=slice(start_date, end_date))
 
                 perturbed[key] = perturbation(
                     da,

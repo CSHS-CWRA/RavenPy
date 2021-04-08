@@ -1,7 +1,7 @@
 import datetime as dt
 import zipfile
 
-from ravenpy.models import RavenMultiModel
+from ravenpy.models import GR4JCN, RavenMultiModel
 from ravenpy.utilities.testdata import get_local_testdata
 
 
