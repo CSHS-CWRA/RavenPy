@@ -57,7 +57,8 @@ try:
 except subprocess.CalledProcessError:
     pass
 
-dev_requirements = gis_requirements.extend(
+dev_requirements = gis_requirements.copy()
+dev_requirements.extend(
     [dependency for dependency in open("requirements_dev.txt").readlines()]
 )
 
