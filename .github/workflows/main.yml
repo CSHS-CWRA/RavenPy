@@ -43,8 +43,9 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install GDAL
-      run:
-        sudo apt-get update && sudo apt-get install libgdal-dev
+      run: |
+        sudo apt-get update
+        sudo apt-get install libgdal-dev
     - name: Install tox
       run: pip install tox
     - name: Test with tox
@@ -66,6 +67,6 @@ jobs:
         run: conda env create -f environment.yml
       - name: Install and test RavenPy
         run: |
-          conda activate ravenpy-env
+          source activate ravenpy-env
           pip install -e ".[dev]"
           pytest tests
