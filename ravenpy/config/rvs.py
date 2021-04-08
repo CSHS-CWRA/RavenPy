@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 from dataclasses import is_dataclass, replace
 from pathlib import Path
 from textwrap import dedent
+from typing import Tuple
 
 import cf_xarray
 import cftime
@@ -656,7 +657,13 @@ class RVT(RV):
 
     def configure_from_nc_data(self, fns):
 
-        self._var_cmds = {k: {} for k in RVT.NC_VARS.keys()}
+        # Important note: if the object at key `k` is a dict (as opposed to a `Command`),
+        # don't reset it because it contains initial user-defined config (for the future Command
+        # object at that particular key)
+        for k in RVT.NC_VARS:
+            v = self._var_cmds[k]
+            if not isinstance(v, dict):
+                self._var_cmds[k] = {}
 
         for fn in fns:
             with xr.open_dataset(fn) as ds:

@@ -100,9 +100,9 @@ class TestGR4JCN:
         )
 
         total_area_in_m2 = model.config.rvh.hrus[0].area * 1000 * 1000
-        # model.rvp.avg_annual_runoff = get_average_annual_runoff(TS, total_area_in_m2)
+        model.rvp.avg_annual_runoff = get_average_annual_runoff(TS, total_area_in_m2)
 
-        # np.testing.assert_almost_equal(model.rvp.avg_annual_runoff, 208.4805694844741)
+        np.testing.assert_almost_equal(model.rvp.avg_annual_runoff, 208.4805694844741)
 
         assert model.config.rvi.suppress_output == ""
 
@@ -653,7 +653,7 @@ class TestGR4JCN:
         assert len(model.diagnostics) == 2
         assert model.hydrograph.dims["params"] == 2
         z = zipfile.ZipFile(model.outputs["rv_config"])
-        # assert len(z.filelist) == 4
+        assert len(z.filelist) == 10
 
     def test_parallel_basins(self, input2d):
         ts = input2d
@@ -676,7 +676,7 @@ class TestGR4JCN:
             model.hydrograph.basin_name[:], ["sub_001", "sub_001"]
         )
         z = zipfile.ZipFile(model.outputs["rv_config"])
-        # assert len(z.filelist) == 4
+        assert len(z.filelist) == 10
 
 
 class TestGR4JCN_OST:
@@ -708,7 +708,6 @@ class TestGR4JCN_OST:
         # Algorithm:          DDS
         # :StartDate          1954-01-01 00:00:00
         # :Duration           208
-        a = model.calibrated_params
         opt_para = astuple(model.calibrated_params)
         opt_func = model.obj_func
 

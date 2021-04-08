@@ -19,12 +19,7 @@ def get_model(name):
     """
     from ravenpy.models import emulators
 
-    model_cls = getattr(emulators, name, None)
-
-    if model_cls is None:
-        for m in [GR4JCN, MOHYSE, HMETS, HBVEC, BLENDED]:
-            if m.identifier == name:
-                model_cls = m
+    model_cls = getattr(emulators, name.upper(), None)
 
     if model_cls is None:
         raise ValueError("Model {} is not recognized.".format(name))
