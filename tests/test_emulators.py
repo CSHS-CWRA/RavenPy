@@ -2,12 +2,12 @@ import datetime as dt
 import os
 import tempfile
 import zipfile
-from dataclasses import replace
 from pathlib import Path
 
 import numpy as np
 import pytest
 import xarray as xr
+from dataclasses import replace
 
 from ravenpy.models import (
     GR4JCN,
@@ -43,6 +43,9 @@ from .common import _convert_2d
 TS = get_local_testdata(
     "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
 )
+
+# Link to THREDDS Data Server netCDF testdata
+TDS = "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/birdhouse/testdata/raven"
 
 
 @pytest.fixture
@@ -646,6 +649,24 @@ class TestGR4JCN:
         )
         z = zipfile.ZipFile(model.outputs["rv_config"])
         assert len(z.filelist) == 10
+
+    @pytest.mark.online
+    def test_dap(self):
+        """Test Raven with DAP link instead of local netCDF file."""
+        model = GR4JCN()
+        config = dict(
+            start_date=dt.datetime(2000, 1, 1),
+            end_date=dt.datetime(2002, 1, 1),
+            run_name="test",
+            name="Salmon",
+            hrus=(GR4JCN.LandHRU(**salmon_land_hru_1),),
+            params=model.params(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
+        )
+
+        ts = (
+            f"{TDS}/raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
+        )
+        model(ts, **config)
 
 
 class TestGR4JCN_OST:
