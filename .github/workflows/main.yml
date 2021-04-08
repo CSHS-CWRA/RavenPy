@@ -41,7 +41,9 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install GDAL
-      run: sudo apt-get update && sudo apt-get install libgdal-dev
+      run:
+        sudo apt-get update && sudo apt-get install libgdal-dev
+        export GDAL_VERSION="$(gdal-config --version)"
     - name: Install tox
       run: pip install tox
     - name: Test with tox
