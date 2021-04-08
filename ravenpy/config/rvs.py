@@ -38,7 +38,9 @@ from ravenpy.config.commands import (
 
 
 class RV(ABC):
-    def __init__(self, **kwds):
+    def __init__(self, config, **kwds):
+        # Each RV has a reference to their parent object in order to access sibling RVs.
+        self._config = config
         # TODO: find something better than this!
         self.is_ostrich_tmpl = False
 
@@ -91,12 +93,30 @@ class RVC(RV):
     {basin_states}
     """
 
-    def __init__(self, tmpl=None):
-        super().__init__()
+    def __init__(self, config):
+        super().__init__(config)
         self.hru_states = {}
         self.basin_states = {}
 
-        self.tmpl = tmpl or RVC.tmpl
+    def reset(self, **kwargs):
+        self.hru_states = {}
+        self.basin_states = {}
+
+    @property
+    def hru_state(self):
+        return self.hru_states.get(1, None)
+
+    @hru_state.setter
+    def hru_state(self, value):
+        self.hru_states[1] = value
+
+    @property
+    def basin_state(self):
+        return self.basin_states.get(1, None)
+
+    @basin_state.setter
+    def basin_state(self, value):
+        self.basin_states[1] = value
 
     @staticmethod
     def parse_solution(solution_str):
@@ -226,8 +246,8 @@ class RVH(RV):
     {reservoirs}
     """
 
-    def __init__(self, tmpl=None):
-        super().__init__()
+    def __init__(self, config):
+        super().__init__(config)
         self.hrus = ()
         self.subbasins = ()
         self.land_subbasin_ids = ()
@@ -235,7 +255,6 @@ class RVH(RV):
         self.lake_subbasin_ids = ()
         self.lake_subbasin_property_multiplier = None
         self.reservoirs = ()
-        self.tmpl = tmpl or RVH.tmpl
 
     def to_rv(self):
         d = {
@@ -304,8 +323,8 @@ class RVI(RV):
         "366_DAY",
     )
 
-    def __init__(self, tmpl=None):
-        super().__init__()
+    def __init__(self, config):
+        super().__init__(config)
         self.name = None
         self.area = None
         self.elevation = None
@@ -327,8 +346,6 @@ class RVI(RV):
         self._evaluation_metrics = "NASH_SUTCLIFFE RMSE"
         self._suppress_output = False
         self._calendar = "standard"
-
-        self.tmpl = tmpl or RVI.tmpl
 
     @property
     def start_date(self):
@@ -531,8 +548,8 @@ class RVP(RV):
     tmpl = """
     """
 
-    def __init__(self, tmpl=None):
-        super().__init__()
+    def __init__(self, config):
+        super().__init__(config)
 
         # Model specific params and derived params
         self.params = None
@@ -544,8 +561,6 @@ class RVP(RV):
         self.land_use_classes: Tuple[LandUseClassesCommand.Record] = ()
         self.channel_profiles: Tuple[ChannelProfileCommand] = ()
         self.avg_annual_runoff: float = None
-
-        self.tmpl = tmpl or RVP.tmpl
 
     def to_rv(self):
         d = {
@@ -576,48 +591,35 @@ class RVT(RV):
     {observed_data}
     """
 
-    # Map CF-Convention standard name to Raven Forcing name
-    forcing_names = {
-        "tasmin": "TEMP_MIN",
-        "tasmax": "TEMP_MAX",
-        "tas": "TEMP_AVE",
-        "rainfall": "RAINFALL",
-        "pr": "PRECIP",
-        "prsn": "SNOWFALL",
-        "evspsbl": "PET",
-        "water_volume_transport_in_river_channel": "HYDROGRAPH",
+    NC_VARS = {
+        "tasmin": {"name": "TEMP_MIN", "alts": ["tasmin", "tmin"]},
+        "tasmax": {"name": "TEMP_MAX", "alts": ["tasmax", "tmax"]},
+        "tas": {"name": "TEMP_AVE", "alts": ["tas", "t2m"]},
+        "rainfall": {"name": "RAINFALL", "alts": ["rainfall", "rain"]},
+        "pr": {
+            "name": "PRECIP",
+            "alts": ["pr", "precip", "prec", "precipitation", "tp"],
+        },
+        "prsn": {
+            "name": "SNOWFALL",
+            "alts": ["prsn", "snow", "snowfall", "solid_precip"],
+        },
+        "evspsbl": {"name": "PET", "alts": ["pet", "evap", "evapotranspiration"]},
+        "water_volume_transport_in_river_channel": {
+            "name": "HYDROGRAPH",
+            "alts": [
+                "qobs",
+                "discharge",
+                "streamflow",
+                "dis",
+            ],
+        },
     }
 
-    alternate_nc_names = {
-        "tasmin": ["tasmin", "tmin"],
-        "tasmax": ["tasmax", "tmax"],
-        "tas": ["tas", "t2m"],
-        "rainfall": ["rainfall", "rain"],
-        "pr": ["pr", "precip", "prec", "precipitation", "tp"],
-        "prsn": ["prsn", "snow", "snowfall", "solid_precip"],
-        "evspsbl": ["pet", "evap", "evapotranspiration"],
-        "water_volume_transport_in_river_channel": [
-            "qobs",
-            "discharge",
-            "streamflow",
-            "dis",
-        ],
-    }
+    def __init__(self, config):
+        super().__init__(config)
 
-    def __init__(self, rvh, tmpl=None):
-        super().__init__()
-
-        self._rvh = rvh
-        self._var_cmds = {
-            "pr": {},
-            "rainfall": {},
-            "prsn": {},
-            "tasmin": {},
-            "tasmax": {},
-            "tas": {},
-            "evspsbl": {},
-            "water_volume_transport_in_river_channel": {},
-        }
+        self._var_cmds = {k: {} for k in RVT.NC_VARS.keys()}
 
         self.nc_index = 0
         self.grid_weights = None
@@ -630,8 +632,6 @@ class RVT(RV):
         self._nc_longitude = []
         self._nc_elevation = []
         self._number_grid_cells = 0
-
-        self.tmpl = tmpl or RVT.tmpl
 
     def add_nc_variable(self, **kwargs):
         var_name = kwargs.get("name", kwargs["var_name_nc"])
@@ -656,6 +656,8 @@ class RVT(RV):
 
     def configure_from_nc_data(self, fns):
 
+        self._var_cmds = {k: {} for k in RVT.NC_VARS.keys()}
+
         for fn in fns:
             with xr.open_dataset(fn) as ds:
                 try:
@@ -667,15 +669,15 @@ class RVT(RV):
                     pass
 
                 # Check if any alternate variable name is in the file.
-                for var_name, alt_names in RVT.alternate_nc_names.items():
-                    for alt_name in alt_names:
+                for var_name in RVT.NC_VARS:
+                    for alt_name in RVT.NC_VARS[var_name]["alts"]:
                         if alt_name not in ds.data_vars:
                             continue
                         nc_var = ds[alt_name]
                         self.add_nc_variable(
                             name=var_name,
                             file_name_nc=fn,
-                            data_type=RVT.forcing_names[var_name],
+                            data_type=RVT.NC_VARS[var_name]["name"],
                             var_name_nc=alt_name,
                             dim_names_nc=nc_var.dims,
                             units=nc_var.attrs.get("units"),
@@ -714,17 +716,17 @@ class RVT(RV):
             lat = (
                 self._nc_latitude[self.nc_index]
                 if self._nc_latitude
-                else self._rvh.hrus[0].latitude
+                else self._config.rvh.hrus[0].latitude
             )
             lon = (
                 self._nc_longitude[self.nc_index]
                 if self._nc_longitude
-                else self._rvh.hrus[0].longitude
+                else self._config.rvh.hrus[0].longitude
             )
             elev = (
                 self._nc_elevation[self.nc_index]
                 if self._nc_elevation
-                else self._rvh.hrus[0].elevation
+                else self._config.rvh.hrus[0].elevation
             )
 
             d["gauge"] = GaugeCommand(
@@ -739,7 +741,7 @@ class RVT(RV):
             )
         else:
             # Construct default grid weights applying equally to all HRUs
-            data = [(hru.hru_id, self.nc_index, 1.0) for hru in self._rvh.hrus]
+            data = [(hru.hru_id, self.nc_index, 1.0) for hru in self._config.rvh.hrus]
             gw = self.grid_weights or GridWeightsCommand(
                 number_hrus=len(data),
                 number_grid_cells=self._number_grid_cells,
@@ -761,7 +763,7 @@ class RVT(RV):
             if isinstance(cmd, ObservationDataCommand):
                 # Search for the gauged SB, not sure what should happen when there are
                 # more than one (should it be even supported?)
-                for sb in self._rvh.subbasins:
+                for sb in self._config.rvh.subbasins:
                     if sb.gauged:
                         cmd.subbasin_id = sb.subbasin_id
                         break
@@ -785,10 +787,8 @@ class Ost(RV):
     tmpl = """
     """
 
-    def __init__(self, rvi, tmpl=None, identifier=None):
-        super().__init__()
-
-        self._rvi = rvi
+    def __init__(self, config, identifier=None):
+        super().__init__(config)
 
         self._max_iterations = None
         self._random_seed = None
@@ -798,8 +798,6 @@ class Ost(RV):
 
         # TODO: find something better than this
         self.identifier = identifier
-
-        self.tmpl = tmpl or Ost.tmpl
 
     @property
     def max_iterations(self):
@@ -827,8 +825,8 @@ class Ost(RV):
 
     def to_rv(self):
         # Get those from RVI (there's probably a better way to do this!)
-        self.run_name = self._rvi.run_name
-        self.run_index = self._rvi.run_index
+        self.run_name = self._config.rvi.run_name
+        self.run_index = self._config.rvi.run_index
 
         # Attributes
         a = list(filter(lambda x: not x.startswith("_"), self.__dict__))
@@ -848,12 +846,12 @@ class Ost(RV):
 
 class Config:
     def __init__(self, identifier, **kwargs):
-        self.rvc = RVC()
-        self.rvh = RVH()
-        self.rvi = RVI()
-        self.rvp = RVP()
-        self.rvt = RVT(self.rvh)
-        self.ost = Ost(self.rvi, identifier=identifier)
+        self.rvc = RVC(self)
+        self.rvh = RVH(self)
+        self.rvi = RVI(self)
+        self.rvp = RVP(self)
+        self.rvt = RVT(self)
+        self.ost = Ost(self, identifier=identifier)
         self.identifier = identifier
         self.update(**kwargs)
 

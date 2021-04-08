@@ -74,9 +74,7 @@ def assimilate(model, ts, q_obs, keys, basin_states, hru_states, days):
     n_members = len(basin_states)
 
     # Run simulation with perturbed inputs
-    model(
-        ts, hru_states=hru_states, basin_states=basin_states, nc_index=range(n_members)
-    )
+    model(ts, hru_state=hru_states, basin_state=basin_states, nc_index=range(n_members))
 
     # Extract final states (n_states, n_members)
     f_hru_states, f_basin_states = model.get_final_state()

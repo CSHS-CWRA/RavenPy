@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from ravenpy.config.commands import BasinIndexCommand
+from ravenpy.config.commands import BasinIndexCommand, HRUState
 from ravenpy.config.rvs import RVC
 from ravenpy.models import GR4JCN
 from ravenpy.utilities.data_assimilation import assimilate, perturbation
@@ -107,10 +107,8 @@ class TestAssimilationGR4JCN:
         # Extract final model states
         hru_state, basin_state = model.get_final_state()
         xa = n_members * [getattr(hru_state, key) for key in assim_var]
-        # hru_states = n_members * [hru_state]
-        hru_states = {i: hru_state for i in range(n_members)}
-        # basin_states = n_members * [basin_state]
-        basin_states = {i: basin_state for i in range(n_members)}
+        hru_states = n_members * [hru_state]
+        basin_states = n_members * [basin_state]
 
         # === Create perturbed time series for full assimilation period ====
         perturbed = {}
@@ -172,7 +170,12 @@ class TestAssimilationGR4JCN:
         model.config.rvi.run_name = "ref"
         model.config.rvi.start_date = start_date
         model.config.rvi.end_date = end_date
-        model.config.rvc = RVC(soil0=None, soil1=15, basin_state=BasinIndexCommand())
+
+        model.config.rvc.hru_states = {}
+        model.config.rvc.basin_states = {}
+        model.config.rvc.soil0 = None
+        model.config.rvc.soil1 = 15
+
         model([ts])
 
         # We can now plot everything!
