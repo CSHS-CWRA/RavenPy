@@ -18,7 +18,7 @@ with open("README.rst") as readme_file:
 with open("HISTORY.rst") as history_file:
     history = history_file.read()
 
-setup_requirements = ["pip<20", "wheel"]
+setup_requirements = ["pip", "wheel"]
 
 requirements = [
     "click",
@@ -58,10 +58,10 @@ try:
 except subprocess.CalledProcessError:
     pass
 
-dev_requirements = [
-    dependency for dependency in open("requirements_dev.txt").readlines()
-]
-dev_requirements.extend(gis_requirements)
+dev_requirements = gis_requirements.copy()
+dev_requirements.extend(
+    [dependency for dependency in open("requirements_dev.txt").readlines()]
+)
 
 
 # Idea taken from: https://stackoverflow.com/a/25176606/787842

@@ -599,10 +599,10 @@ class TestGR4JCN:
 
     def test_version(self):
         model = Raven()
-        assert model.version == "3.0.1"
+        assert model.version == "3.0.4"
 
         model = GR4JCN()
-        assert model.version == "3.0.1"
+        assert model.version == "3.0.4"
 
     def test_parallel_params(self):
         model = GR4JCN()
