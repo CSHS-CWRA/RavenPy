@@ -4,7 +4,14 @@ History
 
 0.4.0
 -----
-This is an interim version making one step toward semi-distributed modeling support. Model configuration is still in flux and will be significantly modified with 0.5. The major change in this version is that model configuration supports passing multiple HRU objects, instead of simply passing area, latitude, longitude and elevation for a single HRU.
+
+This is an interim version making one step toward semi-distributed
+modeling support. Model configuration is still in flux and will be
+significantly modified with 0.5. The major change in this version is
+that model configuration supports passing multiple HRU objects,
+instead of simply passing area, latitude, longitude and elevation for
+a single HRU.
+
 * GR4JCN emulator now supports routing mode.
 * Add BLENDED emulator.
 * DAP links for forcing files are now supported.
