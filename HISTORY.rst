@@ -7,6 +7,9 @@ History
 
 * GR4JCN emulator now supports routing mode.
 * Add BLENDED emulator.
+* Added support for `tox`-based localized installation and testing with python-pip.
+* Now supporting Python 3.7, 3.8, and 3.9.
+* Build testing for `pip` and `conda`-based builds with GitHub CI.
 
 0.3.1
 -----
