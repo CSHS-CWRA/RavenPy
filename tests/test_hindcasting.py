@@ -1,10 +1,6 @@
 import datetime as dt
-import tempfile
-
-from fiona.io import ZipMemoryFile
 
 from ravenpy.models import GR4JCN
-from ravenpy.utilities import forecasting
 from ravenpy.utilities.testdata import get_local_testdata
 
 """
@@ -16,10 +12,7 @@ but this is a good proof of concept.
 
 
 class TestHindcasting:
-    def test_hindcasting_GEPS(self, tmpdir):
-
-        # Set the hindcasting date
-        date = dt.datetime(2018, 6, 1)
+    def test_hindcasting_GEPS(self):
 
         # Prepare a RAVEN model run using historical data, GR4JCN in this case.
         # This is a dummy run to get initial states. In a real forecast situation,
@@ -27,33 +20,25 @@ class TestHindcasting:
         ts = get_local_testdata(
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
         )
-        model = GR4JCN(workdir=tmpdir)
+        hrus = (
+            GR4JCN.LandHRU(
+                area=4250.6, elevation=843.0, latitude=54.4848, longitude=-123.3659
+            ),
+        )
+        model = GR4JCN()
         model(
             ts,
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2002, 6, 1),
-            area=44250.6,
-            elevation=843.0,
-            latitude=54.4848,
-            longitude=-123.3659,
+            hrus=hrus,
             params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
         )
 
         # Extract the final states that will be used as the next initial states
         rvc = model.outputs["solution"]
 
-        # Collect the hindcast data for the date, location and climate model.
-        # Limited to GEPS for now, for a restricted period (2017-06-01 to 2018-08-31)
-        with open(get_local_testdata("watershed_vector/LSJ_LL.zip"), "rb") as f:
-            with ZipMemoryFile(f.read()) as z:
-                region_coll = z.open("LSJ_LL.shp")
-                fcst = forecasting.get_hindcast_day(
-                    region_coll, date, climate_model="GEPS"
-                )
-
-        # write the forecast data to file
-        ts = f"{tmpdir}/fcstfile.nc"
-        fcst.to_netcdf(ts)
+        ts20 = get_local_testdata("caspar_eccc_hindcasts/geps_watershed.nc")
+        nm = 20
 
         # It is necessary to clean the model state because the input variables of the previous
         # model are not the same as the ones provided in the forecast model. therefore, if we
@@ -65,14 +50,11 @@ class TestHindcasting:
 
         # And run the model with the forecast data.
         model(
-            ts=ts,
-            nc_index=range(fcst.dims.get("member")),
+            ts=ts20,
+            nc_index=range(nm),
             start_date=dt.datetime(2018, 6, 1),
             end_date=dt.datetime(2018, 6, 10),
-            area=44250.6,
-            elevation=843.0,
-            latitude=54.4848,
-            longitude=-123.3659,
+            hrus=hrus,
             params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
             overwrite=True,
             pr={
@@ -85,5 +67,6 @@ class TestHindcasting:
 
         # The model now has the forecast data generated and it has 10 days of forecasts.
         assert len(model.q_sim.values) == 10
+
         # Also see if GEPS has 20 members produced.
-        assert model.q_sim.values.shape[1] == 20
+        assert model.q_sim.values.shape[1] == nm

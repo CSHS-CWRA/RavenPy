@@ -1,18 +1,13 @@
 import datetime as dt
-import os
-import pdb
-import tempfile
-from copy import deepcopy
+from dataclasses import replace
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
-import pytest
 import xarray as xr
 
 from ravenpy.models import GR4JCN
+from ravenpy.models.commands import BasinIndexCommand
 from ravenpy.models.rv import RVC
-from ravenpy.models.state import BasinStateVariables
 from ravenpy.utilities.data_assimilation import assimilate, perturbation
 from ravenpy.utilities.testdata import get_local_testdata
 
@@ -85,11 +80,12 @@ class TestAssimilationGR4JCN:
         end_date = start_date + dt.timedelta(days=sum(assim_days))
 
         # Set model options
-        model.rvh.name = "Salmon"
-        model.rvh.area = "4250.6"
-        model.rvh.elevation = "843.0"
-        model.rvh.latitude = 54.4848
-        model.rvh.longitude = -123.3659
+
+        model.rvh.hrus = (
+            GR4JCN.LandHRU(
+                area=4250.6, elevation=843.0, latitude=54.4848, longitude=-123.3659
+            ),
+        )
 
         model.rvp.params = model.params(
             0.1353389, -0.005067198, 576.8007, 6.986121, 1.102917, 0.9224778
@@ -114,10 +110,10 @@ class TestAssimilationGR4JCN:
         # === Create perturbed time series for full assimilation period ====
         perturbed = {}
         for key, s in std.items():
-            nc = model.rvt.get(key)
+            nc = model.rvt.var_cmds[key]
 
-            with xr.open_dataset(nc.path) as ds:
-                da = ds.get(nc.var_name).sel(time=slice(start_date, end_date))
+            with xr.open_dataset(nc.file_name_nc) as ds:
+                da = ds.get(nc.var_name_nc).sel(time=slice(start_date, end_date))
 
                 perturbed[key] = perturbation(
                     da,
@@ -160,7 +156,7 @@ class TestAssimilationGR4JCN:
             # Get new initial conditions and feed assimilated values
             hru_states, basin_states = model.get_final_state()
             hru_states = [
-                hru_states[i]._replace(**dict(zip(assim_var, xa[:, i])))
+                replace(hru_states[i], **dict(zip(assim_var, xa[:, i])))
                 for i in range(n_members)
             ]
 
@@ -170,12 +166,8 @@ class TestAssimilationGR4JCN:
         model.rvi.run_name = "ref"
         model.rvi.start_date = start_date
         model.rvi.end_date = end_date
-        model.rvc = RVC(soil0=None, soil1=15, basin_state=BasinStateVariables())
-        model(
-            [
-                ts,
-            ]
-        )
+        model.rvc = RVC(soil0=None, soil1=15, basin_state=BasinIndexCommand())
+        model([ts])
 
         # We can now plot everything!
         plt.plot(q_assim.T, "r", label="Assimilated")  # plot the assimilated flows

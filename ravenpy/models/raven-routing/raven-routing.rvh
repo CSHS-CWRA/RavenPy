@@ -1,0 +1,14 @@
+# TODO: Replace with mechanism to create this file from scratch.
+{subbasins_cmd}
+
+{hrus_cmd}
+
+{land_subbasin_group_cmd}
+
+{land_subbasin_property_multiplier}
+
+{lake_subbasin_group_cmd}
+
+{lake_subbasin_property_multiplier}
+
+{reservoir_cmd_list}

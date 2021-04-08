@@ -1,0 +1,8 @@
+# ----------------------------------------------
+# Raven Input file
+# Walkthrough #6: Grid-based routing example
+# ----------------------------------------------
+
+{gridded_forcing_list}
+
+{observation_data}

@@ -1,5 +1,5 @@
 """
-Tools for hydrological regionalization
+Tools for hydrological regionalization.
 """
 
 import logging
@@ -10,12 +10,13 @@ import pandas as pd
 import statsmodels.api as sm
 import xarray as xr
 
-from ravenpy.models import get_model
+import ravenpy.models as models
 
 from . import coords
-from .testdata import get_local_testdata
 
 LOGGER = logging.getLogger("PYWPS")
+
+regionalisation_data_dir = Path(__file__).parent.parent / "data" / "regionalisation"
 
 
 def regionalize(
@@ -112,8 +113,8 @@ def regionalize(
     )
 
     # Run the model over all parameters and create ensemble DataArray
-    m = get_model(model)()
-    qsims = []
+    m = models.get_model(model)()
+    qsims = list()
 
     for i, params in enumerate(reg_params):
         kwds["params"] = params
@@ -172,7 +173,7 @@ def read_gauged_properties(properties):
     pd.DataFrame
       Catchment properties keyed by catchment ID.
     """
-    f = get_local_testdata("regionalisation_data/gauged_catchment_properties.csv")
+    f = regionalisation_data_dir / "gauged_catchment_properties.csv"
     proptable = pd.read_csv(f, index_col="ID")
 
     return proptable[properties]
@@ -188,7 +189,7 @@ def read_gauged_params(model):
     pd.DataFrame
       Model parameters keyed by catchment ID.
     """
-    f = get_local_testdata(f"regionalisation_data/{model}_parameters.csv")
+    f = regionalisation_data_dir / f"{model}_parameters.csv"
     params = pd.read_csv(f, index_col="ID")
 
     return params["NASH"], params.iloc[:, 1:]

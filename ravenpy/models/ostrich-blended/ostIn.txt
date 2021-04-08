@@ -1,0 +1,182 @@
+ProgramType         {algorithm}
+ObjectiveFunction   GCOP
+ModelExecutable     ./ostrich-runs-raven.sh
+PreserveBestModel   ./save_best.sh
+#OstrichWarmStart   yes
+
+ModelSubdir processor_
+
+BeginExtraDirs
+model
+#best
+EndExtraDirs
+
+BeginFilePairs
+  raven-blended.rvi.tpl;  raven-blended.rvi
+  raven-blended.rvp.tpl;  raven-blended.rvp
+  raven-blended.rvc.tpl;  raven-blended.rvc
+  raven-blended.rvt.tpl;  raven-blended.rvt
+  #can be multiple (.rvh, .rvi)
+EndFilePairs
+
+#Parameter/DV Specification
+BeginParams
+  #parameter init.    low               high               tx_in  tx_ost   tx_out
+  par_x01    random   {lowerBounds.par_x01} {upperBounds.par_x01}  none   none     none
+  par_x02    random   {lowerBounds.par_x02} {upperBounds.par_x02}  none   none     none
+  par_x03    random   {lowerBounds.par_x03} {upperBounds.par_x03}  none   none     none
+  par_x04    random   {lowerBounds.par_x04} {upperBounds.par_x04}  none   none     none
+  par_x05    random   {lowerBounds.par_x05} {upperBounds.par_x05}  none   none     none
+  par_x06    random   {lowerBounds.par_x06} {upperBounds.par_x06}  none   none     none
+  par_x07    random   {lowerBounds.par_x07} {upperBounds.par_x07}  none   none     none
+  par_x08    random   {lowerBounds.par_x08} {upperBounds.par_x08}  none   none     none
+  par_x09    random   {lowerBounds.par_x09} {upperBounds.par_x09}  none   none     none
+  par_x10    random   {lowerBounds.par_x10} {upperBounds.par_x10}  none   none     none
+  par_x11    random   {lowerBounds.par_x11} {upperBounds.par_x11}  none   none     none
+  par_x12    random   {lowerBounds.par_x12} {upperBounds.par_x12}  none   none     none
+  par_x13    random   {lowerBounds.par_x13} {upperBounds.par_x13}  none   none     none
+  par_x14    random   {lowerBounds.par_x14} {upperBounds.par_x14}  none   none     none
+  par_x15    random   {lowerBounds.par_x15} {upperBounds.par_x15}  none   none     none
+  par_x16    random   {lowerBounds.par_x16} {upperBounds.par_x16}  none   none     none
+  par_x17    random   {lowerBounds.par_x17} {upperBounds.par_x17}  none   none     none
+  par_x18    random   {lowerBounds.par_x18} {upperBounds.par_x18}  none   none     none
+  par_x19    random   {lowerBounds.par_x19} {upperBounds.par_x19}  none   none     none
+  par_x20    random   {lowerBounds.par_x20} {upperBounds.par_x20}  none   none     none
+  par_x21    random   {lowerBounds.par_x21} {upperBounds.par_x21}  none   none     none
+  par_x22    random   {lowerBounds.par_x22} {upperBounds.par_x22}  none   none     none
+  par_x23    random   {lowerBounds.par_x23} {upperBounds.par_x23}  none   none     none
+  par_x24    random   {lowerBounds.par_x24} {upperBounds.par_x24}  none   none     none
+  par_x25    random   {lowerBounds.par_x25} {upperBounds.par_x25}  none   none     none
+  par_x26    random   {lowerBounds.par_x26} {upperBounds.par_x26}  none   none     none
+  par_x27    random   {lowerBounds.par_x27} {upperBounds.par_x27}  none   none     none
+  par_x28    random   {lowerBounds.par_x28} {upperBounds.par_x28}  none   none     none
+  par_x29    random   {lowerBounds.par_x29} {upperBounds.par_x29}  none   none     none
+  par_x30    random   {lowerBounds.par_x30} {upperBounds.par_x30}  none   none     none
+  par_x31    random   {lowerBounds.par_x31} {upperBounds.par_x31}  none   none     none
+  par_x32    random   {lowerBounds.par_x32} {upperBounds.par_x32}  none   none     none
+  par_x33    random   {lowerBounds.par_x33} {upperBounds.par_x33}  none   none     none
+  par_x34    random   {lowerBounds.par_x34} {upperBounds.par_x34}  none   none     none
+  par_x35    random   {lowerBounds.par_x35} {upperBounds.par_x35}  none   none     none
+  par_r01    random   {lowerBounds.par_r01} {upperBounds.par_r01}  none   none     none
+  par_r02    random   {lowerBounds.par_r02} {upperBounds.par_r02}  none   none     none
+  par_r03    random   {lowerBounds.par_r03} {upperBounds.par_r03}  none   none     none
+  par_r04    random   {lowerBounds.par_r04} {upperBounds.par_r04}  none   none     none
+  par_r05    random   {lowerBounds.par_r05} {upperBounds.par_r05}  none   none     none
+  par_r06    random   {lowerBounds.par_r06} {upperBounds.par_r06}  none   none     none
+  par_r07    random   {lowerBounds.par_r07} {upperBounds.par_r07}  none   none     none
+  par_r08    random   {lowerBounds.par_r08} {upperBounds.par_r08}  none   none     none
+EndParams
+
+BeginTiedParams
+  # ---------------------------------------------------------------
+  # MAX_MELT_FACTOR > MIN_MELT_FACTOR
+  #
+  # sum_x24_x25 = par_x24 + par_x25
+  # Xtied =(c3 * X1 * X2) + (c2 * X2) + (c1 * X1) + c0
+  # --> c0 = 0.0
+  # --> c1 = 1.0
+  # --> c2 = 1.0
+  # --> c3 = 0.0
+  #
+  sum_x24_x25 2 par_x24 par_x25 linear 0.00 1.00 1.00 0.00 free
+  #
+  # ---------------------------------------------------------------
+  # SNOW_SWI_MAX > SNOW_SWI_MIN
+  #
+  # sum_x13_x14 = par_x13 + par_x14
+  # Xtied =(c3 * X1 * X2) + (c2 * X2) + (c1 * X1) + c0
+  # --> c0 = 0.0
+  # --> c1 = 1.0
+  # --> c2 = 1.0
+  # --> c3 = 0.0
+  #
+  sum_x13_x14 2 par_x13 par_x14 linear 0.00 1.00 1.00 0.00 free
+  #
+  # ---------------------------------------------------------------
+  # FIELD_CAPACITY > SAT_WILT
+  #
+  # sum_x09_x10 = par_x09 + par_x10
+  # Xtied =(c3 * X1 * X2) + (c2 * X2) + (c1 * X1) + c0
+  # --> c0 = 0.0
+  # --> c1 = 1.0
+  # --> c2 = 1.0
+  # --> c3 = 0.0
+  #
+  sum_x09_x10 2 par_x09 par_x10 linear 0.00 1.00 1.00 0.00 free
+  #
+  # ---------------------------------------------------------------
+  # half the value but in [mm] not [m]
+  #
+  # half_x29 = par_x29 * 0.5 * 1000  --> half of it but in [mm] not [m]
+  # Xtied = (c1 * X) + c0
+  # --> c0 = 0.0
+  # --> c1 = 500.
+  #
+  half_x29 1 par_x29 linear 500.0 0.0 free
+  #
+  # ---------------------------------------------------------------
+  # half the value but in [mm] not [m]
+  #
+  # half_x30 = par_x30 * 0.5 * 1000  --> half of it but in [mm] not [m]
+  # Xtied = (c1 * X) + c0
+  # --> c0 = 0.0
+  # --> c1 = 500.
+  #
+  half_x30 1 par_x30 linear 500.0 0.0 free
+  #
+  # ---------------------------------------------------------------
+  # BASEFLOW_COEFF TOPSOIL  = 10.0^x4
+  #
+  # pow_x04 = 10.0**(par_x4)
+  # Xtied = c2 * base ** (c1 * X) + c0
+  # --> c0   = 0.0
+  # --> c1   = 1.0
+  # --> c2   = 1.0
+  # --> base = 10.0
+  #
+  pow_x04 1 par_x04 exp 10.0 1.0 1.0 0.0 free
+  #
+  # ---------------------------------------------------------------
+  # BASEFLOW_COEFF PHREATIC = 10.0^x11
+  #
+  # pow_x11 = 10.0**(par_x3)
+  # Xtied = c2 * base ** (c1 * X) + c0
+  # --> c0   = 0.0
+  # --> c1   = 1.0
+  # --> c2   = 1.0
+  # --> base = 10.0
+  #
+  pow_x11 1 par_x11 exp 10.0 1.0 1.0 0.0 free
+EndTiedParams
+
+BeginResponseVars
+  #name   filename                              keyword         line    col     token
+  NS      ./model/output/{run_name}-{run_index}_Diagnostics.csv;       OST_NULL        1       3       ','
+EndResponseVars
+
+BeginTiedRespVars
+  NegNS 1 NS wsum -1.00
+EndTiedRespVars
+
+BeginGCOP
+  CostFunction NegNS
+  PenaltyFunction APM
+EndGCOP
+
+BeginConstraints
+        # not needed when no constraints, but PenaltyFunction statement above is required
+        # name     type     penalty    lwr   upr   resp.var
+EndConstraints
+
+# Randomsed control added
+{random_seed}
+
+#Algorithm should be last in this file:
+
+BeginDDSAlg
+        PerturbationValue 0.20
+        MaxIterations {max_iterations}
+        UseRandomParamValues
+        # UseInitialParamValues
+        # above intializes DDS to parameter values IN the initial model input files
+EndDDSAlg

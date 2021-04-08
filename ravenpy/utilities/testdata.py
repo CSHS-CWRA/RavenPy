@@ -1,3 +1,6 @@
+"""
+Tools for searching for and acquiring test data.
+"""
 import logging
 import os
 import re
@@ -20,19 +23,19 @@ __all__ = ["get_local_testdata", "get_file", "open_dataset", "query_folder"]
 
 
 def get_local_testdata(pattern: str) -> Union[Path, List[Path]]:
-    """
+    """Gather testdata from a local folder.
+
     Return files matching `pattern` in the local test data repo
     located at `RAVENPY_TESTDATA_PATH` (which must be set).
 
     Parameters
     ----------
     pattern: str
-        Glob pattern, which must include the folder.
+      Glob pattern, which must include the folder.
 
     Returns
     -------
     Union[Path, List[Path]]
-
     """
     testdata_path = os.getenv("RAVENPY_TESTDATA_PATH")
     if not testdata_path:
@@ -41,6 +44,8 @@ def get_local_testdata(pattern: str) -> Union[Path, List[Path]]:
     if not testdata_path.exists():
         raise RuntimeError(f"{testdata_path} does not exists")
     paths = [path for path in testdata_path.glob(pattern) if path.suffix != ".md5"]
+    if not paths:
+        raise RuntimeError(f"No data found for {pattern} at {testdata_path}")
     # Return item directly when singleton, for convenience
     return paths[0] if len(paths) == 1 else paths
 
@@ -67,7 +72,7 @@ def _get(
         urlretrieve(url, local_file)
         try:
             url = "/".join((github_url, "raw", branch, md5name.as_posix()))
-            LOGGER.info("Fetching remote file md5: %s" % fullname.as_posix())
+            LOGGER.info("Fetching remote file md5: %s" % md5name.as_posix())
             urlretrieve(url, md5file)
         except HTTPError as e:
             msg = f"{md5name.as_posix()} not found. Aborting file retrieval."
@@ -192,29 +197,28 @@ def open_dataset(
     cache_dir: Path = _default_cache_dir,
     **kwds,
 ) -> Dataset:
-    """
-    Open a dataset from the online GitHub-like repository.
+    """Open a dataset from the online GitHub-like repository.
+
     If a local copy is found then always use that to avoid network traffic.
 
     Parameters
     ----------
-    name : str
-        Name of the file containing the dataset. If no suffix is given, assumed
-        to be netCDF ('.nc' is appended).
-    suffix : str, optional
-        If no suffix is given, assumed to be netCDF ('.nc' is appended). For no suffix, set "".
-    dap_url : str, optional
-        URL to OPeNDAP folder where the data is stored. If supplied, supersedes github_url.
-    github_url : str
-        URL to Github repository where the data is stored.
-    branch : str, optional
-        For GitHub-hosted files, the branch to download from.
-    cache_dir : Path
-        The directory in which to search for and write cached data.
-    cache : bool
-        If True, then cache data locally for use on subsequent calls.
-    kwds : dict, optional
-        For NetCDF files, **kwds passed to xarray.open_dataset.
+    name: str
+      Name of the file containing the dataset. If no suffix is given, assumed to be netCDF ('.nc' is appended).
+    suffix: str, optional
+      If no suffix is given, assumed to be netCDF ('.nc' is appended). For no suffix, set "".
+    dap_url: str, optional
+      URL to OPeNDAP folder where the data is stored. If supplied, supersedes github_url.
+    github_url: str
+      URL to Github repository where the data is stored.
+    branch: str, optional
+      For GitHub-hosted files, the branch to download from.
+    cache_dir: Path
+      The directory in which to search for and write cached data.
+    cache: bool
+      If True, then cache data locally for use on subsequent calls.
+    kwds: dict, optional
+      For NetCDF files, keywords passed to xarray.open_dataset.
 
     Returns
     -------

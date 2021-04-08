@@ -1,0 +1,21 @@
+#########################################################################
+:FileType          rvc ASCII Raven 2.8.2
+:WrittenBy         Juliane Mai & James Craig
+:CreationDate      Mar 2021
+#
+# Emulation of BLENDED simulation of Salmon River near Prince George
+#------------------------------------------------------------------------
+#
+
+# initialize to 1/2 full
+# x(29)*1000/2
+:UniformInitialConditions SOIL[0] {TOPSOIL_hlf}
+# x(30)*1000/2
+:UniformInitialConditions SOIL[1] {PHREATIC_hlf}
+
+:HRUStateVariableTable (formerly :InitialConditionsTable)
+   :Attributes SOIL[0] SOIL[1]
+   :Units mm mm
+   1 {TOPSOIL_hlf} {PHREATIC_hlf}
+   # x(29)*1000/2       x(30)*1000/2
+:EndHRUStateVariableTable

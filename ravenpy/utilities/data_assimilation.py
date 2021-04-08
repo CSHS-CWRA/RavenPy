@@ -1,10 +1,13 @@
-# -*- coding: utf-8 -*-
 """
 Created on Sun Nov  1 20:48:03 2020
 
 @author: Richard
 """
 
+from copy import deepcopy
+
+import numpy as np
+import xarray as xr
 
 """
 model = Raven model instance, preset with parameters etc.
@@ -19,14 +22,6 @@ temperature = standard deviation used to sample temperature, normal dist (degree
 qobs = standard deviation used to sample observed streamflow, normal dist (fraction of observed value)
 """
 
-import tempfile
-from copy import deepcopy
-from pathlib import Path
-
-import numpy as np
-import xarray as xr
-
-from ravenpy.models.state import HRU_NC_MAP
 
 """
 Suggestion:
@@ -180,8 +175,8 @@ def update_state(x, qobs_pert, qobs_error, qsim):
     ndarray (n_states, n_members)
       Model state values after assimilation.
 
-    Reference
-    ---------
+    References
+    ----------
     The Ensemble Kalman Filter: theoretical formulation and practical implementation, Evensen 2003
     https://link.springer.com/article/10.1007%2Fs10236-003-0036-9
 

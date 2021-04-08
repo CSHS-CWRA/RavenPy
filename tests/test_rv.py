@@ -1,31 +1,18 @@
 import datetime as dt
 import re
 from collections import namedtuple
-from io import StringIO
 from pathlib import Path
 
-import geopandas
 import pytest
 
 import ravenpy
-from ravenpy.models.commands import GriddedForcingCommand
-from ravenpy.models.importers import (
-    RoutingProductGridWeightImporter,
-    RoutingProductShapefileImporter,
+from ravenpy.models.commands import (
+    BaseValueCommand,
+    GriddedForcingCommand,
+    MonthlyAverageCommand,
+    RainCorrection,
 )
-from ravenpy.models.rv import (
-    RV,
-    RVC,
-    RVH,
-    RVI,
-    RVP,
-    RVT,
-    MonthlyAverage,
-    Ost,
-    RavenNcData,
-    RVFile,
-    isinstance_namedtuple,
-)
+from ravenpy.models.rv import RV, RVC, RVH, RVI, RVP, Ost, RVFile, isinstance_namedtuple
 from ravenpy.utilities.testdata import get_local_testdata
 
 
@@ -132,60 +119,6 @@ def compare(a, b):
     return re.sub(r"\s*", "", a) == re.sub(r"\s*", "", b)
 
 
-class TestRavenNcData:
-    def test_simple(self):
-        v = RavenNcData(
-            var="tasmin",
-            path="/path/tasmin.nc",
-            var_name="tn",
-            unit="degC",
-            dimensions=["time"],
-        )
-        tmp = str(v)
-
-        assert compare(
-            tmp,
-            """:Data TEMP_MIN degC
-                                  :ReadFromNetCDF
-                                     :FileNameNC      /path/tasmin.nc
-                                     :VarNameNC       tn
-                                     :DimNamesNC      time
-                                     :StationIdx      1
-                                  :EndReadFromNetCDF
-                               :EndData""",
-        )
-
-    def test_linear_transform(self):
-        v = RavenNcData(
-            var="tasmin",
-            path="/path/tasmin.nc",
-            var_name="tn",
-            unit="degC",
-            dimensions=["time"],
-            linear_transform=(24000.0, 0.0),
-        )
-
-        assert ":LinearTransform 24000.000000000000000 0.000000000000000" in str(v)
-
-    def test_deaccumulate(self):
-        v = RavenNcData(
-            var="tasmin",
-            path="/path/tasmin.nc",
-            var_name="tn",
-            unit="degC",
-            dimensions=["time"],
-            deaccumulate=True,
-        )
-
-        assert ":Deaccumulate" in str(v)
-
-
-class TestMonthlyAve:
-    def test_simple(self):
-        ave = str(MonthlyAverage("Evaporation", range(12)))
-        assert ave.startswith(":MonthlyAveEvaporation, 0, 1, 2")
-
-
 class TestOst:
     def test_random(self):
         o = Ost()
@@ -213,14 +146,11 @@ class TestRVC:
 
     def test_parse(self):
         assert self.r.hru_state.atmosphere == 821.98274
-        assert self.r.basin_state.qout == [
-            13.21660,
-        ]
-        assert self.r.basin_state.qoutlast == 13.29232
+        assert self.r.basin_state.qout == (1, 13.2166, 13.29232)
 
     def test_write(self):
-        assert self.r.txt_hru_state.startswith("1,")
-        assert self.r.txt_basin_state.strip().startswith(":BasinIndex 1,watershed")
+        assert "1,0.0,821.98274" in self.r.hru_states_cmd.to_rv()
+        assert ":BasinIndex 1 watershed" in self.r.basin_states_cmd.to_rv()
 
     def test_format(self):
         rvc_template = Path(ravenpy.models.__file__).parent / "global" / "global.rvc"
@@ -229,17 +159,20 @@ class TestRVC:
 
 
 class TestRVH:
+    importers = pytest.importorskip("ravenpy.models.importers")
+
     @classmethod
     def setup_class(self):
         shp = get_local_testdata("raven-routing-sample/finalcat_hru_info.zip")
-        importer = RoutingProductShapefileImporter(shp)
-        sbs, land_group, lake_group, reservoirs, _, hrus = importer.extract()
-        self.rvh = RVH(sbs, land_group, lake_group, reservoirs, hrus)
+        importer = self.importers.RoutingProductShapefileImporter(shp)
+        config = importer.extract()
+        config.pop("channel_profiles")
+        self.rvh = RVH(**config)
 
     def test_import_process(self):
         assert len(self.rvh.subbasins) == 46
-        assert len(self.rvh.land_subbasin_group) == 41
-        assert len(self.rvh.lake_subbasin_group) == 5
+        assert len(self.rvh.land_subbasins) == 41
+        assert len(self.rvh.lake_subbasins) == 5
         assert len(self.rvh.reservoirs) == 5
         assert len(self.rvh.hrus) == 51
 
@@ -268,39 +201,45 @@ class TestRVH:
 
 
 class TestRVP:
+    importers = pytest.importorskip("ravenpy.models.importers")
+
     @classmethod
     def setup_class(self):
         shp = get_local_testdata("raven-routing-sample/finalcat_hru_info.zip")
-        importer = RoutingProductShapefileImporter(shp)
-        _, _, _, _, cps, _ = importer.extract()
-        self.rvp = RVP(cps)
+        importer = self.importers.RoutingProductShapefileImporter(shp)
+        config = importer.extract()
+        self.rvp = RVP(channel_profiles=config["channel_profiles"])
 
     def test_import_process(self):
         assert len(self.rvp.channel_profiles) == 46
 
     def test_format(self):
-        res = self.rvp.to_rv()
+        res = self.rvp.channel_profile_cmd_list
 
         assert res.count(":ChannelProfile") == 46
         assert res.count(":EndChannelProfile") == 46
 
 
 class TestRVT:
+    importers = pytest.importorskip("ravenpy.models.importers")
+
     @classmethod
     def setup_class(self):
         input_file = get_local_testdata("raven-routing-sample/VIC_streaminputs.nc")
         routing_file = get_local_testdata("raven-routing-sample/finalcat_hru_info.zip")
-        importer = RoutingProductGridWeightImporter(input_file, routing_file)
+        importer = self.importers.RoutingProductGridWeightImporter(
+            input_file, routing_file
+        )
         gws = importer.extract()
-        gfc = GriddedForcingCommand(grid_weights=gws)
-        self.rvt = RVT([gfc])
+        self.gfc = GriddedForcingCommand(grid_weights=gws)
 
     def test_import_process(self):
-        res = self.rvt.to_rv()
+        res = self.gfc.to_rv()
 
         assert ":NumberHRUs 51" in res
         assert ":NumberGridCells 100" in res
-        assert len(res.split("\n")) == 225
+        # FIXME: This test is not superb.
+        assert len(res.split("\n")) == 226
 
 
 def test_isinstance_namedtuple():
@@ -308,3 +247,9 @@ def test_isinstance_namedtuple():
     x = X(1, 2, 3)
     assert isinstance_namedtuple(x)
     assert not isinstance_namedtuple([1, 2, 3])
+
+
+class TestBaseValueCommand:
+    def test_raincorrection(self):
+        rc = RainCorrection(3)
+        assert f"{rc}" == ":RainCorrection 3"

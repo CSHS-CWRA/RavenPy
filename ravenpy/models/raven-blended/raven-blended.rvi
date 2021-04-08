@@ -1,0 +1,88 @@
+#########################################################################
+:FileType          rvi ASCII Raven 2.8.2
+:WrittenBy         James Craig & Juliane Mai
+:CreationDate      Mar 2021
+#
+# Emulation of BLENDED simulation of Salmon River near Prince George
+#------------------------------------------------------------------------
+#
+#
+
+:Calendar              {calendar}
+:RunName               {run_name}-{run_index}
+:StartDate             {start_date}
+:EndDate               {end_date}
+:TimeStep              {time_step}
+:Method                ORDERED_SERIES
+
+:PotentialMeltMethod     POTMELT_HMETS
+:RainSnowFraction        {rain_snow_fraction}  # RAINSNOW_HBV
+:Evaporation             {evaporation}         # PET_OUDIN
+:CatchmentRoute          ROUTE_DUMP
+:Routing                 ROUTE_NONE
+:SoilModel               SOIL_MULTILAYER 3
+
+:Alias DELAYED_RUNOFF CONVOLUTION[1]
+
+:HydrologicProcesses
+  :Precipitation   RAVEN_DEFAULT                         ATMOS_PRECIP   MULTIPLE
+  :ProcessGroup #infiltration group
+                :Infiltration    INF_HMETS               PONDED_WATER   MULTIPLE
+                :Infiltration    INF_VIC_ARNO            PONDED_WATER   MULTIPLE
+                :Infiltration    INF_HBV                 PONDED_WATER   MULTIPLE
+  :EndProcessGroup CALCULATE_WTS {params.par_r01} {params.par_r02}
+  #                              para_r01 para_r02
+                  :Overflow      OVERFLOW_RAVEN          SOIL[0]        DELAYED_RUNOFF
+  :ProcessGroup #quickflow group
+                :Baseflow        BASE_LINEAR_ANALYTIC    SOIL[0]        SURFACE_WATER   # interflow, really
+                :Baseflow        BASE_VIC                SOIL[0]        SURFACE_WATER
+                :Baseflow        BASE_TOPMODEL           SOIL[0]        SURFACE_WATER
+  :EndProcessGroup CALCULATE_WTS {params.par_r03} {params.par_r04}
+  #                              para_r03 para_r04
+  :Percolation                   PERC_LINEAR             SOIL[0]        SOIL[1]         # recharge
+    :Overflow                    OVERFLOW_RAVEN          SOIL[1]        DELAYED_RUNOFF
+  :Percolation                   PERC_LINEAR             SOIL[1]        SOIL[2]         # loss to deep groundwater (simplifies to HMETS when PERC_COEFF DEEP_GW=0)
+  :ProcessGroup #evaporation group
+                :SoilEvaporation SOILEVAP_ALL            SOIL[0]        ATMOSPHERE      # AET
+                :SoilEvaporation SOILEVAP_TOPMODEL       SOIL[0]        ATMOSPHERE      # AET
+  :EndProcessGroup CALCULATE_WTS {params.par_r05}
+  #                              para_r05
+  :Convolve                      CONVOL_GAMMA            CONVOLUTION[0] SURFACE_WATER   # 'surface runoff'
+  :Convolve                      CONVOL_GAMMA_2          DELAYED_RUNOFF SURFACE_WATER   # 'delayed runoff'
+  :ProcessGroup #quickflow group
+                :Baseflow        BASE_LINEAR_ANALYTIC    SOIL[1]        SURFACE_WATER
+                :Baseflow        BASE_POWER_LAW          SOIL[1]        SURFACE_WATER
+  :EndProcessGroup CALCULATE_WTS {params.par_r06}
+  #                              para_r06
+  :ProcessGroup #snow balance group
+                :SnowBalance     SNOBAL_HMETS            MULTIPLE       MULTIPLE
+                :SnowBalance     SNOBAL_SIMPLE_MELT      SNOW           PONDED_WATER
+                :SnowBalance     SNOBAL_HBV              MULTIPLE       MULTIPLE
+                #:SnowBalance    SNOBAL_GAWSER           MULTIPLE       MULTIPLE
+  :EndProcessGroup CALCULATE_WTS {params.par_r07} {params.par_r08}
+  #                              para_r07 para_r08
+:EndHydrologicProcesses
+
+#:CreateRVPTemplate
+
+#---------------------------------------------------------
+# Output Options
+#
+#:WriteForcingFunctions
+:EvaluationMetrics {evaluation_metrics}
+:WriteNetcdfFormat  yes
+#:NoisyMode
+:SilentMode
+:PavicsMode
+{suppress_output}
+
+:NetCDFAttribute title Simulated river discharge
+:NetCDFAttribute history Created on {now} by Raven
+:NetCDFAttribute references  Craig, J.R., and the Raven Development Team, Raven user's and developer's manual (Version 2.8), URL: http://raven.uwaterloo.ca/ (2018).
+:NetCDFAttribute comment Raven Hydrological Framework version {raven_version}
+
+:NetCDFAttribute model_id hmets
+
+:NetCDFAttribute time_frequency day
+:NetCDFAttribute time_coverage_start {start_date}
+:NetCDFAttribute time_coverage_end {end_date}

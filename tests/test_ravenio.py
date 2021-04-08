@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from ravenpy.utilities import ravenio
 from ravenpy.utilities.testdata import get_local_testdata
 

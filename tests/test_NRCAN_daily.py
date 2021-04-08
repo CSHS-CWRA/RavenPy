@@ -1,43 +1,7 @@
 import datetime as dt
-import json
-import tempfile
-
-import xarray as xr
 
 from ravenpy.models import HMETS
 from ravenpy.utilities.testdata import get_local_testdata
-
-# Get path to ncml file for NRCan data.
-NRCAN_path = "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/datasets/gridded_obs/nrcan_v2.ncml"
-
-# Temporary path
-filepath = tempfile.mkdtemp() + "/NRCAN_ts.nc"
-
-# Get information for given catchment, could be passed in parameter to the function
-ts = get_local_testdata(
-    "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
-)
-salmon = xr.open_dataset(ts)
-lat = salmon.lat.values[0]
-lon = salmon.lon.values[0]
-
-# Start and end dates
-start_date = dt.datetime(2006, 1, 1)
-end_date = dt.datetime(2007, 12, 31)
-
-# Get data for the covered period including a 1-degree bounding box for good measure. Eventually we will be
-# able to take the catchment polygon as a mask and average points residing inside.
-
-ds = (
-    xr.open_dataset(NRCAN_path)
-    .sel(
-        lat=slice(lat + 1, lat - 1),
-        lon=slice(lon - 1, lon + 1),
-        time=slice(start_date, end_date),
-    )
-    .mean(dim={"lat", "lon"}, keep_attrs=True)
-)
-ds.to_netcdf(filepath)
 
 
 class TestRavenNRCAN:
@@ -67,9 +31,13 @@ class TestRavenNRCAN:
             916.1947,
         )
 
+        ts = get_local_testdata("nrcan/NRCAN_2006-2007_subset.nc")
+        start_date = dt.datetime(2006, 1, 1)
+        end_date = dt.datetime(2007, 12, 31)
+
         model = HMETS()
         model(
-            ts=filepath,
+            ts=ts,
             params=params,
             start_date=start_date,
             end_date=end_date,
@@ -80,7 +48,7 @@ class TestRavenNRCAN:
             latitude=54.4848,
             longitude=-123.3659,
             rain_snow_fraction="RAINSNOW_DINGMAN",
-            tasmax={"linear_transform": (1.0, -273.15)},
-            tasmin={"linear_transform": (1.0, -273.15)},
-            pr={"linear_transform": (86400, 0.0)},
+            tasmax={"scale": 1.0, "offset": -273.15},
+            tasmin={"scale": 1.0, "offset": -273.15},
+            pr={"scale": 86400, "offset": 0.0},
         )

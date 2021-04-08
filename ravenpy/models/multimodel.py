@@ -39,7 +39,7 @@ class RavenMultiModel(Raven):
             self._models.append(m)
 
     def _rename_run_name(self, run_name=None):
-        rns = set([m.rvi.run_name for m in self._models])
+        rns = {m.rvi.run_name for m in self._models}
         if (run_name is not None) or (len(rns) < len(self._models)):
             for m in self._models:
                 rn = run_name or m.rvi.run_name

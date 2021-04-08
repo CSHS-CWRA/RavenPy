@@ -15,7 +15,7 @@
 :Method                ORDERED_SERIES
 
 :SoilModel             SOIL_MULTILAYER  4
-:Routing               ROUTE_NONE
+{routing_cmd}
 :CatchmentRoute        ROUTE_DUMP
 :Evaporation           {evaporation}  # PET_OUDIN
 :RainSnowFraction      {rain_snow_fraction}  # RAINSNOW_DINGMAN

@@ -1,24 +1,50 @@
+import warnings
 from collections import defaultdict
 from pathlib import Path
 
-import geopandas
+import cf_xarray
+import xarray as xr
+
+try:
+    import geopandas
+    from osgeo import __version__ as osgeo_version  # noqa
+    from osgeo import ogr, osr  # noqa
+
+except (ImportError, ModuleNotFoundError) as e:
+    msg = (
+        f"`{Path(__file__).stem}` requires installation of the RavenPy GIS libraries. These can be installed using the"
+        " `pip install ravenpy[gis]` recipe or via Anaconda (`conda env -n ravenpy-env -f environment.yml`)"
+        " from the RavenPy repository source files."
+    )
+    raise ImportError(msg) from e
+
+
 import netCDF4 as nc4
 import numpy as np
-import xarray
-from osgeo import __version__ as osgeo_version
-from osgeo import ogr, osr
 
+from . import rv
 from .commands import (
     ChannelProfileCommand,
+    DataCommand,
     GriddedForcingCommand,
     GridWeightsCommand,
     HRUsCommand,
-    HRUsCommandRecord,
+    ObservationDataCommand,
     ReservoirCommand,
-    SubBasinGroupCommand,
+    StationForcingCommand,
     SubBasinsCommand,
-    SubBasinsCommandRecord,
 )
+
+grid_weight_importer_params = dict(
+    DIM_NAMES=("lon_dim", "lat_dim"),
+    VAR_NAMES=("lon", "lat"),
+    ROUTING_ID_FIELD="HRU_ID",
+    NETCDF_INPUT_FIELD="NetCDF_col",
+    AREA_ERROR_THRESHOLD=0.05,
+)
+
+
+HRU_ASPECT_CONVENTION = "GRASS"  # GRASS | ArcGIS
 
 
 class RoutingProductShapefileImporter:
@@ -36,24 +62,32 @@ class RoutingProductShapefileImporter:
     USE_MANNING_COEFF = False
     MANNING_DEFAULT = 0.035
 
-    def __init__(self, shapefile_path):
+    def __init__(self, shapefile_path, hru_aspect_convention=HRU_ASPECT_CONVENTION):
         if Path(shapefile_path).suffix == ".zip":
             shapefile_path = f"zip://{shapefile_path}"
         self._df = geopandas.read_file(shapefile_path)
+        self.hru_aspect_convention = hru_aspect_convention
 
     def extract(self):
         """
         This will extract the data from the Routing Product shapefile and
-        return it as relevant commands.
+        return it as relevant Raven command data objects.
 
         Returns
         -------
-        `commands.SubBasinsCommand`
-        `commands.SubBasinGroup`
-        `commands.SubBasinGroup`
-        list of `commands.ReservoirCommand`
-        list of `commands.ChannelProfileCommand`
-        `commands.HRUsCommand`
+        dict
+            "subbasins"
+               Sequence of `commands.SubBasinsCommand.Record` objects
+            "land_subbasins"
+               Sequence of land subbasins ids
+            "lake_subbasins"
+               Sequence of lake subbasins ids
+            "reservoirs"
+               Sequence of `commands.ReservoirCommand` objects
+            "channel_profiles"
+               Sequence of `commands.ChannelProfileCommand` objects
+            "hrus"
+               Sequence of `commands.HRUsCommand.Record` objects
 
         """
 
@@ -66,7 +100,6 @@ class RoutingProductShapefileImporter:
 
         # Collect all subbasin_ids for fast lookup in next loop
         subbasin_ids = {int(row["SubId"]) for _, row in self._df.iterrows()}
-        subbasin_id_accum = set()
 
         for _, row in self._df.iterrows():
 
@@ -75,40 +108,40 @@ class RoutingProductShapefileImporter:
 
             subbasin_id = int(row["SubId"])
 
-            # We only want to process the first row with a given SubId (we ignore the other ones)
-            if subbasin_id in subbasin_id_accum:
-                continue
-            subbasin_id_accum.add(subbasin_id)
+            is_lake = False
 
-            # Subbasin
-            sb, is_lake = self._extract_subbasin(row, subbasin_ids)
-            subbasin_recs.append(sb)
-
-            if is_lake:
+            if row["IsLake"] > 0 and row["HRU_IsLake"] > 0:
                 lake_sb_ids.append(subbasin_id)
                 reservoir_cmds.append(self._extract_reservoir(row))
+                is_lake = True
+            elif row["IsLake"] > 0:
+                continue
             else:
                 land_sb_ids.append(subbasin_id)
+
+            # Subbasin
+            sb = self._extract_subbasin(row, is_lake, subbasin_ids)
+            subbasin_recs.append(sb)
 
             # ChannelProfile
             channel_profile_cmds.append(self._extract_channel_profile(row))
 
-        return (
-            SubBasinsCommand(subbasin_recs),
-            SubBasinGroupCommand("land", land_sb_ids),
-            SubBasinGroupCommand("lake", lake_sb_ids),
-            reservoir_cmds,
-            channel_profile_cmds,
-            HRUsCommand(hru_recs),
+        return dict(
+            subbasins=subbasin_recs,
+            land_subbasins=land_sb_ids,
+            lake_subbasins=lake_sb_ids,
+            reservoirs=reservoir_cmds,
+            channel_profiles=channel_profile_cmds,
+            hrus=hru_recs,
         )
 
-    def _extract_subbasin(self, row, subbasin_ids) -> SubBasinsCommandRecord:
+    def _extract_subbasin(self, row, is_lake, subbasin_ids) -> SubBasinsCommand.Record:
         subbasin_id = int(row["SubId"])
-        is_lake = row["IsLake"] >= 0
-        river_length_in_kms = 0 if is_lake else row["Rivlen"] / 1000
-        river_slope = max(
-            row["RivSlope"], RoutingProductShapefileImporter.MAX_RIVER_SLOPE
-        )
+        # is_lake = row["HRU_IsLake"] >= 0
+        river_length_in_kms = 0 if is_lake else round(row["Rivlen"] / 1000, 5)
+        # river_slope = max(
+        #     row["RivSlope"], RoutingProductShapefileImporter.MAX_RIVER_SLOPE
+        # )
         # downstream_id
         downstream_id = int(row["DowSubId"])
         if downstream_id == subbasin_id:
@@ -116,9 +149,9 @@ class RoutingProductShapefileImporter:
         elif downstream_id not in subbasin_ids:
             downstream_id = -1
         gauged = row["IsObs"] > 0 or (
-            row["IsLake"] >= 0 and RoutingProductShapefileImporter.USE_LAKE_AS_GAUGE
+            is_lake and RoutingProductShapefileImporter.USE_LAKE_AS_GAUGE
         )
-        rec = SubBasinsCommandRecord(
+        rec = SubBasinsCommand.Record(
             subbasin_id=subbasin_id,
             name=f"sub_{subbasin_id}",
             downstream_id=downstream_id,
@@ -127,7 +160,7 @@ class RoutingProductShapefileImporter:
             gauged=gauged,
         )
 
-        return rec, is_lake
+        return rec
 
     def _extract_reservoir(self, row) -> ReservoirCommand:
         lake_id = int(row["HyLakeId"])
@@ -146,24 +179,40 @@ class RoutingProductShapefileImporter:
         subbasin_id = int(row["SubId"])
         slope = max(row["RivSlope"], RoutingProductShapefileImporter.MAX_RIVER_SLOPE)
 
-        channel_width = row["BkfWidth"]
-        channel_depth = row["BkfDepth"]
+        # SWAT: top width of channel when filled with water; bankfull width W_bnkfull
+        channel_width = max(row["BkfWidth"], 1)
+        # SWAT: depth of water in channel when filled to top of bank
+        channel_depth = max(row["BkfDepth"], 1)
         channel_elev = row["MeanElev"]
         floodn = row["FloodP_n"]
         channeln = row["Ch_n"]
 
+        # channel profile calculations are based on theory SWAT model is based on
+        # see: https://swat.tamu.edu/media/99192/swat2009-theory.pdf
+        #      --> "Channel Characteristics" p. 429 ff
+
+        # inverse of channel side slope; channel sides assumed to have 2:1 run to rise ratio
         zch = 2
-        sidwd = zch * channel_depth  # river side width
-        botwd = channel_width - 2 * sidwd  # river
+        # river side width
+        sidwd = zch * channel_depth
+        # river bottom width W_btm
+        botwd = channel_width - 2 * sidwd
+
+        # if derived bottom width is negative, set bottom width to 0.5*bankfull width and recalculate zch
         if botwd < 0:
             botwd = 0.5 * channel_width
             sidwd = 0.5 * 0.5 * channel_width
-            zch = (channel_width - botwd) / 2 / channel_depth
+            zch = (channel_width - botwd) / (2 * channel_depth)
 
+        # inverse of floodplain side slope; flood plain side slopes assumed to have 4:1 run to rise ratio
         zfld = 4 + channel_elev
+        # floodplain bottom width
         zbot = channel_elev - channel_depth
+        # floodplain side width
         sidwdfp = 4 / 0.25
 
+        # geometry of the channel and floodplain
+        # (see figure 7:1-2 in SWAT theory document)
         survey_points = [
             (0, zfld),
             (sidwdfp, channel_elev),
@@ -180,6 +229,7 @@ class RoutingProductShapefileImporter:
         else:
             mann = RoutingProductShapefileImporter.MANNING_DEFAULT
 
+        # roughness zones of channel and floodplain
         roughness_zones = [
             (0, floodn),
             (sidwdfp + 2 * channel_width, mann),
@@ -193,10 +243,22 @@ class RoutingProductShapefileImporter:
             roughness_zones=roughness_zones,
         )
 
-    def _extract_hru(self, row) -> HRUsCommandRecord:
-        return HRUsCommandRecord(
+    def _extract_hru(self, row) -> HRUsCommand.Record:
+
+        aspect = row["HRU_A_mean"]
+
+        if self.hru_aspect_convention == "GRASS":
+            aspect -= 360
+            if aspect < 0:
+                aspect += 360
+        elif self.hru_aspect_convention == "ArcGIS":
+            aspect = 360 - aspect
+        else:
+            assert False
+
+        return HRUsCommand.Record(
             hru_id=int(row["HRU_ID"]),
-            area=row["HRU_Area"],
+            area=row["HRU_Area"] / 1_000_000,
             elevation=row["HRU_E_mean"],
             latitude=row["HRU_CenY"],
             longitude=row["HRU_CenX"],
@@ -207,7 +269,7 @@ class RoutingProductShapefileImporter:
             aquifer_profile="[NONE]",
             terrain_class="[NONE]",
             slope=row["HRU_S_mean"],
-            aspect=row["HRU_A_mean"],
+            aspect=aspect,
         )
 
 
@@ -217,25 +279,20 @@ class RoutingProductGridWeightImporter:
     The original version of this algorithm can be found at: https://github.com/julemai/GridWeightsGenerator
     """
 
-    CRS_LLDEG = 4326  # EPSG id of lat/lon (deg) coordinate referenence system (CRS)
-    CRS_CAEA = 3573  # EPSG id of equal-area    coordinate referenence system (CRS)
-    ROUTING_ID_FIELD = "HRU_ID"
-    NETCDF_INPUT_FIELD = "NetCDF_col"
-    DIM_NAMES = ("lon", "lat")
-    VAR_NAMES = ("lon", "lat")
-    AREA_ERROR_THRESHOLD = 0.05
+    CRS_LLDEG = 4326  # EPSG id of lat/lon (deg) coordinate reference system (CRS)
+    CRS_CAEA = 3573  # EPSG id of equal-area coordinate reference system (CRS)
 
     def __init__(
         self,
         input_file_path,
         routing_file_path,
-        dim_names=DIM_NAMES,
-        var_names=VAR_NAMES,
-        routing_id_field=ROUTING_ID_FIELD,
-        netcdf_input_field=NETCDF_INPUT_FIELD,
+        dim_names=grid_weight_importer_params["DIM_NAMES"],
+        var_names=grid_weight_importer_params["VAR_NAMES"],
+        routing_id_field=grid_weight_importer_params["ROUTING_ID_FIELD"],
+        netcdf_input_field=grid_weight_importer_params["NETCDF_INPUT_FIELD"],
         gauge_ids=None,
         sub_ids=None,
-        area_error_threshold=AREA_ERROR_THRESHOLD,
+        area_error_threshold=grid_weight_importer_params["AREA_ERROR_THRESHOLD"],
     ):
         self._dim_names = tuple(dim_names)
         self._var_names = tuple(var_names)
@@ -273,7 +330,6 @@ class RoutingProductGridWeightImporter:
         self._routing_data = geopandas.read_file(routing_file_path)
 
     def extract(self) -> GridWeightsCommand:
-
         self._prepare_input_data()
 
         # Read routing data
@@ -283,9 +339,38 @@ class RoutingProductGridWeightImporter:
             epsg=RoutingProductGridWeightImporter.CRS_CAEA
         )
 
-        self._routing_data = self._routing_data.drop_duplicates(
-            self._routing_id_field
-        ).sort_values(self._routing_id_field)
+        def keep_only_valid_downsubid_and_obs_nm(g):
+            """
+            This function receives a group (g) of routing rows that have been grouped by HRU_ID.
+            If there is only one row, there is nothing to do (we return it). If there are more than
+            one rows, we want to return the one with the DowSubId != -1 (if there are more than one
+            we emit a warning). We also want to search for an Obs_NM value different than -9999 in
+            any row of the group, and if we find it we set it in the corresponding field of the
+            returning row (if we can't find one we also emit a warning).
+            """
+            if len(g) == 1:
+                return g
+            hru_id_field = self._routing_id_field
+            row = g[g["DowSubId"] != -1].copy()
+            if len(row) > 1:
+                row = row[:1].copy()
+                warnings.warn(
+                    f"More than one row with HRU_ID={row[hru_id_field]} having DowSubId = -1"
+                )
+            obs_nm = g[g["Obs_NM"] != -9999]
+            if not obs_nm.empty:
+                row["Obs_NM"] = obs_nm["Obs_NM"].iloc[0]
+            else:
+                warnings.warn(
+                    f"All values of Obs_NM are -9999 for rows with HRU_ID={row[hru_id_field]}"
+                )
+
+            return row
+
+        # Remove duplicate HRU_IDs while making sure that we keed relevant DowSubId and Obs_NM values
+        self._routing_data = self._routing_data.groupby(self._routing_id_field).apply(
+            keep_only_valid_downsubid_and_obs_nm
+        )
 
         # Make sure those are ints
         self._routing_data.SubId = self._routing_data.SubId.astype(int)
@@ -306,7 +391,7 @@ class RoutingProductGridWeightImporter:
         if self._sub_ids:
             # Here we want to extract the network of connected subbasins by going upstream via their DowSubId,
             # starting from the list supplied by the user (either directly, or via their gauge IDs).. We first
-            # build a map of downSubID -> subID for effficient lookup
+            # build a map of downSubID -> subID for efficient lookup
             downsubid_to_subids = defaultdict(set)
             for _, r in self._routing_data.iterrows():
                 downsubid_to_subids[r.DowSubId].add(r.SubId)
@@ -352,7 +437,7 @@ class RoutingProductGridWeightImporter:
             enve_basin = poly.GetEnvelope()
 
             area_all = 0.0
-            ncells = 0
+            # ncells = 0
 
             row_grid_weights = []
 
@@ -370,7 +455,7 @@ class RoutingProductGridWeightImporter:
                     if not grid_is_close:
                         continue
 
-                    grid_cell_area = grid_cell_geom_gpd_wkt[ilat][ilon].Area()
+                    # grid_cell_area = grid_cell_geom_gpd_wkt[ilat][ilon].Area()
 
                     # "fake" buffer to avoid invalid polygons and weirdos dumped by ArcGIS
                     inter = grid_cell_geom_gpd_wkt[ilat][ilon].Intersection(
@@ -686,3 +771,120 @@ class RoutingProductGridWeightImporter:
             and min_lon_cell <= max_lon_shape
             and max_lon_cell >= min_lon_shape
         )
+
+
+class NcDataImporter:
+    def __init__(self, fns):
+        self.fns = map(Path, fns)
+        self.attrs = {}
+        self._extract_nc_attrs(self.fns)
+
+    def _extract_nc_attrs(self, fns):
+        for fn in fns:
+            if ".nc" in fn.suffix:
+                with xr.open_dataset(fn) as ds:
+                    # Check if any alternate variable name is in the file.
+                    for var, alt_names in rv.alternate_nc_names.items():
+                        for name in alt_names:
+                            if name in ds.data_vars:
+                                v = ds[name]
+                                # Parse common attributes to all data models
+                                attrs = dict(
+                                    name=var,
+                                    file_name_nc=fn,
+                                    data_type=rv.forcing_names[var],
+                                    var_name_nc=name,
+                                    dim_names_nc=v.dims,
+                                    units=v.attrs.get("units"),
+                                    number_grid_cells=v.size / len(ds["time"]),
+                                )
+                                try:
+                                    attrs["latitude"] = ds.cf["latitude"]
+                                    attrs["longitude"] = ds.cf["longitude"]
+                                    attrs["elevation"] = ds.cf["vertical"]
+                                except KeyError:
+                                    pass
+
+                                if "GRIB_stepType" in v.attrs:
+                                    attrs["deaccumulate"] = (
+                                        v.attrs["GRIB_stepType"] == "accum"
+                                    )
+
+                                self.attrs[var] = attrs
+
+    def _create_command(self, var, attrs, rvh, rvt=None, nc_index=0):
+        coords = {"latitude", "longitude", "elevation"}
+        dims = attrs["dim_names_nc"]
+
+        # Remove extra attributes
+        number_grid_cells = attrs.pop("number_grid_cells")
+        for k in coords:
+            attrs.pop(k, None)
+
+        # Add options from rvt
+        rvt_attrs = ["scale", "offset", "time_shift"]
+        for a in rvt_attrs:
+            if a in rvt[var]:
+                attrs[a] = rvt[var][a]
+
+        if len(dims) == 1:
+            if var == "water_volume_transport_in_river_channel":
+                return ObservationDataCommand(**attrs)
+
+            return DataCommand(**attrs)
+
+        if len(dims) == 2:
+            if var == "water_volume_transport_in_river_channel":
+                # Search for the gauged SB, not sure what should happen when there are
+                # more than one (should it be even supported?)
+                for sb in rvh.subbasins:
+                    if sb.gauged:
+                        attrs["subbasin_id"] = sb.subbasin_id
+                        break
+                else:
+                    raise Exception(
+                        "Could not find an outlet subbasin for observation data"
+                    )
+                return ObservationDataCommand(**attrs)
+
+            # TODO: implement a RedirectToFile mechanism to avoid inlining the grid weights
+            # multiple times as we do here
+            # Construct default grid weights applying equally to all HRUs
+            data = [(hru.hru_id, nc_index, 1.0) for hru in rvh.hrus]
+
+            gw = rvt.grid_weights or GridWeightsCommand(
+                number_hrus=len(rvh.hrus),
+                number_grid_cells=number_grid_cells,
+                data=data,
+            )
+
+            return StationForcingCommand(**attrs, grid_weights=gw)
+
+        return GriddedForcingCommand(**attrs, grid_weights=rvt.grid_weights)
+
+    def extract(self, rvh, rvt=None, nc_index=0):
+        out = {"var_cmds": {}}
+
+        for var, attrs in self.attrs.items():
+            out["var_cmds"][var] = self._create_command(
+                var, attrs.copy(), rvh, rvt, nc_index
+            )
+            if type(out["var_cmds"][var]) is DataCommand:
+                # Try extracting the gauge location from the netCDF coordinates.
+                try:
+                    out["gauge_latitude"] = attrs["latitude"][nc_index]
+                    out["gauge_longitude"] = attrs["longitude"][nc_index]
+                    out["gauge_elevation"] = attrs["elevation"][nc_index]
+
+                # Revert to RHU coordinates
+                except Exception:
+                    if isinstance(rvh, rv.RVH):
+                        out["gauge_latitude"] = rvh.hrus[0].latitude
+                        out["gauge_longitude"] = rvh.hrus[0].longitude
+                        out["gauge_elevation"] = rvh.hrus[0].elevation
+                    else:
+                        out["gauge_latitude"] = getattr(rvh, "latitude", None)
+                        out["gauge_longitude"] = getattr(rvh, "longitude", None)
+                        out["gauge_elevation"] = getattr(rvh, "elevation", None)
+
+        return out

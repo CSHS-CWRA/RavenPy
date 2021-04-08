@@ -5,6 +5,7 @@ include LICENSE
 include README.rst
 include requirements_dev.txt
 include requirements_docs.txt
+include requirements_gis.txt
 
 recursive-include tests *
 recursive-exclude * __pycache__
@@ -12,5 +13,5 @@ recursive-exclude * *.py[co]
 
 recursive-include docs *.rst conf.py Makefile make.bat *.jpg *.png *.gif
 
-graft data
 graft ravenpy/models
+graft ravenpy/data

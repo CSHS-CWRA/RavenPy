@@ -1,3 +1,7 @@
+"""
+Tools for reading outputs and writing inputs for the Raven executable.
+"""
+
 from collections import OrderedDict
 
 

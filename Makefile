@@ -49,7 +49,7 @@ clean-test: ## remove test and coverage artifacts
 
 lint: ## check style with flake8
 	flake8 ravenpy tests
-	black --check --target-version py36 ravenpy tests
+	black --check --target-version py37 ravenpy tests
 
 test: ## run tests quickly with the default Python
 	pytest
@@ -64,8 +64,8 @@ coverage: ## check code coverage quickly with the default Python
 	$(BROWSER) htmlcov/index.html
 
 docs: ## generate Sphinx HTML documentation, including API docs
-	rm -f docs/ravenpy.rst
-	rm -f docs/modules.rst
+	# Warning: as the sphinx-apidoc is NOT being run on the RTD server the workaround we have
+	# is to commit the (currently 5) rst files it generates.
 	sphinx-apidoc -o docs/ ravenpy
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html

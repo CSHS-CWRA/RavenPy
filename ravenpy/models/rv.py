@@ -1,13 +1,47 @@
 import collections
 import datetime as dt
+from collections import namedtuple
 from pathlib import Path
+from textwrap import dedent
+from typing import Dict, List, Tuple
 
 import cftime
-import geopandas
 import six
-from xclim.core.units import units, units2pint
+import xarray as xr
+from dataclasses import dataclass, replace
+from xclim.core.units import units2pint
 
-from .state import BasinStateVariables, HRUStateVariables
+from .commands import (
+    BasinIndexCommand,
+    BasinStateVariablesCommand,
+    ChannelProfileCommand,
+    DataCommand,
+    GaugeCommand,
+    GriddedForcingCommand,
+    GridWeightsCommand,
+    HRUsCommand,
+    HRUStateVariableTableCommand,
+    LandUseClassesCommand,
+    MonthlyAverageCommand,
+    ObservationDataCommand,
+    RainCorrection,
+    RavenConfig,
+    ReservoirCommand,
+    Routing,
+    SBGroupPropertyMultiplierCommand,
+    SnowCorrection,
+    SoilClassesCommand,
+    SoilProfilesCommand,
+    StationForcingCommand,
+    SubBasinGroupCommand,
+    SubBasinsCommand,
+    VegetationClassesCommand,
+)
+
+HRU = HRUsCommand.Record
+HRUState = HRUStateVariableTableCommand.Record
+LU = LandUseClassesCommand.Record
+Sub = SubBasinsCommand.Record
 
 """
 Raven configuration
@@ -36,6 +70,7 @@ Simulation end date and duration are updated automatically when duration, start 
 
 """
 
+# CF standard names used for mappings
 default_input_variables = (
     "pr",
     "rainfall",
@@ -46,6 +81,36 @@ default_input_variables = (
     "evspsbl",
     "water_volume_transport_in_river_channel",
 )
+
+# Map CF-Convention standard name to Raven Forcing name
+forcing_names = {
+    "tasmin": "TEMP_MIN",
+    "tasmax": "TEMP_MAX",
+    "tas": "TEMP_AVE",
+    "rainfall": "RAINFALL",
+    "pr": "PRECIP",
+    "prsn": "SNOWFALL",
+    "evspsbl": "PET",
+    "water_volume_transport_in_river_channel": "HYDROGRAPH",
+}
+
+
+# Alternate typical variable names found in netCDF files, keyed by CF standard name
+alternate_nc_names = {
+    "tasmin": ["tasmin", "tmin"],
+    "tasmax": ["tasmax", "tmax"],
+    "tas": ["tas", "t2m"],
+    "rainfall": ["rainfall", "rain"],
+    "pr": ["pr", "precip", "prec", "precipitation", "tp"],
+    "prsn": ["prsn", "snow", "snowfall", "solid_precip"],
+    "evspsbl": ["pet", "evap", "evapotranspiration"],
+    "water_volume_transport_in_river_channel": [
+        "qobs",
+        "discharge",
+        "streamflow",
+        "dis",
+    ],
+}
 
 rain_snow_fraction_options = (
     "RAINSNOW_DATA",
@@ -72,8 +137,6 @@ evaporation_options = (
     "PET_MOHYSE",
     "PET_OUDIN",
 )
-
-state_variables = ()
 
 calendar_options = (
     "PROLEPTIC_GREGORIAN",
@@ -136,7 +199,7 @@ class RVFile:
         return pattern.findall(self.content)
 
 
-class RV(collections.abc.Mapping):
+class RV(collections.abc.Mapping, RavenConfig):
     """Generic configuration class.
 
     RV provides two mechanisms to set values, a dictionary-like interface and an object-like interface::
@@ -179,7 +242,17 @@ class RV(collections.abc.Mapping):
         return iter(self.keys())
 
     def keys(self):
-        return (key[1:] if key.startswith("_") else key for key in self.__dict__)
+        # Attributes
+        a = list(filter(lambda x: not x.startswith("_"), self.__dict__))
+
+        # Properties
+        p = list(
+            filter(
+                lambda x: isinstance(getattr(self.__class__, x, None), property),
+                dir(self),
+            )
+        )
+        return a + p
 
     def items(self):
         for attribute in self.keys():
@@ -203,242 +276,90 @@ class RV(collections.abc.Mapping):
                 self[key] = val
 
 
-class RavenNcData(RV):
-    pat = """
-          :{kind} {raven_name} {site} {runits}
-              :ReadFromNetCDF
-                 :FileNameNC      {path}
-                 :VarNameNC       {var_name}
-                 :DimNamesNC      {dimensions}
-                 :StationIdx      {index}
-                 {time_shift}
-                 {linear_transform}
-                 {deaccumulate}
-              :EndReadFromNetCDF
-          :End{kind}
-          """
-
-    _var_names = {
-        "tasmin": "TEMP_MIN",
-        "tasmax": "TEMP_MAX",
-        "tas": "TEMP_AVE",
-        "rainfall": "RAINFALL",
-        "pr": "PRECIP",
-        "prsn": "SNOWFALL",
-        "evspsbl": "PET",
-        "water_volume_transport_in_river_channel": "HYDROGRAPH",
-    }
-
-    _var_runits = {
-        "tasmin": "degC",
-        "tasmax": "degC",
-        "tas": "degC",
-        "pr": "mm/d",
-        "rainfall": "mm/d",
-        "prsn": "mm/d",
-        "evspsbl": "mm/d",
-        "water_volume_transport_in_river_channel": "m**3/s",
-    }
-
-    def __init__(self, **kwargs):
-        """Instantiate from attributes scrapped from the netCDF file."""
-        self.var = None
-        self.path = None
-        self.var_name = None
-        self.units = None
-        self.scale_factor = None
-        self.add_offset = None
-
-        self._time_shift = None
-        self._dimensions = None
-        self._index = None
-        self._linear_transform = None
-        self._kind = None
-        self._runits = None
-        self._raven_name = None
-        self._site = None
-        self._deaccumulate = None
-
-        super().__init__(**kwargs)
-
-    @property
-    def raven_name(self):
-        return self._var_names[self.var]
-
-    @property
-    def runits(self):
-        return self._var_runits[self.var]
-
-    @property
-    def kind(self):
-        if self.var == "water_volume_transport_in_river_channel":
-            return "ObservationData"
-        else:
-            return "Data"
-
-    @property
-    def site(self):
-        if self.var == "water_volume_transport_in_river_channel":
-            return 1
-        else:
-            return ""
-
-    @property
-    def index(self):
-        if self._index is not None:
-            return str(self._index + 1)
-
-    @index.setter
-    def index(self, value):
-        self._index = value
-
-    @property
-    def dimensions(self):
-        """Return dimensions as Raven expects it:
-        - time
-        - station time
-        - lon lat time
-        """
-        dims = list(self._dimensions)
-
-        # Move the time dimension at the end
-        dims.remove("time")
-        dims.append("time")
-
-        return " ".join(dims)
-
-    @dimensions.setter
-    def dimensions(self, value):
-        if "time" not in value:
-            raise ValueError("Raven expects a time dimension.")
-
-        self._dimensions = value
-
-        # If there is no spatial dimension, set the index to 0.
-        if self.index is None and len(value) == 1:
-            self._index = 0
-
-    @property
-    def time_shift(self):
-        """The fraction describing the time shift, for example to convert UTC to local time."""
-        if self._time_shift is not None:
-            return f":TimeShift {self._time_shift}"
-
-    @time_shift.setter
-    def time_shift(self, value):
-        self._time_shift = value
-
-    @property
-    def linear_transform(self):
-        """A sequence of two values: multiplicative factor and additive offset."""
-        lt = self._linear_transform
-        if lt is not None:
-            slope, intercept = lt or (1, 0)
-            return ":LinearTransform {:.15f} {:.15f}".format(slope, intercept)
-
-    @linear_transform.setter
-    def linear_transform(self, value):
-        """Set the scale factor and offset."""
-        if len(value) == 1:
-            value = (value, 0)
-        elif len(value) == 2:
-            pass
-        else:
-            raise ValueError(
-                "Linear transform takes at most two values: "
-                "a scaling factor and an offset."
-            )
-
-        self._linear_transform = value
-
-    @property
-    def deaccumulate(self):
-        """Convert cumulative precipitation to precipitation rate (mm/d)."""
-        return ":Deaccumulate" if self._deaccumulate is True else ""
-
-    @deaccumulate.setter
-    def deaccumulate(self, value):
-        self._deaccumulate = value
-
-    def _check_units(self):
-        import warnings
-
-        if units2pint(self.units) != units2pint(self.runits):
-            if self._linear_transform is None:
-                warnings.warn(
-                    f"Units are not what Raven expects for {self.var}.\n"
-                    f"Actual: {self.units}\n"
-                    f"Expected: {self.runits}\n"
-                    f"Make sure to set linear_transform to perform conversion."
-                )
-
-    def __str__(self):
-        if self.var is None:
-            return ""
-        else:
-            kwds = {k: v if v is not None else "" for (k, v) in self.items()}
-            return self.pat.format(**kwds)
-
-
-class MonthlyAverage(RV):
-    pat = ":MonthlyAve{var}, {data}"
-
-    def __init__(self, var=None, data=None):
-        self.var = var
-        self.data = data
-
-    def __str__(self):
-        if self.var is None:
-            return ""
-        out = self.pat.format(var=self.var, data=", ".join([str(d) for d in self.data]))
-        return out
-
-
 class RVT(RV):
-    def __init__(self, gridded_forcing_cmds=None, **kwargs):
-        self._nc_index = None
-        self._gridded_forcings = gridded_forcing_cmds or []
+    def __init__(self, **kwargs):
+        self.pr = {}
+        self.rainfall = {}
+        self.prsn = {}
+        self.tasmin = {}
+        self.tasmax = {}
+        self.tas = {}
+        self.evspsbl = {}
+        self.water_volume_transport_in_river_channel = {}
+
+        self.nc_index = None
+        self.gauge_latitude = None
+        self.gauge_longitude = None
+        self.gauge_elevation = None
+
+        self.raincorrection = 1
+        self.snowcorrection = 1
+
+        self.monthly_ave_evaporation = ()
+        self.monthly_ave_temperature = ()
+
+        self.gridded_forcings = ()
+
+        # For a distributed model these weights will be shared among all the StationForcing commands
+        self.grid_weights = None
+
+        self.var_cmds = {}
+        # Dictionary of potential variable names, keyed by CF standard name.
+        # http://cfconventions.org/Data/cf-standard-names/60/build/cf-standard-name-table.html
+        # PET is the potential evapotranspiration, while evspsbl is the actual evap.
+        # TODO: Check we're not mixing precip and rainfall.
+
         super(RVT, self).__init__(**kwargs)
 
     @property
-    def nc_index(self):
-        return self._nc_index
-
-    @nc_index.setter
-    def nc_index(self, value):
-        for key, val in self.items():
-            if isinstance(val, RavenNcData):
-                setattr(val, "index", value)
+    def variables(self):
+        return (getattr(self, name) for name in default_input_variables)
 
     @property
-    def gridded_forcings(self):
-        return self._gridded_forcings
-
-    def update(self, items, force=False):
-        """Update values from dictionary items.
-
-        Parameters
-        ----------
-        items : dict
-          Dictionary of values.
-        force : bool
-          If True, un-initialized keys can be set.
-        """
-        if force:
-            raise ValueError("Cannot add a new variable at run-time.")
+    def gauge(self):
+        data = [o for o in self.var_cmds.values() if isinstance(o, DataCommand)]
+        if data:
+            return GaugeCommand(
+                latitude=self.gauge_latitude,
+                longitude=self.gauge_longitude,
+                elevation=self.gauge_elevation,
+                raincorrection=self.raincorrection,
+                snowcorrection=self.snowcorrection,
+                monthly_ave_evaporation=self.monthly_ave_evaporation,
+                monthly_ave_temperature=self.monthly_ave_temperature,
+                data=data,
+            )
         else:
-            for key, val in items.items():
-                if isinstance(val, dict):
-                    self[key].update(val, force=True)
+            return ""
 
-    def to_rv(self):
-        return """
-{gridded_forcing_cmds}
-        """.format(
-            gridded_forcing_cmds="\n\n".join(
-                [gf.to_rv() for gf in self._gridded_forcings]
-            ),
-        )
+    @property
+    def station_forcing_list(self):
+        data = [
+            o for o in self.var_cmds.values() if isinstance(o, StationForcingCommand)
+        ]
+        return "\n\n".join(map(str, data))
+
+    @property
+    def gridded_forcing_list(self):
+        data = [
+            o for o in self.var_cmds.values() if isinstance(o, GriddedForcingCommand)
+        ]
+        # This is really a hack for now, as model.rvt.gridded_forcings are set
+        # directly by the user in TestRouting.test_lievre_tutorial
+        data += self.gridded_forcings
+        return "\n\n".join(map(str, data))
+
+    @property
+    def observed_data_cmd(self):
+        return self.var_cmds.get("water_volume_transport_in_river_channel", "")
+
+    @property
+    def raincorrection_cmd(self):
+        return RainCorrection(self.raincorrection)
+
+    @property
+    def snowcorrection_cmd(self):
+        return SnowCorrection(self.snowcorrection)
 
 
 class RVI(RV):
@@ -450,6 +371,7 @@ class RVI(RV):
         self.longitude = None
         self.run_index = 0
         self.raven_version = "3.0.1 rev#275"
+        self.routing = "ROUTE_NONE"
 
         self._run_name = "run"
         self._start_date = None
@@ -584,6 +506,10 @@ class RVI(RV):
         self._suppress_output = value
 
     @property
+    def routing_cmd(self):
+        return Routing(value=self.routing)
+
+    @property
     def rain_snow_fraction(self):
         """Rain snow partitioning."""
         return self._rain_snow_fraction
@@ -650,15 +576,15 @@ class RVI(RV):
 
 
 class RVC(RV):
-    def __init__(self, **kwargs):
-        self._hru_state = {}
-        self._basin_state = {}
-
-        # This is a hack to make sure the txt_hru_state and txt_basin_state are picked up to fill the rv templates.
-        self._txt_hru_state = ""
-        self._txt_basin_state = ""
-
-        super().__init__(**kwargs)
+    def __init__(
+        self,
+        hru_states: Dict[int, HRUState] = None,
+        basin_states: Dict[int, BasinIndexCommand] = None,
+        **kwds,
+    ):
+        self.hru_states = hru_states or {}
+        self.basin_states = basin_states or {}
+        super().__init__(**kwds)
 
     def parse(self, rvc):
         """Set initial conditions based on *solution* output file.
@@ -669,134 +595,116 @@ class RVC(RV):
           `solution.rvc` content.
         """
         objs = parse_solution(rvc)
-        hru, basin = get_states(objs)
-        self._hru_state.update(hru)
-        self._basin_state.update(basin)
+        self.hru_states, self.basin_states = get_states(objs)
 
     @property
     def hru_state(self):
-        return self._hru_state.get(1)
+        return self.hru_states.get(1, None)
 
     @hru_state.setter
     def hru_state(self, value):
-        self._hru_state[1] = value
+        self.hru_states[1] = value
 
     @property
     def basin_state(self):
-        return self._basin_state.get(1)
+        return self.basin_states.get(1, None)
 
     @basin_state.setter
     def basin_state(self, value):
-        self._basin_state[1] = value
+        self.basin_states[1] = value
 
     @property
-    def txt_hru_state(self):
+    def hru_states_cmd(self):
         """Return HRU state values."""
-        txt = []
-        for index, data in self._hru_state.items():
-            txt.append(f"{index}," + ",".join(map(repr, data)))
-
-        return "\n".join(txt)
+        return HRUStateVariableTableCommand(self.hru_states)
 
     @property
-    def txt_basin_state(self):
+    def basin_states_cmd(self):
         """Return basin state variables."""
-        pat = """
-              :BasinIndex {index},{name}
-                :ChannelStorage, {channelstorage}
-                :RivuletStorage, {rivuletstorage}
-                :Qout,{nsegs},{qout},{qoutlast}
-                :Qlat,{nQlatHist},{qlat},{qlatlast}
-                :Qin ,{nQinHist}, {qin}
-            """
-        txt = []
-        for index, data in self._basin_state.items():
-            txt.append(
-                pat.format(
-                    **data._asdict(),
-                    nsegs=len(data.qout),
-                    nQlatHist=len(data.qlat),
-                    nQinHist=len(data.qin),
-                )
-            )
-        return "\n".join(txt).replace("[", "").replace("]", "")
+        return BasinStateVariablesCommand(self.basin_states)
 
 
+@dataclass
 class RVH(RV):
-    def __init__(
-        self,
-        subbasins_cmd,
-        land_subbasin_group_cmd,
-        lake_subbasin_group_cmd,
-        reservoir_cmds,
-        hrus_cmd,
-        **kwargs,
-    ):
-        self._subbasins_cmd = subbasins_cmd
-        self._land_subbasin_group_cmd = land_subbasin_group_cmd
-        self._lake_subbasin_group_cmd = lake_subbasin_group_cmd
-        self._reservoir_cmds = reservoir_cmds
-        self._hrus_cmd = hrus_cmd
+    subbasins: Tuple[SubBasinsCommand.Record] = (SubBasinsCommand.Record(),)
+    land_subbasins: Tuple[int] = ()
+    land_subbasin_property_multiplier: SBGroupPropertyMultiplierCommand = ""
+    lake_subbasins: Tuple[int] = ()
+    lake_subbasin_property_multiplier: SBGroupPropertyMultiplierCommand = ""
+    reservoirs: Tuple[ReservoirCommand] = ()
+    hrus: Tuple[HRUsCommand.Record] = ()
 
-        super().__init__(**kwargs)
+    template = """
+    {subbasins_cmd}
 
-    @property
-    def subbasins(self):
-        return self._subbasins_cmd.subbasins  # return internal list
+    {hrus_cmd}
 
-    @property
-    def land_subbasin_group(self):
-        return self._land_subbasin_group_cmd.subbasin_ids  # return internal list
+    {land_subbasin_group_cmd}
+
+    {lake_subbasin_group_cmd}
+
+    {reservoir_cmd_list}
+    """
 
     @property
-    def lake_subbasin_group(self):
-        return self._lake_subbasin_group_cmd.subbasin_ids  # return internal list
+    def subbasins_cmd(self):
+        return SubBasinsCommand(self.subbasins)
 
     @property
-    def reservoirs(self):
-        return self._reservoir_cmds  # return list directly
+    def land_subbasin_group_cmd(self):
+        return SubBasinGroupCommand("Land", self.land_subbasins)
 
     @property
-    def hrus(self):
-        return self._hrus_cmd.hrus  # return internal list
+    def lake_subbasin_group_cmd(self):
+        return SubBasinGroupCommand("Lakes", self.lake_subbasins)
+
+    @property
+    def reservoir_cmd_list(self):
+        return "\n\n".join(map(str, self.reservoirs))
+
+    @property
+    def hrus_cmd(self):
+        return HRUsCommand(self.hrus)
 
     def to_rv(self):
-        return """
-{subbasins_cmd}
-
-{hrus_cmd}
-
-{land_subbasin_group_cmd}
-
-{lake_subbasin_group_cmd}
-
-{reservoir_cmds}
-        """.format(
-            subbasins_cmd=self._subbasins_cmd.to_rv(),
-            hrus_cmd=self._hrus_cmd.to_rv(),
-            land_subbasin_group_cmd=self._land_subbasin_group_cmd.to_rv(),
-            lake_subbasin_group_cmd=self._lake_subbasin_group_cmd.to_rv(),
-            reservoir_cmds="\n\n".join([r.to_rv() for r in self._reservoir_cmds]),
-        )
+        # params = self.items()
+        return dedent(self.template).format(**dict(self.items()))
 
 
+@dataclass
 class RVP(RV):
-    def __init__(self, channel_profile_cmds, **kwargs):
-        self._channel_profile_cmds = channel_profile_cmds
-        super().__init__(**kwargs)
+    params: Tuple[namedtuple] = ()
+    soil_classes: Tuple[SoilClassesCommand.Record] = ()
+    soil_profiles: Tuple[SoilProfilesCommand.Record] = ()
+    vegetation_classes: Tuple[VegetationClassesCommand.Record] = ()
+    land_use_classes: Tuple[LandUseClassesCommand.Record] = ()
+    channel_profiles: Tuple[ChannelProfileCommand] = ()
+    avg_annual_runoff: float = 0
 
     @property
-    def channel_profiles(self):
-        return self._channel_profile_cmds
+    def soil_classes_cmd(self):
+        return SoilClassesCommand(self.soil_classes)
 
-    def to_rv(self):
-        return """
-{channel_profile_cmds}
-        """.format(
-            channel_profile_cmds="\n\n".join(
-                [cp.to_rv() for cp in self._channel_profile_cmds]
-            ),
-        )
+    @property
+    def soil_profiles_cmd(self):
+        return SoilProfilesCommand(self.soil_profiles)
+
+    @property
+    def vegetation_classes_cmd(self):
+        return VegetationClassesCommand(self.vegetation_classes)
+
+    @property
+    def land_use_classes_cmd(self):
+        return LandUseClassesCommand(self.land_use_classes)
+
+    @property
+    def channel_profile_cmd_list(self):
+        return "\n\n".join(map(str, self.channel_profiles))
+
+    # Note sure about this!
+    # def to_rv(self):
+    #     params = self.items()
+    #     return dedent(self.template).format(**dict(self.items()))
 
 
 class Ost(RV):
@@ -869,11 +777,11 @@ def get_states(solution, hru_index=None, basin_index=None):
     basin_state = {}
 
     for index, params in solution["HRUStateVariableTable"]["data"].items():
-        hru_state[index] = HRUStateVariables(*params)
+        hru_state[index] = HRUState(*params)
 
     for index, raw in solution["BasinStateVariables"]["BasinIndex"].items():
         params = {k.lower(): v for (k, v) in raw.items()}
-        basin_state[index] = BasinStateVariables(**params)
+        basin_state[index] = BasinIndexCommand(**params)
 
     if hru_index is not None:
         hru_state = hru_state[hru_index]
@@ -921,13 +829,13 @@ def _parser(lines, indent="", fmt=str):
                     out[key][i] = dict(
                         index=i, name=name, **_parser(lines, new_indent + "  ", float)
                     )
-                elif key in ["Qlat", "Qout"]:
-                    n, *values, last = value.split(",")
-                    out[key] = list(map(float, values))
-                    out[key + "Last"] = float(last)
-                elif key == "Qin":
+                # elif key in ["Qlat", "Qout"]:
+                #     n, *values, last = value.split(",")
+                #     out[key] = list(map(float, values))
+                #     out[key + "Last"] = float(last)
+                elif key in ["Qin", "Qout", "Qlat"]:
                     n, *values = value.split(",")
-                    out[key] = list(map(float, values))
+                    out[key] = (int(n),) + tuple(map(float, values))
                 else:
                     out[key] = (
                         list(map(fmt, value.split(","))) if "," in value else fmt(value)
@@ -937,6 +845,6 @@ def _parser(lines, indent="", fmt=str):
         else:
             data = line.split(",")
             i = int(data.pop(0))
-            out["data"][i] = list(map(float, data))
+            out["data"][i] = [i] + list(map(float, data))
 
     return out

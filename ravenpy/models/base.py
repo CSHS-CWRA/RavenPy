@@ -16,19 +16,29 @@ import subprocess
 import tempfile
 from collections import OrderedDict
 from pathlib import Path
+from typing import Union
 
 import numpy as np
-import six
 import xarray as xr
 
 import ravenpy
 
+from .commands import (
+    DataCommand,
+    GriddedForcingCommand,
+    HRUsCommand,
+    ObservationDataCommand,
+    StationForcingCommand,
+)
+from .importers import NcDataImporter
 from .rv import (
     RV,
+    RVH,
     RVI,
+    RVT,
     Ost,
-    RavenNcData,
     RVFile,
+    forcing_names,
     get_states,
     isinstance_namedtuple,
     parse_solution,
@@ -37,18 +47,17 @@ from .rv import (
 RAVEN_EXEC_PATH = os.getenv("RAVENPY_RAVEN_BINARY_PATH") or shutil.which("raven")
 OSTRICH_EXEC_PATH = os.getenv("RAVENPY_OSTRICH_BINARY_PATH") or shutil.which("ostrich")
 
+RAVEN_NO_DATA_VALUE = -1.2345
+
 
 class Raven:
-    """RAVEN hydrological model wrapper
+    """RAVEN hydrological model wrapper.
 
     This class is used to run the RAVEN model from user-provided configuration files. It can also be subclassed with
     configuration templates for emulated models, allowing direct calls to the models.
 
-    Examples
-    --------
-    >>> r = Raven('/tmp/testdir')
-    >>> r.configure()
-
+    r = Raven('/tmp/testdir')
+    r.configure()
     """
 
     identifier = "generic-raven"
@@ -56,26 +65,6 @@ class Raven:
 
     # Allowed configuration file extensions
     _rvext = ("rvi", "rvp", "rvc", "rvh", "rvt")
-
-    # Dictionary of potential variable names, keyed by CF standard name.
-    # http://cfconventions.org/Data/cf-standard-names/60/build/cf-standard-name-table.html
-    # PET is the potential evapotranspiration, while evspsbl is the actual evap.
-    # TODO: Check we're not mixing precip and rainfall.
-    _variable_names = {
-        "tasmin": ["tasmin", "tmin"],
-        "tasmax": ["tasmax", "tmax"],
-        "tas": ["tas", "t2m"],
-        "rainfall": ["rainfall", "rain"],
-        "pr": ["pr", "precip", "prec", "precipitation", "tp"],
-        "prsn": ["prsn", "snow", "snowfall", "solid_precip"],
-        "evspsbl": ["pet", "evap", "evapotranspiration"],
-        "water_volume_transport_in_river_channel": [
-            "qobs",
-            "discharge",
-            "streamflow",
-            "dis",
-        ],
-    }
 
     _parallel_parameters = [
         "params",
@@ -88,16 +77,12 @@ class Raven:
         "latitude",
         "longitude",
         "region_id",
-        "hrus",
     ]
 
-    def __init__(self, workdir=None):
+    def __init__(self, workdir: Union[str, Path] = None):
         """Initialize the RAVEN model.
 
-        Parameters
-        ----------
-        workdir : str, Path
-          Directory for the model configuration and outputs. If None, a temporary directory will be created.
+        Directory for the model configuration and outputs. If None, a temporary directory will be created.
         """
 
         if not RAVEN_EXEC_PATH:
@@ -119,7 +104,7 @@ class Raven:
         self.rvi = RV()
         self.rvp = RV()
         self.rvc = RV()
-        self.rvt = RV()
+        self.rvt = RVT()
         self.rvh = RV()
         self.rvd = RV()  # rvd is for derived parameters
 
@@ -281,8 +266,8 @@ class Raven:
                     p = att.__class__(*value)
                     setattr(obj, key, p)
                 # If att is a RavenNcData, we expect a dict
-                elif isinstance(att, RavenNcData):
-                    att.update(value)
+                # elif isinstance(att, dict):
+                #     att.update(value)
                 else:
                     setattr(obj, key, value)
                 assigned = True
@@ -316,8 +301,8 @@ class Raven:
         Model configuration files and time series inputs are stored directly in the working directory.
 
         workdir/  # Created by PyWPS. Is considered the model path.
-           model/
-           output/
+        model/
+        output/
 
         """
         if overwrite:
@@ -340,13 +325,15 @@ class Raven:
         ts : sequence
           Paths to input forcing files.
         index : int
-          Run index.
+          Run index (starts at 1)
         """
         # Create configuration information from input files
-        ncvars = self._assign_files(ts)
-        self.rvt.update(ncvars)
-        self.check_units()
-        self.check_inputs()
+        # ncvars = self._assign_files(ts)
+        # self.rvt.update(ncvars)
+
+        # TODO: Re-enable those checks
+        # self.check_units()
+        # self.check_inputs()
 
         # Compute derived parameters
         self.derived_parameters()
@@ -397,17 +384,15 @@ class Raven:
         >>> r.run(ts, start_date=dt.datetime(2000, 1, 1), area=1000, X1=67)
 
         """
-        if isinstance(ts, (six.string_types, Path)):
-            ts = [
-                ts,
-            ]
+        if isinstance(ts, (str, Path)):
+            ts = [ts]
 
         # Case for potentially parallel parameters
         pdict = {}
         for p in self._parallel_parameters:
             a = kwds.pop(p, None)
 
-            if a is not None and p in ["params", "basin_state", "hru_state"]:
+            if a is not None and p in ["params"]:
                 pdict[p] = np.atleast_2d(a)
             else:
                 pdict[p] = np.atleast_1d(a)
@@ -440,6 +425,11 @@ class Raven:
             if len(val) == 1:
                 pdict[key] = val.repeat(nloops, axis=0)
 
+        # Use rvc file to set model state, if any
+        rvc = kwds.pop("rvc", None)
+        if rvc:
+            self.resume(solution=rvc)
+
         # Update non-parallel parameter objects
         for key, val in kwds.items():
 
@@ -461,6 +451,8 @@ class Raven:
             self.handle_date_defaults(ts)
             self.set_calendar(ts)
 
+        ncdata = NcDataImporter(ts)
+
         # Loop over parallel parameters - sets self.rvi.run_index
         procs = []
         for self.psim in range(nloops):
@@ -468,7 +460,17 @@ class Raven:
                 if val[self.psim] is not None:
                     self.assign(key, val[self.psim])
 
+            # Forcing commands
+            self.rvt.update(
+                ncdata.extract(
+                    rvh=self.rvh,
+                    rvt=self.rvt,
+                    nc_index=pdict["nc_index"][self.psim],
+                )
+            )
+
             cmd = self.setup_model_run(tuple(map(Path, ts)))
+
             procs.append(
                 subprocess.Popen(cmd, cwd=self.cmd_path, stdout=subprocess.PIPE)
             )
@@ -486,6 +488,9 @@ class Raven:
             #    print(line)
         try:
             self.parse_results()
+            err = self.parse_errors()
+            if "ERROR" in err:
+                raise UserWarning("Simulation error")
 
         except UserWarning as e:
             err = self.parse_errors()
@@ -535,6 +540,8 @@ class Raven:
             except UserWarning as exc:
                 if key != "diagnostics":
                     raise exc
+                else:
+                    continue
 
             fns.sort()
             self.ind_outputs[key] = fns
@@ -586,46 +593,6 @@ class Raven:
             out += f.read_text()
         return out
 
-    def _assign_files(self, fns):
-        """Find for each variable the file storing it's data and the name of the netCDF variable.
-
-        Parameters
-        ----------
-        fns : sequence
-          Paths to netCDF files.
-
-        Returns
-        -------
-        dict
-          A dictionary keyed by variable storing the `RavenNcData` instance storing each variable's configuration
-          information.
-        """
-        ncvars = {}
-        for fn in fns:
-            if ".nc" in fn.suffix:
-                with xr.open_dataset(fn) as ds:
-                    for var, alt_names in self._variable_names.items():
-                        # Check that the emulator is expecting that variable.
-                        if var not in self.rvt.keys():
-                            continue
-
-                        # Check if any alternate variable name is in the file.
-                        for alt_name in alt_names:
-                            if alt_name in ds.data_vars:
-                                ncvars[var] = dict(
-                                    var=var,
-                                    path=fn,
-                                    var_name=alt_name,
-                                    dimensions=ds[alt_name].dims,
-                                    units=ds[alt_name].attrs.get("units"),
-                                )
-                                if "GRIB_stepType" in ds[alt_name].attrs:
-                                    ncvars[var]["deaccumulate"] = (
-                                        ds[alt_name].attrs["GRIB_stepType"] == "accum"
-                                    )
-                                break
-        return ncvars
-
     def _get_output(self, pattern, path):
         """Match actual output files to known expected files.
 
@@ -633,9 +600,9 @@ class Raven:
         """
         files = list(path.rglob(pattern))
 
-        # TODO: Fix this. Raven won't have rvi.suppress_output is initialized with existing configuration files.
-        if len(files) == 0 and not self.rvi.suppress_output:
-            raise UserWarning("No output files for {} in {}.".format(pattern, path))
+        if len(files) == 0:
+            if not (isinstance(self.rvi, RVI) and self.rvi.suppress_output):
+                raise UserWarning("No output files for {} in {}.".format(pattern, path))
 
         return [f.absolute() for f in files]
 
@@ -775,20 +742,22 @@ class Raven:
     @staticmethod
     def split_ext(fn):
         """Return the name and rv key of the configuration file."""
-        if isinstance(fn, six.string_types):
+        if isinstance(fn, str):
             fn = Path(fn)
 
         return fn.stem, fn.suffix[1:]
 
     def check_units(self):
         """Check that the input file units match expectations."""
-        for var, nc in self.rvt.items():
-            if isinstance(nc, RavenNcData) and nc.var is not None:
-                nc._check_units()
+        # TODO: make compliant with the new RVT implementation
+        pass
+        # for var, nc in self.rvt.items():
+        #     if isinstance(nc, RavenNcData) and nc.var is not None:
+        #         nc._check_units()
 
     def check_inputs(self):
         """Check that necessary variables are defined."""
-        has_file = set([key for key, val in self.rvt.items() if val is not None])
+        has_file = {key for key, val in self.rvt.items() if val is not None}
         vars = list(self.rvt.keys())
 
         for var in vars:
@@ -808,23 +777,22 @@ class Raven:
 
 
 class Ostrich(Raven):
-    """Wrapper for OSTRICH calibration of RAVEN hydrological model
+    """Wrapper for OSTRICH calibration of RAVEN hydrological model.
 
     This class is used to calibrate RAVEN model using OSTRICH from user-provided configuration files. It can also be
     subclassed with configuration templates for emulated models, allowing direct calls to the models.
+
+    Parameters
+    ----------
+    conf:
+      The rv configuration files + Ostrict ostIn.txt.
+    tpl:
+      The Ostrich templates.
 
     Examples
     --------
     >>> r = Ostrich('/tmp/testdir')
     >>> r.configure()
-
-    Attributes
-    ----------
-    conf
-      The rv configuration files + Ostrict ostIn.txt
-    tpl
-      The Ostrich templates
-
     """
 
     identifier = "generic-ostrich"
@@ -870,20 +838,10 @@ class Ostrich(Raven):
         make_executable(fn)
 
     def setup(self, overwrite=False):
-        """Create directory structure to store model input files, executable and output results.
+        """Create directory structure to store model input files, executable, and output results.
 
         Model configuration files and time series inputs are stored directly in the working directory.
-
-        workdir/  # Created by PyWPS.
-           *.rv?
-           *.tpl
-           ostIn.txt
-           model/
-           model/output/
-           best/
-
-        At each Ostrich loop, configuration files (original and created from templates are copied into model/.
-
+        At each Ostrich loop, configuration files (original and created from templates are copied into model).
         """
         Raven.setup(self, overwrite)
 
@@ -908,9 +866,16 @@ class Ostrich(Raven):
 
         # Store output file names in dict
         for key, pattern in patterns.items():
-            self.outputs[key] = self._get_output(pattern, path=self.exec_path)[0]
+            fns = self._get_output(pattern, path=self.exec_path)
+            if len(fns) == 1:
+                fns = fns[0]
+            self.outputs[key] = fns
 
-        self.outputs["calibparams"] = ", ".join(map(str, self.calibrated_params))
+        try:
+            self.outputs["calibparams"] = ", ".join(map(str, self.calibrated_params))
+        except (AttributeError, TypeError):
+            err = self.parse_errors()
+            raise UserWarning(err)
 
     def parse_errors(self):
         try:
@@ -934,7 +899,7 @@ class Ostrich(Raven):
                 0
             ].read_text()
 
-        return "{}\n{}".format(ost_err, raven_err)
+        return f"{ost_err}\n{raven_err}"
 
     def parse_optimal_parameter_set(self):
         """Return dictionary of optimal parameter set."""
@@ -992,6 +957,24 @@ def make_executable(fn):
     """Make file executable."""
     st = os.stat(fn)
     os.chmod(fn, st.st_mode | stat.S_IEXEC)
+
+
+def get_average_annual_runoff(
+    nc_file_path, area_in_m2, time_dim="time", na_value=RAVEN_NO_DATA_VALUE
+):
+    """
+    Compute the average annual runoff from observed data.
+    """
+    with xr.open_dataset(nc_file_path) as ds:
+        qobs = ds.where(ds["qobs"] != na_value)["qobs"]
+        qobs *= 86400.0  # convert m**3/s to m**3/d
+        axis = qobs.dims.index(time_dim)
+        # avg daily runoff [m3/d] for each year in record
+        qyear = np.nanmean(qobs.groupby("time.year").mean("time"), axis=axis)
+        qyear = qyear / area_in_m2 * 365 * 1000.0  # [mm/yr] for each year in record
+        qyear = np.mean(qyear)  # [mm/yr] mean over all years in record
+
+    return qyear
 
 
 # TODO: Configure this according to the model_path and output_path.
