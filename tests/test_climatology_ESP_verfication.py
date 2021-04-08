@@ -27,10 +27,12 @@ class TestClimpredHindcastVerification:
         # Prepare the model parameters and forecast details
         model = "GR4JCN"
         params = (0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
+
         forecast_duration = 3
         ts = get_local_testdata(
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
         )
+        rvc = get_local_testdata("gr4j_cemaneige/solution.rvc")
 
         # Make the hindcasts for each initialization date. Here we will extract
         # ESP forecasts for a given calendar date for the years in "included_years"
@@ -41,6 +43,7 @@ class TestClimpredHindcastVerification:
         # The "qobs" dataset contains all qobs in the timeseries: Climpred will
         # sort it all out during its processing. Note that the format of these datasets
         # is tailor-made to be used in climpred, and thus has specific dimension names.
+
         hindcasts, qobs = make_ESP_hindcast_dataset(
             model_name=model,
             forecast_date=dt.datetime(1955, 6, 30),
@@ -53,9 +56,11 @@ class TestClimpredHindcastVerification:
                 ),
             ),
             params=params,
+            rvc=str(rvc),
         )
 
         # Once we have the correctly formatted datasets, Make the hindcast object for climpred
+
         hindcast_object = make_climpred_hindcast_object(hindcasts, qobs)
 
         # This function is used to convert to binary to see if yes/no forecast is larger than obs
