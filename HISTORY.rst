@@ -2,6 +2,12 @@
 History
 =======
 
+0.4.0
+-----
+
+* GR4JCN emulator now supports routing mode.
+* Add BLENDED emulator.
+
 0.3.1
 -----
 
