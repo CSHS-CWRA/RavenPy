@@ -781,7 +781,7 @@ class NcDataImporter:
 
     def _extract_nc_attrs(self, fns):
         for fn in fns:
-            if ".nc" in Path(fn).suffix:
+            if Path(fn).suffix.startswith(".nc"):
                 with xr.open_dataset(fn) as ds:
                     # Check if any alternate variable name is in the file.
                     for var, alt_names in rv.alternate_nc_names.items():
