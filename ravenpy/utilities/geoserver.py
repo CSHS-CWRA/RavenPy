@@ -19,13 +19,14 @@ from . import gis_import_error_message
 
 try:
     import fiona
+    import geopandas as gpd
     import pandas as pd
     from lxml import etree
     from owslib.fes import PropertyIsLike
     from owslib.wcs import WebCoverageService
     from owslib.wfs import WebFeatureService
     from shapely.geometry import Point, shape
-    import geopandas as gpd
+
 except (ImportError, ModuleNotFoundError) as e:
     msg = gis_import_error_message.format(Path(__file__).stem)
     raise ImportError(msg) from e
@@ -531,9 +532,11 @@ def hydro_routing_upstream(
     layer = f"public:routing_{lakes}Lakes_{str(level).zfill(2)}"
 
     # Get attributes necessary to identify upstream watersheds
-    resp = wfs.getfeature(typename=layer,
-                          propertyname=["SubId", "DowSubId"],
-                          outputFormat="application/json")
+    resp = wfs.getfeature(
+        typename=layer,
+        propertyname=["SubId", "DowSubId"],
+        outputFormat="application/json",
+    )
 
     df = gpd.read_file(resp)
 
@@ -546,9 +549,11 @@ def hydro_routing_upstream(
     )
 
     # Fetch upstream features
-    resp = wfs.getfeature(typename=layer,
-                          featureid=df_upstream["id"].tolist(),
-                          outputFormat="application/json")
+    resp = wfs.getfeature(
+        typename=layer,
+        featureid=df_upstream["id"].tolist(),
+        outputFormat="application/json",
+    )
 
     return gpd.read_file(resp.read().decode())
 
@@ -582,7 +587,9 @@ def get_hydro_routing_attributes_wfs(
 
     """
     layer = f"public:routing_{lakes}Lakes_{str(level).zfill(2)}"
-    return _get_feature_attributes_wfs(attribute=attribute, layer=layer, geoserver=geoserver)
+    return _get_feature_attributes_wfs(
+        attribute=attribute, layer=layer, geoserver=geoserver
+    )
 
 
 def get_hydro_routing_location_wfs(
