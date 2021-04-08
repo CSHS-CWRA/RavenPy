@@ -25,6 +25,7 @@ try:
     from owslib.wcs import WebCoverageService
     from owslib.wfs import WebFeatureService
     from shapely.geometry import Point, shape
+    import geopandas as gpd
 except (ImportError, ModuleNotFoundError) as e:
     msg = gis_import_error_message.format(Path(__file__).stem)
     raise ImportError(msg) from e
@@ -84,7 +85,7 @@ def _get_location_wfs(
 
 
 def _get_feature_attributes_wfs(
-    attribute: list,
+    attribute: Sequence[str],
     layer: str,
     geoserver: str = GEO_URL,
 ) -> str:
@@ -502,11 +503,11 @@ def hydro_routing_aggregate(gdf: pd.DataFrame) -> pd.Series:
     return gdf.dissolve(aggfunc=aggfunc)
 
 
-def hydro_routing_upstream_ids(
+def hydro_routing_upstream(
     fid: Union[str, float, int],
-    df: pd.DataFrame,
-    basin_field="SubId",
-    downstream_field="DowSubId",
+    level: int = 12,
+    lakes: str = "1km",
+    geoserver: str = GEO_URL,
 ) -> pd.Series:
     """Return a list of hydro routing features located upstream.
 
@@ -514,33 +515,48 @@ def hydro_routing_upstream_ids(
     ----------
     fid : Union[str, float, int]
       Basin feature ID code of the downstream feature.
-    df : pd.DataFrame
-      Watershed attributes.
-    basin_field: str
-      The field used to determine the id of the basin. Default: "SubId".
-    downstream_field: str
-      The field identifying the downstream sub-basin. Default: "DowSubId".
+    level : int
+      Level of granularity requested for the lakes vector (range(7,13)). Default: 12.
+    lakes : {"1km", "all"}
+      Query the version of dataset with lakes under 1km in width removed ("1km") or return all lakes ("all").
+    geoserver: str
+      The address of the geoserver housing the layer to be queried. Default: http://pavics.ouranos.ca/geoserver/.
 
     Returns
     -------
     pd.Series
       Basins ids including `fid` and its upstream contributors.
     """
+    wfs = WebFeatureService(url=urljoin(geoserver, "wfs"), version="2.0.0", timeout=30)
+    layer = f"public:routing_{lakes}Lakes_{str(level).zfill(2)}"
+
+    # Get attributes necessary to identify upstream watersheds
+    resp = wfs.getfeature(typename=layer,
+                          propertyname=["SubId", "DowSubId"],
+                          outputFormat="application/json")
+
+    df = gpd.read_file(resp)
+
+    # Identify upstream features
     df_upstream = _determine_upstream_ids(
         fid=fid,
         df=df,
-        basin_field=basin_field,
-        downstream_field=downstream_field,
+        basin_field="SubId",
+        downstream_field="DowSubId",
     )
 
-    return df_upstream
+    # Fetch upstream features
+    resp = wfs.getfeature(typename=layer,
+                          featureid=df_upstream["id"].tolist(),
+                          outputFormat="application/json")
+
+    return gpd.read_file(resp.read().decode())
 
 
 def get_hydro_routing_attributes_wfs(
-    attribute: str = None,
-    value: Union[str, float, int] = None,
+    attribute: Sequence[str],
     level: int = 12,
-    lakes: str = None,
+    lakes: str = "1km",
     geoserver: str = GEO_URL,
 ) -> str:
     """Return a URL that formats and returns a remote GetFeatures request from hydro routing dataset.
@@ -550,10 +566,8 @@ def get_hydro_routing_attributes_wfs(
 
     Parameters
     ----------
-    attribute : str
-      Attribute/field to be queried.
-    value: Union[str, float, int]
-      Value for attribute queried.
+    attribute : list
+      Attributes/fields to be queried.
     level : int
       Level of granularity requested for the lakes vector (range(7,13)). Default: 12.
     lakes : {"1km", "all"}
@@ -568,11 +582,7 @@ def get_hydro_routing_attributes_wfs(
 
     """
     layer = f"public:routing_{lakes}Lakes_{str(level).zfill(2)}"
-    q = _get_feature_attributes_wfs(
-        attribute=attribute, value=value, layer=layer, geoserver=geoserver
-    )
-
-    return q
+    return _get_feature_attributes_wfs(attribute=attribute, layer=layer, geoserver=geoserver)
 
 
 def get_hydro_routing_location_wfs(
