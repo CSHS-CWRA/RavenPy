@@ -24,7 +24,7 @@ jobs:
         run: tox -e ${{ matrix.tox-env }}
 
   pip:
-    name: Pip-install for Python ${{ matrix.python-version }}
+    name: Pip with Python${{ matrix.python-version }}
     needs: black
     runs-on: ubuntu-latest
     strategy:
@@ -51,7 +51,7 @@ jobs:
       run: env GDAL_VERSION="$(gdal-config --version)" tox -e ${{ matrix.tox-env }}
 
   conda:
-    name: Miniconda3 install fro Python3.8
+    name: Conda
     needs: black
     runs-on: ubuntu-latest
     steps:
@@ -60,14 +60,12 @@ jobs:
         uses: s-weigand/setup-conda@v1
         with:
           update-conda: true
-          python-version: 3.8
-          conda-channels: zeitsperre, conda-forge, defaults
       - name: Conda version
         run: conda --version
       - name: Create RavenPy environment
         run: conda env create -f environment.yml
-      - run: conda activate ravenpy-env
-      - name: Install RavenPy
-        run: pip install -e ".[dev]"
-      - name: Test with pytest
-        run: pytest tests
+      - name: Install and test RavenPy
+        run: |
+          conda activate ravenpy-env
+          pip install -e ".[dev]"
+          pytest tests
