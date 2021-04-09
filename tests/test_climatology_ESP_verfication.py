@@ -60,7 +60,6 @@ class TestClimpredHindcastVerification:
         )
 
         # Once we have the correctly formatted datasets, Make the hindcast object for climpred
-
         hindcast_object = make_climpred_hindcast_object(hindcasts, qobs)
 
         # This function is used to convert to binary to see if yes/no forecast is larger than obs
