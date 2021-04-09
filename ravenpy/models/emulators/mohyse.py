@@ -1,6 +1,7 @@
 from collections import defaultdict
-from dataclasses import dataclass
 from pathlib import Path
+
+from dataclasses import dataclass
 
 from ravenpy.config.commands import HRU, LU, BasinIndexCommand, HRUState, Sub
 from ravenpy.models.base import Ostrich, Raven
@@ -30,6 +31,7 @@ class MOHYSE(Raven):
         super().__init__(*args, **kwds)
 
         self.config.update(
+            identifier="mohyse",
             hrus=(GR4JCN.LandHRU(),),
             subbasins=(
                 Sub(
@@ -221,6 +223,7 @@ class MOHYSE_OST(Ostrich, MOHYSE):
         super().__init__(*args, **kwds)
 
         self.config.update(
+            identifier="mohyse-ost",
             algorithm="DDS",
             max_iterations=50,
             lowerBounds=MOHYSE.Params(),

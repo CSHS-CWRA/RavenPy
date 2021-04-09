@@ -1,6 +1,7 @@
 from collections import defaultdict
-from dataclasses import dataclass
 from pathlib import Path
+
+from dataclasses import dataclass
 
 from ravenpy.config.commands import HRU, LU, BasinIndexCommand, HRUState, Sub
 from ravenpy.models.base import Ostrich, Raven
@@ -56,6 +57,7 @@ class GR4JCN(Raven):
         super().__init__(*args, **kwds)
 
         self.config.update(
+            identifier="gr4jcn",
             hrus=(GR4JCN.LandHRU(),),
             subbasins=(
                 Sub(
@@ -274,6 +276,7 @@ class GR4JCN_OST(Ostrich, GR4JCN):
         super().__init__(*args, **kwds)
 
         self.config.update(
+            identifier="gr4jcn-ost",
             algorithm="DDS",
             max_iterations=50,
             lowerBounds=GR4JCN.Params(),

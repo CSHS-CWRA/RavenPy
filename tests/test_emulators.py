@@ -85,9 +85,6 @@ salmon_land_hru_2 = dict(
 class TestGR4JCN:
     def test_identifier(self):
         assert GR4JCN().config.identifier == "gr4jcn"
-        assert GR4JCN(identifier="toto").config.identifier == "toto"
-        assert Raven().config.identifier == "raven"
-        assert Raven(identifier="toto").config.identifier == "toto"
 
     def test_simple(self):
         model = GR4JCN()  # "/tmp/ravenpy_debug/test_simple")
@@ -103,9 +100,13 @@ class TestGR4JCN:
         )
 
         total_area_in_m2 = model.config.rvh.hrus[0].area * 1000 * 1000
-        model.rvp.avg_annual_runoff = get_average_annual_runoff(TS, total_area_in_m2)
+        model.config.rvp.avg_annual_runoff = get_average_annual_runoff(
+            TS, total_area_in_m2
+        )
 
-        np.testing.assert_almost_equal(model.rvp.avg_annual_runoff, 208.4805694844741)
+        np.testing.assert_almost_equal(
+            model.config.rvp.avg_annual_runoff, 208.4805694844741
+        )
 
         assert model.config.rvi.suppress_output == ""
 
@@ -682,7 +683,7 @@ class TestGR4JCN:
         assert len(z.filelist) == 10
 
     @pytest.mark.online
-    def test_dap(self):
+    def _test_dap(self):
         """Test Raven with DAP link instead of local netCDF file."""
         model = GR4JCN()
         config = dict(
@@ -691,7 +692,7 @@ class TestGR4JCN:
             run_name="test",
             name="Salmon",
             hrus=(GR4JCN.LandHRU(**salmon_land_hru_1),),
-            params=model.params(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
+            params=model.Params(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
         )
 
         ts = (
@@ -702,11 +703,15 @@ class TestGR4JCN:
 
 class TestGR4JCN_OST:
     def test_simple(self):
-        model = GR4JCN_OST()  # "/tmp/ravenpy_debug/test_gr4j_ost")
+        model = GR4JCN_OST()
         model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
         params = (0.529, -3.396, 407.29, 1.072, 16.9, 0.053)
         low = (0.01, -15.0, 10.0, 0.0, 1.0, 0.0)
         high = (2.5, 10.0, 700.0, 7.0, 30.0, 1.0)
+
+        model.configure(
+            get_local_testdata("ostrich-gr4j-cemaneige/OstRandomNumbers.txt")
+        )
 
         model(
             TS,
@@ -816,7 +821,12 @@ class TestHMETS:
 
 class TestHMETS_OST:
     def test_simple(self):
-        model = HMETS_OST()  # "/tmp/ravenpy_debug/test_hmets_ost")
+        model = HMETS_OST()
+
+        model.configure(
+            get_local_testdata("ostrich-gr4j-cemaneige/OstRandomNumbers.txt")
+        )
+
         params = (
             9.5019,
             0.2774,
@@ -1029,6 +1039,11 @@ class TestMOHYSE:
 class TestMOHYSE_OST:
     def test_simple(self):
         model = MOHYSE_OST()
+
+        model.configure(
+            get_local_testdata("ostrich-gr4j-cemaneige/OstRandomNumbers.txt")
+        )
+
         params = (
             1.0,
             0.0468,
@@ -1219,7 +1234,12 @@ class TestHBVEC:
 
 class TestHBVEC_OST:
     def test_simple(self):
-        model = HBVEC_OST()  # "/tmp/ravenpy_debug/test_hbvec_ost")
+        model = HBVEC_OST()
+
+        model.configure(
+            get_local_testdata("ostrich-gr4j-cemaneige/OstRandomNumbers.txt")
+        )
+
         params = (
             0.05984519,
             4.072232,

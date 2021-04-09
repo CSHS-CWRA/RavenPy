@@ -48,7 +48,9 @@ class TestRouting:
         # Model #
         #########
 
-        model = Raven(identifier="raven-lievre-routing")
+        model = Raven()
+
+        model.config.identifier = "raven-lievre-routing"
 
         #######
         # RVI #

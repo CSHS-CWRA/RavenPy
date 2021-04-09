@@ -1,5 +1,6 @@
-from dataclasses import dataclass
 from pathlib import Path
+
+from dataclasses import dataclass
 
 from ravenpy.config.commands import HRU, LU, BasinIndexCommand, HRUState, Sub
 from ravenpy.models.base import Ostrich, Raven
@@ -52,6 +53,7 @@ class HMETS(Raven):
         super().__init__(*args, **kwds)
 
         self.config.update(
+            identifier="hmets",
             hrus=(HMETS.ForestHRU(),),
             subbasins=(
                 Sub(
@@ -254,6 +256,7 @@ class HMETS_OST(Ostrich, HMETS):
         super().__init__(*args, **kwds)
 
         self.config.update(
+            identifier="hmets-ost",
             algorithm="DDS",
             max_iterations=50,
             lowerBounds=HMETS.Params(),

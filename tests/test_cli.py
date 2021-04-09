@@ -287,8 +287,6 @@ class TestAggregateForcingsToHRUs:
         #                                    # = 0.2/(0.2+0.1)*9 + 0.1/(0.2+0.1)*6
         assert abs(val[3, 2] - 4.9) < 1e-04  # = 0.2*2 + 0.1*3 + 0.7*6
 
-        print("val[2, 3] = ", val[2, 3].data)
-
         # aggregated time series for HRU #4
         # HRU #3 = [ 40% cell 3 ; 60% cell 4 ]
         # (cell3 is NODATA at 3rd time step; cell 4 is NODATA for each time step)

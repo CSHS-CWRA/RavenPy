@@ -86,7 +86,7 @@ class TestBLENDED:
 
 class TestBLENDED_OST:
     def test_simple(self):
-        model = BLENDED_OST()
+        model = BLENDED_OST()  # "/tmp/ravenpy_debug/test_blended_ost")
         params = (
             2.930702e-02,  # par_x01
             2.211166e00,  # par_x02
@@ -221,6 +221,10 @@ class TestBLENDED_OST:
             1.0,  # par_r06
             1.0,  # par_r07
             1.0,  # par_r08
+        )
+
+        model.configure(
+            get_local_testdata("ostrich-gr4j-cemaneige/OstRandomNumbers.txt")
         )
 
         model(

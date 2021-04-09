@@ -1,6 +1,7 @@
 from collections import defaultdict
-from dataclasses import dataclass
 from pathlib import Path
+
+from dataclasses import dataclass
 
 from ravenpy.config.commands import HRU, LU, BasinIndexCommand, HRUState, Sub
 from ravenpy.models.base import Ostrich, Raven
@@ -79,6 +80,7 @@ class BLENDED(Raven):
         super().__init__(*args, **kwds)
 
         self.config.update(
+            identifier="blended",
             hrus=(BLENDED.ForestHRU(),),
             subbasins=(
                 Sub(
@@ -363,6 +365,7 @@ class BLENDED_OST(Ostrich, BLENDED):
         super().__init__(*args, **kwds)
 
         self.config.update(
+            identifier="blended-ost",
             algorithm="DDS",
             max_iterations=50,
             lowerBounds=BLENDED.Params(),

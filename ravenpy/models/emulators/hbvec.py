@@ -1,8 +1,8 @@
 from collections import defaultdict
-from dataclasses import dataclass
 from pathlib import Path
 
 import xarray as xr
+from dataclasses import dataclass
 
 from ravenpy.config.commands import HRU, LU, BasinIndexCommand, HRUState, Sub
 from ravenpy.models.base import Ostrich, Raven
@@ -44,6 +44,7 @@ class HBVEC(Raven):
         super().__init__(*args, **kwds)
 
         self.config.update(
+            identifier="hbvec",
             hrus=(GR4JCN.LandHRU(),),
             subbasins=(
                 Sub(
@@ -314,6 +315,7 @@ class HBVEC_OST(Ostrich, HBVEC):
         super().__init__(*args, **kwds)
 
         self.config.update(
+            identifier="hbvec-ost",
             algorithm="DDS",
             max_iterations=50,
             lowerBounds=HBVEC.Params(),

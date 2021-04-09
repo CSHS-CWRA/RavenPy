@@ -47,11 +47,22 @@ class RavenMultiModel(Raven):
             m.resume(solution)
 
     @property
-    def rvs(self):
+    def _rv_paths(self):
         out = []
         for m in self._models:
-            out.extend(m.rvs)
+            out.extend(m._rv_paths)
         return out
+
+    @_rv_paths.setter
+    def _rv_paths(self, value):
+        pass
+
+    # @property
+    # def rvs(self):
+    #     out = []
+    #     for m in self._models:
+    #         out.extend(m._rv_paths)
+    #     return out
 
     def run(self, ts, overwrite=False, **kwds):
         """Run model.

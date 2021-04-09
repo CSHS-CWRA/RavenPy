@@ -1,7 +1,6 @@
 import collections
 import datetime as dt
 from abc import ABC, abstractmethod
-from dataclasses import is_dataclass, replace
 from pathlib import Path
 from textwrap import dedent
 from typing import Tuple
@@ -10,6 +9,7 @@ import cf_xarray
 import cftime
 import numpy as np
 import xarray as xr
+from dataclasses import is_dataclass, replace
 
 from ravenpy.config.commands import (
     AvgAnnualRunoffCommand,
@@ -44,6 +44,8 @@ class RV(ABC):
         self._config = config
         # TODO: find something better than this!
         self.is_ostrich_tmpl = False
+        # There's probably a much better way than this also!
+        self.content = None
 
     def update(self, key, value):
         if hasattr(self, key):
@@ -287,7 +289,7 @@ class RVI(RV):
     tmpl = """
     """
 
-    rain_snow_fraction_options = (
+    RAIN_SNOW_FRACTION_OPTIONS = (
         "RAINSNOW_DATA",
         "RAINSNOW_DINGMAN",
         "RAINSNOW_UBC",
@@ -296,7 +298,7 @@ class RVI(RV):
         "RAINSNOW_HSPF",
     )
 
-    evaporation_options = (
+    EVAPORATION_OPTIONS = (
         "PET_CONSTANT",
         "PET_PENMAN_MONTEITH",
         "PET_PENMAN_COMBINATION",
@@ -313,7 +315,7 @@ class RVI(RV):
         "PET_OUDIN",
     )
 
-    calendar_options = (
+    CALENDAR_OPTIONS = (
         "PROLEPTIC_GREGORIAN",
         "JULIAN",
         "GREGORIAN",
@@ -472,11 +474,11 @@ class RVI(RV):
         """
         v = value.upper()
 
-        if v in RVI.rain_snow_fraction_options:
+        if v in RVI.RAIN_SNOW_FRACTION_OPTIONS:
             self._rain_snow_fraction = v
         else:
             raise ValueError(
-                f"Value should be one of {RVI.rain_snow_fraction_options}."
+                f"Value should be one of {RVI.RAIN_SNOW_FRACTION_OPTIONS}."
             )
 
     @property
@@ -487,10 +489,10 @@ class RVI(RV):
     @evaporation.setter
     def evaporation(self, value):
         v = value.upper()
-        if v in RVI.evaporation_options:
+        if v in RVI.EVAPORATION_OPTIONS:
             self._evaporation = v
         else:
-            raise ValueError(f"Value {v} should be one of {RVI.evaporation_options}.")
+            raise ValueError(f"Value {v} should be one of {RVI.EVAPORATION_OPTIONS}.")
 
     @property
     def ow_evaporation(self):
@@ -500,10 +502,10 @@ class RVI(RV):
     @ow_evaporation.setter
     def ow_evaporation(self, value):
         v = value.upper()
-        if v in RVI.evaporation_options:
+        if v in RVI.EVAPORATION_OPTIONS:
             self._ow_evaporation = v
         else:
-            raise ValueError(f"Value {v} should be one of {RVI.evaporation_options}.")
+            raise ValueError(f"Value {v} should be one of {RVI.EVAPORATION_OPTIONS}.")
 
     @property
     def calendar(self):
@@ -512,10 +514,10 @@ class RVI(RV):
 
     @calendar.setter
     def calendar(self, value):
-        if value.upper() in RVI.calendar_options:
+        if value.upper() in RVI.CALENDAR_OPTIONS:
             self._calendar = value
         else:
-            raise ValueError(f"Value should be one of {RVI.calendar_options}.")
+            raise ValueError(f"Value should be one of {RVI.CALENDAR_OPTIONS}.")
 
     def _dt2cf(self, date):
         """Convert datetime to cftime datetime."""
@@ -794,7 +796,7 @@ class Ost(RV):
     tmpl = """
     """
 
-    def __init__(self, config, identifier=None):
+    def __init__(self, config):
         super().__init__(config)
 
         self._max_iterations = None
@@ -802,9 +804,8 @@ class Ost(RV):
         self.lowerBounds = None
         self.upperBounds = None
         self.algorithm = None
-
-        # TODO: find something better than this
-        self.identifier = identifier
+        # If there's an OstRandomNumbers.txt file this is its path
+        self.random_numbers_path = None
 
     @property
     def max_iterations(self):
@@ -830,6 +831,10 @@ class Ost(RV):
         else:
             self._random_seed = None
 
+    @property
+    def identifier(self):
+        return self._config.identifier
+
     def to_rv(self):
         # Get those from RVI (there's probably a better way to do this!)
         self.run_name = self._config.rvi.run_name
@@ -852,14 +857,14 @@ class Ost(RV):
 
 
 class Config:
-    def __init__(self, identifier, **kwargs):
+    def __init__(self, **kwargs):
         self.rvc = RVC(self)
         self.rvh = RVH(self)
         self.rvi = RVI(self)
         self.rvp = RVP(self)
         self.rvt = RVT(self)
-        self.ost = Ost(self, identifier=identifier)
-        self.identifier = identifier
+        self.ost = Ost(self)
+        self.identifier = None
         self.update(**kwargs)
 
     def update(self, key=None, value=None, **kwargs):
@@ -875,8 +880,32 @@ class Config:
                     f"No field named `{key}` found in any RV* conf class"
                 )
 
+        identifier = kwargs.pop("identifier", None)
+        if identifier:
+            self.identifier = identifier
+
         if key is None and value is None:
             for k, v in kwargs.items():
                 _update_single(k, v)
         else:
             _update_single(key, value)
+
+    def set_rv_file(self, fn):
+        fn = Path(fn)
+        if fn.name == "OstRandomNumbers.txt":
+            self.ost.random_numbers_path = fn
+        else:
+            rvx = fn.suffixes[0][1:]  # get first suffix: eg.g. .rvt[.tpl]
+            rvo = getattr(self, rvx, None) or self.ost
+            rvo.content = fn.read_text()
+            rvo.is_ostrich_tmpl = fn.suffixes[-1] == ".tpl"
+            if not self.identifier:
+                # Get the "true" stem if there are more than one suffixes
+                identifier = fn
+                while identifier.suffixes:
+                    identifier = Path(identifier.stem)
+                self.identifier = identifier.as_posix()
+            # This is a sorry hack: I want to have rvi.run_name have a default of "run"
+            # because I don't want to burden the user with setting it.. but the problem
+            # is that externally supplied rv files might not have it (to be discussed)
+            self.rvi.run_name = None
