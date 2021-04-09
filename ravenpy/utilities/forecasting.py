@@ -148,7 +148,7 @@ def perform_climatology_esp(
     kwds["end_date"] = forecast_date - dt.timedelta(days=1)
 
     # Get RVC file if it exists, else compute it.
-    if len(kwds["rvc"]) > 0:
+    if "rvc" in kwds and len(kwds["rvc"]) > 0:
         rvc = kwds.pop("rvc")
     else:
         # Run model to get rvc file after warm-up using base meteo
