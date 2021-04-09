@@ -104,7 +104,7 @@ class Raven:
         self.rvi = RV()
         self.rvp = RV()
         self.rvc = RV()
-        self.rvt = RVT()
+        self.rvt = RV()
         self.rvh = RV()
         self.rvd = RV()  # rvd is for derived parameters
 
@@ -461,13 +461,14 @@ class Raven:
                     self.assign(key, val[self.psim])
 
             # Forcing commands
-            self.rvt.update(
-                ncdata.extract(
-                    rvh=self.rvh,
-                    rvt=self.rvt,
-                    nc_index=pdict["nc_index"][self.psim],
+            if isinstance(self.rvt, RVT):
+                self.rvt.update(
+                    ncdata.extract(
+                        rvh=self.rvh,
+                        rvt=self.rvt,
+                        nc_index=pdict["nc_index"][self.psim],
+                    )
                 )
-            )
 
             cmd = self.setup_model_run(tuple(map(Path, ts)))
 

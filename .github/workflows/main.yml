@@ -70,4 +70,4 @@ jobs:
           source activate ravenpy-env
           pip install -e ".[dev]"
           git clone https://github.com/Ouranosinc/raven-testdata $GITHUB_WORKSPACE/raven-testdata
-          env RAVENPY_TESTDATA_PATH=$GITHUB_WORKSPACE/raven-testdata pytest --cov --color=yes ravenpy
+          env RAVENPY_TESTDATA_PATH=$GITHUB_WORKSPACE/raven-testdata pytest --cov ravenpy
