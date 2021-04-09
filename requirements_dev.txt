@@ -17,3 +17,5 @@ pytest-cov
 black
 isort
 pre-commit
+holoviews
+hvplot

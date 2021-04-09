@@ -121,11 +121,11 @@ class HRUsCommand(RavenConfig):
         latitude: float = 0
         longitude: float = 0
         subbasin_id: int = 1
-        land_use_class: str = "LU_ALL"
-        veg_class: str = "VEG_ALL"
-        soil_profile: str = "DEFAULT_P"
-        aquifer_profile: str = "[NONE]"
-        terrain_class: str = "[NONE]"
+        land_use_class: str = ""
+        veg_class: str = ""
+        soil_profile: str = ""
+        aquifer_profile: str = ""
+        terrain_class: str = ""
         slope: float = 0.0
         aspect: float = 0.0
         # This can be used instead of sub-typing in serialization contexts

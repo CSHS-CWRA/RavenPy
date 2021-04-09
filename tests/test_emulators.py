@@ -2,12 +2,12 @@ import datetime as dt
 import os
 import tempfile
 import zipfile
-from dataclasses import replace
 from pathlib import Path
 
 import numpy as np
 import pytest
 import xarray as xr
+from dataclasses import replace
 
 from ravenpy.models import (
     GR4JCN,
@@ -43,6 +43,9 @@ from .common import _convert_2d
 TS = get_local_testdata(
     "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
 )
+
+# Link to THREDDS Data Server netCDF testdata
+TDS = "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/birdhouse/testdata/raven"
 
 
 @pytest.fixture
@@ -88,7 +91,6 @@ class TestGR4JCN:
         model.rvi.end_date = dt.datetime(2002, 1, 1)
         model.rvi.run_name = "test"
 
-        model.rvh.name = "Salmon"
         model.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
 
         model.rvp.params = model.params(0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
@@ -187,7 +189,6 @@ class TestGR4JCN:
         # station (see :ObservationData in RVT). We will compare these observations
         # with the simulated streamflow. That is the reason why "gauged=True" for
         # the second basin.
-        model.rvh.name = "Salmon"
 
         # HRU IDs are 1 to 3
         model.rvh.hrus = (
@@ -384,7 +385,23 @@ class TestGR4JCN:
     def test_run(self):
         model = GR4JCN()
 
-        model.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
+        model(
+            TS,
+            area=4250.6,
+            elevation=843.0,
+            latitude=54.4848,
+            longitude=-123.3659,
+            start_date=dt.datetime(2000, 1, 1),
+            end_date=dt.datetime(2002, 1, 1),
+            params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
+            suppress_output=False,
+        )
+        d = model.diagnostics
+
+        np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.117301, 4)
+
+    def test_run_new_hrus_param(self):
+        model = GR4JCN()
 
         model(
             TS,
@@ -392,6 +409,7 @@ class TestGR4JCN:
             end_date=dt.datetime(2002, 1, 1),
             params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
             suppress_output=False,
+            hrus=(GR4JCN.LandHRU(**salmon_land_hru_1),),
         )
         d = model.diagnostics
 
@@ -584,10 +602,10 @@ class TestGR4JCN:
 
     def test_version(self):
         model = Raven()
-        assert model.version == "3.0.1"
+        assert model.version == "3.0.4"
 
         model = GR4JCN()
-        assert model.version == "3.0.1"
+        assert model.version == "3.0.4"
 
     def test_parallel_params(self):
         model = GR4JCN()
@@ -631,6 +649,24 @@ class TestGR4JCN:
         )
         z = zipfile.ZipFile(model.outputs["rv_config"])
         assert len(z.filelist) == 10
+
+    @pytest.mark.online
+    def test_dap(self):
+        """Test Raven with DAP link instead of local netCDF file."""
+        model = GR4JCN()
+        config = dict(
+            start_date=dt.datetime(2000, 1, 1),
+            end_date=dt.datetime(2002, 1, 1),
+            run_name="test",
+            name="Salmon",
+            hrus=(GR4JCN.LandHRU(**salmon_land_hru_1),),
+            params=model.params(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
+        )
+
+        ts = (
+            f"{TDS}/raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
+        )
+        model(ts, **config)
 
 
 class TestGR4JCN_OST:

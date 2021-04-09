@@ -308,16 +308,19 @@ def ts_graphs(file, trend=True, alpha=0.05):
 def ts_fit_graph(ts, params):
     """Create graphic showing an histogram of the data and the distribution fitted to it.
 
+    The graphic contains one panel per watershed.
+
     Parameters
     ----------
-    ts : str
-      Path to netCDF file storing the time series.
-    params : str
-      Path to netCDF file storing the distribution parameters.
+    ts : xr.DataArray
+      Stream flow time series with dimensions (time, nbasins).
+    params : xr.DataArray
+      Fitted distribution parameters returned by `xclim.land.fit` indicator.
 
     Returns
     -------
     fig
+      Figure showing a histogram and the parameterized pdf.
     """
     from xclim.indices.stats import get_dist
 
@@ -330,17 +333,18 @@ def ts_fit_graph(ts, params):
         ax = axes.flat[i]
         ax2 = plt.twinx(ax)
         p = params.isel(nbasins=i)
+        t = ts.isel(nbasins=i).dropna(dim="time")
 
         # Plot histogram of time series as density then as a normal count.
         density, bins, patches = ax.hist(
-            ts.isel(nbasins=i).dropna(dim="time"),
+            t,
             alpha=0.5,
             density=True,
             bins="auto",
             label="__nolabel__",
         )
         ax2.hist(
-            ts.isel(nbasins=i).dropna(dim="time"),
+            t,
             bins=bins,
             facecolor=(1, 1, 1, 0.01),
             edgecolor="gray",
@@ -353,6 +357,7 @@ def ts_fit_graph(ts, params):
         mx = dc.ppf(0.99)
         q = np.linspace(mn, mx, 200)
         pdf = dc.pdf(q)
+
         ps = ", ".join(["{:.1f}".format(x) for x in p.values])
         ax.plot(q, pdf, "-", label="{}({})".format(params.attrs["scipy_dist"], ps))
 

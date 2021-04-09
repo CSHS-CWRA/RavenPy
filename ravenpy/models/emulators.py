@@ -1,11 +1,11 @@
 from collections import defaultdict, namedtuple
-from dataclasses import dataclass
 from pathlib import Path
 
 import xarray as xr
+from dataclasses import dataclass
 
 from .base import Ostrich, Raven
-from .commands import BasinIndexCommand, MonthlyAverageCommand, StationForcingCommand
+from .commands import BasinIndexCommand, MonthlyAverageCommand
 from .rv import HRU, LU, RV, RVC, RVH, RVI, RVP, RVT, HRUState, Ost, Sub
 
 __all__ = [
@@ -138,6 +138,24 @@ class GR4JCN(Raven):
             ]
         )
 
+    def run(self, ts, overwrite=False, **kwds):
+        """
+        This is a hook into `Raven.run` for this particular subclass, which
+        allows the support of legacy HRU-related keywords in the model.__call__
+        interface.
+        """
+        hru_attrs = {}
+        for k in ["area", "latitude", "longitude", "elevation"]:
+            v = kwds.pop(k, None)
+            if v:
+                # It seems that `v` is a list when running via a WPS interface
+                hru_attrs[k] = v[0] if isinstance(v, list) else v
+        if hru_attrs:
+            assert isinstance(self.rvh, RVH)
+            self.rvh.hrus = (GR4JCN.LandHRU(**hru_attrs),)
+
+        return super().run(ts, overwrite=overwrite, **kwds)
+
 
 class GR4JCN_OST(Ostrich, GR4JCN):
     _p = Path(__file__).parent / "ostrich-gr4j-cemaneige"
@@ -155,7 +173,7 @@ class GR4JCN_OST(Ostrich, GR4JCN):
 
     def derived_parameters(self):
         """Derived parameters are computed by Ostrich."""
-        GR4JCN.derived_parameters(self)
+        pass
 
 
 class MOHYSE(Raven):
@@ -207,7 +225,7 @@ class MOHYSE_OST(Ostrich, MOHYSE):
         pass
 
 
-class HMETS(GR4JCN):
+class HMETS(Raven):
     identifier = "hmets"
     templates = tuple((Path(__file__).parent / "raven-hmets").glob("*.rv?"))
 
@@ -242,6 +260,9 @@ class HMETS(GR4JCN):
         super().__init__(*args, **kwds)
         self.rvp = RV(params=HMETS.params(*((None,) * len(HMETS.params._fields))))
         self.rvt = RVT()
+        self.rvh = RV(
+            name=None, area=None, elevation=None, latitude=None, longitude=None
+        )
         self.rvi = RVI(evaporation="PET_OUDIN", rain_snow_fraction="RAINSNOW_DATA")
         self.rvc = RVC(soil0=None, soil1=None, basin_state=BasinIndexCommand())
         self.rvd = RV(
@@ -361,7 +382,7 @@ class HMETS_OST(Ostrich, HMETS):
         return self.params(*out)
 
 
-class HBVEC(GR4JCN):
+class HBVEC(Raven):
     identifier = "hbvec"
     templates = tuple((Path(__file__).parent / "raven-hbv-ec").glob("*.rv?"))
 

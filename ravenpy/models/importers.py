@@ -775,13 +775,13 @@ class RoutingProductGridWeightImporter:
 
 class NcDataImporter:
     def __init__(self, fns):
-        self.fns = map(Path, fns)
+        self.fns = fns
         self.attrs = {}
         self._extract_nc_attrs(self.fns)
 
     def _extract_nc_attrs(self, fns):
         for fn in fns:
-            if ".nc" in fn.suffix:
+            if Path(fn).suffix.startswith(".nc"):
                 with xr.open_dataset(fn) as ds:
                     # Check if any alternate variable name is in the file.
                     for var, alt_names in rv.alternate_nc_names.items():

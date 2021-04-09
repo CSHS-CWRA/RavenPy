@@ -33,6 +33,7 @@ from .commands import (
 from .importers import NcDataImporter
 from .rv import (
     RV,
+    RVH,
     RVI,
     RVT,
     Ost,
@@ -103,7 +104,7 @@ class Raven:
         self.rvi = RV()
         self.rvp = RV()
         self.rvc = RV()
-        self.rvt = RVT()
+        self.rvt = RV()
         self.rvh = RV()
         self.rvd = RV()  # rvd is for derived parameters
 
@@ -386,17 +387,6 @@ class Raven:
         if isinstance(ts, (str, Path)):
             ts = [ts]
 
-        # This is a temporary mechanism to support the legacy HRU keywords for
-        # `model.__call__`
-        hru_attrs = {}
-        for k in ["area", "latitude", "longitude", "elevation"]:
-            v = kwds.pop(k, None)
-            if v:
-                # It seems that `v` is a list when running via a WPS interface
-                hru_attrs[k] = v[0] if isinstance(v, list) else v
-        if hru_attrs:
-            self.rvh.hrus = (HRUsCommand.Record(**hru_attrs),)
-
         # Case for potentially parallel parameters
         pdict = {}
         for p in self._parallel_parameters:
@@ -435,6 +425,11 @@ class Raven:
             if len(val) == 1:
                 pdict[key] = val.repeat(nloops, axis=0)
 
+        # Use rvc file to set model state, if any
+        rvc = kwds.pop("rvc", None)
+        if rvc:
+            self.resume(solution=rvc)
+
         # Update non-parallel parameter objects
         for key, val in kwds.items():
 
@@ -466,13 +461,14 @@ class Raven:
                     self.assign(key, val[self.psim])
 
             # Forcing commands
-            self.rvt.update(
-                ncdata.extract(
-                    rvh=self.rvh,
-                    rvt=self.rvt,
-                    nc_index=pdict["nc_index"][self.psim],
+            if isinstance(self.rvt, RVT):
+                self.rvt.update(
+                    ncdata.extract(
+                        rvh=self.rvh,
+                        rvt=self.rvt,
+                        nc_index=pdict["nc_index"][self.psim],
+                    )
                 )
-            )
 
             cmd = self.setup_model_run(tuple(map(Path, ts)))
 

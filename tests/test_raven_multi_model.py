@@ -12,11 +12,6 @@ class TestRavenMultiModel:
         )
         model = RavenMultiModel(models=["gr4jcn", "hmets"])
         gr4jcn = (0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
-        hrus = (
-            GR4JCN.LandHRU(
-                area=4250.6, elevation=843.0, latitude=54.4848, longitude=-123.3659
-            ),
-        )
         hmets = (
             9.5019,
             0.2774,
@@ -45,9 +40,6 @@ class TestRavenMultiModel:
             ts,
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2002, 1, 1),
-            # The GR4JCN model can use the newer `hrus` interface because it supports routing
-            hrus=hrus,  # <-- use
-            # Since the HMETS does not (yet!) support routing, these next 4 params are still needed
             area=4250.6,
             elevation=843.0,
             latitude=54.4848,

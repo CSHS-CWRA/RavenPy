@@ -147,12 +147,12 @@ def perform_climatology_esp(
     # So forecasts warm-up will be from day 1 in the dataset to the forecast date.
     kwds["end_date"] = forecast_date - dt.timedelta(days=1)
 
-     # Get RVC file if it exists, else compute it.
-    if len(kwds['rvc']) > 0:
-       rvc=kwds.pop('rvc')
+    # Get RVC file if it exists, else compute it.
+    if len(kwds["rvc"]) > 0:
+        rvc = kwds.pop("rvc")
     else:
-       # Run model to get rvc file after warm-up using base meteo
-       rvc = get_raven_states(model_name, workdir=workdir, **kwds)
+        # Run model to get rvc file after warm-up using base meteo
+        rvc = get_raven_states(model_name, workdir=workdir, **kwds)
 
     # We need to check which years are long enough (ex: wrapping years, 365-day forecast starting in
     # September 2015 will need data up to August 2016 at least)
@@ -453,10 +453,10 @@ def make_ESP_hindcast_dataset(
         )
 
         # Concatenate in the 'init' dimension.
-        qsims=xr.concat([qsims,qsims_tmp],dim="init")
-    
-    qsims['lead']=list(range(1,forecast_duration+1))
-    
+        qsims = xr.concat([qsims, qsims_tmp], dim="init")
+
+    qsims["lead"] = list(range(1, forecast_duration + 1))
+
     # Make the list of hindcast dates for populating the 'init' dimension coordinates.
     date_list = [
         forecast_date.replace(year=included_years[x])
