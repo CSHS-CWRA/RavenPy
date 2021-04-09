@@ -2,6 +2,23 @@
 History
 =======
 
+0.4.0
+-----
+
+This is an interim version making one step toward semi-distributed
+modeling support. Model configuration is still in flux and will be
+significantly modified with 0.5. The major change in this version is
+that model configuration supports passing multiple HRU objects,
+instead of simply passing area, latitude, longitude and elevation for
+a single HRU.
+
+* GR4JCN emulator now supports routing mode.
+* Add BLENDED model emulator.
+* DAP links for forcing files are now supported.
+* Added support for `tox`-based localized installation and testing with python-pip.
+* Now supporting Python 3.7, 3.8, and 3.9.
+* Build testing for `pip` and `conda`-based builds with GitHub CI.
+
 0.3.1
 -----
 

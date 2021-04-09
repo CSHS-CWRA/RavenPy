@@ -15,12 +15,12 @@ import stat
 import subprocess
 import tempfile
 from collections import OrderedDict
-from dataclasses import astuple, fields, replace
 from pathlib import Path
 from typing import Union
 
 import numpy as np
 import xarray as xr
+from dataclasses import astuple, fields, replace
 
 import ravenpy
 from ravenpy.config.commands import (
@@ -779,7 +779,7 @@ class Ostrich(Raven):
         super()._dump_rv()
 
         # OST
-        with open(self.exec_path / f"ostIn.txt", "w") as f:
+        with open(self.exec_path / "ostIn.txt", "w") as f:
             f.write(self.config.ost.to_rv())
 
         # Not sure about this
