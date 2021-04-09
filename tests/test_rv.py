@@ -9,6 +9,7 @@ import ravenpy
 from ravenpy.models.commands import (
     BaseValueCommand,
     GriddedForcingCommand,
+    MonthlyAverageCommand,
     RainCorrection,
 )
 from ravenpy.models.rv import RV, RVC, RVH, RVI, RVP, Ost, RVFile, isinstance_namedtuple

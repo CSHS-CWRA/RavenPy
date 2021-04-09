@@ -1,7 +1,6 @@
 import collections
 import datetime as dt
 from collections import namedtuple
-from dataclasses import dataclass, replace
 from pathlib import Path
 from textwrap import dedent
 from typing import Dict, List, Tuple
@@ -9,6 +8,7 @@ from typing import Dict, List, Tuple
 import cftime
 import six
 import xarray as xr
+from dataclasses import dataclass, replace
 from xclim.core.units import units2pint
 
 from .commands import (
