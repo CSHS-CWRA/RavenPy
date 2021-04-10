@@ -87,7 +87,7 @@ class TestGR4JCN:
         assert GR4JCN().config.identifier == "gr4jcn"
 
     def test_simple(self):
-        model = GR4JCN()  # "/tmp/ravenpy_debug/test_simple")
+        model = GR4JCN()
 
         model.config.rvi.start_date = dt.datetime(2000, 1, 1)
         model.config.rvi.end_date = dt.datetime(2002, 1, 1)
@@ -167,7 +167,7 @@ class TestGR4JCN:
 
     def test_routing(self):
         """We need at least 2 subbasins to activate routing."""
-        model = GR4JCN()  # "/tmp/ravenpy_debug/new_config_routing")
+        model = GR4JCN()
 
         ts_2d = get_local_testdata(
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_2d.nc"
@@ -408,7 +408,7 @@ class TestGR4JCN:
             model.config.update("why", "not?")
 
     def test_run(self):
-        model = GR4JCN()  # "/tmp/ravenpy_debug/test_run")
+        model = GR4JCN()
 
         model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
 
@@ -661,7 +661,7 @@ class TestGR4JCN:
 
     def test_parallel_basins(self, input2d):
         ts = input2d
-        model = GR4JCN()  # "/tmp/ravenpy_debug/test_parallel_basins")
+        model = GR4JCN()
         model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
 
         model(
@@ -1006,7 +1006,7 @@ class TestHMETS_OST:
 
 class TestMOHYSE:
     def test_simple(self):
-        model = MOHYSE("/tmp/ravenpy_debug/test_mohyse")
+        model = MOHYSE()
         params = (
             1.0,
             0.0468,

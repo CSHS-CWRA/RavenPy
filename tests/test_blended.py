@@ -86,7 +86,7 @@ class TestBLENDED:
 
 class TestBLENDED_OST:
     def test_simple(self):
-        model = BLENDED_OST()  # "/tmp/ravenpy_debug/test_blended_ost")
+        model = BLENDED_OST()
         params = (
             2.930702e-02,  # par_x01
             2.211166e00,  # par_x02

@@ -124,8 +124,8 @@ class RoutingProductShapefileImporter:
 
         return dict(
             subbasins=subbasin_recs,
-            land_subbasins=land_sb_ids,
-            lake_subbasins=lake_sb_ids,
+            land_subbasin_ids=land_sb_ids,
+            lake_subbasin_ids=lake_sb_ids,
             reservoirs=reservoir_cmds,
             channel_profiles=channel_profile_cmds,
             hrus=hru_recs,
