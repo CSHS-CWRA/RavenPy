@@ -28,6 +28,7 @@ requirements = [
     "netCDF4",
     "numpy",
     "pandas",
+    "pydantic",
     "requests",
     "scipy",
     "statsmodels",

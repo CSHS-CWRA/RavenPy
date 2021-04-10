@@ -1,52 +1,30 @@
 import itertools
 import re
-from dataclasses import asdict, dataclass, field
+from abc import ABC, abstractmethod
+from pathlib import Path
 from textwrap import dedent
 from typing import Any, Dict, Optional, Tuple, Union
+
+from dataclasses import asdict, field
+from pydantic.dataclasses import dataclass
 
 INDENT = " " * 4
 VALUE_PADDING = 10
 
 
-class RavenConfig:
+class RavenCommand(ABC):
     def __str__(self):
         return self.to_rv()
 
-
-@dataclass
-class BaseValueCommand(RavenConfig):
-    """BaseValueCommand."""
-
-    value: Any = None
-    tag: str = ""
-
-    template = ":{tag} {value}"
-
-    # Overloading init to freeze the tag.
-    def __init__(self, value):
-        self.value = value
-
+    @abstractmethod
     def to_rv(self):
-        if self.value is None:
-            return ""
-        return self.template.format(**asdict(self))
+        pass
 
 
 @dataclass
-class BaseBooleanCommand(RavenConfig):
-    tag: str = ""
-    value: bool = False
-
-    template = ":{tag}"
-
-    def to_rv(self):
-        return self.template.format(tag=self.tag) if self.value else ""
-
-
-@dataclass
-class LinearTransform(RavenConfig):
-    scale: float = 1
-    offset: float = 0
+class LinearTransform(RavenCommand):
+    scale: Optional[float] = 1
+    offset: Optional[float] = 0
 
     template = ":LinearTransform {scale:.15f} {offset:.15f}"
 
@@ -57,9 +35,9 @@ class LinearTransform(RavenConfig):
 
 
 @dataclass
-class MonthlyAverageCommand(RavenConfig):
+class MonthlyAverageCommand(RavenCommand):
     var_name: str = ""
-    data: Tuple[float] = ()
+    data: Optional[Tuple[float, ...]] = ()
 
     template = ":MonthlyAve{var_name} {data}"
 
@@ -74,11 +52,11 @@ class MonthlyAverageCommand(RavenConfig):
 
 
 @dataclass
-class SubBasinsCommand(RavenConfig):
+class SubBasinsCommand(RavenCommand):
     """SubBasins command (RVH)."""
 
     @dataclass
-    class Record(RavenConfig):
+    class Record(RavenCommand):
         """Record to populate RVH :SubBasins command internal table."""
 
         subbasin_id: int = 0
@@ -94,7 +72,7 @@ class SubBasinsCommand(RavenConfig):
             d["gauged"] = int(d["gauged"])
             return " ".join(f"{v: <{VALUE_PADDING}}" for v in d.values())
 
-    subbasins: Tuple[Record] = ()
+    subbasins: Tuple[Record, ...] = ()
 
     template = """
     :SubBasins
@@ -114,11 +92,11 @@ Sub = SubBasinsCommand.Record
 
 
 @dataclass
-class HRUsCommand(RavenConfig):
+class HRUsCommand(RavenCommand):
     """HRUs command (RVH)."""
 
     @dataclass
-    class Record(RavenConfig):
+    class Record(RavenCommand):
         """Record to populate :HRUs command internal table (RVH)."""
 
         hru_id: int = 1
@@ -141,7 +119,7 @@ class HRUsCommand(RavenConfig):
             d = asdict(self)
             return " ".join(f"{v: <{VALUE_PADDING * 2}}" for v in d.values())
 
-    hrus: Tuple[Record] = ()
+    hrus: Tuple[Record, ...] = ()
 
     template = """
     :HRUs
@@ -161,7 +139,7 @@ HRU = HRUsCommand.Record
 
 
 @dataclass
-class ReservoirCommand(RavenConfig):
+class ReservoirCommand(RavenCommand):
     """Reservoir command (RVH)."""
 
     subbasin_id: int = 0
@@ -190,11 +168,11 @@ class ReservoirCommand(RavenConfig):
 
 
 @dataclass
-class SubBasinGroupCommand(RavenConfig):
+class SubBasinGroupCommand(RavenCommand):
     """SubBasinGroup command (RVH)."""
 
     name: str = ""
-    subbasin_ids: Tuple[int] = ()
+    subbasin_ids: Tuple[int, ...] = ()
 
     template = """
     :SubBasinGroup {name}
@@ -215,7 +193,7 @@ class SubBasinGroupCommand(RavenConfig):
 
 
 @dataclass
-class SBGroupPropertyMultiplierCommand(RavenConfig):
+class SBGroupPropertyMultiplierCommand(RavenCommand):
 
     group_name: str = ""
     parameter_name: str = ""
@@ -228,13 +206,13 @@ class SBGroupPropertyMultiplierCommand(RavenConfig):
 
 
 @dataclass
-class ChannelProfileCommand(RavenConfig):
+class ChannelProfileCommand(RavenCommand):
     """ChannelProfile command (RVP)."""
 
     name: str = "chn_XXX"
     bed_slope: float = 0
-    survey_points: Tuple[Tuple[float, float]] = ()
-    roughness_zones: Tuple[Tuple[float, float]] = ()
+    survey_points: Tuple[Tuple[float, float], ...] = ()
+    roughness_zones: Tuple[Tuple[float, float], ...] = ()
 
     template = """
     :ChannelProfile {name}
@@ -260,15 +238,15 @@ class ChannelProfileCommand(RavenConfig):
 
 
 @dataclass
-class BaseDataCommand(RavenConfig):
+class BaseDataCommand(RavenCommand):
     """Do not use directly. Subclass."""
 
     name: Optional[str] = ""
     units: Optional[str] = ""
     data_type: str = ""
-    file_name_nc: str = ""
+    file_name_nc: Path = ""
     var_name_nc: str = ""
-    dim_names_nc: Tuple[str] = ("time",)
+    dim_names_nc: Tuple[str, ...] = ("time",)
     time_shift: Optional[int] = None  # in days
     scale: Optional[float] = None
     offset: Optional[float] = None
@@ -327,18 +305,19 @@ class DataCommand(BaseDataCommand):
 
 
 @dataclass
-class GaugeCommand(RavenConfig):
-    data: Tuple[DataCommand] = ()
+class GaugeCommand(RavenCommand):
     latitude: float = 0
     longitude: float = 0
     elevation: float = 0
 
     # Accept strings to embed parameter names into Ostrich templates
-    rain_correction: Union[float, str] = 1
-    snow_correction: Union[float, str] = 1
+    rain_correction: Optional[Union[float, str]] = 1
+    snow_correction: Optional[Union[float, str]] = 1
 
-    monthly_ave_evaporation: Tuple[float] = ()
-    monthly_ave_temperature: Tuple[float] = ()
+    monthly_ave_evaporation: Optional[Tuple[float, ...]] = ()
+    monthly_ave_temperature: Optional[Tuple[float, ...]] = ()
+
+    data: Optional[Tuple[DataCommand, ...]] = ()
 
     template = """
     :Gauge
@@ -399,7 +378,7 @@ class ObservationDataCommand(DataCommand):
 
 
 @dataclass
-class GridWeightsCommand(RavenConfig):
+class GridWeightsCommand(RavenCommand):
     """GridWeights command.
 
     Important note: this command can be embedded in both a `GriddedForcingCommand`
@@ -411,7 +390,7 @@ class GridWeightsCommand(RavenConfig):
 
     number_hrus: int = 1
     number_grid_cells: int = 1
-    data: Tuple[Tuple[int, int, float]] = ((1, 0, 1.0),)
+    data: Tuple[Tuple[int, int, float], ...] = ((1, 0, 1.0),)
 
     template = """
     {indent}:GridWeights
@@ -499,11 +478,11 @@ class StationForcingCommand(BaseDataCommand):
 
 
 @dataclass
-class HRUStateVariableTableCommand(RavenConfig):
+class HRUStateVariableTableCommand(RavenCommand):
     """Initial condition for a given HRU."""
 
     @dataclass
-    class Record(RavenConfig):
+    class Record(RavenCommand):
         index: int = 1
         surface_water: float = 0
         atmosphere: float = 0
@@ -643,16 +622,16 @@ HRUState = HRUStateVariableTableCommand.Record
 
 
 @dataclass
-class BasinIndexCommand(RavenConfig):
+class BasinIndexCommand(RavenCommand):
     """Initial conditions for a flow segment."""
 
     index: int = 1
     name: str = "watershed"
     channelstorage: float = 0
     rivuletstorage: float = 0
-    qout: Tuple[float] = (1, 0, 0)
-    qin: Optional[Tuple[float]] = None
-    qlat: Optional[Tuple[float]] = None
+    qout: Tuple[float, ...] = (1, 0, 0)
+    qin: Optional[Tuple[float, ...]] = None
+    qlat: Optional[Tuple[float, ...]] = None
 
     template = """
     :BasinIndex {index} {name}
@@ -676,7 +655,7 @@ class BasinIndexCommand(RavenConfig):
 
 
 @dataclass
-class BasinStateVariablesCommand(RavenConfig):
+class BasinStateVariablesCommand(RavenCommand):
 
     basin_states: Dict[int, BasinIndexCommand] = field(default_factory=dict)
 
@@ -693,15 +672,15 @@ class BasinStateVariablesCommand(RavenConfig):
 
 
 @dataclass
-class SoilClassesCommand(RavenConfig):
+class SoilClassesCommand(RavenCommand):
     @dataclass
-    class Record(RavenConfig):
+    class Record(RavenCommand):
         name: str = ""
 
         def to_rv(self):
             return " ".join(map(str, asdict(self).values()))
 
-    soil_classes: Tuple[Record] = ()
+    soil_classes: Tuple[Record, ...] = ()
 
     template = """
     :SoilClasses
@@ -716,12 +695,12 @@ class SoilClassesCommand(RavenConfig):
 
 
 @dataclass
-class SoilProfilesCommand(RavenConfig):
+class SoilProfilesCommand(RavenCommand):
     @dataclass
-    class Record(RavenConfig):
+    class Record(RavenCommand):
         profile_name: str = ""
-        soil_class_names: Tuple[str] = ()
-        thicknesses: Tuple[float] = ()
+        soil_class_names: Tuple[str, ...] = ()
+        thicknesses: Tuple[float, ...] = ()
 
         def to_rv(self):
             # From the Raven manual: {profile_name,#horizons,{soil_class_name,thick.}x{#horizons}}x[NP]
@@ -732,7 +711,7 @@ class SoilProfilesCommand(RavenConfig):
             horizon_data = ", ".join(map(str, horizon_data))
             return f"{self.profile_name}, {n_horizons}, {horizon_data}"
 
-    soil_profiles: Tuple[Record] = ()
+    soil_profiles: Tuple[Record, ...] = ()
 
     template = """
     :SoilProfiles
@@ -747,9 +726,9 @@ class SoilProfilesCommand(RavenConfig):
 
 
 @dataclass
-class VegetationClassesCommand(RavenConfig):
+class VegetationClassesCommand(RavenCommand):
     @dataclass
-    class Record(RavenConfig):
+    class Record(RavenCommand):
         name: str = ""
         max_ht: float = 0
         max_lai: float = 0
@@ -758,7 +737,7 @@ class VegetationClassesCommand(RavenConfig):
         def to_rv(self):
             return " ".join(map(str, asdict(self).values()))
 
-    vegetation_classes: Tuple[Record] = ()
+    vegetation_classes: Tuple[Record, ...] = ()
 
     template = """
     :VegetationClasses
@@ -775,9 +754,9 @@ class VegetationClassesCommand(RavenConfig):
 
 
 @dataclass
-class LandUseClassesCommand(RavenConfig):
+class LandUseClassesCommand(RavenCommand):
     @dataclass
-    class Record(RavenConfig):
+    class Record(RavenCommand):
         name: str = ""
         impermeable_frac: float = 0
         forest_coverage: float = 0
@@ -785,7 +764,7 @@ class LandUseClassesCommand(RavenConfig):
         def to_rv(self):
             return " ".join(map(str, asdict(self).values()))
 
-    land_use_classes: Tuple[Record] = ()
+    land_use_classes: Tuple[Record, ...] = ()
 
     template = """
     :LandUseClasses
@@ -806,31 +785,64 @@ LU = LandUseClassesCommand.Record
 
 
 @dataclass
-class RainCorrectionCommand(BaseValueCommand):
-    tag: str = "RainCorrection"
-    value: Union[float, str] = 1.0
+class RainCorrectionCommand(RavenCommand):
+
+    value: Optional[Union[float, str]] = 1.0
+
+    template = ":RainCorrection {value}"
+
+    def to_rv(self):
+        if self.value is None:
+            return ""
+        return self.template.format(**asdict(self))
 
 
 @dataclass
-class SnowCorrectionCommand(BaseValueCommand):
-    tag: str = "SnowCorrection"
-    value: Union[float, str] = 1.0
+class SnowCorrectionCommand(RavenCommand):
+
+    value: Optional[Union[float, str]] = 1.0
+
+    template = ":SnowCorrection {value}"
+
+    def to_rv(self):
+        if self.value is None:
+            return ""
+        return self.template.format(**asdict(self))
 
 
 @dataclass
-class RoutingCommand(BaseValueCommand):
+class RoutingCommand(RavenCommand):
     """ROUTE_NONE, ROUTE_DIFFUSIVE_WAVE"""
 
-    tag: str = "Routing"
     value: str = "ROUTE_NONE"
 
+    template = ":Routing {value}"
+
+    def to_rv(self):
+        if self.value is None:
+            return ""
+        return self.template.format(**asdict(self))
+
 
 @dataclass
-class DeaccumulateCommand(BaseBooleanCommand):
-    tag: str = "Deaccumulate"
+class DeaccumulateCommand(RavenCommand):
+
+    value: bool = False
+
+    template = ":Deaccumulate"
+
+    def to_rv(self):
+        return self.template if self.value else ""
 
 
 @dataclass
-class AvgAnnualRunoffCommand(BaseValueCommand):
-    tag: str = "AvgAnnualRunoff"
-    value: float = None
+class AvgAnnualRunoffCommand(RavenCommand):
+
+    value: Optional[float] = 1.0
+
+    template = ":AvgAnnualRunoff {value}"
+
+    def to_rv(self):
+        if self.value is None:
+            return ""
+        return self.template.format(**asdict(self))
