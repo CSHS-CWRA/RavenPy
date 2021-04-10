@@ -59,7 +59,11 @@ class HBVEC(Raven):
             derived_params=HBVEC.DerivedParams(),
         )
 
-        self.config.rvp.tmpl = """
+        #########
+        # R V P #
+        #########
+
+        rvp_tmpl = """
         #------------------------------------------------------------------------
         # Global parameters
         #
@@ -140,8 +144,13 @@ class HBVEC(Raven):
            [DEFAULT],                  1.64,               0.05,          {params.par_x19},           0.05
         :EndLandUseParameterList
         """
+        self.config.rvp.set_tmpl(rvp_tmpl)
 
-        self.config.rvi.tmpl = """
+        #########
+        # R V I #
+        #########
+
+        rvi_tmpl = """
         :Calendar              {calendar}
         :RunName               {run_name}-{run_index}
         :StartDate             {start_date}
@@ -229,8 +238,13 @@ class HBVEC(Raven):
         :NetCDFAttribute time_coverage_start {start_date}
         :NetCDFAttribute time_coverage_end {end_date}
         """
+        self.config.rvi.set_tmpl(rvi_tmpl)
 
-        self.config.rvh.tmpl = """
+        #########
+        # R V H #
+        #########
+
+        rvh_tmpl = """
         {subbasins}
 
         {hrus}
@@ -243,10 +257,19 @@ class HBVEC(Raven):
                      1,            {par_x11},          {par_x11_half},
         :EndSubBasinProperties
         """
+        self.config.rvh.set_tmpl(rvh_tmpl)
+
+        #########
+        # R V I #
+        #########
 
         self.config.rvi.evaporation = "PET_FROMMONTHLY"
         self.config.rvi.ow_evaporation = "PET_FROMMONTHLY"
         self.config.rvi.rain_snow_fraction = "RAINSNOW_HBV"
+
+        #########
+        # R V C #
+        #########
 
         self.config.rvc.soil2 = 0.50657
 
@@ -325,7 +348,11 @@ class HBVEC_OST(Ostrich, HBVEC):
             suppress_output=True,
         )
 
-        self.config.rvc.tmpl = """
+        #########
+        # R V C #
+        #########
+
+        rvc_tmpl = """
         :BasinInitialConditions
          :Attributes, ID,              Q
          :Units,      none,         m3/s
@@ -341,8 +368,13 @@ class HBVEC_OST(Ostrich, HBVEC):
              0.50657
         :EndInitialConditions
         """
+        self.config.rvc.set_tmpl(rvc_tmpl)
 
-        self.config.rvh.tmpl = """
+        ####################
+        # R V H (OST TMPL) #
+        ####################
+
+        rvh_tmpl = """
         :SubBasins
                 :Attributes     NAME    DOWNSTREAM_ID   PROFILE   REACH_LENGTH    GAUGED
                 :Units          none    none            none      km              none
@@ -363,9 +395,13 @@ class HBVEC_OST(Ostrich, HBVEC):
                      1,             par_x11,             par_half_x11,
         :EndSubBasinProperties
         """
-        self.config.rvh.is_ostrich_tmpl = True
+        self.config.rvh.set_tmpl(rvh_tmpl, is_ostrich=True)
 
-        self.config.rvp.tmpl = """
+        ####################
+        # R V P (OST TMPL) #
+        ####################
+
+        rvp_tmpl = """
         # tied parameters:
         # (it is important for OSTRICH to find every parameter place holder somewhere in this file)
         # (without this "para_x05" and "para_x15" wouldn't be detectable)
@@ -452,18 +488,26 @@ class HBVEC_OST(Ostrich, HBVEC):
            [DEFAULT],                  1.64,               0.05,            par_x19,           0.05
         :EndLandUseParameterList
         """
-        self.config.rvp.is_ostrich_tmpl = True
+        self.config.rvp.set_tmpl(rvp_tmpl, is_ostrich=True)
 
-        self.config.rvt.tmpl = """
+        ####################
+        # R V T (OST TMPL) #
+        ####################
+
+        rvt_tmpl = """
         {gauge}
 
         {forcing_list}
 
         {observed_data}
         """
-        self.config.rvt.is_ostrich_tmpl = True
+        self.config.rvt.set_tmpl(rvt_tmpl, is_ostrich=True)
 
-        self.config.ost.tmpl = """
+        #########
+        # O S T #
+        #########
+
+        ost_tmpl = """
         ProgramType         {algorithm}
         ObjectiveFunction   GCOP
         ModelExecutable     ./ostrich-runs-raven.sh
@@ -558,6 +602,7 @@ class HBVEC_OST(Ostrich, HBVEC):
                 # above intializes DDS to parameter values IN the initial model input files
         EndDDSAlg
         """
+        self.config.ost.set_tmpl(ost_tmpl)
 
     # TODO: Support index specification and unit changes.
     def derived_parameters(self):

@@ -42,9 +42,7 @@ class RV(ABC):
     def __init__(self, config, **kwds):
         # Each RV has a reference to their parent object in order to access sibling RVs.
         self._config = config
-        # TODO: find something better than this!
         self.is_ostrich_tmpl = False
-        # There's probably a much better way than this also!
         self.content = None
 
     def update(self, key, value):
@@ -72,6 +70,10 @@ class RV(ABC):
             if k not in d:
                 e[k] = v
         return e
+
+    def set_tmpl(self, tmpl, is_ostrich=False):
+        self.tmpl = tmpl
+        self.is_ostrich_tmpl = is_ostrich
 
     @property
     @abstractmethod
@@ -791,7 +793,7 @@ class RVT(RV):
 #########
 
 
-class Ost(RV):
+class OST(RV):
 
     tmpl = """
     """
@@ -863,7 +865,7 @@ class Config:
         self.rvi = RVI(self)
         self.rvp = RVP(self)
         self.rvt = RVT(self)
-        self.ost = Ost(self)
+        self.ost = OST(self)
         self.identifier = None
         self.update(**kwargs)
 

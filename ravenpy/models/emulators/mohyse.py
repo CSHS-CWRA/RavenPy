@@ -46,7 +46,11 @@ class MOHYSE(Raven):
             derived_params=MOHYSE.DerivedParams(),
         )
 
-        self.config.rvp.tmpl = """
+        #########
+        # R V P #
+        #########
+
+        rvp_tmpl = """
         #-----------------------------------------------------------------
         # Soil Classes
         #-----------------------------------------------------------------
@@ -124,8 +128,13 @@ class MOHYSE(Raven):
             [DEFAULT],             0.0,             0.0,             0.0,
         :EndVegetationParameterList
         """
+        self.config.rvp.set_tmpl(rvp_tmpl)
 
-        self.config.rvi.tmpl = """
+        #########
+        # R V I #
+        #########
+
+        rvi_tmpl = """
         :Calendar              {calendar}
         :RunName               {run_name}-{run_index}
         :StartDate             {start_date}
@@ -186,8 +195,13 @@ class MOHYSE(Raven):
         :NetCDFAttribute time_coverage_start {start_date}
         :NetCDFAttribute time_coverage_end {end_date}
         """
+        self.config.rvi.set_tmpl(rvi_tmpl)
 
-        self.config.rvh.tmpl = """
+        #########
+        # R V H #
+        #########
+
+        rvh_tmpl = """
         {subbasins}
 
         {hrus}
@@ -199,9 +213,18 @@ class MOHYSE(Raven):
                       1,         {par_rezi_x10},       {par_x09}
         :EndSubBasinProperties
         """
+        self.config.rvh.set_tmpl(rvh_tmpl)
+
+        #########
+        # R V I #
+        #########
 
         self.config.rvi.rain_snow_fraction = "RAINSNOW_DATA"
         self.config.rvi.evaporation = "PET_MOHYSE"
+
+        #########
+        # R V C #
+        #########
 
         # This is not stricly necessary it seems
         self.config.rvc.hru_states[1] = HRUState()
@@ -233,7 +256,11 @@ class MOHYSE_OST(Ostrich, MOHYSE):
             suppress_output=True,
         )
 
-        self.config.rvp.tmpl = """
+        ####################
+        # R V P (OST TMPL) #
+        ####################
+
+        rvp_tmpl = """
         #-----------------------------------------------------------------
         # Soil Classes
         #-----------------------------------------------------------------
@@ -311,9 +338,13 @@ class MOHYSE_OST(Ostrich, MOHYSE):
             [DEFAULT],             0.0,             0.0,             0.0,
         :EndVegetationParameterList
         """
-        self.config.rvp.is_ostrich_tmpl = True
+        self.config.rvp.set_tmpl(rvp_tmpl, is_ostrich=True)
 
-        self.config.rvh.tmpl = """
+        ####################
+        # R V H (OST TMPL) #
+        ####################
+
+        rvh_tmpl = """
         # tied parameters:
         # (it is important for OSTRICH to find every parameter place holder somewhere in this file)
         # (without this "par_x11" wouldn't be detectable)
@@ -339,9 +370,13 @@ class MOHYSE_OST(Ostrich, MOHYSE):
                       1,   par_rezi_x10,         par_x09
         :EndSubBasinProperties
         """
-        self.config.rvh.is_ostrich_tmpl = True
+        self.config.rvh.set_tmpl(rvh_tmpl, is_ostrich=True)
 
-        self.config.ost.tmpl = """
+        #########
+        # O S T #
+        #########
+
+        ost_tmpl = """
         ProgramType         {algorithm}
         ObjectiveFunction   GCOP
         ModelExecutable     ./ostrich-runs-raven.sh
@@ -418,6 +453,7 @@ class MOHYSE_OST(Ostrich, MOHYSE):
                 # above intializes DDS to parameter values IN the initial model input files
         EndDDSAlg
         """
+        self.config.ost.set_tmpl(ost_tmpl)
 
     def derived_parameters(self):
         """  Derived parameters are computed by Ostrich.  """

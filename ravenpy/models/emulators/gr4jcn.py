@@ -72,7 +72,11 @@ class GR4JCN(Raven):
             derived_params=GR4JCN.DerivedParams(),
         )
 
-        self.config.rvp.tmpl = """
+        #########
+        # R V P #
+        #########
+
+        rvp_tmpl = """
         # -Global snow parameters-------------------------------------
         :RainSnowTransition 0 1.0
         :AirSnowCoeff       {derived_params.one_minus_CEMANEIGE_X2}  # [1/d] = 1.0 - CEMANEIGE_X2 = 1.0 - x6
@@ -132,8 +136,13 @@ class GR4JCN(Raven):
         # List of channel profiles
         {channel_profiles}
         """
+        self.config.rvp.set_tmpl(rvp_tmpl)
 
-        self.config.rvi.tmpl = """
+        #########
+        # R V I #
+        #########
+
+        rvi_tmpl = """
         :Calendar              {calendar}
         :RunName               {run_name}-{run_index}
         :StartDate             {start_date}
@@ -202,9 +211,14 @@ class GR4JCN(Raven):
         :NetCDFAttribute time_coverage_start {start_date}
         :NetCDFAttribute time_coverage_end {end_date}
         """
+        self.config.rvi.set_tmpl(rvi_tmpl)
 
         self.config.rvi.rain_snow_fraction = "RAINSNOW_DINGMAN"
         self.config.rvi.evaporation = "PET_OUDIN"
+
+        #########
+        # R V C #
+        #########
 
         # Initialize the stores to 1/2 full. Declare the parameters that can be user-modified
         self.config.rvc.soil0 = None
@@ -284,7 +298,11 @@ class GR4JCN_OST(Ostrich, GR4JCN):
             suppress_output=True,
         )
 
-        self.config.rvc.tmpl = """
+        ####################
+        # R V C (OST TMPL) #
+        ####################
+
+        rvc_tmpl = """
         # Tied parameters:
         # (it is important for OSTRICH to find every parameter place holder somewhere in this file)
         # (without this "para_x1" wouldn't be detectable)
@@ -303,9 +321,13 @@ class GR4JCN_OST(Ostrich, GR4JCN):
            1           par_half_x1   15.0
         :EndHRUStateVariableTable
         """
-        self.config.rvc.is_ostrich_tmpl = True
+        self.config.rvc.set_tmpl(rvc_tmpl, is_ostrich=True)
 
-        self.config.rvp.tmpl = """
+        ####################
+        # R V P (OST TMPL) #
+        ####################
+
+        rvp_tmpl = """
         #########################################################################
         :FileType          rvp ASCII Raven 2.8.2
         :WrittenBy         Juliane Mai & James Craig
@@ -369,9 +391,13 @@ class GR4JCN_OST(Ostrich, GR4JCN):
            [DEFAULT],  par_x4,        7.73
         :EndLandUseParameterList
         """
-        self.config.rvp.is_ostrich_tmpl = True
+        self.config.rvp.set_tmpl(rvp_tmpl, is_ostrich=True)
 
-        self.config.ost.tmpl = """
+        ##########
+        # O S T  #
+        ##########
+
+        ost_tmpl = """
         ProgramType         {algorithm}
         ObjectiveFunction   GCOP
         ModelExecutable     ./ostrich-runs-raven.sh
@@ -450,6 +476,7 @@ class GR4JCN_OST(Ostrich, GR4JCN):
                 # above intializes DDS to parameter values IN the initial model input files
         EndDDSAlg
         """
+        self.config.ost.set_tmpl(ost_tmpl)
 
     def derived_parameters(self):
         """Derived parameters are computed by Ostrich."""

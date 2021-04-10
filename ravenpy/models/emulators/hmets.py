@@ -68,7 +68,11 @@ class HMETS(Raven):
             derived_params=HMETS.DerivedParams(),
         )
 
-        self.config.rvp.tmpl = """
+        #########
+        # R V P #
+        #########
+
+        rvp_tmpl = """
         #-----------------------------------------------------------------
         # Soil Classes
         #-----------------------------------------------------------------
@@ -151,8 +155,13 @@ class HMETS(Raven):
             [DEFAULT],             0.0,             0.0,
         :EndVegetationParameterList
         """
+        self.config.rvp.set_tmpl(rvp_tmpl)
 
-        self.config.rvi.tmpl = """
+        #########
+        # R V I #
+        #########
+
+        rvi_tmpl = """
         :Calendar              {calendar}
         :RunName               {run_name}-{run_index}
         :StartDate             {start_date}
@@ -208,9 +217,14 @@ class HMETS(Raven):
         :NetCDFAttribute time_coverage_start {start_date}
         :NetCDFAttribute time_coverage_end {end_date}
         """
+        self.config.rvi.set_tmpl(rvi_tmpl)
 
         self.config.rvi.evaporation = "PET_OUDIN"
         self.config.rvi.rain_snow_fraction = "RAINSNOW_DATA"
+
+        #########
+        # R V C #
+        #########
 
         self.config.rvc.soil0 = None
         self.config.rvc.soil1 = None
@@ -266,7 +280,11 @@ class HMETS_OST(Ostrich, HMETS):
             suppress_output=True,
         )
 
-        self.config.rvc.tmpl = """
+        ####################
+        # R V C (OST TMPL) #
+        ####################
+
+        rvc_tmpl = """
         # Tied parameters:
         # (it is important for OSTRICH to find every parameter place holder somewhere in this file)
         # (without this "par_x20" and "par_x21" wouldn't be detectable)
@@ -284,9 +302,13 @@ class HMETS_OST(Ostrich, HMETS):
            1 par_half_x20 par_half_x21
         :EndHRUStateVariableTable
         """
-        self.config.rvc.is_ostrich_tmpl = True
+        self.config.rvc.set_tmpl(rvc_tmpl, is_ostrich=True)
 
-        self.config.rvp.tmpl = """
+        ####################
+        # R V P (OST TMPL) #
+        ####################
+
+        rvp_tmpl = """
         # tied parameters:
         # (it is important for OSTRICH to find every parameter place holder somewhere in this file)
         # (without this "par_x06" and "par_x10" wouldn't be detectable)
@@ -375,9 +397,13 @@ class HMETS_OST(Ostrich, HMETS):
             [DEFAULT],             0.0,             0.0,
         :EndVegetationParameterList
         """
-        self.config.rvp.is_ostrich_tmpl = True
+        self.config.rvp.set_tmpl(rvp_tmpl, is_ostrich=True)
 
-        self.config.ost.tmpl = """
+        #########
+        # O S T #
+        #########
+
+        ost_tmpl = """
         ProgramType         {algorithm}
         ObjectiveFunction   GCOP
         ModelExecutable     ./ostrich-runs-raven.sh
@@ -489,12 +515,13 @@ class HMETS_OST(Ostrich, HMETS):
                 # above intializes DDS to parameter values IN the initial model input files
         EndDDSAlg
         """
+        self.config.ost.set_tmpl(ost_tmpl)
 
     def derived_parameters(self):
         """Derived parameters are computed by Ostrich."""
         pass
 
-    def ost2raven(self, ops):
+    def ost2raven(self, ops: dict) -> HMETS.Params:
         """Return a list of parameter names calibrated by Ostrich that match Raven's parameters.
 
         Parameters

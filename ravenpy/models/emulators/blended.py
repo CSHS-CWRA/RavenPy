@@ -100,7 +100,11 @@ class BLENDED(Raven):
             rain_snow_fraction="RAINSNOW_HBV",
         )
 
-        self.config.rvp.tmpl = """
+        #########
+        # R V P #
+        #########
+
+        rvp_tmpl = """
         # tied parameters:
         # (it is important for OSTRICH to find every parameter place holder somewhere in this file)
         # (without this "5.421821E-02" and "1.596675E-01" and "2.169724E-01" wouldn't be detectable)
@@ -213,8 +217,13 @@ class BLENDED(Raven):
           FOREST, 1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0
         :EndSeasonalRelativeHeight
         """
+        self.config.rvp.set_tmpl(rvp_tmpl)
 
-        self.config.rvi.tmpl = """
+        #########
+        # R V I #
+        #########
+
+        rvi_tmpl = """
         :Calendar              {calendar}
         :RunName               {run_name}-{run_index}
         :StartDate             {start_date}
@@ -294,10 +303,15 @@ class BLENDED(Raven):
         :NetCDFAttribute time_coverage_start {start_date}
         :NetCDFAttribute time_coverage_end {end_date}
         """
+        self.config.rvi.set_tmpl(rvi_tmpl)
 
         self.config.rvi.params = self.config.rvp.params
 
-        self.config.rvc.tmpl = """
+        #########
+        # R V C #
+        #########
+
+        rvc_tmpl = """
         # initialize to 1/2 full
         # x(29)*1000/2
         :UniformInitialConditions SOIL[0] {TOPSOIL_hlf}
@@ -311,6 +325,7 @@ class BLENDED(Raven):
            # x(29)*1000/2       x(30)*1000/2
         :EndHRUStateVariableTable
         """
+        self.config.rvc.set_tmpl(rvc_tmpl)
 
         self.config.rvc.soil0 = None
         self.config.rvc.soil1 = None
@@ -373,7 +388,11 @@ class BLENDED_OST(Ostrich, BLENDED):
             suppress_output=True,
         )
 
-        self.config.rvc.tmpl = """
+        ####################
+        # R V C (OST TMPL) #
+        ####################
+
+        rvc_tmpl = """
         # tied parameters:
         # (it is important for OSTRICH to find every parameter place holder somewhere in this file)
         # (without this "par_x29" and "par_x30" wouldn't be detectable)
@@ -390,9 +409,13 @@ class BLENDED_OST(Ostrich, BLENDED):
            1 half_x29 half_x30
         :EndHRUStateVariableTable
         """
-        self.config.rvc.is_ostrich_tmpl = True
+        self.config.rvc.set_tmpl(rvc_tmpl, is_ostrich=True)
 
-        self.config.rvi.tmpl = """
+        ####################
+        # R V I (OST TMPL) #
+        ####################
+
+        rvi_tmpl = """
         :Calendar              {calendar}
         :RunName               {run_name}-{run_index}
         :StartDate             {start_date}
@@ -453,9 +476,13 @@ class BLENDED_OST(Ostrich, BLENDED):
         :SilentMode
         :DontWriteWatershedStorage
         """
-        self.config.rvi.is_ostrich_tmpl = True
+        self.config.rvi.set_tmpl(rvi_tmpl, is_ostrich=True)
 
-        self.config.rvp.tmpl = """
+        ####################
+        # R V P (OST TMPL) #
+        ####################
+
+        rvp_tmpl = """
         # tied parameters:
         # (it is important for OSTRICH to find every parameter place holder somewhere in this file)
         # (without this "par_x25" and "par_x14" and "par_x10" wouldn't be detectable)
@@ -572,18 +599,26 @@ class BLENDED_OST(Ostrich, BLENDED):
           FOREST, 1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0
         :EndSeasonalRelativeHeight
         """
-        self.config.rvp.is_ostrich_tmpl = True
+        self.config.rvp.set_tmpl(rvp_tmpl, is_ostrich=True)
 
-        self.config.rvt.tmpl = """
+        ####################
+        # R V T (OST TMPL) #
+        ####################
+
+        rvt_tmpl = """
         {gauge}
 
         {forcing_list}
 
         {observed_data}
         """
-        self.config.rvt.is_ostrich_tmpl = True
+        self.config.rvt.set_tmpl(rvt_tmpl, is_ostrich=True)
 
-        self.config.ost.tmpl = """
+        ##########
+        # O S T  #
+        ##########
+
+        ost_tmpl = """
         ProgramType         {algorithm}
         ObjectiveFunction   GCOP
         ModelExecutable     ./ostrich-runs-raven.sh
@@ -767,6 +802,7 @@ class BLENDED_OST(Ostrich, BLENDED):
                 # above intializes DDS to parameter values IN the initial model input files
         EndDDSAlg
         """
+        self.config.ost.set_tmpl(ost_tmpl)
 
     def derived_parameters(self):
         """Derived parameters are computed by Ostrich."""
