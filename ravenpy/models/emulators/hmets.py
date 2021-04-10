@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from dataclasses import dataclass
+from pydantic.dataclasses import dataclass
 
 from ravenpy.config.commands import HRU, LU, BasinIndexCommand, HRUState, Sub
 from ravenpy.models.base import Ostrich, Raven
