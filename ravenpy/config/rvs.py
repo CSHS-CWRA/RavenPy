@@ -3,7 +3,7 @@ import datetime as dt
 from abc import ABC, abstractmethod
 from pathlib import Path
 from textwrap import dedent
-from typing import Tuple
+from typing import Optional, Tuple
 
 import cf_xarray
 import cftime
@@ -560,12 +560,12 @@ class RVP(RV):
         self.params = None
         self.derived_params = None
 
-        self.soil_classes: Tuple[SoilClassesCommand.Record] = ()
-        self.soil_profiles: Tuple[SoilProfilesCommand.Record] = ()
-        self.vegetation_classes: Tuple[VegetationClassesCommand.Record] = ()
-        self.land_use_classes: Tuple[LandUseClassesCommand.Record] = ()
-        self.channel_profiles: Tuple[ChannelProfileCommand] = ()
-        self.avg_annual_runoff: float = None
+        self.soil_classes: Tuple[SoilClassesCommand.Record, ...] = ()
+        self.soil_profiles: Tuple[SoilProfilesCommand.Record, ...] = ()
+        self.vegetation_classes: Tuple[VegetationClassesCommand.Record, ...] = ()
+        self.land_use_classes: Tuple[LandUseClassesCommand.Record, ...] = ()
+        self.channel_profiles: Tuple[ChannelProfileCommand, ...] = ()
+        self.avg_annual_runoff: Optional[float] = None
 
     def to_rv(self):
         d = {
