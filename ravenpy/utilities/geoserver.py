@@ -182,7 +182,7 @@ def _determine_upstream_ids(
     basin_field: str = None,
     downstream_field: str = None,
     basin_family: Optional[str] = None,
-) -> pd.Series:
+) -> pd.DataFrame:
     """Return a list of upstream features by evaluating the downstream networks.
 
     Parameters
@@ -200,7 +200,7 @@ def _determine_upstream_ids(
 
     Returns
     -------
-    pd.Series
+    pd.DataFrame
       Basins ids including `fid` and its upstream contributors.
     """
 
@@ -298,7 +298,7 @@ def get_raster_wcs(
 # ~~~~ HydroBASINS functions ~~~~ #
 
 
-def hydrobasins_upstream(feature: dict, domain: str) -> pd.Series:
+def hydrobasins_upstream(feature: dict, domain: str) -> pd.DataFrame:
     """Return a list of hydrobasins features located upstream.
 
     Parameters
@@ -337,7 +337,7 @@ def hydrobasins_upstream(feature: dict, domain: str) -> pd.Series:
     )
 
 
-def hydrobasins_aggregate(gdf: pd.DataFrame) -> pd.Series:
+def hydrobasins_aggregate(gdf: pd.DataFrame) -> pd.DataFrame:
     """Aggregate multiple HydroBASINS watersheds into a single geometry.
 
     Parameters
@@ -347,7 +347,7 @@ def hydrobasins_aggregate(gdf: pd.DataFrame) -> pd.Series:
 
     Returns
     -------
-    pd.Series
+    pd.DataFrame
     """
     i0 = gdf.index[0]
 
@@ -399,7 +399,7 @@ def select_hybas_domain(
 def filter_hydrobasins_attributes_wfs(
     attribute: str,
     value: Union[str, float, int],
-    domain: str = None,
+    domain: str,
     geoserver: str = GEO_URL,
 ) -> str:
     """Return a URL that formats and returns a remote GetFeatures request from the USGS HydroBASINS dataset.
