@@ -261,8 +261,8 @@ class BaseDataCommand(RavenConfig):
     var_name_nc: str = ""
     dim_names_nc: Tuple[str] = ("time",)
     time_shift: Optional[int] = None  # in days
-    scale: Optional[float] = 1
-    offset: Optional[float] = 0
+    scale: float = 1
+    offset: float = 0
     deaccumulate: Optional[bool] = False
 
     @property
