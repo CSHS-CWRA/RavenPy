@@ -75,7 +75,7 @@ def _get_location_wfs(
     Returns
     -------
     str
-      A GML-encoded vector feature.
+      A GeoJSON-encoded vector feature.
 
     """
     wfs = WebFeatureService(url=urljoin(geoserver, "wfs"), version="1.1.0", timeout=30)
@@ -462,7 +462,7 @@ def get_hydrobasins_location_wfs(
     Returns
     -------
     str
-      A GML-encoded vector feature.
+      A GeoJSON-encoded vector feature.
 
     """
     lakes = True
