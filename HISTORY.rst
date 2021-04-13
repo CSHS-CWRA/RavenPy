@@ -4,11 +4,12 @@ History
 
 0.4.1
 -----
-- Add notebook about hindcast verification skill
-- Add notebook about routing capability
-- Modify geoserver functions to have them return GeoJSON instead of GML
-- Collect upstream watershed aggregation logic
-- Fix RVC bug
+
+* Add notebook about hindcast verification skill.
+* Add notebook about routing capability.
+* Modify geoserver functions to have them return GeoJSON instead of GML.
+* Collect upstream watershed aggregation logic.
+* Fix RVC bug.
 
 0.4.0
 -----
