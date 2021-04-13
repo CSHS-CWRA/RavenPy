@@ -1,8 +1,9 @@
 import itertools
 import re
-from dataclasses import asdict, dataclass, field
 from textwrap import dedent
 from typing import Any, Dict, Optional, Tuple, Union
+
+from dataclasses import asdict, dataclass, field
 
 INDENT = " " * 4
 VALUE_PADDING = 10
@@ -49,7 +50,7 @@ class LinearTransform(RavenConfig):
     template = ":LinearTransform {scale:.15f} {offset:.15f}"
 
     def to_rv(self):
-        if (self.scale is not None) or (self.offset is not None):
+        if (self.scale != 1) or (self.offset != 0):
             return self.template.format(**asdict(self))
         return ""
 
@@ -260,8 +261,8 @@ class BaseDataCommand(RavenConfig):
     var_name_nc: str = ""
     dim_names_nc: Tuple[str] = ("time",)
     time_shift: Optional[int] = None  # in days
-    scale: Optional[float] = None
-    offset: Optional[float] = None
+    scale: Optional[float] = 1
+    offset: Optional[float] = 0
     deaccumulate: Optional[bool] = False
 
     @property
