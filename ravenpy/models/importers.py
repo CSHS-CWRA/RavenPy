@@ -881,7 +881,7 @@ class NcDataImporter:
                     raise Exception(
                         "Could not find an outlet subbasin for observation data"
                     )
-                return ObservationDataCommand(**attrs, index=nc_index)
+                return ObservationDataCommand(**attrs, index=nc_index + 1)
 
             # TODO: implement a RedirectToFile mechanism to avoid inlining the grid weights
             # multiple times as we do here
