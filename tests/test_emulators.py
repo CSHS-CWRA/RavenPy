@@ -19,6 +19,7 @@ from ravenpy.models import (
     MOHYSE,
     MOHYSE_OST,
     Raven,
+    RavenError,
     Routing,
     Sub,
     get_average_annual_runoff,
@@ -84,6 +85,18 @@ salmon_land_hru_2 = dict(
 
 
 class TestGR4JCN:
+    def test_error(self):
+        model = GR4JCN()
+
+        model.rvp.params = model.params(0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
+
+        with pytest.raises(RavenError) as exc:
+            model(TS)
+
+        assert "CHydroUnit constructor:: HRU 1 has a negative or zero area" in str(
+            exc.value
+        )
+
     def test_simple(self):
         model = GR4JCN()
 
