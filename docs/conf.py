@@ -44,6 +44,14 @@ extensions = [
 autosummary_generate = True
 nbsphinx_execute = "auto"
 
+# To ensure that underlined fields (e.g. `_field`) are shown in the docs.
+autodoc_default_options = {
+    "members": True,
+    "undoc-members": True,
+    "private-members": True,
+    "special-members": True,
+}
+
 # To avoid having to install these and burst memory limit on ReadTheDocs.
 autodoc_mock_imports = [
     "affine",
