@@ -86,7 +86,7 @@ salmon_land_hru_2 = dict(
 
 class TestGR4JCN:
     def test_error(self):
-        model = GR4JCN("/tmp/ravenpy_debug/test_error")
+        model = GR4JCN()
 
         model.rvp.params = model.params(0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
 
@@ -98,7 +98,7 @@ class TestGR4JCN:
         )
 
     def test_simple(self):
-        model = GR4JCN("/tmp/ravenpy_debug/test_error")
+        model = GR4JCN()
 
         model.rvi.start_date = dt.datetime(2000, 1, 1)
         model.rvi.end_date = dt.datetime(2002, 1, 1)
