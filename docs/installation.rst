@@ -132,3 +132,11 @@ If everything was properly installed the test suite should run successfully:
 
    (ravenpy-env) $ export RAVENPY_TESTDATA_PATH=/path/to/raven-testdata
    (ravenpy-env) $ pytest tests
+
+Or set the conda environment variable permanently:
+
+.. code-block:: console
+
+   (ravenpy-env) $ conda env config vars set RAVENPY_TESTDATA_PATH=/path/to/raven-testdata
+
+then deactivate and reactivate the environment.
