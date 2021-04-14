@@ -301,7 +301,7 @@ class RVT(RV):
         self.gridded_forcings = ()
 
         # For a distributed model these weights will be shared among all the StationForcing commands
-        self.grid_weights = GridWeightsCommand()
+        self.grid_weights = None
 
         self.var_cmds = {}
         # Dictionary of potential variable names, keyed by CF standard name.

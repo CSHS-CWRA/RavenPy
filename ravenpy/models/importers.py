@@ -819,7 +819,8 @@ class NcDataImporter:
                                     var_name_nc=name,
                                     dim_names_nc=v.dims,
                                     units=v.attrs.get("units"),
-                                    number_grid_cells=v.size / len(ds["time"]),
+                                    number_grid_cells=v.size
+                                    / len(ds["time"]),  # Probably too simplistic.
                                 )
                                 try:
                                     attrs["latitude"] = ds.cf["latitude"]
@@ -841,6 +842,18 @@ class NcDataImporter:
 
         # Remove extra attributes
         number_grid_cells = attrs.pop("number_grid_cells")
+
+        # Construct default grid weights applying equally to all HRUs
+        if hasattr(rvh, "hrus"):
+            data = [(hru.hru_id, nc_index, 1.0) for hru in rvh.hrus]
+            gw = GridWeightsCommand(
+                number_hrus=len(rvh.hrus),
+                number_grid_cells=number_grid_cells,
+                data=data,
+            )
+        else:
+            gw = None
+
         for k in coords:
             attrs.pop(k, None)
 
@@ -872,18 +885,9 @@ class NcDataImporter:
 
             # TODO: implement a RedirectToFile mechanism to avoid inlining the grid weights
             # multiple times as we do here
-            # Construct default grid weights applying equally to all HRUs
-            data = [(hru.hru_id, nc_index, 1.0) for hru in rvh.hrus]
+            return StationForcingCommand(**attrs, grid_weights=rvt.grid_weights or gw)
 
-            gw = rvt.grid_weights or GridWeightsCommand(
-                number_hrus=len(rvh.hrus),
-                number_grid_cells=number_grid_cells,
-                data=data,
-            )
-
-            return StationForcingCommand(**attrs, grid_weights=gw)
-
-        return GriddedForcingCommand(**attrs, grid_weights=rvt.grid_weights)
+        return GriddedForcingCommand(**attrs, grid_weights=rvt.grid_weights or gw)
 
     def extract(self, rvh, rvt=None, nc_index=0):
         out = {"var_cmds": {}}
