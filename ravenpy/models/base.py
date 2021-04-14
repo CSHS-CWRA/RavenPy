@@ -52,6 +52,11 @@ RAVEN_NO_DATA_VALUE = -1.2345
 
 
 class RavenError(Exception):
+    """
+    This is an error that is meant to be raised whenever a message of type "ERROR" is found
+    in the Raven_errors.txt file resulting from a Raven (i.e. the C program) run.
+    """
+
     pass
 
 
