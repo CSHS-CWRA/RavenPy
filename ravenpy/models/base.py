@@ -601,6 +601,8 @@ class Raven:
             "SIMULATION COMPLETE": False,
         }
         for p in err_filepaths:
+            # The error message for an unknown command is exceptionally on two lines
+            # (the second starts with a triple space)
             for m in re.findall("^([A-Z ]+) :(.+)(?:\n   (.+))?", p.read_text(), re.M):
                 if m[0] == "SIMULATION COMPLETE":
                     messages["SIMULATION COMPLETE"] = True
