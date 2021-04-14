@@ -293,7 +293,7 @@ class BaseDataCommand(RavenConfig):
 
 @dataclass
 class DataCommand(BaseDataCommand):
-    index: int = 1
+    index: int = 1  # Indexing starts with 1.
     data_type: str = ""
     site: str = ""
     var: str = ""

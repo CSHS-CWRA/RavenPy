@@ -7,13 +7,6 @@ repos:
     hooks:
     -   id: pyupgrade
         language_version: python3
--   repo: https://github.com/kynan/nbstripout
-    rev: 0.3.9
-    hooks:
-    -   id: nbstripout
-        language_version: python3
-        files: ".ipynb"
-        args: ["--keep-output"]
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v3.4.0
     hooks:

@@ -10,8 +10,6 @@ import numpy as np
 import xarray as xr
 from matplotlib import pyplot as plt
 
-from . import docs_import_error_message
-
 try:
     import holoviews as hv
     import hvplot.xarray
@@ -19,8 +17,7 @@ try:
     # from holoviews.streams import Buffer
     # from bokeh.models import Range1d, LinearAxis
 except (ImportError, ModuleNotFoundError) as e:
-    msg = docs_import_error_message.format(Path(__file__).stem)
-    raise ImportError(msg) from e
+    raise ImportError("Install holoviews and hvplot.") from e
 
 hv.extension("bokeh")
 

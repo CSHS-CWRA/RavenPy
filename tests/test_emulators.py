@@ -668,8 +668,8 @@ class TestGR4JCN:
         """Test Raven with DAP link instead of local netCDF file."""
         model = GR4JCN()
         config = dict(
-            start_date=dt.datetime(2000, 1, 1),
-            end_date=dt.datetime(2002, 1, 1),
+            start_date=dt.datetime(2000, 6, 1),
+            end_date=dt.datetime(2000, 6, 10),
             run_name="test",
             name="Salmon",
             hrus=(GR4JCN.LandHRU(**salmon_land_hru_1),),
@@ -680,6 +680,32 @@ class TestGR4JCN:
             f"{TDS}/raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
         )
         model(ts, **config)
+
+    @pytest.mark.online
+    def test_canopex(self):
+        CANOPEX_DAP = (
+            "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/birdhouse/ets"
+            "/Watersheds_5797_cfcompliant.nc"
+        )
+        model = GR4JCN()
+        config = dict(
+            name="WHITEMOUTH RIVER NEAR WHITEMOUTH",
+            start_date=dt.datetime(2010, 6, 1),
+            end_date=dt.datetime(2010, 6, 10),
+            nc_index=5600,
+            run_name="Test_run",
+            rain_snow_fraction="RAINSNOW_DINGMAN",
+            tasmax={"offset": -273.15},
+            tasmin={"offset": -273.15},
+            pr={"scale": 86400.0},
+            hrus=[
+                model.LandHRU(
+                    area=3650.47, latitude=49.51, longitude=-95.72, elevation=330.59
+                )
+            ],
+            params=model.params(108.02, 2.8693, 25.352, 1.3696, 1.2483, 0.30679),
+        )
+        model(ts=CANOPEX_DAP, **config)
 
 
 class TestGR4JCN_OST:
