@@ -756,7 +756,7 @@ class TestGR4JCN_OST:
         # # Random number seed: 123
         # # Budget:             50
         # # Algorithm:          DDS
-        # # :StartDate          1954-01-01 00:00:00no
+        # # :StartDate          1954-01-01 00:00:00
         # # :Duration           20819
         # np.testing.assert_almost_equal( opt_para, [0.3243268,3.034247,407.2890,2.722774,12.18124,0.9468769], 4,
         #                                 err_msg='calibrated parameter set is not matching expected value')

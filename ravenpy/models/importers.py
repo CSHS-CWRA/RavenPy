@@ -837,6 +837,8 @@ class NcDataImporter:
                                 self.attrs[var] = attrs
 
     def _create_command(self, var, attrs, rvh, rvt=None, nc_index=0):
+        if nc_index is None:
+            nc_index = 0
         coords = {"latitude", "longitude", "elevation"}
         dims = attrs["dim_names_nc"]
 

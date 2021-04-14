@@ -2,6 +2,13 @@
 History
 =======
 
+0.4.2
+-----
+* Update to RavenC revision 318 to fix OPENDAP access for StationForcing commands
+* Fix grid_weights set to None by default
+* Pass nc_index to ObservationData command
+* Expose more cleanly RavenC errors and warnings
+
 0.4.1
 -----
 
