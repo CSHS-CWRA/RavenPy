@@ -10,6 +10,7 @@ import csv
 import datetime as dt
 import operator
 import os
+import re
 import shutil
 import stat
 import subprocess
@@ -48,6 +49,10 @@ RAVEN_EXEC_PATH = os.getenv("RAVENPY_RAVEN_BINARY_PATH") or shutil.which("raven"
 OSTRICH_EXEC_PATH = os.getenv("RAVENPY_OSTRICH_BINARY_PATH") or shutil.which("ostrich")
 
 RAVEN_NO_DATA_VALUE = -1.2345
+
+
+class RavenError(Exception):
+    pass
 
 
 class Raven:
@@ -473,38 +478,35 @@ class Raven:
             cmd = self.setup_model_run(tuple(map(Path, ts)))
 
             procs.append(
-                subprocess.Popen(cmd, cwd=self.cmd_path, stdout=subprocess.PIPE)
+                subprocess.Popen(
+                    cmd,
+                    cwd=self.cmd_path,
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    universal_newlines=True,
+                )
             )
 
         return procs
 
     def __call__(self, ts, overwrite=False, **kwds):
         self.setup(overwrite)
+
         procs = self.run(ts, overwrite, **kwds)
 
         for proc in procs:
+            # When Raven errors right away it asks for a RETURN to exit
+            proc.communicate(input="\n")
             proc.wait()
-            # Julie: For debugging
-            # for line in iter(proc.stdout.readline, b''):
-            #    print(line)
-        try:
-            self.parse_results()
-            err = self.parse_errors()
-            if "ERROR" in err:
-                raise UserWarning("Simulation error")
 
-        except UserWarning as e:
-            err = self.parse_errors()
-            msg = """
-        **************************************************************
-        Path : {dir}
-        **************************************************************
-        {err}
-        """.format(
-                dir=self.cmd_path, err=err
-            )
-            print(msg)
-            raise e
+        messages = self.extract_raven_messages()
+
+        if messages["ERROR"]:
+            raise RavenError("\n".join(messages["ERROR"]))
+
+        assert messages["SIMULATION COMPLETE"]
+
+        self.parse_results()
 
     def resume(self, solution=None):
         """Set the initial state to the state at the end of the last run.
@@ -587,12 +589,33 @@ class Raven:
 
         return outfn
 
-    def parse_errors(self):
-        files = self._get_output("Raven_errors.txt", self.exec_path)
-        out = ""
-        for f in files:
-            out += f.read_text()
-        return out
+    def extract_raven_messages(self):
+        """
+        Parse all the Raven_errors and extract the messages, structured by types.
+        """
+        err_filepaths = self.exec_path.rglob("Raven_errors.txt")
+        messages = {
+            "ERROR": [],
+            "WARNING": [],
+            "ADVISORY": [],
+            "SIMULATION COMPLETE": False,
+        }
+        for p in err_filepaths:
+            for m in re.findall("^([A-Z ]+) :(.+)(?:\n   (.+))?", p.read_text(), re.M):
+                if m[0] == "SIMULATION COMPLETE":
+                    messages["SIMULATION COMPLETE"] = True
+                    continue
+                msg_type = m[0]
+                msg = f"{m[1]} {m[2]}".strip()
+                if (
+                    msg
+                    == "Errors found in input data. See Raven_errors.txt for details"
+                ):
+                    # Skip this one because it's a bit circular
+                    continue
+                messages[msg_type].append(msg)
+
+        return messages
 
     def _get_output(self, pattern, path):
         """Match actual output files to known expected files.
