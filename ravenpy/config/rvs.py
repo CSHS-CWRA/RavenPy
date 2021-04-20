@@ -1,6 +1,7 @@
 import collections
 import datetime as dt
 from abc import ABC, abstractmethod
+from dataclasses import is_dataclass, replace
 from pathlib import Path
 from textwrap import dedent
 from typing import Optional, Tuple
@@ -9,7 +10,6 @@ import cf_xarray
 import cftime
 import numpy as np
 import xarray as xr
-from dataclasses import is_dataclass, replace
 
 from ravenpy.config.commands import (
     AvgAnnualRunoffCommand,
@@ -782,6 +782,8 @@ class RVT(RV):
                     raise Exception(
                         "Could not find an outlet subbasin for observation data"
                     )
+                # Set the :StationxIdx (which starts at 1)
+                cmd.index = self.nc_index + 1
                 d["observed_data"] = cmd
                 break
 

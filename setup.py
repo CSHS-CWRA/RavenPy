@@ -171,7 +171,7 @@ def create_external_deps_install_class(command_cls):
                 self.external_deps_path.mkdir(exist_ok=True)
 
                 url = "http://www.civil.uwaterloo.ca/jmai/raven/"
-                self.install_binary_dep(url, "raven", "Raven-rev312", "Raven.exe")
+                self.install_binary_dep(url, "raven", "Raven-rev318", "Raven.exe")
 
                 url = "https://github.com/usbr/ostrich/archive/refs/tags/"
                 self.install_binary_dep(
@@ -207,6 +207,7 @@ setup(
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
     ],
     description="A Python wrapper to setup and run the hydrologic modelling framework Raven.",
     entry_points={
@@ -236,7 +237,7 @@ setup(
         gis=gis_requirements,
     ),
     url="https://github.com/CSHS-CWRA/ravenpy",
-    version="0.4.0",
+    version="0.4.2",
     zip_safe=False,
     cmdclass={
         "install": create_external_deps_install_class(install),

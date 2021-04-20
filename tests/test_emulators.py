@@ -2,12 +2,12 @@ import datetime as dt
 import os
 import tempfile
 import zipfile
+from dataclasses import astuple, replace
 from pathlib import Path
 
 import numpy as np
 import pytest
 import xarray as xr
-from dataclasses import astuple, replace
 
 from ravenpy.config.commands import (
     ChannelProfileCommand,
@@ -32,7 +32,7 @@ from ravenpy.models import (
     MOHYSE,
     MOHYSE_OST,
     Raven,
-    RavenMultiModel,
+    RavenError,
     get_average_annual_runoff,
 )
 from ravenpy.utilities.testdata import get_local_testdata
@@ -83,8 +83,19 @@ salmon_land_hru_2 = dict(
 
 
 class TestGR4JCN:
-    def test_identifier(self):
-        assert GR4JCN().config.identifier == "gr4jcn"
+    def test_error(self):
+        model = GR4JCN()
+
+        model.config.rvp.params = model.Params(
+            0.529, -3.396, 407.29, 1.072, 16.9, 0.947
+        )
+
+        with pytest.raises(RavenError) as exc:
+            model(TS)
+
+        assert "CHydroUnit constructor:: HRU 1 has a negative or zero area" in str(
+            exc.value
+        )
 
     def test_simple(self):
         model = GR4JCN()
@@ -687,8 +698,8 @@ class TestGR4JCN:
         """Test Raven with DAP link instead of local netCDF file."""
         model = GR4JCN()
         config = dict(
-            start_date=dt.datetime(2000, 1, 1),
-            end_date=dt.datetime(2002, 1, 1),
+            start_date=dt.datetime(2000, 6, 1),
+            end_date=dt.datetime(2000, 6, 10),
             run_name="test",
             name="Salmon",
             hrus=(GR4JCN.LandHRU(**salmon_land_hru_1),),
@@ -699,6 +710,32 @@ class TestGR4JCN:
             f"{TDS}/raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
         )
         model(ts, **config)
+
+    @pytest.mark.online
+    def test_canopex(self):
+        CANOPEX_DAP = (
+            "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/birdhouse/ets"
+            "/Watersheds_5797_cfcompliant.nc"
+        )
+        model = GR4JCN()
+        config = dict(
+            name="WHITEMOUTH RIVER NEAR WHITEMOUTH",
+            start_date=dt.datetime(2010, 6, 1),
+            end_date=dt.datetime(2010, 6, 10),
+            nc_index=5600,
+            run_name="Test_run",
+            rain_snow_fraction="RAINSNOW_DINGMAN",
+            tasmax={"offset": -273.15},
+            tasmin={"offset": -273.15},
+            pr={"scale": 86400.0},
+            hrus=[
+                model.LandHRU(
+                    area=3650.47, latitude=49.51, longitude=-95.72, elevation=330.59
+                )
+            ],
+            params=model.Params(108.02, 2.8693, 25.352, 1.3696, 1.2483, 0.30679),
+        )
+        model(ts=CANOPEX_DAP, **config)
 
 
 class TestGR4JCN_OST:

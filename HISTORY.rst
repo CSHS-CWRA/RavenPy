@@ -2,6 +2,23 @@
 History
 =======
 
+0.4.2
+-----
+
+* Update to RavenC revision 318 to fix OPENDAP access for StationForcing commands.
+* Fix grid_weights set to None by default.
+* Pass nc_index to ObservationData command.
+* Expose more cleanly RavenC errors and warnings.
+
+0.4.1
+-----
+
+* Add notebook about hindcast verification skill.
+* Add notebook about routing capability.
+* Modify geoserver functions to have them return GeoJSON instead of GML.
+* Collect upstream watershed aggregation logic.
+* Fix RVC bug.
+
 0.4.0
 -----
 

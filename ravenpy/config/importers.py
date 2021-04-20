@@ -59,15 +59,24 @@ class RoutingProductShapefileImporter:
     MANNING_DEFAULT = 0.035
 
     def __init__(self, shapefile_path, hru_aspect_convention=HRU_ASPECT_CONVENTION):
-        if Path(shapefile_path).suffix == ".zip":
-            shapefile_path = f"zip://{shapefile_path}"
-        self._df = geopandas.read_file(shapefile_path)
+        if isinstance(shapefile_path, (Path, str)):
+            if Path(shapefile_path).suffix == ".zip":
+                shapefile_path = f"zip://{shapefile_path}"
+            self._df = geopandas.read_file(shapefile_path)
+        elif isinstance(shapefile_path, geopandas.GeoDataFrame):
+            self._df = shapefile_path
+
         self.hru_aspect_convention = hru_aspect_convention
 
-    def extract(self):
+    def extract(self, model=None):
         """
         This will extract the data from the Routing Product shapefile and
         return it as relevant Raven command data objects.
+
+        Parameters
+        ----------
+        model : Raven subclass
+          Emulator class used to customize HRU objects extracted.
 
         Returns
         -------
@@ -86,6 +95,7 @@ class RoutingProductShapefileImporter:
                Sequence of `commands.HRUsCommand.Record` objects
 
         """
+        self.model_cls = model
 
         subbasin_recs = []
         land_sb_ids = []
@@ -252,20 +262,33 @@ class RoutingProductShapefileImporter:
         else:
             assert False
 
-        return HRUsCommand.Record(
+        attrs = dict(
             hru_id=int(row["HRU_ID"]),
             area=row["HRU_Area"] / 1_000_000,
             elevation=row["HRU_E_mean"],
             latitude=row["HRU_CenY"],
             longitude=row["HRU_CenX"],
             subbasin_id=int(row["SubId"]),
-            land_use_class=row["LAND_USE_C"],
-            veg_class=row["VEG_C"],
-            soil_profile=row["SOIL_PROF"],
             aquifer_profile="[NONE]",
             terrain_class="[NONE]",
             slope=row["HRU_S_mean"],
             aspect=aspect,
+        )
+
+        if self.model_cls is not None:
+            # Instantiate HRUs with emulator specific land_use_class, veg_class and soil_profile names.
+            if row["LAND_USE_C"] == "Landuse_Land_HRU":
+                return self.model_cls.LandHRU(**attrs)
+
+            if row["LAND_USE_C"] == "Landuse_Lake_HRU":
+                return self.model_cls.LakeHRU(**attrs)
+
+        # Instantiate HRUs with generic land_use_class, veg_class and soil_profile names.
+        return HRUsCommand.Record(
+            land_use_class=row["LAND_USE_C"],
+            veg_class=row["VEG_C"],
+            soil_profile=row["SOIL_PROF"],
+            **attrs,
         )
 
 

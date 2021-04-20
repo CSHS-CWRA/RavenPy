@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 
 import ravenpy
-from ravenpy.models import Ostrich, Raven
+from ravenpy.models import Ostrich, Raven, RavenError
 from ravenpy.models.base import get_diff_level
 from ravenpy.utilities.testdata import get_local_testdata
 
@@ -29,6 +29,26 @@ class TestRaven:
         model = Raven()
         model.configure(rvp_tpl)
         assert model.config.identifier == Path(rvp_tpl.stem).stem
+
+    def test_raven_error(self):
+        rvs = get_local_testdata("raven-gr4j-cemaneige/raven-gr4j-salmon.rv?")
+        ts = get_local_testdata(
+            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
+        )
+
+        model = Raven()
+
+        model.configure(rvs)
+
+        # Set a typo in the RVH
+        model.config.rvh.content = model.config.rvh.content.replace(
+            ":SubBasins", ":Subbasins"
+        )
+
+        with pytest.raises(RavenError) as exc:
+            model(ts)
+
+        assert "Unrecognized command in .rvh file" in str(exc.value)
 
     def test_gr4j(self):
         rvs = get_local_testdata("raven-gr4j-cemaneige/raven-gr4j-salmon.rv?")

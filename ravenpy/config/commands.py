@@ -1,11 +1,11 @@
 import itertools
 import re
 from abc import ABC, abstractmethod
+from dataclasses import asdict, field
 from pathlib import Path
 from textwrap import dedent
 from typing import Any, Dict, Optional, Tuple, Union
 
-from dataclasses import asdict, field
 from pydantic.dataclasses import dataclass
 
 INDENT = " " * 4
@@ -29,7 +29,7 @@ class LinearTransform(RavenCommand):
     template = ":LinearTransform {scale:.15f} {offset:.15f}"
 
     def to_rv(self):
-        if (self.scale is not None) or (self.offset is not None):
+        if (self.scale != 1) or (self.offset != 0):
             return self.template.format(**asdict(self))
         return ""
 
@@ -244,12 +244,15 @@ class BaseDataCommand(RavenCommand):
     name: Optional[str] = ""
     units: Optional[str] = ""
     data_type: str = ""
-    file_name_nc: Path = ""
+    # Can be a url or a path; note that the order "str, Path" is important here because
+    # otherwise pydantic would try to coerce a string into a Path, which is a problem for a url
+    # because it messes with slashes; so a Path will be one only when explicitly specified
+    file_name_nc: Union[str, Path] = ""  # can be a URL
     var_name_nc: str = ""
     dim_names_nc: Tuple[str, ...] = ("time",)
     time_shift: Optional[int] = None  # in days
-    scale: Optional[float] = None
-    offset: Optional[float] = None
+    scale: float = 1
+    offset: float = 0
     deaccumulate: Optional[bool] = False
 
     @property
@@ -280,7 +283,7 @@ class BaseDataCommand(RavenCommand):
 
 @dataclass
 class DataCommand(BaseDataCommand):
-    index: int = 1
+    index: int = 1  # Indexing starts with 1.
     data_type: str = ""
     site: str = ""
     var: str = ""

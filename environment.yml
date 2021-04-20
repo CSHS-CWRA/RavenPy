@@ -4,8 +4,8 @@ channels:
 - conda-forge
 - defaults
 dependencies:
-  - raven
-  - ostrich
+  - raven ==3.0.4.318
+  - ostrich ==21.03.16
   - python>=3.7
   - affine
   - click
