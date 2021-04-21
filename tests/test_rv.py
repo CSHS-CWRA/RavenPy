@@ -7,8 +7,10 @@ import pytest
 
 import ravenpy
 from ravenpy.config.commands import (
+    BasinStateVariablesCommand,
     DeaccumulateCommand,
     GriddedForcingCommand,
+    HRUStateVariableTableCommand,
     MonthlyAverageCommand,
     RainCorrectionCommand,
     SnowCorrectionCommand,
@@ -65,17 +67,20 @@ class TestRVC:
     @classmethod
     def setup_class(self):
         sol = open(get_local_testdata("gr4j_cemaneige/solution.rvc")).read()
-        self.rvc = RVC(None)
-        self.rvc.set_from_solution(sol)
+        self.rvc = RVC.create_solution(sol)
 
     def test_parse(self):
-        assert self.rvc.hru_state.atmosphere == 821.98274
-        assert self.rvc.basin_state.qout == (1, 13.2166, 13.29232)
+        assert len(self.rvc.hru_states) == 1
+        assert self.rvc.hru_states[1].atmosphere == 821.98274
+        assert self.rvc.hru_states[1].atmos_precip == -1233.16
 
-    def test_write(self):
-        res = self.rvc.to_rv()
-        assert "1,0.0,821.98274" in res
-        assert ":BasinIndex 1 watershed" in res
+        assert len(self.rvc.basin_states) == 1
+        assert self.rvc.basin_states[1].channel_storage == 0
+        assert self.rvc.basin_states[1].qout == (1, 13.21660, 13.29232)
+
+    def test_format(self):
+        rv = self.rvc.to_rv()
+        assert ":BasinIndex 1 watershed" in rv
 
 
 class TestRVH:

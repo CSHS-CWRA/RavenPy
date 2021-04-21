@@ -614,6 +614,26 @@ class HRUStateVariableTableCommand(RavenCommand):
     """
     hru_states: Dict[int, Record] = field(default_factory=dict)
 
+    @classmethod
+    def parse(cls, sol):
+        pat = r"""
+        :HRUStateVariableTable
+        \s*:Attributes.*?
+        \s*:Units.*?
+        (.+)
+        :EndHRUStateVariableTable
+        """
+        m = re.search(dedent(pat).strip(), sol, re.DOTALL)
+        lines = m.group(1).strip().splitlines()
+        lines = [re.split(r",|\s+", line.strip()) for line in lines]
+        hru_states = {}
+        for line in lines:
+            idx, *values = line
+            idx = int(idx)
+            values = list(map(float, values))
+            hru_states[idx] = cls.Record(*([idx] + values))
+        return cls(hru_states)
+
     def to_rv(self):
         return dedent(self.template).format(
             hru_states="\n    ".join(map(str, self.hru_states.values()))
@@ -630,20 +650,42 @@ class BasinIndexCommand(RavenCommand):
 
     index: int = 1
     name: str = "watershed"
-    channelstorage: float = 0
-    rivuletstorage: float = 0
+    channel_storage: float = 0
+    rivulet_storage: float = 0
     qout: Tuple[float, ...] = (1, 0, 0)
     qin: Optional[Tuple[float, ...]] = None
     qlat: Optional[Tuple[float, ...]] = None
 
     template = """
     :BasinIndex {index} {name}
-        :ChannelStorage {channelstorage}
-        :RivuletStorage {rivuletstorage}
+        :ChannelStorage {channel_storage}
+        :RivuletStorage {rivulet_storage}
         {qout}
         {qin}
         {qlat}
         """
+
+    @classmethod
+    def parse(cls, s):
+        pat = r"""
+        :BasinIndex (.+?)
+        (.+)
+        """
+        m = re.search(dedent(pat).strip(), s, re.DOTALL)
+        index_name = re.split(r",|\s+", m.group(1).strip())
+        rec_values = {"index": index_name[0], "name": index_name[1]}
+        for line in m.group(2).strip().splitlines():
+            values = filter(None, re.split(r",|\s+", line.strip()))
+            cmd, *values = values
+            if cmd == ":ChannelStorage":
+                assert len(values) == 1
+                rec_values["channel_storage"] = float(values[0])
+            elif cmd == ":RivuletStorage":
+                assert len(values) == 1
+                rec_values["rivulet_storage"] = float(values[0])
+            else:
+                rec_values[cmd[1:].lower()] = tuple(values)
+        return cls(**rec_values)
 
     def to_rv(self):
         d = asdict(self)
@@ -667,6 +709,21 @@ class BasinStateVariablesCommand(RavenCommand):
         {basin_states_list}
     :EndBasinStateVariables
     """
+
+    @classmethod
+    def parse(cls, sol):
+        pat = r"""
+        :BasinStateVariables
+        (.+)
+        :EndBasinStateVariables
+        """
+        m = re.search(dedent(pat).strip(), sol, re.DOTALL)
+        bi_strings = filter(None, m.group(1).strip().split(":BasinIndex"))
+        basin_states = {}
+        for bi_string in bi_strings:
+            bi = BasinIndexCommand.parse(f":BasinIndex {bi_string}")
+            basin_states[bi.index] = bi
+        return cls(basin_states)
 
     def to_rv(self):
         return dedent(self.template).format(

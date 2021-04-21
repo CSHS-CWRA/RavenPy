@@ -434,7 +434,7 @@ class Raven:
         else:
             fn = solution
 
-        self.config.rvc.set_from_solution(Path(fn).read_text())
+        self.config.rvc.parse_solution(Path(fn).read_text())
 
     def parse_results(self, path=None, run_name=None):
         """Store output files in the self.outputs dictionary."""
@@ -626,10 +626,10 @@ class Raven:
     @property
     def solution(self):
         if self.outputs["solution"].suffix == ".rvc":
-            return RVC.parse_solution(self.outputs["solution"].read_text())
+            return RVC.create_solution(self.outputs["solution"].read_text())
         elif self.outputs["solution"].suffix == ".zip":
             return [
-                RVC.parse_solution(fn.read_text())
+                RVC.create_solution(fn.read_text())
                 for fn in self.ind_outputs["solution"]
             ]
 
@@ -644,10 +644,14 @@ class Raven:
           Set index value or None to get all basin states.
         """
         solution = self.solution
-        if isinstance(solution, dict):
-            return RVC.get_states(solution, hru_index, basin_index)
+        if isinstance(solution, RVC):
+            return solution.hru_states[hru_index], solution.basin_states[basin_index]
         else:
-            return zip(*[RVC.get_states(s, hru_index, basin_index) for s in solution])
+            states = [
+                (sol.hru_states[hru_index], sol.basin_states[basin_index])
+                for sol in solution
+            ]
+            return zip(*states)
 
     @property
     def diagnostics(self):

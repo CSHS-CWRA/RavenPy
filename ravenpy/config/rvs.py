@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from dataclasses import is_dataclass, replace
 from pathlib import Path
 from textwrap import dedent
-from typing import Optional, Tuple
+from typing import Dict, Optional, Tuple
 
 import cf_xarray
 import cftime
@@ -100,8 +100,8 @@ class RVC(RV):
 
     def __init__(self, config):
         super().__init__(config)
-        self.hru_states = {}
-        self.basin_states = {}
+        self.hru_states: Dict[int, HRUState] = {}
+        self.basin_states: Dict[int, BasinIndexCommand] = {}
 
     def reset(self, **kwargs):
         self.hru_states = {}
@@ -123,99 +123,15 @@ class RVC(RV):
     def basin_state(self, value):
         self.basin_states[1] = value
 
-    @staticmethod
-    def parse_solution(solution_str):
-        def _parser(lines, indent="", fmt=str):
-            import itertools
-            import re
+    @classmethod
+    def create_solution(cls, solution_str):
+        rvc = RVC(None)
+        rvc.parse_solution(solution_str)
+        return rvc
 
-            header_pat = re.compile(r"(\s*):(\w+)\s?,?\s*(.*)")
-
-            out = collections.defaultdict(dict)
-            old_key = None
-            for line in lines:
-                header = header_pat.match(line)
-                if header:
-                    new_indent, key, value = header.groups()
-                    if new_indent > indent:
-                        out[old_key] = _parser(
-                            itertools.chain([line], lines), new_indent
-                        )
-                    elif new_indent < indent:
-                        return out
-                    else:
-                        if key == "BasinIndex":
-                            i, name = value.split(",")
-                            i = int(i)
-                            out[key][i] = dict(
-                                index=i,
-                                name=name,
-                                **_parser(lines, new_indent + "  ", float),
-                            )
-                        # elif key in ["Qlat", "Qout"]:
-                        #     n, *values, last = value.split(",")
-                        #     out[key] = list(map(float, values))
-                        #     out[key + "Last"] = float(last)
-                        elif key in ["Qin", "Qout", "Qlat"]:
-                            n, *values = value.split(",")
-                            out[key] = (int(n),) + tuple(map(float, values))
-                        else:
-                            out[key] = (
-                                list(map(fmt, value.split(",")))
-                                if "," in value
-                                else fmt(value)
-                            )
-
-                    old_key = key
-                else:
-                    data = line.split(",")
-                    i = int(data.pop(0))
-                    out["data"][i] = [i] + list(map(float, data))
-
-            return out
-
-        lines = iter(solution_str.splitlines())
-        return _parser(lines)
-
-    @staticmethod
-    def get_states(solution, hru_index=None, basin_index=None):
-        """Return state variables.
-        Parameters
-        ----------
-        solution : dict
-          `solution.rvc` parsed content.
-        """
-        hru_state = {}
-        basin_state = {}
-
-        for index, params in solution["HRUStateVariableTable"]["data"].items():
-            hru_state[index] = HRUState(*params)
-
-        for index, raw in solution["BasinStateVariables"]["BasinIndex"].items():
-            params = {k.lower(): v for (k, v) in raw.items()}
-            basin_state[index] = BasinIndexCommand(**params)
-
-        if hru_index is not None:
-            hru_state = hru_state[hru_index]
-
-        if basin_index is not None:
-            basin_state = basin_state[basin_index]
-
-        return hru_state, basin_state
-
-    def set_from_solution(self, solution_str):
-
-        solution_objs = RVC.parse_solution(solution_str)
-
-        self.hru_states = {}
-        self.basin_states = {}
-
-        for index, params in solution_objs["HRUStateVariableTable"]["data"].items():
-            self.hru_states[index] = HRUStateVariableTableCommand.Record(*params)
-
-        for index, raw in solution_objs["BasinStateVariables"]["BasinIndex"].items():
-            params = {k.lower(): v for (k, v) in raw.items()}
-            self.basin_states[index] = BasinIndexCommand(**params)
+    def parse_solution(self, solution_str):
+        self.hru_states = HRUStateVariableTableCommand.parse(solution_str).hru_states
+        self.basin_states = BasinStateVariablesCommand.parse(solution_str).basin_states
 
     def to_rv(self):
         d = {

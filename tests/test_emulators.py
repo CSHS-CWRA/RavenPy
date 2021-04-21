@@ -169,7 +169,7 @@ class TestGR4JCN:
         # ------------
         # Check saved HRU states saved in RVC
         # ------------
-        assert 1 in model.solution["HRUStateVariableTable"]["data"]
+        assert 1 in model.solution.hru_states
 
         # ------------
         # Check attributes
@@ -597,7 +597,7 @@ class TestGR4JCN:
         # 2. Replace variable in RVC class by parsed values: model.rvc.parse(rvc.read_text())
         # I think in many cases option 2 will prove simpler.
 
-        model.config.rvc.set_from_solution(rvc.read_text())
+        model.config.rvc.parse_solution(rvc.read_text())
 
         model(
             TS,

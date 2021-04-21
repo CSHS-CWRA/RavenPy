@@ -46,7 +46,7 @@ class TestHindcasting:
         # data provided in the testdata above. Then the dates will not work, and the model errors.
         model = GR4JCN()
 
-        model.config.rvc.set_from_solution(rvc.read_text())
+        model.config.rvc.parse_solution(rvc.read_text())
 
         # And run the model with the forecast data.
         model(
