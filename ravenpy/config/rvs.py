@@ -107,21 +107,11 @@ class RVC(RV):
         self.hru_states = {}
         self.basin_states = {}
 
-    @property
-    def hru_state(self):
-        return self.hru_states.get(1, None)
+    def set_hru_state(self, hru_state: HRUState):
+        self.hru_states[hru_state.index] = hru_state
 
-    @hru_state.setter
-    def hru_state(self, value):
-        self.hru_states[1] = value
-
-    @property
-    def basin_state(self):
-        return self.basin_states.get(1, None)
-
-    @basin_state.setter
-    def basin_state(self, value):
-        self.basin_states[1] = value
+    def set_basin_state(self, basin_state: BasinIndexCommand):
+        self.basin_states[basin_state.index] = basin_state
 
     @classmethod
     def create_solution(cls, solution_str):

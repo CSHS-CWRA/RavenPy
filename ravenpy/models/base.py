@@ -385,7 +385,12 @@ class Raven:
         for self.psim in range(nloops):
             for key, val in pdict.items():
                 if val[self.psim] is not None:
-                    self.config.update(key, val[self.psim])
+                    if key == "hru_state":
+                        self.config.rvc.set_hru_state(val[self.psim])
+                    elif key == "basin_state":
+                        self.config.rvc.set_basin_state(val[self.psim])
+                    else:
+                        self.config.update(key, val[self.psim])
 
             cmd = self.setup_model_run(tuple(map(Path, ts)))
 
