@@ -65,7 +65,7 @@ coverage: ## check code coverage quickly with the default Python
 
 docs: ## generate Sphinx HTML documentation, including API docs
 	# Warning: as the sphinx-apidoc is NOT being run on the RTD server the workaround we have
-	# is to commit the (currently 5) rst files it generates.
+	# is to commit the (currently 8) rst files it generates.
 	sphinx-apidoc -d 10 -o docs/ ravenpy
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
