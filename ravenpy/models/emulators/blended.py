@@ -3,7 +3,14 @@ from pathlib import Path
 
 from pydantic.dataclasses import dataclass
 
-from ravenpy.config.commands import HRU, LU, BasinIndexCommand, HRUState, Sub
+from ravenpy.config.commands import (
+    HRU,
+    LU,
+    BasinIndexCommand,
+    HRUState,
+    RainSnowFraction,
+    Sub,
+)
 from ravenpy.models.base import Ostrich, Raven
 
 from .gr4jcn import GR4JCN
@@ -97,7 +104,7 @@ class BLENDED(Raven):
                 LU("FOREST", impermeable_frac=0.0, forest_coverage=0.02345),
             ),
             evaporation="PET_OUDIN",
-            rain_snow_fraction="RAINSNOW_HBV",
+            rain_snow_fraction=RainSnowFraction.HBV,
         )
 
         #########
@@ -232,7 +239,7 @@ class BLENDED(Raven):
         :Method                ORDERED_SERIES
 
         :PotentialMeltMethod     POTMELT_HMETS
-        :RainSnowFraction        {rain_snow_fraction}  # RAINSNOW_HBV
+        {rain_snow_fraction}
         :Evaporation             {evaporation}         # PET_OUDIN
         :CatchmentRoute          ROUTE_DUMP
         :Routing                 ROUTE_NONE
@@ -424,7 +431,7 @@ class BLENDED_OST(Ostrich, BLENDED):
         :Method                ORDERED_SERIES
 
         :PotentialMeltMethod     POTMELT_HMETS
-        :RainSnowFraction        {rain_snow_fraction}  # RAINSNOW_HBV
+        {rain_snow_fraction}
         :Evaporation             {evaporation}         # PET_OUDIN
         :CatchmentRoute          ROUTE_DUMP
         :Routing                 ROUTE_NONE

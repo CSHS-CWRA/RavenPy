@@ -2,6 +2,7 @@ import itertools
 import re
 from abc import ABC, abstractmethod
 from dataclasses import asdict, field
+from enum import Enum
 from pathlib import Path
 from textwrap import dedent
 from typing import Any, Dict, Optional, Tuple, Union
@@ -904,3 +905,24 @@ class AvgAnnualRunoffCommand(RavenCommand):
         if self.value is None:
             return ""
         return self.template.format(**asdict(self))
+
+
+@dataclass
+class RainSnowFractionCommand(RavenCommand):
+    class Values(Enum):
+        DATA = "RAINSNOW_DATA"
+        DINGMAN = "RAINSNOW_DINGMAN"
+        UBC = "RAINSNOW_UBC"
+        HBV = "RAINSNOW_HBV"
+        HARDER = "RAINSNOW_HARDER"
+        HSPF = "RAINSNOW_HSPF"
+
+    value: Values = Values.DATA
+
+    template = ":RainSnowFraction {value.value}"
+
+    def to_rv(self):
+        return self.template.format(**asdict(self))
+
+
+RainSnowFraction = RainSnowFractionCommand.Values

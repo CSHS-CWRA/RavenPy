@@ -27,6 +27,8 @@ from ravenpy.config.commands import (
     MonthlyAverageCommand,
     ObservationDataCommand,
     RainCorrectionCommand,
+    RainSnowFraction,
+    RainSnowFractionCommand,
     RoutingCommand,
     SnowCorrectionCommand,
     SoilClassesCommand,
@@ -197,15 +199,6 @@ class RVI(RV):
     tmpl = """
     """
 
-    RAIN_SNOW_FRACTION_OPTIONS = (
-        "RAINSNOW_DATA",
-        "RAINSNOW_DINGMAN",
-        "RAINSNOW_UBC",
-        "RAINSNOW_HBV",
-        "RAINSNOW_HARDER",
-        "RAINSNOW_HSPF",
-    )
-
     EVAPORATION_OPTIONS = (
         "PET_CONSTANT",
         "PET_PENMAN_MONTEITH",
@@ -250,7 +243,7 @@ class RVI(RV):
         self._start_date = None
         self._end_date = None
         self._now = None
-        self._rain_snow_fraction = "RAINSNOW_DATA"
+        self._rain_snow_fraction = RainSnowFraction.DATA
         self._evaporation = None
         self._ow_evaporation = None
         self._duration = 1
@@ -367,27 +360,11 @@ class RVI(RV):
     @property
     def rain_snow_fraction(self):
         """Rain snow partitioning."""
-        return self._rain_snow_fraction
+        return RainSnowFractionCommand(self._rain_snow_fraction)
 
     @rain_snow_fraction.setter
-    def rain_snow_fraction(self, value):
-        """Can be one of
-
-        - RAINSNOW_DATA
-        - RAINSNOW_DINGMAN
-        - RAINSNOW_UBC
-        - RAINSNOW_HBV
-        - RAINSNOW_HARDER
-        - RAINSNOW_HSPF
-        """
-        v = value.upper()
-
-        if v in RVI.RAIN_SNOW_FRACTION_OPTIONS:
-            self._rain_snow_fraction = v
-        else:
-            raise ValueError(
-                f"Value should be one of {RVI.RAIN_SNOW_FRACTION_OPTIONS}."
-            )
+    def rain_snow_fraction(self, value: RainSnowFraction):
+        self._rain_snow_fraction = value
 
     @property
     def evaporation(self):

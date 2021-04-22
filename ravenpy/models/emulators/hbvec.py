@@ -173,7 +173,7 @@ class HBVEC(Raven):
         :SWCloudCorrect      	    SW_CLOUD_CORR_NONE
         :SWCanopyCorrect     	    SW_CANOPY_CORR_NONE
         :LWRadiationMethod   	    LW_RAD_DEFAULT
-        :RainSnowFraction    	    {rain_snow_fraction}  # RAINSNOW_HBV
+        {rain_snow_fraction}
         :PotentialMeltMethod 	    POTMELT_HBV
         :OroTempCorrect      	    OROCORR_HBV
         :OroPrecipCorrect    	    OROCORR_HBV

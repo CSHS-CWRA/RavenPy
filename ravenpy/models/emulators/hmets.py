@@ -2,7 +2,14 @@ from pathlib import Path
 
 from pydantic.dataclasses import dataclass
 
-from ravenpy.config.commands import HRU, LU, BasinIndexCommand, HRUState, Sub
+from ravenpy.config.commands import (
+    HRU,
+    LU,
+    BasinIndexCommand,
+    HRUState,
+    RainSnowFraction,
+    Sub,
+)
 from ravenpy.models.base import Ostrich, Raven
 
 
@@ -169,7 +176,7 @@ class HMETS(Raven):
         :Method                ORDERED_SERIES
 
         :PotentialMeltMethod     POTMELT_HMETS
-        :RainSnowFraction        {rain_snow_fraction}
+        {rain_snow_fraction}
         :Evaporation             {evaporation}  # PET_OUDIN
         :CatchmentRoute          ROUTE_DUMP
         :Routing                 ROUTE_NONE
@@ -219,7 +226,7 @@ class HMETS(Raven):
         self.config.rvi.set_tmpl(rvi_tmpl)
 
         self.config.rvi.evaporation = "PET_OUDIN"
-        self.config.rvi.rain_snow_fraction = "RAINSNOW_DATA"
+        self.config.rvi.rain_snow_fraction = RainSnowFraction.DATA
 
         #########
         # R V C #
