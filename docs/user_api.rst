@@ -20,21 +20,41 @@ Base Models
 Emulators
 =========
 
-.. automodule::  ravenpy.models.emulators
+.. automodule::  ravenpy.models.emulators.blended
+   :members:
+   :noindex:
+
+.. automodule::  ravenpy.models.emulators.gr4jcn
+   :members:
+   :noindex:
+
+.. automodule::  ravenpy.models.emulators.hbvec
+   :members:
+   :noindex:
+
+.. automodule::  ravenpy.models.emulators.hmets
+   :members:
+   :noindex:
+
+.. automodule::  ravenpy.models.emulators.mohyse
    :members:
    :noindex:
 
 Configuration
 =============
 
-.. automodule::  ravenpy.config
+.. automodule::  ravenpy.config.commands
+   :members:
+   :noindex:
+
+.. automodule::  ravenpy.config.rvs
    :members:
    :noindex:
 
 Extractors
 ==========
 
-.. automodule::  ravenpy.extractors
+.. automodule::  ravenpy.extractors.routing_product
    :members:
    :noindex:
 
