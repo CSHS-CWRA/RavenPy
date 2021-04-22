@@ -21,29 +21,14 @@ import numpy as np
 
 from ravenpy.config.commands import (
     ChannelProfileCommand,
-    DataCommand,
-    GriddedForcingCommand,
     GridWeightsCommand,
     HRUsCommand,
-    ObservationDataCommand,
     ReservoirCommand,
-    StationForcingCommand,
     SubBasinsCommand,
 )
 
-grid_weight_importer_params = dict(
-    DIM_NAMES=("lon_dim", "lat_dim"),
-    VAR_NAMES=("lon", "lat"),
-    ROUTING_ID_FIELD="HRU_ID",
-    NETCDF_INPUT_FIELD="NetCDF_col",
-    AREA_ERROR_THRESHOLD=0.05,
-)
 
-
-HRU_ASPECT_CONVENTION = "GRASS"  # GRASS | ArcGIS
-
-
-class RoutingProductShapefileImporter:
+class RoutingProductShapefileExtractor:
 
     """
     This is a class to encapsulate the logic of converting the Routing
@@ -57,6 +42,7 @@ class RoutingProductShapefileImporter:
     USE_LAND_AS_GAUGE = False
     USE_MANNING_COEFF = False
     MANNING_DEFAULT = 0.035
+    HRU_ASPECT_CONVENTION = "GRASS"  # GRASS | ArcGIS
 
     def __init__(self, shapefile_path, hru_aspect_convention=HRU_ASPECT_CONVENTION):
         if isinstance(shapefile_path, (Path, str)):
@@ -146,7 +132,7 @@ class RoutingProductShapefileImporter:
         # is_lake = row["HRU_IsLake"] >= 0
         river_length_in_kms = 0 if is_lake else round(row["Rivlen"] / 1000, 5)
         # river_slope = max(
-        #     row["RivSlope"], RoutingProductShapefileImporter.MAX_RIVER_SLOPE
+        #     row["RivSlope"], RoutingProductShapefileExtractor.MAX_RIVER_SLOPE
         # )
         # downstream_id
         downstream_id = int(row["DowSubId"])
@@ -155,7 +141,7 @@ class RoutingProductShapefileImporter:
         elif downstream_id not in subbasin_ids:
             downstream_id = -1
         gauged = row["IsObs"] > 0 or (
-            is_lake and RoutingProductShapefileImporter.USE_LAKE_AS_GAUGE
+            is_lake and RoutingProductShapefileExtractor.USE_LAKE_AS_GAUGE
         )
         rec = SubBasinsCommand.Record(
             subbasin_id=subbasin_id,
@@ -175,7 +161,7 @@ class RoutingProductShapefileImporter:
             subbasin_id=int(row["SubId"]),
             hru_id=int(row["HRU_ID"]),
             name=f"Lake_{lake_id}",
-            weir_coefficient=RoutingProductShapefileImporter.WEIR_COEFFICIENT,
+            weir_coefficient=RoutingProductShapefileExtractor.WEIR_COEFFICIENT,
             crest_width=row["BkfWidth"],
             max_depth=row["LakeDepth"],
             lake_area=row["HRU_Area"],
@@ -183,7 +169,7 @@ class RoutingProductShapefileImporter:
 
     def _extract_channel_profile(self, row) -> ChannelProfileCommand:
         subbasin_id = int(row["SubId"])
-        slope = max(row["RivSlope"], RoutingProductShapefileImporter.MAX_RIVER_SLOPE)
+        slope = max(row["RivSlope"], RoutingProductShapefileExtractor.MAX_RIVER_SLOPE)
 
         # SWAT: top width of channel when filled with water; bankfull width W_bnkfull
         channel_width = max(row["BkfWidth"], 1)
@@ -230,10 +216,10 @@ class RoutingProductShapefileImporter:
             (2 * sidwdfp + 4 * channel_width + 2 * sidwd + botwd, zfld),
         ]
 
-        if RoutingProductShapefileImporter.USE_MANNING_COEFF:
+        if RoutingProductShapefileExtractor.USE_MANNING_COEFF:
             mann = channeln
         else:
-            mann = RoutingProductShapefileImporter.MANNING_DEFAULT
+            mann = RoutingProductShapefileExtractor.MANNING_DEFAULT
 
         # roughness zones of channel and floodplain
         roughness_zones = [
@@ -292,12 +278,17 @@ class RoutingProductShapefileImporter:
         )
 
 
-class RoutingProductGridWeightImporter:
+class RoutingProductGridWeightExtractor:
 
     """
     The original version of this algorithm can be found at: https://github.com/julemai/GridWeightsGenerator
     """
 
+    DIM_NAMES = ("lon_dim", "lat_dim")
+    VAR_NAMES = ("lon", "lat")
+    ROUTING_ID_FIELD = "HRU_ID"
+    NETCDF_INPUT_FIELD = "NetCDF_col"
+    AREA_ERROR_THRESHOLD = 0.05
     CRS_LLDEG = 4326  # EPSG id of lat/lon (deg) coordinate reference system (CRS)
     CRS_CAEA = 3573  # EPSG id of equal-area coordinate reference system (CRS)
 
@@ -305,13 +296,13 @@ class RoutingProductGridWeightImporter:
         self,
         input_file_path,
         routing_file_path,
-        dim_names=grid_weight_importer_params["DIM_NAMES"],
-        var_names=grid_weight_importer_params["VAR_NAMES"],
-        routing_id_field=grid_weight_importer_params["ROUTING_ID_FIELD"],
-        netcdf_input_field=grid_weight_importer_params["NETCDF_INPUT_FIELD"],
+        dim_names=DIM_NAMES,
+        var_names=VAR_NAMES,
+        routing_id_field=ROUTING_ID_FIELD,
+        netcdf_input_field=NETCDF_INPUT_FIELD,
         gauge_ids=None,
         sub_ids=None,
-        area_error_threshold=grid_weight_importer_params["AREA_ERROR_THRESHOLD"],
+        area_error_threshold=AREA_ERROR_THRESHOLD,
     ):
         self._dim_names = tuple(dim_names)
         self._var_names = tuple(var_names)
@@ -355,7 +346,7 @@ class RoutingProductGridWeightImporter:
 
         # WGS 84 / North Pole LAEA Canada
         self._routing_data = self._routing_data.to_crs(
-            epsg=RoutingProductGridWeightImporter.CRS_CAEA
+            epsg=RoutingProductGridWeightExtractor.CRS_CAEA
         )
 
         def keep_only_valid_downsubid_and_obs_nm(g):
@@ -568,7 +559,7 @@ class RoutingProductGridWeightImporter:
             # input data is a shapefile
 
             self._input_data = self._input_data.to_crs(
-                epsg=RoutingProductGridWeightImporter.CRS_CAEA
+                epsg=RoutingProductGridWeightExtractor.CRS_CAEA
             )
 
             self._nlon = 1  # only for consistency
@@ -635,7 +626,7 @@ class RoutingProductGridWeightImporter:
                         ]
 
                     tmp = self._shape_to_geometry(
-                        gridcell_edges, epsg=RoutingProductGridWeightImporter.CRS_CAEA
+                        gridcell_edges, epsg=RoutingProductGridWeightExtractor.CRS_CAEA
                     )
                     grid_cell_geom_gpd_wkt[ilat][ilon] = tmp
 
@@ -730,7 +721,7 @@ class RoutingProductGridWeightImporter:
         if epsg:
             source = osr.SpatialReference()
             # usual lat/lon projection
-            source.ImportFromEPSG(RoutingProductGridWeightImporter.CRS_LLDEG)
+            source.ImportFromEPSG(RoutingProductGridWeightExtractor.CRS_LLDEG)
 
             target = osr.SpatialReference()
             target.ImportFromEPSG(epsg)  # any projection to convert to

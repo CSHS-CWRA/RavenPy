@@ -15,11 +15,11 @@ from ravenpy.config.commands import (
     RainCorrectionCommand,
     SnowCorrectionCommand,
 )
-from ravenpy.config.importers import (
-    RoutingProductGridWeightImporter,
-    RoutingProductShapefileImporter,
-)
 from ravenpy.config.rvs import OST, RVC, RVH, RVI, RVP, RVT
+from ravenpy.extractors import (
+    RoutingProductGridWeightExtractor,
+    RoutingProductShapefileExtractor,
+)
 from ravenpy.utilities.testdata import get_local_testdata
 
 
@@ -87,8 +87,8 @@ class TestRVH:
     @classmethod
     def setup_class(self):
         shp = get_local_testdata("raven-routing-sample/finalcat_hru_info.zip")
-        importer = RoutingProductShapefileImporter(shp)
-        config = importer.extract()
+        extractor = RoutingProductShapefileExtractor(shp)
+        config = extractor.extract()
         self.rvh = RVH(None)
         for k, v in config.items():
             if k != "channel_profiles":
@@ -129,8 +129,8 @@ class TestRVP:
     @classmethod
     def setup_class(self):
         shp = get_local_testdata("raven-routing-sample/finalcat_hru_info.zip")
-        importer = RoutingProductShapefileImporter(shp)
-        config = importer.extract()
+        extractor = RoutingProductShapefileExtractor(shp)
+        config = extractor.extract()
         self.rvp = RVP(None)
         self.rvp.tmpl = "{channel_profiles}"
         self.rvp.channel_profiles = config["channel_profiles"]
@@ -150,8 +150,8 @@ class TestRVT:
     def setup_class(self):
         input_file = get_local_testdata("raven-routing-sample/VIC_streaminputs.nc")
         routing_file = get_local_testdata("raven-routing-sample/finalcat_hru_info.zip")
-        importer = RoutingProductGridWeightImporter(input_file, routing_file)
-        gws = importer.extract()
+        extractor = RoutingProductGridWeightExtractor(input_file, routing_file)
+        gws = extractor.extract()
         self.gfc = GriddedForcingCommand(grid_weights=gws)
 
     def test_import_process(self):

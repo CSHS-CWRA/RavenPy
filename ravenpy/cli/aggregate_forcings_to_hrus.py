@@ -3,7 +3,7 @@ from pathlib import Path
 import click
 
 from ravenpy.config.commands import GridWeightsCommand
-from ravenpy.config.importers import grid_weight_importer_params
+from ravenpy.extractors.routing_product import RoutingProductGridWeightExtractor
 
 
 @click.command()
@@ -14,7 +14,7 @@ from ravenpy.config.importers import grid_weight_importer_params
     "--dim-names",
     nargs=2,
     type=click.Tuple([str, str]),
-    default=grid_weight_importer_params["DIM_NAMES"],
+    default=RoutingProductGridWeightExtractor.DIM_NAMES,
     show_default=True,
     help="Ordered dimension names of longitude (x) and latitude (y) in the NetCDF INPUT_NC_FILE.",
 )

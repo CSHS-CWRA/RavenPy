@@ -8,9 +8,9 @@ from ravenpy.config.commands import (
     SoilProfilesCommand,
     VegetationClassesCommand,
 )
-from ravenpy.config.importers import (
-    RoutingProductGridWeightImporter,
-    RoutingProductShapefileImporter,
+from ravenpy.extractors.routing_product import (
+    RoutingProductGridWeightExtractor,
+    RoutingProductShapefileExtractor,
 )
 from ravenpy.models import Raven
 from ravenpy.utilities.testdata import get_local_testdata
@@ -116,10 +116,10 @@ class TestRouting:
         # RVH #
         #######
 
-        rvh_importer = RoutingProductShapefileImporter(
+        rvh_extractor = RoutingProductShapefileExtractor(
             routing_product_shp_path, hru_aspect_convention="ArcGIS"
         )
-        rvh_config = rvh_importer.extract()
+        rvh_config = rvh_extractor.extract()
         channel_profiles = rvh_config.pop("channel_profiles")
 
         gauge = [sb for sb in rvh_config["subbasins"] if sb.gauged]
@@ -182,11 +182,11 @@ class TestRouting:
         # RVT #
         #######
 
-        streaminputs_importer = RoutingProductGridWeightImporter(
+        streaminputs_extractor = RoutingProductGridWeightExtractor(
             vic_streaminputs_nc_path, routing_product_shp_path
         )
 
-        temperatures_importer = RoutingProductGridWeightImporter(
+        temperatures_extractor = RoutingProductGridWeightExtractor(
             vic_temperatures_nc_path, routing_product_shp_path
         )
 
@@ -198,7 +198,7 @@ class TestRouting:
             dim_names_nc=("lon_dim", "lat_dim", "time"),
             scale=4.0,
             offset=0,
-            grid_weights=streaminputs_importer.extract(),
+            grid_weights=streaminputs_extractor.extract(),
         )
 
         model.config.rvt.add_nc_variable(
@@ -207,7 +207,7 @@ class TestRouting:
             file_name_nc=vic_temperatures_nc_path.name,
             var_name_nc="Avg_temp",
             dim_names_nc=("lon_dim", "lat_dim", "time"),
-            grid_weights=temperatures_importer.extract(),
+            grid_weights=temperatures_extractor.extract(),
         )
 
         model.config.rvt.add_nc_variable(
