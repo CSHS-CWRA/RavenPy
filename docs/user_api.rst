@@ -2,7 +2,7 @@
 User API
 ========
 
-Base models
+Base Models
 ===========
 
 .. autoclass:: ravenpy.models.base.Raven
@@ -24,26 +24,19 @@ Emulators
    :members:
    :noindex:
 
+Configuration
+=============
 
-Configuration options
-=====================
-
-.. automodule::  ravenpy.models.rv
+.. automodule::  ravenpy.config
    :members:
    :noindex:
 
-.. automodule::  ravenpy.models.commands
+Extractors
+==========
+
+.. automodule::  ravenpy.extractors
    :members:
    :noindex:
-
-
-Importers
-=========
-
-.. automodule::  ravenpy.models.importers
-   :members:
-   :noindex:
-
 
 Utilities
 =========

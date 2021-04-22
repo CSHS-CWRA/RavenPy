@@ -15,6 +15,7 @@ dependencies:
   - ipython
   - ipykernel
   - jupyter_client
+  - pydantic
   - sphinx-click
   - sphinx_rtd_theme
   - sphinx-autoapi
