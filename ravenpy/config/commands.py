@@ -112,8 +112,6 @@ class HRUsCommand(RavenCommand):
         terrain_class: str = ""
         slope: float = 0.0
         aspect: float = 0.0
-        # This can be used instead of sub-typing in serialization contexts
-        _hru_type: Optional[str] = "land"  # land | lake
 
         def to_rv(self):
             d = asdict(self)

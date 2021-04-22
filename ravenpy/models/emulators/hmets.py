@@ -47,7 +47,6 @@ class HMETS(Raven):
         soil_profile: str = "DEFAULT_P"
         aquifer_profile: str = "[NONE]"
         terrain_class: str = "[NONE]"
-        # _hru_type: str = "land"
 
     def __init__(self, *args, **kwds):
         super().__init__(*args, **kwds)
