@@ -14,12 +14,32 @@ VALUE_PADDING = 10
 
 
 class RavenCommand(ABC):
-    def __str__(self):
-        return self.to_rv()
+    """
+    This base class must be used for all Raven commands that are dataclasses
+    which must implement some specialized rendering logic.
+    """
 
     @abstractmethod
     def to_rv(self):
         pass
+
+    def __str__(self):
+        return self.to_rv()
+
+
+class RavenOptionCommand(Enum):
+    """
+    This alternate base class allows to create Raven commands that are based on
+    a simple set of Enum options.
+    """
+
+    def to_rv(self):
+        cmd = f":{self.__class__.__name__}"
+        cmd = cmd.replace("Command", "")
+        return f"{cmd} {self.value}"
+
+    def __str__(self):
+        return self.to_rv()
 
 
 @dataclass
@@ -907,22 +927,13 @@ class AvgAnnualRunoffCommand(RavenCommand):
         return self.template.format(**asdict(self))
 
 
-@dataclass
-class RainSnowFractionCommand(RavenCommand):
-    class Values(Enum):
-        DATA = "RAINSNOW_DATA"
-        DINGMAN = "RAINSNOW_DINGMAN"
-        UBC = "RAINSNOW_UBC"
-        HBV = "RAINSNOW_HBV"
-        HARDER = "RAINSNOW_HARDER"
-        HSPF = "RAINSNOW_HSPF"
-
-    value: Values = Values.DATA
-
-    template = ":RainSnowFraction {value.value}"
-
-    def to_rv(self):
-        return self.template.format(**asdict(self))
+class RainSnowFractionCommand(RavenOptionCommand):
+    DATA = "RAINSNOW_DATA"
+    DINGMAN = "RAINSNOW_DINGMAN"
+    UBC = "RAINSNOW_UBC"
+    HBV = "RAINSNOW_HBV"
+    HARDER = "RAINSNOW_HARDER"
+    HSPF = "RAINSNOW_HSPF"
 
 
-RainSnowFraction = RainSnowFractionCommand.Values
+RainSnowFraction = RainSnowFractionCommand
