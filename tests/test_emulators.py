@@ -2,12 +2,12 @@ import datetime as dt
 import os
 import tempfile
 import zipfile
+from dataclasses import replace
 from pathlib import Path
 
 import numpy as np
 import pytest
 import xarray as xr
-from dataclasses import replace
 
 from ravenpy.models import (
     GR4JCN,

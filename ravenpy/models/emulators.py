@@ -1,8 +1,8 @@
 from collections import defaultdict, namedtuple
+from dataclasses import dataclass
 from pathlib import Path
 
 import xarray as xr
-from dataclasses import dataclass
 
 from .base import Ostrich, Raven
 from .commands import BasinIndexCommand, MonthlyAverageCommand
@@ -221,7 +221,7 @@ class MOHYSE_OST(Ostrich, MOHYSE):
         )
 
     def derived_parameters(self):
-        """  Derived parameters are computed by Ostrich.  """
+        """Derived parameters are computed by Ostrich."""
         pass
 
 
