@@ -65,10 +65,6 @@ class BLENDED(Raven):
 
     @dataclass
     class DerivedParams:
-        TOPSOIL_mm: float = None
-        PHREATIC_mm: float = None
-        TOPSOIL_hlf: float = None
-        PHREATIC_hlf: float = None
         POW_X04: float = None
         POW_X11: float = None
         SUM_X09_X10: float = None
@@ -314,43 +310,7 @@ class BLENDED(Raven):
 
         self.config.rvi.params = self.config.rvp.params
 
-        #########
-        # R V C #
-        #########
-
-        rvc_tmpl = """
-        # initialize to 1/2 full
-        # x(29)*1000/2
-        :UniformInitialConditions SOIL[0] {TOPSOIL_hlf}
-        # x(30)*1000/2
-        :UniformInitialConditions SOIL[1] {PHREATIC_hlf}
-
-        :HRUStateVariableTable (formerly :InitialConditionsTable)
-           :Attributes SOIL[0] SOIL[1]
-           :Units mm mm
-           1 {TOPSOIL_hlf} {PHREATIC_hlf}
-           # x(29)*1000/2       x(30)*1000/2
-        :EndHRUStateVariableTable
-        """
-        self.config.rvc.set_tmpl(rvc_tmpl)
-
-        self.config.rvc.soil0 = None
-        self.config.rvc.soil1 = None
-        self.config.rvc.basin_states[1] = BasinIndexCommand()
-
     def derived_parameters(self):
-        self.config.rvp.derived_params.TOPSOIL_hlf = (
-            self.config.rvp.params.par_x29 * 0.5 * 1000.0
-        )
-        self.config.rvp.derived_params.PHREATIC_hlf = (
-            self.config.rvp.params.par_x30 * 0.5 * 1000.0
-        )
-        self.config.rvp.derived_params.TOPSOIL_mm = (
-            self.config.rvp.params.par_x29 * 1000.0
-        )
-        self.config.rvp.derived_params.PHREATIC_mm = (
-            self.config.rvp.params.par_x30 * 1000.0
-        )
         self.config.rvp.derived_params.SUM_X09_X10 = (
             self.config.rvp.params.par_x10
         )  # + self.config.rvp.params.par_x09
@@ -365,18 +325,10 @@ class BLENDED(Raven):
         # 10.0**self.config.rvp.params.par_x11  #
         self.config.rvp.derived_params.POW_X11 = self.config.rvp.params.par_x11
 
-        self.config.rvc.TOPSOIL_hlf = self.config.rvp.derived_params.TOPSOIL_hlf
-        self.config.rvc.PHREATIC_hlf = self.config.rvp.derived_params.PHREATIC_hlf
-
-        # Default initial conditions if none are given
-        # if not self.config.rvc.hru_states:
-        #     soil0 = (
-        #         self.config.rvp.derived_params.TOPSOIL_hlf if self.config.rvc.soil0 is None else self.config.rvc.soil0
-        #     )
-        #     soil1 = (
-        #         self.config.rvp.derived_params.PHREATIC_hlf if self.config.rvc.soil1 is None else self.config.rvc.soil1
-        #     )
-        #     self.config.rvc.hru_states[1] = HRUState(soil0=soil0, soil1=soil1)
+        topsoil_hlf = self.config.rvp.params.par_x29 * 0.5 * 1000
+        phreatic_hlf = self.config.rvp.params.par_x30 * 0.5 * 1000
+        hru_state = HRUState(soil0=topsoil_hlf, soil1=phreatic_hlf)
+        self.config.rvc.set_hru_state(hru_state)
 
         self.config.rvt.rain_correction = self.config.rvp.params.par_x33
         self.config.rvt.snow_correction = self.config.rvp.params.par_x34
