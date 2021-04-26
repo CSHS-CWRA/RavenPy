@@ -25,7 +25,6 @@ repos:
     hooks:
     -   id: black
         language_version: python3
-        args: ["--target-version", "py37"]
 -   repo: https://github.com/pycqa/flake8
     rev: 3.9.1
     hooks:
@@ -37,7 +36,7 @@ repos:
     hooks:
     -   id: isort
         language_version: python3
-        args: ['--profile', 'black', '--filter-files', '--py', '37']
+        args: ['--profile', 'black', '--filter-files']
 -   repo: https://github.com/pycqa/pydocstyle
     rev: 6.0.0
     hooks:
