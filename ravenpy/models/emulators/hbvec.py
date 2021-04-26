@@ -151,19 +151,6 @@ class HBVEC(Raven):
         #########
 
         rvi_tmpl = """
-        :Calendar              {calendar}
-        :RunName               {run_name}-{run_index}
-        :StartDate             {start_date}
-        :EndDate               {end_date}
-        :TimeStep              {time_step}
-        :Method                ORDERED_SERIES
-
-        #------------------------------------------------------------------------
-        # Model options
-        #
-        :Method              	    ORDERED_SERIES
-        #:Interpolation      	    INTERP_NEAREST_NEIGHBOR
-
         :Routing             	    ROUTE_NONE
         :CatchmentRoute      	    TRIANGULAR_UH
 

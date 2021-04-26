@@ -196,6 +196,15 @@ class RVH(RV):
 
 class RVI(RV):
 
+    _base_tmpl = """
+    :Calendar              {calendar}
+    :RunName               {run_name}-{run_index}
+    :StartDate             {start_date}
+    :EndDate               {end_date}
+    :TimeStep              {time_step}
+    :Method                ORDERED_SERIES
+    """
+
     tmpl = """
     """
 
@@ -423,7 +432,7 @@ class RVI(RV):
 
         d = {attr: getattr(self, attr) for attr in a + p}
 
-        return dedent(self.tmpl).format(**d)
+        return dedent(self._base_tmpl + self.tmpl).format(**d)
 
 
 ##########

@@ -142,13 +142,6 @@ class MOHYSE(Raven):
         #########
 
         rvi_tmpl = """
-        :Calendar              {calendar}
-        :RunName               {run_name}-{run_index}
-        :StartDate             {start_date}
-        :EndDate               {end_date}
-        :TimeStep              {time_step}
-        :Method                ORDERED_SERIES
-
         :SoilModel             SOIL_TWO_LAYER
         :PotentialMeltMethod   POTMELT_DEGREE_DAY
         :Routing               ROUTE_NONE

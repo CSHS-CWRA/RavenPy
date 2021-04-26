@@ -168,13 +168,6 @@ class HMETS(Raven):
         #########
 
         rvi_tmpl = """
-        :Calendar              {calendar}
-        :RunName               {run_name}-{run_index}
-        :StartDate             {start_date}
-        :EndDate               {end_date}
-        :TimeStep              {time_step}
-        :Method                ORDERED_SERIES
-
         :PotentialMeltMethod     POTMELT_HMETS
         {rain_snow_fraction}
         :Evaporation             {evaporation}  # PET_OUDIN
