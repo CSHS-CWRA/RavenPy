@@ -1,9 +1,8 @@
 import itertools
 import re
+from dataclasses import asdict, dataclass, field
 from textwrap import dedent
 from typing import Any, Dict, Optional, Tuple, Union
-
-from dataclasses import asdict, dataclass, field
 
 INDENT = " " * 4
 VALUE_PADDING = 10
