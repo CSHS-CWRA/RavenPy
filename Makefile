@@ -49,7 +49,7 @@ clean-test: ## remove test and coverage artifacts
 
 lint: ## check style with flake8
 	flake8 ravenpy tests
-	black --check --target-version py37 ravenpy tests
+	black --check ravenpy tests
 
 test: ## run tests quickly with the default Python
 	pytest
