@@ -191,30 +191,6 @@ class HMETS(Raven):
           :Convolve        CONVOL_GAMMA_2  DELAYED_RUNOFF SURFACE_WATER #'delayed runoff'
           :Baseflow        BASE_LINEAR     SOIL[1]      SURFACE_WATER
         :EndHydrologicProcesses
-
-        #:CreateRVPTemplate
-
-        #---------------------------------------------------------
-        # Output Options
-        #
-        #:WriteForcingFunctions
-        :EvaluationMetrics {evaluation_metrics}
-        :WriteNetcdfFormat  yes
-        #:NoisyMode
-        :SilentMode
-        :PavicsMode
-        {suppress_output}
-
-        :NetCDFAttribute title Simulated river discharge
-        :NetCDFAttribute history Created on {now} by Raven
-        :NetCDFAttribute references  Craig, J.R., and the Raven Development Team, Raven user's and developer's manual (Version 2.8), URL: http://raven.uwaterloo.ca/ (2018).
-        :NetCDFAttribute comment Raven Hydrological Framework version {raven_version}
-
-        :NetCDFAttribute model_id hmets
-
-        :NetCDFAttribute time_frequency day
-        :NetCDFAttribute time_coverage_start {start_date}
-        :NetCDFAttribute time_coverage_end {end_date}
         """
         self.config.rvi.set_tmpl(rvi_tmpl)
 

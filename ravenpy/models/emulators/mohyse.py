@@ -172,28 +172,6 @@ class MOHYSE(Raven):
         # :Alias MOHYSE_PARA_8	    0.0132    # SoilParameterList    --> BASEFLOW_COEFF (GWSOIL)
         # :Alias MOHYSE_PARA_9	    1.0474    # :SubBasinProperties  --> GAMMA_SHAPE
         # :Alias MOHYSE_PARA_10	    7.9628    # :SubBasinProperties  --> TIME_CONC = MOHYSE_PARA_10 / 0.3 = 26.542666666
-
-        #---------------------------------------------------------
-        # Output Options
-        #
-        #:WriteForcingFunctions
-        :EvaluationMetrics {evaluation_metrics}
-        :WriteNetcdfFormat  yes
-        #:NoisyMode
-        :SilentMode
-        :PavicsMode
-        {suppress_output}
-
-        :NetCDFAttribute title Simulated river discharge
-        :NetCDFAttribute history Created on {now} by Raven
-        :NetCDFAttribute references  Craig, J.R., and the Raven Development Team, Raven user's and developer's manual (Version 2.8), URL: http://raven.uwaterloo.ca/ (2018).
-        :NetCDFAttribute comment Raven Hydrological Framework version {raven_version}
-
-        :NetCDFAttribute model_id mohyse
-
-        :NetCDFAttribute time_frequency day
-        :NetCDFAttribute time_coverage_start {start_date}
-        :NetCDFAttribute time_coverage_end {end_date}
         """
         self.config.rvi.set_tmpl(rvi_tmpl)
 

@@ -196,7 +196,7 @@ class RVH(RV):
 
 class RVI(RV):
 
-    _base_tmpl = """
+    _pre_tmpl = """
     :Calendar              {calendar}
     :RunName               {run_name}-{run_index}
     :StartDate             {start_date}
@@ -206,6 +206,26 @@ class RVI(RV):
     """
 
     tmpl = """
+    """
+
+    # This part must be at the end of the file in particular because `:EvaluationMetrics` must
+    # come after `:SoilModel`
+    _post_tmpl = """
+    :EvaluationMetrics {evaluation_metrics}
+    :WriteNetcdfFormat  yes
+    #:WriteForcingFunctions
+    :SilentMode
+    :PavicsMode
+    {suppress_output}
+
+    :NetCDFAttribute title Simulated river discharge
+    :NetCDFAttribute history Created on {now} by Raven
+    :NetCDFAttribute references  Craig, J.R., and the Raven Development Team, Raven user's and developer's manual (Version 2.8), URL: http://raven.uwaterloo.ca/ (2018).
+    :NetCDFAttribute comment Raven Hydrological Framework version {raven_version}
+    :NetCDFAttribute model_id {identifier}
+    :NetCDFAttribute time_frequency day
+    :NetCDFAttribute time_coverage_start {start_date}
+    :NetCDFAttribute time_coverage_end {end_date}
     """
 
     EVAPORATION_OPTIONS = (
@@ -419,6 +439,8 @@ class RVI(RV):
 
     def to_rv(self):
 
+        self.identifier = self._config.identifier
+
         # Attributes
         a = list(filter(lambda x: not x.startswith("_"), self.__dict__))
 
@@ -432,7 +454,8 @@ class RVI(RV):
 
         d = {attr: getattr(self, attr) for attr in a + p}
 
-        return dedent(self._base_tmpl + self.tmpl).format(**d)
+        t = dedent(self._pre_tmpl) + dedent(self.tmpl) + dedent(self._post_tmpl)
+        return t.format(**d)
 
 
 ##########
