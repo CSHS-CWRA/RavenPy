@@ -1,10 +1,10 @@
 import datetime as dt
+from dataclasses import replace
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 import xarray as xr
-from dataclasses import replace
 
 from ravenpy.config.commands import BasinIndexCommand, HRUState
 from ravenpy.config.rvs import RVC

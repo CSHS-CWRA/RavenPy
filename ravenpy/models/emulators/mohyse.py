@@ -456,5 +456,5 @@ class MOHYSE_OST(Ostrich, MOHYSE):
         self.config.ost.set_tmpl(ost_tmpl)
 
     def derived_parameters(self):
-        """  Derived parameters are computed by Ostrich.  """
+        """Derived parameters are computed by Ostrich."""
         pass
