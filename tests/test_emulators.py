@@ -384,17 +384,6 @@ class TestGR4JCN:
         d = model.diagnostics
         np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.0141168, 4)
 
-    def _test_tags(self):
-        model = GR4JCN(tempfile.mkdtemp())
-
-        tags = model.tags
-        assert "run_name" in tags
-
-    def _test_rvobjs(self):
-        model = GR4JCN(tempfile.mkdtemp())
-        a = model.rvobjs
-        assert a
-
     def test_config_update(self):
         model = GR4JCN()
 
