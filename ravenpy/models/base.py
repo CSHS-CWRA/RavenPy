@@ -678,51 +678,6 @@ class Raven:
 
         return diag if len(diag) > 1 else diag[0]
 
-    # @property
-    # def tags(self):
-    #     """Return a list of tags within the templates."""
-    #     out = []
-    #     for rvf in self.rvfiles.values():
-    #         out.extend(rvf.tags)
-
-    #     return out
-
-    @staticmethod
-    def split_ext(fn):
-        """Return the name and rv key of the configuration file."""
-        if isinstance(fn, str):
-            fn = Path(fn)
-
-        return fn.stem, fn.suffix[1:]
-
-    def check_units(self):
-        """Check that the input file units match expectations."""
-        # TODO: make compliant with the new RVT implementation
-        pass
-        # for var, nc in self.rvt.items():
-        #     if isinstance(nc, RavenNcData) and nc.var is not None:
-        #         nc._check_units()
-
-    def check_inputs(self):
-        """Check that necessary variables are defined."""
-        has_file = {key for key, val in self.rvt.items() if val is not None}
-        vars = list(self.rvt.keys())
-
-        for var in vars:
-            if var not in has_file and var != "nc_index":
-                if var in ["tasmin", "tasmax"] and "tas" in has_file:
-                    pass  # This is OK
-                if var == "tas" and has_file.issuperset(["tasmin", "tasmax"]):
-                    pass
-                elif var in ["prsn"]:
-                    pass  # Ok, can be guessed from temp ?
-                elif var in ["evspsbl"]:
-                    pass  # Ok, can be computed by Oudin ?
-                elif var in ["water_volume_transport_in_river_channel"]:
-                    pass  # Ok, not strictly necessary for simulations ?
-                else:
-                    raise ValueError("{} not found in files.".format(var))
-
 
 class Ostrich(Raven):
     """Wrapper for OSTRICH calibration of RAVEN hydrological model.
