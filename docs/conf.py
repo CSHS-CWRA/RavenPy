@@ -70,7 +70,6 @@ autodoc_mock_imports = [
     "lxml",
     "owslib",
     "pandas",
-    # "pydantic",
     "pyproj",
     "rasterio",
     "rioxarray",
