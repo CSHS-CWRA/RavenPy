@@ -279,11 +279,16 @@ class RVI(RV):
 
     def __init__(self, config):
         super().__init__(config)
+
+        # These are attributes that can be modified/set directly
         self.run_name = "run"
         self.run_index = 0
         self.raven_version = "3.0.1 rev#275"
         self.time_step = 1.0
 
+        # These correspond to properties whose setters will pass their value through
+        # an Enum cast (triggering a ValueError at runtime for unknown values) and
+        # getters will be used when rendering the template in the `to_rv` method
         self._calendar = RVI.CalendarOptions.STANDARD
         self._routing = RVI.RoutingOptions.NONE
         self._start_date = None
