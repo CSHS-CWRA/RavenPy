@@ -463,6 +463,7 @@ class RVI(RV):
 
 class RVP(RV):
 
+    # This is expected to be defined by the emulators.
     tmpl = """
     """
 
