@@ -80,7 +80,11 @@ class TestRouting:
         # Raven will use 24h even though the NC inputs are 6h
         model.config.rvi.time_step = "24:00:00"
 
-        model.config.rvi.evaluation_metrics = "NASH_SUTCLIFFE PCT_BIAS KLING_GUPTA"
+        model.config.rvi.evaluation_metrics = [
+            "NASH_SUTCLIFFE",
+            "PCT_BIAS",
+            "KLING_GUPTA",
+        ]
 
         #######
         # RVH #

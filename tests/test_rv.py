@@ -8,12 +8,8 @@ import pytest
 import ravenpy
 from ravenpy.config.commands import (
     BasinStateVariablesCommand,
-    DeaccumulateCommand,
     GriddedForcingCommand,
     HRUStateVariableTableCommand,
-    MonthlyAverageCommand,
-    RainCorrectionCommand,
-    SnowCorrectionCommand,
 )
 from ravenpy.config.rvs import OST, RVC, RVH, RVI, RVP, RVT
 from ravenpy.extractors import (
@@ -161,47 +157,3 @@ class TestRVT:
         assert ":NumberGridCells 100" in res
         # FIXME: This test is not superb.
         assert len(res.split("\n")) == 226
-
-
-class TestCommands:
-    def test_rain_correction(self):
-        rc = RainCorrectionCommand(3)
-        assert f"{rc}" == ":RainCorrection 3.0"
-
-        rc = RainCorrectionCommand("3")
-        assert f"{rc}" == ":RainCorrection 3.0"
-
-        rc = RainCorrectionCommand(3.1)
-        assert f"{rc}" == ":RainCorrection 3.1"
-
-        rc = RainCorrectionCommand()
-        assert f"{rc}" == ":RainCorrection 1.0"
-
-        rc = RainCorrectionCommand(None)
-        assert f"{rc}" == ""
-
-    def test_snow_correction(self):
-        sc = SnowCorrectionCommand(3)
-        assert f"{sc}" == ":SnowCorrection 3.0"
-
-        sc = SnowCorrectionCommand("3")
-        assert f"{sc}" == ":SnowCorrection 3.0"
-
-        sc = SnowCorrectionCommand(3.1)
-        assert f"{sc}" == ":SnowCorrection 3.1"
-
-        sc = SnowCorrectionCommand()
-        assert f"{sc}" == ":SnowCorrection 1.0"
-
-        sc = SnowCorrectionCommand(None)
-        assert f"{sc}" == ""
-
-    def test_deaccumulate(self):
-        dc = DeaccumulateCommand()
-        assert f"{dc}" == ""
-
-        dc = DeaccumulateCommand(False)
-        assert f"{dc}" == ""
-
-        dc = DeaccumulateCommand(True)
-        assert f"{dc}" == ":Deaccumulate"

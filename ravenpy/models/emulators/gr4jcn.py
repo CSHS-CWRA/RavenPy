@@ -3,14 +3,8 @@ from pathlib import Path
 
 from pydantic.dataclasses import dataclass
 
-from ravenpy.config.commands import (
-    HRU,
-    LU,
-    BasinIndexCommand,
-    HRUState,
-    RainSnowFraction,
-    Sub,
-)
+from ravenpy.config.commands import HRU, LU, BasinIndexCommand, HRUState, Sub
+from ravenpy.config.rvs import RVI
 from ravenpy.models.base import Ostrich, Raven
 
 
@@ -149,10 +143,10 @@ class GR4JCN(Raven):
 
         rvi_tmpl = """
         :SoilModel             SOIL_MULTILAYER  4
-        {routing}
+        :Routing               {routing}
         :CatchmentRoute        ROUTE_DUMP
         :Evaporation           {evaporation}  # PET_OUDIN
-        {rain_snow_fraction}
+        :RainSnowFraction      {rain_snow_fraction}
 
         :PotentialMeltMethod   POTMELT_DEGREE_DAY
         :OroTempCorrect        OROCORR_SIMPLELAPSE
@@ -189,7 +183,7 @@ class GR4JCN(Raven):
         """
         self.config.rvi.set_tmpl(rvi_tmpl)
 
-        self.config.rvi.rain_snow_fraction = RainSnowFraction.DINGMAN
+        self.config.rvi.rain_snow_fraction = RVI.RainSnowFractionOptions.DINGMAN
         self.config.rvi.evaporation = "PET_OUDIN"
 
         #########

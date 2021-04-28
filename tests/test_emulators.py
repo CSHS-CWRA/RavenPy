@@ -22,6 +22,7 @@ from ravenpy.config.commands import (
     Sub,
     VegetationClassesCommand,
 )
+from ravenpy.config.rvs import RVI
 from ravenpy.models import (
     GR4JCN,
     GR4JCN_OST,
@@ -164,7 +165,8 @@ class TestGR4JCN:
         # ------------
         # Check parser
         # ------------
-        assert model.config.rvi.calendar == "GREGORIAN"
+
+        assert model.config.rvi.calendar == RVI.CalendarOptions.GREGORIAN.value
 
         # ------------
         # Check saved HRU states saved in RVC
@@ -396,13 +398,23 @@ class TestGR4JCN:
     def test_config_update(self):
         model = GR4JCN()
 
-        # This is a regular member
-        model.config.update("area", 123)
-        assert model.config.rvi.area == 123
-
-        # This is a property
+        # This is a regular attribute member
         model.config.update("run_name", "test")
         assert model.config.rvi.run_name == "test"
+
+        # This is a computed property
+        model.config.update("evaporation", "PET_FROMMONTHLY")
+        assert model.config.rvi.evaporation == "PET_FROMMONTHLY"
+
+        # Existing property but wrong value (the enum cast should throw an error)
+        with pytest.raises(ValueError):
+            model.config.update("routing", "WRONG")
+
+        # Non-existing attribute
+        with pytest.raises(AttributeError):
+            model.config.update("why", "not?")
+
+        # Params
 
         model.config.update(
             "params", np.array([0.529, -3.396, 407.29, 1.072, 16.9, 0.947])
@@ -414,9 +426,6 @@ class TestGR4JCN:
 
         model.config.update("params", (0.529, -3.396, 407.29, 1.072, 16.9, 0.947))
         assert model.config.rvp.params.GR4J_X1 == 0.529
-
-        with pytest.raises(AttributeError):
-            model.config.update("why", "not?")
 
     def test_run(self):
         model = GR4JCN()
@@ -694,14 +703,13 @@ class TestGR4JCN:
         assert len(z.filelist) == 10
 
     @pytest.mark.online
-    def _test_dap(self):
+    def test_dap(self):
         """Test Raven with DAP link instead of local netCDF file."""
         model = GR4JCN()
         config = dict(
             start_date=dt.datetime(2000, 6, 1),
             end_date=dt.datetime(2000, 6, 10),
             run_name="test",
-            name="Salmon",
             hrus=(GR4JCN.LandHRU(**salmon_land_hru_1),),
             params=model.Params(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
         )
@@ -719,7 +727,6 @@ class TestGR4JCN:
         )
         model = GR4JCN()
         config = dict(
-            name="WHITEMOUTH RIVER NEAR WHITEMOUTH",
             start_date=dt.datetime(2010, 6, 1),
             end_date=dt.datetime(2010, 6, 10),
             nc_index=5600,

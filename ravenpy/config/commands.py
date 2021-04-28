@@ -27,21 +27,6 @@ class RavenCommand(ABC):
         return self.to_rv()
 
 
-class RavenOptionCommand(Enum):
-    """
-    This alternate base class allows to create Raven commands that are based on
-    a simple set of Enum options.
-    """
-
-    def to_rv(self):
-        cmd = f":{self.__class__.__name__}"
-        cmd = cmd.replace("Command", "")
-        return f"{cmd} {self.value}"
-
-    def __str__(self):
-        return self.to_rv()
-
-
 @dataclass
 class LinearTransform(RavenCommand):
     scale: Optional[float] = 1
@@ -53,23 +38,6 @@ class LinearTransform(RavenCommand):
         if (self.scale != 1) or (self.offset != 0):
             return self.template.format(**asdict(self))
         return ""
-
-
-@dataclass
-class MonthlyAverageCommand(RavenCommand):
-    var_name: str = ""
-    data: Optional[Tuple[float, ...]] = ()
-
-    template = ":MonthlyAve{var_name} {data}"
-
-    def to_rv(self):
-        if self.data:
-            d = asdict(self)
-            d["var_name"] = self.var_name.lower().capitalize()
-            d["data"] = " ".join(map(str, self.data))
-            return self.template.format(**d)
-        else:
-            return ""
 
 
 @dataclass
@@ -295,7 +263,7 @@ class BaseDataCommand(RavenCommand):
         d = asdict(self)
         d["dimensions"] = self.dimensions
         d["linear_transform"] = self.linear_transform
-        d["deaccumulate"] = DeaccumulateCommand(self.deaccumulate)
+        d["deaccumulate"] = ":Deaccumulate" if self.deaccumulate else ""
         d["time_shift"] = f":TimeShift {self.time_shift}" if self.time_shift else ""
         return d
 
@@ -346,36 +314,32 @@ class GaugeCommand(RavenCommand):
         :Latitude {latitude}
         :Longitude {longitude}
         :Elevation {elevation}
-        {rain_correction_cmd}
-        {snow_correction_cmd}
-        {monthly_ave_evaporation_cmd}
-        {monthly_ave_temperature_cmd}
+        {rain_correction}
+        {snow_correction}
+        {monthly_ave_evaporation}
+        {monthly_ave_temperature}
         {data_list}
     :EndGauge
     """
 
-    @property
-    def rain_correction_cmd(self):
-        return RainCorrectionCommand(self.rain_correction)
-
-    @property
-    def snow_correction_cmd(self):
-        return SnowCorrectionCommand(self.snow_correction)
-
-    @property
-    def monthly_ave_evaporation_cmd(self):
-        return MonthlyAverageCommand("evaporation", self.monthly_ave_evaporation)
-
-    @property
-    def monthly_ave_temperature_cmd(self):
-        return MonthlyAverageCommand("temperature", self.monthly_ave_temperature)
-
     def to_rv(self):
         d = asdict(self)
-        d["rain_correction_cmd"] = self.rain_correction_cmd
-        d["snow_correction_cmd"] = self.snow_correction_cmd
-        d["monthly_ave_evaporation_cmd"] = self.monthly_ave_evaporation_cmd
-        d["monthly_ave_temperature_cmd"] = self.monthly_ave_temperature_cmd
+        d["rain_correction"] = (
+            f":RainCorrection {self.rain_correction}" if self.rain_correction else ""
+        )
+        d["snow_correction"] = (
+            f":SnowCorrection {self.snow_correction}" if self.snow_correction else ""
+        )
+        if self.monthly_ave_evaporation:
+            evap_data = " ".join(map(str, self.monthly_ave_evaporation))
+            d["monthly_ave_evaporation"] = f":MonthlyAveEvaporation {evap_data}"
+        else:
+            d["monthly_ave_evaporation"] = ""
+        if self.monthly_ave_temperature:
+            temp_data = " ".join(map(str, self.monthly_ave_temperature))
+            d["monthly_ave_temperature"] = f":MonthlyAveTemperature {temp_data}"
+        else:
+            d["monthly_ave_temperature"] = ""
         d["data_list"] = "\n\n".join(map(str, self.data))
         return dedent(self.template).format(**d)
 
@@ -861,79 +825,3 @@ class LandUseClassesCommand(RavenCommand):
 
 # For convenience
 LU = LandUseClassesCommand.Record
-
-
-@dataclass
-class RainCorrectionCommand(RavenCommand):
-
-    value: Optional[Union[float, str]] = 1.0
-
-    template = ":RainCorrection {value}"
-
-    def to_rv(self):
-        if self.value is None:
-            return ""
-        return self.template.format(**asdict(self))
-
-
-@dataclass
-class SnowCorrectionCommand(RavenCommand):
-
-    value: Optional[Union[float, str]] = 1.0
-
-    template = ":SnowCorrection {value}"
-
-    def to_rv(self):
-        if self.value is None:
-            return ""
-        return self.template.format(**asdict(self))
-
-
-@dataclass
-class RoutingCommand(RavenCommand):
-    """ROUTE_NONE, ROUTE_DIFFUSIVE_WAVE"""
-
-    value: str = "ROUTE_NONE"
-
-    template = ":Routing {value}"
-
-    def to_rv(self):
-        if self.value is None:
-            return ""
-        return self.template.format(**asdict(self))
-
-
-@dataclass
-class DeaccumulateCommand(RavenCommand):
-
-    value: bool = False
-
-    template = ":Deaccumulate"
-
-    def to_rv(self):
-        return self.template if self.value else ""
-
-
-@dataclass
-class AvgAnnualRunoffCommand(RavenCommand):
-
-    value: Optional[float] = 1.0
-
-    template = ":AvgAnnualRunoff {value}"
-
-    def to_rv(self):
-        if self.value is None:
-            return ""
-        return self.template.format(**asdict(self))
-
-
-class RainSnowFractionCommand(RavenOptionCommand):
-    DATA = "RAINSNOW_DATA"
-    DINGMAN = "RAINSNOW_DINGMAN"
-    UBC = "RAINSNOW_UBC"
-    HBV = "RAINSNOW_HBV"
-    HARDER = "RAINSNOW_HARDER"
-    HSPF = "RAINSNOW_HSPF"
-
-
-RainSnowFraction = RainSnowFractionCommand

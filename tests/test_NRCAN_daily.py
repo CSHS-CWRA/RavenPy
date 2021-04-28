@@ -41,7 +41,6 @@ class TestRavenNRCAN:
             params=params,
             start_date=start_date,
             end_date=end_date,
-            name="Salmon",
             run_name="test-hmets-NRCAN",
             area=4250.6,
             elevation=843.0,

@@ -2,6 +2,7 @@ import collections
 import datetime as dt
 from abc import ABC, abstractmethod
 from dataclasses import is_dataclass, replace
+from enum import Enum
 from pathlib import Path
 from textwrap import dedent
 from typing import Dict, Optional, Tuple
@@ -12,7 +13,6 @@ import numpy as np
 import xarray as xr
 
 from ravenpy.config.commands import (
-    AvgAnnualRunoffCommand,
     BasinIndexCommand,
     BasinStateVariablesCommand,
     ChannelProfileCommand,
@@ -24,13 +24,7 @@ from ravenpy.config.commands import (
     HRUState,
     HRUStateVariableTableCommand,
     LandUseClassesCommand,
-    MonthlyAverageCommand,
     ObservationDataCommand,
-    RainCorrectionCommand,
-    RainSnowFraction,
-    RainSnowFractionCommand,
-    RoutingCommand,
-    SnowCorrectionCommand,
     SoilClassesCommand,
     SoilProfilesCommand,
     StationForcingCommand,
@@ -211,8 +205,8 @@ class RVI(RV):
     # This part must be at the end of the file in particular because `:EvaluationMetrics` must
     # come after `:SoilModel`
     _post_tmpl = """
-    :EvaluationMetrics {evaluation_metrics}
-    :WriteNetcdfFormat  yes
+    :EvaluationMetrics     {evaluation_metrics}
+    :WriteNetcdfFormat     yes
     #:WriteForcingFunctions
     :SilentMode
     :PavicsMode
@@ -228,57 +222,81 @@ class RVI(RV):
     :NetCDFAttribute time_coverage_end {end_date}
     """
 
-    EVAPORATION_OPTIONS = (
-        "PET_CONSTANT",
-        "PET_PENMAN_MONTEITH",
-        "PET_PENMAN_COMBINATION",
-        "PET_PRIESTLEY_TAYLOR",
-        "PET_HARGREAVES",
-        "PET_HARGREAVES_1985",
-        "PET_FROMMONTHLY",
-        "PET_DATA",
-        "PET_HAMON_1961",
-        "PET_TURC_1961",
-        "PET_MAKKINK_1957",
-        "PET_MONTHLY_FACTOR",
-        "PET_MOHYSE",
-        "PET_OUDIN",
-    )
+    class EvaporationOptions(Enum):
+        PET_CONSTANT = "PET_CONSTANT"
+        PET_PENMAN_MONTEITH = "PET_PENMAN_MONTEITH"
+        PET_PENMAN_COMBINATION = "PET_PENMAN_COMBINATION"
+        PET_PRIESTLEY_TAYLOR = "PET_PRIESTLEY_TAYLOR"
+        PET_HARGREAVES = "PET_HARGREAVES"
+        PET_HARGREAVES_1985 = "PET_HARGREAVES_1985"
+        PET_FROMMONTHLY = "PET_FROMMONTHLY"
+        PET_DATA = "PET_DATA"
+        PET_HAMON_1961 = "PET_HAMON_1961"
+        PET_TURC_1961 = "PET_TURC_1961"
+        PET_MAKKINK_1957 = "PET_MAKKINK_1957"
+        PET_MONTHLY_FACTOR = "PET_MONTHLY_FACTOR"
+        PET_MOHYSE = "PET_MOHYSE"
+        PET_OUDIN = "PET_OUDIN"
 
-    CALENDAR_OPTIONS = (
-        "PROLEPTIC_GREGORIAN",
-        "JULIAN",
-        "GREGORIAN",
-        "STANDARD",
-        "NOLEAP",
-        "365_DAY",
-        "ALL_LEAP",
-        "366_DAY",
-    )
+    class CalendarOptions(Enum):
+        PROLEPTIC_GREGORIAN = "PROLEPTIC_GREGORIAN"
+        JULIAN = "JULIAN"
+        GREGORIAN = "GREGORIAN"
+        STANDARD = "STANDARD"
+        NOLEAP = "NOLEAP"
+        _365_DAY = "365_DAY"
+        ALL_LEAP = "ALL_LEAP"
+        _366_DAY = "366_DAY"
+
+    class EvaluationMetrics(Enum):
+        NASH_SUTCLIFFE = "NASH_SUTCLIFFE"
+        LOG_NASH = "LOG_NASH"
+        RMSE = "RMSE"
+        PCT_BIAS = "PCT_BIAS"
+        ABSERR = "ABSERR"
+        ABSMAX = "ABSMAX"
+        PDIFF = "PDIFF"
+        TMVOL = "TMVOL"
+        RCOEFF = "RCOEFF"
+        NSC = "NSC"
+        KLING_GUPTA = "KLING_GUPTA"
+
+    class RainSnowFractionOptions(Enum):
+        DATA = "RAINSNOW_DATA"
+        DINGMAN = "RAINSNOW_DINGMAN"
+        UBC = "RAINSNOW_UBC"
+        HBV = "RAINSNOW_HBV"
+        HARDER = "RAINSNOW_HARDER"
+        HSPF = "RAINSNOW_HSPF"
+
+    class RoutingOptions(Enum):
+        DIFFUSIVE_WAVE = "ROUTE_DIFFUSIVE_WAVE"
+        HYDROLOGIC = "ROUTE_HYDROLOGIC"
+        NONE = "ROUTE_NONE"
+        STORAGE_COEFF = "ROUTE_STORAGE_COEFF"
+        PLUG_FLOW = "ROUTE_PLUG_FLOW"
+        MUSKINGUM = "MUSKINGUM"
 
     def __init__(self, config):
         super().__init__(config)
-        self.name = None
-        self.area = None
-        self.elevation = None
-        self.latitude = None
-        self.longitude = None
         self.run_name = "run"
         self.run_index = 0
         self.raven_version = "3.0.1 rev#275"
         self.time_step = 1.0
 
-        self._routing = "ROUTE_NONE"
+        self._calendar = RVI.CalendarOptions.STANDARD
+        self._routing = RVI.RoutingOptions.NONE
         self._start_date = None
         self._end_date = None
-        self._now = None
-        self._rain_snow_fraction = RainSnowFraction.DATA
+        self._rain_snow_fraction = RVI.RainSnowFractionOptions.DATA
         self._evaporation = None
         self._ow_evaporation = None
         self._duration = 1
-        self._evaluation_metrics = "NASH_SUTCLIFFE RMSE"
+        self._evaluation_metrics = [
+            RVI.EvaluationMetrics.NASH_SUTCLIFFE,
+            RVI.EvaluationMetrics.RMSE,
+        ]
         self._suppress_output = False
-        self._calendar = "standard"
 
     @property
     def start_date(self):
@@ -330,30 +348,19 @@ class RVI(RV):
 
     @property
     def evaluation_metrics(self):
-        return self._evaluation_metrics
+        if self._evaluation_metrics:
+            return ",".join(m.value for m in self._evaluation_metrics)
+        return None
 
     @evaluation_metrics.setter
-    def evaluation_metrics(self, x):
-        if not isinstance(x, str):
-            raise ValueError("Evaluation metrics must be string.")
-
-        for metric in x.split():
-            if metric not in {
-                "NASH_SUTCLIFFE",
-                "LOG_NASH",
-                "RMSE",
-                "PCT_BIAS",
-                "ABSERR",
-                "ABSMAX",
-                "PDIFF",
-                "TMVOL",
-                "RCOEFF",
-                "NSC",
-                "KLING_GUPTA",
-            }:
-                raise ValueError("{} is not a metric recognized by Raven.")
-
-        self._evaluation_metrics = x
+    def evaluation_metrics(self, values):
+        if not isinstance(values, (list, set, tuple)):
+            values = [values]
+        ms = []
+        for v in values:
+            v = v.upper() if isinstance(v, str) else v.value
+            ms.append(RVI.EvaluationMetrics(v))
+        self._evaluation_metrics = ms
 
     def _update_duration(self):
         if self.end_date is not None and self.start_date is not None:
@@ -362,10 +369,6 @@ class RVI(RV):
     def _update_end_date(self):
         if self.start_date is not None and self.duration is not None:
             self._end_date = self.start_date + dt.timedelta(days=self.duration)
-
-    @property
-    def now(self):
-        return dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     @property
     def suppress_output(self):
@@ -380,71 +383,63 @@ class RVI(RV):
 
     @property
     def routing(self):
-        return RoutingCommand(value=self._routing)
+        return self._routing.value
 
     @routing.setter
     def routing(self, value):
-        self._routing = value
+        v = value.upper() if isinstance(value, str) else value.value
+        self._routing = RVI.RoutingOptions(v)
 
     @property
     def rain_snow_fraction(self):
         """Rain snow partitioning."""
-        return RainSnowFractionCommand(self._rain_snow_fraction)
+        return self._rain_snow_fraction.value
 
     @rain_snow_fraction.setter
-    def rain_snow_fraction(self, value: RainSnowFraction):
-        self._rain_snow_fraction = value
+    def rain_snow_fraction(self, value):
+        v = value.upper() if isinstance(value, str) else value.value
+        self._rain_snow_fraction = RVI.RainSnowFractionOptions(v)
 
     @property
     def evaporation(self):
         """Evaporation scheme"""
-        return self._evaporation
+        return self._evaporation.value if self._evaporation else None
 
     @evaporation.setter
     def evaporation(self, value):
-        v = value.upper()
-        if v in RVI.EVAPORATION_OPTIONS:
-            self._evaporation = v
-        else:
-            raise ValueError(f"Value {v} should be one of {RVI.EVAPORATION_OPTIONS}.")
+        v = value.upper() if isinstance(value, str) else value.value
+        self._evaporation = RVI.EvaporationOptions(v)
 
     @property
     def ow_evaporation(self):
         """Open-water evaporation scheme"""
-        return self._ow_evaporation
+        return self._ow_evaporation.value if self._ow_evaporation else None
 
     @ow_evaporation.setter
     def ow_evaporation(self, value):
-        v = value.upper()
-        if v in RVI.EVAPORATION_OPTIONS:
-            self._ow_evaporation = v
-        else:
-            raise ValueError(f"Value {v} should be one of {RVI.EVAPORATION_OPTIONS}.")
+        v = value.upper() if isinstance(value, str) else value.value
+        self._ow_evaporation = RVI.EvaporationOptions(v)
 
     @property
     def calendar(self):
         """Calendar"""
-        return self._calendar.upper()
+        return self._calendar.value
 
     @calendar.setter
     def calendar(self, value):
-        if value.upper() in RVI.CALENDAR_OPTIONS:
-            self._calendar = value
-        else:
-            raise ValueError(f"Value should be one of {RVI.CALENDAR_OPTIONS}.")
+        v = value.upper() if isinstance(value, str) else value.value
+        self._calendar = RVI.CalendarOptions(v)
 
     def _dt2cf(self, date):
         """Convert datetime to cftime datetime."""
-        return cftime._cftime.DATE_TYPES[self._calendar.lower()](*date.timetuple()[:6])
+        return cftime._cftime.DATE_TYPES[self.calendar.lower()](*date.timetuple()[:6])
 
     def to_rv(self):
 
-        self.identifier = self._config.identifier
-
-        # Attributes
+        # Attributes (not starting with "_")
         a = list(filter(lambda x: not x.startswith("_"), self.__dict__))
 
-        # Properties
+        # Properties (computing values corresponding to attributes starting with "_')
         p = list(
             filter(
                 lambda x: isinstance(getattr(self.__class__, x, None), property),
@@ -453,6 +448,9 @@ class RVI(RV):
         )
 
         d = {attr: getattr(self, attr) for attr in a + p}
+
+        d["identifier"] = self._config.identifier
+        d["now"] = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         t = dedent(self._pre_tmpl) + dedent(self.tmpl) + dedent(self._post_tmpl)
         return t.format(**d)
@@ -491,7 +489,9 @@ class RVP(RV):
             "vegetation_classes": VegetationClassesCommand(self.vegetation_classes),
             "land_use_classes": LandUseClassesCommand(self.land_use_classes),
             "channel_profiles": "\n\n".join(map(str, self.channel_profiles)),
-            "avg_annual_runoff": AvgAnnualRunoffCommand(self.avg_annual_runoff),
+            "avg_annual_runoff": f":AvgAnnualRunoff {self.avg_annual_runoff}"
+            if self.avg_annual_runoff
+            else "",
         }
         return dedent(self.tmpl).format(**d)
 

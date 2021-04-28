@@ -3,14 +3,8 @@ from pathlib import Path
 
 from pydantic.dataclasses import dataclass
 
-from ravenpy.config.commands import (
-    HRU,
-    LU,
-    BasinIndexCommand,
-    HRUState,
-    RainSnowFraction,
-    Sub,
-)
+from ravenpy.config.commands import HRU, LU, BasinIndexCommand, HRUState, Sub
+from ravenpy.config.rvs import RVI
 from ravenpy.models.base import Ostrich, Raven
 
 from .gr4jcn import GR4JCN
@@ -148,7 +142,7 @@ class MOHYSE(Raven):
         :CatchmentRoute        ROUTE_GAMMA_CONVOLUTION
         :Evaporation           {evaporation}  # PET_MOHYSE
         :DirectEvaporation
-        {rain_snow_fraction}
+        :RainSnowFraction      {rain_snow_fraction}
 
         :HydrologicProcesses
              :SoilEvaporation  SOILEVAP_LINEAR    SOIL[0]            ATMOSPHERE
@@ -197,7 +191,7 @@ class MOHYSE(Raven):
         # R V I #
         #########
 
-        self.config.rvi.rain_snow_fraction = RainSnowFraction.DATA
+        self.config.rvi.rain_snow_fraction = RVI.RainSnowFractionOptions.DATA
         self.config.rvi.evaporation = "PET_MOHYSE"
 
         #########
