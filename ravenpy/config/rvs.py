@@ -512,22 +512,23 @@ class RVT(RV):
     {observed_data}
     """
 
+    # Keys are standard names
     NC_VARS = {
-        "tasmin": {"name": "TEMP_MIN", "alts": ["tasmin", "tmin"]},
-        "tasmax": {"name": "TEMP_MAX", "alts": ["tasmax", "tmax"]},
-        "tas": {"name": "TEMP_AVE", "alts": ["tas", "t2m"]},
-        "rainfall": {"name": "RAINFALL", "alts": ["rainfall", "rain"]},
+        "tasmin": {"raven": "TEMP_MIN", "alts": ["tmin"]},
+        "tasmax": {"raven": "TEMP_MAX", "alts": ["tmax"]},
+        "tas": {"raven": "TEMP_AVE", "alts": ["t2m"]},
+        "rainfall": {"raven": "RAINFALL", "alts": ["rain"]},
         "pr": {
-            "name": "PRECIP",
-            "alts": ["pr", "precip", "prec", "precipitation", "tp"],
+            "raven": "PRECIP",
+            "alts": ["precip", "prec", "precipitation", "tp"],
         },
         "prsn": {
-            "name": "SNOWFALL",
-            "alts": ["prsn", "snow", "snowfall", "solid_precip"],
+            "raven": "SNOWFALL",
+            "alts": ["snow", "snowfall", "solid_precip"],
         },
-        "evspsbl": {"name": "PET", "alts": ["pet", "evap", "evapotranspiration"]},
+        "evspsbl": {"raven": "PET", "alts": ["pet", "evap", "evapotranspiration"]},
         "water_volume_transport_in_river_channel": {
-            "name": "HYDROGRAPH",
+            "raven": "HYDROGRAPH",
             "alts": [
                 "qobs",
                 "discharge",
@@ -555,35 +556,35 @@ class RVT(RV):
         self._number_grid_cells = 0
 
     def add_nc_variable(self, **kwargs):
-        var_name = kwargs.get("name", kwargs["var_name_nc"])
+        std_name = kwargs.get("name", kwargs["var_name_nc"])
         is_obs_var = kwargs.pop("is_observation", False)
         if len(kwargs["dim_names_nc"]) == 1:
-            if var_name == "water_volume_transport_in_river_channel" or is_obs_var:
+            if std_name == "water_volume_transport_in_river_channel" or is_obs_var:
                 cmd = ObservationDataCommand(**kwargs)
             else:
                 cmd = DataCommand(**kwargs)
         elif len(kwargs["dim_names_nc"]) == 2:
-            if var_name == "water_volume_transport_in_river_channel" or is_obs_var:
+            if std_name == "water_volume_transport_in_river_channel" or is_obs_var:
                 cmd = ObservationDataCommand(**kwargs)
             else:
                 cmd = StationForcingCommand(**kwargs)
         else:
             cmd = GriddedForcingCommand(**kwargs)
 
-        if isinstance(self._var_cmds.get(var_name, None), dict):
-            self._var_cmds[var_name] = replace(cmd, **self._var_cmds[var_name])
+        if isinstance(self._var_cmds.get(std_name, None), dict):
+            self._var_cmds[std_name] = replace(cmd, **self._var_cmds[std_name])
         else:
-            self._var_cmds[var_name] = cmd
+            self._var_cmds[std_name] = cmd
 
     def configure_from_nc_data(self, fns):
 
         # Important note: if the object at key `k` is a dict (as opposed to a `Command`),
         # don't reset it because it contains initial user-defined config (for the future Command
         # object at that particular key)
-        for k in RVT.NC_VARS:
-            v = self._var_cmds[k]
+        for std_name in RVT.NC_VARS:
+            v = self._var_cmds[std_name]
             if not isinstance(v, dict):
-                self._var_cmds[k] = {}
+                self._var_cmds[std_name] = {}
 
         for fn in fns:
             with xr.open_dataset(fn) as ds:
@@ -596,16 +597,16 @@ class RVT(RV):
                     pass
 
                 # Check if any alternate variable name is in the file.
-                for var_name in RVT.NC_VARS:
-                    for alt_name in RVT.NC_VARS[var_name]["alts"]:
-                        if alt_name not in ds.data_vars:
+                for std_name in RVT.NC_VARS:
+                    for var_name in [std_name] + RVT.NC_VARS[std_name]["alts"]:
+                        if var_name not in ds.data_vars:
                             continue
-                        nc_var = ds[alt_name]
+                        nc_var = ds[var_name]
                         self.add_nc_variable(
-                            name=var_name,
+                            name=std_name,
                             file_name_nc=fn,
-                            data_type=RVT.NC_VARS[var_name]["name"],
-                            var_name_nc=alt_name,
+                            data_type=RVT.NC_VARS[std_name]["raven"],
+                            var_name_nc=var_name,
                             dim_names_nc=nc_var.dims,
                             units=nc_var.attrs.get("units"),
                         )
