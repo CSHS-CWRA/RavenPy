@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import pytest
 import xarray
 
 from ravenpy.utilities.testdata import (
@@ -58,6 +59,7 @@ class TestRemoteFileAccess:
         )
         assert isinstance(ds, xarray.Dataset)
 
+    @pytest.mark.xfail(reason="test.opendap.org is offline")
     def test_dap_access(self):
         ds = open_dataset(
             name="20070917-MODIS_A-JPL-L2P-A2007260000000.L2_LAC_GHRSST-v01.nc",
