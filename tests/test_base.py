@@ -50,6 +50,11 @@ class TestRaven:
 
         assert "Unrecognized command in .rvh file" in str(exc.value)
 
+    def test_raven_version(self):
+        model = Raven()
+
+        assert model.config.rvi.raven_version == model.version
+
     def test_gr4j(self):
         rvs = get_local_testdata("raven-gr4j-cemaneige/raven-gr4j-salmon.rv?")
         ts = get_local_testdata(

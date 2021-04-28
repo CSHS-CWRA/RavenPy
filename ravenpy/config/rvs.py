@@ -283,7 +283,7 @@ class RVI(RV):
         # These are attributes that can be modified/set directly
         self.run_name = "run"
         self.run_index = 0
-        self.raven_version = "3.0.1 rev#275"
+        self.raven_version = "3.X.X"
         self.time_step = 1.0
 
         # These correspond to properties whose setters will pass their value through
