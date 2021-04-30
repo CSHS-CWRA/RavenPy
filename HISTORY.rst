@@ -7,11 +7,11 @@ History
 
 * Refactoring of the RV config subsystem:
 
-  * The config is fully encapsulated into its own class: `ravenpy.config.rvs.Config`.
+  * The config is fully encapsulated into its own class: ``ravenpy.config.rvs.Config``.
   * The emulator RV templates are inline in their emulator classes.
 
-* The emulators have their own submodule: `ravenpy.models.emulators`.
-* The "importers" have been renamed to "extractors" and they have their own submodule: `ravenpy.extractors`.
+* The emulators have their own submodule: ``ravenpy.models.emulators``.
+* The "importers" have been renamed to "extractors" and they have their own submodule: ``ravenpy.extractors``.
 
 0.4.2
 -----
@@ -43,9 +43,9 @@ a single HRU.
 * GR4JCN emulator now supports routing mode.
 * Add BLENDED model emulator.
 * DAP links for forcing files are now supported.
-* Added support for `tox`-based localized installation and testing with python-pip.
+* Added support for ``tox``-based localized installation and testing with python-pip.
 * Now supporting Python 3.7, 3.8, and 3.9.
-* Build testing for `pip` and `conda`-based builds with GitHub CI.
+* Build testing for ``pip`` and ``conda``-based builds with GitHub CI.
 
 0.3.1
 -----
@@ -55,10 +55,10 @@ a single HRU.
 0.3.0
 -----
 
-* Migration and refactoring of GIS and IO utilities (`utils.py`, `utilities/gis.py`) from RavenWPS to RavenPy.
+* Migration and refactoring of GIS and IO utilities (``utils.py``, ``utilities/gis.py``) from RavenWPS to RavenPy.
 * RavenPy can now be installed from PyPI without GIS dependencies (limited functionality).
-* Hydro routing product is now supported from `geoserver.py` (a notebook has been added to demonstrate the new functions).
-* New script `ravenpy aggregate-forcings-to-hrus` to aggregate NetCDF files and compute updated grid weights.
+* Hydro routing product is now supported from ``geoserver.py`` (a notebook has been added to demonstrate the new functions).
+* New script ``ravenpy aggregate-forcings-to-hrus`` to aggregate NetCDF files and compute updated grid weights.
 * Add the basis for a new routing emulator option (WIP).
 * Add climpred verification capabilities.
 
@@ -68,13 +68,13 @@ a single HRU.
 * Regionalisation data is now part of the package.
 * Fix tests that were not using testdata properly.
 * Add tests for external dataset access.
-* `utilities.testdata.get_local_testdata` now raises an exception when it finds no dataset corresponding to the user pattern.
+* ``utilities.testdata.get_local_testdata`` now raises an exception when it finds no dataset corresponding to the user pattern.
 
 0.2.2
 -----
 
 * Set wcs.getCoverage timeout to 120 seconds.
-* Fix `Raven.parse_results` logic when no flow observations are present and no diagnostic file is created.
+* Fix ``Raven.parse_results`` logic when no flow observations are present and no diagnostic file is created.
 * Fix ECCC test where input was cached and shadowed forecast input data.
 
 0.2.1
@@ -85,7 +85,7 @@ a single HRU.
 0.2.0
 -----
 
-* Refactoring of `ravenpy.utilities.testdata` functions.
+* Refactoring of ``ravenpy.utilities.testdata`` functions.
 * Bump xclim to 0.23.
 
 0.1.7
