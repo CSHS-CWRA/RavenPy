@@ -5,11 +5,13 @@ History
 0.5.0
 -----
 
-* Refactoring of the RV config subsystem
-  * The config is fully encapsulated into its own class: `ravenpy.config.rvs.Config`
-  * The emulator RV templates are inline in their emulator classes
-* The emulators have their own submodule: `ravenpy.models.emulators`
-* The "importers" have been renamed to "extractors" and they have their own submodule: `ravenpy.extractors`
+* Refactoring of the RV config subsystem:
+
+  * The config is fully encapsulated into its own class: `ravenpy.config.rvs.Config`.
+  * The emulator RV templates are inline in their emulator classes.
+
+* The emulators have their own submodule: `ravenpy.models.emulators`.
+* The "importers" have been renamed to "extractors" and they have their own submodule: `ravenpy.extractors`.
 
 0.4.2
 -----
