@@ -101,7 +101,7 @@ class Raven:
         # self._name = None
         self._defaults = {}
 
-        self._rv_paths = set()
+        self._rv_paths = []
 
         # Directory logic
         # Top directory inside workdir. This is where Ostrich and its config and templates are stored.
@@ -210,7 +210,7 @@ class Raven:
             else:
                 fn = self.model_path / f"{identifier}.{rvx}"
             with open(fn, "w") as f:
-                self._rv_paths.add(fn)
+                self._rv_paths.append(fn)
                 content = rvo.content or rvo.to_rv()
                 assert content.strip(), f"{rvx} has no content!"
                 f.write(content)
@@ -501,6 +501,7 @@ class Raven:
         # Try to create a zip file
         with zipfile.ZipFile(outfn, "w") as f:
             for fn in files:
+                len(fn.parts)
                 f.write(fn, arcname=fn.relative_to(Path(*fn.parts[:i])))
 
         return outfn
@@ -759,14 +760,14 @@ class Ostrich(Raven):
         # ostIn.txt
         fn = self.exec_path / "ostIn.txt"
         with open(fn, "w") as f:
-            self._rv_paths.add(fn)
+            self._rv_paths.append(fn)
             f.write(self.config.ost.content or self.config.ost.to_rv())
 
         # OstRandomNumbers.txt
         if self.config.ost.random_numbers_path:
             fn = self.exec_path / "OstRandomNumbers.txt"
             with open(fn, "w") as f:
-                self._rv_paths.add(fn)
+                self._rv_paths.append(fn)
                 f.write(self.config.ost.random_numbers_path.read_text())
 
     def parse_results(self):
