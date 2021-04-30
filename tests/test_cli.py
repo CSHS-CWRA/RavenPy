@@ -4,7 +4,7 @@ import netCDF4 as nc4
 from click.testing import CliRunner
 
 from ravenpy.cli import aggregate_forcings_to_hrus, generate_grid_weights
-from ravenpy.models.commands import GridWeightsCommand
+from ravenpy.config.commands import GridWeightsCommand
 from ravenpy.utilities.testdata import get_local_testdata
 
 
@@ -286,8 +286,6 @@ class TestAggregateForcingsToHRUs:
         assert abs(val[2, 2] - 8.0) < 1e-04  # = 0.2*9 + 0.1*6 + 0.7*NODATA
         #                                    # = 0.2/(0.2+0.1)*9 + 0.1/(0.2+0.1)*6
         assert abs(val[3, 2] - 4.9) < 1e-04  # = 0.2*2 + 0.1*3 + 0.7*6
-
-        print("val[2, 3] = ", val[2, 3].data)
 
         # aggregated time series for HRU #4
         # HRU #3 = [ 40% cell 3 ; 60% cell 4 ]

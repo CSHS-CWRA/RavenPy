@@ -1,9 +1,0 @@
-#########################################################################
-:FileType          rvc ASCII Raven 3.0
-#
-# Initial conditions
-#-------------------
-
-{hru_states_cmd}
-
-{basin_states_cmd}

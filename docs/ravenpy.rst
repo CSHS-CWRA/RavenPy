@@ -5,9 +5,11 @@ Subpackages
 -----------
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 10
 
    ravenpy.cli
+   ravenpy.config
+   ravenpy.extractors
    ravenpy.models
    ravenpy.utilities
 

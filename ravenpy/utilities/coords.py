@@ -1,3 +1,5 @@
+from dataclasses import fields
+
 import numpy as np
 import xarray as xr
 
@@ -32,10 +34,10 @@ def param(model):
     model : str
       Model name.
     """
-    model = models.get_model(model)
+    model_cls = models.get_model(model)
     return xr.IndexVariable(
         "param",
-        data=np.array(model.params._fields),
+        data=np.array([f.name for f in fields(model_cls.Params)]),
         attrs={
             "standard_name": "parameter",
             "long_name": "{} model parameter name".format(model),

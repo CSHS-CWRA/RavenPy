@@ -84,6 +84,14 @@ ravenpy.utilities.mk\_test module
    :undoc-members:
    :show-inheritance:
 
+ravenpy.utilities.nb\_graphs module
+-----------------------------------
+
+.. automodule:: ravenpy.utilities.nb_graphs
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 ravenpy.utilities.ravenio module
 --------------------------------
 

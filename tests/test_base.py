@@ -1,4 +1,4 @@
-import tempfile
+import zipfile
 from pathlib import Path
 
 import numpy as np
@@ -13,6 +13,23 @@ has_singularity = False  # ravenpy.raven_simg.exists()
 
 
 class TestRaven:
+    def test_identifier(self):
+        model = Raven()
+        assert model.config.identifier is None
+
+        model.config.update(identifier="toto")
+        assert model.config.identifier == "toto"
+
+        rvt = get_local_testdata("raven-gr4j-cemaneige/raven-gr4j-salmon.rvt")
+        model = Raven()
+        model.configure(rvt)
+        assert model.config.identifier == rvt.stem
+
+        rvp_tpl = get_local_testdata("ostrich-gr4j-cemaneige/raven-gr4j-salmon.rvp.tpl")
+        model = Raven()
+        model.configure(rvp_tpl)
+        assert model.config.identifier == Path(rvp_tpl.stem).stem
+
     def test_raven_error(self):
         rvs = get_local_testdata("raven-gr4j-cemaneige/raven-gr4j-salmon.rv?")
         ts = get_local_testdata(
@@ -21,14 +38,22 @@ class TestRaven:
 
         model = Raven()
 
-        rvs_without_rvi = [p for p in rvs if p.suffix != ".rvi"]
+        model.configure(rvs)
 
-        model.configure(rvs_without_rvi)
+        # Set a typo in the RVH
+        model.config.rvh.content = model.config.rvh.content.replace(
+            ":SubBasins", ":Subbasins"
+        )
 
         with pytest.raises(RavenError) as exc:
             model(ts)
 
-        assert "Cannot find or read .rvi file" in str(exc.value)
+        assert "Unrecognized command in .rvh file" in str(exc.value)
+
+    def test_raven_version(self):
+        model = Raven()
+
+        assert model.config.rvi.raven_version == model.version
 
     def test_gr4j(self):
         rvs = get_local_testdata("raven-gr4j-cemaneige/raven-gr4j-salmon.rv?")
@@ -40,29 +65,41 @@ class TestRaven:
         model.configure(rvs)
         model(ts)
 
+        z = zipfile.ZipFile(model.outputs["rv_config"])
+        assert len(z.filelist) == 5
+
     def test_mohyse(self):
         rvs = get_local_testdata("raven-mohyse/raven-mohyse-salmon.rv?")
         ts = get_local_testdata("raven-mohyse/Salmon-River-Near-Prince-George_*.rvt")
 
-        model = Raven(tempfile.mkdtemp())
+        model = Raven()
         model.configure(rvs)
         model(ts)
+
+        z = zipfile.ZipFile(model.outputs["rv_config"])
+        assert len(z.filelist) == 5
 
     def test_hmets(self):
         rvs = get_local_testdata("raven-hmets/raven-hmets-salmon.rv?")
         ts = get_local_testdata("raven-hmets/Salmon-River-Near-Prince-George_*.rvt")
 
-        model = Raven(tempfile.mkdtemp())
+        model = Raven()
         model.configure(rvs)
         model(ts)
+
+        z = zipfile.ZipFile(model.outputs["rv_config"])
+        assert len(z.filelist) == 5
 
     def test_hbvec(self):
         rvs = get_local_testdata("raven-hbv-ec/raven-hbv-ec-salmon.rv?")
         ts = get_local_testdata("raven-hbv-ec/Salmon-River-Near-Prince-George_*.rvt")
 
-        model = Raven(tempfile.mkdtemp())
+        model = Raven()
         model.configure(rvs)
         model(ts)
+
+        z = zipfile.ZipFile(model.outputs["rv_config"])
+        assert len(z.filelist) == 5
 
     @pytest.mark.skipif(not has_singularity, reason="Singularity is not available.")
     def test_singularity(self):
@@ -87,6 +124,7 @@ class TestOstrich:
 
         model = Ostrich()
         model.configure(ost)
+
         model(ts)
 
         opt_para = model.optimized_parameters
@@ -124,6 +162,9 @@ class TestOstrich:
         #                                err_msg='calibrated NSE is not matching expected value')
 
         assert Path(model.outputs["calibration"]).exists()
+
+        z = zipfile.ZipFile(model.outputs["rv_config"])
+        assert len(z.filelist) == 7
 
     def test_mohyse_with_no_tags(self):
         ts = get_local_testdata(
@@ -185,6 +226,9 @@ class TestOstrich:
 
         assert Path(model.outputs["calibration"]).exists()
 
+        z = zipfile.ZipFile(model.outputs["rv_config"])
+        assert len(z.filelist) == 7
+
     def test_hmets_with_no_tags(self):
         ts = get_local_testdata(
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
@@ -195,6 +239,9 @@ class TestOstrich:
         model = Ostrich()
         model.configure(ost)
         model(ts)
+
+        z = zipfile.ZipFile(model.outputs["rv_config"])
+        assert len(z.filelist) == 7
 
         opt_para = model.optimized_parameters
         opt_func = model.obj_func
@@ -262,6 +309,9 @@ class TestOstrich:
 
         assert Path(model.outputs["calibration"]).exists()
 
+        z = zipfile.ZipFile(model.outputs["rv_config"])
+        assert len(z.filelist) == 7
+
     def test_hbvec_with_no_tags(self):
         ts = get_local_testdata(
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
@@ -272,6 +322,9 @@ class TestOstrich:
         model = Ostrich()
         model.configure(ost)
         model(ts)
+
+        z = zipfile.ZipFile(model.outputs["rv_config"])
+        assert len(z.filelist) == 7
 
         opt_para = model.optimized_parameters
         opt_func = model.obj_func
@@ -335,6 +388,9 @@ class TestOstrich:
         #                                err_msg='calibrated NSE is not matching expected value')
 
         assert Path(model.outputs["calibration"]).exists()
+
+        z = zipfile.ZipFile(model.outputs["rv_config"])
+        assert len(z.filelist) == 7
 
 
 def test_get_diff_level():

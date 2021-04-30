@@ -16,34 +16,23 @@ import stat
 import subprocess
 import tempfile
 from collections import OrderedDict
+from dataclasses import astuple, fields, is_dataclass, replace
 from pathlib import Path
 from typing import Union
 
 import numpy as np
 import xarray as xr
+from numpy.distutils.misc_util import is_sequence
 
 import ravenpy
-
-from .commands import (
+from ravenpy.config.commands import (
     DataCommand,
     GriddedForcingCommand,
     HRUsCommand,
     ObservationDataCommand,
     StationForcingCommand,
 )
-from .importers import NcDataImporter
-from .rv import (
-    RV,
-    RVH,
-    RVI,
-    RVT,
-    Ost,
-    RVFile,
-    forcing_names,
-    get_states,
-    isinstance_namedtuple,
-    parse_solution,
-)
+from ravenpy.config.rvs import RVC, RVI, Config
 
 RAVEN_EXEC_PATH = os.getenv("RAVENPY_RAVEN_BINARY_PATH") or shutil.which("raven")
 OSTRICH_EXEC_PATH = os.getenv("RAVENPY_OSTRICH_BINARY_PATH") or shutil.which("ostrich")
@@ -70,18 +59,12 @@ class Raven:
     r.configure()
     """
 
-    identifier = "generic-raven"
-    templates = ()
-
-    # Allowed configuration file extensions
-    _rvext = ("rvi", "rvp", "rvc", "rvh", "rvt")
-
     _parallel_parameters = [
         "params",
         "hru_state",
         "basin_state",
         "nc_index",
-        "name",
+        # "name",
         "area",
         "elevation",
         "latitude",
@@ -89,7 +72,7 @@ class Raven:
         "region_id",
     ]
 
-    def __init__(self, workdir: Union[str, Path] = None):
+    def __init__(self, workdir: Union[str, Path] = None):  # , identifier: str = None):
         """Initialize the RAVEN model.
 
         Directory for the model configuration and outputs. If None, a temporary directory will be created.
@@ -109,30 +92,16 @@ class Raven:
         self.ostrich_exec = OSTRICH_EXEC_PATH
 
         workdir = workdir or tempfile.mkdtemp()
-        self._rvs = []
-
-        self.rvi = RV()
-        self.rvp = RV()
-        self.rvc = RV()
-        self.rvt = RV()
-        self.rvh = RV()
-        self.rvd = RV()  # rvd is for derived parameters
 
         self.workdir = Path(workdir)
         self.ind_outputs = {}  # Individual files for all simulations
         self.outputs = {}  # Aggregated files
         self.singularity = False  # Set to True to launch Raven with singularity.
         self.raven_simg = None  # ravenpy.raven_simg
-        self._name = None
+        # self._name = None
         self._defaults = {}
-        self.rvfiles = {}
 
-        # Configuration file extensions + rvd for derived parameters.
-        self._rvext = self._rvext + ("rvd",)
-
-        # For subclasses where the configuration file templates are known in advance.
-        if self.templates:
-            self.configure(self.templates)
+        self._rv_paths = []
 
         # Directory logic
         # Top directory inside workdir. This is where Ostrich and its config and templates are stored.
@@ -144,6 +113,8 @@ class Raven:
         self.final_path = self.workdir / self.final_dir
         self._psim = 0
         self._pdim = None  # Parallel dimension (either initparam, params or region)
+
+        self.config = Config(raven_version=self.version)
 
     @property
     def output_path(self):
@@ -182,8 +153,8 @@ class Raven:
     def psim(self, value):
         if not isinstance(value, int):
             raise ValueError
-        if isinstance(self.rvi, RVI):
-            self.rvi.run_index = value
+        if isinstance(self.config.rvi, RVI):
+            self.config.rvi.run_index = value
         self._psim = value
 
     @property
@@ -194,7 +165,8 @@ class Raven:
     @property
     def bash_cmd(self):
         """Bash command arguments."""
-        return [self.cmd, self.name, "-o", str(self.output_path)]
+        identifier = self.config.identifier or "raven-generic"
+        return [self.cmd, identifier, "-o", str(self.output_path)]
 
     @property
     def singularity_cmd(self):
@@ -207,7 +179,7 @@ class Raven:
             "--bind",
             "{}:/data_out:rw".format(self.output_path),
             self.raven_simg,
-            self.name,
+            self.config.identifier,
         ]
 
     @property
@@ -215,95 +187,33 @@ class Raven:
         """This is the main executable."""
         return self.model_path
 
-    @property
-    def name(self):
-        """Name of the model configuration."""
-        return self._name
-
-    @name.setter
-    def name(self, x):
-        self._name = x
-
-    @property
-    def configuration(self):
-        """Configuration dictionaries."""
-        return {ext: OrderedDict(getattr(self, ext).items()) for ext in self._rvext}
-
-    @property
-    def parameters(self):
-        """Dictionary storing all parameters."""
-        params = {}
-        for key, val in self.configuration.items():
-            params.update(val)
-        return params
-
-    @property
-    def rvobjs(self):
-        """Generator for (ext, rv object)."""
-        return {ext: getattr(self, ext) for ext in self._rvext}
-
-    def configure(self, fns):
-        """Read configuration files."""
-        for fn in fns:
-            rvf = RVFile(fn)
-            if rvf.ext not in self._rvext + ("txt",):
-                raise ValueError(
-                    "rv contains unrecognized configuration file keys : {}.".format(
-                        rvf.ext
-                    )
-                )
-            else:
-                if rvf.ext.startswith("rv"):
-                    setattr(self, "name", rvf.stem)
-                    self.rvfiles[rvf.ext] = rvf
-                elif rvf.ext == "txt":
-                    self.rvfiles[rvf.stem] = rvf
-                else:
-                    raise ValueError
-
-    def assign(self, key, value):
-        """Assign parameter to rv object that has a key with the same name."""
-
-        assigned = False
-        for ext, obj in self.rvobjs.items():
-            if hasattr(obj, key):
-                att = getattr(obj, key)
-
-                # If att is a namedtuple, we get its class and try to instantiate it with the values passed.
-                if isinstance_namedtuple(att) and isinstance(
-                    value, (list, tuple, np.ndarray)
-                ):
-                    p = att.__class__(*value)
-                    setattr(obj, key, p)
-                # If att is a RavenNcData, we expect a dict
-                # elif isinstance(att, dict):
-                #     att.update(value)
-                else:
-                    setattr(obj, key, value)
-                assigned = True
-
-        if not assigned:
-            raise AttributeError("No configuration key named {}".format(key))
-
     def derived_parameters(self):
         """Subclassed by emulators. Defines model parameters that are a function of other parameters."""
         return
 
+    def configure(self, fns):
+        """Read configuration files."""
+        if not is_sequence(fns):
+            fns = [fns]
+        for fn in map(Path, fns):
+            self.config.set_rv_file(fn)
+
     def _dump_rv(self):
         """Write configuration files to disk."""
 
-        params = self.parameters
+        identifier = self.config.identifier or "raven-generic"
 
-        for rvf in self.rvfiles.values():
-            p = self.exec_path if rvf.is_tpl else self.model_path
-            if (
-                rvf.stem == "OstRandomNumbers"
-                and isinstance(self.txt, Ost)
-                and self.txt.random_seed == ""
-            ):
-                continue
-            fn = rvf.write(p, **params)
-            self._rvs.append(fn)
+        for rvx in ["rvt", "rvh", "rvp", "rvc", "rvi"]:
+            rvo = getattr(self.config, rvx)
+            if rvo.is_ostrich_tmpl:
+                fn = self.exec_path / f"{identifier}.{rvx}.tpl"
+            else:
+                fn = self.model_path / f"{identifier}.{rvx}"
+            with open(fn, "w") as f:
+                self._rv_paths.append(fn)
+                content = rvo.content or rvo.to_rv()
+                assert content.strip(), f"{rvx} has no content!"
+                f.write(content)
 
     def setup(self, overwrite=False):
         """Create directory structure to store model input files, executable and output results.
@@ -397,12 +307,29 @@ class Raven:
         if isinstance(ts, (str, Path)):
             ts = [ts]
 
+        ts_are_ncs = all(Path(f).suffix.startswith(".nc") for f in ts)
+
+        # Support legacy interface for single HRU emulator
+        hru_attrs = {}
+        for k in ["area", "latitude", "longitude", "elevation"]:
+            v = kwds.pop(k, None)
+            if v:
+                # It seems that `v` is a list when running via a WPS interface
+                hru_attrs[k] = v[0] if isinstance(v, list) else v
+        if hru_attrs:
+            assert len(self.config.rvh.hrus) == 1
+            self.config.rvh.hrus = (replace(self.config.rvh.hrus[0], **hru_attrs),)
+
         # Case for potentially parallel parameters
         pdict = {}
         for p in self._parallel_parameters:
             a = kwds.pop(p, None)
 
-            if a is not None and p in ["params"]:
+            if (
+                a is not None
+                and p == "params"
+                and not isinstance(a, self.__class__.Params)
+            ):
                 pdict[p] = np.atleast_2d(a)
             else:
                 pdict[p] = np.atleast_1d(a)
@@ -442,43 +369,27 @@ class Raven:
 
         # Update non-parallel parameter objects
         for key, val in kwds.items():
+            self.config.update(key, val)
 
-            if key in self._rvext:
-                obj = getattr(self, key)
-                if isinstance(val, dict):
-                    obj.update(val)
-                elif isinstance(val, RV):
-                    setattr(self, key, val)
-                else:
-                    raise ValueError(
-                        "A dictionary or an RV instance is expected to update the values "
-                        "for {}.".format(key)
-                    )
-            else:
-                self.assign(key, val)
-
-        if self.rvi:
+        # if self.config.rvi:
+        if ts_are_ncs:
             self.handle_date_defaults(ts)
             self.set_calendar(ts)
 
-        ncdata = NcDataImporter(ts)
+        if ts_are_ncs:
+            self.config.rvt.configure_from_nc_data(ts)
 
         # Loop over parallel parameters - sets self.rvi.run_index
         procs = []
         for self.psim in range(nloops):
             for key, val in pdict.items():
                 if val[self.psim] is not None:
-                    self.assign(key, val[self.psim])
-
-            # Forcing commands
-            if isinstance(self.rvt, RVT):
-                self.rvt.update(
-                    ncdata.extract(
-                        rvh=self.rvh,
-                        rvt=self.rvt,
-                        nc_index=pdict["nc_index"][self.psim],
-                    )
-                )
+                    if key == "hru_state":
+                        self.config.rvc.set_hru_state(val[self.psim])
+                    elif key == "basin_state":
+                        self.config.rvc.set_basin_state(val[self.psim])
+                    else:
+                        self.config.update(key, val[self.psim])
 
             cmd = self.setup_model_run(tuple(map(Path, ts)))
 
@@ -500,7 +411,8 @@ class Raven:
         procs = self.run(ts, overwrite, **kwds)
 
         for proc in procs:
-            # When Raven errors right away it asks for a RETURN to exit
+            # When Raven errors right away (for instance if it's missing an RV file)
+            # it asks for a RETURN to exit
             proc.communicate(input="\n")
             proc.wait()
 
@@ -526,14 +438,14 @@ class Raven:
         else:
             fn = solution
 
-        self.rvc.parse(Path(fn).read_text())
+        self.config.rvc.parse_solution(Path(fn).read_text())
 
     def parse_results(self, path=None, run_name=None):
         """Store output files in the self.outputs dictionary."""
         # Output files default names. The actual output file names will be composed of the run_name and the default
         # name.
         path = path or self.exec_path
-        run_name = run_name or getattr(self.rvi, "run_name", "")
+        run_name = run_name or self.config.rvi.run_name or ""
         patterns = {
             "hydrograph": f"{run_name}*Hydrographs.nc",
             "storage": f"{run_name}*WatershedStorage.nc",
@@ -555,7 +467,7 @@ class Raven:
             self.ind_outputs[key] = fns
             self.outputs[key] = self._merge_output(fns, pattern[1:])
 
-        self.outputs["rv_config"] = self._merge_output(self.rvs, "rv.zip")
+        self.outputs["rv_config"] = self._merge_output(self._rv_paths, "rv.zip")
 
     def _merge_output(self, files, name):
         """Merge multiple output files into one if possible, otherwise return a list of files."""
@@ -632,7 +544,9 @@ class Raven:
         files = list(path.rglob(pattern))
 
         if len(files) == 0:
-            if not (isinstance(self.rvi, RVI) and self.rvi.suppress_output):
+            if not (
+                isinstance(self.config.rvi, RVI) and self.config.rvi.suppress_output
+            ):
                 raise UserWarning("No output files for {} in {}.".format(pattern, path))
 
         return [f.absolute() for f in files]
@@ -661,26 +575,23 @@ class Raven:
     def get_calendar(fns):
         """Return the calendar."""
         ds = xr.open_mfdataset(fns, combine="by_coords")
-        return ds.time.encoding.get("calendar", "standard")
+        cal = ds.time.encoding.get("calendar", "standard")
+        return RVI.CalendarOptions(cal.upper())
 
     def set_calendar(self, ts):
         """Set the calendar in the RVI configuration."""
-        self.rvi.calendar = self.get_calendar(ts)
+        self.config.rvi.calendar = self.get_calendar(ts)
 
     def handle_date_defaults(self, ts):
         # Get start and end date from file
         start, end = self.start_end_date(ts)
 
-        rvi = self.rvi
+        rvi = self.config.rvi
         if rvi.start_date in [None, dt.datetime(1, 1, 1)]:
             rvi.start_date = start
 
         if rvi.end_date in [None, dt.datetime(1, 1, 1)]:
             rvi.end_date = end
-
-    @property
-    def rvs(self):
-        return self._rvs
 
     @property
     def q_sim(self):
@@ -720,10 +631,11 @@ class Raven:
     @property
     def solution(self):
         if self.outputs["solution"].suffix == ".rvc":
-            return parse_solution(self.outputs["solution"].read_text())
+            return RVC.create_solution(self.outputs["solution"].read_text())
         elif self.outputs["solution"].suffix == ".zip":
             return [
-                parse_solution(fn.read_text()) for fn in self.ind_outputs["solution"]
+                RVC.create_solution(fn.read_text())
+                for fn in self.ind_outputs["solution"]
             ]
 
     def get_final_state(self, hru_index=1, basin_index=1):
@@ -737,10 +649,14 @@ class Raven:
           Set index value or None to get all basin states.
         """
         solution = self.solution
-        if isinstance(solution, dict):
-            return get_states(solution, hru_index, basin_index)
+        if isinstance(solution, RVC):
+            return solution.hru_states[hru_index], solution.basin_states[basin_index]
         else:
-            return zip(*[get_states(s, hru_index, basin_index) for s in solution])
+            states = [
+                (sol.hru_states[hru_index], sol.basin_states[basin_index])
+                for sol in solution
+            ]
+            return zip(*states)
 
     @property
     def diagnostics(self):
@@ -761,51 +677,6 @@ class Raven:
 
         return diag if len(diag) > 1 else diag[0]
 
-    @property
-    def tags(self):
-        """Return a list of tags within the templates."""
-        out = []
-        for rvf in self.rvfiles.values():
-            out.extend(rvf.tags)
-
-        return out
-
-    @staticmethod
-    def split_ext(fn):
-        """Return the name and rv key of the configuration file."""
-        if isinstance(fn, str):
-            fn = Path(fn)
-
-        return fn.stem, fn.suffix[1:]
-
-    def check_units(self):
-        """Check that the input file units match expectations."""
-        # TODO: make compliant with the new RVT implementation
-        pass
-        # for var, nc in self.rvt.items():
-        #     if isinstance(nc, RavenNcData) and nc.var is not None:
-        #         nc._check_units()
-
-    def check_inputs(self):
-        """Check that necessary variables are defined."""
-        has_file = {key for key, val in self.rvt.items() if val is not None}
-        vars = list(self.rvt.keys())
-
-        for var in vars:
-            if var not in has_file and var != "nc_index":
-                if var in ["tasmin", "tasmax"] and "tas" in has_file:
-                    pass  # This is OK
-                if var == "tas" and has_file.issuperset(["tasmin", "tasmax"]):
-                    pass
-                elif var in ["prsn"]:
-                    pass  # Ok, can be guessed from temp ?
-                elif var in ["evspsbl"]:
-                    pass  # Ok, can be computed by Oudin ?
-                elif var in ["water_volume_transport_in_river_channel"]:
-                    pass  # Ok, not strictly necessary for simulations ?
-                else:
-                    raise ValueError("{} not found in files.".format(var))
-
 
 class Ostrich(Raven):
     """Wrapper for OSTRICH calibration of RAVEN hydrological model.
@@ -825,10 +696,6 @@ class Ostrich(Raven):
     >>> r = Ostrich('/tmp/testdir')
     >>> r.configure()
     """
-
-    identifier = "generic-ostrich"
-    _rvext = ("rvi", "rvp", "rvc", "rvh", "rvt", "txt")
-    txt = RV()
 
     @property
     def model_path(self):
@@ -865,7 +732,8 @@ class Ostrich(Raven):
 
     def write_ostrich_runs_raven(self):
         fn = self.exec_path / "ostrich-runs-raven.sh"
-        fn.write_text(ostrich_runs_raven.format(name=self.name))
+        identifier = self.config.identifier or "ostrich-generic"
+        fn.write_text(ostrich_runs_raven.format(identifier=identifier))
         make_executable(fn)
 
     def setup(self, overwrite=False):
@@ -883,6 +751,24 @@ class Ostrich(Raven):
 
         # Create symbolic link to executable
         os.symlink(self.ostrich_exec, str(self.cmd))
+
+    def _dump_rv(self):
+        """write configuration files to disk."""
+
+        super()._dump_rv()
+
+        # ostIn.txt
+        fn = self.exec_path / "ostIn.txt"
+        with open(fn, "w") as f:
+            self._rv_paths.append(fn)
+            f.write(self.config.ost.content or self.config.ost.to_rv())
+
+        # OstRandomNumbers.txt
+        if self.config.ost.random_numbers_path:
+            fn = self.exec_path / "OstRandomNumbers.txt"
+            with open(fn, "w") as f:
+                self._rv_paths.append(fn)
+                f.write(self.config.ost.random_numbers_path.read_text())
 
     def parse_results(self):
         """Store output files in the self.outputs dictionary."""
@@ -903,7 +789,14 @@ class Ostrich(Raven):
             self.outputs[key] = fns
 
         try:
-            self.outputs["calibparams"] = ", ".join(map(str, self.calibrated_params))
+            if is_dataclass(self.calibrated_params):
+                self.outputs["calibparams"] = ", ".join(
+                    map(str, astuple(self.calibrated_params))
+                )
+            else:
+                self.outputs["calibparams"] = ", ".join(
+                    map(str, self.calibrated_params)
+                )
         except (AttributeError, TypeError):
             err = self.parse_errors()
             raise UserWarning(err)
@@ -952,12 +845,15 @@ class Ostrich(Raven):
         This method should be subclassed by emulators for which Ostrich has different parameters than the original
         Raven model.
         """
-        if hasattr(self, "params"):
-            n = len(self.params._fields)
+
+        if self.config.rvp.params:
+            # We are using an emulator
+            n = len(fields(self.config.rvp.params))
             pattern = "par_x{}" if n < 8 else "par_x{:02}"
             names = [pattern.format(i + 1) for i in range(n)]
-            return self.params(*(ops[n] for n in names))
+            return self.__class__.Params(*[ops[n] for n in names])
         else:
+            # We are using generic Ostrich
             return ops.values()
 
     @property
@@ -1027,7 +923,7 @@ set -e
 
 cp ./*.rv? model/
 
-./model/raven ./model/{name} -o ./model/output/
+./model/raven ./model/{identifier} -o ./model/output/
 
 exit 0
 """

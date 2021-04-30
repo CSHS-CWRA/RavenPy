@@ -9,7 +9,7 @@ Created on Tue Feb 23 22:25:32 2021
 import datetime as dt
 import logging
 
-from ravenpy.models import GR4JCN
+from ravenpy.models.emulators import GR4JCN
 from ravenpy.utilities.forecasting import (
     make_climpred_hindcast_object,
     make_ESP_hindcast_dataset,

@@ -2,7 +2,7 @@
 User API
 ========
 
-Base models
+Base Models
 ===========
 
 .. autoclass:: ravenpy.models.base.Raven
@@ -20,30 +20,43 @@ Base models
 Emulators
 =========
 
-.. automodule::  ravenpy.models.emulators
+.. automodule::  ravenpy.models.emulators.blended
    :members:
    :noindex:
 
-
-Configuration options
-=====================
-
-.. automodule::  ravenpy.models.rv
+.. automodule::  ravenpy.models.emulators.gr4jcn
    :members:
    :noindex:
 
-.. automodule::  ravenpy.models.commands
+.. automodule::  ravenpy.models.emulators.hbvec
    :members:
    :noindex:
 
-
-Importers
-=========
-
-.. automodule::  ravenpy.models.importers
+.. automodule::  ravenpy.models.emulators.hmets
    :members:
    :noindex:
 
+.. automodule::  ravenpy.models.emulators.mohyse
+   :members:
+   :noindex:
+
+Configuration
+=============
+
+.. automodule::  ravenpy.config.commands
+   :members:
+   :noindex:
+
+.. automodule::  ravenpy.config.rvs
+   :members:
+   :noindex:
+
+Extractors
+==========
+
+.. automodule::  ravenpy.extractors.routing_product
+   :members:
+   :noindex:
 
 Utilities
 =========

@@ -7,6 +7,7 @@ import subprocess
 import urllib.request
 import zipfile
 from pathlib import Path
+from urllib.parse import urljoin
 
 from setuptools import Distribution, find_packages, setup
 from setuptools.command.develop import develop
@@ -28,6 +29,7 @@ requirements = [
     "netCDF4",
     "numpy",
     "pandas",
+    "pydantic",
     "requests",
     "scipy",
     "statsmodels",
@@ -116,10 +118,12 @@ def create_external_deps_install_class(command_cls):
             self, url, name, rev_name, binary_name, make_target="", src_folder=None
         ):
             print(f"Downloading {name} source code..")
-            print(f"{url}/{rev_name}.zip", self.external_deps_path / f"{name}.zip")
+            print(
+                f"{urljoin(url, rev_name)}.zip", self.external_deps_path / f"{name}.zip"
+            )
 
             urllib.request.urlretrieve(
-                f"{url}/{rev_name}.zip", self.external_deps_path / f"{name}.zip"
+                f"{urljoin(url, rev_name)}.zip", self.external_deps_path / f"{name}.zip"
             )
 
             print(f"Extracting {name} source code..")
@@ -169,7 +173,7 @@ def create_external_deps_install_class(command_cls):
                 self.external_deps_path = Path("./external_deps")
                 self.external_deps_path.mkdir(exist_ok=True)
 
-                url = "http://www.civil.uwaterloo.ca/jmai/raven/"
+                url = "https://www.civil.uwaterloo.ca/jmai/raven/"
                 self.install_binary_dep(url, "raven", "Raven-rev318", "Raven.exe")
 
                 url = "https://github.com/usbr/ostrich/archive/refs/tags/"
@@ -183,7 +187,8 @@ def create_external_deps_install_class(command_cls):
                 )
 
             # This works with python setup.py install, but produces this error with pip install:
-            # ERROR: ravenpy==0.1.0 did not indicate that it installed an .egg-info directory. Only setup.py projects generating .egg-info directories are supported.
+            # ERROR: ravenpy==0.1.0 did not indicate that it installed an .egg-info directory.
+            # Only setup.py projects generating .egg-info directories are supported.
             # super().do_egg_install()
 
             # This works with pip install, but has the problem that it ignores install_requires
@@ -236,7 +241,7 @@ setup(
         gis=gis_requirements,
     ),
     url="https://github.com/CSHS-CWRA/ravenpy",
-    version="0.4.2",
+    version="0.5.0",
     zip_safe=False,
     cmdclass={
         "install": create_external_deps_install_class(install),

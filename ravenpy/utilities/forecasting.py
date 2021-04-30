@@ -28,7 +28,7 @@ except (ImportError, ModuleNotFoundError) as e:
     msg = gis_import_error_message.format(Path(__file__).stem)
     raise ImportError(msg) from e
 
-from ravenpy.models import get_model
+from ravenpy.models.emulators import get_model
 
 LOGGER = logging.getLogger("PYWPS")
 

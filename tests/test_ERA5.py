@@ -40,7 +40,6 @@ class TestRavenERA5:
             params=params,
             start_date=dt.datetime(2018, 1, 1),
             end_date=dt.datetime(2018, 1, 3),
-            name="Salmon",
             run_name="test-hmets-era5",
             area=4250.6,
             elevation=843.0,

@@ -3,7 +3,8 @@ import tempfile
 
 import numpy as np
 
-from ravenpy.models import BLENDED, BLENDED_OST, HRU, LU
+from ravenpy.config.commands import LU
+from ravenpy.models import BLENDED, BLENDED_OST
 from ravenpy.utilities.testdata import get_local_testdata
 
 from .common import _convert_2d
@@ -12,7 +13,7 @@ TS = get_local_testdata(
     "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
 )
 
-hru = BLENDED.HRU(
+hru = BLENDED.ForestHRU(
     area=4250.6, elevation=843.0, latitude=54.4848, longitude=-123.3659, slope=0.01234
 )
 
@@ -220,6 +221,10 @@ class TestBLENDED_OST:
             1.0,  # par_r06
             1.0,  # par_r07
             1.0,  # par_r08
+        )
+
+        model.configure(
+            get_local_testdata("ostrich-gr4j-cemaneige/OstRandomNumbers.txt")
         )
 
         model(

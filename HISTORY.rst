@@ -2,12 +2,22 @@
 History
 =======
 
+0.5.0
+-----
+
+* Refactoring of the RV config subsystem
+  * The config is fully encapsulated into its own class: `ravenpy.config.rvs.Config`
+  * The emulator RV templates are inline in their emulator classes
+* The emulators have their own submodule: `ravenpy.models.emulators`
+* The "importers" have been renamed to "extractors" and they have their own submodule: `ravenpy.extractors`
+
 0.4.2
 -----
-* Update to RavenC revision 318 to fix OPENDAP access for StationForcing commands
-* Fix grid_weights set to None by default
-* Pass nc_index to ObservationData command
-* Expose more cleanly RavenC errors and warnings
+
+* Update to RavenC revision 318 to fix OPENDAP access for StationForcing commands.
+* Fix grid_weights set to None by default.
+* Pass nc_index to ObservationData command.
+* Expose more cleanly RavenC errors and warnings.
 
 0.4.1
 -----

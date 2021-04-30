@@ -22,6 +22,7 @@ dependencies:
   - pandas
   - pip
   - proj
+  - pydantic
   - pyparsing
   - pyproj>=3.0.0
   - rasterio

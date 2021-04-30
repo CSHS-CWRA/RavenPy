@@ -46,7 +46,7 @@ class TestECCCForecast:
 
         model = GR4JCN()
 
-        model.rvc.parse(rvc.read_text())
+        model.config.rvc.parse_solution(rvc.read_text())
 
         model(
             ts=(ts20,),
