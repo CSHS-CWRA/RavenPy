@@ -209,8 +209,10 @@ class MOHYSE(Raven):
 
         # These need to be injected in the RVH
         # TODO: find a better way to implement inter-RV value sharing/injection
-        self.config.rvh.par_rezi_x10 = self.config.rvp.derived_params.par_rezi_x10
-        self.config.rvh.par_x09 = self.config.rvp.params.par_x09
+        self.config.rvh.set_extra_attribute(
+            "par_rezi_x10", self.config.rvp.derived_params.par_rezi_x10
+        )
+        self.config.rvh.set_extra_attribute("par_x09", self.config.rvp.params.par_x09)
 
 
 class MOHYSE_OST(Ostrich, MOHYSE):

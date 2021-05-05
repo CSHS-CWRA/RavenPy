@@ -101,9 +101,13 @@ class HRUsCommand(RavenCommand):
         terrain_class: str = ""
         slope: float = 0.0
         aspect: float = 0.0
+        # This field is not part of the Raven config, it is needed for serialization,
+        # to specify which HRU subclass to use when necessary
+        hru_type: Optional[str] = None
 
         def to_rv(self):
             d = asdict(self)
+            del d["hru_type"]
             return " ".join(f"{v: <{VALUE_PADDING * 2}}" for v in d.values())
 
     hrus: Tuple[Record, ...] = ()
@@ -237,7 +241,7 @@ class BaseDataCommand(RavenCommand):
     file_name_nc: Union[str, Path] = ""  # can be a URL
     var_name_nc: str = ""
     dim_names_nc: Tuple[str, ...] = ("time",)
-    time_shift: Optional[int] = None  # in days
+    time_shift: Optional[float] = None  # in days
     scale: float = 1
     offset: float = 0
     deaccumulate: Optional[bool] = False

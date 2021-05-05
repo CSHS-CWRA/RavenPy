@@ -248,8 +248,10 @@ class HBVEC(Raven):
 
         # These need to be injected in the RVH
         # TODO: find a better way to implement inter-RV value sharing/injection
-        self.config.rvh.par_x11 = self.config.rvp.params.par_x11
-        self.config.rvh.par_x11_half = self.config.rvp.derived_params.par_x11_half
+        self.config.rvh.set_extra_attribute("par_x11", self.config.rvp.params.par_x11)
+        self.config.rvh.set_extra_attribute(
+            "par_x11_half", self.config.rvp.derived_params.par_x11_half
+        )
 
         self.config.rvt.rain_correction = self.config.rvp.params.par_x20
         self.config.rvt.snow_correction = self.config.rvp.params.par_x21

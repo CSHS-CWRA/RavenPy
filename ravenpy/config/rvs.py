@@ -11,6 +11,7 @@ import cf_xarray
 import cftime
 import numpy as np
 import xarray as xr
+from numpy.distutils.misc_util import is_sequence
 
 from ravenpy.config.commands import (
     BasinIndexCommand,
@@ -38,8 +39,17 @@ class RV(ABC):
     def __init__(self, config, **kwds):
         # Each RV has a reference to their parent object in order to access sibling RVs.
         self._config = config
+
         self.is_ostrich_tmpl = False
+
+        # This variable contains the RV file content when it was set from a file; if still
+        # None at the moment Raven is called, it means the corresponding RV must be rendered
+        # with the `to_rv` method.
         self.content = None
+
+        # This contains extra attributes that might be used with a customized template
+        # (currently used with HBVEC and MOHYSE emulators, for values in their RVH)
+        self._extra_attributes = {}
 
     def update(self, key, value):
         if hasattr(self, key):
@@ -48,24 +58,14 @@ class RV(ABC):
             # numpy array); if that's the case, cast those values into a new instance of the
             # corresponding dataclass.
             attr = getattr(self, key)
-            if is_dataclass(attr) and isinstance(value, (list, tuple, np.ndarray)):
+            if is_dataclass(attr) and is_sequence(value):
                 value = attr.__class__(*value)
             setattr(self, key, value)
             return True
         return False
 
-    def get_extra_attributes(self, d):
-        """
-        Not sure about this: for the moment I use it only for certain params that must
-        be injected in the RVH by the MOHYSE emulator. The idea is to complete the `d`
-        dict used in the `to_rv` method for the template with extra attributes that have
-        been added in the emulator.
-        """
-        e = {}
-        for k, v in self.__dict__.items():
-            if k not in d:
-                e[k] = v
-        return e
+    def set_extra_attribute(self, key, value):
+        self._extra_attributes[key] = value
 
     def set_tmpl(self, tmpl, is_ostrich=False):
         self.tmpl = tmpl
@@ -125,7 +125,7 @@ class RVC(RV):
             "basin_states": BasinStateVariablesCommand(self.basin_states),
         }
 
-        d.update(self.get_extra_attributes(d))
+        d.update(self._extra_attributes)
 
         return dedent(self.tmpl).format(**d)
 
@@ -178,7 +178,7 @@ class RVH(RV):
             "reservoirs": "\n\n".join(map(str, self.reservoirs)),
         }
 
-        d.update(self.get_extra_attributes(d))
+        d.update(self._extra_attributes)
 
         return dedent(self.tmpl).format(**d)
 
@@ -302,6 +302,19 @@ class RVI(RV):
             RVI.EvaluationMetrics.RMSE,
         ]
         self._suppress_output = False
+
+    def configure_from_nc_data(self, fns):
+        with xr.open_mfdataset(fns, combine="by_coords") as ds:
+            start, end = ds.indexes["time"][0], ds.indexes["time"][-1]
+            cal = ds.time.encoding.get("calendar", "standard")
+
+        if self.start_date in [None, dt.datetime(1, 1, 1)]:
+            self.start_date = start
+
+        if self.end_date in [None, dt.datetime(1, 1, 1)]:
+            self.end_date = end
+
+        self.calendar = RVI.CalendarOptions(cal.upper())
 
     @property
     def start_date(self):
@@ -457,6 +470,8 @@ class RVI(RV):
         d["identifier"] = self._config.identifier
         d["now"] = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+        d.update(self._extra_attributes)
+
         t = dedent(self._pre_tmpl) + dedent(self.tmpl) + dedent(self._post_tmpl)
         return t.format(**d)
 
@@ -499,6 +514,9 @@ class RVP(RV):
             if self.avg_annual_runoff
             else "",
         }
+
+        d.update(self._extra_attributes)
+
         return dedent(self.tmpl).format(**d)
 
 
@@ -577,7 +595,12 @@ class RVT(RV):
             cmd = GriddedForcingCommand(**kwargs)
 
         if isinstance(self._var_cmds.get(std_name, None), dict):
-            self._var_cmds[std_name] = replace(cmd, **self._var_cmds[std_name])
+            d = self._var_cmds[std_name]
+            lt = d.pop("linear_transform", None)
+            if lt:
+                d["scale"] = lt[0]
+                d["offset"] = lt[1]
+            self._var_cmds[std_name] = replace(cmd, **d)
         else:
             self._var_cmds[std_name] = cmd
 

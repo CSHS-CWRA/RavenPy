@@ -32,7 +32,7 @@ from ravenpy.config.commands import (
     ObservationDataCommand,
     StationForcingCommand,
 )
-from ravenpy.config.rvs import RVC, RVI, Config
+from ravenpy.config.rvs import RVC, Config
 
 RAVEN_EXEC_PATH = os.getenv("RAVENPY_RAVEN_BINARY_PATH") or shutil.which("raven")
 OSTRICH_EXEC_PATH = os.getenv("RAVENPY_OSTRICH_BINARY_PATH") or shutil.which("ostrich")
@@ -64,7 +64,6 @@ class Raven:
         "hru_state",
         "basin_state",
         "nc_index",
-        # "name",
         "area",
         "elevation",
         "latitude",
@@ -96,10 +95,6 @@ class Raven:
         self.workdir = Path(workdir)
         self.ind_outputs = {}  # Individual files for all simulations
         self.outputs = {}  # Aggregated files
-        self.singularity = False  # Set to True to launch Raven with singularity.
-        self.raven_simg = None  # ravenpy.raven_simg
-        # self._name = None
-        self._defaults = {}
 
         self._rv_paths = []
 
@@ -131,8 +126,6 @@ class Raven:
 
     @property
     def version(self):
-        import re
-
         out = subprocess.check_output(
             [
                 self.raven_exec,
@@ -153,8 +146,7 @@ class Raven:
     def psim(self, value):
         if not isinstance(value, int):
             raise ValueError
-        if isinstance(self.config.rvi, RVI):
-            self.config.rvi.run_index = value
+        self.config.rvi.run_index = value
         self._psim = value
 
     @property
@@ -167,20 +159,6 @@ class Raven:
         """Bash command arguments."""
         identifier = self.config.identifier or "raven-generic"
         return [self.cmd, identifier, "-o", str(self.output_path)]
-
-    @property
-    def singularity_cmd(self):
-        """Run Singularity container."""
-        return [
-            "singularity",
-            "run",
-            "--bind",
-            "{}:/data".format(self.model_path),
-            "--bind",
-            "{}:/data_out:rw".format(self.output_path),
-            self.raven_simg,
-            self.config.identifier,
-        ]
 
     @property
     def cmd_path(self):
@@ -247,14 +225,6 @@ class Raven:
         index : int
           Run index (starts at 1)
         """
-        # Create configuration information from input files
-        # ncvars = self._assign_files(ts)
-        # self.rvt.update(ncvars)
-
-        # TODO: Re-enable those checks
-        # self.check_units()
-        # self.check_inputs()
-
         # Compute derived parameters
         self.derived_parameters()
 
@@ -262,6 +232,7 @@ class Raven:
         if not self.model_path.exists():
             os.makedirs(self.model_path)
             os.makedirs(self.output_path)
+
         self._dump_rv()
 
         # Create symbolic link to input files
@@ -273,13 +244,7 @@ class Raven:
         if not self.raven_cmd.exists():
             os.symlink(self.raven_exec, str(self.raven_cmd))
 
-        # Shell command to run the model
-        if self.singularity:
-            cmd = self.singularity_cmd
-        else:
-            cmd = self.bash_cmd
-
-        return cmd
+        return self.bash_cmd
 
     def run(self, ts, overwrite=False, **kwds):
         """Run the model.
@@ -307,8 +272,6 @@ class Raven:
         if isinstance(ts, (str, Path)):
             ts = [ts]
 
-        ts_are_ncs = all(Path(f).suffix.startswith(".nc") for f in ts)
-
         # Support legacy interface for single HRU emulator
         hru_attrs = {}
         for k in ["area", "latitude", "longitude", "elevation"]:
@@ -323,16 +286,16 @@ class Raven:
         # Case for potentially parallel parameters
         pdict = {}
         for p in self._parallel_parameters:
-            a = kwds.pop(p, None)
-
-            if (
-                a is not None
-                and p == "params"
-                and not isinstance(a, self.__class__.Params)
-            ):
-                pdict[p] = np.atleast_2d(a)
+            val = kwds.pop(p, None)
+            if val is not None and p == "params":
+                # Special case where we have `Params(..)` or `[Params(), ..]`
+                lval = [val] if not is_sequence(val) else val
+                if isinstance(lval[0], self.__class__.Params):
+                    pdict[p] = np.atleast_1d(val)
+                else:
+                    pdict[p] = np.atleast_2d(val)
             else:
-                pdict[p] = np.atleast_1d(a)
+                pdict[p] = np.atleast_1d(val)
 
         # Number of parallel loops is dictated by the number of parallel parameters or nc_index.
         plen = {pp: len(pdict[pp]) for pp in self._parallel_parameters + ["nc_index"]}
@@ -371,13 +334,13 @@ class Raven:
         for key, val in kwds.items():
             self.config.update(key, val)
 
-        # if self.config.rvi:
-        if ts_are_ncs:
-            self.handle_date_defaults(ts)
-            self.set_calendar(ts)
+        ts_ncs = [f for f in ts if Path(f).suffix.startswith(".nc")]
 
-        if ts_are_ncs:
-            self.config.rvt.configure_from_nc_data(ts)
+        if ts_ncs:
+            self.config.rvi.configure_from_nc_data(ts_ncs)
+
+        if ts_ncs:
+            self.config.rvt.configure_from_nc_data(ts_ncs)
 
         # Loop over parallel parameters - sets self.rvi.run_index
         procs = []
@@ -544,54 +507,10 @@ class Raven:
         files = list(path.rglob(pattern))
 
         if len(files) == 0:
-            if not (
-                isinstance(self.config.rvi, RVI) and self.config.rvi.suppress_output
-            ):
+            if not self.config.rvi.suppress_output:
                 raise UserWarning("No output files for {} in {}.".format(pattern, path))
 
         return [f.absolute() for f in files]
-
-    @staticmethod
-    def start_end_date(fns):
-        """Return the common starting and ending date and time of netCDF files.
-
-        Parameters
-        ----------
-        fns : sequence
-          Sequence of netCDF file names for forcing data.
-
-        Returns
-        -------
-        start : datetime
-          The first datetime of the forcing files.
-        end : datetime
-          The last datetime of the forcing files.
-        """
-
-        ds = xr.open_mfdataset(fns, combine="by_coords")
-        return ds.indexes["time"][0], ds.indexes["time"][-1]
-
-    @staticmethod
-    def get_calendar(fns):
-        """Return the calendar."""
-        ds = xr.open_mfdataset(fns, combine="by_coords")
-        cal = ds.time.encoding.get("calendar", "standard")
-        return RVI.CalendarOptions(cal.upper())
-
-    def set_calendar(self, ts):
-        """Set the calendar in the RVI configuration."""
-        self.config.rvi.calendar = self.get_calendar(ts)
-
-    def handle_date_defaults(self, ts):
-        # Get start and end date from file
-        start, end = self.start_end_date(ts)
-
-        rvi = self.config.rvi
-        if rvi.start_date in [None, dt.datetime(1, 1, 1)]:
-            rvi.start_date = start
-
-        if rvi.end_date in [None, dt.datetime(1, 1, 1)]:
-            rvi.end_date = end
 
     @property
     def q_sim(self):
@@ -767,8 +686,8 @@ class Ostrich(Raven):
         if self.config.ost.random_numbers_path:
             fn = self.exec_path / "OstRandomNumbers.txt"
             with open(fn, "w") as f:
-                self._rv_paths.append(fn)
                 f.write(self.config.ost.random_numbers_path.read_text())
+            self._rv_paths.append(fn)
 
     def parse_results(self):
         """Store output files in the self.outputs dictionary."""
