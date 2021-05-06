@@ -596,10 +596,6 @@ class RVT(RV):
 
         if isinstance(self._var_cmds.get(std_name, None), dict):
             d = self._var_cmds[std_name]
-            lt = d.pop("linear_transform", None)
-            if lt:
-                d["scale"] = lt[0]
-                d["offset"] = lt[1]
             self._var_cmds[std_name] = replace(cmd, **d)
         else:
             self._var_cmds[std_name] = cmd
