@@ -585,7 +585,7 @@ class RVT(RV):
         self._nc_elevation = []
         self._number_grid_cells = 0
 
-    def add_nc_variable(self, **kwargs):
+    def _add_nc_variable(self, **kwargs):
         std_name = kwargs.get("name", kwargs["var_name_nc"])
         # If the name is not the standard one, search for it
         # TODO: reorganize NC_VARS so that the keys are the Raven names
@@ -614,8 +614,12 @@ class RVT(RV):
         self._var_cmds[std_name] = replace(cmd, **spec)
 
     def set_nc_variables(self, nc_variables):
+        """
+        This is meant for manually setting the variables, and should prevent
+        automatic configuration from an nc file.
+        """
         for nc_var in nc_variables:
-            self.add_nc_variable(**nc_var)
+            self._add_nc_variable(**nc_var)
         self._auto_nc_configure = False
 
     def configure_from_nc_data(self, fns):
@@ -640,7 +644,7 @@ class RVT(RV):
                         if var_name not in ds.data_vars:
                             continue
                         nc_var = ds[var_name]
-                        self.add_nc_variable(
+                        self._add_nc_variable(
                             name=std_name,
                             file_name_nc=fn,
                             data_type=RVT.NC_VARS[std_name]["raven"],
