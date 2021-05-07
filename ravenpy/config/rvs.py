@@ -627,9 +627,9 @@ class RVT(RV):
         for fn in fns:
             with xr.open_dataset(fn) as ds:
                 try:
-                    self.nc_latitude = ds.cf["latitude"]
-                    self.nc_longitude = ds.cf["longitude"]
-                    self.nc_elevation = ds.cf["vertical"]
+                    self._nc_latitude = ds.cf["latitude"]
+                    self._nc_longitude = ds.cf["longitude"]
+                    self._nc_elevation = ds.cf["vertical"]
                 except KeyError:
                     # Will try to compute values later from first HRU (in self.to_rv)
                     pass
@@ -679,21 +679,18 @@ class RVT(RV):
             for var, cmd in self._var_cmds.items():
                 if cmd and not isinstance(cmd, ObservationDataCommand):
                     data_cmds.append(cmd)
-            lat = (
-                self._nc_latitude[self.nc_index]
-                if self._nc_latitude
-                else self._config.rvh.hrus[0].latitude
-            )
-            lon = (
-                self._nc_longitude[self.nc_index]
-                if self._nc_longitude
-                else self._config.rvh.hrus[0].longitude
-            )
-            elev = (
-                self._nc_elevation[self.nc_index]
-                if self._nc_elevation
-                else self._config.rvh.hrus[0].elevation
-            )
+            try:
+                lat = np.atleast_1d(self._nc_latitude.values)[self.nc_index]
+            except Exception:
+                lat = self._config.rvh.hrus[0].latitude
+            try:
+                lon = np.atleast_1d(self._nc_longitude.values)[self.nc_index]
+            except Exception:
+                lon = self._config.rvh.hrus[0].longitude
+            try:
+                elev = np.atleast_1d(self._nc_elevation.values)[self.nc_index]
+            except Exception:
+                elev = self._config.rvh.hrus[0].elevation
 
             d["gauge"] = GaugeCommand(
                 latitude=lat,
