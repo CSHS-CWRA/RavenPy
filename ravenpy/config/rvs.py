@@ -11,6 +11,7 @@ import cf_xarray
 import cftime
 import numpy as np
 import xarray as xr
+from numpy.distutils.misc_util import is_sequence
 
 from ravenpy.config.commands import (
     BasinIndexCommand,
@@ -38,8 +39,17 @@ class RV(ABC):
     def __init__(self, config, **kwds):
         # Each RV has a reference to their parent object in order to access sibling RVs.
         self._config = config
+
         self.is_ostrich_tmpl = False
+
+        # This variable contains the RV file content when it was set from a file; if still
+        # None at the moment Raven is called, it means the corresponding RV must be rendered
+        # with the `to_rv` method.
         self.content = None
+
+        # This contains extra attributes that might be used with a customized template
+        # (currently used with HBVEC and MOHYSE emulators, for values in their RVH)
+        self._extra_attributes = {}
 
     def update(self, key, value):
         if hasattr(self, key):
@@ -48,24 +58,14 @@ class RV(ABC):
             # numpy array); if that's the case, cast those values into a new instance of the
             # corresponding dataclass.
             attr = getattr(self, key)
-            if is_dataclass(attr) and isinstance(value, (list, tuple, np.ndarray)):
+            if is_dataclass(attr) and is_sequence(value):
                 value = attr.__class__(*value)
             setattr(self, key, value)
             return True
         return False
 
-    def get_extra_attributes(self, d):
-        """
-        Not sure about this: for the moment I use it only for certain params that must
-        be injected in the RVH by the MOHYSE emulator. The idea is to complete the `d`
-        dict used in the `to_rv` method for the template with extra attributes that have
-        been added in the emulator.
-        """
-        e = {}
-        for k, v in self.__dict__.items():
-            if k not in d:
-                e[k] = v
-        return e
+    def set_extra_attribute(self, key, value):
+        self._extra_attributes[key] = value
 
     def set_tmpl(self, tmpl, is_ostrich=False):
         self.tmpl = tmpl
@@ -125,7 +125,7 @@ class RVC(RV):
             "basin_states": BasinStateVariablesCommand(self.basin_states),
         }
 
-        d.update(self.get_extra_attributes(d))
+        d.update(self._extra_attributes)
 
         return dedent(self.tmpl).format(**d)
 
@@ -178,7 +178,7 @@ class RVH(RV):
             "reservoirs": "\n\n".join(map(str, self.reservoirs)),
         }
 
-        d.update(self.get_extra_attributes(d))
+        d.update(self._extra_attributes)
 
         return dedent(self.tmpl).format(**d)
 
@@ -302,6 +302,19 @@ class RVI(RV):
             RVI.EvaluationMetrics.RMSE,
         ]
         self._suppress_output = False
+
+    def configure_from_nc_data(self, fns):
+        with xr.open_mfdataset(fns, combine="by_coords") as ds:
+            start, end = ds.indexes["time"][0], ds.indexes["time"][-1]
+            cal = ds.time.encoding.get("calendar", "standard")
+
+        if self.start_date in [None, dt.datetime(1, 1, 1)]:
+            self.start_date = start
+
+        if self.end_date in [None, dt.datetime(1, 1, 1)]:
+            self.end_date = end
+
+        self.calendar = RVI.CalendarOptions(cal.upper())
 
     @property
     def start_date(self):
@@ -457,6 +470,8 @@ class RVI(RV):
         d["identifier"] = self._config.identifier
         d["now"] = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+        d.update(self._extra_attributes)
+
         t = dedent(self._pre_tmpl) + dedent(self.tmpl) + dedent(self._post_tmpl)
         return t.format(**d)
 
@@ -499,6 +514,9 @@ class RVP(RV):
             if self.avg_annual_runoff
             else "",
         }
+
+        d.update(self._extra_attributes)
+
         return dedent(self.tmpl).format(**d)
 
 
@@ -546,7 +564,14 @@ class RVT(RV):
     def __init__(self, config):
         super().__init__(config)
 
-        self._var_cmds = {k: {} for k in RVT.NC_VARS.keys()}
+        # These are customized variable attributes specified by the user
+        self._var_specs = {k: {} for k in RVT.NC_VARS.keys()}
+
+        # These are the actual variable as `commands.BaseDataCommand` objects
+        self._var_cmds = {k: None for k in RVT.NC_VARS.keys()}
+
+        # Specifies whether the variables must be configured using file NC data
+        self._auto_nc_configure = True
 
         self.nc_index = 0
         self.grid_weights = None
@@ -560,8 +585,17 @@ class RVT(RV):
         self._nc_elevation = []
         self._number_grid_cells = 0
 
-    def add_nc_variable(self, **kwargs):
+    def _add_nc_variable(self, **kwargs):
         std_name = kwargs.get("name", kwargs["var_name_nc"])
+        # If the name is not the standard one, search for it
+        # TODO: reorganize NC_VARS so that the keys are the Raven names
+        if std_name not in RVT.NC_VARS:
+            for sn, rec in RVT.NC_VARS.items():
+                if rec["raven"] == kwargs["data_type"] or std_name in rec["alts"]:
+                    std_name = sn
+                    break
+            else:
+                assert False, f"{std_name} not found in the list of standard names"
         is_obs_var = kwargs.pop("is_observation", False)
         if len(kwargs["dim_names_nc"]) == 1:
             if std_name == "water_volume_transport_in_river_channel" or is_obs_var:
@@ -576,27 +610,30 @@ class RVT(RV):
         else:
             cmd = GriddedForcingCommand(**kwargs)
 
-        if isinstance(self._var_cmds.get(std_name, None), dict):
-            self._var_cmds[std_name] = replace(cmd, **self._var_cmds[std_name])
-        else:
-            self._var_cmds[std_name] = cmd
+        spec = self._var_specs[std_name]
+        self._var_cmds[std_name] = replace(cmd, **spec)
+
+    def set_nc_variables(self, nc_variables):
+        """
+        This is meant for manually setting the variables, and should prevent
+        automatic configuration from an nc file.
+        """
+        for nc_var in nc_variables:
+            self._add_nc_variable(**nc_var)
+        self._auto_nc_configure = False
 
     def configure_from_nc_data(self, fns):
 
-        # Important note: if the object at key `k` is a dict (as opposed to a `Command`),
-        # don't reset it because it contains initial user-defined config (for the future Command
-        # object at that particular key)
-        for std_name in RVT.NC_VARS:
-            v = self._var_cmds[std_name]
-            if not isinstance(v, dict):
-                self._var_cmds[std_name] = {}
+        assert self._auto_nc_configure is True
+
+        self._var_cmds = {k: None for k in RVT.NC_VARS.keys()}
 
         for fn in fns:
             with xr.open_dataset(fn) as ds:
                 try:
-                    self.nc_latitude = ds.cf["latitude"]
-                    self.nc_longitude = ds.cf["longitude"]
-                    self.nc_elevation = ds.cf["vertical"]
+                    self._nc_latitude = ds.cf["latitude"]
+                    self._nc_longitude = ds.cf["longitude"]
+                    self._nc_elevation = ds.cf["vertical"]
                 except KeyError:
                     # Will try to compute values later from first HRU (in self.to_rv)
                     pass
@@ -607,7 +644,7 @@ class RVT(RV):
                         if var_name not in ds.data_vars:
                             continue
                         nc_var = ds[var_name]
-                        self.add_nc_variable(
+                        self._add_nc_variable(
                             name=std_name,
                             file_name_nc=fn,
                             data_type=RVT.NC_VARS[std_name]["raven"],
@@ -619,8 +656,8 @@ class RVT(RV):
                         break
 
     def update(self, key, value):
-        if key in self._var_cmds:
-            self._var_cmds[key].update(value)
+        if key in self._var_specs:
+            self._var_specs[key].update(value)
             return True
         elif key == "nc_index":
             self.nc_index = value
@@ -642,25 +679,22 @@ class RVT(RV):
 
         use_gauge = any(type(cmd) is DataCommand for cmd in self._var_cmds.values())
         if use_gauge:
-            data = []
+            data_cmds = []
             for var, cmd in self._var_cmds.items():
                 if cmd and not isinstance(cmd, ObservationDataCommand):
-                    data.append(cmd)
-            lat = (
-                self._nc_latitude[self.nc_index]
-                if self._nc_latitude
-                else self._config.rvh.hrus[0].latitude
-            )
-            lon = (
-                self._nc_longitude[self.nc_index]
-                if self._nc_longitude
-                else self._config.rvh.hrus[0].longitude
-            )
-            elev = (
-                self._nc_elevation[self.nc_index]
-                if self._nc_elevation
-                else self._config.rvh.hrus[0].elevation
-            )
+                    data_cmds.append(cmd)
+            try:
+                lat = np.atleast_1d(self._nc_latitude.values)[self.nc_index]
+            except Exception:
+                lat = self._config.rvh.hrus[0].latitude
+            try:
+                lon = np.atleast_1d(self._nc_longitude.values)[self.nc_index]
+            except Exception:
+                lon = self._config.rvh.hrus[0].longitude
+            try:
+                elev = np.atleast_1d(self._nc_elevation.values)[self.nc_index]
+            except Exception:
+                elev = self._config.rvh.hrus[0].elevation
 
             d["gauge"] = GaugeCommand(
                 latitude=lat,
@@ -670,7 +704,7 @@ class RVT(RV):
                 snow_correction=self.snow_correction,
                 monthly_ave_evaporation=self.monthly_ave_evaporation,
                 monthly_ave_temperature=self.monthly_ave_temperature,
-                data=data,
+                data_cmds=data_cmds,
             )
         else:
             # Construct default grid weights applying equally to all HRUs

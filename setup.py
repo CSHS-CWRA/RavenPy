@@ -33,7 +33,7 @@ requirements = [
     "requests",
     "scipy",
     "statsmodels",
-    "xarray",
+    "xarray==0.17",
     "cf-xarray",
     "xclim>=0.23",
     "wheel",

@@ -101,9 +101,13 @@ class HRUsCommand(RavenCommand):
         terrain_class: str = ""
         slope: float = 0.0
         aspect: float = 0.0
+        # This field is not part of the Raven config, it is needed for serialization,
+        # to specify which HRU subclass to use when necessary
+        hru_type: Optional[str] = None
 
         def to_rv(self):
             d = asdict(self)
+            del d["hru_type"]
             return " ".join(f"{v: <{VALUE_PADDING * 2}}" for v in d.values())
 
     hrus: Tuple[Record, ...] = ()
@@ -237,7 +241,7 @@ class BaseDataCommand(RavenCommand):
     file_name_nc: Union[str, Path] = ""  # can be a URL
     var_name_nc: str = ""
     dim_names_nc: Tuple[str, ...] = ("time",)
-    time_shift: Optional[int] = None  # in days
+    time_shift: Optional[float] = None  # in days
     scale: float = 1
     offset: float = 0
     deaccumulate: Optional[bool] = False
@@ -307,7 +311,7 @@ class GaugeCommand(RavenCommand):
     monthly_ave_evaporation: Optional[Tuple[float, ...]] = ()
     monthly_ave_temperature: Optional[Tuple[float, ...]] = ()
 
-    data: Optional[Tuple[DataCommand, ...]] = ()
+    data_cmds: Optional[Tuple[DataCommand, ...]] = ()
 
     template = """
     :Gauge
@@ -318,7 +322,7 @@ class GaugeCommand(RavenCommand):
         {snow_correction}
         {monthly_ave_evaporation}
         {monthly_ave_temperature}
-        {data_list}
+        {data_cmds}
     :EndGauge
     """
 
@@ -340,7 +344,7 @@ class GaugeCommand(RavenCommand):
             d["monthly_ave_temperature"] = f":MonthlyAveTemperature {temp_data}"
         else:
             d["monthly_ave_temperature"] = ""
-        d["data_list"] = "\n\n".join(map(str, self.data))
+        d["data_cmds"] = "\n\n".join(map(str, self.data_cmds))
         return dedent(self.template).format(**d)
 
 

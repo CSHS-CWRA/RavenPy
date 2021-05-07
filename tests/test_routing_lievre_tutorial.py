@@ -164,35 +164,37 @@ class TestRouting:
             vic_temperatures_nc_path, routing_product_shp_path
         )
 
-        model.config.rvt.add_nc_variable(
-            name="StreamInputs",
-            data_type="PRECIP",
-            file_name_nc=vic_streaminputs_nc_path.name,
-            var_name_nc="Streaminputs",
-            dim_names_nc=("lon_dim", "lat_dim", "time"),
-            scale=4.0,
-            offset=0,
-            grid_weights=streaminputs_extractor.extract(),
-        )
-
-        model.config.rvt.add_nc_variable(
-            name="AverageTemp",
-            data_type="TEMP_AVE",
-            file_name_nc=vic_temperatures_nc_path.name,
-            var_name_nc="Avg_temp",
-            dim_names_nc=("lon_dim", "lat_dim", "time"),
-            grid_weights=temperatures_extractor.extract(),
-        )
-
-        model.config.rvt.add_nc_variable(
-            is_observation=True,
-            data_type="HYDROGRAPH",
-            subbasin_id=gauge.subbasin_id,
-            units="m3/s",
-            file_name_nc=observation_data_nc_path.name,
-            var_name_nc="Q",
-            dim_names_nc=("nstations", "time"),
-            index=1,  # StationIdx
+        model.config.rvt.set_nc_variables(
+            [
+                dict(
+                    name="StreamInputs",
+                    data_type="PRECIP",
+                    file_name_nc=vic_streaminputs_nc_path.name,
+                    var_name_nc="Streaminputs",
+                    dim_names_nc=("lon_dim", "lat_dim", "time"),
+                    scale=4.0,
+                    offset=0,
+                    grid_weights=streaminputs_extractor.extract(),
+                ),
+                dict(
+                    name="AverageTemp",
+                    data_type="TEMP_AVE",
+                    file_name_nc=vic_temperatures_nc_path.name,
+                    var_name_nc="Avg_temp",
+                    dim_names_nc=("lon_dim", "lat_dim", "time"),
+                    grid_weights=temperatures_extractor.extract(),
+                ),
+                dict(
+                    is_observation=True,
+                    data_type="HYDROGRAPH",
+                    subbasin_id=gauge.subbasin_id,
+                    units="m3/s",
+                    file_name_nc=observation_data_nc_path.name,
+                    var_name_nc="Q",
+                    dim_names_nc=("nstations", "time"),
+                    index=1,  # StationIdx
+                ),
+            ]
         )
 
         #############

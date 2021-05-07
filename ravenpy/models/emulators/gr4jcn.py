@@ -43,6 +43,7 @@ class GR4JCN(Raven):
         soil_profile: str = "DEFAULT_P"
         aquifer_profile: str = "[NONE]"
         terrain_class: str = "[NONE]"
+        hru_type: str = "land"
 
     @dataclass
     class LakeHRU(HRU):
@@ -51,6 +52,7 @@ class GR4JCN(Raven):
         soil_profile: str = "LAKE"
         aquifer_profile: str = "[NONE]"
         terrain_class: str = "[NONE]"
+        hru_type: str = "lake"
 
     def __init__(self, *args, **kwds):
         super().__init__(*args, **kwds)
@@ -145,7 +147,7 @@ class GR4JCN(Raven):
         :SoilModel             SOIL_MULTILAYER  4
         :Routing               {routing}
         :CatchmentRoute        ROUTE_DUMP
-        :Evaporation           {evaporation}  # PET_OUDIN
+        :Evaporation           {evaporation}
         :RainSnowFraction      {rain_snow_fraction}
 
         :PotentialMeltMethod   POTMELT_DEGREE_DAY
@@ -219,11 +221,11 @@ class GR4JCN(Raven):
             # If self.rvc.hru_states is set, it means that we are using `resume()` and we don't
             # want to interfere
             for hru in self.config.rvh.hrus:
-                if isinstance(hru, GR4JCN.LandHRU):
+                if isinstance(hru, GR4JCN.LandHRU) or hru.hru_type == "land":
                     self.config.rvc.hru_states[hru.hru_id] = HRUState(
                         index=hru.hru_id, soil0=soil0, soil1=soil1
                     )
-                elif isinstance(hru, GR4JCN.LakeHRU):
+                elif isinstance(hru, GR4JCN.LakeHRU) or hru.hru_type == "lake":
                     self.config.rvc.hru_states[hru.hru_id] = HRUState(index=hru.hru_id)
                     sb_contains_lake[hru.subbasin_id] = True
                 else:
