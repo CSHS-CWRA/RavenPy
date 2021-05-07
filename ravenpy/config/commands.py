@@ -311,7 +311,7 @@ class GaugeCommand(RavenCommand):
     monthly_ave_evaporation: Optional[Tuple[float, ...]] = ()
     monthly_ave_temperature: Optional[Tuple[float, ...]] = ()
 
-    data: Optional[Tuple[DataCommand, ...]] = ()
+    data_cmds: Optional[Tuple[DataCommand, ...]] = ()
 
     template = """
     :Gauge
@@ -322,7 +322,7 @@ class GaugeCommand(RavenCommand):
         {snow_correction}
         {monthly_ave_evaporation}
         {monthly_ave_temperature}
-        {data_list}
+        {data_cmds}
     :EndGauge
     """
 
@@ -344,7 +344,7 @@ class GaugeCommand(RavenCommand):
             d["monthly_ave_temperature"] = f":MonthlyAveTemperature {temp_data}"
         else:
             d["monthly_ave_temperature"] = ""
-        d["data_list"] = "\n\n".join(map(str, self.data))
+        d["data_cmds"] = "\n\n".join(map(str, self.data_cmds))
         return dedent(self.template).format(**d)
 
 

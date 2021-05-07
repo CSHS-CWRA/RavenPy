@@ -339,7 +339,7 @@ class Raven:
         if ts_ncs:
             self.config.rvi.configure_from_nc_data(ts_ncs)
 
-        if ts_ncs:
+        if ts_ncs and self.config.rvt._auto_nc_configure:
             self.config.rvt.configure_from_nc_data(ts_ncs)
 
         # Loop over parallel parameters - sets self.rvi.run_index

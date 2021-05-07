@@ -564,7 +564,14 @@ class RVT(RV):
     def __init__(self, config):
         super().__init__(config)
 
-        self._var_cmds = {k: {} for k in RVT.NC_VARS.keys()}
+        # These are customized variable attributes specified by the user
+        self._var_specs = {k: {} for k in RVT.NC_VARS.keys()}
+
+        # These are the actual variable as `commands.BaseDataCommand` objects
+        self._var_cmds = {k: None for k in RVT.NC_VARS.keys()}
+
+        # Specifies whether the variables must be configured using file NC data
+        self._auto_nc_configure = True
 
         self.nc_index = 0
         self.grid_weights = None
@@ -580,6 +587,15 @@ class RVT(RV):
 
     def add_nc_variable(self, **kwargs):
         std_name = kwargs.get("name", kwargs["var_name_nc"])
+        # If the name is not the standard one, search for it
+        # TODO: reorganize NC_VARS so that the keys are the Raven names
+        if std_name not in RVT.NC_VARS:
+            for sn, rec in RVT.NC_VARS.items():
+                if rec["raven"] == kwargs["data_type"] or std_name in rec["alts"]:
+                    std_name = sn
+                    break
+            else:
+                assert False, f"{std_name} not found in the list of standard names"
         is_obs_var = kwargs.pop("is_observation", False)
         if len(kwargs["dim_names_nc"]) == 1:
             if std_name == "water_volume_transport_in_river_channel" or is_obs_var:
@@ -594,21 +610,19 @@ class RVT(RV):
         else:
             cmd = GriddedForcingCommand(**kwargs)
 
-        if isinstance(self._var_cmds.get(std_name, None), dict):
-            d = self._var_cmds[std_name]
-            self._var_cmds[std_name] = replace(cmd, **d)
-        else:
-            self._var_cmds[std_name] = cmd
+        spec = self._var_specs[std_name]
+        self._var_cmds[std_name] = replace(cmd, **spec)
+
+    def set_nc_variables(self, nc_variables):
+        for nc_var in nc_variables:
+            self.add_nc_variable(**nc_var)
+        self._auto_nc_configure = False
 
     def configure_from_nc_data(self, fns):
 
-        # Important note: if the object at key `k` is a dict (as opposed to a `Command`),
-        # don't reset it because it contains initial user-defined config (for the future Command
-        # object at that particular key)
-        for std_name in RVT.NC_VARS:
-            v = self._var_cmds[std_name]
-            if not isinstance(v, dict):
-                self._var_cmds[std_name] = {}
+        assert self._auto_nc_configure is True
+
+        self._var_cmds = {k: None for k in RVT.NC_VARS.keys()}
 
         for fn in fns:
             with xr.open_dataset(fn) as ds:
@@ -638,8 +652,8 @@ class RVT(RV):
                         break
 
     def update(self, key, value):
-        if key in self._var_cmds:
-            self._var_cmds[key].update(value)
+        if key in self._var_specs:
+            self._var_specs[key].update(value)
             return True
         elif key == "nc_index":
             self.nc_index = value
@@ -661,10 +675,10 @@ class RVT(RV):
 
         use_gauge = any(type(cmd) is DataCommand for cmd in self._var_cmds.values())
         if use_gauge:
-            data = []
+            data_cmds = []
             for var, cmd in self._var_cmds.items():
                 if cmd and not isinstance(cmd, ObservationDataCommand):
-                    data.append(cmd)
+                    data_cmds.append(cmd)
             lat = (
                 self._nc_latitude[self.nc_index]
                 if self._nc_latitude
@@ -689,7 +703,7 @@ class RVT(RV):
                 snow_correction=self.snow_correction,
                 monthly_ave_evaporation=self.monthly_ave_evaporation,
                 monthly_ave_temperature=self.monthly_ave_temperature,
-                data=data,
+                data_cmds=data_cmds,
             )
         else:
             # Construct default grid weights applying equally to all HRUs
