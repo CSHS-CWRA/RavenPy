@@ -5,7 +5,7 @@ from dataclasses import asdict, field
 from enum import Enum
 from pathlib import Path
 from textwrap import dedent
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Tuple, Union, no_type_check
 
 from pydantic.dataclasses import dataclass
 
@@ -186,9 +186,9 @@ class SubBasinGroupCommand(RavenCommand):
 @dataclass
 class SBGroupPropertyMultiplierCommand(RavenCommand):
 
-    group_name: str = ""
-    parameter_name: str = ""
-    mult: float = None
+    group_name: str
+    parameter_name: str
+    mult: float
 
     template = ":SBGroupPropertyMultiplier {group_name} {parameter_name} {mult}"
 
@@ -344,7 +344,7 @@ class GaugeCommand(RavenCommand):
             d["monthly_ave_temperature"] = f":MonthlyAveTemperature {temp_data}"
         else:
             d["monthly_ave_temperature"] = ""
-        d["data_cmds"] = "\n\n".join(map(str, self.data_cmds))
+        d["data_cmds"] = "\n\n".join(map(str, self.data_cmds))  # type: ignore
         return dedent(self.template).format(**d)
 
 
@@ -400,7 +400,7 @@ class GridWeightsCommand(RavenCommand):
         :EndGridWeights
         """
         m = re.match(dedent(pat).strip(), s, re.DOTALL)
-        n_hrus, n_grid_cells, data = m.groups()
+        n_hrus, n_grid_cells, data = m.groups()  # type: ignore
         data = [d.strip().split() for d in data.split("\n")]
         data = tuple((int(h), int(c), float(w)) for h, c, w in data)
         return cls(
@@ -611,7 +611,7 @@ class HRUStateVariableTableCommand(RavenCommand):
         :EndHRUStateVariableTable
         """
         m = re.search(dedent(pat).strip(), sol, re.DOTALL)
-        lines = m.group(1).strip().splitlines()
+        lines = m.group(1).strip().splitlines()  # type: ignore
         lines = [re.split(r",|\s+", line.strip()) for line in lines]
         hru_states = {}
         for line in lines:
@@ -653,6 +653,7 @@ class BasinIndexCommand(RavenCommand):
         """
 
     @classmethod
+    @no_type_check
     def parse(cls, s):
         pat = r"""
         :BasinIndex (.+?)
@@ -662,8 +663,8 @@ class BasinIndexCommand(RavenCommand):
         index_name = re.split(r",|\s+", m.group(1).strip())
         rec_values = {"index": index_name[0], "name": index_name[1]}
         for line in m.group(2).strip().splitlines():
-            values = filter(None, re.split(r",|\s+", line.strip()))
-            cmd, *values = values
+            all_values = filter(None, re.split(r",|\s+", line.strip()))
+            cmd, *values = all_values
             if cmd == ":ChannelStorage":
                 assert len(values) == 1
                 rec_values["channel_storage"] = float(values[0])
@@ -698,6 +699,7 @@ class BasinStateVariablesCommand(RavenCommand):
     """
 
     @classmethod
+    @no_type_check
     def parse(cls, sol):
         pat = r"""
         :BasinStateVariables
@@ -755,8 +757,8 @@ class SoilProfilesCommand(RavenCommand):
             horizon_data = itertools.chain(
                 *zip(self.soil_class_names, self.thicknesses)
             )
-            horizon_data = ", ".join(map(str, horizon_data))
-            return f"{self.profile_name}, {n_horizons}, {horizon_data}"
+            horizon_data_str = ", ".join(map(str, horizon_data))
+            return f"{self.profile_name}, {n_horizons}, {horizon_data_str}"
 
     soil_profiles: Tuple[Record, ...] = ()
 

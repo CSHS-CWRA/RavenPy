@@ -5,7 +5,7 @@ from dataclasses import is_dataclass, replace
 from enum import Enum
 from pathlib import Path
 from textwrap import dedent
-from typing import Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import cf_xarray
 import cftime
@@ -14,6 +14,7 @@ import xarray as xr
 from numpy.distutils.misc_util import is_sequence
 
 from ravenpy.config.commands import (
+    BaseDataCommand,
     BasinIndexCommand,
     BasinStateVariablesCommand,
     ChannelProfileCommand,
@@ -68,7 +69,7 @@ class RV(ABC):
         self._extra_attributes[key] = value
 
     def set_tmpl(self, tmpl, is_ostrich=False):
-        self.tmpl = tmpl
+        self.tmpl = tmpl  # type: ignore
         self.is_ostrich_tmpl = is_ostrich
 
     @property
@@ -281,7 +282,7 @@ class RVI(RV):
         super().__init__(config)
 
         # These are attributes that can be modified/set directly
-        self.run_name = "run"
+        self.run_name: Optional[str] = "run"
         self.run_index = 0
         self.raven_version = "3.X.X"
         self.time_step = 1.0
@@ -565,10 +566,12 @@ class RVT(RV):
         super().__init__(config)
 
         # These are customized variable attributes specified by the user
-        self._var_specs = {k: {} for k in RVT.NC_VARS.keys()}
+        self._var_specs: Dict[str, Dict[str, Any]] = {k: {} for k in RVT.NC_VARS.keys()}
 
         # These are the actual variable as `commands.BaseDataCommand` objects
-        self._var_cmds = {k: None for k in RVT.NC_VARS.keys()}
+        self._var_cmds: Dict[str, Optional[BaseDataCommand]] = {
+            k: None for k in RVT.NC_VARS.keys()
+        }
 
         # Specifies whether the variables must be configured using file NC data
         self._auto_nc_configure = True
@@ -580,9 +583,9 @@ class RVT(RV):
         self.monthly_ave_evaporation = None
         self.monthly_ave_temperature = None
 
-        self._nc_latitude = []
-        self._nc_longitude = []
-        self._nc_elevation = []
+        self._nc_latitude = xr.DataArray()
+        self._nc_longitude = xr.DataArray()
+        self._nc_elevation = xr.DataArray()
         self._number_grid_cells = 0
 
     def _add_nc_variable(self, **kwargs):
@@ -597,6 +600,7 @@ class RVT(RV):
             else:
                 assert False, f"{std_name} not found in the list of standard names"
         is_obs_var = kwargs.pop("is_observation", False)
+        cmd: BaseDataCommand
         if len(kwargs["dim_names_nc"]) == 1:
             if std_name == "water_volume_transport_in_river_channel" or is_obs_var:
                 cmd = ObservationDataCommand(**kwargs)
@@ -640,7 +644,7 @@ class RVT(RV):
 
                 # Check if any alternate variable name is in the file.
                 for std_name in RVT.NC_VARS:
-                    for var_name in [std_name] + RVT.NC_VARS[std_name]["alts"]:
+                    for var_name in [std_name] + RVT.NC_VARS[std_name]["alts"]:  # type: ignore
                         if var_name not in ds.data_vars:
                             continue
                         nc_var = ds[var_name]
@@ -682,6 +686,7 @@ class RVT(RV):
             data_cmds = []
             for var, cmd in self._var_cmds.items():
                 if cmd and not isinstance(cmd, ObservationDataCommand):
+                    cmd = cast(DataCommand, cmd)
                     data_cmds.append(cmd)
             try:
                 lat = np.atleast_1d(self._nc_latitude.values)[self.nc_index]
@@ -704,21 +709,22 @@ class RVT(RV):
                 snow_correction=self.snow_correction,
                 monthly_ave_evaporation=self.monthly_ave_evaporation,
                 monthly_ave_temperature=self.monthly_ave_temperature,
-                data_cmds=data_cmds,
-            )
+                data_cmds=tuple(data_cmds),
+            )  # type: ignore
         else:
             # Construct default grid weights applying equally to all HRUs
             data = [(hru.hru_id, self.nc_index, 1.0) for hru in self._config.rvh.hrus]
             gw = self.grid_weights or GridWeightsCommand(
                 number_hrus=len(data),
                 number_grid_cells=self._number_grid_cells,
-                data=data,
+                data=tuple(data),
             )
             cmds = []
             for var, cmd in self._var_cmds.items():
                 if cmd and not isinstance(cmd, ObservationDataCommand):
                     # TODO: implement a RedirectToFile mechanism to avoid inlining the grid weights
                     # multiple times as we do here
+                    cmd = cast(Union[GriddedForcingCommand, StationForcingCommand], cmd)
                     if len(cmd.grid_weights.data) == 1:
                         cmd.grid_weights = gw
                     cmds.append(cmd)
@@ -740,7 +746,7 @@ class RVT(RV):
                     )
                 # Set the :StationxIdx (which starts at 1)
                 cmd.index = self.nc_index + 1
-                d["observed_data"] = cmd
+                d["observed_data"] = cmd  # type: ignore
                 break
 
         return dedent(self.tmpl).format(**d)
