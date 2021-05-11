@@ -22,9 +22,7 @@ dependencies:
   - owslib
   - pandas
   - pip
-  - proj
   - pydantic
-  - pyparsing
   - pyproj>=3
   - rasterio
   - requests
