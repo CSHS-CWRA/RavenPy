@@ -6,7 +6,7 @@ channels:
 dependencies:
   - raven ==3.0.4.318
   - ostrich ==21.03.16
-  - python>=3.7
+  - python >=3.7
   - affine
   - cf-xarray
   - click
@@ -15,7 +15,7 @@ dependencies:
   - dask <=2021.02.0
   - fiona
   - gdal >=3.0.0
-  - geopandas>=0.9
+  - geopandas >=0.9
   - lxml
   - matplotlib
   - numpy
@@ -33,8 +33,8 @@ dependencies:
   - scikit-learn ==0.24.1
   - shapely
   - statsmodels
-  - xarray>=0.18
-  - xclim>=0.26.1
+  - xarray >=0.18
+  - xclim >=0.26.1
   - xskillscore
   - pre-commit
   - setuptools >50.0
