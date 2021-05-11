@@ -15,10 +15,11 @@ import shutil
 import stat
 import subprocess
 import tempfile
+import zipfile
 from collections import OrderedDict
 from dataclasses import astuple, fields, is_dataclass, replace
 from pathlib import Path
-from typing import Union
+from typing import Dict, List, Union
 
 import numpy as np
 import xarray as xr
@@ -93,10 +94,12 @@ class Raven:
         workdir = workdir or tempfile.mkdtemp()
 
         self.workdir = Path(workdir)
-        self.ind_outputs = {}  # Individual files for all simulations
-        self.outputs = {}  # Aggregated files
+        self.ind_outputs: Dict[
+            str, List[Path]
+        ] = {}  # Individual files for all simulations
+        self.outputs: Dict[str, Path] = {}  # Aggregated files
 
-        self._rv_paths = []
+        self._rv_paths: List[Path] = []
 
         # Directory logic
         # Top directory inside workdir. This is where Ostrich and its config and templates are stored.
@@ -107,7 +110,7 @@ class Raven:
         self.exec_path = self.workdir / "exec"
         self.final_path = self.workdir / self.final_dir
         self._psim = 0
-        self._pdim = None  # Parallel dimension (either initparam, params or region)
+        self._pdim = ""  # Parallel dimension (either initparam, params or region)
 
         self.config = Config(raven_version=self.version)
 
@@ -126,17 +129,12 @@ class Raven:
 
     @property
     def version(self):
-        out = subprocess.check_output(
-            [
-                self.raven_exec,
-            ],
-            input=b"\n",
-        )
-        match = re.search(r"Version (\S+) ", out.decode("utf-8"))
+        out = subprocess.check_output([self.raven_exec], input="\n", text=True)
+        match = re.search(r"Version (\S+) ", out)
         if match:
             return match.groups()[0]
         else:
-            raise AttributeError("Version not found: {}".format(out))
+            raise AttributeError(f"Version not found: {out}")
 
     @property
     def psim(self):
@@ -290,7 +288,7 @@ class Raven:
             if val is not None and p == "params":
                 # Special case where we have `Params(..)` or `[Params(), ..]`
                 lval = [val] if not is_sequence(val) else val
-                if isinstance(lval[0], self.__class__.Params):
+                if isinstance(lval[0], self.__class__.Params):  # type: ignore
                     pdict[p] = np.atleast_1d(val)
                 else:
                     pdict[p] = np.atleast_2d(val)
@@ -434,18 +432,16 @@ class Raven:
 
     def _merge_output(self, files, name):
         """Merge multiple output files into one if possible, otherwise return a list of files."""
-        import zipfile
-
         # If there is only one file, return its name directly.
+        from .multimodel import RavenMultiModel
+
         if len(files) == 1:
             return files[0]
 
         # Otherwise try to create a new file aggregating all files.
         outfn = self.final_path / name
 
-        if name.endswith(".nc") and not isinstance(
-            self, ravenpy.models.RavenMultiModel
-        ):
+        if name.endswith(".nc") and not isinstance(self, RavenMultiModel):
             ds = [xr.open_dataset(fn) for fn in files]
             try:
                 # We aggregate along the pdim dimensions.
@@ -495,7 +491,7 @@ class Raven:
                 ):
                     # Skip this one because it's a bit circular
                     continue
-                messages[msg_type].append(msg)
+                messages[msg_type].append(msg)  # type: ignore
 
         return messages
 
@@ -586,7 +582,7 @@ class Raven:
                 header = next(reader)
                 content = next(reader)
 
-                out = dict(zip(header, content))
+                out: Dict[str, Union[str, float]] = dict(zip(header, content))
                 out.pop("")
 
             for key, val in out.items():
@@ -619,10 +615,6 @@ class Ostrich(Raven):
     @property
     def model_path(self):
         return self.exec_path / self.model_dir
-
-    @staticmethod
-    def _allowed_extensions():
-        return Raven._allowed_extensions() + ("txt",)
 
     @property
     def ostrich_cmd(self):
@@ -746,14 +738,9 @@ class Ostrich(Raven):
 
     def parse_optimal_parameter_set(self):
         """Return dictionary of optimal parameter set."""
-        import re
-
         txt = open(self.outputs["calibration"]).read()
-        ops = re.search(r".*Optimal Parameter Set(.*?)\n{2}", txt, re.DOTALL).groups()[
-            0
-        ]
-
-        p = re.findall(r"(\w+)\s*:\s*([\S]+)", ops)
+        ops = re.search(r".*Optimal Parameter Set(.*?)\n{2}", txt, re.DOTALL).groups()
+        p = re.findall(r"(\w+)\s*:\s*([\S]+)", ops[0])
         return OrderedDict((k, float(v)) for k, v in p)
 
     def ost2raven(self, ops):

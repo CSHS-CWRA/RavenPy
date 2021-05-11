@@ -14,6 +14,7 @@ import xarray as xr
 from numpy.distutils.misc_util import is_sequence
 
 from ravenpy.config.commands import (
+    HRU,
     BaseDataCommand,
     BasinIndexCommand,
     BasinStateVariablesCommand,
@@ -27,9 +28,12 @@ from ravenpy.config.commands import (
     HRUStateVariableTableCommand,
     LandUseClassesCommand,
     ObservationDataCommand,
+    ReservoirCommand,
+    SBGroupPropertyMultiplierCommand,
     SoilClassesCommand,
     SoilProfilesCommand,
     StationForcingCommand,
+    Sub,
     SubBasinGroupCommand,
     SubBasinsCommand,
     VegetationClassesCommand,
@@ -156,13 +160,13 @@ class RVH(RV):
 
     def __init__(self, config):
         super().__init__(config)
-        self.hrus = ()
-        self.subbasins = ()
-        self.land_subbasin_ids = ()
-        self.land_subbasin_property_multiplier = None
-        self.lake_subbasin_ids = ()
-        self.lake_subbasin_property_multiplier = None
-        self.reservoirs = ()
+        self.hrus: Tuple[HRU] = ()
+        self.subbasins: Tuple[Sub] = ()
+        self.land_subbasin_ids: Tuple[int] = ()
+        self.land_subbasin_property_multiplier: SBGroupPropertyMultiplierCommand = None
+        self.lake_subbasin_ids: Tuple[int] = ()
+        self.lake_subbasin_property_multiplier: SBGroupPropertyMultiplierCommand = None
+        self.reservoirs: Tuple[ReservoirCommand] = ()
 
     def to_rv(self):
         d = {
@@ -696,10 +700,11 @@ class RVT(RV):
                 lon = np.atleast_1d(self._nc_longitude.values)[self.nc_index]
             except Exception:
                 lon = self._config.rvh.hrus[0].longitude
-            try:
-                elev = np.atleast_1d(self._nc_elevation.values)[self.nc_index]
-            except Exception:
-                elev = self._config.rvh.hrus[0].elevation
+            # try:
+            print(">>>", self._nc_elevation.values)
+            elev = np.atleast_1d(self._nc_elevation.values)[self.nc_index]
+            # except Exception:
+            #     elev = self._config.rvh.hrus[0].elevation
 
             d["gauge"] = GaugeCommand(
                 latitude=lat,
