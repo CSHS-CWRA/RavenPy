@@ -160,13 +160,17 @@ class RVH(RV):
 
     def __init__(self, config):
         super().__init__(config)
-        self.hrus: Tuple[HRU] = ()
-        self.subbasins: Tuple[Sub] = ()
-        self.land_subbasin_ids: Tuple[int] = ()
-        self.land_subbasin_property_multiplier: SBGroupPropertyMultiplierCommand = None
-        self.lake_subbasin_ids: Tuple[int] = ()
-        self.lake_subbasin_property_multiplier: SBGroupPropertyMultiplierCommand = None
-        self.reservoirs: Tuple[ReservoirCommand] = ()
+        self.hrus: Tuple[HRU, ...] = ()
+        self.subbasins: Tuple[Sub, ...] = ()
+        self.land_subbasin_ids: Tuple[int, ...] = ()
+        self.land_subbasin_property_multiplier: Optional[
+            SBGroupPropertyMultiplierCommand
+        ] = None
+        self.lake_subbasin_ids: Tuple[int, ...] = ()
+        self.lake_subbasin_property_multiplier: Optional[
+            SBGroupPropertyMultiplierCommand
+        ] = None
+        self.reservoirs: Tuple[ReservoirCommand, ...] = ()
 
     def to_rv(self):
         d = {
@@ -587,9 +591,9 @@ class RVT(RV):
         self.monthly_ave_evaporation = None
         self.monthly_ave_temperature = None
 
-        self._nc_latitude = xr.DataArray()
-        self._nc_longitude = xr.DataArray()
-        self._nc_elevation = xr.DataArray()
+        self._nc_latitude: Optional[xr.DataArray] = None
+        self._nc_longitude: Optional[xr.DataArray] = None
+        self._nc_elevation: Optional[xr.DataArray] = None
         self._number_grid_cells = 0
 
     def _add_nc_variable(self, **kwargs):
@@ -692,19 +696,33 @@ class RVT(RV):
                 if cmd and not isinstance(cmd, ObservationDataCommand):
                     cmd = cast(DataCommand, cmd)
                     data_cmds.append(cmd)
-            try:
-                lat = np.atleast_1d(self._nc_latitude.values)[self.nc_index]
-            except Exception:
+
+            if (
+                self._nc_latitude
+                and self._nc_latitude.shape
+                and len(self._nc_latitude) > self.nc_index
+            ):
+                lat = self._nc_latitude.values[self.nc_index]
+            else:
                 lat = self._config.rvh.hrus[0].latitude
-            try:
-                lon = np.atleast_1d(self._nc_longitude.values)[self.nc_index]
-            except Exception:
+
+            if (
+                self._nc_longitude
+                and self._nc_longitude.shape
+                and len(self._nc_longitude) > self.nc_index
+            ):
+                lon = self._nc_longitude.values[self.nc_index]
+            else:
                 lon = self._config.rvh.hrus[0].longitude
-            # try:
-            print(">>>", self._nc_elevation.values)
-            elev = np.atleast_1d(self._nc_elevation.values)[self.nc_index]
-            # except Exception:
-            #     elev = self._config.rvh.hrus[0].elevation
+
+            if (
+                self._nc_elevation
+                and self._nc_elevation
+                and len(self._nc_elevation) > self.nc_index
+            ):
+                elev = self._nc_elevation.values[self.nc_index]
+            else:
+                elev = self._config.rvh.hrus[0].elevation
 
             d["gauge"] = GaugeCommand(
                 latitude=lat,

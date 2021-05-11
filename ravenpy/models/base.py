@@ -19,7 +19,7 @@ import zipfile
 from collections import OrderedDict
 from dataclasses import astuple, fields, is_dataclass, replace
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import Dict, List, Union, cast
 
 import numpy as np
 import xarray as xr
@@ -91,14 +91,14 @@ class Raven:
         self.raven_exec = RAVEN_EXEC_PATH
         self.ostrich_exec = OSTRICH_EXEC_PATH
 
-        workdir = workdir or tempfile.mkdtemp()
+        self.workdir = Path(workdir or tempfile.mkdtemp())
 
-        self.workdir = Path(workdir)
-        self.ind_outputs: Dict[
-            str, List[Path]
-        ] = {}  # Individual files for all simulations
-        self.outputs: Dict[str, Path] = {}  # Aggregated files
+        # Individual files for all simulations
+        self.ind_outputs: Dict[str, List[Path]] = {}
+        # Aggregated files
+        self.outputs: Dict[str, Union[Path, str]] = {}
 
+        # Explicit paths of every rendered RV file
         self._rv_paths: List[Path] = []
 
         # Directory logic
@@ -109,6 +109,8 @@ class Raven:
 
         self.exec_path = self.workdir / "exec"
         self.final_path = self.workdir / self.final_dir
+
+        # Parallel simulations (one Raven config folder will be created for each)
         self._psim = 0
         self._pdim = ""  # Parallel dimension (either initparam, params or region)
 
@@ -527,27 +529,30 @@ class Raven:
         If the model is run multiple times, hydrograph will point to the latest version. To store the results of
         multiple runs, either create different model instances or explicitly copy the file to another disk location.
         """
-        if self.outputs["hydrograph"].suffix == ".nc":
-            return xr.open_dataset(self.outputs["hydrograph"])
-        elif self.outputs["hydrograph"].suffix == ".zip":
+        hydrograph = cast(Path, self.outputs["hydrograph"])
+        if hydrograph.suffix == ".nc":
+            return xr.open_dataset(hydrograph)
+        elif hydrograph.suffix == ".zip":
             return [xr.open_dataset(fn) for fn in self.ind_outputs["hydrograph"]]
         else:
             raise ValueError
 
     @property
     def storage(self):
-        if self.outputs["storage"].suffix == ".nc":
-            return xr.open_dataset(self.outputs["storage"])
-        elif self.outputs["storage"].suffix == ".zip":
+        storage = cast(Path, self.outputs["storage"])
+        if storage.suffix == ".nc":
+            return xr.open_dataset(storage)
+        elif storage.suffix == ".zip":
             return [xr.open_dataset(fn) for fn in self.ind_outputs["storage"]]
         else:
             raise ValueError
 
     @property
     def solution(self):
-        if self.outputs["solution"].suffix == ".rvc":
-            return RVC.create_solution(self.outputs["solution"].read_text())
-        elif self.outputs["solution"].suffix == ".zip":
+        solution = cast(Path, self.outputs["solution"])
+        if solution.suffix == ".rvc":
+            return RVC.create_solution(solution.read_text())
+        elif solution.suffix == ".zip":
             return [
                 RVC.create_solution(fn.read_text())
                 for fn in self.ind_outputs["solution"]
@@ -739,7 +744,7 @@ class Ostrich(Raven):
     def parse_optimal_parameter_set(self):
         """Return dictionary of optimal parameter set."""
         txt = open(self.outputs["calibration"]).read()
-        ops = re.search(r".*Optimal Parameter Set(.*?)\n{2}", txt, re.DOTALL).groups()
+        ops = re.search(r".*Optimal Parameter Set(.*?)\n{2}", txt, re.DOTALL).groups()  # type: ignore
         p = re.findall(r"(\w+)\s*:\s*([\S]+)", ops[0])
         return OrderedDict((k, float(v)) for k, v in p)
 
@@ -757,7 +762,7 @@ class Ostrich(Raven):
             n = len(fields(self.config.rvp.params))
             pattern = "par_x{}" if n < 8 else "par_x{:02}"
             names = [pattern.format(i + 1) for i in range(n)]
-            return self.__class__.Params(*[ops[n] for n in names])
+            return self.__class__.Params(*[ops[n] for n in names])  # type: ignore
         else:
             # We are using generic Ostrich
             return ops.values()
