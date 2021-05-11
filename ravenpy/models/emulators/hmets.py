@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Dict, cast
 
 from pydantic.dataclasses import dataclass
 
@@ -10,36 +11,36 @@ from ravenpy.models.base import Ostrich, Raven
 class HMETS(Raven):
     @dataclass
     class Params:
-        GAMMA_SHAPE: float = None
-        GAMMA_SCALE: float = None
-        GAMMA_SHAPE2: float = None
-        GAMMA_SCALE2: float = None
-        MIN_MELT_FACTOR: float = None
-        MAX_MELT_FACTOR: float = None
-        DD_MELT_TEMP: float = None
-        DD_AGGRADATION: float = None
-        SNOW_SWI_MIN: float = None
-        SNOW_SWI_MAX: float = None
-        SWI_REDUCT_COEFF: float = None
-        DD_REFREEZE_TEMP: float = None
-        REFREEZE_FACTOR: float = None
-        REFREEZE_EXP: float = None
-        PET_CORRECTION: float = None
-        HMETS_RUNOFF_COEFF: float = None
-        PERC_COEFF: float = None
-        BASEFLOW_COEFF_1: float = None
-        BASEFLOW_COEFF_2: float = None
-        TOPSOIL: float = None
-        PHREATIC: float = None
+        GAMMA_SHAPE: float
+        GAMMA_SCALE: float
+        GAMMA_SHAPE2: float
+        GAMMA_SCALE2: float
+        MIN_MELT_FACTOR: float
+        MAX_MELT_FACTOR: float
+        DD_MELT_TEMP: float
+        DD_AGGRADATION: float
+        SNOW_SWI_MIN: float
+        SNOW_SWI_MAX: float
+        SWI_REDUCT_COEFF: float
+        DD_REFREEZE_TEMP: float
+        REFREEZE_FACTOR: float
+        REFREEZE_EXP: float
+        PET_CORRECTION: float
+        HMETS_RUNOFF_COEFF: float
+        PERC_COEFF: float
+        BASEFLOW_COEFF_1: float
+        BASEFLOW_COEFF_2: float
+        TOPSOIL: float
+        PHREATIC: float
 
     @dataclass
     class DerivedParams:
-        TOPSOIL_m: float = None
-        PHREATIC_m: float = None
-        SUM_MELT_FACTOR: float = None
-        SUM_SNOW_SWI: float = None
-        TOPSOIL_hlf: float = None
-        PHREATIC_hlf: float = None
+        TOPSOIL_m: float
+        PHREATIC_m: float
+        SUM_MELT_FACTOR: float
+        SUM_SNOW_SWI: float
+        TOPSOIL_hlf: float
+        PHREATIC_hlf: float
 
     @dataclass
     class ForestHRU(HRU):
@@ -64,8 +65,6 @@ class HMETS(Raven):
                     gauged=True,
                 ),
             ),
-            params=HMETS.Params(),
-            derived_params=HMETS.DerivedParams(),
         )
 
         #########
@@ -195,41 +194,32 @@ class HMETS(Raven):
         # R V C #
         #########
 
-        self.config.rvc.soil0 = None
-        self.config.rvc.soil1 = None
+        self.config.rvc.set_extra_attributes(soil0=None, soil1=None)
 
     def derived_parameters(self):
-        self.config.rvp.derived_params.TOPSOIL_hlf = (
-            self.config.rvp.params.TOPSOIL * 0.5
-        )
-        self.config.rvp.derived_params.PHREATIC_hlf = (
-            self.config.rvp.params.PHREATIC * 0.5
-        )
-        self.config.rvp.derived_params.TOPSOIL_m = (
-            self.config.rvp.params.TOPSOIL / 1000.0
-        )
-        self.config.rvp.derived_params.PHREATIC_m = (
-            self.config.rvp.params.PHREATIC / 1000.0
-        )
-
-        self.config.rvp.derived_params.SUM_MELT_FACTOR = (
-            self.config.rvp.params.MAX_MELT_FACTOR
-        )
-        self.config.rvp.derived_params.SUM_SNOW_SWI = (
-            self.config.rvp.params.SNOW_SWI_MAX
+        params = cast(HMETS.Params, self.config.rvp.params)
+        self.config.rvp.derived_params = HMETS.DerivedParams(
+            TOPSOIL_hlf=(params.TOPSOIL * 0.5),
+            PHREATIC_hlf=(params.PHREATIC * 0.5),
+            TOPSOIL_m=(params.TOPSOIL / 1000.0),
+            PHREATIC_m=(params.PHREATIC / 1000.0),
+            SUM_MELT_FACTOR=(params.MAX_MELT_FACTOR),
+            SUM_SNOW_SWI=(params.SNOW_SWI_MAX),
         )
 
         # Default initial conditions if none are given
         if not self.config.rvc.hru_states:
+            curr_soil0 = self.config.rvc.get_extra_attribute("soil0")
             soil0 = (
                 self.config.rvp.derived_params.TOPSOIL_hlf
-                if self.config.rvc.soil0 is None
-                else self.config.rvc.soil0
+                if curr_soil0 is None
+                else curr_soil0
             )
+            curr_soil1 = self.config.rvc.get_extra_attribute("soil1")
             soil1 = (
                 self.config.rvp.derived_params.PHREATIC_hlf
-                if self.config.rvc.soil1 is None
-                else self.config.rvc.soil1
+                if curr_soil1 is None
+                else curr_soil1
             )
             self.config.rvc.hru_states[1] = HRUState(soil0=soil0, soil1=soil1)
 
@@ -242,8 +232,6 @@ class HMETS_OST(Ostrich, HMETS):
             identifier="hmets-ost",
             algorithm="DDS",
             max_iterations=50,
-            lowerBounds=HMETS.Params(),
-            upperBounds=HMETS.Params(),
             run_name="run",
             run_index=0,
             suppress_output=True,
@@ -490,7 +478,7 @@ class HMETS_OST(Ostrich, HMETS):
         """Derived parameters are computed by Ostrich."""
         pass
 
-    def ost2raven(self, ops: dict) -> HMETS.Params:
+    def ost2raven(self, ops) -> HMETS.Params:
         """Return a list of parameter names calibrated by Ostrich that match Raven's parameters.
 
         Parameters

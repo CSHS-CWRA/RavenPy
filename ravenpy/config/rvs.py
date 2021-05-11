@@ -1,7 +1,7 @@
 import collections
 import datetime as dt
 from abc import ABC, abstractmethod
-from dataclasses import is_dataclass, replace
+from dataclasses import replace
 from enum import Enum
 from pathlib import Path
 from textwrap import dedent
@@ -58,19 +58,16 @@ class RV(ABC):
 
     def update(self, key, value):
         if hasattr(self, key):
-            # Special case: the user might be trying to update `params` or `derived_params`,
-            # (which are dataclasses) by supplying a list of values (either a list, tuple of
-            # numpy array); if that's the case, cast those values into a new instance of the
-            # corresponding dataclass.
-            attr = getattr(self, key)
-            if is_dataclass(attr) and is_sequence(value):
-                value = attr.__class__(*value)
             setattr(self, key, value)
             return True
         return False
 
-    def set_extra_attribute(self, key, value):
-        self._extra_attributes[key] = value
+    def set_extra_attributes(self, **kwargs):
+        for k, v in kwargs.items():
+            self._extra_attributes[k] = v
+
+    def get_extra_attribute(self, k):
+        return self._extra_attributes[k]
 
     def set_tmpl(self, tmpl, is_ostrich=False):
         self.tmpl = tmpl  # type: ignore
@@ -510,6 +507,24 @@ class RVP(RV):
         self.channel_profiles: Tuple[ChannelProfileCommand, ...] = ()
         self.avg_annual_runoff: Optional[float] = None
 
+    def update(self, key, value):
+        if key == "params":
+            if is_sequence(value):
+                self.params = self._config.model_cls.Params(*value)
+            else:
+                assert isinstance(value, self._config.model_cls.Params)
+                self.params = value
+            return True
+        elif key == "derived_params":
+            if is_sequence(value):
+                self.derived_params = self._config.model_cls.DerivedParams(*value)
+            else:
+                assert isinstance(value, self._config.model_cls.DerivedParams)
+                self.derived_params = value
+            return True
+        else:
+            return super().update(key, value)
+
     def to_rv(self):
         d = {
             "params": self.params,
@@ -796,6 +811,17 @@ class OST(RV):
         # If there's an OstRandomNumbers.txt file this is its path
         self.random_numbers_path = None
 
+    def update(self, key, value):
+        if key in ["lowerBounds", "upperBounds"]:
+            if is_sequence(value):
+                setattr(self, key, self._config.model_cls.Params(*value))
+            else:
+                assert isinstance(value, self._config.model_cls.Params)
+                setattr(self, key, value)
+            return True
+        else:
+            return super().update(key, value)
+
     @property
     def max_iterations(self):
         return self._max_iterations
@@ -846,7 +872,8 @@ class OST(RV):
 
 
 class Config:
-    def __init__(self, **kwargs):
+    def __init__(self, model_cls, **kwargs):
+        self.model_cls = model_cls
         self.rvc = RVC(self)
         self.rvh = RVH(self)
         self.rvi = RVI(self)

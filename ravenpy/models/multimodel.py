@@ -1,3 +1,6 @@
+from pathlib import Path
+from typing import List
+
 from .base import Raven
 from .emulators import get_model
 
@@ -35,17 +38,6 @@ class RavenMultiModel(Raven):
         # TODO: Add support for model dependent solutions.
         for m in self._models:
             m.resume(solution)
-
-    @property
-    def _rv_paths(self):
-        out = []
-        for m in self._models:
-            out.extend(m._rv_paths)
-        return out
-
-    @_rv_paths.setter
-    def _rv_paths(self, value):
-        pass
 
     def run(self, ts, overwrite=False, **kwds):
         """Run model.
@@ -102,4 +94,8 @@ class RavenMultiModel(Raven):
             self.ind_outputs[key] = fns
             self.outputs[key] = self._merge_output(fns, pattern[1:])
 
-        self.outputs["rv_config"] = self._merge_output(self._rv_paths, "rv.zip")
+        rv_paths = []
+        for m in self._models:
+            rv_paths += m._rv_paths
+
+        self.outputs["rv_config"] = self._merge_output(rv_paths, "rv.zip")

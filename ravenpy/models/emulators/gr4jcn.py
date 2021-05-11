@@ -1,5 +1,6 @@
 from collections import defaultdict
 from pathlib import Path
+from typing import cast
 
 from pydantic.dataclasses import dataclass
 
@@ -24,17 +25,17 @@ class GR4JCN(Raven):
 
     @dataclass
     class Params:
-        GR4J_X1: float = None
-        GR4J_X2: float = None
-        GR4J_X3: float = None
-        GR4J_X4: float = None
-        CEMANEIGE_X1: float = None
-        CEMANEIGE_X2: float = None
+        GR4J_X1: float
+        GR4J_X2: float
+        GR4J_X3: float
+        GR4J_X4: float
+        CEMANEIGE_X1: float
+        CEMANEIGE_X2: float
 
     @dataclass
     class DerivedParams:
-        one_minus_CEMANEIGE_X2: float = None
-        GR4J_X1_hlf: float = None
+        one_minus_CEMANEIGE_X2: float
+        GR4J_X1_hlf: float
 
     @dataclass
     class LandHRU(HRU):
@@ -69,8 +70,6 @@ class GR4JCN(Raven):
                     gauged=True,
                 ),
             ),
-            params=GR4JCN.Params(),
-            derived_params=GR4JCN.DerivedParams(),
         )
 
         #########
@@ -193,26 +192,25 @@ class GR4JCN(Raven):
         #########
 
         # Initialize the stores to 1/2 full. Declare the parameters that can be user-modified
-        self.config.rvc.soil0 = None
-        self.config.rvc.soil1 = 15
+        self.config.rvc.set_extra_attributes(soil0=None, soil1=15)
 
     def derived_parameters(self):
 
-        self.config.rvp.derived_params.GR4J_X1_hlf = (
-            self.config.rvp.params.GR4J_X1 * 1000.0 / 2.0
-        )
-        self.config.rvp.derived_params.one_minus_CEMANEIGE_X2 = (
-            1.0 - self.config.rvp.params.CEMANEIGE_X2
+        params = cast(GR4JCN.Params, self.config.rvp.params)
+        self.config.rvp.derived_params = GR4JCN.DerivedParams(
+            GR4J_X1_hlf=(params.GR4J_X1 * 1000.0 / 2.0),
+            one_minus_CEMANEIGE_X2=(1.0 - params.CEMANEIGE_X2),
         )
 
         # Default initial conditions if none are given
         if not self.config.rvc.hru_states:
+            curr_soil0 = self.config.rvc.get_extra_attribute("soil0")
             soil0 = (
                 self.config.rvp.derived_params.GR4J_X1_hlf
-                if self.config.rvc.soil0 is None
-                else self.config.rvc.soil0
+                if curr_soil0 is None
+                else curr_soil0
             )
-            soil1 = self.config.rvc.soil1
+            soil1 = self.config.rvc.get_extra_attribute("soil1")
 
         # subbassin_id -> has at least one LakeHRU
         sb_contains_lake = defaultdict(lambda: False)
@@ -241,21 +239,6 @@ class GR4JCN(Raven):
                     index=sb.subbasin_id
                 )
 
-        self.config.rvh.lake_subbasins = tuple(
-            [
-                sb.subbasin_id
-                for sb in self.config.rvh.subbasins
-                if sb_contains_lake[sb.subbasin_id]
-            ]
-        )
-        self.config.rvh.land_subbasins = tuple(
-            [
-                sb.subbasin_id
-                for sb in self.config.rvh.subbasins
-                if not sb_contains_lake[sb.subbasin_id]
-            ]
-        )
-
 
 class GR4JCN_OST(Ostrich, GR4JCN):
     def __init__(self, *args, **kwds):
@@ -265,8 +248,6 @@ class GR4JCN_OST(Ostrich, GR4JCN):
             identifier="gr4jcn-ost",
             algorithm="DDS",
             max_iterations=50,
-            lowerBounds=GR4JCN.Params(),
-            upperBounds=GR4JCN.Params(),
             suppress_output=True,
         )
 

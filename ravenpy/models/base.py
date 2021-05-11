@@ -114,7 +114,7 @@ class Raven:
         self._psim = 0
         self._pdim = ""  # Parallel dimension (either initparam, params or region)
 
-        self.config = Config(raven_version=self.version)
+        self.config = Config(model_cls=self.__class__, raven_version=self.version)
 
     @property
     def output_path(self):

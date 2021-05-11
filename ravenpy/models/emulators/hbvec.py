@@ -1,10 +1,18 @@
 from collections import defaultdict
 from pathlib import Path
+from typing import cast
 
 import xarray as xr
 from pydantic.dataclasses import dataclass
 
-from ravenpy.config.commands import HRU, LU, BasinIndexCommand, HRUState, Sub
+from ravenpy.config.commands import (
+    HRU,
+    LU,
+    BaseDataCommand,
+    BasinIndexCommand,
+    HRUState,
+    Sub,
+)
 from ravenpy.models.base import Ostrich, Raven
 
 from .gr4jcn import GR4JCN
@@ -13,32 +21,32 @@ from .gr4jcn import GR4JCN
 class HBVEC(Raven):
     @dataclass
     class Params:
-        par_x01: float = None
-        par_x02: float = None
-        par_x03: float = None
-        par_x04: float = None
-        par_x05: float = None
-        par_x06: float = None
-        par_x07: float = None
-        par_x08: float = None
-        par_x09: float = None
-        par_x10: float = None
-        par_x11: float = None
-        par_x12: float = None
-        par_x13: float = None
-        par_x14: float = None
-        par_x15: float = None
-        par_x16: float = None
-        par_x17: float = None
-        par_x18: float = None
-        par_x19: float = None
-        par_x20: float = None
-        par_x21: float = None
+        par_x01: float
+        par_x02: float
+        par_x03: float
+        par_x04: float
+        par_x05: float
+        par_x06: float
+        par_x07: float
+        par_x08: float
+        par_x09: float
+        par_x10: float
+        par_x11: float
+        par_x12: float
+        par_x13: float
+        par_x14: float
+        par_x15: float
+        par_x16: float
+        par_x17: float
+        par_x18: float
+        par_x19: float
+        par_x20: float
+        par_x21: float
 
     @dataclass
     class DerivedParams:
-        one_plus_par_x15: float = None
-        par_x11_half: float = None
+        one_plus_par_x15: float
+        par_x11_half: float
 
     def __init__(self, *args, **kwds):
         super().__init__(*args, **kwds)
@@ -55,8 +63,6 @@ class HBVEC(Raven):
                     gauged=True,
                 ),
             ),
-            params=HBVEC.Params(),
-            derived_params=HBVEC.DerivedParams(),
         )
 
         #########
@@ -236,31 +242,30 @@ class HBVEC(Raven):
         # R V C #
         #########
 
-        self.config.rvc.soil2 = 0.50657
+        self.config.rvc.set_extra_attributes(soil2=0.50657)
 
     def derived_parameters(self):
-        self.config.rvp.derived_params.one_plus_par_x15 = (
-            self.config.rvp.params.par_x15 + 1.0
-        )
-        self.config.rvp.derived_params.par_x11_half = (
-            self.config.rvp.params.par_x11 / 2.0
+        params = cast(HBVEC.Params, self.config.rvp.params)
+        self.config.rvp.derived_params = HBVEC.DerivedParams(
+            one_plus_par_x15=(params.par_x15 + 1.0), par_x11_half=params.par_x11 / 2.0
         )
 
         # These need to be injected in the RVH
-        # TODO: find a better way to implement inter-RV value sharing/injection
-        self.config.rvh.set_extra_attribute("par_x11", self.config.rvp.params.par_x11)
-        self.config.rvh.set_extra_attribute(
-            "par_x11_half", self.config.rvp.derived_params.par_x11_half
+        self.config.rvh.set_extra_attributes(
+            par_x11=params.par_x11,
+            par_x11_half=self.config.rvp.derived_params.par_x11_half,
         )
 
-        self.config.rvt.rain_correction = self.config.rvp.params.par_x20
-        self.config.rvt.snow_correction = self.config.rvp.params.par_x21
+        self.config.rvt.rain_correction = params.par_x20
+        self.config.rvt.snow_correction = params.par_x21
 
         self._monthly_average()
 
         # Default initial conditions if none are given
         if not self.config.rvc.hru_states:
-            self.config.rvc.hru_states[1] = HRUState(soil2=self.config.rvc.soil2)
+            self.config.rvc.hru_states[1] = HRUState(
+                soil2=self.config.rvc.get_extra_attribute("soil2")
+            )
         if not self.config.rvc.basin_states:
             self.config.rvc.basin_states[1] = BasinIndexCommand()
 
@@ -272,10 +277,10 @@ class HBVEC(Raven):
             or self.config.rvi.ow_evaporation == "PET_FROMMONTHLY"
         ):
             # If this fails, it's likely the input data is missing some necessary variables (e.g. evap).
-            tas_cmd = self.config.rvt._var_cmds["tas"]
-            tasmin_cmd = self.config.rvt._var_cmds["tasmin"]
-            tasmax_cmd = self.config.rvt._var_cmds["tasmax"]
-            evspsbl_cmd = self.config.rvt._var_cmds["evspsbl"]
+            tas_cmd = cast(BaseDataCommand, self.config.rvt._var_cmds["tas"])
+            tasmin_cmd = cast(BaseDataCommand, self.config.rvt._var_cmds["tasmin"])
+            tasmax_cmd = cast(BaseDataCommand, self.config.rvt._var_cmds["tasmax"])
+            evspsbl_cmd = cast(BaseDataCommand, self.config.rvt._var_cmds["evspsbl"])
 
             if tas_cmd:
                 tas = xr.open_dataset(tas_cmd.file_name_nc)[tas_cmd.var_name_nc]
@@ -308,8 +313,6 @@ class HBVEC_OST(Ostrich, HBVEC):
             identifier="hbvec-ost",
             algorithm="DDS",
             max_iterations=50,
-            lowerBounds=HBVEC.Params(),
-            upperBounds=HBVEC.Params(),
             run_name="run",
             run_index=0,
             suppress_output=True,
