@@ -5,6 +5,8 @@ import pytest
 
 from ravenpy.utilities.testdata import get_local_testdata
 
+pytestmark = pytest.mark.online
+
 
 class TestHydroBASINS:
     geoserver = pytest.importorskip("ravenpy.utilities.geoserver")

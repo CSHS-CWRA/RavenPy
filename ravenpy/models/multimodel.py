@@ -1,3 +1,6 @@
+from pathlib import Path
+from typing import List
+
 from .base import Raven
 from .emulators import get_model
 
@@ -29,40 +32,12 @@ class RavenMultiModel(Raven):
         if (run_name is not None) or (len(rns) < len(self._models)):
             for m in self._models:
                 rn = run_name or m.config.rvi.run_name
-                m.config.rvi.run_name = rn + "_" + m.config.identifier
-
-    def assign(self, key, value):
-        """Assign key to all models, unless it's model parameters."""
-        # Model parameter case
-        if key in self._names:
-            m = self._models[self._names.index(key)]
-            m.assign("params", value)
-        else:
-            for m in self._models:
-                m.assign(key, value)
+                m.config.rvi.run_name = rn + "-" + m.config.identifier
 
     def resume(self, solution=None):
         # TODO: Add support for model dependent solutions.
         for m in self._models:
             m.resume(solution)
-
-    @property
-    def _rv_paths(self):
-        out = []
-        for m in self._models:
-            out.extend(m._rv_paths)
-        return out
-
-    @_rv_paths.setter
-    def _rv_paths(self, value):
-        pass
-
-    # @property
-    # def rvs(self):
-    #     out = []
-    #     for m in self._models:
-    #         out.extend(m._rv_paths)
-    #     return out
 
     def run(self, ts, overwrite=False, **kwds):
         """Run model.
@@ -92,3 +67,35 @@ class RavenMultiModel(Raven):
             procs.extend(m.run(ts, **kw))
 
         return procs
+
+    def parse_results(self):
+        # The Raven parent class uses `run_name` as the glob prefix, but here
+        # since we have multiple models (with each its own config.rvi.run_name)
+        # we simply use no prefix, which has the effect of getting all the files,
+        # for all models
+        patterns = {
+            "hydrograph": "*Hydrographs.nc",
+            "storage": "*WatershedStorage.nc",
+            "solution": "*solution.rvc",
+            "diagnostics": "*Diagnostics.csv",
+        }
+
+        for key, pattern in patterns.items():
+            # There are no diagnostics if a streamflow time series is not provided.
+            try:
+                fns = self._get_output(pattern, path=self.exec_path)
+            except UserWarning as exc:
+                if key != "diagnostics":
+                    raise exc
+                else:
+                    continue
+
+            fns.sort()
+            self.ind_outputs[key] = fns
+            self.outputs[key] = self._merge_output(fns, pattern[1:])
+
+        rv_paths = []
+        for m in self._models:
+            rv_paths += m._rv_paths
+
+        self.outputs["rv_config"] = self._merge_output(rv_paths, "rv.zip")

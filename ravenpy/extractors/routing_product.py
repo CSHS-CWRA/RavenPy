@@ -1,20 +1,17 @@
 import warnings
 from collections import defaultdict
 from pathlib import Path
+from typing import List
+
+from ravenpy.utilities import gis_import_error_message
 
 try:
     import geopandas
     from osgeo import __version__ as osgeo_version  # noqa
     from osgeo import ogr, osr  # noqa
-
 except (ImportError, ModuleNotFoundError) as e:
-    msg = (
-        f"`{Path(__file__).stem}` requires installation of the RavenPy GIS libraries. These can be installed using the"
-        " `pip install ravenpy[gis]` recipe or via Anaconda (`conda env -n ravenpy-env -f environment.yml`)"
-        " from the RavenPy repository source files."
-    )
+    msg = gis_import_error_message.format(Path(__file__).stem)
     raise ImportError(msg) from e
-
 
 import netCDF4 as nc4
 import numpy as np
@@ -205,7 +202,7 @@ class RoutingProductShapefileExtractor:
 
         # geometry of the channel and floodplain
         # (see figure 7:1-2 in SWAT theory document)
-        survey_points = [
+        survey_points = (
             (0, zfld),
             (sidwdfp, channel_elev),
             (sidwdfp + 2 * channel_width, channel_elev),
@@ -214,7 +211,7 @@ class RoutingProductShapefileExtractor:
             (sidwdfp + 2 * channel_width + 2 * sidwd + botwd, channel_elev),
             (sidwdfp + 4 * channel_width + 2 * sidwd + botwd, channel_elev),
             (2 * sidwdfp + 4 * channel_width + 2 * sidwd + botwd, zfld),
-        ]
+        )
 
         if RoutingProductShapefileExtractor.USE_MANNING_COEFF:
             mann = channeln
@@ -222,11 +219,11 @@ class RoutingProductShapefileExtractor:
             mann = RoutingProductShapefileExtractor.MANNING_DEFAULT
 
         # roughness zones of channel and floodplain
-        roughness_zones = [
+        roughness_zones = (
             (0, floodn),
             (sidwdfp + 2 * channel_width, mann),
             (sidwdfp + 2 * channel_width + 2 * sidwd + botwd, floodn),
-        ]
+        )
 
         return ChannelProfileCommand(
             name=f"chn_{subbasin_id}",
@@ -503,7 +500,7 @@ class RoutingProductGridWeightExtractor:
         return GridWeightsCommand(
             number_hrus=len(self._routing_data),
             number_grid_cells=self._nlon * self._nlat,
-            data=grid_weights,
+            data=tuple(grid_weights),
         )
 
     def _prepare_input_data(self):
@@ -569,7 +566,7 @@ class RoutingProductGridWeightExtractor:
 
     def _compute_grid_cell_polygons(self):
 
-        grid_cell_geom_gpd_wkt = [
+        grid_cell_geom_gpd_wkt: List[List[List[ogr.Geometry]]] = [
             [[] for ilon in range(self._nlon)] for ilat in range(self._nlat)
         ]
 
@@ -664,8 +661,8 @@ class RoutingProductGridWeightExtractor:
         # create array of edges where (x,y) are always center cells
         nlon = np.shape(lon)[1]
         nlat = np.shape(lat)[0]
-        lonh = np.empty((nlat + 1, nlon + 1), dtype=np.float)
-        lath = np.empty((nlat + 1, nlon + 1), dtype=np.float)
+        lonh = np.empty((nlat + 1, nlon + 1), dtype=np.float64)
+        lath = np.empty((nlat + 1, nlon + 1), dtype=np.float64)
         tmp1 = [
             [(lat[ii + 1, jj + 1] - lat[ii, jj]) / 2 for jj in range(nlon - 1)]
             + [(lat[ii + 1, nlon - 1] - lat[ii, nlon - 2]) / 2]

@@ -1,5 +1,6 @@
 from collections import defaultdict
 from pathlib import Path
+from typing import cast
 
 from pydantic.dataclasses import dataclass
 
@@ -13,20 +14,20 @@ from .gr4jcn import GR4JCN
 class MOHYSE(Raven):
     @dataclass
     class Params:
-        par_x01: float = None
-        par_x02: float = None
-        par_x03: float = None
-        par_x04: float = None
-        par_x05: float = None
-        par_x06: float = None
-        par_x07: float = None
-        par_x08: float = None
-        par_x09: float = None
-        par_x10: float = None
+        par_x01: float
+        par_x02: float
+        par_x03: float
+        par_x04: float
+        par_x05: float
+        par_x06: float
+        par_x07: float
+        par_x08: float
+        par_x09: float
+        par_x10: float
 
     @dataclass
     class DerivedParams:
-        par_rezi_x10: float = None
+        par_rezi_x10: float
 
     def __init__(self, *args, **kwds):
         super().__init__(*args, **kwds)
@@ -43,8 +44,6 @@ class MOHYSE(Raven):
                     gauged=True,
                 ),
             ),
-            params=MOHYSE.Params(),
-            derived_params=MOHYSE.DerivedParams(),
         )
 
         #########
@@ -203,14 +202,16 @@ class MOHYSE(Raven):
         self.config.rvc.basin_states[1] = BasinIndexCommand()
 
     def derived_parameters(self):
-        self.config.rvp.derived_params.par_rezi_x10 = (
-            1.0 / self.config.rvp.params.par_x10
+        params = cast(MOHYSE.Params, self.config.rvp.params)
+        self.config.rvp.derived_params = MOHYSE.DerivedParams(
+            par_rezi_x10=(1.0 / params.par_x10)
         )
 
         # These need to be injected in the RVH
-        # TODO: find a better way to implement inter-RV value sharing/injection
-        self.config.rvh.par_rezi_x10 = self.config.rvp.derived_params.par_rezi_x10
-        self.config.rvh.par_x09 = self.config.rvp.params.par_x09
+        self.config.rvh.set_extra_attributes(
+            par_rezi_x10=self.config.rvp.derived_params.par_rezi_x10,
+            par_x09=params.par_x09,
+        )
 
 
 class MOHYSE_OST(Ostrich, MOHYSE):
@@ -221,8 +222,6 @@ class MOHYSE_OST(Ostrich, MOHYSE):
             identifier="mohyse-ost",
             algorithm="DDS",
             max_iterations=50,
-            lowerBounds=MOHYSE.Params(),
-            upperBounds=MOHYSE.Params(),
             run_name="run",
             run_index=0,
             suppress_output=True,

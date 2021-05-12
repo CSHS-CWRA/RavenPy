@@ -15,10 +15,11 @@ import shutil
 import stat
 import subprocess
 import tempfile
+import zipfile
 from collections import OrderedDict
 from dataclasses import astuple, fields, is_dataclass, replace
 from pathlib import Path
-from typing import Union
+from typing import Any, Dict, List, Union, cast
 
 import numpy as np
 import xarray as xr
@@ -32,7 +33,7 @@ from ravenpy.config.commands import (
     ObservationDataCommand,
     StationForcingCommand,
 )
-from ravenpy.config.rvs import RVC, RVI, Config
+from ravenpy.config.rvs import RVC, Config
 
 RAVEN_EXEC_PATH = os.getenv("RAVENPY_RAVEN_BINARY_PATH") or shutil.which("raven")
 OSTRICH_EXEC_PATH = os.getenv("RAVENPY_OSTRICH_BINARY_PATH") or shutil.which("ostrich")
@@ -64,13 +65,17 @@ class Raven:
         "hru_state",
         "basin_state",
         "nc_index",
-        # "name",
         "area",
         "elevation",
         "latitude",
         "longitude",
         "region_id",
     ]
+
+    # This is just to satisfy mypy, which wants to know about those internal classes defined
+    # by the emulators (which are Raven subclasses)
+    Params: Any
+    DerivedParams: Any
 
     def __init__(self, workdir: Union[str, Path] = None):  # , identifier: str = None):
         """Initialize the RAVEN model.
@@ -91,17 +96,15 @@ class Raven:
         self.raven_exec = RAVEN_EXEC_PATH
         self.ostrich_exec = OSTRICH_EXEC_PATH
 
-        workdir = workdir or tempfile.mkdtemp()
+        self.workdir = Path(workdir or tempfile.mkdtemp())
 
-        self.workdir = Path(workdir)
-        self.ind_outputs = {}  # Individual files for all simulations
-        self.outputs = {}  # Aggregated files
-        self.singularity = False  # Set to True to launch Raven with singularity.
-        self.raven_simg = None  # ravenpy.raven_simg
-        # self._name = None
-        self._defaults = {}
+        # Individual files for all simulations
+        self.ind_outputs: Dict[str, List[Path]] = {}
+        # Aggregated files
+        self.outputs: Dict[str, Union[Path, str]] = {}
 
-        self._rv_paths = []
+        # Explicit paths of every rendered RV file
+        self._rv_paths: List[Path] = []
 
         # Directory logic
         # Top directory inside workdir. This is where Ostrich and its config and templates are stored.
@@ -111,10 +114,12 @@ class Raven:
 
         self.exec_path = self.workdir / "exec"
         self.final_path = self.workdir / self.final_dir
-        self._psim = 0
-        self._pdim = None  # Parallel dimension (either initparam, params or region)
 
-        self.config = Config(raven_version=self.version)
+        # Parallel simulations (one Raven config folder will be created for each)
+        self._psim = 0
+        self._pdim = ""  # Parallel dimension (either initparam, params or region)
+
+        self.config = Config(model_cls=self.__class__, raven_version=self.version)
 
     @property
     def output_path(self):
@@ -131,19 +136,12 @@ class Raven:
 
     @property
     def version(self):
-        import re
-
-        out = subprocess.check_output(
-            [
-                self.raven_exec,
-            ],
-            input=b"\n",
-        )
-        match = re.search(r"Version (\S+) ", out.decode("utf-8"))
+        out = subprocess.check_output([self.raven_exec], input="\n", text=True)
+        match = re.search(r"Version (\S+) ", out)
         if match:
             return match.groups()[0]
         else:
-            raise AttributeError("Version not found: {}".format(out))
+            raise AttributeError(f"Version not found: {out}")
 
     @property
     def psim(self):
@@ -153,8 +151,7 @@ class Raven:
     def psim(self, value):
         if not isinstance(value, int):
             raise ValueError
-        if isinstance(self.config.rvi, RVI):
-            self.config.rvi.run_index = value
+        self.config.rvi.run_index = value
         self._psim = value
 
     @property
@@ -167,20 +164,6 @@ class Raven:
         """Bash command arguments."""
         identifier = self.config.identifier or "raven-generic"
         return [self.cmd, identifier, "-o", str(self.output_path)]
-
-    @property
-    def singularity_cmd(self):
-        """Run Singularity container."""
-        return [
-            "singularity",
-            "run",
-            "--bind",
-            "{}:/data".format(self.model_path),
-            "--bind",
-            "{}:/data_out:rw".format(self.output_path),
-            self.raven_simg,
-            self.config.identifier,
-        ]
 
     @property
     def cmd_path(self):
@@ -247,14 +230,6 @@ class Raven:
         index : int
           Run index (starts at 1)
         """
-        # Create configuration information from input files
-        # ncvars = self._assign_files(ts)
-        # self.rvt.update(ncvars)
-
-        # TODO: Re-enable those checks
-        # self.check_units()
-        # self.check_inputs()
-
         # Compute derived parameters
         self.derived_parameters()
 
@@ -262,6 +237,7 @@ class Raven:
         if not self.model_path.exists():
             os.makedirs(self.model_path)
             os.makedirs(self.output_path)
+
         self._dump_rv()
 
         # Create symbolic link to input files
@@ -273,13 +249,7 @@ class Raven:
         if not self.raven_cmd.exists():
             os.symlink(self.raven_exec, str(self.raven_cmd))
 
-        # Shell command to run the model
-        if self.singularity:
-            cmd = self.singularity_cmd
-        else:
-            cmd = self.bash_cmd
-
-        return cmd
+        return self.bash_cmd
 
     def run(self, ts, overwrite=False, **kwds):
         """Run the model.
@@ -307,8 +277,6 @@ class Raven:
         if isinstance(ts, (str, Path)):
             ts = [ts]
 
-        ts_are_ncs = all(Path(f).suffix.startswith(".nc") for f in ts)
-
         # Support legacy interface for single HRU emulator
         hru_attrs = {}
         for k in ["area", "latitude", "longitude", "elevation"]:
@@ -323,16 +291,17 @@ class Raven:
         # Case for potentially parallel parameters
         pdict = {}
         for p in self._parallel_parameters:
-            a = kwds.pop(p, None)
-
-            if (
-                a is not None
-                and p == "params"
-                and not isinstance(a, self.__class__.Params)
-            ):
-                pdict[p] = np.atleast_2d(a)
+            val = kwds.pop(p, None)
+            if val is not None and p == "params":
+                assert hasattr(self, "Params")  # make sure we are in an emulator
+                # Special case where we have `Params(..)` or `[Params(), ..]`
+                lval = [val] if not is_sequence(val) else val
+                if isinstance(lval[0], self.Params):
+                    pdict[p] = np.atleast_1d(val)
+                else:
+                    pdict[p] = np.atleast_2d(val)
             else:
-                pdict[p] = np.atleast_1d(a)
+                pdict[p] = np.atleast_1d(val)
 
         # Number of parallel loops is dictated by the number of parallel parameters or nc_index.
         plen = {pp: len(pdict[pp]) for pp in self._parallel_parameters + ["nc_index"]}
@@ -371,13 +340,13 @@ class Raven:
         for key, val in kwds.items():
             self.config.update(key, val)
 
-        # if self.config.rvi:
-        if ts_are_ncs:
-            self.handle_date_defaults(ts)
-            self.set_calendar(ts)
+        ts_ncs = [f for f in ts if Path(f).suffix.startswith(".nc")]
 
-        if ts_are_ncs:
-            self.config.rvt.configure_from_nc_data(ts)
+        if ts_ncs:
+            self.config.rvi.configure_from_nc_data(ts_ncs)
+
+        if ts_ncs and self.config.rvt._auto_nc_configure:
+            self.config.rvt.configure_from_nc_data(ts_ncs)
 
         # Loop over parallel parameters - sets self.rvi.run_index
         procs = []
@@ -471,18 +440,16 @@ class Raven:
 
     def _merge_output(self, files, name):
         """Merge multiple output files into one if possible, otherwise return a list of files."""
-        import zipfile
-
         # If there is only one file, return its name directly.
+        from .multimodel import RavenMultiModel
+
         if len(files) == 1:
             return files[0]
 
         # Otherwise try to create a new file aggregating all files.
         outfn = self.final_path / name
 
-        if name.endswith(".nc") and not isinstance(
-            self, ravenpy.models.RavenMultiModel
-        ):
+        if name.endswith(".nc") and not isinstance(self, RavenMultiModel):
             ds = [xr.open_dataset(fn) for fn in files]
             try:
                 # We aggregate along the pdim dimensions.
@@ -532,7 +499,7 @@ class Raven:
                 ):
                     # Skip this one because it's a bit circular
                     continue
-                messages[msg_type].append(msg)
+                messages[msg_type].append(msg)  # type: ignore
 
         return messages
 
@@ -544,54 +511,10 @@ class Raven:
         files = list(path.rglob(pattern))
 
         if len(files) == 0:
-            if not (
-                isinstance(self.config.rvi, RVI) and self.config.rvi.suppress_output
-            ):
+            if not self.config.rvi.suppress_output:
                 raise UserWarning("No output files for {} in {}.".format(pattern, path))
 
         return [f.absolute() for f in files]
-
-    @staticmethod
-    def start_end_date(fns):
-        """Return the common starting and ending date and time of netCDF files.
-
-        Parameters
-        ----------
-        fns : sequence
-          Sequence of netCDF file names for forcing data.
-
-        Returns
-        -------
-        start : datetime
-          The first datetime of the forcing files.
-        end : datetime
-          The last datetime of the forcing files.
-        """
-
-        ds = xr.open_mfdataset(fns, combine="by_coords")
-        return ds.indexes["time"][0], ds.indexes["time"][-1]
-
-    @staticmethod
-    def get_calendar(fns):
-        """Return the calendar."""
-        ds = xr.open_mfdataset(fns, combine="by_coords")
-        cal = ds.time.encoding.get("calendar", "standard")
-        return RVI.CalendarOptions(cal.upper())
-
-    def set_calendar(self, ts):
-        """Set the calendar in the RVI configuration."""
-        self.config.rvi.calendar = self.get_calendar(ts)
-
-    def handle_date_defaults(self, ts):
-        # Get start and end date from file
-        start, end = self.start_end_date(ts)
-
-        rvi = self.config.rvi
-        if rvi.start_date in [None, dt.datetime(1, 1, 1)]:
-            rvi.start_date = start
-
-        if rvi.end_date in [None, dt.datetime(1, 1, 1)]:
-            rvi.end_date = end
 
     @property
     def q_sim(self):
@@ -612,27 +535,30 @@ class Raven:
         If the model is run multiple times, hydrograph will point to the latest version. To store the results of
         multiple runs, either create different model instances or explicitly copy the file to another disk location.
         """
-        if self.outputs["hydrograph"].suffix == ".nc":
-            return xr.open_dataset(self.outputs["hydrograph"])
-        elif self.outputs["hydrograph"].suffix == ".zip":
+        hydrograph = cast(Path, self.outputs["hydrograph"])
+        if hydrograph.suffix == ".nc":
+            return xr.open_dataset(hydrograph)
+        elif hydrograph.suffix == ".zip":
             return [xr.open_dataset(fn) for fn in self.ind_outputs["hydrograph"]]
         else:
             raise ValueError
 
     @property
     def storage(self):
-        if self.outputs["storage"].suffix == ".nc":
-            return xr.open_dataset(self.outputs["storage"])
-        elif self.outputs["storage"].suffix == ".zip":
+        storage = cast(Path, self.outputs["storage"])
+        if storage.suffix == ".nc":
+            return xr.open_dataset(storage)
+        elif storage.suffix == ".zip":
             return [xr.open_dataset(fn) for fn in self.ind_outputs["storage"]]
         else:
             raise ValueError
 
     @property
     def solution(self):
-        if self.outputs["solution"].suffix == ".rvc":
-            return RVC.create_solution(self.outputs["solution"].read_text())
-        elif self.outputs["solution"].suffix == ".zip":
+        solution = cast(Path, self.outputs["solution"])
+        if solution.suffix == ".rvc":
+            return RVC.create_solution(solution.read_text())
+        elif solution.suffix == ".zip":
             return [
                 RVC.create_solution(fn.read_text())
                 for fn in self.ind_outputs["solution"]
@@ -667,7 +593,7 @@ class Raven:
                 header = next(reader)
                 content = next(reader)
 
-                out = dict(zip(header, content))
+                out: Dict[str, Union[str, float]] = dict(zip(header, content))
                 out.pop("")
 
             for key, val in out.items():
@@ -700,10 +626,6 @@ class Ostrich(Raven):
     @property
     def model_path(self):
         return self.exec_path / self.model_dir
-
-    @staticmethod
-    def _allowed_extensions():
-        return Raven._allowed_extensions() + ("txt",)
 
     @property
     def ostrich_cmd(self):
@@ -767,8 +689,8 @@ class Ostrich(Raven):
         if self.config.ost.random_numbers_path:
             fn = self.exec_path / "OstRandomNumbers.txt"
             with open(fn, "w") as f:
-                self._rv_paths.append(fn)
                 f.write(self.config.ost.random_numbers_path.read_text())
+            self._rv_paths.append(fn)
 
     def parse_results(self):
         """Store output files in the self.outputs dictionary."""
@@ -827,14 +749,9 @@ class Ostrich(Raven):
 
     def parse_optimal_parameter_set(self):
         """Return dictionary of optimal parameter set."""
-        import re
-
         txt = open(self.outputs["calibration"]).read()
-        ops = re.search(r".*Optimal Parameter Set(.*?)\n{2}", txt, re.DOTALL).groups()[
-            0
-        ]
-
-        p = re.findall(r"(\w+)\s*:\s*([\S]+)", ops)
+        ops = re.search(r".*Optimal Parameter Set(.*?)\n{2}", txt, re.DOTALL).groups()  # type: ignore
+        p = re.findall(r"(\w+)\s*:\s*([\S]+)", ops[0])
         return OrderedDict((k, float(v)) for k, v in p)
 
     def ost2raven(self, ops):
@@ -846,12 +763,12 @@ class Ostrich(Raven):
         Raven model.
         """
 
-        if self.config.rvp.params:
-            # We are using an emulator
-            n = len(fields(self.config.rvp.params))
+        if hasattr(self, "Params"):
+            # We are using an emulator, so it has a `Params` internal class
+            n = len(fields(self.Params))
             pattern = "par_x{}" if n < 8 else "par_x{:02}"
             names = [pattern.format(i + 1) for i in range(n)]
-            return self.__class__.Params(*[ops[n] for n in names])
+            return self.Params(*[ops[n] for n in names])
         else:
             # We are using generic Ostrich
             return ops.values()
