@@ -19,7 +19,7 @@ import zipfile
 from collections import OrderedDict
 from dataclasses import astuple, fields, is_dataclass, replace
 from pathlib import Path
-from typing import Dict, List, Union, cast
+from typing import Any, Dict, List, Union, cast
 
 import numpy as np
 import xarray as xr
@@ -71,6 +71,11 @@ class Raven:
         "longitude",
         "region_id",
     ]
+
+    # This is just to satisfy mypy, which wants to know about those internal classes defined
+    # by the emulators (which are Raven subclasses)
+    Params: Any
+    DerivedParams: Any
 
     def __init__(self, workdir: Union[str, Path] = None):  # , identifier: str = None):
         """Initialize the RAVEN model.
@@ -291,7 +296,7 @@ class Raven:
                 assert hasattr(self, "Params")  # make sure we are in an emulator
                 # Special case where we have `Params(..)` or `[Params(), ..]`
                 lval = [val] if not is_sequence(val) else val
-                if isinstance(lval[0], self.__class__.Params):  # type: ignore
+                if isinstance(lval[0], self.Params):
                     pdict[p] = np.atleast_1d(val)
                 else:
                     pdict[p] = np.atleast_2d(val)
@@ -763,7 +768,7 @@ class Ostrich(Raven):
             n = len(fields(self.Params))
             pattern = "par_x{}" if n < 8 else "par_x{:02}"
             names = [pattern.format(i + 1) for i in range(n)]
-            return self.Params(*[ops[n] for n in names])  # type: ignore
+            return self.Params(*[ops[n] for n in names])
         else:
             # We are using generic Ostrich
             return ops.values()
