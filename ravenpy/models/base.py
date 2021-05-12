@@ -288,6 +288,7 @@ class Raven:
         for p in self._parallel_parameters:
             val = kwds.pop(p, None)
             if val is not None and p == "params":
+                assert hasattr(self, "Params")  # make sure we are in an emulator
                 # Special case where we have `Params(..)` or `[Params(), ..]`
                 lval = [val] if not is_sequence(val) else val
                 if isinstance(lval[0], self.__class__.Params):  # type: ignore
@@ -757,12 +758,12 @@ class Ostrich(Raven):
         Raven model.
         """
 
-        if self.config.rvp.params:
-            # We are using an emulator
-            n = len(fields(self.config.rvp.params))
+        if hasattr(self, "Params"):
+            # We are using an emulator, so it has a `Params` internal class
+            n = len(fields(self.Params))
             pattern = "par_x{}" if n < 8 else "par_x{:02}"
             names = [pattern.format(i + 1) for i in range(n)]
-            return self.__class__.Params(*[ops[n] for n in names])  # type: ignore
+            return self.Params(*[ops[n] for n in names])  # type: ignore
         else:
             # We are using generic Ostrich
             return ops.values()
