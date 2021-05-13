@@ -1,6 +1,5 @@
 name: ravenpy-env
 channels:
-- zeitsperre
 - conda-forge
 - defaults
 dependencies:
