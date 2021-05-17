@@ -1,5 +1,6 @@
 from collections import defaultdict
 from pathlib import Path
+from typing import cast
 
 from pydantic.dataclasses import dataclass
 
@@ -13,57 +14,57 @@ from .gr4jcn import GR4JCN
 class BLENDED(Raven):
     @dataclass
     class Params:
-        par_x01: float = None
-        par_x02: float = None
-        par_x03: float = None
-        par_x04: float = None
-        par_x05: float = None
-        par_x06: float = None
-        par_x07: float = None
-        par_x08: float = None
-        par_x09: float = None
-        par_x10: float = None
-        par_x11: float = None
-        par_x12: float = None
-        par_x13: float = None
-        par_x14: float = None
-        par_x15: float = None
-        par_x16: float = None
-        par_x17: float = None
-        par_x18: float = None
-        par_x19: float = None
-        par_x20: float = None
-        par_x21: float = None
-        par_x22: float = None
-        par_x23: float = None
-        par_x24: float = None
-        par_x25: float = None
-        par_x26: float = None
-        par_x27: float = None
-        par_x28: float = None
-        par_x29: float = None
-        par_x30: float = None
-        par_x31: float = None
-        par_x32: float = None
-        par_x33: float = None
-        par_x34: float = None
-        par_x35: float = None
-        par_r01: float = None
-        par_r02: float = None
-        par_r03: float = None
-        par_r04: float = None
-        par_r05: float = None
-        par_r06: float = None
-        par_r07: float = None
-        par_r08: float = None
+        par_x01: float
+        par_x02: float
+        par_x03: float
+        par_x04: float
+        par_x05: float
+        par_x06: float
+        par_x07: float
+        par_x08: float
+        par_x09: float
+        par_x10: float
+        par_x11: float
+        par_x12: float
+        par_x13: float
+        par_x14: float
+        par_x15: float
+        par_x16: float
+        par_x17: float
+        par_x18: float
+        par_x19: float
+        par_x20: float
+        par_x21: float
+        par_x22: float
+        par_x23: float
+        par_x24: float
+        par_x25: float
+        par_x26: float
+        par_x27: float
+        par_x28: float
+        par_x29: float
+        par_x30: float
+        par_x31: float
+        par_x32: float
+        par_x33: float
+        par_x34: float
+        par_x35: float
+        par_r01: float
+        par_r02: float
+        par_r03: float
+        par_r04: float
+        par_r05: float
+        par_r06: float
+        par_r07: float
+        par_r08: float
 
     @dataclass
     class DerivedParams:
-        POW_X04: float = None
-        POW_X11: float = None
-        SUM_X09_X10: float = None
-        SUM_X13_X14: float = None
-        SUM_X24_X25: float = None
+        POW_X04: float
+        POW_X11: float
+        SUM_X09_X10: float
+        SUM_X13_X14: float
+        SUM_X24_X25: float
 
     @dataclass
     class ForestHRU(HRU):
@@ -88,8 +89,6 @@ class BLENDED(Raven):
                     gauged=True,
                 ),
             ),
-            params=BLENDED.Params(),
-            derived_params=BLENDED.DerivedParams(),
             land_use_classes=(
                 LU("FOREST", impermeable_frac=0.0, forest_coverage=0.02345),
             ),
@@ -271,30 +270,25 @@ class BLENDED(Raven):
         """
         self.config.rvi.set_tmpl(rvi_tmpl)
 
-        self.config.rvi.params = self.config.rvp.params
-
     def derived_parameters(self):
-        self.config.rvp.derived_params.SUM_X09_X10 = (
-            self.config.rvp.params.par_x10
-        )  # + self.config.rvp.params.par_x09
-        self.config.rvp.derived_params.SUM_X13_X14 = (
-            self.config.rvp.params.par_x14
-        )  # + self.config.rvp.params.par_x13
-        self.config.rvp.derived_params.SUM_X24_X25 = (
-            self.config.rvp.params.par_x25
-        )  # + self.config.rvp.params.par_x24
-        # 10.0**self.config.rvp.params.par_x04  #
-        self.config.rvp.derived_params.POW_X04 = self.config.rvp.params.par_x04
-        # 10.0**self.config.rvp.params.par_x11  #
-        self.config.rvp.derived_params.POW_X11 = self.config.rvp.params.par_x11
+        self.config.rvi.set_extra_attributes(params=self.config.rvp.params)
 
-        topsoil_hlf = self.config.rvp.params.par_x29 * 0.5 * 1000
-        phreatic_hlf = self.config.rvp.params.par_x30 * 0.5 * 1000
+        params = cast(BLENDED.Params, self.config.rvp.params)
+        self.config.rvp.derived_params = BLENDED.DerivedParams(
+            SUM_X09_X10=params.par_x10,
+            SUM_X13_X14=params.par_x14,
+            SUM_X24_X25=params.par_x25,
+            POW_X04=params.par_x04,
+            POW_X11=params.par_x11,
+        )
+
+        topsoil_hlf = params.par_x29 * 0.5 * 1000
+        phreatic_hlf = params.par_x30 * 0.5 * 1000
         hru_state = HRUState(soil0=topsoil_hlf, soil1=phreatic_hlf)
         self.config.rvc.set_hru_state(hru_state)
 
-        self.config.rvt.rain_correction = self.config.rvp.params.par_x33
-        self.config.rvt.snow_correction = self.config.rvp.params.par_x34
+        self.config.rvt.rain_correction = params.par_x33
+        self.config.rvt.snow_correction = params.par_x34
 
 
 class BLENDED_OST(Ostrich, BLENDED):
@@ -305,8 +299,6 @@ class BLENDED_OST(Ostrich, BLENDED):
             identifier="blended-ost",
             algorithm="DDS",
             max_iterations=50,
-            lowerBounds=BLENDED.Params(),
-            upperBounds=BLENDED.Params(),
             suppress_output=True,
         )
 

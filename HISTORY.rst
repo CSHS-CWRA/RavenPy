@@ -2,6 +2,13 @@
 History
 =======
 
+0.5.1
+-----
+
+* Some adjustments and bugfixes needed for RavenWPS.
+* Refactoring of some internal logic in ``ravenpy.config.rvs.RVT``.
+* Improvements to typing with the help of mypy.
+
 0.5.0
 -----
 
