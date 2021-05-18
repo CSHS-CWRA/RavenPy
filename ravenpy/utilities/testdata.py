@@ -4,6 +4,7 @@ Tools for searching for and acquiring test data.
 import logging
 import os
 import re
+from hashlib import md5
 from pathlib import Path
 from typing import List, Optional, Sequence, Union
 from urllib.error import HTTPError
@@ -13,13 +14,19 @@ from urllib.request import urlretrieve
 import requests
 from xarray import Dataset
 from xarray import open_dataset as _open_dataset
-from xarray.tutorial import file_md5_checksum
 
 _default_cache_dir = Path.home() / ".raven_testing_data"
 
 LOGGER = logging.getLogger("RAVEN")
 
 __all__ = ["get_local_testdata", "get_file", "open_dataset", "query_folder"]
+
+
+def file_md5_checksum(fname):
+    hash_md5 = md5()
+    with open(fname, "rb") as f:
+        hash_md5.update(f.read())
+    return hash_md5.hexdigest()
 
 
 def get_local_testdata(pattern: str) -> Union[Path, List[Path]]:
