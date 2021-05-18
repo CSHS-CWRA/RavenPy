@@ -680,6 +680,7 @@ class SACSMA_OST(Ostrich, SACSMA):
         self.config.ost.set_tmpl(ost_tmpl)
 
     def derived_parameters(self):
+        # We don't want to use the parent class in this context
         pass
 
     def ost2raven(self, ops):
