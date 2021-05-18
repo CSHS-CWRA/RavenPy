@@ -35,7 +35,6 @@ class GR4JCN(Raven):
     @dataclass
     class DerivedParams:
         one_minus_CEMANEIGE_X2: float
-        GR4J_X1_hlf: float
 
     @dataclass
     class LandHRU(HRU):
@@ -187,30 +186,12 @@ class GR4JCN(Raven):
         self.config.rvi.rain_snow_fraction = RVI.RainSnowFractionOptions.DINGMAN
         self.config.rvi.evaporation = "PET_OUDIN"
 
-        #########
-        # R V C #
-        #########
-
-        # Initialize the stores to 1/2 full. Declare the parameters that can be user-modified
-        self.config.rvc.set_extra_attributes(soil0=None, soil1=15)
-
     def derived_parameters(self):
 
         params = cast(GR4JCN.Params, self.config.rvp.params)
         self.config.rvp.derived_params = GR4JCN.DerivedParams(
-            GR4J_X1_hlf=(params.GR4J_X1 * 1000.0 / 2.0),
             one_minus_CEMANEIGE_X2=(1.0 - params.CEMANEIGE_X2),
         )
-
-        # Default initial conditions if none are given
-        if not self.config.rvc.hru_states:
-            curr_soil0 = self.config.rvc.get_extra_attribute("soil0")
-            soil0 = (
-                self.config.rvp.derived_params.GR4J_X1_hlf
-                if curr_soil0 is None
-                else curr_soil0
-            )
-            soil1 = self.config.rvc.get_extra_attribute("soil1")
 
         # subbassin_id -> has at least one LakeHRU
         sb_contains_lake = defaultdict(lambda: False)
@@ -218,6 +199,10 @@ class GR4JCN(Raven):
         if not self.config.rvc.hru_states:
             # If self.rvc.hru_states is set, it means that we are using `resume()` and we don't
             # want to interfere
+
+            soil0 = params.GR4J_X1 * 1000.0 / 2.0
+            soil1 = 15
+
             for hru in self.config.rvh.hrus:
                 if isinstance(hru, GR4JCN.LandHRU) or hru.hru_type == "land":
                     self.config.rvc.hru_states[hru.hru_id] = HRUState(
