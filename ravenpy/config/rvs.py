@@ -69,8 +69,8 @@ class RV(ABC):
     def get_extra_attribute(self, k):
         return self._extra_attributes[k]
 
-    def set_tmpl(self, tmpl, is_ostrich=False):
-        self.tmpl = tmpl  # type: ignore
+    def set_tmpl(self, tmpl=None, is_ostrich=False):
+        self.tmpl = tmpl or self.tmpl  # type: ignore
         self.is_ostrich_tmpl = is_ostrich
 
     @property
@@ -686,10 +686,7 @@ class RVT(RV):
         if key in self._var_specs:
             self._var_specs[key].update(value)
             return True
-        elif key == "nc_index":
-            self.nc_index = value
-            return True
-        return False
+        return super().update(key, value)
 
     def to_rv(self):
         """

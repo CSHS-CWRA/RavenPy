@@ -3,6 +3,7 @@ from .gr4jcn import *
 from .hbvec import *
 from .hmets import *
 from .mohyse import *
+from .sacsma import *
 
 
 def get_model(name):

@@ -195,7 +195,9 @@ class Raven:
             with open(fn, "w") as f:
                 self._rv_paths.append(fn)
                 content = rvo.content or rvo.to_rv()
-                assert content.strip(), f"{rvx} has no content!"
+                assert (
+                    content.strip()
+                ), f"{rvx} has no content! (did you forget to use `RV.set_tmpl`?)"
                 f.write(content)
 
     def setup(self, overwrite=False):
@@ -672,7 +674,8 @@ class Ostrich(Raven):
         self.write_save_best()
 
         # Create symbolic link to executable
-        os.symlink(self.ostrich_exec, str(self.cmd))
+        if not self.cmd.exists():
+            os.symlink(self.ostrich_exec, str(self.cmd))
 
     def _dump_rv(self):
         """write configuration files to disk."""
@@ -683,7 +686,11 @@ class Ostrich(Raven):
         fn = self.exec_path / "ostIn.txt"
         with open(fn, "w") as f:
             self._rv_paths.append(fn)
-            f.write(self.config.ost.content or self.config.ost.to_rv())
+            content = self.config.ost.content or self.config.ost.to_rv()
+            assert (
+                content.strip()
+            ), "OST has no content! (did you forget to use `RV.set_tmpl`?)"
+            f.write(content)
 
         # OstRandomNumbers.txt
         if self.config.ost.random_numbers_path:
