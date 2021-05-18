@@ -78,14 +78,6 @@ class SACSMA(Raven):
         #########
 
         rvp_tmpl = """
-        #########################################################################
-        :FileType          rvp ASCII Raven 3.0.4
-        :WrittenBy         James Craig & Juliane Mai
-        :CreationDate      Feb 2020
-        #
-        # Emulation of SAC-SMA simulation of Salmon River near Prince George
-        #------------------------------------------------------------------------
-
         # --------------------------
         # Parameters and description
         # (adopted from Table 1 under https://wiki.ewater.org.au/display/SD41/Sacramento+Model+-+SRG)
@@ -140,8 +132,6 @@ class SACSMA(Raven):
         # para_x20 0.8    1.2      # RAINCORRECTION; Muliplier to correct rain, Gauge; none ; default=1.0
         # para_x21 0.8    1.2      # SNOWCORRECTION; Muliplier to correct snow, Gauge; none ; default=1.0
 
-        #
-
         # tied parameters:
         # (it is important for OSTRICH to find every parameter place holder somewhere in this file)
         # (without this parameters that are used to derive parameters wouldn't be detectable by Ostrich)
@@ -151,7 +141,6 @@ class SACSMA(Raven):
         #    para_pow_x01      = POW_X01          = 10^(para_x01)         = 10^par_x01
         #    para_pow_x02      = POW_X02          = 10^(para_x02)         = 10^par_x02
         #    para_pow_x03      = POW_X03          = 10^(para_x03)         = 10^par_x03
-
 
         #-----------------------------------------------------------------
         # Soil Classes
@@ -179,8 +168,6 @@ class SACSMA(Raven):
         #      FOREST,         para_x13,           1.0,
         #
         :EndLandUseClasses
-
-
 
         #-----------------------------------------------------------------
         # Vegetation Classes
@@ -262,7 +249,7 @@ class SACSMA(Raven):
 
         rvi_tmpl = """
         :PotentialMeltMethod     POTMELT_DEGREE_DAY
-        :RainSnowFraction        {rain_snow_fraction}  # RAINSNOW_DATA ; maybe RAINSNOW_HBV??
+        :RainSnowFraction        {rain_snow_fraction}
         :Evaporation             {evaporation}
         :CatchmentRoute          ROUTE_GAMMA_CONVOLUTION
         :Routing                 ROUTE_NONE
@@ -399,8 +386,6 @@ class SACSMA_OST(Ostrich, SACSMA):
         # para_x20 0.8    1.2      # RAINCORRECTION; Muliplier to correct rain, Gauge; none ; default=1.0
         # para_x21 0.8    1.2      # SNOWCORRECTION; Muliplier to correct snow, Gauge; none ; default=1.0
 
-        #
-
         # tied parameters:
         # (it is important for OSTRICH to find every parameter place holder somewhere in this file)
         # (without this parameters that are used to derive parameters wouldn't be detectable by Ostrich)
@@ -437,8 +422,6 @@ class SACSMA_OST(Ostrich, SACSMA):
         #      FOREST,         para_x13,           1.0,
         #
         :EndLandUseClasses
-
-
 
         #-----------------------------------------------------------------
         # Vegetation Classes
