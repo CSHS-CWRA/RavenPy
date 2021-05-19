@@ -193,14 +193,6 @@ class MOHYSE(Raven):
         self.config.rvi.rain_snow_fraction = RVI.RainSnowFractionOptions.DATA
         self.config.rvi.evaporation = "PET_MOHYSE"
 
-        #########
-        # R V C #
-        #########
-
-        # This is not stricly necessary it seems
-        self.config.rvc.hru_states[1] = HRUState()
-        self.config.rvc.basin_states[1] = BasinIndexCommand()
-
     def derived_parameters(self):
         params = cast(MOHYSE.Params, self.config.rvp.params)
         self.config.rvp.derived_params = MOHYSE.DerivedParams(
