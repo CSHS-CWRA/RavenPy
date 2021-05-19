@@ -41,8 +41,6 @@ class SACSMA(Raven):
 
     @dataclass
     class DerivedParams:
-        par_soil0_mm: float
-        par_soil2_mm: float
         PAR_BF_LOSS_FRAC: float
         POW_X01: float
         POW_X02: float
@@ -275,33 +273,19 @@ class SACSMA(Raven):
         self.config.rvi.rain_snow_fraction = RVI.RainSnowFractionOptions.DATA
         self.config.rvi.evaporation = RVI.EvaporationOptions.PET_OUDIN
 
-        #########
-        # R V C #
-        #########
-
-        rvc_tmpl = """
-        # initialize to full tension storage
-        :UniformInitialConditions SOIL[0] {par_soil0_mm} #<UZTWM> = para_x04*1000
-        :UniformInitialConditions SOIL[2] {par_soil2_mm} #<LZTWM> = para_x06*1000
-        """
-        self.config.rvc.set_tmpl(rvc_tmpl)
-
     def derived_parameters(self):
 
         params = cast(SACSMA.Params, self.config.rvp.params)
         self.config.rvp.derived_params = SACSMA.DerivedParams(
-            par_soil0_mm=params.par_x04 * 1000.0,
-            par_soil2_mm=params.par_x06 * 1000.0,
             PAR_BF_LOSS_FRAC=params.par_x12,
             POW_X01=params.par_x01,
             POW_X02=params.par_x02,
             POW_X03=params.par_x03,
         )
 
-        self.config.rvc.set_extra_attributes(
-            par_soil0_mm=self.config.rvp.derived_params.par_soil0_mm,
-            par_soil2_mm=self.config.rvp.derived_params.par_soil2_mm,
-        )
+        soil0 = params.par_x04 * 1000.0
+        soil2 = params.par_x06 * 1000.0
+        self.config.rvc.hru_states[1] = HRUState(soil0=soil0, soil2=soil2)
 
         self.config.rvt.rain_correction = params.par_x20
         self.config.rvt.snow_correction = params.par_x21
