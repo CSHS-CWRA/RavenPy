@@ -238,12 +238,6 @@ class HBVEC(Raven):
         self.config.rvi.ow_evaporation = "PET_FROMMONTHLY"
         self.config.rvi.rain_snow_fraction = "RAINSNOW_HBV"
 
-        #########
-        # R V C #
-        #########
-
-        self.config.rvc.set_extra_attributes(soil2=0.50657)
-
     def derived_parameters(self):
         params = cast(HBVEC.Params, self.config.rvp.params)
         self.config.rvp.derived_params = HBVEC.DerivedParams(
@@ -263,9 +257,9 @@ class HBVEC(Raven):
 
         # Default initial conditions if none are given
         if not self.config.rvc.hru_states:
-            self.config.rvc.hru_states[1] = HRUState(
-                soil2=self.config.rvc.get_extra_attribute("soil2")
-            )
+            soil2 = 0.50657
+            self.config.rvc.hru_states[1] = HRUState(soil2=soil2)
+
         if not self.config.rvc.basin_states:
             self.config.rvc.basin_states[1] = BasinIndexCommand()
 

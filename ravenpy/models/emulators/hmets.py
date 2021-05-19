@@ -39,8 +39,6 @@ class HMETS(Raven):
         PHREATIC_m: float
         SUM_MELT_FACTOR: float
         SUM_SNOW_SWI: float
-        TOPSOIL_hlf: float
-        PHREATIC_hlf: float
 
     @dataclass
     class ForestHRU(HRU):
@@ -190,37 +188,18 @@ class HMETS(Raven):
         self.config.rvi.evaporation = "PET_OUDIN"
         self.config.rvi.rain_snow_fraction = RVI.RainSnowFractionOptions.DATA
 
-        #########
-        # R V C #
-        #########
-
-        self.config.rvc.set_extra_attributes(soil0=None, soil1=None)
-
     def derived_parameters(self):
         params = cast(HMETS.Params, self.config.rvp.params)
         self.config.rvp.derived_params = HMETS.DerivedParams(
-            TOPSOIL_hlf=(params.TOPSOIL * 0.5),
-            PHREATIC_hlf=(params.PHREATIC * 0.5),
             TOPSOIL_m=(params.TOPSOIL / 1000.0),
             PHREATIC_m=(params.PHREATIC / 1000.0),
             SUM_MELT_FACTOR=(params.MAX_MELT_FACTOR),
             SUM_SNOW_SWI=(params.SNOW_SWI_MAX),
         )
 
-        # Default initial conditions if none are given
         if not self.config.rvc.hru_states:
-            curr_soil0 = self.config.rvc.get_extra_attribute("soil0")
-            soil0 = (
-                self.config.rvp.derived_params.TOPSOIL_hlf
-                if curr_soil0 is None
-                else curr_soil0
-            )
-            curr_soil1 = self.config.rvc.get_extra_attribute("soil1")
-            soil1 = (
-                self.config.rvp.derived_params.PHREATIC_hlf
-                if curr_soil1 is None
-                else curr_soil1
-            )
+            soil0 = params.TOPSOIL * 0.5
+            soil1 = params.PHREATIC * 0.5
             self.config.rvc.hru_states[1] = HRUState(soil0=soil0, soil1=soil1)
 
 
