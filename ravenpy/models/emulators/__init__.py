@@ -2,6 +2,7 @@ from .blended import *
 from .gr4jcn import *
 from .hbvec import *
 from .hmets import *
+from .hypr import *
 from .mohyse import *
 from .sacsma import *
 
