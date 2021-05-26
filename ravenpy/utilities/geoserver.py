@@ -14,7 +14,7 @@ We could have a function that returns the layer name, and then other functions e
 """
 import os
 from pathlib import Path
-from typing import Iterable, List, Optional, Sequence, Tuple, Union
+from typing import Iterable, Optional, Sequence, Tuple, Union
 from urllib.parse import urljoin
 
 from requests import Request
@@ -57,7 +57,7 @@ def _get_location_wfs(
     ],
     layer: str = True,
     geoserver: str = GEO_URL,
-    point: Iterable[str] = None,
+    point: Tuple[str, str] = None,
 ) -> bytes:
     """Return leveled features from a hosted data set using bounding box coordinates and WFS 1.1.0 protocol.
 
