@@ -2,6 +2,12 @@
 History
 =======
 
+0.5.2
+-----
+
+* Simplify RVC configuration logic.
+* Add ``ravenpy.utilities.testdata.file_md5_checksum`` (previously in ``xarray.tutorial``).
+
 0.5.1
 -----
 
