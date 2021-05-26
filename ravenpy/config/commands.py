@@ -41,6 +41,20 @@ class LinearTransform(RavenCommand):
 
 
 @dataclass
+class EvaluationPeriod(RavenCommand):
+    """:EvaluationPeriod [period_name] [start yyyy-mm-dd] [end yyyy-mm-dd]"""
+
+    name: str
+    start: str
+    end: str
+
+    template = ":EvaluationPeriod {name} {start} {end}"
+
+    def to_rv(self):
+        return self.template.format(**asdict(self))
+
+
+@dataclass
 class SubBasinsCommand(RavenCommand):
     """SubBasins command (RVH)."""
 

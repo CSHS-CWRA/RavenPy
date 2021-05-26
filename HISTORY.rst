@@ -2,6 +2,11 @@
 History
 =======
 
+0.6.0
+-----
+
+* Added support for EvaluationPeriod commands. Note that as a result of this, the model diagnostic property contains lists instead of a scalars.
+
 0.5.2
 -----
 

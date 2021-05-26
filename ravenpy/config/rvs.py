@@ -212,6 +212,7 @@ class RVI(RV):
     # come after `:SoilModel`
     _post_tmpl = """
     :EvaluationMetrics     {evaluation_metrics}
+    {evaluation_periods}
     :WriteNetcdfFormat     yes
     #:WriteForcingFunctions
     :SilentMode
@@ -307,6 +308,7 @@ class RVI(RV):
             RVI.EvaluationMetrics.NASH_SUTCLIFFE,
             RVI.EvaluationMetrics.RMSE,
         ]
+        self._evaluation_periods = []
         self._suppress_output = False
 
     def configure_from_nc_data(self, fns):
@@ -385,6 +387,17 @@ class RVI(RV):
             v = v.upper() if isinstance(v, str) else v.value
             ms.append(RVI.EvaluationMetrics(v))
         self._evaluation_metrics = ms
+
+    @property
+    def evaluation_periods(self):
+        """:EvaluationPeriod option. Instantiate with list of EvaluationPeriod commands."""
+        return "\n".join([str(p) for p in self._evaluation_periods])
+
+    @evaluation_periods.setter
+    def evaluation_periods(self, values):
+        if not isinstance(values, (list, set, tuple)):
+            values = [values]
+        self._evaluation_periods = values
 
     def _update_duration(self):
         if self.end_date is not None and self.start_date is not None:

@@ -8,6 +8,7 @@ import pytest
 import ravenpy
 from ravenpy.config.commands import (
     BasinStateVariablesCommand,
+    EvaluationPeriod,
     GriddedForcingCommand,
     HRUStateVariableTableCommand,
 )
@@ -37,6 +38,19 @@ class TestRV:
 
         with pytest.raises(ValueError):
             rvi.evaluation_metrics = "JIM"
+
+    def test_evaluation_periods(self):
+        rvi = RVI(None)
+        assert rvi.evaluation_periods == ""
+
+        rvi.evaluation_periods = [
+            EvaluationPeriod("dry", "1980-01-01", "1989-12-31"),
+            EvaluationPeriod("wet", "1990-01-01", "2000-12-31"),
+        ]
+
+        out = rvi.evaluation_periods
+        assert len(out.split("\n")) == 2
+        assert out.startswith(":EvaluationPeriod")
 
 
 class TestOst:
