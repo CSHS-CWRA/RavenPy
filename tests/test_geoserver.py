@@ -26,9 +26,14 @@ class TestHydroBASINS:
         assert dom == "ar"
 
     def test_get_hydrobasins_location_wfs(self, tmp_path):
-        lake_winnipeg = (-98.03575958286369, 52.88238524279493)
+        lake_winnipeg = (
+            -98.03575958286369,
+            52.88238524279493,
+            -98.02575958286369,
+            52.89238524279493,
+        )
         resp = self.geoserver.get_hydrobasins_location_wfs(
-            coordinates=lake_winnipeg * 2, domain="na"
+            coordinates=lake_winnipeg, domain="na"
         )
         feat = self.gpd.read_file(resp.decode())
         geom = self.sgeo.shape(feat["geometry"][0])
@@ -59,9 +64,9 @@ class TestHydroBASINS:
         )
 
     def test_hydrobasins_upstream_aggregate(self, tmp_path):
-        puerto_cortes = (-83.525, 8.96)
+        puerto_cortes = (-83.525, 8.96, -83.520, 8.97)
         resp = self.geoserver.get_hydrobasins_location_wfs(
-            coordinates=puerto_cortes * 2, domain="na"
+            coordinates=puerto_cortes, domain="na"
         )
         feat = self.gpd.read_file(resp.decode())
 
@@ -85,9 +90,14 @@ class TestHydroRouting:
     sgeo = pytest.importorskip("shapely.geometry")
 
     def test_hydro_routing_locations(self, tmp_path):
-        lake_winnipeg = (-98.03575958286369, 52.88238524279493)
+        lake_winnipeg = (
+            -98.03575958286369,
+            52.88238524279493,
+            -98.02575958286369,
+            52.89238524279493,
+        )
         resp = self.geoserver.get_hydro_routing_location_wfs(
-            coordinates=lake_winnipeg * 2, lakes="all"
+            coordinates=lake_winnipeg, lakes="all"
         )
         feat = self.gpd.read_file(resp.decode())
         geom = feat["geometry"][0]
@@ -105,9 +115,9 @@ class TestHydroRouting:
 
     @pytest.mark.slow
     def test_hydro_routing_upstream(self, tmp_path):
-        amadjuak = (-71.225, 65.05)
+        amadjuak = (-71.225, 65.05, -71.220, 65.10)
         resp = self.geoserver.get_hydro_routing_location_wfs(
-            coordinates=amadjuak * 2, lakes="1km", level=7
+            coordinates=amadjuak, lakes="1km", level=7
         )
         feature = self.gpd.read_file(resp.decode())
         subbasin_id = feature["SubId"][0]
@@ -127,10 +137,11 @@ class TestWFS:
     sgeo = pytest.importorskip("shapely.geometry")
 
     def test_get_location_wfs(self, tmp_path):
-        las_vegas = (-115.136389, 36.175)
+        # las_vegas = (-115.136389, 36.175)
+        las_vegas = ["-115.1364", "36.175"]
         usa_admin_bounds = "public:usa_admin_boundaries"
         resp = self.geoserver._get_location_wfs(
-            coordinates=las_vegas * 2, layer=usa_admin_bounds
+            coordinates=las_vegas * 2, layer=usa_admin_bounds, point=las_vegas
         )
         feat = self.gpd.read_file(resp.decode())
 

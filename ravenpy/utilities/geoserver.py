@@ -14,7 +14,7 @@ We could have a function that returns the layer name, and then other functions e
 """
 import os
 from pathlib import Path
-from typing import Iterable, Optional, Sequence, Tuple, Union
+from typing import Iterable, List, Optional, Sequence, Tuple, Union
 from urllib.parse import urljoin
 
 from requests import Request
@@ -57,6 +57,7 @@ def _get_location_wfs(
     ],
     layer: str = True,
     geoserver: str = GEO_URL,
+    point: Iterable[str] = None,
 ) -> bytes:
     """Return leveled features from a hosted data set using bounding box coordinates and WFS 1.1.0 protocol.
 
@@ -78,13 +79,25 @@ def _get_location_wfs(
       A GeoJSON-encoded vector feature.
 
     """
-    wfs = WebFeatureService(url=urljoin(geoserver, "wfs"), version="1.1.0", timeout=30)
-    resp = wfs.getfeature(
-        typename=layer,
-        bbox=coordinates,
-        srsname="urn:x-ogc:def:crs:EPSG:4326",
-        outputFormat="application/json",
-    )
+    wfs = WebFeatureService(url=urljoin(geoserver, "wfs"), version="2.0.0", timeout=30)
+
+    if point is None:
+        resp = wfs.getfeature(
+            typename=layer,
+            bbox=coordinates,
+            outputFormat="application/json",
+        )
+    else:
+        intersect_point = (
+            '<ogc:Intersects xmlns:ogc="http://www.opengis.net/ogc" wildCard="*" singleChar="_" escapeChar="\\">'
+            "<ogc:PropertyName>the_geom</ogc:PropertyName>"
+            f'<gml:Point srsName="http://www.opengis.net/gml/srs/epsg.xml#4326"><gml:coordinates>{",".join(point)}</gml:coordinates></gml:Point>'
+            f"</ogc:Intersects>"
+        )
+
+        resp = wfs.getfeature(
+            typename=layer, outputFormat="application/json", filter=intersect_point
+        )
 
     data = resp.read()
     return data
