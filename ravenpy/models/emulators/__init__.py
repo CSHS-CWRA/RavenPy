@@ -1,4 +1,5 @@
 from .blended import *
+from .canadianshield import *
 from .gr4jcn import *
 from .hbvec import *
 from .hmets import *

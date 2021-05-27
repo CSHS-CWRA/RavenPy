@@ -591,7 +591,7 @@ class HRUStateVariableTableCommand(RavenCommand):
         depression: float = 0
 
         def to_rv(self):
-            return ",".join(map(repr, asdict(self).values()))
+            return ",".join(map(str, asdict(self).values()))
 
     template = """
     :HRUStateVariableTable

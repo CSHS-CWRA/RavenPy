@@ -865,6 +865,8 @@ class OST(RV):
 
         d = {attr: getattr(self, attr) for attr in a + p}
 
+        d.update(self._extra_attributes)
+
         return dedent(self.tmpl).format(**d)
 
 

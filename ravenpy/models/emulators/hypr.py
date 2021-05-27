@@ -24,8 +24,10 @@ class HYPR(Raven):
     model. HBV is modified to work in the prairies by incorporating a
     conceptual lateral-flow component to represent the pothole storage
     complexities. HYPR can be used for prairie streamflow simulation.
+
     References
     ----------
+
     Mohamed I. Ahmed, Amin Elshorbagy, and Alain Pietroniro (2020).
     Toward Simple Modeling Practices in the Complex Canadian Prairie
     Watersheds. Journal of Hydrologic Engineering, 25(6), 04020024.
