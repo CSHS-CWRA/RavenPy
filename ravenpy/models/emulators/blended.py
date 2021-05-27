@@ -330,13 +330,6 @@ class BLENDED_OST(Ostrich, BLENDED):
         ####################
 
         rvi_tmpl = """
-        :Calendar              {calendar}
-        :RunName               {run_name}-{run_index}
-        :StartDate             {start_date}
-        :EndDate               {end_date}
-        :TimeStep              {time_step}
-        :Method                ORDERED_SERIES
-
         :PotentialMeltMethod     POTMELT_HMETS
         :RainSnowFraction        {rain_snow_fraction}
         :Evaporation             {evaporation}         # PET_OUDIN
@@ -379,16 +372,6 @@ class BLENDED_OST(Ostrich, BLENDED):
                         #:SnowBalance    SNOBAL_GAWSER           MULTIPLE       MULTIPLE
           :EndProcessGroup CALCULATE_WTS par_r07 par_r08
         :EndHydrologicProcesses
-
-        #:CreateRVPTemplate
-
-        #---------------------------------------------------------
-        # Output Options
-        #
-        :EvaluationMetrics NASH_SUTCLIFFE RMSE KLING_GUPTA
-        :SuppressOutput
-        :SilentMode
-        :DontWriteWatershedStorage
         """
         self.config.rvi.set_tmpl(rvi_tmpl, is_ostrich=True)
 
@@ -686,15 +669,16 @@ class BLENDED_OST(Ostrich, BLENDED):
 
         BeginResponseVars
           #name   filename                              keyword         line    col     token
-          NS      ./model/output/{run_name}-{run_index}_Diagnostics.csv;       OST_NULL        1       3       ','
+          RawMetric  ./model/output/{run_name}-{run_index}_Diagnostics.csv;       OST_NULL        1       3       ','
         EndResponseVars
 
         BeginTiedRespVars
-          NegNS 1 NS wsum -1.00
+        # <name1> <np1> <pname 1,1 > <pname 1,2 > ... <pname 1,np1 > <type1> <type_data1>
+          Metric 1 RawMetric wsum {evaluation_metric_multiplier}
         EndTiedRespVars
 
         BeginGCOP
-          CostFunction NegNS
+          CostFunction Metric
           PenaltyFunction APM
         EndGCOP
 

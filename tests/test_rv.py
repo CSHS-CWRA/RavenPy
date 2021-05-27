@@ -12,7 +12,7 @@ from ravenpy.config.commands import (
     GriddedForcingCommand,
     HRUStateVariableTableCommand,
 )
-from ravenpy.config.rvs import OST, RVC, RVH, RVI, RVP, RVT
+from ravenpy.config.rvs import OST, RVC, RVH, RVI, RVP, RVT, Config
 from ravenpy.extractors import (
     RoutingProductGridWeightExtractor,
     RoutingProductShapefileExtractor,
@@ -63,6 +63,11 @@ class TestOst:
 
         o.random_seed = 0
         assert o.random_seed == "RandomSeed 0"
+
+    def test_evaluation_metric_multiplier(self):
+        config = Config(model_cls=None)
+        config.rvi.evaluation_metrics = ["RMSE", "NASH_SUTCLIFFE"]
+        assert config.ost.evaluation_metric_multiplier == 1
 
 
 class TestRVI:

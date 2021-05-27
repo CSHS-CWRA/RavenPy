@@ -814,6 +814,21 @@ class OST(RV):
     tmpl = """
     """
 
+    # Multiplier applied to metric before passing to minimization algorithm.
+    _evaluation_metrics_multiplier = dict(
+        NASH_SUTCLIFFE=-1,
+        LOG_NASH=-1,
+        RMSE=1,
+        PCT_BIAS=1,
+        ABSERR=1,
+        ABSMAX=1,
+        PDIFF=1,
+        TMVOL=1,
+        RCOEFF=1,
+        NSC=-1,
+        KLING_GUPTA=-1,
+    )
+
     def __init__(self, config):
         super().__init__(config)
 
@@ -859,6 +874,12 @@ class OST(RV):
             self._random_seed = value
         else:
             self._random_seed = None
+
+    @property
+    def evaluation_metric_multiplier(self):
+        """For Ostrich."""
+        m = self._config.rvi._evaluation_metrics[0]
+        return self._evaluation_metrics_multiplier[m.value]
 
     @property
     def identifier(self):
