@@ -380,7 +380,8 @@ class RVI(RV):
 
     @evaluation_metrics.setter
     def evaluation_metrics(self, values):
-        if not isinstance(values, (list, set, tuple)):
+
+        if not is_sequence(values):
             values = [values]
         ms = []
         for v in values:

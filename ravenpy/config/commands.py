@@ -1,3 +1,4 @@
+import datetime as dt
 import itertools
 import re
 from abc import ABC, abstractmethod
@@ -45,8 +46,8 @@ class EvaluationPeriod(RavenCommand):
     """:EvaluationPeriod [period_name] [start yyyy-mm-dd] [end yyyy-mm-dd]"""
 
     name: str
-    start: str
-    end: str
+    start: dt.date
+    end: dt.date
 
     template = ":EvaluationPeriod {name} {start} {end}"
 

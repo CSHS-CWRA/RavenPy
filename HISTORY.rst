@@ -5,7 +5,7 @@ History
 0.6.0
 -----
 
-* Added support for EvaluationPeriod commands. Note that as a result of this, the model diagnostic property contains lists instead of a scalars.
+* Added support for EvaluationPeriod commands. Note that as a result of this, the model's `diagnostics` property contains one list per key, instead of a single scalar. Also note that for calibration,  Ostrich will use the first period and the first evaluation metric.
 
 0.5.2
 -----

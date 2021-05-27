@@ -47,10 +47,13 @@ class TestRV:
             EvaluationPeriod("dry", "1980-01-01", "1989-12-31"),
             EvaluationPeriod("wet", "1990-01-01", "2000-12-31"),
         ]
-
         out = rvi.evaluation_periods
         assert len(out.split("\n")) == 2
         assert out.startswith(":EvaluationPeriod")
+
+        # Check date input
+        d = EvaluationPeriod("dry", dt.date(1980, 1, 1), dt.date(1989, 12, 31))
+        assert str(d) == str(rvi.evaluation_periods.splitlines()[0])
 
 
 class TestOst:
