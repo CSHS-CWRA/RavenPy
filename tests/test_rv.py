@@ -69,6 +69,10 @@ class TestOst:
         config.rvi.evaluation_metrics = ["RMSE", "NASH_SUTCLIFFE"]
         assert config.ost.evaluation_metric_multiplier == 1
 
+        with pytest.raises(ValueError):
+            config.rvi.evaluation_metrics = ["PCT_BIAS"]
+            config.ost.evaluation_metric_multiplier
+
 
 class TestRVI:
     def test_supress_output(self):

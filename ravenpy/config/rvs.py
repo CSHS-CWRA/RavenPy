@@ -819,7 +819,7 @@ class OST(RV):
         NASH_SUTCLIFFE=-1,
         LOG_NASH=-1,
         RMSE=1,
-        PCT_BIAS=1,
+        PCT_BIAS="Not Supported",
         ABSERR=1,
         ABSMAX=1,
         PDIFF=1,
@@ -879,6 +879,10 @@ class OST(RV):
     def evaluation_metric_multiplier(self):
         """For Ostrich."""
         m = self._config.rvi._evaluation_metrics[0]
+        if m.name == "PCT_BIAS":
+            raise ValueError(
+                "PCT_BIAS cannot be properly minimized. Select another evaluation metric."
+            )
         return self._evaluation_metrics_multiplier[m.value]
 
     @property
