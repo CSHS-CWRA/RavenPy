@@ -212,6 +212,7 @@ class RVI(RV):
     # come after `:SoilModel`
     _post_tmpl = """
     :EvaluationMetrics     {evaluation_metrics}
+    {evaluation_periods}
     :WriteNetcdfFormat     yes
     #:WriteForcingFunctions
     :SilentMode
@@ -307,6 +308,7 @@ class RVI(RV):
             RVI.EvaluationMetrics.NASH_SUTCLIFFE,
             RVI.EvaluationMetrics.RMSE,
         ]
+        self._evaluation_periods = []
         self._suppress_output = False
 
     def configure_from_nc_data(self, fns):
@@ -378,13 +380,25 @@ class RVI(RV):
 
     @evaluation_metrics.setter
     def evaluation_metrics(self, values):
-        if not isinstance(values, (list, set, tuple)):
+
+        if not is_sequence(values):
             values = [values]
         ms = []
         for v in values:
             v = v.upper() if isinstance(v, str) else v.value
             ms.append(RVI.EvaluationMetrics(v))
         self._evaluation_metrics = ms
+
+    @property
+    def evaluation_periods(self):
+        """:EvaluationPeriod option. Instantiate with list of EvaluationPeriod commands."""
+        return "\n".join([str(p) for p in self._evaluation_periods])
+
+    @evaluation_periods.setter
+    def evaluation_periods(self, values):
+        if not isinstance(values, (list, set, tuple)):
+            values = [values]
+        self._evaluation_periods = values
 
     def _update_duration(self):
         if self.end_date is not None and self.start_date is not None:
@@ -800,6 +814,21 @@ class OST(RV):
     tmpl = """
     """
 
+    # Multiplier applied to metric before passing to minimization algorithm.
+    _evaluation_metrics_multiplier = dict(
+        NASH_SUTCLIFFE=-1,
+        LOG_NASH=-1,
+        RMSE=1,
+        PCT_BIAS="Not Supported",
+        ABSERR=1,
+        ABSMAX=1,
+        PDIFF=1,
+        TMVOL=1,
+        RCOEFF=1,
+        NSC=-1,
+        KLING_GUPTA=-1,
+    )
+
     def __init__(self, config):
         super().__init__(config)
 
@@ -845,6 +874,16 @@ class OST(RV):
             self._random_seed = value
         else:
             self._random_seed = None
+
+    @property
+    def evaluation_metric_multiplier(self):
+        """For Ostrich."""
+        m = self._config.rvi._evaluation_metrics[0]
+        if m.name == "PCT_BIAS":
+            raise ValueError(
+                "PCT_BIAS cannot be properly minimized. Select another evaluation metric."
+            )
+        return self._evaluation_metrics_multiplier[m.value]
 
     @property
     def identifier(self):

@@ -6,6 +6,7 @@ The `Raven` class is the base class that implements model setup, execution and o
 class is the base class adapting `Raven` to work with the Ostrich calibration tool.
 
 """
+import collections
 import csv
 import datetime as dt
 import operator
@@ -586,21 +587,24 @@ class Raven:
 
     @property
     def diagnostics(self):
+        """Return a nested dictionary of performance metrics keyed by diagnostic name and period. The default period
+        is called "ALL".
+        """
         diag = []
+        out = collections.defaultdict(list)
         for fn in self.ind_outputs["diagnostics"]:
             with open(fn) as f:
                 reader = csv.reader(f.readlines())
                 header = next(reader)
-                content = next(reader)
+                for row in reader:
+                    for (key, val) in zip(header, row):
+                        if "DIAG" in key:
+                            val = float(val)
+                        out[key].append(val)
 
-                out: Dict[str, Union[str, float]] = dict(zip(header, content))
                 out.pop("")
 
-            for key, val in out.items():
-                if "DIAG" in key:
-                    out[key] = float(val)
             diag.append(out)
-
         return diag if len(diag) > 1 else diag[0]
 
 

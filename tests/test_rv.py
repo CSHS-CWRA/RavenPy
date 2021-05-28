@@ -8,10 +8,11 @@ import pytest
 import ravenpy
 from ravenpy.config.commands import (
     BasinStateVariablesCommand,
+    EvaluationPeriod,
     GriddedForcingCommand,
     HRUStateVariableTableCommand,
 )
-from ravenpy.config.rvs import OST, RVC, RVH, RVI, RVP, RVT
+from ravenpy.config.rvs import OST, RVC, RVH, RVI, RVP, RVT, Config
 from ravenpy.extractors import (
     RoutingProductGridWeightExtractor,
     RoutingProductShapefileExtractor,
@@ -38,6 +39,22 @@ class TestRV:
         with pytest.raises(ValueError):
             rvi.evaluation_metrics = "JIM"
 
+    def test_evaluation_periods(self):
+        rvi = RVI(None)
+        assert rvi.evaluation_periods == ""
+
+        rvi.evaluation_periods = [
+            EvaluationPeriod("dry", "1980-01-01", "1989-12-31"),
+            EvaluationPeriod("wet", "1990-01-01", "2000-12-31"),
+        ]
+        out = rvi.evaluation_periods
+        assert len(out.split("\n")) == 2
+        assert out.startswith(":EvaluationPeriod")
+
+        # Check date input
+        d = EvaluationPeriod("dry", dt.date(1980, 1, 1), dt.date(1989, 12, 31))
+        assert str(d) == str(rvi.evaluation_periods.splitlines()[0])
+
 
 class TestOst:
     def test_random(self):
@@ -46,6 +63,15 @@ class TestOst:
 
         o.random_seed = 0
         assert o.random_seed == "RandomSeed 0"
+
+    def test_evaluation_metric_multiplier(self):
+        config = Config(model_cls=None)
+        config.rvi.evaluation_metrics = ["RMSE", "NASH_SUTCLIFFE"]
+        assert config.ost.evaluation_metric_multiplier == 1
+
+        with pytest.raises(ValueError):
+            config.rvi.evaluation_metrics = ["PCT_BIAS"]
+            config.ost.evaluation_metric_multiplier
 
 
 class TestRVI:
