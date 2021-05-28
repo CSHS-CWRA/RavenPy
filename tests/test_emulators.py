@@ -11,6 +11,7 @@ import xarray as xr
 
 from ravenpy.config.commands import (
     ChannelProfileCommand,
+    EvaluationPeriod,
     GriddedForcingCommand,
     GridWeightsCommand,
     HRUStateVariableTableCommand,
@@ -70,7 +71,7 @@ def test_race():
 
 # Salmon catchment is now split into land- and lake-part.
 # The areas do not sum up to overall area of 4250.6 [km2].
-# This is the reason the "test_routing" will give differnt
+# This is the reason the "test_routing" will give different
 # results compared to "test_simple". The "salmon_land_hru"
 # however is kept at the overall area of 4250.6 [km2] such
 # that other tests still obtain same results as before.
@@ -435,6 +436,33 @@ class TestGR4JCN:
         d = model.diagnostics
 
         np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.117301, 4)
+
+    def test_evaluation(self):
+        model = GR4JCN("/tmp/testeval")
+
+        model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
+
+        model(
+            TS,
+            area=4250.6,
+            elevation=843.0,
+            latitude=54.4848,
+            longitude=-123.3659,
+            start_date=dt.datetime(2000, 1, 1),
+            end_date=dt.datetime(2002, 1, 1),
+            params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
+            suppress_output=False,
+            evaluation_metrics=["RMSE", "KLING_GUPTA"],
+            evaluation_periods=[
+                EvaluationPeriod("period1", "2000-01-01", "2000-12-31"),
+                EvaluationPeriod("period2", "2001-01-01", "2001-12-31"),
+            ],
+        )
+        d = model.diagnostics
+        print(d)
+        assert "DIAG_RMSE" in d
+        assert "DIAG_KLING_GUPTA" in d
+        assert len(d["DIAG_RMSE"]) == 3  # ALL, period1, period2
 
     def test_run_new_hrus_param(self):
         model = GR4JCN()

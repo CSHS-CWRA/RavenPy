@@ -1,3 +1,4 @@
+import datetime as dt
 import itertools
 import re
 from abc import ABC, abstractmethod
@@ -38,6 +39,20 @@ class LinearTransform(RavenCommand):
         if (self.scale != 1) or (self.offset != 0):
             return self.template.format(**asdict(self))
         return ""
+
+
+@dataclass
+class EvaluationPeriod(RavenCommand):
+    """:EvaluationPeriod [period_name] [start yyyy-mm-dd] [end yyyy-mm-dd]"""
+
+    name: str
+    start: dt.date
+    end: dt.date
+
+    template = ":EvaluationPeriod {name} {start} {end}"
+
+    def to_rv(self):
+        return self.template.format(**asdict(self))
 
 
 @dataclass
