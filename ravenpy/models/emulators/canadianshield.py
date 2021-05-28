@@ -573,17 +573,25 @@ class CANADIANSHIELD_OST(Ostrich, CANADIANSHIELD):
 
         self.config.ost.set_extra_attributes(area=self.config.rvh.hrus[0].area)
 
-        self.config.rvh.hrus[0].area = "par_area_organic_SB1"
-        self.config.rvh.hrus[1].area = "par_area_bedrock_SB1"
+        # Here we are abusing the pydantic.dataclass type checking
+        # mechanism, in virtue of the fact that it's only operating
+        # when passing the args to the constructor (not when setting
+        # them manually after the object creation, like we do here):
+        # the following attributes are all numeric in nature, but in
+        # the context of Ostrich templating we need to set them to
+        # non-numeric values.
+
+        self.config.rvh.hrus[0].area = "par_area_organic_SB1"  # type: ignore
+        self.config.rvh.hrus[1].area = "par_area_bedrock_SB1"  # type: ignore
 
         self.config.rvc.set_hru_state(HRUState(index=1))
-        self.config.rvc.hru_states[1].soil0 = "par_half_x01"
-        self.config.rvc.hru_states[1].soil1 = "par_half_x02"
-        self.config.rvc.hru_states[1].soil2 = "par_half_x03"
+        self.config.rvc.hru_states[1].soil0 = "par_half_x01"  # type: ignore
+        self.config.rvc.hru_states[1].soil1 = "par_half_x02"  # type: ignore
+        self.config.rvc.hru_states[1].soil2 = "par_half_x03"  # type: ignore
 
         self.config.rvc.set_hru_state(HRUState(index=2))
-        self.config.rvc.hru_states[2].soil0 = "par_half_x01"
-        self.config.rvc.hru_states[2].soil2 = "par_half_x03"
+        self.config.rvc.hru_states[2].soil0 = "par_half_x01"  # type: ignore
+        self.config.rvc.hru_states[2].soil2 = "par_half_x03"  # type: ignore
 
     def ost2raven(self, ops):
         """Return a list of parameter names calibrated by Ostrich that match Raven's parameters.

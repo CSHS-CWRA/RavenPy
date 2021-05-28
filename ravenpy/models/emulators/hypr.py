@@ -64,7 +64,7 @@ class HYPR(Raven):
         POW_X06: float
 
     @dataclass
-    class HRU(HRU):
+    class HRU(HRU):  # type: ignore
         land_use_class: str = "OPEN_1"
         veg_class: str = "FOREST"
         soil_profile: str = "DEFAULT_P"

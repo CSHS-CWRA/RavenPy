@@ -601,7 +601,7 @@ class Raven:
                 for row in reader:
                     for (key, val) in zip(header, row):
                         if "DIAG" in key:
-                            val = float(val)
+                            val = float(val)  # type: ignore
                         out[key].append(val)
 
                 out.pop("")
