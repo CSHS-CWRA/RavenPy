@@ -536,15 +536,16 @@ class CANADIANSHIELD_OST(Ostrich, CANADIANSHIELD):
 
         BeginResponseVars
           #name   filename                              keyword         line    col     token
-          NS      ./model/output/{run_name}-{run_index}_Diagnostics.csv;       OST_NULL        1       3       ','
+          RawMetric  ./model/output/{run_name}-{run_index}_Diagnostics.csv;       OST_NULL        1       3       ','
         EndResponseVars
 
         BeginTiedRespVars
-          NegNS 1 NS wsum -1.00
+        # <name1> <np1> <pname 1,1 > <pname 1,2 > ... <pname 1,np1 > <type1> <type_data1>
+          Metric 1 RawMetric wsum {evaluation_metric_multiplier}
         EndTiedRespVars
 
         BeginGCOP
-          CostFunction NegNS
+          CostFunction Metric
           PenaltyFunction APM
         EndGCOP
 
@@ -554,7 +555,6 @@ class CANADIANSHIELD_OST(Ostrich, CANADIANSHIELD):
         EndConstraints
 
         # Randomsed control added
-        #RandomSeed 1615909479
         RandomSeed 0
 
         #Algorithm should be last in this file:
