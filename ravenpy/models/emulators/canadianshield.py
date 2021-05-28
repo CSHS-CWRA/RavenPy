@@ -216,10 +216,6 @@ class CANADIANSHIELD(Raven):
         """
         self.config.rvp.set_tmpl(rvp_tmpl)
 
-        self.config.rvp.land_use_classes = (
-            LU("FOREST", impermeable_frac=0.0, forest_coverage=0.02345),
-        )
-
         #########
         # R V I #
         #########
@@ -430,18 +426,14 @@ class CANADIANSHIELD_OST(Ostrich, CANADIANSHIELD):
         """
         self.config.rvp.set_tmpl(rvp_tmpl, is_ostrich=True)
 
-        self.config.rvp.land_use_classes = (
-            LU("FOREST", impermeable_frac=0.0, forest_coverage=0.02345),
-        )
-
         ####################
         # R V T (OST TMPL) #
         ####################
 
         self.config.rvt.set_tmpl(is_ostrich=True)
 
-        self.config.rvt.update("snow_correction", "par_x32")
-        self.config.rvt.update("rain_correction", "par_x33")
+        self.config.rvt.update("rain_correction", "par_x32")
+        self.config.rvt.update("snow_correction", "par_x33")
 
         ####################
         # R V H (OST TMPL) #
@@ -592,3 +584,25 @@ class CANADIANSHIELD_OST(Ostrich, CANADIANSHIELD):
         self.config.rvc.set_hru_state(HRUState(index=2))
         self.config.rvc.hru_states[2].soil0 = "par_half_x01"
         self.config.rvc.hru_states[2].soil2 = "par_half_x03"
+
+    def ost2raven(self, ops):
+        """Return a list of parameter names calibrated by Ostrich that match Raven's parameters.
+
+        Parameters
+        ----------
+        ops: dict
+          Optimal parameter set returned by Ostrich.
+
+        Returns
+        -------
+        CANADIANSHIELDParams named tuple
+          Parameters expected by Raven.
+        """
+        names = ["par_x{:02}".format(i) for i in range(1, 35)]
+        names[7] = "par_pow_x08"
+        names[8] = "par_pow_x09"
+        names[5] = "par_sum_x05_x06"
+        names[16] = "par_sum_x16_x17"
+
+        out = [ops[n] for n in names]
+        return self.Params(*out)

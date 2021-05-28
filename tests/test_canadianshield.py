@@ -80,7 +80,7 @@ class TestCANADIANSHIELD:
 
 class TestCANADIANSHIELD_OST:
     def test_simple(self):
-        model = CANADIANSHIELD_OST()  # "/tmp/ravenpy_debug/canadian_ost/")
+        model = CANADIANSHIELD_OST()
         model.config.rvh.hrus = (
             CANADIANSHIELD.HRU_ORGANIC(**hru_default_values),
             CANADIANSHIELD.HRU_BEDROCK(**hru_default_values),
@@ -215,8 +215,6 @@ class TestCANADIANSHIELD_OST:
 
         np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -4.790550e-01, 4)
 
-        return
-
         opt_para = model.optimized_parameters
         opt_func = model.obj_func
 
@@ -270,7 +268,7 @@ class TestCANADIANSHIELD_OST:
         )
 
         canadianshield = CANADIANSHIELD()
-        canadianshield.rvh.hrus = (
+        canadianshield.config.rvh.hrus = (
             CANADIANSHIELD.HRU_ORGANIC(**hru_default_values),
             CANADIANSHIELD.HRU_BEDROCK(**hru_default_values),
         )
@@ -278,7 +276,6 @@ class TestCANADIANSHIELD_OST:
             TS,
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2002, 1, 1),
-            # hrus=(hru,),
             land_use_classes=(lu,),
             params=model.calibrated_params,
             suppress_output=True,
