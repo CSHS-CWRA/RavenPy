@@ -91,7 +91,7 @@ class CANADIANSHIELD(Raven):
 
         self.config.update(
             identifier="canadianshield",
-            # hrus=(HYPR.HRU(),),
+            hrus=(CANADIANSHIELD.HRU_ORGANIC(), CANADIANSHIELD.HRU_BEDROCK()),
             subbasins=(
                 Sub(
                     subbasin_id=1,
