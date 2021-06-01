@@ -2,7 +2,9 @@ import datetime as dt
 import tempfile
 
 import numpy as np
+import pytest
 
+from ravenpy.config import ConfigError
 from ravenpy.models import CANADIANSHIELD, CANADIANSHIELD_OST, HRU, LU
 from ravenpy.utilities.testdata import get_local_testdata
 
@@ -76,6 +78,72 @@ class TestCANADIANSHIELD:
         d = model.diagnostics
 
         np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], 0.39602, 4)
+
+    def test_bad_config(self):
+        model = CANADIANSHIELD()
+        params = (
+            4.72304300e-01,  # par_x01
+            8.16392200e-01,  # par_x02
+            9.86197600e-02,  # par_x03
+            3.92699900e-03,  # par_x04
+            4.69073600e-02,  # par_x05
+            4.95528400e-01,  # feed par_x05+x06; not par_x06=4.4862100E-01
+            6.803492000e00,  # par_x07
+            4.33050200e-03,  # feed 10**par_x08; not par_x8=-2.363462E+00
+            1.01425900e-05,  # feed 10**par_x09; not par_x9=-4.993851E+00
+            1.823470000e00,  # par_x10
+            5.12215400e-01,  # par_x11
+            9.017555000e00,  # par_x12
+            3.077103000e01,  # par_x13
+            5.094095000e01,  # par_x14
+            1.69422700e-01,  # par_x15
+            8.23412200e-02,  # par_x16
+            2.34595300e-01,  # feed par_x16+x17; not par_x17=1.5225400E-01
+            7.30904000e-02,  # par_x18
+            1.284052000e00,  # par_x19
+            3.653415000e00,  # par_x20
+            2.306515000e01,  # par_x21
+            2.402183000e00,  # par_x22
+            2.522095000e00,  # par_x23
+            5.80344900e-01,  # par_x24
+            1.614157000e00,  # par_x25
+            6.031781000e00,  # par_x26
+            3.11129800e-01,  # par_x27
+            6.71695100e-02,  # par_x28
+            5.83759500e-05,  # par_x29
+            9.824723000e00,  # par_x30
+            9.00747600e-01,  # par_x31
+            8.04057300e-01,  # par_x32
+            1.179003000e00,  # par_x33
+            7.98001300e-01,  # par_x34
+        )
+
+        # Must be 2 HRUs
+        with pytest.raises(ConfigError) as _:
+            model.config.rvh.hrus = (CANADIANSHIELD.HRU_ORGANIC(**hru_default_values),)
+            model(
+                TS,
+                start_date=dt.datetime(2000, 1, 1),
+                end_date=dt.datetime(2002, 1, 1),
+                land_use_classes=(lu,),
+                params=params,
+                suppress_output=True,
+            )
+
+        # The 2 HRUs must have the same area
+        with pytest.raises(ConfigError) as _:
+            model.config.rvh.hrus = (
+                CANADIANSHIELD.HRU_ORGANIC(area=100),
+                CANADIANSHIELD.HRU_BEDROCK(area=200),
+            )
+            model(
+                TS,
+                start_date=dt.datetime(2000, 1, 1),
+                end_date=dt.datetime(2002, 1, 1),
+                land_use_classes=(lu,),
+                params=params,
+                suppress_output=True,
+            )
 
 
 class TestCANADIANSHIELD_OST:

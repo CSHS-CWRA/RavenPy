@@ -5,6 +5,7 @@ from typing import cast
 import xarray as xr
 from pydantic.dataclasses import dataclass
 
+from ravenpy.config import ConfigError
 from ravenpy.config.commands import (
     HRU,
     LU,
@@ -276,9 +277,11 @@ class CANADIANSHIELD(Raven):
             POW_X09=params.par_x09,
         )
 
-        # We must have two HRUs with equal areas
-        assert len(self.config.rvh.hrus) == 2
-        assert self.config.rvh.hrus[0].area == self.config.rvh.hrus[1].area
+        if len(self.config.rvh.hrus) != 2:
+            raise ConfigError("CANADIANSHIELD must have exactly two HRUs")
+
+        if self.config.rvh.hrus[0].area != self.config.rvh.hrus[1].area:
+            raise ConfigError("CANADIANSHIELD HRUs must have equal areas")
 
         self.config.rvh.hrus[0].area *= params.par_x34
         self.config.rvh.hrus[1].area *= 1.0 - params.par_x34
