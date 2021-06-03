@@ -1,4 +1,5 @@
 from collections import defaultdict
+from dataclasses import fields
 from pathlib import Path
 from typing import cast
 
@@ -59,11 +60,6 @@ class HYPR(Raven):
         par_x21: float
 
     @dataclass
-    class DerivedParams:
-        POW_X05: float
-        POW_X06: float
-
-    @dataclass
     class HRU(HRU):  # type: ignore
         land_use_class: str = "OPEN_1"
         veg_class: str = "FOREST"
@@ -93,12 +89,6 @@ class HYPR(Raven):
         #########
 
         rvp_tmpl = """
-        # tied parameters:
-        # (it is important for OSTRICH to find every parameter place holder somewhere in this file)
-        # (without this "para_x05" and "para_x06" wouldn't be detectable)
-        #    para_pow_x5     = {derived_params.POW_X05}     =  10^(para_x05)       = 10^{params.par_x05}
-        #    para_pow_x6     = {derived_params.POW_X06}     =  10^(para_x06)       = 10^{params.par_x06}
-
         :SoilClasses
          :Attributes,
          :Units,
@@ -169,12 +159,12 @@ class HYPR(Raven):
         :GlobalParameter PRECIP_LAPSE    {params.par_x20} # para_x20 = PCALT
 
         :SoilParameterList
-          :Parameters, POROSITY,   FIELD_CAPACITY, SAT_WILT,         HBV_BETA, MAX_CAP_RISE_RATE, MAX_PERC_RATE, BASEFLOW_COEFF, BASEFLOW_N, BASEFLOW_COEFF2, STORAGE_THRESHOLD
-          :Units     ,     none,             none,     none,             none,              mm/d,          mm/d,            1/d,       none,             1/d,                mm,
-        #   [DEFAULT],      1.0,         para_x04,      0.0,         para_x16,              0.0,            0.0,            0.0,        0.0,             0.0,               0.0,
-            [DEFAULT],      1.0, {params.par_x04},      0.0, {params.par_x16},              0.0,            0.0,            0.0,        0.0,             0.0,               0.0,
-        #    FAST_RES, _DEFAULT,         _DEFAULT,      0.0,         _DEFAULT,         _DEFAULT,            0.0,        pow_x06,        1.0,         pow_x05,          para_x10,
-             FAST_RES, _DEFAULT,         _DEFAULT,      0.0,         _DEFAULT,         _DEFAULT,            0.0,      {derived_params.POW_X06},        1.0,       {derived_params.POW_X05},  {params.par_x10},
+          :Parameters, POROSITY,   FIELD_CAPACITY, SAT_WILT,         HBV_BETA, MAX_CAP_RISE_RATE, MAX_PERC_RATE,   BASEFLOW_COEFF, BASEFLOW_N,  BASEFLOW_COEFF2, STORAGE_THRESHOLD
+          :Units     ,     none,             none,     none,             none,              mm/d,          mm/d,              1/d,       none,              1/d,                mm,
+        #   [DEFAULT],      1.0,         para_x04,      0.0,         para_x16,              0.0,            0.0,              0.0,        0.0,              0.0,               0.0,
+            [DEFAULT],      1.0, {params.par_x04},      0.0, {params.par_x16},              0.0,            0.0,              0.0,        0.0,              0.0,               0.0,
+        #    FAST_RES, _DEFAULT,         _DEFAULT,      0.0,         _DEFAULT,         _DEFAULT,            0.0,         para_x06,        1.0,         para_x05,          para_x10,
+             FAST_RES, _DEFAULT,         _DEFAULT,      0.0,         _DEFAULT,         _DEFAULT,            0.0, {params.par_x06},        1.0, {params.par_x05},   {params.par_x10},
              SLOW_RES, _DEFAULT,         _DEFAULT,      0.0,         _DEFAULT,         _DEFAULT,       _DEFAULT,           0.01,        1.0,            0.05,                 0,
         :EndSoilParameterList
 
@@ -280,15 +270,8 @@ class HYPR(Raven):
 
     def derived_parameters(self):
         params = cast(HYPR.Params, self.config.rvp.params)
-        self.config.rvp.derived_params = HYPR.DerivedParams(
-            POW_X05=params.par_x05,
-            POW_X06=params.par_x06,
-        )
-
         self.config.rvt.snow_correction = params.par_x21
-
         self.config.rvh.set_extra_attributes(par_x15=params.par_x15)
-
         self._monthly_average()
 
     # TODO: Support index specification and unit changes.
@@ -592,20 +575,28 @@ class HYPR_OST(Ostrich, HYPR):
     def derived_parameters(self):
         self._monthly_average()
 
-    def ost2raven(self, ops):
+    def ost2raven(self, ostrich_params):
         """Return a list of parameter names calibrated by Ostrich that match Raven's parameters.
         Parameters
         ----------
-        ops: dict
+        ostrich_params: dict
           Optimal parameter set returned by Ostrich.
         Returns
         -------
-        HYPRParams named tuple
+        HYPR.Params
           Parameters expected by Raven.
         """
-        names = ["par_x{:02}".format(i) for i in range(1, 22)]
-        names[4] = "pow_x05"
-        names[5] = "pow_x06"
+        raven_params = {}
 
-        out = [ops[n] for n in names]
-        return HYPR.Params(*out)
+        for f in fields(HYPR.Params):
+            # Since the `par_x05` and `par_x06` values that Ostrich have found are the base-10 logarithms of the
+            # corresponding Raven values, we perform the transformation here, so that Raven receives 10^par_x05
+            # and 10^par_x06 for its own `Params.par_x05` and `Params.par_x06`, respectively.
+            if f.name == "par_x05":
+                raven_params[f.name] = ostrich_params["pow_x05"]
+            elif f.name == "par_x06":
+                raven_params[f.name] = ostrich_params["pow_x06"]
+            else:
+                raven_params[f.name] = ostrich_params[f.name]
+
+        return HYPR.Params(**raven_params)
