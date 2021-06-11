@@ -40,13 +40,6 @@ class SACSMA(Raven):
         par_x21: float
 
     @dataclass
-    class DerivedParams:
-        PAR_BF_LOSS_FRAC: float
-        POW_X01: float
-        POW_X02: float
-        POW_X03: float
-
-    @dataclass
     class HRU(HRU):  # type: ignore
         land_use_class: str = "FOREST"
         veg_class: str = "FOREST"
@@ -205,9 +198,9 @@ class SACSMA(Raven):
           :Parameters,              BASEFLOW_COEFF,     UNAVAIL_FRAC
                :Units,                         1/d,             0..1
             [DEFAULT],                         0.0,              0.0
-               UZF,       {derived_params.POW_X03},              0.0
-               LZFP,      {derived_params.POW_X01}, {params.par_x16}
-               LZFS,      {derived_params.POW_X02},              0.0
+               UZF,               {params.par_x03},              0.0
+               LZFP,              {params.par_x01}, {params.par_x16}
+               LZFS,              {params.par_x02},              0.0
         #   [DEFAULT],                         0.0,              0.0
         #      UZF,                          <UZK>,              0.0
         #      LZFP,                        <LZPK>,          <RSERV>
@@ -224,7 +217,7 @@ class SACSMA(Raven):
         :LandUseParameterList
           :Parameters,      GAMMA_SHAPE,      GAMMA_SCALE,      MELT_FACTOR,  STREAM_FRACTION, MAX_SAT_AREA_FRAC,      BF_LOSS_FRACTION
                :Units,                -,                -,           mm/d/C,           [0..1],            [0..1],                [0..1]
-            [DEFAULT], {params.par_x18}, {params.par_x19}, {params.par_x17}, {params.par_x15},  {params.par_x14},    {derived_params.PAR_BF_LOSS_FRAC}
+            [DEFAULT], {params.par_x18}, {params.par_x19}, {params.par_x17}, {params.par_x15},  {params.par_x14},      {params.par_x12}
         #                      para_x18,         para_x19,         para_x17,           <RIVA>,           <ADIMP>,     <SIDE>/(1+<SIDE>)
         #                      para_x18,         para_x19,         para_x17,         para_x15,          para_x14, para_x12/(1+para_x12)
         :EndLandUseParameterList
@@ -274,14 +267,7 @@ class SACSMA(Raven):
         self.config.rvi.evaporation = RVI.EvaporationOptions.PET_OUDIN
 
     def derived_parameters(self):
-
         params = cast(SACSMA.Params, self.config.rvp.params)
-        self.config.rvp.derived_params = SACSMA.DerivedParams(
-            PAR_BF_LOSS_FRAC=params.par_x12,
-            POW_X01=params.par_x01,
-            POW_X02=params.par_x02,
-            POW_X03=params.par_x03,
-        )
 
         soil0 = params.par_x04 * 1000.0
         soil2 = params.par_x06 * 1000.0
@@ -292,6 +278,14 @@ class SACSMA(Raven):
 
 
 class SACSMA_OST(Ostrich, SACSMA):
+
+    ostrich_to_raven_param_conversion = {
+        "pow_x01": "par_x01",
+        "pow_x02": "par_x02",
+        "pow_x03": "par_x03",
+        "par_bf_loss_frac": "par_x12",
+    }
+
     def __init__(self, *args, **kwds):
         super().__init__(*args, **kwds)
 
@@ -650,23 +644,3 @@ class SACSMA_OST(Ostrich, SACSMA):
     def derived_parameters(self):
         # We don't want to use the parent class in this context
         pass
-
-    def ost2raven(self, ops):
-        """Return a list of parameter names calibrated by Ostrich that match Raven's parameters.
-        Parameters
-        ----------
-        ops: dict
-          Optimal parameter set returned by Ostrich.
-        Returns
-        -------
-        SACSMAParams named tuple
-          Parameters expected by Raven.
-        """
-        names = ["par_x{:02}".format(i) for i in range(1, 22)]
-        names[0] = "pow_x01"
-        names[1] = "pow_x02"
-        names[2] = "pow_x03"
-        names[11] = "par_bf_loss_frac"
-
-        out = [ops[n] for n in names]
-        return SACSMA.Params(*out)
