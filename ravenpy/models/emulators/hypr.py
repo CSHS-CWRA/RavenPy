@@ -311,6 +311,15 @@ class HYPR(Raven):
 
 
 class HYPR_OST(Ostrich, HYPR):
+
+    # Since the `par_x05` and `par_x06` values that Ostrich have found are the base-10 logarithms of the
+    # corresponding Raven values, we perform the transformation here, so that Raven receives 10^par_x05
+    # and 10^par_x06 for its own `Params.par_x05` and `Params.par_x06`, respectively.
+    ostrich_to_raven_param_conversion = {
+        "pow_x05": "par_x05",
+        "pow_x06": "par_x06",
+    }
+
     def __init__(self, *args, **kwds):
         super().__init__(*args, **kwds)
 
@@ -574,29 +583,3 @@ class HYPR_OST(Ostrich, HYPR):
 
     def derived_parameters(self):
         self._monthly_average()
-
-    def ost2raven(self, ostrich_params):
-        """Return a list of parameter names calibrated by Ostrich that match Raven's parameters.
-        Parameters
-        ----------
-        ostrich_params: dict
-          Optimal parameter set returned by Ostrich.
-        Returns
-        -------
-        HYPR.Params
-          Parameters expected by Raven.
-        """
-        raven_params = {}
-
-        for f in fields(HYPR.Params):
-            # Since the `par_x05` and `par_x06` values that Ostrich have found are the base-10 logarithms of the
-            # corresponding Raven values, we perform the transformation here, so that Raven receives 10^par_x05
-            # and 10^par_x06 for its own `Params.par_x05` and `Params.par_x06`, respectively.
-            if f.name == "par_x05":
-                raven_params[f.name] = ostrich_params["pow_x05"]
-            elif f.name == "par_x06":
-                raven_params[f.name] = ostrich_params["pow_x06"]
-            else:
-                raven_params[f.name] = ostrich_params[f.name]
-
-        return HYPR.Params(**raven_params)
