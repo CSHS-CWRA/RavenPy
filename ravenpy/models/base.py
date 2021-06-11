@@ -765,24 +765,31 @@ class Ostrich(Raven):
         p = re.findall(r"(\w+)\s*:\s*([\S]+)", ops[0])
         return OrderedDict((k, float(v)) for k, v in p)
 
-    def ost2raven(self, ops):
+    def ost2raven(self, ostrich_params):
         """Return model parameters.
 
-        Notes
-        -----
-        This method should be subclassed by emulators for which Ostrich has different parameters than the original
-        Raven model.
+        Parameters
+        ----------
+        ostrich_params: dict
+
+        If this method is used in the context of an emulator subclass, it will return
+        an instance of the Params dataclass of the emulator (it will also make sure that the param
+        name conversion from Ostrich to Raven is performed); if not, it will return the list of values.
+
         """
 
         if hasattr(self, "Params"):
-            # We are using an emulator, so it has a `Params` internal class
-            n = len(fields(self.Params))
-            pattern = "par_x{}" if n < 8 else "par_x{:02}"
-            names = [pattern.format(i + 1) for i in range(n)]
-            return self.Params(*[ops[n] for n in names])
+            # We are in an emulator subclass, so a properly typed Params dataclass is available
+            raven_params = {}
+            # Perform Ostrich to Raven param name conversion if needed
+            o2r = getattr(self, "ostrich_to_raven_param_conversion")
+            r2o = {r: o for o, r in o2r.items()}
+            for f in fields(self.Params):
+                raven_params[f.name] = ostrich_params[r2o.get(f.name, f.name)]
+            return self.Params(**raven_params)
         else:
             # We are using generic Ostrich
-            return ops.values()
+            return ostrich_params.values()
 
     @property
     def calibrated_params(self):
