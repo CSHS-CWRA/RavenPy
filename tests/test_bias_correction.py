@@ -1,5 +1,6 @@
 import xarray as xr
 import xclim.sdba as sdba
+from xclim.core.calendar import convert_calendar
 
 from ravenpy.utilities.testdata import get_local_testdata
 
@@ -17,9 +18,12 @@ class TestBiasCorrect:
                 "cmip5/nasa_nex-gddp-1.0_day_inmcm4_historical+rcp45_nex-gddp_1971-1972_subset.nc",
             )
         )
+        ds_ref_sub = convert_calendar(ds_ref_sub, "noleap")
+
         ds_his_sub = xr.open_dataset(
             get_local_testdata("nrcan/NRCAN_1971-1972_subset.nc")
         )
+        ds_his_sub = convert_calendar(ds_his_sub, "noleap")
 
         group_month_nowindow = sdba.utils.Grouper("time.month")
         Adj = sdba.DetrendedQuantileMapping(
