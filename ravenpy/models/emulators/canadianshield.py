@@ -63,13 +63,6 @@ class CANADIANSHIELD(Raven):
         par_x34: float
 
     @dataclass
-    class DerivedParams:
-        SUM_X05_X06: float
-        SUM_X16_X17: float
-        POW_X08: float
-        POW_X09: float
-
-    @dataclass
     class HRU_ORGANIC(HRU):
         hru_id: int = 1
         land_use_class: str = "FOREST"
@@ -159,7 +152,7 @@ class CANADIANSHIELD(Raven):
         #-----------------------------------------------------------------
         :GlobalParameter          SNOW_SWI {params.par_x15}            # para_x15
         :GlobalParameter      SNOW_SWI_MIN {params.par_x16}            # para_x16
-        :GlobalParameter      SNOW_SWI_MAX {derived_params.SUM_X16_X17}               # para_x16+para_x17
+        :GlobalParameter      SNOW_SWI_MAX {params.par_x17}            # para_x16+para_x17
         :GlobalParameter  SWI_REDUCT_COEFF {params.par_x18}            # para_x18
         :GlobalParameter     RAINSNOW_TEMP {params.par_x19}            # para_x19
         :GlobalParameter    RAINSNOW_DELTA {params.par_x20}            # para_x20
@@ -170,14 +163,14 @@ class CANADIANSHIELD(Raven):
         # Soil Parameters
         #-----------------------------------------------------------------
         :SoilParameterList
-          :Parameters,        POROSITY,         HBV_BETA,  BASEFLOW_COEFF,       BASEFLOW_N,  MAX_INTERFLOW_RATE,   FIELD_CAPACITY,         SAT_WILT,    MAX_PERC_RATE,   PET_CORRECTION,
-               :Units,               -,                -,               -,                -,                   -,                -,                -,                -,                -,
-              TOPSOIL,             1.0, {params.par_x07},             0.0,              0.0,    {params.par_x12},    {derived_params.SUM_X05_X06}, {params.par_x05}, {params.par_x13}, {params.par_x04},
-               VADOSE,             1.0,              0.0,       {derived_params.POW_X08}, {params.par_x10},                 0.0,              0.0,              0.0, {params.par_x14},              0.0,
-          FRACBEDROCK,             1.0,              0.0,       {derived_params.POW_X09}, {params.par_x11},                 0.0,              0.0,              0.0,              0.0,              0.0,
-        #     TOPSOIL,             1.0,         para_x07,             0.0,              0.0,            para_x12, para_sum_x05_x06,         para_x05,         para_x13,         para_x04,
-        #      VADOSE,             1.0,              0.0,    para_pow_x08,         para_x10,                 0.0,              0.0,              0.0,         para_x14,              0.0,
-        # FRACBEDROCK,             1.0,              0.0,    para_pow_x09,         para_x11,                 0.0,              0.0,              0.0,              0.0,              0.0,
+          :Parameters,        POROSITY,         HBV_BETA,   BASEFLOW_COEFF,       BASEFLOW_N,  MAX_INTERFLOW_RATE,   FIELD_CAPACITY,         SAT_WILT,    MAX_PERC_RATE,   PET_CORRECTION,
+               :Units,               -,                -,                -,                -,                   -,                -,                -,                -,                -,
+              TOPSOIL,             1.0, {params.par_x07},              0.0,              0.0,    {params.par_x12}, {params.par_x06}, {params.par_x05}, {params.par_x13}, {params.par_x04},
+               VADOSE,             1.0,              0.0, {params.par_x08}, {params.par_x10},                 0.0,              0.0,              0.0, {params.par_x14},              0.0,
+          FRACBEDROCK,             1.0,              0.0, {params.par_x09}, {params.par_x11},                 0.0,              0.0,              0.0,              0.0,              0.0,
+        #     TOPSOIL,             1.0,         para_x07,              0.0,              0.0,            para_x12, para_sum_x05_x06,         para_x05,         para_x13,         para_x04,
+        #      VADOSE,             1.0,              0.0,     para_pow_x08,         para_x10,                 0.0,              0.0,              0.0,         para_x14,              0.0,
+        # FRACBEDROCK,             1.0,              0.0,     para_pow_x09,         para_x11,                 0.0,              0.0,              0.0,              0.0,              0.0,
         :EndSoilParameterList
 
         # note: TOPSOIL FIELD_CAPACITY calculated as {params.par_x05} + {params.par_x06}
@@ -270,12 +263,6 @@ class CANADIANSHIELD(Raven):
 
     def derived_parameters(self):
         params = cast(CANADIANSHIELD.Params, self.config.rvp.params)
-        self.config.rvp.derived_params = CANADIANSHIELD.DerivedParams(
-            SUM_X05_X06=params.par_x06,
-            SUM_X16_X17=params.par_x17,
-            POW_X08=params.par_x08,
-            POW_X09=params.par_x09,
-        )
 
         if len(self.config.rvh.hrus) != 2:
             raise ConfigError("CANADIANSHIELD must have exactly two HRUs")
@@ -301,6 +288,14 @@ class CANADIANSHIELD(Raven):
 
 
 class CANADIANSHIELD_OST(Ostrich, CANADIANSHIELD):
+
+    ostrich_to_raven_param_conversion = {
+        "par_sum_x05_x06": "par_x06",
+        "par_sum_x16_x17": "par_x17",
+        "par_pow_x08": "par_x08",
+        "par_pow_x09": "par_x09",
+    }
+
     def __init__(self, *args, **kwds):
         super().__init__(*args, **kwds)
 
@@ -353,7 +348,7 @@ class CANADIANSHIELD_OST(Ostrich, CANADIANSHIELD):
         # :LandUseClasses,
         #   :Attributes,        IMPERM,    FOREST_COV,
         #        :Units,          frac,          frac,
-        #   FOREST,                0.0,       0.02345 ## forest_frac,
+        #   FOREST,                0.0,   forest_frac,
         # :EndLandUseClasses
         {land_use_classes}
 
@@ -595,25 +590,3 @@ class CANADIANSHIELD_OST(Ostrich, CANADIANSHIELD):
         self.config.rvc.set_hru_state(HRUState(index=2))
         self.config.rvc.hru_states[2].soil0 = "par_half_x01"  # type: ignore
         self.config.rvc.hru_states[2].soil2 = "par_half_x03"  # type: ignore
-
-    def ost2raven(self, ops):
-        """Return a list of parameter names calibrated by Ostrich that match Raven's parameters.
-
-        Parameters
-        ----------
-        ops: dict
-          Optimal parameter set returned by Ostrich.
-
-        Returns
-        -------
-        CANADIANSHIELDParams named tuple
-          Parameters expected by Raven.
-        """
-        names = ["par_x{:02}".format(i) for i in range(1, 35)]
-        names[7] = "par_pow_x08"
-        names[8] = "par_pow_x09"
-        names[5] = "par_sum_x05_x06"
-        names[16] = "par_sum_x16_x17"
-
-        out = [ops[n] for n in names]
-        return self.Params(*out)

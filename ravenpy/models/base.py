@@ -73,10 +73,9 @@ class Raven:
         "region_id",
     ]
 
-    # This is just to satisfy mypy, which wants to know about those internal classes defined
+    # This is just to satisfy mypy, which wants to know about this internal class defined
     # by the emulators (which are Raven subclasses)
     Params: Any
-    DerivedParams: Any
 
     def __init__(self, workdir: Union[str, Path] = None):  # , identifier: str = None):
         """Initialize the RAVEN model.
@@ -782,7 +781,7 @@ class Ostrich(Raven):
             # We are in an emulator subclass, so a properly typed Params dataclass is available
             raven_params = {}
             # Perform Ostrich to Raven param name conversion if needed
-            o2r = getattr(self, "ostrich_to_raven_param_conversion")
+            o2r = getattr(self, "ostrich_to_raven_param_conversion", {})
             r2o = {r: o for o, r in o2r.items()}
             for f in fields(self.Params):
                 raven_params[f.name] = ostrich_params[r2o.get(f.name, f.name)]

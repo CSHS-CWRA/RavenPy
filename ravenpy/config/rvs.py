@@ -510,9 +510,8 @@ class RVP(RV):
     def __init__(self, config):
         super().__init__(config)
 
-        # Model specific params and derived params
+        # Model specific params
         self.params = None
-        self.derived_params = None
 
         self.soil_classes: Tuple[SoilClassesCommand.Record, ...] = ()
         self.soil_profiles: Tuple[SoilProfilesCommand.Record, ...] = ()
@@ -529,20 +528,12 @@ class RVP(RV):
                 assert isinstance(value, self._config.model_cls.Params)
                 self.params = value
             return True
-        elif key == "derived_params":
-            if is_sequence(value):
-                self.derived_params = self._config.model_cls.DerivedParams(*value)
-            else:
-                assert isinstance(value, self._config.model_cls.DerivedParams)
-                self.derived_params = value
-            return True
         else:
             return super().update(key, value)
 
     def to_rv(self):
         d = {
             "params": self.params,
-            "derived_params": self.derived_params,
             "soil_classes": SoilClassesCommand(self.soil_classes),
             "soil_profiles": SoilProfilesCommand(self.soil_profiles),
             "vegetation_classes": VegetationClassesCommand(self.vegetation_classes),

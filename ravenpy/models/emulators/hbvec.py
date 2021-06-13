@@ -43,11 +43,6 @@ class HBVEC(Raven):
         par_x20: float
         par_x21: float
 
-    @dataclass
-    class DerivedParams:
-        one_plus_par_x15: float
-        par_x11_half: float
-
     def __init__(self, *args, **kwds):
         super().__init__(*args, **kwds)
 
@@ -98,7 +93,7 @@ class HBVEC(Raven):
           #                        HBV_PARA_05,   HBV_PARA_06, HBV_PARA_14, HBV_PARA_07,       HBV_PARA_16,     CONSTANT,      CONSTANT,              CONSTANT,
             [DEFAULT],               {params.par_x05},     {params.par_x06},   {params.par_x14},    {params.par_x07},        {params.par_x16},          0.0,           0.0,                   0.0
           #                                                       CONSTANT,                                  HBV_PARA_08,   HBV_PARA_09, 1+HBV_PARA_15=1+ALPHA,
-             FAST_RES,                _DEFAULT,      _DEFAULT,         0.0,    _DEFAULT,          _DEFAULT,    {params.par_x08},     {params.par_x09},    {derived_params.one_plus_par_x15}
+             FAST_RES,                _DEFAULT,      _DEFAULT,         0.0,    _DEFAULT,          _DEFAULT,    {params.par_x08},     {params.par_x09},    {one_plus_par_x15}
           #                                                       CONSTANT,                                                 HBV_PARA_10,              CONSTANT,
              SLOW_RES,                _DEFAULT,      _DEFAULT,         0.0,    _DEFAULT,          _DEFAULT,     _DEFAULT,     {params.par_x10},                   1.0
         :EndSoilParameterList
@@ -240,14 +235,12 @@ class HBVEC(Raven):
 
     def derived_parameters(self):
         params = cast(HBVEC.Params, self.config.rvp.params)
-        self.config.rvp.derived_params = HBVEC.DerivedParams(
-            one_plus_par_x15=(params.par_x15 + 1.0), par_x11_half=params.par_x11 / 2.0
+        self.config.rvp.set_extra_attributes(
+            one_plus_par_x15=params.par_x15 + 1.0, par_x11_half=params.par_x11 / 2.0
         )
 
-        # These need to be injected in the RVH
         self.config.rvh.set_extra_attributes(
-            par_x11=params.par_x11,
-            par_x11_half=self.config.rvp.derived_params.par_x11_half,
+            par_x11=params.par_x11, par_x11_half=params.par_x11 / 2.0
         )
 
         self.config.rvt.rain_correction = params.par_x20
