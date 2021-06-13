@@ -438,7 +438,7 @@ class TestGR4JCN:
         np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.117301, 4)
 
     def test_evaluation(self):
-        model = GR4JCN("/tmp/testeval")
+        model = GR4JCN()
 
         model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
 
@@ -459,7 +459,6 @@ class TestGR4JCN:
             ],
         )
         d = model.diagnostics
-        print(d)
         assert "DIAG_RMSE" in d
         assert "DIAG_KLING_GUPTA" in d
         assert len(d["DIAG_RMSE"]) == 3  # ALL, period1, period2

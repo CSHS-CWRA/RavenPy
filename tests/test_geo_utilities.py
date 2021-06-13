@@ -226,7 +226,7 @@ class TestGenericGeoOperations:
             geom = self.sgeo.shape(feature["geometry"])
 
         geom_properties = self.analysis.geom_prop(geom)
-        np.testing.assert_almost_equal(geom_properties["area"], 6450001762792.884, 1)
+        np.testing.assert_almost_equal(geom_properties["area"], 6450001762792, 0)
         np.testing.assert_almost_equal(
             geom_properties["centroid"], (1645777.7589835, -933242.1203143)
         )
@@ -312,7 +312,7 @@ class TestGenericGeoOperations:
         )
         np.testing.assert_almost_equal(transformed.centroid.x, 1645777.7589835)
         np.testing.assert_almost_equal(transformed.centroid.y, -933242.1203143)
-        np.testing.assert_almost_equal(transformed.area, 6450001762792.884, 1)
+        np.testing.assert_almost_equal(transformed.area, 6450001762792, 0)
 
 
 class TestGIS:

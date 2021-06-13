@@ -69,8 +69,8 @@ class RV(ABC):
     def get_extra_attribute(self, k):
         return self._extra_attributes[k]
 
-    def set_tmpl(self, tmpl, is_ostrich=False):
-        self.tmpl = tmpl  # type: ignore
+    def set_tmpl(self, tmpl=None, is_ostrich=False):
+        self.tmpl = tmpl or self.tmpl  # type: ignore
         self.is_ostrich_tmpl = is_ostrich
 
     @property
@@ -510,9 +510,8 @@ class RVP(RV):
     def __init__(self, config):
         super().__init__(config)
 
-        # Model specific params and derived params
+        # Model specific params
         self.params = None
-        self.derived_params = None
 
         self.soil_classes: Tuple[SoilClassesCommand.Record, ...] = ()
         self.soil_profiles: Tuple[SoilProfilesCommand.Record, ...] = ()
@@ -529,20 +528,12 @@ class RVP(RV):
                 assert isinstance(value, self._config.model_cls.Params)
                 self.params = value
             return True
-        elif key == "derived_params":
-            if is_sequence(value):
-                self.derived_params = self._config.model_cls.DerivedParams(*value)
-            else:
-                assert isinstance(value, self._config.model_cls.DerivedParams)
-                self.derived_params = value
-            return True
         else:
             return super().update(key, value)
 
     def to_rv(self):
         d = {
             "params": self.params,
-            "derived_params": self.derived_params,
             "soil_classes": SoilClassesCommand(self.soil_classes),
             "soil_profiles": SoilProfilesCommand(self.soil_profiles),
             "vegetation_classes": VegetationClassesCommand(self.vegetation_classes),
@@ -700,10 +691,7 @@ class RVT(RV):
         if key in self._var_specs:
             self._var_specs[key].update(value)
             return True
-        elif key == "nc_index":
-            self.nc_index = value
-            return True
-        return False
+        return super().update(key, value)
 
     def to_rv(self):
         """
@@ -906,6 +894,8 @@ class OST(RV):
         )
 
         d = {attr: getattr(self, attr) for attr in a + p}
+
+        d.update(self._extra_attributes)
 
         return dedent(self.tmpl).format(**d)
 

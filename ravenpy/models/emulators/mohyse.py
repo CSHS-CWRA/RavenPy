@@ -25,10 +25,6 @@ class MOHYSE(Raven):
         par_x09: float
         par_x10: float
 
-    @dataclass
-    class DerivedParams:
-        par_rezi_x10: float
-
     def __init__(self, *args, **kwds):
         super().__init__(*args, **kwds)
 
@@ -195,13 +191,13 @@ class MOHYSE(Raven):
 
     def derived_parameters(self):
         params = cast(MOHYSE.Params, self.config.rvp.params)
-        self.config.rvp.derived_params = MOHYSE.DerivedParams(
-            par_rezi_x10=(1.0 / params.par_x10)
-        )
 
-        # These need to be injected in the RVH
+        par_rezi_x10 = 1.0 / params.par_x10
+
+        self.config.rvp.set_extra_attributes(par_rezi_x10=par_rezi_x10)
+
         self.config.rvh.set_extra_attributes(
-            par_rezi_x10=self.config.rvp.derived_params.par_rezi_x10,
+            par_rezi_x10=par_rezi_x10,
             par_x09=params.par_x09,
         )
 
@@ -418,7 +414,3 @@ class MOHYSE_OST(Ostrich, MOHYSE):
         EndDDSAlg
         """
         self.config.ost.set_tmpl(ost_tmpl)
-
-    def derived_parameters(self):
-        """Derived parameters are computed by Ostrich."""
-        pass

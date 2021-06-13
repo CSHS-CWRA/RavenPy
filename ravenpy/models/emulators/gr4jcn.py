@@ -33,10 +33,6 @@ class GR4JCN(Raven):
         CEMANEIGE_X2: float
 
     @dataclass
-    class DerivedParams:
-        one_minus_CEMANEIGE_X2: float
-
-    @dataclass
     class LandHRU(HRU):
         land_use_class: str = "LU_ALL"
         veg_class: str = "VEG_ALL"
@@ -78,7 +74,7 @@ class GR4JCN(Raven):
         rvp_tmpl = """
         # -Global snow parameters-------------------------------------
         :RainSnowTransition 0 1.0
-        :AirSnowCoeff       {derived_params.one_minus_CEMANEIGE_X2}  # [1/d] = 1.0 - CEMANEIGE_X2 = 1.0 - x6
+        :AirSnowCoeff       {one_minus_CEMANEIGE_X2}  # [1/d] = 1.0 - CEMANEIGE_X2 = 1.0 - x6
         :AvgAnnualSnow      {params.CEMANEIGE_X1}            # [mm]  =       CEMANEIGE_X1 =       x5
 
         # -Orographic Corrections-------------------------------------
@@ -189,8 +185,9 @@ class GR4JCN(Raven):
     def derived_parameters(self):
 
         params = cast(GR4JCN.Params, self.config.rvp.params)
-        self.config.rvp.derived_params = GR4JCN.DerivedParams(
-            one_minus_CEMANEIGE_X2=(1.0 - params.CEMANEIGE_X2),
+
+        self.config.rvp.set_extra_attributes(
+            one_minus_CEMANEIGE_X2=(1.0 - params.CEMANEIGE_X2)
         )
 
         # subbassin_id -> has at least one LakeHRU
@@ -226,6 +223,16 @@ class GR4JCN(Raven):
 
 
 class GR4JCN_OST(Ostrich, GR4JCN):
+
+    ostrich_to_raven_param_conversion = {
+        "par_x1": "GR4J_X1",
+        "par_x2": "GR4J_X2",
+        "par_x3": "GR4J_X3",
+        "par_x4": "GR4J_X4",
+        "par_x5": "CEMANEIGE_X1",
+        "par_x6": "CEMANEIGE_X2",
+    }
+
     def __init__(self, *args, **kwds):
         super().__init__(*args, **kwds)
 
@@ -416,7 +423,3 @@ class GR4JCN_OST(Ostrich, GR4JCN):
         EndDDSAlg
         """
         self.config.ost.set_tmpl(ost_tmpl)
-
-    def derived_parameters(self):
-        """Derived parameters are computed by Ostrich."""
-        pass
