@@ -13,6 +13,9 @@ from setuptools import Distribution, find_packages, setup
 from setuptools.command.develop import develop
 from setuptools.command.install import install
 
+RAVEN_ZIP_NAME = "Raven-rev318"
+OSTRICH_GIT_VERSION = "21.03.16"
+
 with open("README.rst") as readme_file:
     readme = readme_file.read()
 
@@ -70,7 +73,7 @@ dev_requirements.extend(
 class OnlyGetScriptPath(install):
     def run(self):
         # does not call install.run() by design
-        self.distribution.install_scripts = self.install_scripts
+        self.distribution.install_scripts = self.install_scripts  # noqa
 
 
 def get_setuptools_install_scripts_dir():
@@ -109,7 +112,7 @@ def create_external_deps_install_class(command_cls):
             """Set default values for options."""
             # Each user option must be listed here with their default value.
             command_cls.initialize_options(self)
-            self.with_binaries = False
+            self.with_binaries = False  # noqa
 
         def finalize_options(self):
             command_cls.finalize_options(self)
@@ -170,20 +173,20 @@ def create_external_deps_install_class(command_cls):
         def run(self):
 
             if self.with_binaries:
-                self.external_deps_path = Path("./external_deps")
+                self.external_deps_path = Path("./external_deps")  # noqa
                 self.external_deps_path.mkdir(exist_ok=True)
 
                 url = "https://www.civil.uwaterloo.ca/jmai/raven/"
-                self.install_binary_dep(url, "raven", "Raven-rev318", "Raven.exe")
+                self.install_binary_dep(url, "raven", RAVEN_ZIP_NAME, "Raven.exe")
 
                 url = "https://github.com/usbr/ostrich/archive/refs/tags/"
                 self.install_binary_dep(
                     url,
                     "ostrich",
-                    "v21.03.16",
+                    f"v{OSTRICH_GIT_VERSION}",
                     "Ostrich",
                     "GCC",
-                    src_folder="ostrich-21.03.16/make",
+                    src_folder=f"ostrich-{OSTRICH_GIT_VERSION}/make",
                 )
 
             # This works with python setup.py install, but produces this error with pip install:
