@@ -40,8 +40,14 @@ class RoutingProductShapefileExtractor:
     USE_MANNING_COEFF = False
     MANNING_DEFAULT = 0.035
     HRU_ASPECT_CONVENTION = "GRASS"  # GRASS | ArcGIS
+    ROUTING_PRODUCT_VERSION = "1.0"  # 1.0 | 2.1
 
-    def __init__(self, shapefile_path, hru_aspect_convention=HRU_ASPECT_CONVENTION):
+    def __init__(
+        self,
+        shapefile_path,
+        hru_aspect_convention=HRU_ASPECT_CONVENTION,
+        routing_product_version=ROUTING_PRODUCT_VERSION,
+    ):
         if isinstance(shapefile_path, (Path, str)):
             if Path(shapefile_path).suffix == ".zip":
                 shapefile_path = f"zip://{shapefile_path}"
@@ -50,6 +56,7 @@ class RoutingProductShapefileExtractor:
             self._df = shapefile_path
 
         self.hru_aspect_convention = hru_aspect_convention
+        self.routing_product_version = routing_product_version
 
     def extract(self, model=None):
         """
@@ -99,11 +106,15 @@ class RoutingProductShapefileExtractor:
 
             is_lake = False
 
-            if row["IsLake"] > 0 and row["HRU_IsLake"] > 0:
+            lake_field = (
+                "IsLake" if self.routing_product_version == "1.0" else "Lake_Cat"
+            )
+
+            if row[lake_field] > 0 and row["HRU_IsLake"] > 0:
                 lake_sb_ids.append(subbasin_id)
                 reservoir_cmds.append(self._extract_reservoir(row))
                 is_lake = True
-            elif row["IsLake"] > 0:
+            elif row[lake_field] > 0:
                 continue
             else:
                 land_sb_ids.append(subbasin_id)
@@ -127,7 +138,10 @@ class RoutingProductShapefileExtractor:
     def _extract_subbasin(self, row, is_lake, subbasin_ids) -> SubBasinsCommand.Record:
         subbasin_id = int(row["SubId"])
         # is_lake = row["HRU_IsLake"] >= 0
-        river_length_in_kms = 0 if is_lake else round(row["Rivlen"] / 1000, 5)
+        riv_length_field = (
+            "Rivlen" if self.routing_product_version == "1.0" else "RivLength"
+        )
+        river_length_in_kms = 0 if is_lake else round(row[riv_length_field] / 1000, 5)
         # river_slope = max(
         #     row["RivSlope"], RoutingProductShapefileExtractor.MAX_RIVER_SLOPE
         # )
@@ -137,7 +151,10 @@ class RoutingProductShapefileExtractor:
             downstream_id = -1
         elif downstream_id not in subbasin_ids:
             downstream_id = -1
-        gauged = row["IsObs"] > 0 or (
+        has_gauge_field = (
+            "IsObs" if self.routing_product_version == "1.0" else "Has_Gauge"
+        )
+        gauged = row[has_gauge_field] > 0 or (
             is_lake and RoutingProductShapefileExtractor.USE_LAKE_AS_GAUGE
         )
         rec = SubBasinsCommand.Record(
@@ -245,9 +262,12 @@ class RoutingProductShapefileExtractor:
         else:
             assert False
 
+        # m^2 or km^2
+        hru_area_conv = 1 / 1_000_000 if self.routing_product_version == "1.0" else 1
+
         attrs = dict(
             hru_id=int(row["HRU_ID"]),
-            area=row["HRU_Area"] / 1_000_000,
+            area=row["HRU_Area"] * hru_area_conv,
             elevation=row["HRU_E_mean"],
             latitude=row["HRU_CenY"],
             longitude=row["HRU_CenX"],
