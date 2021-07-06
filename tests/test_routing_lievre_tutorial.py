@@ -48,7 +48,7 @@ class TestRouting:
         # Model #
         #########
 
-        model = Raven("/tmp/ravenpy_debug/lievre/")
+        model = Raven()
 
         model.config.identifier = "raven-lievre-routing"
 
@@ -268,7 +268,7 @@ class TestRouting:
         # Model #
         #########
 
-        model = Raven("/tmp/ravenpy_debug/lievre_v21/")
+        model = Raven()
 
         model.config.identifier = "raven-lievre-routing-v21"
 
