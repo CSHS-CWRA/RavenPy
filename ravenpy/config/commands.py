@@ -69,6 +69,7 @@ class SubBasinsCommand(RavenCommand):
         profile: str = "chn_XXX"
         reach_length: float = 0
         gauged: bool = False
+        gauge_id: Optional[str] = ""
 
         def to_rv(self):
             d = asdict(self)

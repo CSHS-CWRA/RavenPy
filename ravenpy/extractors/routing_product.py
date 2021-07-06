@@ -157,6 +157,7 @@ class RoutingProductShapefileExtractor:
         gauged = row[has_gauge_field] > 0 or (
             is_lake and RoutingProductShapefileExtractor.USE_LAKE_AS_GAUGE
         )
+        gauge_id = row["Obs_NM"] if gauged else ""
         rec = SubBasinsCommand.Record(
             subbasin_id=subbasin_id,
             name=f"sub_{subbasin_id}",
@@ -164,6 +165,7 @@ class RoutingProductShapefileExtractor:
             profile=f"chn_{subbasin_id}",
             reach_length=river_length_in_kms,
             gauged=gauged,
+            gauge_id=gauge_id,
         )
 
         return rec
@@ -262,12 +264,9 @@ class RoutingProductShapefileExtractor:
         else:
             assert False
 
-        # m^2 or km^2
-        hru_area_conv = 1 / 1_000_000 if self.routing_product_version == "1.0" else 1
-
         attrs = dict(
             hru_id=int(row["HRU_ID"]),
-            area=row["HRU_Area"] * hru_area_conv,
+            area=row["HRU_Area"] / 1_000_000,
             elevation=row["HRU_E_mean"],
             latitude=row["HRU_CenY"],
             longitude=row["HRU_CenX"],
