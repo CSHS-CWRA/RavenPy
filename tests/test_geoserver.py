@@ -132,19 +132,25 @@ class TestWFS:
     gpd = pytest.importorskip("geopandas")
     sgeo = pytest.importorskip("shapely.geometry")
 
-    def test_get_location_wfs(self, tmp_path):
-        # las_vegas = (-115.136389, 36.175)
-        las_vegas = ["-115.1364", "36.175"]
+    def test_get_location_wfs_point(self, tmp_path):
+        las_vegas = (-115.136389, 36.175)
         usa_admin_bounds = "public:usa_admin_boundaries"
-        resp = self.geoserver._get_location_wfs(
-            coordinates=las_vegas * 2, layer=usa_admin_bounds, point=las_vegas
-        )
+        resp = self.geoserver._get_location_wfs(point=las_vegas, layer=usa_admin_bounds)
         feat = self.gpd.read_file(resp.decode())
 
         geom = feat["geometry"][0]
         assert geom.bounds == (-120.001, 35.0019, -114.0417, 41.9948)
         # Note: This value is not in sq. km.
         np.testing.assert_almost_equal(geom.area, 29.9690150)
+
+    def test_get_location_wfs_bbox(self, tmp_path):
+        new_vegas = (-115.697, 34.742, -114.279, 36.456)
+        usa_admin_bounds = "public:usa_admin_boundaries"
+        resp = self.geoserver._get_location_wfs(bbox=new_vegas, layer=usa_admin_bounds)
+        feat = self.gpd.read_file(resp.decode())
+
+        assert len(feat["geometry"]) == 3
+        assert set(feat.STATE_NAME.unique()) == {"Nevada", "California", "Arizona"}
 
     def test_get_feature_attributes_wfs(self):
         state_name = "Nevada"
