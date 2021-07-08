@@ -648,7 +648,7 @@ def get_hydro_routing_location_wfs(
 
     Parameters
     ----------
-    coordinates : Tuple[Union[str, float, int], Union[str, float, int], Union[str, float, int], Union[str, float, int]]
+    coordinates : Tuple[Union[str, float, int], Union[str, float, int]]
       Geographic coordinates of the bounding box (left, down, right, up).
     lakes : {"1km", "all"}
       Query the version of dataset with lakes under 1km in width removed ("1km") or return all lakes ("all").
