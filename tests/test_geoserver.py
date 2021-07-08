@@ -29,8 +29,6 @@ class TestHydroBASINS:
         lake_winnipeg = (
             -98.03575958286369,
             52.88238524279493,
-            -98.02575958286369,
-            52.89238524279493,
         )
         resp = self.geoserver.get_hydrobasins_location_wfs(
             coordinates=lake_winnipeg, domain="na"
@@ -93,8 +91,6 @@ class TestHydroRouting:
         lake_winnipeg = (
             -98.03575958286369,
             52.88238524279493,
-            -98.02575958286369,
-            52.89238524279493,
         )
         resp = self.geoserver.get_hydro_routing_location_wfs(
             coordinates=lake_winnipeg, lakes="all"
