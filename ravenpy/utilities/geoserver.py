@@ -101,7 +101,7 @@ def _get_location_wfs(
     wfs = WebFeatureService(url=urljoin(geoserver, "wfs"), version="2.0.0", timeout=30)
 
     if bbox and point:
-        raise NotImplementedError("Provide either 'coordinates' or 'point'.")
+        raise NotImplementedError("Provide either 'bbox' or 'point'.")
     if bbox:
         kwargs = dict(bbox=bbox)
     elif point:
