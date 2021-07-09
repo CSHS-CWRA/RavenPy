@@ -12,6 +12,7 @@ TODO: Refactor to remove functions that are just 2-lines of code.
 For example, many function's logic essentially consists in creating the layer name.
 We could have a function that returns the layer name, and then other functions expect the layer name.
 """
+import json
 import os
 import warnings
 from pathlib import Path
@@ -68,7 +69,7 @@ def _get_location_wfs(
     ] = None,
     layer: str = None,
     geoserver: str = GEO_URL,
-) -> bytes:
+) -> str:
     """Return leveled features from a hosted data set using bounding box coordinates and WFS 1.1.0 protocol.
 
     For geographic rasters, subsetting is based on WGS84 (Long, Lat) boundaries. If not geographic, subsetting based
@@ -120,7 +121,7 @@ def _get_location_wfs(
         typename=layer, outputFormat="application/json", method="POST", **kwargs
     )
 
-    data = resp.read()
+    data = json.loads(resp.read())
     return data
 
 
@@ -401,9 +402,12 @@ def hydrobasins_aggregate(gdf: pd.DataFrame) -> pd.DataFrame:
 
 
 def select_hybas_domain(
-    bbox: Tuple[
-        Union[int, float], Union[int, float], Union[int, float], Union[int, float]
-    ]
+    bbox: Optional[
+        Tuple[
+            Union[int, float], Union[int, float], Union[int, float], Union[int, float]
+        ]
+    ] = None,
+    point: Optional[Tuple[Union[int, float], Union[int, float]]] = None,
 ) -> str:
     """
     Provided a given coordinate or boundary box, return the domain name of the geographic region
@@ -411,14 +415,22 @@ def select_hybas_domain(
 
     Parameters
     ----------
-    bbox : tuple
+    bbox : Optional[Tuple[Union[float, int], Union[float, int], Union[float, int], Union[float, int]]]
       Geographic coordinates of the bounding box (left, down, right, up).
+    point : Optional[Tuple[Union[float, int], Union[float, int]]]
+      Geographic coordinates of an intersecting point (lon, lat).
 
     Returns
     -------
     str
       The domain that the coordinate falls within. Possible results: "na", "ar".
     """
+    if bbox and point:
+        raise NotImplementedError("Provide either 'bbox' or 'point'.")
+    if point:
+        bbox = point * 2
+
+    print(bbox)
 
     for dom, fn in hybas_domains.items():
         with open(fn, "rb") as f:
@@ -476,7 +488,7 @@ def get_hydrobasins_location_wfs(
     ],
     domain: str = None,
     geoserver: str = GEO_URL,
-) -> bytes:
+) -> str:
     """Return features from the USGS HydroBASINS data set using bounding box coordinates.
 
     For geographic rasters, subsetting is based on WGS84 (Long, Lat) boundaries. If not geographic, subsetting based
