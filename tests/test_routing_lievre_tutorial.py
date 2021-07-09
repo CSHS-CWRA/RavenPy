@@ -223,9 +223,9 @@ class TestRouting:
         assert csv_lines[1].split(",")[:-1] == [
             "HYDROGRAPH_ALL",
             observation_data_nc_path.name,
-            "0.311049",
-            "-11.9514",
-            "0.471256",
+            "0.311049",  # NASH_SUTCLIFFE
+            "-11.9514",  # PCT_BIAS
+            "0.471256",  # KLING_GUPTA
         ]
 
         for d, q_sim in [
@@ -455,9 +455,9 @@ class TestRouting:
         assert csv_lines[1].split(",")[:-1] == [
             "HYDROGRAPH_ALL",
             observation_data_nc_path.name,
-            "0.253988",
-            "-17.0916",
-            "0.443201",
+            "0.253988",  # NASH_SUTCLIFFE
+            "-17.0916",  # PCT_BIAS
+            "0.443201",  # KLING_GUPTA
         ]
 
         for d, q_sim in [
