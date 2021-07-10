@@ -69,12 +69,13 @@ class SubBasinsCommand(RavenCommand):
         profile: str = "chn_XXX"
         reach_length: float = 0
         gauged: bool = False
-        gauge_id: Optional[str] = ""
+        gauge_id: Optional[str] = ""  # This attribute is not rendered to RVH
 
         def to_rv(self):
             d = asdict(self)
             d["reach_length"] = d["reach_length"] if d["reach_length"] else "ZERO-"
             d["gauged"] = int(d["gauged"])
+            del d["gauge_id"]
             return " ".join(f"{v: <{VALUE_PADDING}}" for v in d.values())
 
     subbasins: Tuple[Record, ...] = ()
