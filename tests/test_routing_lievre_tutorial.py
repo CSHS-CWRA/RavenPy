@@ -12,7 +12,7 @@ from ravenpy.extractors.routing_product import (
     RoutingProductGridWeightExtractor,
     RoutingProductShapefileExtractor,
 )
-from ravenpy.models import Raven
+from ravenpy.models import Raven, get_average_annual_runoff
 from ravenpy.utilities.testdata import get_local_testdata
 
 
@@ -138,7 +138,15 @@ class TestRouting:
         {channel_profiles}
         """
 
-        model.config.rvp.avg_annual_runoff = 594
+        total_area_in_m2 = sum(
+            [hru.area * 1000 * 1000 for hru in model.config.rvh.hrus]
+        )
+        model.config.rvp.avg_annual_runoff = get_average_annual_runoff(
+            observation_data_nc_path, total_area_in_m2, obs_var="Q"
+        )
+
+        assert model.config.rvp.avg_annual_runoff == pytest.approx(593.6191)
+
         model.config.rvp.soil_classes = [SoilClassesCommand.Record("AQUIFER")]
         model.config.rvp.soil_profiles = [
             SoilProfilesCommand.Record("Lake_Soil_Lake_HRU", ("AQUIFER",), (5,)),
@@ -229,7 +237,7 @@ class TestRouting:
         ]
 
         for d, q_sim in [
-            (0, 85.97869699520872),
+            (0, 85.92356056334998),
             (1000, 78.9516829670743),
             (2000, 70.29412760595676),
             (3000, 44.711237489482755),
@@ -369,7 +377,15 @@ class TestRouting:
         {channel_profiles}
         """
 
-        model.config.rvp.avg_annual_runoff = 594
+        total_area_in_m2 = sum(
+            [hru.area * 1000 * 1000 for hru in model.config.rvh.hrus]
+        )
+        model.config.rvp.avg_annual_runoff = get_average_annual_runoff(
+            observation_data_nc_path, total_area_in_m2, obs_var="Q"
+        )
+
+        assert model.config.rvp.avg_annual_runoff == pytest.approx(597.6287)
+
         model.config.rvp.soil_classes = [SoilClassesCommand.Record("AQUIFER")]
         model.config.rvp.soil_profiles = [
             SoilProfilesCommand.Record("LAKE", ("AQUIFER",), (5,)),
@@ -455,16 +471,16 @@ class TestRouting:
         assert csv_lines[1].split(",")[:-1] == [
             "HYDROGRAPH_ALL",
             observation_data_nc_path.name,
-            "0.253988",  # NASH_SUTCLIFFE
-            "-17.0916",  # PCT_BIAS
-            "0.443201",  # KLING_GUPTA
+            "0.253959",  # NASH_SUTCLIFFE
+            "-17.0904",  # PCT_BIAS
+            "0.443212",  # KLING_GUPTA
         ]
 
         for d, q_sim in [
-            (0, 85.401842),
-            (1000, 74.071142),
-            (2000, 62.679696),
-            (3000, 42.738307),
-            (4000, 128.689885),
+            (0, 85.92355875229545),
+            (1000, 74.05569855818379),
+            (2000, 62.675159400333115),
+            (3000, 42.73584909530037),
+            (4000, 128.70284018326998),
         ]:
             assert model.hydrograph.q_sim[d].item() == pytest.approx(q_sim)
