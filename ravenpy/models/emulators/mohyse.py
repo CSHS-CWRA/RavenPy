@@ -26,10 +26,10 @@ class MOHYSE(Raven):
         par_x10: float
 
     def __init__(self, *args, **kwds):
+        kwds["identifier"] = kwds.get("identifier", "mohyse")
         super().__init__(*args, **kwds)
 
         self.config.update(
-            identifier="mohyse",
             hrus=(GR4JCN.LandHRU(),),
             subbasins=(
                 Sub(
@@ -204,10 +204,10 @@ class MOHYSE(Raven):
 
 class MOHYSE_OST(Ostrich, MOHYSE):
     def __init__(self, *args, **kwds):
+        kwds["identifier"] = kwds.get("identifier", "mohyse-ost")
         super().__init__(*args, **kwds)
 
         self.config.update(
-            identifier="mohyse-ost",
             algorithm="DDS",
             max_iterations=50,
             run_name="run",

@@ -48,9 +48,10 @@ class TestRouting:
         # Model #
         #########
 
-        model = Raven()
-
-        model.config.identifier = "raven-lievre-routing"
+        model = Raven(
+            identifier="raven-lievre-routing",
+            description="Lievre catchment draining towards 02LE024",
+        )
 
         #######
         # RVI #
@@ -276,9 +277,10 @@ class TestRouting:
         # Model #
         #########
 
-        model = Raven()
-
-        model.config.identifier = "raven-lievre-routing-v21"
+        model = Raven(
+            identifier="raven-lievre-routing-v21",
+            description="Lievre catchment draining towards 02LE024 (using Routing Product V2.1)",
+        )
 
         #######
         # RVI #

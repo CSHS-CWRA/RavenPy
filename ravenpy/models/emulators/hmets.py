@@ -43,10 +43,10 @@ class HMETS(Raven):
         terrain_class: str = "[NONE]"
 
     def __init__(self, *args, **kwds):
+        kwds["identifier"] = kwds.get("identifier", "hmets")
         super().__init__(*args, **kwds)
 
         self.config.update(
-            identifier="hmets",
             hrus=(HMETS.ForestHRU(),),
             subbasins=(
                 Sub(
@@ -227,10 +227,10 @@ class HMETS_OST(Ostrich, HMETS):
     }
 
     def __init__(self, *args, **kwds):
+        kwds["identifier"] = kwds.get("identifier", "hmets-ost")
         super().__init__(*args, **kwds)
 
         self.config.update(
-            identifier="hmets-ost",
             algorithm="DDS",
             max_iterations=50,
             run_name="run",

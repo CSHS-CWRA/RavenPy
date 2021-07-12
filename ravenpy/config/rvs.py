@@ -13,6 +13,7 @@ import numpy as np
 import xarray as xr
 from numpy.distutils.misc_util import is_sequence
 
+from ravenpy import __version__
 from ravenpy.config.commands import (
     HRU,
     BaseDataCommand,
@@ -41,6 +42,16 @@ from ravenpy.config.commands import (
 
 
 class RV(ABC):
+
+    # This header will be prepended to all RV files when they are rendered
+    tmpl_header = """
+    ###########################################################################################################
+    :FileType          {rv_type} ASCII Raven {raven_version}
+    :WrittenBy         PAVICS RavenPy {ravenpy_version} based on setups provided by James Craig and Juliane Mai
+    :CreationDate      {date}{model_and_description}
+    #----------------------------------------------------------------------------------------------------------
+    """
+
     def __init__(self, config, **kwds):
         # Each RV has a reference to their parent object in order to access sibling RVs.
         self._config = config
@@ -79,8 +90,27 @@ class RV(ABC):
         pass
 
     @abstractmethod
-    def to_rv(self) -> str:
-        pass
+    def to_rv(self, s: str, rv_type: str) -> str:
+        if not self._config:
+            # In the case where the RV file has been created outside the context of a
+            # Config object, don't include the header
+            return s
+        d = {
+            "rv_type": rv_type,
+            "raven_version": self._config.model.raven_version,
+            "ravenpy_version": __version__,
+            "date": dt.datetime.now().isoformat(),
+            "model_and_description": "",
+        }
+        model = ""
+        description = self._config.model.description or ""
+        if self._config.model.__class__.__name__ not in ["Raven", "Ostrich"]:
+            model = f"Emulation of {self._config.model.__class__.__name__}"
+        model_and_description = list(filter(None, [model, description]))
+        if model_and_description:
+            model_and_description = ": ".join(model_and_description)
+            d["model_and_description"] = f"\n#\n# {model_and_description}"
+        return dedent(self.tmpl_header.lstrip("\n")).format(**d) + s
 
 
 #########
@@ -129,7 +159,7 @@ class RVC(RV):
 
         d.update(self._extra_attributes)
 
-        return dedent(self.tmpl).format(**d)
+        return super().to_rv(dedent(self.tmpl.lstrip("\n")).format(**d), "RVC")
 
 
 #########
@@ -186,7 +216,7 @@ class RVH(RV):
 
         d.update(self._extra_attributes)
 
-        return dedent(self.tmpl).format(**d)
+        return super().to_rv(dedent(self.tmpl.lstrip("\n")).format(**d), "RVH")
 
 
 #########
@@ -290,7 +320,6 @@ class RVI(RV):
         # These are attributes that can be modified/set directly
         self.run_name: Optional[str] = "run"
         self.run_index = 0
-        self.raven_version = "3.X.X"
         self.time_step = 1.0
 
         # These correspond to properties whose setters will pass their value through
@@ -323,6 +352,10 @@ class RVI(RV):
             self.end_date = end
 
         self.calendar = RVI.CalendarOptions(cal.upper())
+
+    @property
+    def raven_version(self):
+        return self._config.model.raven_version
 
     @property
     def start_date(self):
@@ -487,13 +520,18 @@ class RVI(RV):
 
         d = {attr: getattr(self, attr) for attr in a + p}
 
-        d["identifier"] = self._config.identifier
+        d["identifier"] = self._config.model.identifier
         d["now"] = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         d.update(self._extra_attributes)
 
-        t = dedent(self._pre_tmpl) + dedent(self.tmpl) + dedent(self._post_tmpl)
-        return t.format(**d)
+        t = (
+            dedent(self._pre_tmpl.lstrip("\n"))
+            + dedent(self.tmpl.lstrip("\n"))
+            + dedent(self._post_tmpl.lstrip("\n"))
+        )
+
+        return super().to_rv(t.format(**d), "RVI")
 
 
 ##########
@@ -523,9 +561,9 @@ class RVP(RV):
     def update(self, key, value):
         if key == "params":
             if is_sequence(value):
-                self.params = self._config.model_cls.Params(*value)
+                self.params = self._config.model.Params(*value)
             else:
-                assert isinstance(value, self._config.model_cls.Params)
+                assert isinstance(value, self._config.model.Params)
                 self.params = value
             return True
         else:
@@ -546,7 +584,7 @@ class RVP(RV):
 
         d.update(self._extra_attributes)
 
-        return dedent(self.tmpl).format(**d)
+        return super().to_rv(dedent(self.tmpl.lstrip("\n")).format(**d), "RVP")
 
 
 #########
@@ -789,7 +827,7 @@ class RVT(RV):
                 d["observed_data"] = cmd  # type: ignore
                 break
 
-        return dedent(self.tmpl).format(**d)
+        return super().to_rv(dedent(self.tmpl.lstrip("\n")).format(**d), "RVT")
 
 
 #########
@@ -831,9 +869,9 @@ class OST(RV):
     def update(self, key, value):
         if key in ["lowerBounds", "upperBounds"]:
             if is_sequence(value):
-                setattr(self, key, self._config.model_cls.Params(*value))
+                setattr(self, key, self._config.model.Params(*value))
             else:
-                assert isinstance(value, self._config.model_cls.Params)
+                assert isinstance(value, self._config.model.Params)
                 setattr(self, key, value)
             return True
         else:
@@ -875,7 +913,7 @@ class OST(RV):
 
     @property
     def identifier(self):
-        return self._config.identifier
+        return self._config.model.identifier
 
     def to_rv(self):
         # Get those from RVI (there's probably a better way to do this!)
@@ -897,19 +935,18 @@ class OST(RV):
 
         d.update(self._extra_attributes)
 
-        return dedent(self.tmpl).format(**d)
+        return super().to_rv(dedent(self.tmpl.lstrip("\n")).format(**d), "OST")
 
 
 class Config:
-    def __init__(self, model_cls, **kwargs):
-        self.model_cls = model_cls
+    def __init__(self, model, **kwargs):
+        self.model = model
         self.rvc = RVC(self)
         self.rvh = RVH(self)
         self.rvi = RVI(self)
         self.rvp = RVP(self)
         self.rvt = RVT(self)
         self.ost = OST(self)
-        self.identifier = None
         self.update(**kwargs)
 
     def update(self, key=None, value=None, **kwargs):
@@ -924,10 +961,6 @@ class Config:
                 raise AttributeError(
                     f"No field named `{key}` found in any RV* conf class"
                 )
-
-        identifier = kwargs.pop("identifier", None)
-        if identifier:
-            self.identifier = identifier
 
         if key is None and value is None:
             for k, v in kwargs.items():
@@ -944,12 +977,6 @@ class Config:
             rvo = getattr(self, rvx, None) or self.ost
             rvo.content = fn.read_text()
             rvo.is_ostrich_tmpl = fn.suffixes[-1] == ".tpl"
-            if not self.identifier:
-                # Get the "true" stem if there are more than one suffixes
-                identifier = fn
-                while identifier.suffixes:
-                    identifier = Path(identifier.stem)
-                self.identifier = identifier.as_posix()
             # This is a sorry hack: I want to have rvi.run_name have a default of "run"
             # because I don't want to burden the user with setting it.. but the problem
             # is that externally supplied rv files might not have it (to be discussed)

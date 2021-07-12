@@ -81,10 +81,10 @@ class CANADIANSHIELD(Raven):
         terrain_class: str = "[NONE]"
 
     def __init__(self, *args, **kwds):
+        kwds["identifier"] = kwds.get("identifier", "canadianshield")
         super().__init__(*args, **kwds)
 
         self.config.update(
-            identifier="canadianshield",
             hrus=(CANADIANSHIELD.HRU_ORGANIC(), CANADIANSHIELD.HRU_BEDROCK()),
             subbasins=(
                 Sub(
@@ -297,10 +297,10 @@ class CANADIANSHIELD_OST(Ostrich, CANADIANSHIELD):
     }
 
     def __init__(self, *args, **kwds):
+        kwds["identifier"] = kwds.get("identifier", "canadianshield-ost")
         super().__init__(*args, **kwds)
 
         self.config.update(
-            identifier="canadianshield-ost",
             algorithm="DDS",
             max_iterations=50,
             suppress_output=True,

@@ -15,20 +15,20 @@ has_singularity = False  # ravenpy.raven_simg.exists()
 class TestRaven:
     def test_identifier(self):
         model = Raven()
-        assert model.config.identifier is None
+        assert model.identifier == "raven-generic"
 
-        model.config.update(identifier="toto")
-        assert model.config.identifier == "toto"
+        model = Raven(identifier="toto")
+        assert model.identifier == "toto"
 
         rvt = get_local_testdata("raven-gr4j-cemaneige/raven-gr4j-salmon.rvt")
         model = Raven()
         model.configure(rvt)
-        assert model.config.identifier == rvt.stem
+        assert model.identifier == rvt.stem
 
         rvp_tpl = get_local_testdata("ostrich-gr4j-cemaneige/raven-gr4j-salmon.rvp.tpl")
         model = Raven()
         model.configure(rvp_tpl)
-        assert model.config.identifier == Path(rvp_tpl.stem).stem
+        assert model.identifier == Path(rvp_tpl.stem).stem
 
     def test_raven_error(self):
         rvs = get_local_testdata("raven-gr4j-cemaneige/raven-gr4j-salmon.rv?")
@@ -53,7 +53,7 @@ class TestRaven:
     def test_raven_version(self):
         model = Raven()
 
-        assert model.config.rvi.raven_version == model.version
+        assert model.config.rvi.raven_version == model.raven_version
 
     def test_gr4j(self):
         rvs = get_local_testdata("raven-gr4j-cemaneige/raven-gr4j-salmon.rv?")
@@ -115,6 +115,10 @@ class TestRaven:
 
 
 class TestOstrich:
+    def test_identifier(self):
+        model = Ostrich()
+        assert model.identifier == "ostrich-generic"
+
     def test_gr4j_with_no_tags(self):
         ts = get_local_testdata(
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"

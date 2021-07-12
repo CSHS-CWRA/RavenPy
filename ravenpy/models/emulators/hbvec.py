@@ -44,10 +44,10 @@ class HBVEC(Raven):
         par_x21: float
 
     def __init__(self, *args, **kwds):
+        kwds["identifier"] = kwds.get("identifier", "hbvec")
         super().__init__(*args, **kwds)
 
         self.config.update(
-            identifier="hbvec",
             hrus=(GR4JCN.LandHRU(),),
             subbasins=(
                 Sub(
@@ -294,10 +294,10 @@ class HBVEC(Raven):
 
 class HBVEC_OST(Ostrich, HBVEC):
     def __init__(self, *args, **kwds):
+        kwds["identifier"] = kwds.get("identifier", "hbvec-ost")
         super().__init__(*args, **kwds)
 
         self.config.update(
-            identifier="hbvec-ost",
             algorithm="DDS",
             max_iterations=50,
             run_name="run",
