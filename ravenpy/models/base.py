@@ -107,7 +107,7 @@ class Raven:
         if match:
             self.raven_version = match.groups()[0]
         else:
-            raise AttributeError(f"Version not found: {out}")
+            raise AttributeError(f"Raven version not found: {out}")
 
         self.workdir = Path(workdir or tempfile.mkdtemp())
 
