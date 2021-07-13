@@ -67,10 +67,10 @@ class BLENDED(Raven):
         terrain_class: str = "DEFAULT_T"
 
     def __init__(self, *args, **kwds):
+        kwds["identifier"] = kwds.get("identifier", "blended")
         super().__init__(*args, **kwds)
 
         self.config.update(
-            identifier="blended",
             hrus=(BLENDED.ForestHRU(),),
             subbasins=(
                 Sub(
@@ -287,10 +287,10 @@ class BLENDED_OST(Ostrich, BLENDED):
     }
 
     def __init__(self, *args, **kwds):
+        kwds["identifier"] = kwds.get("identifier", "blended-ost")
         super().__init__(*args, **kwds)
 
         self.config.update(
-            identifier="blended-ost",
             algorithm="DDS",
             max_iterations=50,
             suppress_output=True,

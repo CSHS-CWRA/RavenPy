@@ -68,10 +68,10 @@ class HYPR(Raven):
         terrain_class: str = "[NONE]"
 
     def __init__(self, *args, **kwds):
+        kwds["identifier"] = kwds.get("identifier", "hypr")
         super().__init__(*args, **kwds)
 
         self.config.update(
-            identifier="hypr",
             hrus=(HYPR.HRU(),),
             subbasins=(
                 Sub(
@@ -321,10 +321,10 @@ class HYPR_OST(Ostrich, HYPR):
     }
 
     def __init__(self, *args, **kwds):
+        kwds["identifier"] = kwds.get("identifier", "hypr-ost")
         super().__init__(*args, **kwds)
 
         self.config.update(
-            identifier="hypr-ost",
             algorithm="DDS",
             max_iterations=50,
             suppress_output=True,

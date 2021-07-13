@@ -48,10 +48,10 @@ class SACSMA(Raven):
         terrain_class: str = "[NONE]"
 
     def __init__(self, *args, **kwds):
+        kwds["identifier"] = kwds.get("identifier", "sacsma")
         super().__init__(*args, **kwds)
 
         self.config.update(
-            identifier="sacsma",
             hrus=(SACSMA.HRU(),),
             subbasins=(
                 Sub(
@@ -287,10 +287,10 @@ class SACSMA_OST(Ostrich, SACSMA):
     }
 
     def __init__(self, *args, **kwds):
+        kwds["identifier"] = kwds.get("identifier", "sacsma-ost")
         super().__init__(*args, **kwds)
 
         self.config.update(
-            identifier="sacsma-ost",
             algorithm="DDS",
             max_iterations=50,
             suppress_output=True,

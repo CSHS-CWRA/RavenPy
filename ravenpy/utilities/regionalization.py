@@ -154,7 +154,7 @@ def regionalize(
         attrs={
             "title": "Regionalization ensemble",
             "institution": "",
-            "source": "RAVEN V.{} - {}".format(m.version, model),
+            "source": "RAVEN V.{} - {}".format(m.raven_version, model),
             "history": "Created by raven regionalize.",
             "references": "",
             "comment": "Regionalization method: {}".format(method),

@@ -65,7 +65,7 @@ class TestOst:
         assert o.random_seed == "RandomSeed 0"
 
     def test_evaluation_metric_multiplier(self):
-        config = Config(model_cls=None)
+        config = Config(model=None)
         config.rvi.evaluation_metrics = ["RMSE", "NASH_SUTCLIFFE"]
         assert config.ost.evaluation_metric_multiplier == 1
 

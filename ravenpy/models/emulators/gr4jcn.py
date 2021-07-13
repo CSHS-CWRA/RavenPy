@@ -51,10 +51,10 @@ class GR4JCN(Raven):
         hru_type: str = "lake"
 
     def __init__(self, *args, **kwds):
+        kwds["identifier"] = kwds.get("identifier", "gr4jcn")
         super().__init__(*args, **kwds)
 
         self.config.update(
-            identifier="gr4jcn",
             hrus=(GR4JCN.LandHRU(),),
             subbasins=(
                 Sub(
@@ -234,10 +234,10 @@ class GR4JCN_OST(Ostrich, GR4JCN):
     }
 
     def __init__(self, *args, **kwds):
+        kwds["identifier"] = kwds.get("identifier", "gr4jcn-ost")
         super().__init__(*args, **kwds)
 
         self.config.update(
-            identifier="gr4jcn-ost",
             algorithm="DDS",
             max_iterations=50,
             suppress_output=True,
