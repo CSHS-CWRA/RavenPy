@@ -7,6 +7,7 @@ History
 
 * Add support for V2.1 of the Routing Product in ``ravenpy.extractors.routing_product``
 * Add ``collect-subbasins-upstream-of-gauge`` CLI script
+* Modify wfs request functions to use spatial filtering (`Intersects`) supplied by OWSLib.
 
 0.6.0
 -----
