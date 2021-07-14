@@ -652,7 +652,7 @@ def get_hydro_routing_location_wfs(
     lakes: str,
     level: int = 12,
     geoserver: str = GEO_URL,
-) -> bytes:
+) -> str:
     """Return features from the hydro routing data set using bounding box coordinates.
 
     For geographic rasters, subsetting is based on WGS84 (Long, Lat) boundaries. If not geographic, subsetting based

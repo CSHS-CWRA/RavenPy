@@ -33,7 +33,7 @@ class TestHydroBASINS:
         resp = self.geoserver.get_hydrobasins_location_wfs(
             coordinates=lake_winnipeg, domain="na"
         )
-        feat = self.gpd.read_file(resp.decode())
+        feat = self.gpd.GeoDataFrame.from_features(resp)
         geom = self.sgeo.shape(feat["geometry"][0])
         assert geom.bounds == (-99.2731, 50.3603, -96.2578, 53.8705)
         np.testing.assert_almost_equal(geom.area, 3.2530867)
@@ -43,7 +43,7 @@ class TestHydroBASINS:
         resp = self.geoserver.get_hydrobasins_location_wfs(
             coordinates=rio_grande * 2, domain="na"
         )
-        feat = self.gpd.read_file(resp.decode())
+        feat = self.gpd.GeoDataFrame.from_features(resp)
         main_bas = feat["MAIN_BAS"][0]
 
         region_url = self.geoserver.filter_hydrobasins_attributes_wfs(
@@ -66,7 +66,7 @@ class TestHydroBASINS:
         resp = self.geoserver.get_hydrobasins_location_wfs(
             coordinates=puerto_cortes, domain="na"
         )
-        feat = self.gpd.read_file(resp.decode())
+        feat = self.gpd.GeoDataFrame.from_features(resp)
 
         gdf_upstream = self.geoserver.hydrobasins_upstream(feat.loc[0], domain="na")
         assert len(gdf_upstream) == 73
@@ -95,7 +95,7 @@ class TestHydroRouting:
         resp = self.geoserver.get_hydro_routing_location_wfs(
             coordinates=lake_winnipeg, lakes="all"
         )
-        feat = self.gpd.read_file(resp.decode())
+        feat = self.gpd.GeoDataFrame.from_features(resp)
         geom = feat["geometry"][0]
         assert geom.bounds == (-99.3083, 50.1875, -95.9875, 54.0542)
         # Note: This value is not in sq. km.
@@ -115,8 +115,8 @@ class TestHydroRouting:
         resp = self.geoserver.get_hydro_routing_location_wfs(
             coordinates=amadjuak, lakes="1km", level=7
         )
-        feature = self.gpd.read_file(resp.decode())
-        subbasin_id = feature["SubId"][0]
+        feat = self.gpd.GeoDataFrame.from_features(resp)
+        subbasin_id = feat["SubId"][0]
 
         gdf_upstream = self.geoserver.hydro_routing_upstream(
             subbasin_id, lakes="1km", level=7
@@ -136,7 +136,7 @@ class TestWFS:
         las_vegas = (-115.136389, 36.175)
         usa_admin_bounds = "public:usa_admin_boundaries"
         resp = self.geoserver._get_location_wfs(point=las_vegas, layer=usa_admin_bounds)
-        feat = self.gpd.read_file(resp.decode())
+        feat = self.gpd.GeoDataFrame.from_features(resp)
 
         geom = feat["geometry"][0]
         assert geom.bounds == (-120.001, 35.0019, -114.0417, 41.9948)
@@ -147,7 +147,7 @@ class TestWFS:
         new_vegas = (-115.697, 34.742, -114.279, 36.456)
         usa_admin_bounds = "public:usa_admin_boundaries"
         resp = self.geoserver._get_location_wfs(bbox=new_vegas, layer=usa_admin_bounds)
-        feat = self.gpd.read_file(resp.decode())
+        feat = self.gpd.GeoDataFrame.from_features(resp)
 
         assert len(feat["geometry"]) == 3
         assert set(feat.STATE_NAME.unique()) == {"Nevada", "California", "Arizona"}
