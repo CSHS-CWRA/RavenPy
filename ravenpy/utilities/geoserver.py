@@ -12,6 +12,7 @@ TODO: Refactor to remove functions that are just 2-lines of code.
 For example, many function's logic essentially consists in creating the layer name.
 We could have a function that returns the layer name, and then other functions expect the layer name.
 """
+import inspect
 import json
 import os
 import warnings
@@ -29,15 +30,20 @@ try:
     import pandas as pd
     from lxml import etree
     from owslib.fes import PropertyIsEqualTo, PropertyIsLike
-    from owslib.fes2 import Intersects
-    from owslib.gml import Point as wfs_Point
     from owslib.wcs import WebCoverageService
     from owslib.wfs import WebFeatureService
     from shapely.geometry import Point, shape
-
 except (ImportError, ModuleNotFoundError) as e:
     msg = gis_import_error_message.format(Path(__file__).stem)
     raise ImportError(msg) from e
+
+try:
+    from owslib.fes2 import Intersects
+    from owslib.gml import Point as wfs_Point
+except (ImportError, ModuleNotFoundError):
+    warnings.warn("WFS point spatial filtering requires OWSLib>0.24.1.")
+    Intersects = False
+    wfs_Point = False
 
 # Do not remove the trailing / otherwise `urljoin` will remove the geoserver path.
 # Can be set at runtime with `$ env GEO_URL=https://xx.yy.zz/geoserver/ ...`.
@@ -92,13 +98,6 @@ def _get_location_wfs(
       A GeoJSON-encoded vector feature.
 
     """
-    # FIXME: Remove this once OWSlib > 0.24.1 is released.
-    warnings.warn(
-        f"{_get_feature_attributes_wfs.__name__} requires OWSLib>0.24.1.",
-        RuntimeWarning,
-        stacklevel=4,
-    )
-
     wfs = WebFeatureService(url=urljoin(geoserver, "wfs"), version="2.0.0", timeout=30)
 
     if bbox and point:
@@ -106,6 +105,12 @@ def _get_location_wfs(
     if bbox:
         kwargs = dict(bbox=bbox)
     elif point:
+        # FIXME: Remove this once OWSlib > 0.24.1 is released.
+        if Intersects is False and wfs_Point is False:
+            raise NotImplementedError(
+                f"{inspect.stack()[1][3]} with point filtering requires OWSLib>0.24.1.",
+            )
+
         p = wfs_Point(
             id="feature",
             srsName="http://www.opengis.net/gml/srs/epsg.xml#4326",
@@ -512,7 +517,10 @@ def get_hydrobasins_location_wfs(
     lakes = True
     level = 12
     layer = f"public:USGS_HydroBASINS_{'lake_' if lakes else ''}{domain}_lev{str(level).zfill(2)}"
-    data = _get_location_wfs(point=coordinates, layer=layer, geoserver=geoserver)
+    if wfs_Point is False and Intersects is False:
+        data = _get_location_wfs(bbox=coordinates * 2, layer=layer, geoserver=geoserver)
+    else:
+        data = _get_location_wfs(point=coordinates, layer=layer, geoserver=geoserver)
 
     return data
 
@@ -676,6 +684,10 @@ def get_hydro_routing_location_wfs(
 
     """
     layer = f"public:routing_{lakes}Lakes_{str(level).zfill(2)}"
-    data = _get_location_wfs(point=coordinates, layer=layer, geoserver=geoserver)
+
+    if wfs_Point is False and Intersects is False:
+        data = _get_location_wfs(bbox=coordinates * 2, layer=layer, geoserver=geoserver)
+    else:
+        data = _get_location_wfs(point=coordinates, layer=layer, geoserver=geoserver)
 
     return data

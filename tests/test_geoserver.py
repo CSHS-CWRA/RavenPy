@@ -7,6 +7,8 @@ from ravenpy.utilities.testdata import get_local_testdata
 
 pytestmark = pytest.mark.online
 
+# FIXME: Remove XFAIL marks once OWSLib > 0.24.1 is released.
+
 
 class TestHydroBASINS:
     geoserver = pytest.importorskip("ravenpy.utilities.geoserver")
@@ -25,6 +27,7 @@ class TestHydroBASINS:
         dom = self.geoserver.select_hybas_domain(bbox)
         assert dom == "ar"
 
+    @pytest.mark.xfail(reason="OWSLib>0.24.1 is needed.")
     def test_get_hydrobasins_location_wfs(self, tmp_path):
         lake_winnipeg = (
             -98.03575958286369,
@@ -38,6 +41,7 @@ class TestHydroBASINS:
         assert geom.bounds == (-99.2731, 50.3603, -96.2578, 53.8705)
         np.testing.assert_almost_equal(geom.area, 3.2530867)
 
+    @pytest.mark.xfail(reason="OWSLib>0.24.1 is needed.")
     def test_get_hydrobasins_attributes_wfs(self, tmp_path):
         rio_grande = (-80.475, 8.4)
         resp = self.geoserver.get_hydrobasins_location_wfs(
@@ -61,6 +65,7 @@ class TestHydroBASINS:
             np.array([[-80.8542, 8.2459, -80.1375, 8.7004]]),
         )
 
+    @pytest.mark.xfail(reason="OWSLib>0.24.1 is needed.")
     def test_hydrobasins_upstream_aggregate(self, tmp_path):
         puerto_cortes = (-83.525, 8.96, -83.520, 8.97)
         resp = self.geoserver.get_hydrobasins_location_wfs(
@@ -87,6 +92,7 @@ class TestHydroRouting:
     gpd = pytest.importorskip("geopandas")
     sgeo = pytest.importorskip("shapely.geometry")
 
+    @pytest.mark.xfail(reason="OWSLib>0.24.1 is needed.")
     def test_hydro_routing_locations(self, tmp_path):
         lake_winnipeg = (
             -98.03575958286369,
@@ -110,6 +116,7 @@ class TestHydroRouting:
         assert len(gdf) == 11415
 
     @pytest.mark.slow
+    @pytest.mark.xfail(reason="OWSLib>0.24.1 is needed.")
     def test_hydro_routing_upstream(self, tmp_path):
         amadjuak = (-71.225, 65.05, -71.220, 65.10)
         resp = self.geoserver.get_hydro_routing_location_wfs(
@@ -132,6 +139,7 @@ class TestWFS:
     gpd = pytest.importorskip("geopandas")
     sgeo = pytest.importorskip("shapely.geometry")
 
+    @pytest.mark.xfail(reason="OWSLib>0.24.1 is needed.")
     def test_get_location_wfs_point(self, tmp_path):
         las_vegas = (-115.136389, 36.175)
         usa_admin_bounds = "public:usa_admin_boundaries"
