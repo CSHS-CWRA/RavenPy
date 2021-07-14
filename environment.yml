@@ -18,8 +18,8 @@ dependencies:
   - lxml
   - matplotlib
   - numpy
-  - owslib
-  - pandas
+#  - owslib
+  - pandas<1.3
   - pip
   - pydantic
   - pyproj>=3
@@ -38,3 +38,5 @@ dependencies:
   - wheel
   - holoviews
   - hvplot
+  - pip:
+    - owslib @ git+https://github.com/geopython/OWSLib.git@master

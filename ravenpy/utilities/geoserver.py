@@ -12,7 +12,9 @@ TODO: Refactor to remove functions that are just 2-lines of code.
 For example, many function's logic essentially consists in creating the layer name.
 We could have a function that returns the layer name, and then other functions expect the layer name.
 """
+import json
 import os
+import warnings
 from pathlib import Path
 from typing import Iterable, Optional, Sequence, Tuple, Union
 from urllib.parse import urljoin
@@ -27,6 +29,8 @@ try:
     import pandas as pd
     from lxml import etree
     from owslib.fes import PropertyIsEqualTo, PropertyIsLike
+    from owslib.fes2 import Intersects
+    from owslib.gml import Point as wfs_Point
     from owslib.wcs import WebCoverageService
     from owslib.wfs import WebFeatureService
     from shapely.geometry import Point, shape
@@ -49,15 +53,23 @@ hybas_domains = {dom: hybas_dir / hybas_pat.format(dom) for dom in hybas_regions
 
 
 def _get_location_wfs(
-    coordinates: Tuple[
-        Union[int, float, str],
-        Union[str, float, int],
-        Union[str, float, int],
-        Union[str, float, int],
-    ],
-    layer: str = True,
+    bbox: Optional[
+        Tuple[
+            Union[str, float, int],
+            Union[str, float, int],
+            Union[str, float, int],
+            Union[str, float, int],
+        ]
+    ] = None,
+    point: Optional[
+        Tuple[
+            Union[str, float, int],
+            Union[str, float, int],
+        ]
+    ] = None,
+    layer: str = None,
     geoserver: str = GEO_URL,
-) -> bytes:
+) -> str:
     """Return leveled features from a hosted data set using bounding box coordinates and WFS 1.1.0 protocol.
 
     For geographic rasters, subsetting is based on WGS84 (Long, Lat) boundaries. If not geographic, subsetting based
@@ -65,8 +77,10 @@ def _get_location_wfs(
 
     Parameters
     ----------
-    coordinates : Tuple[Union[str, float, int], Union[str, float, int], Union[str, float, int], Union[str, float, int]]
+    bbox : Optional[Tuple[Union[str, float, int], Union[str, float, int], Union[str, float, int], Union[str, float, int]]]
       Geographic coordinates of the bounding box (left, down, right, up).
+    point : Optional[Tuple[Union[str, float, int], Union[str, float, int]]]
+      Geographic coordinates of an intersecting point (lon, lat).
     layer : str
       The WFS/WMS layer name requested.
     geoserver: str
@@ -78,21 +92,42 @@ def _get_location_wfs(
       A GeoJSON-encoded vector feature.
 
     """
-    wfs = WebFeatureService(url=urljoin(geoserver, "wfs"), version="1.1.0", timeout=30)
-    resp = wfs.getfeature(
-        typename=layer,
-        bbox=coordinates,
-        srsname="urn:x-ogc:def:crs:EPSG:4326",
-        outputFormat="application/json",
+    # FIXME: Remove this once OWSlib > 0.24.1 is released.
+    warnings.warn(
+        f"{_get_feature_attributes_wfs.__name__} requires OWSLib>0.24.1.",
+        RuntimeWarning,
+        stacklevel=4,
     )
 
-    data = resp.read()
+    wfs = WebFeatureService(url=urljoin(geoserver, "wfs"), version="2.0.0", timeout=30)
+
+    if bbox and point:
+        raise NotImplementedError("Provide either 'bbox' or 'point'.")
+    if bbox:
+        kwargs = dict(bbox=bbox)
+    elif point:
+        p = wfs_Point(
+            id="feature",
+            srsName="http://www.opengis.net/gml/srs/epsg.xml#4326",
+            pos=point,
+        )
+        f = Intersects(propertyname="the_geom", geometry=p)
+        intersects = f.toXML()
+        kwargs = dict(filter=intersects)
+    else:
+        raise ValueError()
+
+    resp = wfs.getfeature(
+        typename=layer, outputFormat="application/json", method="POST", **kwargs
+    )
+
+    data = json.loads(resp.read())
     return data
 
 
 def _get_feature_attributes_wfs(
     attribute: Sequence[str],
-    layer: str,
+    layer: str = None,
     geoserver: str = GEO_URL,
 ) -> str:
     """Return WFS GetFeature URL request for attribute values.
@@ -367,9 +402,12 @@ def hydrobasins_aggregate(gdf: pd.DataFrame) -> pd.DataFrame:
 
 
 def select_hybas_domain(
-    bbox: Tuple[
-        Union[int, float], Union[int, float], Union[int, float], Union[int, float]
-    ]
+    bbox: Optional[
+        Tuple[
+            Union[int, float], Union[int, float], Union[int, float], Union[int, float]
+        ]
+    ] = None,
+    point: Optional[Tuple[Union[int, float], Union[int, float]]] = None,
 ) -> str:
     """
     Provided a given coordinate or boundary box, return the domain name of the geographic region
@@ -377,14 +415,22 @@ def select_hybas_domain(
 
     Parameters
     ----------
-    bbox : tuple
+    bbox : Optional[Tuple[Union[float, int], Union[float, int], Union[float, int], Union[float, int]]]
       Geographic coordinates of the bounding box (left, down, right, up).
+    point : Optional[Tuple[Union[float, int], Union[float, int]]]
+      Geographic coordinates of an intersecting point (lon, lat).
 
     Returns
     -------
     str
       The domain that the coordinate falls within. Possible results: "na", "ar".
     """
+    if bbox and point:
+        raise NotImplementedError("Provide either 'bbox' or 'point'.")
+    if point:
+        bbox = point * 2
+
+    print(bbox)
 
     for dom, fn in hybas_domains.items():
         with open(fn, "rb") as f:
@@ -439,12 +485,10 @@ def get_hydrobasins_location_wfs(
     coordinates: Tuple[
         Union[str, float, int],
         Union[str, float, int],
-        Union[str, float, int],
-        Union[str, float, int],
     ],
     domain: str = None,
     geoserver: str = GEO_URL,
-) -> bytes:
+) -> str:
     """Return features from the USGS HydroBASINS data set using bounding box coordinates.
 
     For geographic rasters, subsetting is based on WGS84 (Long, Lat) boundaries. If not geographic, subsetting based
@@ -452,7 +496,7 @@ def get_hydrobasins_location_wfs(
 
     Parameters
     ----------
-    coordinates : Tuple[Union[str, float, int], Union[str, float, int], Union[str, float, int], Union[str, float, int]]
+    coordinates : Tuple[Union[str, float, int], Union[str, float, int]]
       Geographic coordinates of the bounding box (left, down, right, up).
     domain : {"na", "ar"}
       The domain of the HydroBASINS data.
@@ -468,7 +512,7 @@ def get_hydrobasins_location_wfs(
     lakes = True
     level = 12
     layer = f"public:USGS_HydroBASINS_{'lake_' if lakes else ''}{domain}_lev{str(level).zfill(2)}"
-    data = _get_location_wfs(coordinates, layer=layer, geoserver=geoserver)
+    data = _get_location_wfs(point=coordinates, layer=layer, geoserver=geoserver)
 
     return data
 
@@ -604,13 +648,11 @@ def get_hydro_routing_location_wfs(
     coordinates: Tuple[
         Union[int, float, str],
         Union[str, float, int],
-        Union[str, float, int],
-        Union[str, float, int],
     ],
     lakes: str,
     level: int = 12,
     geoserver: str = GEO_URL,
-) -> bytes:
+) -> str:
     """Return features from the hydro routing data set using bounding box coordinates.
 
     For geographic rasters, subsetting is based on WGS84 (Long, Lat) boundaries. If not geographic, subsetting based
@@ -618,7 +660,7 @@ def get_hydro_routing_location_wfs(
 
     Parameters
     ----------
-    coordinates : Tuple[Union[str, float, int], Union[str, float, int], Union[str, float, int], Union[str, float, int]]
+    coordinates : Tuple[Union[str, float, int], Union[str, float, int]]
       Geographic coordinates of the bounding box (left, down, right, up).
     lakes : {"1km", "all"}
       Query the version of dataset with lakes under 1km in width removed ("1km") or return all lakes ("all").
@@ -634,6 +676,6 @@ def get_hydro_routing_location_wfs(
 
     """
     layer = f"public:routing_{lakes}Lakes_{str(level).zfill(2)}"
-    data = _get_location_wfs(coordinates, layer=layer, geoserver=geoserver)
+    data = _get_location_wfs(point=coordinates, layer=layer, geoserver=geoserver)
 
     return data
