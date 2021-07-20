@@ -10,8 +10,8 @@ dependencies:
   - cf_xarray
   - click
   - climpred >=2.1
-  - clisops >=0.6.4
-  - dask <=2021.02.0
+  - clisops ==0.5.0
+  - dask
   - fiona
   - gdal >=3.0.0
   - geopandas >=0.9
@@ -27,7 +27,7 @@ dependencies:
   - requests
   - rioxarray
   - scipy
-  - scikit-learn ==0.24.1
+  - scikit-learn ==0.24.2
   - shapely
   - statsmodels
   - xarray >=0.18

@@ -435,8 +435,6 @@ def select_hybas_domain(
     if point:
         bbox = point * 2
 
-    print(bbox)
-
     for dom, fn in hybas_domains.items():
         with open(fn, "rb") as f:
             zf = fiona.io.ZipMemoryFile(f)
