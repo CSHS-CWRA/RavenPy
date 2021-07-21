@@ -320,6 +320,11 @@ def get_subsetted_forecast(region_coll, ds, times, is_caspar):
     lat_min = region_coll.bounds[1]
     lat_max = region_coll.bounds[3]
 
+    # Add a very simple lon wraparound if data suggests for it
+    if ((ds.lon.min() >= 0) and (ds.lon.max() <= 360)) and (lon_max < 0):
+        lon_min += 360
+        lon_max += 360
+
     # Subset the data to the desired location (bounding box) and times
     ds = ds.where(
         (ds.lon <= lon_max)
