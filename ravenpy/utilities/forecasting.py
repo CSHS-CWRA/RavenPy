@@ -321,9 +321,13 @@ def get_subsetted_forecast(region_coll, ds, times, is_caspar):
     lat_max = region_coll.bounds[3]
 
     # Subset the data to the desired location (bounding box) and times
-    ds = ds.rio.clip_box(minx=lon_min, miny=lat_min, maxx=lon_max, maxy=lat_max).sel(
-        time=times
-    )
+    ds = ds.where(
+        (ds.lon <= lon_max)
+        & (ds.lon >= lon_min)
+        & (ds.lat <= lat_max)
+        & (ds.lat >= lat_min),
+        drop=True,
+    ).sel(time=times)
 
     # Rioxarray requires CRS definitions for variables
     # Get CRS, e.g. 4326
