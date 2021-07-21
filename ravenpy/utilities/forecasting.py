@@ -23,7 +23,6 @@ from . import gis_import_error_message
 
 try:
     import rioxarray
-    from clisops.core import subset
 except (ImportError, ModuleNotFoundError) as e:
     msg = gis_import_error_message.format(Path(__file__).stem)
     raise ImportError(msg) from e
@@ -322,9 +321,9 @@ def get_subsetted_forecast(region_coll, ds, times, is_caspar):
     lat_max = region_coll.bounds[3]
 
     # Subset the data to the desired location (bounding box) and times
-    ds = subset.subset_bbox(
-        ds, lon_bnds=[lon_min, lon_max], lat_bnds=[lat_min, lat_max]
-    ).sel(time=times)
+    ds = ds.rio.clip_box(minx=lon_min, miny=lat_min, maxx=lon_max, maxy=lat_max).sel(
+        time=times
+    )
 
     # Rioxarray requires CRS definitions for variables
     # Get CRS, e.g. 4326

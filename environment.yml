@@ -10,7 +10,7 @@ dependencies:
   - cf_xarray
   - click
   - climpred >=2.1
-  - clisops ==0.5.0
+#  - clisops ==0.5.0
   - dask
   - fiona
   - gdal >=3.0.0
