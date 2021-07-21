@@ -27,7 +27,7 @@ setup_requirements = ["pip", "wheel"]
 requirements = [
     "click",
     "climpred>=2.1",
-    "dask<=2021.02.0",
+    "dask",
     "matplotlib",
     "netCDF4",
     "numpy",
