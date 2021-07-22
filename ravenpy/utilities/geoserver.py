@@ -42,8 +42,8 @@ try:
     from owslib.gml import Point as wfs_Point
 except (ImportError, ModuleNotFoundError):
     warnings.warn("WFS point spatial filtering requires OWSLib>0.24.1.")
-    Intersects = False
-    wfs_Point = False
+    Intersects = None
+    wfs_Point = None
 
 # Do not remove the trailing / otherwise `urljoin` will remove the geoserver path.
 # Can be set at runtime with `$ env GEO_URL=https://xx.yy.zz/geoserver/ ...`.
@@ -106,7 +106,7 @@ def _get_location_wfs(
         kwargs = dict(bbox=bbox)
     elif point:
         # FIXME: Remove this once OWSlib > 0.24.1 is released.
-        if Intersects is False and wfs_Point is False:
+        if Intersects is None and wfs_Point is None:
             raise NotImplementedError(
                 f"{inspect.stack()[1][3]} with point filtering requires OWSLib>0.24.1.",
             )
@@ -200,7 +200,7 @@ def _filter_feature_attributes_wfs(
         value = str(value)
 
     except ValueError:
-        raise Exception("Unable to cast attribute/filter to string")
+        raise Exception("Unable to cast attribute/filter to string.")
 
     filter_request = PropertyIsLike(propertyname=attribute, literal=value, wildCard="*")
     filterxml = etree.tostring(filter_request.toXML()).decode("utf-8")
@@ -515,7 +515,7 @@ def get_hydrobasins_location_wfs(
     lakes = True
     level = 12
     layer = f"public:USGS_HydroBASINS_{'lake_' if lakes else ''}{domain}_lev{str(level).zfill(2)}"
-    if wfs_Point is False and Intersects is False:
+    if wfs_Point is None and Intersects is None:
         data = _get_location_wfs(bbox=coordinates * 2, layer=layer, geoserver=geoserver)
     else:
         data = _get_location_wfs(point=coordinates, layer=layer, geoserver=geoserver)
@@ -683,7 +683,7 @@ def get_hydro_routing_location_wfs(
     """
     layer = f"public:routing_{lakes}Lakes_{str(level).zfill(2)}"
 
-    if wfs_Point is False and Intersects is False:
+    if wfs_Point is None and Intersects is None:
         data = _get_location_wfs(bbox=coordinates * 2, layer=layer, geoserver=geoserver)
     else:
         data = _get_location_wfs(point=coordinates, layer=layer, geoserver=geoserver)
