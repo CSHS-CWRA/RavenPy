@@ -1,9 +1,8 @@
 affine
-# clisops==0.5.0
 fiona
 geopandas>=0.9.0
 lxml
-owslib @ git+https://github.com/geopython/OWSLib.git@master
+owslib
 pyproj>=3.0.0
 rasterio
 rioxarray
