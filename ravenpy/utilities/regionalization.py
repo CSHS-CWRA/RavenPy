@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 import xarray as xr
-from haversine import haversine
+from haversine import haversine_vector
 
 import ravenpy.models as models
 
@@ -238,11 +238,13 @@ def distance(gauged, ungauged):
       Coordinates of the ungauged catchment.
 
     """
-    lon, lat = ungauged.longitude, ungauged.latitude
-    lons, lats = gauged.longitude, gauged.latitude
+    gauged_array = np.array(list(zip(gauged.latitude.values, gauged.longitude.values)))
 
     return pd.Series(
-        data=haversine((lats.values, lons.values), (lat, lon)), index=gauged.index
+        data=haversine_vector(
+            gauged_array, np.array([ungauged.latitude, ungauged.longitude]), comb=True
+        )[0],
+        index=gauged.index,
     )
 
 
