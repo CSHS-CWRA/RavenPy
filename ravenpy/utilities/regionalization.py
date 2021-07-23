@@ -227,7 +227,7 @@ def read_gauged_params(model):
 #     return km
 
 
-def distance(gauged, ungauged):
+def distance(gauged: pd.DataFrame, ungauged: pd.Series):
     """Return geographic distance [km] between ungauged and database of gauged catchments.
 
     Parameters
