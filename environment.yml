@@ -10,34 +10,32 @@ dependencies:
   - cf_xarray
   - click
   - climpred >=2.1
-#  - clisops ==0.5.0
   - dask
   - fiona
   - gdal >=3.0.0
   - geopandas >=0.9
   - haversine
+  - holoviews
+  - hvplot
   - lxml
   - matplotlib
   - numpy
-#  - owslib
+  - owslib
   - pandas<1.3
   - pip
+  - pre-commit
   - pydantic
   - pyproj>=3
   - rasterio
   - requests
   - rioxarray
-  - scipy
   - scikit-learn ==0.24.2
+  - scipy
+  - setuptools >50.0
   - shapely
   - statsmodels
   - xarray >=0.18
-  - xclim >=0.26.1
   - xskillscore
-  - pre-commit
-  - setuptools >50.0
   - wheel
-  - holoviews
-  - hvplot
   - pip:
-    - owslib @ git+https://github.com/geopython/OWSLib.git@master
+    - xclim >=0.26.1
