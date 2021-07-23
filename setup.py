@@ -28,6 +28,7 @@ requirements = [
     "click",
     "climpred>=2.1",
     "dask",
+    "haversine",
     "matplotlib",
     "netCDF4",
     "numpy",

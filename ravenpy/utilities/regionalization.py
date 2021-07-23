@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 import xarray as xr
+from haversine import haversine_vector
 
 import ravenpy.models as models
 
@@ -195,38 +196,7 @@ def read_gauged_params(model):
     return params["NASH"], params.iloc[:, 1:]
 
 
-def haversine(lon1, lat1, lon2, lat2):
-    """
-    Return the great circle distance between two points on the earth.
-
-    Parameters
-    ----------
-    lon1, lat1 : ndarray
-        Longitude and latitude coordinates in decimal degrees.
-    lon2, lat2 : ndarray
-        Longitude and latitude coordinates in decimal degrees.
-
-    Returns
-    -------
-    ndarray
-      Distance between points 1 and 2 [km].
-
-    """
-    lon1, lat1, lon2, lat2 = map(np.radians, [lon1, lat1, lon2, lat2])
-
-    dlon = lon2 - lon1
-    dlat = lat2 - lat1
-
-    a = np.sin(dlat / 2.0) ** 2 + np.cos(lat1) * np.cos(lat2) * (
-        np.sin(dlon / 2.0) ** 2
-    )
-
-    c = 2 * np.arcsin(np.sqrt(a))
-    km = 6367 * c
-    return km
-
-
-def distance(gauged, ungauged):
+def distance(gauged: pd.DataFrame, ungauged: pd.Series):
     """Return geographic distance [km] between ungauged and database of gauged catchments.
 
     Parameters
@@ -237,11 +207,13 @@ def distance(gauged, ungauged):
       Coordinates of the ungauged catchment.
 
     """
-    lon, lat = ungauged.longitude, ungauged.latitude
-    lons, lats = gauged.longitude, gauged.latitude
+    gauged_array = np.array(list(zip(gauged.latitude.values, gauged.longitude.values)))
 
     return pd.Series(
-        data=haversine(lons.values, lats.values, lon, lat), index=gauged.index
+        data=haversine_vector(
+            gauged_array, np.array([ungauged.latitude, ungauged.longitude]), comb=True
+        )[0],
+        index=gauged.index,
     )
 
 

@@ -14,6 +14,7 @@ dependencies:
   - fiona
   - gdal >=3.0.0
   - geopandas >=0.9
+  - haversine
   - holoviews
   - hvplot
   - lxml
