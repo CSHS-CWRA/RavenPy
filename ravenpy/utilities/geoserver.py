@@ -106,7 +106,7 @@ def _get_location_wfs(
         kwargs = dict(bbox=bbox)
     elif point:
         # FIXME: Remove this once OWSlib > 0.24.1 is released.
-        if Intersects is None and wfs_Point is None:
+        if not Intersects and not wfs_Point:
             raise NotImplementedError(
                 f"{inspect.stack()[1][3]} with point filtering requires OWSLib>0.24.1.",
             )
@@ -320,8 +320,8 @@ def get_raster_wcs(
             timeout=120,
         )
 
-    except Exception as e:
-        raise Exception(e)
+    except Exception:
+        raise
 
     data = resp.read()
 
@@ -515,7 +515,7 @@ def get_hydrobasins_location_wfs(
     lakes = True
     level = 12
     layer = f"public:USGS_HydroBASINS_{'lake_' if lakes else ''}{domain}_lev{str(level).zfill(2)}"
-    if wfs_Point is None and Intersects is None:
+    if not wfs_Point and not Intersects:
         data = _get_location_wfs(bbox=coordinates * 2, layer=layer, geoserver=geoserver)
     else:
         data = _get_location_wfs(point=coordinates, layer=layer, geoserver=geoserver)
@@ -683,7 +683,7 @@ def get_hydro_routing_location_wfs(
     """
     layer = f"public:routing_{lakes}Lakes_{str(level).zfill(2)}"
 
-    if wfs_Point is None and Intersects is None:
+    if not wfs_Point and not Intersects:
         data = _get_location_wfs(bbox=coordinates * 2, layer=layer, geoserver=geoserver)
     else:
         data = _get_location_wfs(point=coordinates, layer=layer, geoserver=geoserver)
