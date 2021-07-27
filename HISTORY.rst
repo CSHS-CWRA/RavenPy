@@ -2,17 +2,17 @@
 History
 =======
 
-0.X.X
+0.7.0
 -----
 
-* Add support for V2.1 of the Routing Product in ``ravenpy.extractors.routing_product``
-* Add ``collect-subbasins-upstream-of-gauge`` CLI script
-* Modify wfs request functions to use spatial filtering (`Intersects`) supplied by OWSLib.
+* Add support for V2.1 of the Routing Product in ``ravenpy.extractors.routing_product``.
+* Add ``collect-subbasins-upstream-of-gauge`` CLI script.
+* Modify WFS request functions to use spatial filtering (``Intersects``) supplied by OWSLib.
 
 0.6.0
 -----
 
-* Add support for EvaluationPeriod commands. Note that as a result of this, the model's `diagnostics` property contains one list per key, instead of a single scalar. Also note that for calibration, Ostrich will use the first period and the first evaluation metric.
+* Add support for EvaluationPeriod commands. Note that as a result of this, the model's ``diagnostics`` property contains one list per key, instead of a single scalar. Also note that for calibration, Ostrich will use the first period and the first evaluation metric.
 * Add ``SACSMA``, ``CANADIANSHIELD`` and ``HYPR`` model emulators.
 
 0.5.2
