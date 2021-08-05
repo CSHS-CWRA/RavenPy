@@ -1,14 +1,11 @@
 import datetime as dt
-import tempfile
 
 import numpy as np
 import pytest
 
 from ravenpy.config import ConfigError
-from ravenpy.models import CANADIANSHIELD, CANADIANSHIELD_OST, HRU, LU
+from ravenpy.models import CANADIANSHIELD, CANADIANSHIELD_OST, LU
 from ravenpy.utilities.testdata import get_local_testdata
-
-from .common import _convert_2d
 
 TS = get_local_testdata(
     "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"

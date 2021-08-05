@@ -1,18 +1,13 @@
 import datetime as dt
 import re
-from collections import namedtuple
-from pathlib import Path
 
 import pytest
 
-import ravenpy
-from ravenpy.config.commands import (
-    BasinStateVariablesCommand,
+from ravenpy.config.commands import (  # BasinStateVariablesCommand,; HRUStateVariableTableCommand,
     EvaluationPeriod,
     GriddedForcingCommand,
-    HRUStateVariableTableCommand,
 )
-from ravenpy.config.rvs import OST, RVC, RVH, RVI, RVP, RVT, Config
+from ravenpy.config.rvs import OST, RVC, RVH, RVI, RVP, Config
 from ravenpy.extractors import (
     RoutingProductGridWeightExtractor,
     RoutingProductShapefileExtractor,
@@ -71,7 +66,7 @@ class TestOst:
 
         with pytest.raises(ValueError):
             config.rvi.evaluation_metrics = ["PCT_BIAS"]
-            config.ost.evaluation_metric_multiplier
+            _ = config.ost.evaluation_metric_multiplier
 
 
 class TestRVI:

@@ -4,7 +4,6 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-import ravenpy
 from ravenpy.models import Ostrich, Raven, RavenError
 from ravenpy.models.base import get_diff_level
 from ravenpy.utilities.testdata import get_local_testdata

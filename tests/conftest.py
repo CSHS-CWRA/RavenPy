@@ -1,6 +1,6 @@
 import pytest
 import xarray as xr
-from xclim.indicators.land._streamflow import fit, stats
+from xclim.indicators.land import fit, stats
 
 from ravenpy.utilities.testdata import get_local_testdata
 

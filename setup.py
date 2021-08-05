@@ -52,22 +52,9 @@ docs_requirements = [
     dependency for dependency in open("requirements_docs.txt").readlines()
 ]
 
-gis_requirements = [
-    dependency for dependency in open("requirements_gis.txt").readlines()
+dev_requirements = [
+    dependency for dependency in open("requirements_dev.txt").readlines()
 ]
-# Special GDAL handling
-try:
-    gdal_version = subprocess.run(
-        ["gdal-config", "--version"], capture_output=True
-    ).stdout.decode("utf-8")
-    gis_requirements.append(f"gdal=={gdal_version}")
-except subprocess.CalledProcessError:
-    pass
-
-dev_requirements = gis_requirements.copy()
-dev_requirements.extend(
-    [dependency for dependency in open("requirements_dev.txt").readlines()]
-)
 
 
 # Idea taken from: https://stackoverflow.com/a/25176606/787842
@@ -206,7 +193,7 @@ def create_external_deps_install_class(command_cls):
 setup(
     author="David Huard",
     author_email="huard.david@ouranos.ca",
-    python_requires=">=3.6",
+    python_requires=">=3.7",
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
         "Intended Audience :: Developers",
@@ -242,7 +229,6 @@ setup(
     extras_require=dict(
         dev=dev_requirements,
         docs=docs_requirements,
-        gis=gis_requirements,
     ),
     url="https://github.com/CSHS-CWRA/ravenpy",
     version="0.7.0",
