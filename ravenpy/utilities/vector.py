@@ -9,10 +9,11 @@ import tempfile
 import warnings
 import zipfile
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import Iterable, List, Optional, Union
 
 import geojson
 from pyproj import CRS
+from shapefile import Reader
 from shapely.geometry import (
     GeometryCollection,
     MultiPolygon,
@@ -143,37 +144,35 @@ def generic_vector_reproject(
         warnings.warn(
             f"File {Path(vector).name} should be extracted from archive before reprojection."
         )
-        vector = generic_extract_archive(vector)
+        vector = next(iter(archive_sniffer(generic_extract_archive(vector))))
 
     if isinstance(vector, Path):
         vector = vector.as_posix()
 
     if vector.lower().endswith(".shp"):
-        raise NotImplementedError()
-
+        src = geojson.loads(json.dumps(Reader(vector).__geo_interface__))
     elif vector.lower().endswith("json"):
         src = geojson.load(open(vector))
-        with open(projected, "w") as sink:
-            for feature in src.features:
-                # Perform vector reprojection using Shapely on each feature
-                try:
-                    geom = shape(feature.geometry)
-                    transformed = geom_transform(geom, source_crs, target_crs)
-                    feature.geometry = mapping(transformed)
-                    if hasattr(feature, "bbox"):
-                        bbox = box(*feature.bbox)
-                        transformed = geom_transform(bbox, source_crs, target_crs)
-                        feature.bbox = mapping(transformed)
-                    output["features"].append(feature)
-                except Exception as err:
-                    LOGGER.exception(
-                        "{}: Unable to reproject feature {}".format(err, src)
-                    )
-                    raise
-
-            sink.write(f"{json.dumps(output)}")
     else:
         raise FileNotFoundError(f"{vector} is not a valid geoJSON or Shapefile.")
+
+    with open(projected, "w") as sink:
+        for feature in src.features:
+            # Perform vector reprojection using Shapely on each feature
+            try:
+                geom = shape(feature.geometry)
+                transformed = geom_transform(geom, source_crs, target_crs)
+                feature.geometry = mapping(transformed)
+                if hasattr(feature, "bbox"):
+                    bbox = box(*feature.bbox)
+                    transformed = geom_transform(bbox, source_crs, target_crs)
+                    feature.bbox = mapping(transformed)
+                output["features"].append(feature)
+            except Exception as err:
+                LOGGER.exception("{}: Unable to reproject feature {}".format(err, src))
+                raise
+
+        sink.write(f"{json.dumps(output)}")
 
 
 def generic_extract_archive(
@@ -238,3 +237,36 @@ def generic_extract_archive(
             return resources
 
     return files
+
+
+def archive_sniffer(
+    archives: Union[str, Path, List[Union[str, Path]]],
+    working_dir: Optional[Union[str, Path]] = None,
+    extensions: Optional[Iterable[str]] = None,
+) -> List[Union[str, Path]]:
+    """Return a list of locally unarchived files that match the desired extensions.
+
+    Parameters
+    ----------
+    archives : Union[str, Path, List[Union[str, Path]]]
+      archive location or list of archive locations
+    working_dir : Union[str, path]
+      string or Path to a working location
+    extensions : List[str]
+      list of accepted extensions
+
+    Returns
+    -------
+    List[Union[str, Path]]
+      List of files with matching accepted extensions
+    """
+    potential_files = list()
+
+    if not extensions:
+        extensions = [".gml", ".shp", ".geojson", ".gpkg", ".json"]
+
+    decompressed_files = generic_extract_archive(archives, output_dir=working_dir)
+    for file in decompressed_files:
+        if any(ext in Path(file).suffix for ext in extensions):
+            potential_files.append(file)
+    return potential_files

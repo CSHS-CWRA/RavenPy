@@ -2,6 +2,7 @@ import tempfile
 
 import geojson
 import numpy as np
+import pytest
 import shapely.geometry as sgeo
 
 from ravenpy.utilities import vector
@@ -10,6 +11,9 @@ from ravenpy.utilities.testdata import get_local_testdata
 
 class TestVectorUtils:
     geojson_file = get_local_testdata("polygons/mars.geojson")
+    routing_product_shapefile = get_local_testdata(
+        "raven-routing-sample/finalcat_hru_info.zip"
+    )
 
     def test_shapely_pyproj_geojson_transform(self):
         feat = geojson.load(open(self.geojson_file))
@@ -22,6 +26,28 @@ class TestVectorUtils:
         np.testing.assert_almost_equal(transformed.centroid.x, 1645777, 0)
         np.testing.assert_almost_equal(transformed.centroid.y, -933242, 0)
         np.testing.assert_almost_equal(transformed.area, 6450001868342, 0)
+
+    @pytest.mark.slow
+    def test_shapely_pyproj_shapely_transform_properties(self, tmp_path):
+        reproj_file = tempfile.NamedTemporaryFile(
+            prefix="reproj_", suffix=".geojson", delete=False, dir=tmp_path
+        ).name
+        vector.generic_vector_reproject(
+            self.routing_product_shapefile,
+            projected=reproj_file,
+            target_crs="EPSG:3348",
+        )
+
+        feat = geojson.load(open(reproj_file))
+        geom = sgeo.shape(feat[0].geometry)
+
+        geom_properties = vector.geom_prop(geom)
+        np.testing.assert_almost_equal(geom_properties["area"], 310646674, 0)
+        np.testing.assert_almost_equal(
+            geom_properties["centroid"], (7460914.0, 1413210.6), 1
+        )
+        np.testing.assert_almost_equal(geom_properties["perimeter"], 371435.385, 3)
+        np.testing.assert_almost_equal(geom_properties["gravelius"], 5.9449059)
 
     def test_shapely_pyproj_geojson_transform_properties(self, tmp_path):
         # TODO: It would be awesome if this returned a temporary filepath if no file given.
