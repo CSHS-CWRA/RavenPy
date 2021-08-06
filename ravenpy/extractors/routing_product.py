@@ -1,12 +1,20 @@
+import json
 import warnings
 from collections import defaultdict
 from pathlib import Path
 from typing import List
 
+import geojson
 import shapely.geometry as sgeo
+from shapefile import Reader
 
 from ravenpy.utilities import gis_import_error_message
-from ravenpy.utilities.vector import geom_transform
+from ravenpy.utilities.vector import (
+    archive_sniffer,
+    generic_extract_archive,
+    generic_vector_reproject,
+    geom_transform,
+)
 
 try:
     import geopandas
@@ -53,11 +61,21 @@ class RoutingProductShapefileExtractor:
         routing_product_version=ROUTING_PRODUCT_VERSION,
     ):
         if isinstance(shapefile_path, (Path, str)):
-            if Path(shapefile_path).suffix == ".zip":
-                shapefile_path = f"zip://{shapefile_path}"
-            self._df = geopandas.read_file(shapefile_path)
-        elif isinstance(shapefile_path, geopandas.GeoDataFrame):
-            self._df = shapefile_path
+            shapefile = next(
+                iter(archive_sniffer(generic_extract_archive(shapefile_path)))
+            )
+            if Path(shapefile).suffix.lower() == ".shp":
+                self._df = geojson.loads(
+                    json.dumps(Reader(shapefile).__geo_interface__)
+                )
+            else:
+                raise ValueError("Shapefile not found.")
+
+        #     if Path(shapefile_path).suffix == ".zip":
+        #         shapefile_path = f"zip://{shapefile_path}"
+        #     self._df = geopandas.read_file(shapefile_path)
+        # elif isinstance(shapefile_path, geopandas.GeoDataFrame):
+        #     self._df = shapefile_path
 
         self.hru_aspect_convention = hru_aspect_convention
         self.routing_product_version = routing_product_version
@@ -99,14 +117,16 @@ class RoutingProductShapefileExtractor:
         hru_recs = []
 
         # Collect all subbasin_ids for fast lookup in next loop
-        subbasin_ids = {int(row["SubId"]) for _, row in self._df.iterrows()}
+        # subbasin_ids = {int(row["SubId"]) for _, row in self._df.iterrows()}
+        subbasin_ids = {int(feat.properties["SubId"]) for feat in self._df.features}
 
-        for _, row in self._df.iterrows():
+        for feat in self._df.features:
+            feat_properties = feat.properties
 
             # HRU
-            hru_recs.append(self._extract_hru(row))
+            hru_recs.append(self._extract_hru(feat_properties))
 
-            subbasin_id = int(row["SubId"])
+            subbasin_id = int(feat_properties["SubId"])
 
             is_lake = False
 
@@ -114,21 +134,21 @@ class RoutingProductShapefileExtractor:
                 "IsLake" if self.routing_product_version == "1.0" else "Lake_Cat"
             )
 
-            if row[lake_field] > 0 and row["HRU_IsLake"] > 0:
+            if feat_properties[lake_field] > 0 and feat_properties["HRU_IsLake"] > 0:
                 lake_sb_ids.append(subbasin_id)
-                reservoir_cmds.append(self._extract_reservoir(row))
+                reservoir_cmds.append(self._extract_reservoir(feat_properties))
                 is_lake = True
-            elif row[lake_field] > 0:
+            elif feat_properties[lake_field] > 0:
                 continue
             else:
                 land_sb_ids.append(subbasin_id)
 
             # Subbasin
-            sb = self._extract_subbasin(row, is_lake, subbasin_ids)
+            sb = self._extract_subbasin(feat_properties, is_lake, subbasin_ids)
             subbasin_recs.append(sb)
 
             # ChannelProfile
-            channel_profile_cmds.append(self._extract_channel_profile(row))
+            channel_profile_cmds.append(self._extract_channel_profile(feat_properties))
 
         return dict(
             subbasins=subbasin_recs,
@@ -589,6 +609,9 @@ class RoutingProductGridWeightExtractor:
 
             # input data is a shapefile
 
+            # self._input_data = self._input_data.to_crs(
+            #     epsg=RoutingProductGridWeightExtractor.CRS_CAEA
+            # )
             self._input_data = self._input_data.to_crs(
                 epsg=RoutingProductGridWeightExtractor.CRS_CAEA
             )
@@ -663,7 +686,6 @@ class RoutingProductGridWeightExtractor:
 
         else:
 
-            # FIXME: This entire branch is untested. Difficult to determine if it works.
             for ishape in range(self._nlat):
 
                 idx = np.where(self._input_data[self._netcdf_input_field] == ishape)[0]
