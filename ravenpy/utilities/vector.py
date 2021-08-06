@@ -67,6 +67,8 @@ def geom_transform(
     geom: Union[GeometryCollection, shape],
     source_crs: Union[str, int, CRS] = WGS84,
     target_crs: Union[str, int, CRS] = None,
+    always_xy: bool = True,
+    **kwargs,
 ) -> GeometryCollection:
     """Change the projection of a geometry.
 
@@ -80,6 +82,10 @@ def geom_transform(
       Projection identifier (proj4) for the source geometry, e.g. '+proj=longlat +datum=WGS84 +no_defs'.
     target_crs : Union[str, int, CRS]
       Projection identifier (proj4) for the target geometry.
+    always_xy : bool
+
+    **kwargs
+      Keyword arguments passed directly to pyproj.Transformer().
 
     Returns
     -------
@@ -92,16 +98,18 @@ def geom_transform(
         from pyproj import Transformer  # noqa
 
         if isinstance(source_crs, int or str):
-            source = CRS.from_epsg(source_crs)
+            source = CRS.from_user_input(source_crs)
         else:
             source = source_crs
 
         if isinstance(target_crs, int or str):
-            target = CRS.from_epsg(target_crs)
+            target = CRS.from_user_input(target_crs)
         else:
             target = target_crs
 
-        transform_func = Transformer.from_crs(source, target, always_xy=True)
+        transform_func = Transformer.from_crs(
+            source, target, always_xy=always_xy, **kwargs
+        )
         reprojected = transform(transform_func.transform, geom)
 
         return reprojected

@@ -3,7 +3,10 @@ from collections import defaultdict
 from pathlib import Path
 from typing import List
 
+import shapely.geometry as sgeo
+
 from ravenpy.utilities import gis_import_error_message
+from ravenpy.utilities.vector import geom_transform
 
 try:
     import geopandas
@@ -455,12 +458,16 @@ class RoutingProductGridWeightExtractor:
         grid_weights = []
 
         for _, row in self._routing_data.iterrows():
+            # FIXME: Remove this
+            # poly = ogr.CreateGeometryFromWkt(row.geometry.to_wkt())
 
-            poly = ogr.CreateGeometryFromWkt(row.geometry.to_wkt())
+            # area_basin = poly.Area()
 
-            area_basin = poly.Area()
             # bounding box around basin (for easy check of proximity)
-            enve_basin = poly.GetEnvelope()
+            # enve_basin = poly.GetEnvelope()
+
+            poly = sgeo.shape(row.geometry)
+            area_basin = poly.area
 
             area_all = 0.0
             # ncells = 0
@@ -470,26 +477,33 @@ class RoutingProductGridWeightExtractor:
             for ilat in range(self._nlat):
                 for ilon in range(self._nlon):
 
+                    # FIXME: Remove this
                     # bounding box around grid-cell (for easy check of proximity)
-                    enve_gridcell = grid_cell_geom_gpd_wkt[ilat][ilon].GetEnvelope()
+                    # enve_gridcell = grid_cell_geom_gpd_wkt[ilat][ilon].GetEnvelope()
 
-                    grid_is_close = self._check_proximity_of_envelops(
-                        enve_gridcell, enve_basin
-                    )
-
-                    # this check decreases runtime DRASTICALLY (from ~6h to ~1min)
-                    if not grid_is_close:
-                        continue
+                    # grid_is_close = self._check_proximity_of_envelops(
+                    #     enve_gridcell, enve_basin
+                    # )
+                    #
+                    # # this check decreases runtime DRASTICALLY (from ~6h to ~1min)
+                    # if not grid_is_close:
+                    #     continue
 
                     # grid_cell_area = grid_cell_geom_gpd_wkt[ilat][ilon].Area()
 
                     # "fake" buffer to avoid invalid polygons and weirdos dumped by ArcGIS
-                    inter = grid_cell_geom_gpd_wkt[ilat][ilon].Intersection(
-                        poly.Buffer(0.0)
-                    )
+                    # inter = grid_cell_geom_gpd_wkt[ilat][ilon].intersection(
+                    #     poly.Buffer(0.0)
+                    # )
 
-                    area_intersect = inter.Area()
+                    # area_intersect = inter.Area()
 
+                    gridcell = sgeo.shape(grid_cell_geom_gpd_wkt[ilat][ilon])
+
+                    if not gridcell.envelope.intersects(poly.envelope):
+                        continue
+
+                    area_intersect = gridcell.intersection(poly).area
                     area_all += area_intersect
 
                     if area_intersect > 0:
@@ -648,6 +662,7 @@ class RoutingProductGridWeightExtractor:
 
         else:
 
+            # FIXME: This entire branch is untested. Difficult to determine if it works.
             for ishape in range(self._nlat):
 
                 idx = np.where(self._input_data[self._netcdf_input_field] == ishape)[0]
@@ -724,44 +739,56 @@ class RoutingProductGridWeightExtractor:
         # converts shape read from shapefile to geometry
         # epsg :: integer EPSG code
 
-        ring_shape = ogr.Geometry(ogr.wkbLinearRing)
+        # FIXME: Remove ogr/gdal
+        # ring_shape = ogr.Geometry(ogr.wkbLinearRing)
+        #
+        # for ii in shape_from_jsonfile:
+        #     ring_shape.AddPoint_2D(ii[0], ii[1])
+        # # close ring
+        # ring_shape.AddPoint_2D(shape_from_jsonfile[0][0], shape_from_jsonfile[0][1])
+        #
+        # poly_shape = ogr.Geometry(ogr.wkbPolygon)
+        # poly_shape.AddGeometry(ring_shape)
 
-        for ii in shape_from_jsonfile:
-            ring_shape.AddPoint_2D(ii[0], ii[1])
-        # close ring
-        ring_shape.AddPoint_2D(shape_from_jsonfile[0][0], shape_from_jsonfile[0][1])
-
-        poly_shape = ogr.Geometry(ogr.wkbPolygon)
-        poly_shape.AddGeometry(ring_shape)
+        poly_shape = sgeo.Polygon(shape_from_jsonfile)
 
         if epsg:
-            source = osr.SpatialReference()
-            # usual lat/lon projection
-            source.ImportFromEPSG(RoutingProductGridWeightExtractor.CRS_LLDEG)
+            # FIXME: Remove ogr/gdal
+            # source = osr.SpatialReference()
+            # # usual lat/lon projection
+            # source.ImportFromEPSG(RoutingProductGridWeightExtractor.CRS_LLDEG)
+            #
+            # target = osr.SpatialReference()
+            # target.ImportFromEPSG(epsg)  # any projection to convert to
+            #
+            # transform = osr.CoordinateTransformation(source, target)
+            # poly_shape.Transform(transform)
 
-            target = osr.SpatialReference()
-            target.ImportFromEPSG(epsg)  # any projection to convert to
-
-            transform = osr.CoordinateTransformation(source, target)
-            poly_shape.Transform(transform)
+            poly_shape = geom_transform(
+                poly_shape,
+                source_crs=RoutingProductGridWeightExtractor.CRS_LLDEG,
+                target_crs=epsg,
+                always_xy=False,  # This kwarg is VERY important. No touching!
+            )
 
         return poly_shape
 
-    def _check_proximity_of_envelops(self, gridcell_envelop, shape_envelop):
-
-        # checks if two envelops are in proximity (intersect)
-
-        # minX  --> env[0]
-        # maxX  --> env[1]
-        # minY  --> env[2]
-        # maxY  --> env[3]
-
-        return (
-            gridcell_envelop[0] <= shape_envelop[1]
-            and gridcell_envelop[1] >= shape_envelop[0]
-            and gridcell_envelop[2] <= shape_envelop[3]
-            and gridcell_envelop[3] >= shape_envelop[2]
-        )
+    # FIXME: remove this
+    # def _check_proximity_of_envelops(self, gridcell_envelop, shape_envelop):
+    #
+    #     # checks if two envelops are in proximity (intersect)
+    #
+    #     # minX  --> env[0]
+    #     # maxX  --> env[1]
+    #     # minY  --> env[2]
+    #     # maxY  --> env[3]
+    #
+    #     return (
+    #         gridcell_envelop[0] <= shape_envelop[1]
+    #         and gridcell_envelop[1] >= shape_envelop[0]
+    #         and gridcell_envelop[2] <= shape_envelop[3]
+    #         and gridcell_envelop[3] >= shape_envelop[2]
+    #     )
 
     def _check_gridcell_in_proximity_of_shape(
         self, gridcell_edges, shape_from_jsonfile

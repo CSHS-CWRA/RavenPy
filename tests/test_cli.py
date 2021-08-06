@@ -1,6 +1,7 @@
 import re
 
 import netCDF4 as nc4
+import pytest
 from click.testing import CliRunner
 
 from ravenpy.cli import aggregate_forcings_to_hrus, generate_grid_weights
@@ -67,6 +68,7 @@ class TestGenerateGridWeights:
         weight = float(re.search("1 52 (.+)", output).group(1))
         assert abs(weight - 0.2610203097218425) < 1e-04
 
+    @pytest.mark.slow
     def test_generate_grid_weights_with_nc_input_and_1d_coords(self, tmp_path):
         runner = CliRunner()
         output_path = tmp_path / "bla.rvt"

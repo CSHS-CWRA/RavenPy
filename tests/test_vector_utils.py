@@ -28,7 +28,7 @@ class TestVectorUtils:
         np.testing.assert_almost_equal(transformed.area, 6450001868342, 0)
 
     @pytest.mark.slow
-    def test_shapely_pyproj_shapely_transform_properties(self, tmp_path):
+    def test_shapely_pyproj_shapefile_transform_properties(self, tmp_path):
         reproj_file = tempfile.NamedTemporaryFile(
             prefix="reproj_", suffix=".geojson", delete=False, dir=tmp_path
         ).name
