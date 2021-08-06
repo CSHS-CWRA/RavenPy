@@ -11,7 +11,8 @@ from ravenpy.utilities.vector import geom_transform
 try:
     import geopandas
     from osgeo import __version__ as osgeo_version  # noqa
-    from osgeo import ogr, osr  # noqa
+
+    # from osgeo import ogr, osr
 except (ImportError, ModuleNotFoundError) as e:
     msg = gis_import_error_message.format(Path(__file__).stem)
     raise ImportError(msg) from e
@@ -498,7 +499,7 @@ class RoutingProductGridWeightExtractor:
 
                     # area_intersect = inter.Area()
 
-                    gridcell = sgeo.shape(grid_cell_geom_gpd_wkt[ilat][ilon])
+                    gridcell: sgeo.shape = grid_cell_geom_gpd_wkt[ilat][ilon]
 
                     if not gridcell.envelope.intersects(poly.envelope):
                         continue
@@ -599,7 +600,7 @@ class RoutingProductGridWeightExtractor:
 
     def _compute_grid_cell_polygons(self):
 
-        grid_cell_geom_gpd_wkt: List[List[List[ogr.Geometry]]] = [
+        grid_cell_geom_gpd_wkt: List[List[List[sgeo.shape]]] = [
             [[] for ilon in range(self._nlon)] for ilat in range(self._nlat)
         ]
 
@@ -682,11 +683,12 @@ class RoutingProductGridWeightExtractor:
                     raise ValueError("Polygon ID not unique.")
                 idx = idx[0]
                 poly = self._input_data.loc[idx].geometry
-                grid_cell_geom_gpd_wkt[ishape][0] = ogr.CreateGeometryFromWkt(
-                    poly.to_wkt()
-                ).Buffer(
-                    0.0
-                )  # We add an empty buffer here to fix problems with bad polygon topology (actually caused by ESRI's historical incompetence)
+                # grid_cell_geom_gpd_wkt[ishape][0] = ogr.CreateGeometryFromWkt(
+                #     poly.to_wkt()
+                # ).Buffer(
+                #     0.0
+                # )  # We add an empty buffer here to fix problems with bad polygon topology (actually caused by ESRI's historical incompetence)
+                grid_cell_geom_gpd_wkt[ishape][0] = sgeo.shape(poly)
 
         return grid_cell_geom_gpd_wkt
 
