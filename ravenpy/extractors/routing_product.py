@@ -10,6 +10,7 @@ from shapefile import Reader
 
 from ravenpy.utilities import gis_import_error_message
 from ravenpy.utilities.vector import (
+    WGS84,
     archive_sniffer,
     generic_extract_archive,
     generic_vector_reproject,
@@ -359,25 +360,44 @@ class RoutingProductGridWeightExtractor:
         self._input_is_netcdf = True
 
         input_file_path = Path(input_file_path)
-        if input_file_path.suffix == ".nc":
+        if {input_file_path.suffix.lower()}.issubset({".nc", ".nc4"}):
             # Note that we cannot use xarray because it complains about variables and dimensions
             # having the same name.
             self._input_data = nc4.Dataset(input_file_path)
-        elif input_file_path.suffix == ".zip":
-            self._input_data = geopandas.read_file(f"zip://{input_file_path}")
-            self._input_is_netcdf = False
-        elif input_file_path.suffix == ".shp":
-            self._input_data = geopandas.read_file(input_file_path)
-            self._input_is_netcdf = False
+        elif {input_file_path.suffix.lower()}.issubset({".zip", ".shp"}):
+            # self._input_data = geopandas.read_file(f"zip://{input_file_path}")
+            if input_file_path.suffix.lower() == ".zip":
+                input_file_path = next(
+                    iter(archive_sniffer(generic_extract_archive(input_file_path)))
+                )
+            if input_file_path.suffix.lower() == ".shp":
+                # self._input_data = geopandas.read_file(input_file_path)
+                self._input_data = geojson.loads(
+                    json.dumps(Reader(input_file_path.as_posix()).__geo_interface__)
+                )
+                self._input_is_netcdf = False
         else:
             raise ValueError(
-                "The input file must be a shapefile (.shp or .zip) or NetCDF"
+                "The input file must be a shapefile (.shp or .zip) or a NetCDF."
             )
 
         routing_file_path = Path(routing_file_path)
-        if routing_file_path.suffix == ".zip":
-            routing_file_path = f"zip://{routing_file_path}"
-        self._routing_data = geopandas.read_file(routing_file_path)
+        # if routing_file_path.suffix == ".zip":
+        #     routing_file_path = f"zip://{routing_file_path}"
+        # self._routing_data = geopandas.read_file(routing_file_path)
+
+        if routing_file_path.suffix.lower() == ".zip":
+            # self._input_data = geopandas.read_file(f"zip://{input_file_path}")
+            routing_file_path = Path(
+                next(iter(archive_sniffer(generic_extract_archive(routing_file_path))))
+            )
+        if routing_file_path.suffix.lower() == ".shp":
+            # self._input_data = geopandas.read_file(input_file_path)
+            self._routing_data = geojson.loads(
+                json.dumps(Reader(routing_file_path.as_posix()).__geo_interface__)
+            )
+        else:
+            raise ValueError("The routing file must be a shapefile (.shp or .zip).")
 
     def extract(self) -> GridWeightsCommand:
         self._prepare_input_data()
@@ -385,9 +405,24 @@ class RoutingProductGridWeightExtractor:
         # Read routing data
 
         # WGS 84 / North Pole LAEA Canada
-        self._routing_data = self._routing_data.to_crs(
-            epsg=RoutingProductGridWeightExtractor.CRS_CAEA
-        )
+        # self._routing_data = self._routing_data.to_crs(
+        #     epsg=RoutingProductGridWeightExtractor.CRS_CAEA
+        # )
+        output = list()
+        for feature in self._routing_data.features:
+            geom = sgeo.shape(feature.geometry)
+            transformed = geom_transform(
+                geom, WGS84, RoutingProductGridWeightExtractor.CRS_CAEA
+            )
+            feature.geometry = sgeo.mapping(transformed)
+            if hasattr(feature, "bbox"):
+                bbox = sgeo.box(*feature.bbox)
+                transformed = geom_transform(
+                    bbox, WGS84, RoutingProductGridWeightExtractor.CRS_CAEA
+                )
+                feature.bbox = sgeo.mapping(transformed)
+            output.append(feature)
+        self._routing_data = geojson.FeatureCollection(output)
 
         def keep_only_valid_downsubid_and_obs_nm(g):
             """
