@@ -32,7 +32,7 @@ LOGGER = logging.getLogger("RavenPy")
 WGS84 = 4326
 
 
-def geom_prop(geom: Union[Polygon, MultiPolygon, GeometryCollection]) -> dict:
+def geom_properties(geom: Union[Polygon, MultiPolygon, GeometryCollection]) -> dict:
     """Return a dictionary of geometry properties.
 
     Parameters

@@ -591,7 +591,7 @@ class RoutingProductGridWeightExtractor:
                 # error = 0.0
 
         return GridWeightsCommand(
-            number_hrus=len(self._routing_data),
+            number_hrus=len(self._routing_data.features),
             number_grid_cells=self._nlon * self._nlat,
             data=tuple(grid_weights),
         )

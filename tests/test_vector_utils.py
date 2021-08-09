@@ -41,7 +41,7 @@ class TestVectorUtils:
         feat = geojson.load(open(reproj_file))
         geom = sgeo.shape(feat[0].geometry)
 
-        geom_properties = vector.geom_prop(geom)
+        geom_properties = vector.geom_properties(geom)
         np.testing.assert_almost_equal(geom_properties["area"], 310646674, 0)
         np.testing.assert_almost_equal(
             geom_properties["centroid"], (7460914.0, 1413210.6), 1
@@ -61,7 +61,7 @@ class TestVectorUtils:
         feat = geojson.load(open(reproj_file))
         geom = sgeo.shape(feat[0].geometry)
 
-        geom_properties = vector.geom_prop(geom)
+        geom_properties = vector.geom_properties(geom)
         np.testing.assert_almost_equal(geom_properties["area"], 6450001868342, 0)
         np.testing.assert_almost_equal(
             geom_properties["centroid"], (1645777.7, -933242.1), 1
@@ -75,7 +75,7 @@ class TestVectorUtils:
         geom_0 = sgeo.shape(feat[0].geometry)
         geom_1 = sgeo.shape(feat[1].geometry)
 
-        geom_1_properties = vector.geom_prop(geom_0)
+        geom_1_properties = vector.geom_properties(geom_0)
         np.testing.assert_almost_equal(geom_1_properties["area"], 357.981, 3)
         np.testing.assert_almost_equal(
             geom_1_properties["centroid"], (-128.396, 19.157), 3
@@ -83,7 +83,7 @@ class TestVectorUtils:
         np.testing.assert_almost_equal(geom_1_properties["perimeter"], 68.458, 3)
         np.testing.assert_almost_equal(geom_1_properties["gravelius"], 1.021, 3)
 
-        geom_2_properties = vector.geom_prop(geom_1)
+        geom_2_properties = vector.geom_properties(geom_1)
         np.testing.assert_almost_equal(geom_2_properties["area"], 361.511, 3)
         np.testing.assert_almost_equal(
             geom_2_properties["centroid"], (-70.239, 45.770), 3
