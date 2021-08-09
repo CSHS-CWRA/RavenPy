@@ -8,12 +8,15 @@ import tarfile
 import tempfile
 import warnings
 import zipfile
+from os import PathLike
 from pathlib import Path
 from typing import Iterable, List, Optional, Union
 
 import geojson
+import pandas as pd
 from pyproj import CRS
 from shapefile import Reader
+from shapefile import Shape as Shapefile
 from shapely.geometry import (
     GeometryCollection,
     MultiPolygon,
@@ -120,8 +123,8 @@ def geom_transform(
 
 
 def generic_vector_reproject(
-    vector: Union[str, Path],
-    projected: Union[str, Path],
+    vector: Union[str, PathLike],
+    projected: Union[str, PathLike],
     source_crs: Union[str, CRS] = WGS84,
     target_crs: Union[str, CRS] = None,
 ) -> None:
@@ -184,8 +187,8 @@ def generic_vector_reproject(
 
 
 def generic_extract_archive(
-    resources: Union[str, Path, List[Union[bytes, str, Path]]],
-    output_dir: Optional[Union[str, Path]] = None,
+    resources: Union[str, PathLike, List[Union[bytes, str, PathLike]]],
+    output_dir: Optional[Union[str, PathLike]] = None,
 ) -> List[str]:
     """Extract archives (tar/zip) to a working directory.
 
@@ -248,10 +251,10 @@ def generic_extract_archive(
 
 
 def archive_sniffer(
-    archives: Union[str, Path, List[Union[str, Path]]],
-    working_dir: Optional[Union[str, Path]] = None,
+    archives: Union[str, PathLike, List[Union[str, PathLike]]],
+    working_dir: Optional[Union[str, PathLike]] = None,
     extensions: Optional[Iterable[str]] = None,
-) -> List[Union[str, Path]]:
+) -> List[Union[str, PathLike]]:
     """Return a list of locally unarchived files that match the desired extensions.
 
     Parameters
@@ -278,3 +281,32 @@ def archive_sniffer(
         if any(ext in Path(file).suffix for ext in extensions):
             potential_files.append(file)
     return potential_files
+
+
+def shapefile_to_dataframe(shp_path: Union[str, PathLike, Shapefile]) -> pd.DataFrame:
+    """
+    Read a shapefile into a Pandas dataframe with a 'coords' column holding
+    the geometry information. This uses the pyshp package.
+
+    Parameters
+    ----------
+    shp_path : str or os.PathLike or
+
+    Notes
+    -----
+    Example adapted from https://gist.github.com/aerispaha/f098916ac041c286ae92d037ba5c37ba
+    """
+    if isinstance(shp_path, Shapefile):
+        sf = shp_path
+    else:
+        sf = Reader(shp_path)
+
+    fields = [x[0] for x in sf.fields][1:]
+    records = sf.records()
+    geoms = [s.points for s in sf.shapes()]
+
+    # write into a dataframe
+    df = pd.DataFrame(columns=fields, data=records)
+    df = df.assign(geometries=geoms)
+
+    return df

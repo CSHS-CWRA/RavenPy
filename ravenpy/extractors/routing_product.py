@@ -5,29 +5,10 @@ from pathlib import Path
 from typing import List
 
 import geojson
-import shapely.geometry as sgeo
-from shapefile import Reader
-
-from ravenpy.utilities import gis_import_error_message
-from ravenpy.utilities.vector import (
-    WGS84,
-    archive_sniffer,
-    generic_extract_archive,
-    generic_vector_reproject,
-    geom_transform,
-)
-
-try:
-    import geopandas
-    from osgeo import __version__ as osgeo_version  # noqa
-
-    # from osgeo import ogr, osr
-except (ImportError, ModuleNotFoundError) as e:
-    msg = gis_import_error_message.format(Path(__file__).stem)
-    raise ImportError(msg) from e
-
 import netCDF4 as nc4
 import numpy as np
+import shapely.geometry as sgeo
+from shapefile import Reader
 
 from ravenpy.config.commands import (
     ChannelProfileCommand,
@@ -36,6 +17,24 @@ from ravenpy.config.commands import (
     ReservoirCommand,
     SubBasinsCommand,
 )
+
+# from ravenpy.utilities import gis_import_error_message
+from ravenpy.utilities.vector import (
+    WGS84,
+    archive_sniffer,
+    generic_extract_archive,
+    geom_transform,
+    shapefile_to_dataframe,
+)
+
+# try:
+#     # import geopandas
+#     # from osgeo import __version__ as osgeo_version  # noqa
+#
+#     # from osgeo import ogr, osr
+# except (ImportError, ModuleNotFoundError) as e:
+#     msg = gis_import_error_message.format(Path(__file__).stem)
+#     raise ImportError(msg) from e
 
 
 class RoutingProductShapefileExtractor:
@@ -396,6 +395,9 @@ class RoutingProductGridWeightExtractor:
             self._routing_data = geojson.loads(
                 json.dumps(Reader(routing_file_path.as_posix()).__geo_interface__)
             )
+            self._routing_data_table = shapefile_to_dataframe(
+                routing_file_path.as_posix()
+            )
         else:
             raise ValueError("The routing file must be a shapefile (.shp or .zip).")
 
@@ -453,18 +455,22 @@ class RoutingProductGridWeightExtractor:
             return row
 
         # Remove duplicate HRU_IDs while making sure that we keed relevant DowSubId and Obs_NM values
-        self._routing_data = self._routing_data.groupby(self._routing_id_field).apply(
-            keep_only_valid_downsubid_and_obs_nm
-        )
+        self._routing_data_table = self._routing_data_table.groupby(
+            self._routing_id_field
+        ).apply(keep_only_valid_downsubid_and_obs_nm)
 
         # Make sure those are ints
-        self._routing_data.SubId = self._routing_data.SubId.astype(int)
-        self._routing_data.DowSubId = self._routing_data.DowSubId.astype(int)
+        self._routing_data_table.SubId = self._routing_data_table.SubId.astype(int)
+        self._routing_data_table.DowSubId = self._routing_data_table.DowSubId.astype(
+            int
+        )
 
         if self._gauge_ids:
             # Extract the SubIDs of the gauges that were specified at input
             self._sub_ids = (
-                self._routing_data.loc[self._routing_data.Obs_NM.isin(self._gauge_ids)]
+                self._routing_data_table.loc[
+                    self._routing_data_table.Obs_NM.isin(self._gauge_ids)
+                ]
                 .SubId.unique()
                 .tolist()
             )
@@ -478,7 +484,7 @@ class RoutingProductGridWeightExtractor:
             # starting from the list supplied by the user (either directly, or via their gauge IDs).. We first
             # build a map of downSubID -> subID for efficient lookup
             downsubid_to_subids = defaultdict(set)
-            for _, r in self._routing_data.iterrows():
+            for _, r in self._routing_data_table.iterrows():
                 downsubid_to_subids[r.DowSubId].add(r.SubId)
 
             expanded_sub_ids = set(self._sub_ids)
@@ -497,8 +503,8 @@ class RoutingProductGridWeightExtractor:
 
         # Reduce the initial dataset with the target Sub IDs
         if self._sub_ids:
-            self._routing_data = self._routing_data[
-                self._routing_data.SubId.isin(self._sub_ids)
+            self._routing_data_table = self._routing_data_table[
+                self._routing_data_table.SubId.isin(self._sub_ids)
             ]
 
         # -------------------------------
@@ -513,7 +519,9 @@ class RoutingProductGridWeightExtractor:
 
         grid_weights = []
 
-        for _, row in self._routing_data.iterrows():
+        for geojson_row, (_, table_row) in zip(
+            self._routing_data.features, self._routing_data_table.iterrows()
+        ):
             # FIXME: Remove this
             # poly = ogr.CreateGeometryFromWkt(row.geometry.to_wkt())
 
@@ -522,7 +530,7 @@ class RoutingProductGridWeightExtractor:
             # bounding box around basin (for easy check of proximity)
             # enve_basin = poly.GetEnvelope()
 
-            poly = sgeo.shape(row.geometry)
+            poly = sgeo.shape(geojson_row.geometry)
             area_basin = poly.area
 
             area_all = 0.0
@@ -563,7 +571,7 @@ class RoutingProductGridWeightExtractor:
                     area_all += area_intersect
 
                     if area_intersect > 0:
-                        hru_id = int(row[self._routing_id_field])
+                        hru_id = int(table_row[self._routing_id_field])
                         cell_id = ilat * self._nlon + ilon
                         weight = area_intersect / area_basin
                         row_grid_weights.append((hru_id, cell_id, weight))
@@ -693,26 +701,26 @@ class RoutingProductGridWeightExtractor:
                     # Graham             Python 3.6.3 GDAL 2.2.1 --> lon/lat (Julie)
                     # Ubuntu 18.04.2 LTS Python 3.6.8 GDAL 2.2.3 --> lon/lat (Etienne)
                     #
-                    if osgeo_version < "3.0":
-                        gridcell_edges = [
-                            [
-                                lonh[ilat, ilon],
-                                lath[ilat, ilon],
-                            ],  # for some reason need to switch lat/lon that transform works
-                            [lonh[ilat + 1, ilon], lath[ilat + 1, ilon]],
-                            [lonh[ilat + 1, ilon + 1], lath[ilat + 1, ilon + 1]],
-                            [lonh[ilat, ilon + 1], lath[ilat, ilon + 1]],
-                        ]
-                    else:
-                        gridcell_edges = [
-                            [
-                                lath[ilat, ilon],
-                                lonh[ilat, ilon],
-                            ],  # for some reason lat/lon order works
-                            [lath[ilat + 1, ilon], lonh[ilat + 1, ilon]],
-                            [lath[ilat + 1, ilon + 1], lonh[ilat + 1, ilon + 1]],
-                            [lath[ilat, ilon + 1], lonh[ilat, ilon + 1]],
-                        ]
+                    # if osgeo_version < "3.0":
+                    #     gridcell_edges = [
+                    #         [
+                    #             lonh[ilat, ilon],
+                    #             lath[ilat, ilon],
+                    #         ],  # for some reason need to switch lat/lon that transform works
+                    #         [lonh[ilat + 1, ilon], lath[ilat + 1, ilon]],
+                    #         [lonh[ilat + 1, ilon + 1], lath[ilat + 1, ilon + 1]],
+                    #         [lonh[ilat, ilon + 1], lath[ilat, ilon + 1]],
+                    #     ]
+                    # else:
+                    gridcell_edges = [
+                        [
+                            lath[ilat, ilon],
+                            lonh[ilat, ilon],
+                        ],  # for some reason lat/lon order works
+                        [lath[ilat + 1, ilon], lonh[ilat + 1, ilon]],
+                        [lath[ilat + 1, ilon + 1], lonh[ilat + 1, ilon + 1]],
+                        [lath[ilat, ilon + 1], lonh[ilat, ilon + 1]],
+                    ]
 
                     tmp = self._shape_to_geometry(
                         gridcell_edges, epsg=RoutingProductGridWeightExtractor.CRS_CAEA
