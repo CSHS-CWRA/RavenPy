@@ -32,7 +32,7 @@ class TestVectorUtils:
         reproj_file = tempfile.NamedTemporaryFile(
             prefix="reproj_", suffix=".geojson", delete=False, dir=tmp_path
         ).name
-        vector.generic_vector_reproject(
+        vector.generic_vector_file_transform(
             self.routing_product_shapefile,
             projected=reproj_file,
             target_crs="EPSG:3348",
@@ -54,7 +54,7 @@ class TestVectorUtils:
         reproj_file = tempfile.NamedTemporaryFile(
             prefix="reproj_", suffix=".geojson", delete=False, dir=tmp_path
         ).name
-        vector.generic_vector_reproject(
+        vector.generic_vector_file_transform(
             self.geojson_file, projected=reproj_file, target_crs="EPSG:3348"
         )
 

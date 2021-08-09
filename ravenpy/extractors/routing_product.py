@@ -23,6 +23,7 @@ from ravenpy.utilities.vector import (
     WGS84,
     archive_sniffer,
     generic_extract_archive,
+    geojson_object_transform,
     geom_transform,
     shapefile_to_dataframe,
 )
@@ -359,20 +360,25 @@ class RoutingProductGridWeightExtractor:
         self._input_is_netcdf = True
 
         input_file_path = Path(input_file_path)
-        if {input_file_path.suffix.lower()}.issubset({".nc", ".nc4"}):
+        if input_file_path.suffix.lower() in {".nc", ".nc4"}:
             # Note that we cannot use xarray because it complains about variables and dimensions
             # having the same name.
             self._input_data = nc4.Dataset(input_file_path)
-        elif {input_file_path.suffix.lower()}.issubset({".zip", ".shp"}):
+        elif input_file_path.suffix.lower() in {".zip", ".shp"}:
             # self._input_data = geopandas.read_file(f"zip://{input_file_path}")
             if input_file_path.suffix.lower() == ".zip":
-                input_file_path = next(
-                    iter(archive_sniffer(generic_extract_archive(input_file_path)))
+                input_file_path = Path(
+                    next(
+                        iter(archive_sniffer(generic_extract_archive(input_file_path)))
+                    )
                 )
             if input_file_path.suffix.lower() == ".shp":
                 # self._input_data = geopandas.read_file(input_file_path)
                 self._input_data = geojson.loads(
                     json.dumps(Reader(input_file_path.as_posix()).__geo_interface__)
+                )
+                self._input_data_table = shapefile_to_dataframe(
+                    input_file_path.as_posix()
                 )
                 self._input_is_netcdf = False
         else:
@@ -410,21 +416,9 @@ class RoutingProductGridWeightExtractor:
         # self._routing_data = self._routing_data.to_crs(
         #     epsg=RoutingProductGridWeightExtractor.CRS_CAEA
         # )
-        output = list()
-        for feature in self._routing_data.features:
-            geom = sgeo.shape(feature.geometry)
-            transformed = geom_transform(
-                geom, WGS84, RoutingProductGridWeightExtractor.CRS_CAEA
-            )
-            feature.geometry = sgeo.mapping(transformed)
-            if hasattr(feature, "bbox"):
-                bbox = sgeo.box(*feature.bbox)
-                transformed = geom_transform(
-                    bbox, WGS84, RoutingProductGridWeightExtractor.CRS_CAEA
-                )
-                feature.bbox = sgeo.mapping(transformed)
-            output.append(feature)
-        self._routing_data = geojson.FeatureCollection(output)
+        self._routing_data = geojson_object_transform(
+            self._routing_data, WGS84, RoutingProductGridWeightExtractor.CRS_CAEA
+        )
 
         def keep_only_valid_downsubid_and_obs_nm(g):
             """
@@ -530,7 +524,7 @@ class RoutingProductGridWeightExtractor:
             # bounding box around basin (for easy check of proximity)
             # enve_basin = poly.GetEnvelope()
 
-            poly = sgeo.shape(geojson_row.geometry)
+            poly = sgeo.shape(geojson_row.geometry).buffer(0.0)
             area_basin = poly.area
 
             area_all = 0.0
@@ -562,7 +556,9 @@ class RoutingProductGridWeightExtractor:
 
                     # area_intersect = inter.Area()
 
-                    gridcell: sgeo.shape = grid_cell_geom_gpd_wkt[ilat][ilon]
+                    gridcell = sgeo.shape(grid_cell_geom_gpd_wkt[ilat][ilon]).buffer(
+                        0.0
+                    )
 
                     if not gridcell.envelope.intersects(poly.envelope):
                         continue
@@ -655,14 +651,23 @@ class RoutingProductGridWeightExtractor:
             # self._input_data = self._input_data.to_crs(
             #     epsg=RoutingProductGridWeightExtractor.CRS_CAEA
             # )
-            self._input_data = self._input_data.to_crs(
-                epsg=RoutingProductGridWeightExtractor.CRS_CAEA
-            )
 
             self._nlon = 1  # only for consistency
 
+            # FIXME: This is not counting shapes, this is counting the number of features with geometry fields.
             # number of shapes in model "discretization" shapefile (not routing toolbox shapefile)
-            self._nlat = self._input_data.geometry.count()  # only for consistency
+            # self._nlat = len(self._input_data.geometry.count()  # only for consistency
+
+            # FIXME: This counts the number of shapes but is not needed.
+            # self._nlat = 0
+            # for i in self._input_data.features:
+            #     geom_type = sgeo.shape(i.geometry).geometryType()
+            #     if geom_type == "MultiPolygon":
+            #         self._nlat += len(list(sgeo.shape(i.geometry)))
+            #     else:
+            #         self._nlat += 1
+
+            self._nlat = len(self._input_data.features)
 
     def _compute_grid_cell_polygons(self):
 
@@ -730,8 +735,9 @@ class RoutingProductGridWeightExtractor:
         else:
 
             for ishape in range(self._nlat):
-
-                idx = np.where(self._input_data[self._netcdf_input_field] == ishape)[0]
+                idx = np.where(
+                    self._input_data_table[self._netcdf_input_field] == ishape
+                )[0]
                 if len(idx) == 0:
                     # print(
                     #     "Polygon ID = {} not found in '{}'. Numbering of shapefile attribute '{}' needs to be [0 ... {}-1].".format(
@@ -746,14 +752,17 @@ class RoutingProductGridWeightExtractor:
                     #     )
                     # )
                     raise ValueError("Polygon ID not unique.")
-                idx = idx[0]
-                poly = self._input_data.loc[idx].geometry
+                # idx = idx[0]
+                # poly = self._input_data_table.loc[idx].geometry
                 # grid_cell_geom_gpd_wkt[ishape][0] = ogr.CreateGeometryFromWkt(
                 #     poly.to_wkt()
                 # ).Buffer(
                 #     0.0
                 # )  # We add an empty buffer here to fix problems with bad polygon topology (actually caused by ESRI's historical incompetence)
-                grid_cell_geom_gpd_wkt[ishape][0] = sgeo.shape(poly)
+
+                grid_cell_geom_gpd_wkt[ishape][0] = sgeo.shape(
+                    self._input_data[idx[0]].geometry
+                )
 
         return grid_cell_geom_gpd_wkt
 

@@ -79,20 +79,19 @@ def geom_transform(
 
     Parameters
     ----------
-    geom : Union[GeometryCollection, shape]
+    geom : shapely.geometry.GeometryCollection or shapely.geometry.shape
       Source geometry.
-    source_crs : Union[str, int, CRS]
+    source_crs : int or str or pyproj.CRS
       Projection identifier (proj4) for the source geometry, e.g. '+proj=longlat +datum=WGS84 +no_defs'.
-    target_crs : Union[str, int, CRS]
+    target_crs : int or str or pyproj.CRS
       Projection identifier (proj4) for the target geometry.
     always_xy : bool
-
     **kwargs
       Keyword arguments passed directly to pyproj.Transformer().
 
     Returns
     -------
-    GeometryCollection
+    shapely.geometry.GeometryCollection
       Reprojected geometry.
     """
     try:
@@ -122,19 +121,57 @@ def geom_transform(
         raise Exception(msg)
 
 
-def generic_vector_reproject(
+def geojson_object_transform(
+    collection: geojson.FeatureCollection,
+    source_crs: Union[int, str, CRS],
+    target_crs: Union[int, str, CRS],
+) -> geojson.FeatureCollection:
+    """
+
+    Parameters
+    ----------
+    collection : geojson.FeatureCollection
+    source_crs : int or str or pyproj.CRS
+    target_crs : int or str or pyproj.CRS
+
+    Returns
+    -------
+    geojson.FeatureCollection
+    """
+    output = list()
+    for feature in collection.features:
+        try:
+            geom = shape(feature.geometry)
+            transformed = geom_transform(geom, source_crs, target_crs)
+            feature.geometry = mapping(transformed)
+            if hasattr(feature, "bbox"):
+                bbox = box(*feature.bbox)
+                transformed = geom_transform(bbox, source_crs, target_crs)
+                feature.bbox = mapping(transformed)
+            output.append(feature)
+
+        except Exception as err:
+            LOGGER.exception(
+                "{}: Unable to reproject feature {}".format(err, collection)
+            )
+            raise
+
+    return geojson.FeatureCollection(output)
+
+
+def generic_vector_file_transform(
     vector: Union[str, PathLike],
     projected: Union[str, PathLike],
     source_crs: Union[str, CRS] = WGS84,
     target_crs: Union[str, CRS] = None,
-) -> None:
+) -> Union[str, PathLike]:
     """Reproject all features and layers within a vector file and return a GeoJSON
 
     Parameters
     ----------
-    vector : Union[str, Path]
-      Path to a file containing a valid vector layer (geoJSON or Shapefile).
-    projected: Union[str, Path]
+    vector : str or PathLike
+      Path to a file containing a valid vector layer (GeoJSON or Shapefile).
+    projected: str or PathLike
       Path to a file to be written.
     source_crs : Union[str, dict, CRS]
       Projection identifier (proj4) for the source geometry, Default: '+proj=longlat +datum=WGS84 +no_defs'.
@@ -143,13 +180,11 @@ def generic_vector_reproject(
 
     Returns
     -------
-    None
+    str or PathLike
     """
 
     if target_crs is None:
         raise ValueError("No target CRS is defined.")
-
-    output = {"type": "FeatureCollection", "features": list()}
 
     if Path(vector).suffix in [".tar", ".zip", ".7z"]:
         warnings.warn(
@@ -165,25 +200,13 @@ def generic_vector_reproject(
     elif vector.lower().endswith("json"):
         src = geojson.load(open(vector))
     else:
-        raise FileNotFoundError(f"{vector} is not a valid geoJSON or Shapefile.")
+        raise FileNotFoundError(f"{vector} is not a valid GeoJSON or Shapefile.")
 
     with open(projected, "w") as sink:
-        for feature in src.features:
-            # Perform vector reprojection using Shapely on each feature
-            try:
-                geom = shape(feature.geometry)
-                transformed = geom_transform(geom, source_crs, target_crs)
-                feature.geometry = mapping(transformed)
-                if hasattr(feature, "bbox"):
-                    bbox = box(*feature.bbox)
-                    transformed = geom_transform(bbox, source_crs, target_crs)
-                    feature.bbox = mapping(transformed)
-                output["features"].append(feature)
-            except Exception as err:
-                LOGGER.exception("{}: Unable to reproject feature {}".format(err, src))
-                raise
-
+        output = geojson_object_transform(src, source_crs, target_crs)
         sink.write(f"{json.dumps(output)}")
+
+    return projected
 
 
 def generic_extract_archive(
@@ -251,7 +274,7 @@ def generic_extract_archive(
 
 
 def archive_sniffer(
-    archives: Union[str, PathLike, List[Union[str, PathLike]]],
+    archives: Union[str, PathLike, Iterable[Union[str, PathLike]]],
     working_dir: Optional[Union[str, PathLike]] = None,
     extensions: Optional[Iterable[str]] = None,
 ) -> List[Union[str, PathLike]]:
@@ -307,6 +330,6 @@ def shapefile_to_dataframe(shp_path: Union[str, PathLike, Shapefile]) -> pd.Data
 
     # write into a dataframe
     df = pd.DataFrame(columns=fields, data=records)
-    df = df.assign(geometries=geoms)
+    df = df.assign(geometry=geoms)
 
     return df
