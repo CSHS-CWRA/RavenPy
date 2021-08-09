@@ -2,7 +2,14 @@ from collections import defaultdict
 from pathlib import Path
 
 import click
-import geopandas as gpd
+
+from ravenpy.utilities.vector import (
+    archive_sniffer,
+    generic_extract_archive,
+    shapefile_to_dataframe,
+)
+
+# import geopandas as gpd
 
 
 @click.command()
@@ -22,11 +29,16 @@ def collect_subbasins_upstream_of_gauge(
 
     GAUGE_ID: ID of the target gauge, to be found in the "Obs_NM" column (e.g. "02LE024").
     """
-    if Path(input_file).suffix == ".zip":
-        input_file = f"zip://{input_file}"
-    gdf = gpd.read_file(input_file)
+    input_file = Path(input_file)
 
-    if gauge_id not in gdf.Obs_NM.values:
+    if input_file.suffix == ".zip":
+        input_file = next(iter(archive_sniffer(generic_extract_archive(input_file))))
+    if input_file.suffix.lower() == ".shp":
+        df = shapefile_to_dataframe(input_file.as_posix())
+    else:
+        raise FileNotFoundError()
+
+    if gauge_id not in df.Obs_NM.values:
         raise click.ClickException(f"Cannot find gauge {gauge_id} in `Obs_NM` column")
 
     if not output:
@@ -37,11 +49,11 @@ def collect_subbasins_upstream_of_gauge(
 
     downsubid_to_subids = defaultdict(set)
 
-    for _, r in gdf.iterrows():
+    for _, r in df.iterrows():
         downsubid_to_subids[r.DowSubId].add(r.SubId)
 
     # Starting from the SubId of the gauge, iteratively expand the set of upstream subbasin SubIds
-    upstream_subids = {gdf[gdf.Obs_NM == gauge_id].iloc[0].SubId}
+    upstream_subids = {df[df.Obs_NM == gauge_id].iloc[0].SubId}
     prev = upstream_subids.copy()
     while True:
         curr = set()
@@ -53,10 +65,12 @@ def collect_subbasins_upstream_of_gauge(
         else:
             break
 
-    gdf_upstream = gdf[gdf.SubId.isin(upstream_subids)]
+    df_upstream = df[df.SubId.isin(upstream_subids)]
 
-    gpd.GeoDataFrame(gdf_upstream).to_file(output_file)
+    df_upstream.to_json(output_file)
+
+    # pd.GeoDataFrame(gdf_upstream).to_file(output_file)
 
     click.echo(
-        f"Found {len(gdf_upstream)} upstream subbasins, saved them in {output_file}"
+        f"Found {len(df_upstream)} upstream subbasins, saved them in {output_file}"
     )
