@@ -98,6 +98,7 @@ class TestGenerateGridWeights:
         weight = float(re.search("4 3731 (.+)", output).group(1))
         assert abs(weight - 0.0034512752779023515) < 1e-04
 
+    @pytest.mark.slow
     def test_generate_grid_weights_with_shp_input(self, tmp_path):
         runner = CliRunner()
         output_path = tmp_path / "bla.rvt"
@@ -126,6 +127,7 @@ class TestGenerateGridWeights:
         weight = float(re.search("13 238 (.+)", output).group(1))
         assert abs(weight - 0.5761414847779369) < 1e-04
 
+    @pytest.mark.slow
     def test_generate_grid_weights_with_weight_rescaling(self, tmp_path):
         runner = CliRunner()
         output_path = tmp_path / "bla.rvt"

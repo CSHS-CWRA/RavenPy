@@ -116,11 +116,12 @@ class RoutingProductShapefileExtractor:
         hru_recs = []
 
         # Collect all subbasin_ids for fast lookup in next loop
+        subbasin_ids = set(self._df["SubId"].unique())
         # subbasin_ids = {int(row["SubId"]) for _, row in self._df.iterrows()}
-        subbasin_ids = {int(feat.properties["SubId"]) for feat in self._df.features}
+        # subbasin_ids = {int(feat.properties["SubId"]) for feat in self._df.iterrows()}
 
-        for feat in self._df.features:
-            feat_properties = feat.properties
+        for _, feat_properties in self._df.iterrows():
+            # feat_properties = feat.properties
 
             # HRU
             hru_recs.append(self._extract_hru(feat_properties))
@@ -717,28 +718,30 @@ class RoutingProductGridWeightExtractor:
                     # Ubuntu 18.04.2 LTS Python 3.6.8 GDAL 2.2.3 --> lon/lat (Etienne)
                     #
                     # if osgeo_version < "3.0":
-                    #     gridcell_edges = [
-                    #         [
-                    #             lonh[ilat, ilon],
-                    #             lath[ilat, ilon],
-                    #         ],  # for some reason need to switch lat/lon that transform works
-                    #         [lonh[ilat + 1, ilon], lath[ilat + 1, ilon]],
-                    #         [lonh[ilat + 1, ilon + 1], lath[ilat + 1, ilon + 1]],
-                    #         [lonh[ilat, ilon + 1], lath[ilat, ilon + 1]],
-                    #     ]
-                    # else:
                     gridcell_edges = [
                         [
-                            lath[ilat, ilon],
                             lonh[ilat, ilon],
-                        ],  # for some reason lat/lon order works
-                        [lath[ilat + 1, ilon], lonh[ilat + 1, ilon]],
-                        [lath[ilat + 1, ilon + 1], lonh[ilat + 1, ilon + 1]],
-                        [lath[ilat, ilon + 1], lonh[ilat, ilon + 1]],
+                            lath[ilat, ilon],
+                        ],  # for some reason need to switch lat/lon that transform works
+                        [lonh[ilat + 1, ilon], lath[ilat + 1, ilon]],
+                        [lonh[ilat + 1, ilon + 1], lath[ilat + 1, ilon + 1]],
+                        [lonh[ilat, ilon + 1], lath[ilat, ilon + 1]],
                     ]
+                    # else:
+                    # gridcell_edges = [
+                    #     [
+                    #         lath[ilat, ilon],
+                    #         lonh[ilat, ilon],
+                    #     ],  # for some reason lat/lon order works
+                    #     [lath[ilat + 1, ilon], lonh[ilat + 1, ilon]],
+                    #     [lath[ilat + 1, ilon + 1], lonh[ilat + 1, ilon + 1]],
+                    #     [lath[ilat, ilon + 1], lonh[ilat, ilon + 1]],
+                    # ]
 
                     tmp = self._shape_to_geometry(
-                        gridcell_edges, epsg=RoutingProductGridWeightExtractor.CRS_CAEA
+                        gridcell_edges,
+                        source_crs=WGS84,
+                        target_crs=RoutingProductGridWeightExtractor.CRS_CAEA,
                     )
                     grid_cell_geom_gpd_wkt[ilat][ilon] = tmp
 
@@ -820,7 +823,9 @@ class RoutingProductGridWeightExtractor:
 
         return [lath, lonh]
 
-    def _shape_to_geometry(self, shape_from_jsonfile, epsg=None):
+    def _shape_to_geometry(
+        self, shape_from_jsonfile, source_crs=WGS84, target_crs=None
+    ):
 
         # converts shape read from shapefile to geometry
         # epsg :: integer EPSG code
@@ -838,7 +843,7 @@ class RoutingProductGridWeightExtractor:
 
         poly_shape = sgeo.Polygon(shape_from_jsonfile)
 
-        if epsg:
+        if target_crs:
             # FIXME: Remove ogr/gdal
             # source = osr.SpatialReference()
             # # usual lat/lon projection
@@ -852,9 +857,9 @@ class RoutingProductGridWeightExtractor:
 
             poly_shape = geom_transform(
                 poly_shape,
-                source_crs=RoutingProductGridWeightExtractor.CRS_LLDEG,
-                target_crs=epsg,
-                # always_xy=True,  # This kwarg is VERY important. No touching!
+                source_crs=source_crs,
+                target_crs=target_crs,
+                always_xy=True,  # This kwarg is VERY important. No touching!
             )
 
         return poly_shape
