@@ -4,6 +4,8 @@ import click
 
 from ravenpy.extractors.routing_product import RoutingProductGridWeightExtractor
 
+WGS84 = 4326
+
 
 @click.command()
 @click.argument("input-file", type=click.Path(exists=True))
@@ -74,6 +76,22 @@ from ravenpy.extractors.routing_product import RoutingProductGridWeightExtractor
     type=click.Path(),
     help="Text field that will contain the results as a single :GridWeights Raven command containing the weights.",
 )
+@click.option(
+    "-i",
+    "--input-shape-crs",
+    type=int,
+    default=WGS84,
+    show_default=True,
+    help="Coordinate reference system (EPSG) of the shapefile INPUT_FILE.",
+)
+@click.option(
+    "-r",
+    "--routing-shape-crs",
+    type=int,
+    default=WGS84,
+    show_default=True,
+    help="Coordinate reference system (EPSG) of the shapefile ROUTING_FILE.",
+)
 def generate_grid_weights(
     input_file,
     routing_file,
@@ -85,6 +103,8 @@ def generate_grid_weights(
     sub_ids,
     area_error_threshold,
     output,
+    input_shape_crs,
+    routing_shape_crs,
 ):
     """
     Generate grid weights in various formats.
@@ -119,6 +139,8 @@ def generate_grid_weights(
         gauge_ids,
         sub_ids,
         area_error_threshold,
+        input_shape_crs,
+        routing_shape_crs,
     )
     gw_cmd = extractor.extract()
 

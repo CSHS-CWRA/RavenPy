@@ -106,6 +106,8 @@ class TestGenerateGridWeights:
             get_local_testdata("raven-routing-sample/finalcat_hru_info.zip"),
             "-o",
             output_path,
+            "-i",
+            3162,
         ]
         params = map(str, params)
 
@@ -134,6 +136,8 @@ class TestGenerateGridWeights:
             "0.42",
             "-o",
             output_path,
+            "--input-shape-crs",
+            3162,
         ]
         params = map(str, params)
 

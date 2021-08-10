@@ -62,13 +62,11 @@ class RoutingProductShapefileExtractor:
         routing_product_version=ROUTING_PRODUCT_VERSION,
     ):
         if isinstance(shapefile_path, (Path, str)):
-            shapefile = next(
-                iter(archive_sniffer(generic_extract_archive(shapefile_path)))
+            shapefile = Path(
+                next(iter(archive_sniffer(generic_extract_archive(shapefile_path))))
             )
-            if Path(shapefile).suffix.lower() == ".shp":
-                self._df = geojson.loads(
-                    json.dumps(Reader(shapefile).__geo_interface__)
-                )
+            if shapefile.suffix.lower() == ".shp":
+                self._df = shapefile_to_dataframe(shapefile.as_posix())
             else:
                 raise ValueError("Shapefile not found.")
 
@@ -344,6 +342,8 @@ class RoutingProductGridWeightExtractor:
         gauge_ids=None,
         sub_ids=None,
         area_error_threshold=AREA_ERROR_THRESHOLD,
+        input_shape_crs=WGS84,
+        routing_shape_crs=WGS84,
     ):
         self._dim_names = tuple(dim_names)
         self._var_names = tuple(var_names)
@@ -352,6 +352,8 @@ class RoutingProductGridWeightExtractor:
         self._gauge_ids = gauge_ids or []
         self._sub_ids = sub_ids or []
         self._area_error_threshold = area_error_threshold
+        self._input_data_crs = input_shape_crs
+        self._routing_data_crs = routing_shape_crs
 
         assert not (
             self._gauge_ids and self._sub_ids
@@ -417,7 +419,9 @@ class RoutingProductGridWeightExtractor:
         #     epsg=RoutingProductGridWeightExtractor.CRS_CAEA
         # )
         self._routing_data = geojson_object_transform(
-            self._routing_data, WGS84, RoutingProductGridWeightExtractor.CRS_CAEA
+            self._routing_data,
+            self._routing_data_crs,
+            RoutingProductGridWeightExtractor.CRS_CAEA,
         )
 
         def keep_only_valid_downsubid_and_obs_nm(g):
@@ -652,6 +656,12 @@ class RoutingProductGridWeightExtractor:
             #     epsg=RoutingProductGridWeightExtractor.CRS_CAEA
             # )
 
+            self._input_data = geojson_object_transform(
+                self._input_data,
+                self._input_data_crs,
+                RoutingProductGridWeightExtractor.CRS_CAEA,
+            )
+
             self._nlon = 1  # only for consistency
 
             # FIXME: This is not counting shapes, this is counting the number of features with geometry fields.
@@ -844,7 +854,7 @@ class RoutingProductGridWeightExtractor:
                 poly_shape,
                 source_crs=RoutingProductGridWeightExtractor.CRS_LLDEG,
                 target_crs=epsg,
-                always_xy=False,  # This kwarg is VERY important. No touching!
+                # always_xy=True,  # This kwarg is VERY important. No touching!
             )
 
         return poly_shape

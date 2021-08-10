@@ -125,6 +125,8 @@ def geojson_object_transform(
     collection: geojson.FeatureCollection,
     source_crs: Union[int, str, CRS],
     target_crs: Union[int, str, CRS],
+    always_xy: bool = True,
+    **kwargs,
 ) -> geojson.FeatureCollection:
     """
 
@@ -133,6 +135,9 @@ def geojson_object_transform(
     collection : geojson.FeatureCollection
     source_crs : int or str or pyproj.CRS
     target_crs : int or str or pyproj.CRS
+    always_xy : bool
+    **kwargs
+      Keyword arguments passed directly to pyproj.Transformer().
 
     Returns
     -------
@@ -142,11 +147,15 @@ def geojson_object_transform(
     for feature in collection.features:
         try:
             geom = shape(feature.geometry)
-            transformed = geom_transform(geom, source_crs, target_crs)
+            transformed = geom_transform(
+                geom, source_crs, target_crs, always_xy=always_xy, **kwargs
+            )
             feature.geometry = mapping(transformed)
             if hasattr(feature, "bbox"):
                 bbox = box(*feature.bbox)
-                transformed = geom_transform(bbox, source_crs, target_crs)
+                transformed = geom_transform(
+                    bbox, source_crs, target_crs, always_xy=always_xy, **kwargs
+                )
                 feature.bbox = mapping(transformed)
             output.append(feature)
 
@@ -164,6 +173,7 @@ def generic_vector_file_transform(
     projected: Union[str, PathLike],
     source_crs: Union[str, CRS] = WGS84,
     target_crs: Union[str, CRS] = None,
+    **kwargs,
 ) -> Union[str, PathLike]:
     """Reproject all features and layers within a vector file and return a GeoJSON
 
@@ -203,7 +213,7 @@ def generic_vector_file_transform(
         raise FileNotFoundError(f"{vector} is not a valid GeoJSON or Shapefile.")
 
     with open(projected, "w") as sink:
-        output = geojson_object_transform(src, source_crs, target_crs)
+        output = geojson_object_transform(src, source_crs, target_crs, **kwargs)
         sink.write(f"{json.dumps(output)}")
 
     return projected
