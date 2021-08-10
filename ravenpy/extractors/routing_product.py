@@ -1,14 +1,11 @@
-import json
 import warnings
 from collections import defaultdict
 from pathlib import Path
 from typing import List
 
-import geojson
 import netCDF4 as nc4
 import numpy as np
 import shapely.geometry as sgeo
-from shapefile import Reader
 
 from ravenpy.config.commands import (
     ChannelProfileCommand,
@@ -22,7 +19,6 @@ from ravenpy.config.commands import (
 from ravenpy.utilities.vector import (
     archive_sniffer,
     generic_extract_archive,
-    geojson_object_transform,
     geom_transform,
     shapefile_to_dataframe,
 )
