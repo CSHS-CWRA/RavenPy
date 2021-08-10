@@ -20,7 +20,6 @@ from ravenpy.config.commands import (
 
 # from ravenpy.utilities import gis_import_error_message
 from ravenpy.utilities.vector import (
-    WGS84,
     archive_sniffer,
     generic_extract_archive,
     geojson_object_transform,
@@ -343,8 +342,8 @@ class RoutingProductGridWeightExtractor:
         gauge_ids=None,
         sub_ids=None,
         area_error_threshold=AREA_ERROR_THRESHOLD,
-        input_shape_crs=WGS84,
-        routing_shape_crs=WGS84,
+        input_shape_crs=CRS_LLDEG,
+        routing_shape_crs=CRS_LLDEG,
     ):
         self._dim_names = tuple(dim_names)
         self._var_names = tuple(var_names)
@@ -377,12 +376,10 @@ class RoutingProductGridWeightExtractor:
                 )
             if input_file_path.suffix.lower() == ".shp":
                 # self._input_data = geopandas.read_file(input_file_path)
-                self._input_data = geojson.loads(
-                    json.dumps(Reader(input_file_path.as_posix()).__geo_interface__)
-                )
-                self._input_data_table = shapefile_to_dataframe(
-                    input_file_path.as_posix()
-                )
+                # self._input_data = geojson.loads(
+                #     json.dumps(Reader(input_file_path.as_posix()).__geo_interface__)
+                # )
+                self._input_data = shapefile_to_dataframe(input_file_path.as_posix())
                 self._input_is_netcdf = False
         else:
             raise ValueError(
@@ -401,12 +398,10 @@ class RoutingProductGridWeightExtractor:
             )
         if routing_file_path.suffix.lower() == ".shp":
             # self._input_data = geopandas.read_file(input_file_path)
-            self._routing_data = geojson.loads(
-                json.dumps(Reader(routing_file_path.as_posix()).__geo_interface__)
-            )
-            self._routing_data_table = shapefile_to_dataframe(
-                routing_file_path.as_posix()
-            )
+            # self._routing_data = geojson.loads(
+            #     json.dumps(Reader(routing_file_path.as_posix()).__geo_interface__)
+            # )
+            self._routing_data = shapefile_to_dataframe(routing_file_path.as_posix())
         else:
             raise ValueError("The routing file must be a shapefile (.shp or .zip).")
 
@@ -419,10 +414,16 @@ class RoutingProductGridWeightExtractor:
         # self._routing_data = self._routing_data.to_crs(
         #     epsg=RoutingProductGridWeightExtractor.CRS_CAEA
         # )
-        self._routing_data = geojson_object_transform(
-            self._routing_data,
-            self._routing_data_crs,
-            RoutingProductGridWeightExtractor.CRS_CAEA,
+        # self._routing_data = geojson_object_transform(
+        #     self._routing_data,
+        #     self._routing_data_crs,
+        #     RoutingProductGridWeightExtractor.CRS_CAEA,
+        # )
+
+        self._routing_data.geometry = self._routing_data.geometry.apply(
+            geom_transform,
+            source_crs=self._routing_data_crs,
+            target_crs=RoutingProductGridWeightExtractor.CRS_CAEA,
         )
 
         def keep_only_valid_downsubid_and_obs_nm(g):
@@ -453,23 +454,19 @@ class RoutingProductGridWeightExtractor:
 
             return row
 
-        # Remove duplicate HRU_IDs while making sure that we keed relevant DowSubId and Obs_NM values
-        self._routing_data_table = self._routing_data_table.groupby(
-            self._routing_id_field
-        ).apply(keep_only_valid_downsubid_and_obs_nm)
+        # Remove duplicate HRU_IDs while making sure that we keep relevant DowSubId and Obs_NM values
+        self._routing_data = self._routing_data.groupby(self._routing_id_field).apply(
+            keep_only_valid_downsubid_and_obs_nm
+        )
 
         # Make sure those are ints
-        self._routing_data_table.SubId = self._routing_data_table.SubId.astype(int)
-        self._routing_data_table.DowSubId = self._routing_data_table.DowSubId.astype(
-            int
-        )
+        self._routing_data.SubId = self._routing_data.SubId.astype(int)
+        self._routing_data.DowSubId = self._routing_data.DowSubId.astype(int)
 
         if self._gauge_ids:
             # Extract the SubIDs of the gauges that were specified at input
             self._sub_ids = (
-                self._routing_data_table.loc[
-                    self._routing_data_table.Obs_NM.isin(self._gauge_ids)
-                ]
+                self._routing_data.loc[self._routing_data.Obs_NM.isin(self._gauge_ids)]
                 .SubId.unique()
                 .tolist()
             )
@@ -483,7 +480,8 @@ class RoutingProductGridWeightExtractor:
             # starting from the list supplied by the user (either directly, or via their gauge IDs).. We first
             # build a map of downSubID -> subID for efficient lookup
             downsubid_to_subids = defaultdict(set)
-            for _, r in self._routing_data_table.iterrows():
+
+            for _, r in self._routing_data.iterrows():
                 downsubid_to_subids[r.DowSubId].add(r.SubId)
 
             expanded_sub_ids = set(self._sub_ids)
@@ -502,8 +500,8 @@ class RoutingProductGridWeightExtractor:
 
         # Reduce the initial dataset with the target Sub IDs
         if self._sub_ids:
-            self._routing_data_table = self._routing_data_table[
-                self._routing_data_table.SubId.isin(self._sub_ids)
+            self._routing_data = self._routing_data[
+                self._routing_data.SubId.isin(self._sub_ids)
             ]
 
         # -------------------------------
@@ -516,11 +514,13 @@ class RoutingProductGridWeightExtractor:
         # Derive overlay and calculate weights
         # -------------------------------
 
-        grid_weights = []
+        grid_weights = list()
 
-        for geojson_row, (_, table_row) in zip(
-            self._routing_data.features, self._routing_data_table.iterrows()
-        ):
+        # for geojson_row, (_, table_row) in zip(
+        #     self._routing_data.features, self._routing_data_table.iterrows()
+        # ):
+        for _, row in self._routing_data.iterrows():
+
             # FIXME: Remove this
             # poly = ogr.CreateGeometryFromWkt(row.geometry.to_wkt())
 
@@ -529,13 +529,13 @@ class RoutingProductGridWeightExtractor:
             # bounding box around basin (for easy check of proximity)
             # enve_basin = poly.GetEnvelope()
 
-            poly = sgeo.shape(geojson_row.geometry).buffer(0.0)
+            poly = row.geometry.buffer(0.0)
             area_basin = poly.area
 
             area_all = 0.0
             # ncells = 0
 
-            row_grid_weights = []
+            row_grid_weights = list()
 
             for ilat in range(self._nlat):
                 for ilon in range(self._nlon):
@@ -561,9 +561,7 @@ class RoutingProductGridWeightExtractor:
 
                     # area_intersect = inter.Area()
 
-                    gridcell = sgeo.shape(grid_cell_geom_gpd_wkt[ilat][ilon]).buffer(
-                        0.0
-                    )
+                    gridcell = grid_cell_geom_gpd_wkt[ilat][ilon].buffer(0.0)
 
                     if not gridcell.envelope.intersects(poly.envelope):
                         continue
@@ -572,7 +570,7 @@ class RoutingProductGridWeightExtractor:
                     area_all += area_intersect
 
                     if area_intersect > 0:
-                        hru_id = int(table_row[self._routing_id_field])
+                        hru_id = int(row[self._routing_id_field])
                         cell_id = ilat * self._nlon + ilon
                         weight = area_intersect / area_basin
                         row_grid_weights.append((hru_id, cell_id, weight))
@@ -596,7 +594,7 @@ class RoutingProductGridWeightExtractor:
                 # error = 0.0
 
         return GridWeightsCommand(
-            number_hrus=len(self._routing_data.features),
+            number_hrus=len(self._routing_data),
             number_grid_cells=self._nlon * self._nlat,
             data=tuple(grid_weights),
         )
@@ -657,10 +655,16 @@ class RoutingProductGridWeightExtractor:
             #     epsg=RoutingProductGridWeightExtractor.CRS_CAEA
             # )
 
-            self._input_data = geojson_object_transform(
-                self._input_data,
-                self._input_data_crs,
-                RoutingProductGridWeightExtractor.CRS_CAEA,
+            # self._input_data["geometry"] = geom_transform(
+            #     self._input_data,
+            #     source_crs=self._input_data_crs,
+            #     target_crs=RoutingProductGridWeightExtractor.CRS_CAEA,
+            # )
+
+            self._input_data.geometry = self._input_data.geometry.apply(
+                geom_transform,
+                source_crs=self._input_data_crs,
+                target_crs=RoutingProductGridWeightExtractor.CRS_CAEA,
             )
 
             self._nlon = 1  # only for consistency
@@ -678,9 +682,9 @@ class RoutingProductGridWeightExtractor:
             #     else:
             #         self._nlat += 1
 
-            self._nlat = len(self._input_data.features)
+            self._nlat = len(self._input_data)
 
-    def _compute_grid_cell_polygons(self):
+    def _compute_grid_cell_polygons(self, source_crs=CRS_LLDEG):
 
         grid_cell_geom_gpd_wkt: List[List[List[sgeo.shape]]] = [
             [[] for ilon in range(self._nlon)] for ilat in range(self._nlat)
@@ -738,9 +742,9 @@ class RoutingProductGridWeightExtractor:
                     #     [lath[ilat, ilon + 1], lonh[ilat, ilon + 1]],
                     # ]
 
-                    tmp = self._shape_to_geometry(
+                    tmp = self._gridcells_to_projected_geometry(
                         gridcell_edges,
-                        source_crs=WGS84,
+                        source_crs=source_crs,
                         target_crs=RoutingProductGridWeightExtractor.CRS_CAEA,
                     )
                     grid_cell_geom_gpd_wkt[ilat][ilon] = tmp
@@ -748,9 +752,7 @@ class RoutingProductGridWeightExtractor:
         else:
 
             for ishape in range(self._nlat):
-                idx = np.where(
-                    self._input_data_table[self._netcdf_input_field] == ishape
-                )[0]
+                idx = np.where(self._input_data[self._netcdf_input_field] == ishape)[0]
                 if len(idx) == 0:
                     # print(
                     #     "Polygon ID = {} not found in '{}'. Numbering of shapefile attribute '{}' needs to be [0 ... {}-1].".format(
@@ -823,8 +825,8 @@ class RoutingProductGridWeightExtractor:
 
         return [lath, lonh]
 
-    def _shape_to_geometry(
-        self, shape_from_jsonfile, source_crs=WGS84, target_crs=None
+    def _gridcells_to_projected_geometry(
+        self, shape_from_jsonfile, source_crs=CRS_LLDEG, target_crs=None
     ):
 
         # converts shape read from shapefile to geometry

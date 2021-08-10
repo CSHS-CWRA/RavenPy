@@ -71,7 +71,6 @@ def geom_transform(
     source_crs: Union[str, int, CRS] = WGS84,
     target_crs: Union[str, int, CRS] = None,
     always_xy: bool = True,
-    **kwargs,
 ) -> GeometryCollection:
     """Change the projection of a geometry.
 
@@ -86,8 +85,6 @@ def geom_transform(
     target_crs : int or str or pyproj.CRS
       Projection identifier (proj4) for the target geometry.
     always_xy : bool
-    **kwargs
-      Keyword arguments passed directly to pyproj.Transformer().
 
     Returns
     -------
@@ -109,9 +106,7 @@ def geom_transform(
         else:
             target = target_crs
 
-        transform_func = Transformer.from_crs(
-            source, target, always_xy=always_xy, **kwargs
-        )
+        transform_func = Transformer.from_crs(source, target, always_xy=always_xy)
         reprojected = transform(transform_func.transform, geom)
 
         return reprojected
@@ -126,7 +121,6 @@ def geojson_object_transform(
     source_crs: Union[int, str, CRS],
     target_crs: Union[int, str, CRS],
     always_xy: bool = True,
-    **kwargs,
 ) -> geojson.FeatureCollection:
     """
 
@@ -136,8 +130,6 @@ def geojson_object_transform(
     source_crs : int or str or pyproj.CRS
     target_crs : int or str or pyproj.CRS
     always_xy : bool
-    **kwargs
-      Keyword arguments passed directly to pyproj.Transformer().
 
     Returns
     -------
@@ -148,13 +140,13 @@ def geojson_object_transform(
         try:
             geom = shape(feature.geometry)
             transformed = geom_transform(
-                geom, source_crs, target_crs, always_xy=always_xy, **kwargs
+                geom, source_crs, target_crs, always_xy=always_xy
             )
             feature.geometry = mapping(transformed)
             if hasattr(feature, "bbox"):
                 bbox = box(*feature.bbox)
                 transformed = geom_transform(
-                    bbox, source_crs, target_crs, always_xy=always_xy, **kwargs
+                    bbox, source_crs, target_crs, always_xy=always_xy
                 )
                 feature.bbox = mapping(transformed)
             output.append(feature)
@@ -173,7 +165,6 @@ def generic_vector_file_transform(
     projected: Union[str, PathLike],
     source_crs: Union[str, CRS] = WGS84,
     target_crs: Union[str, CRS] = None,
-    **kwargs,
 ) -> Union[str, PathLike]:
     """Reproject all features and layers within a vector file and return a GeoJSON
 
@@ -213,7 +204,7 @@ def generic_vector_file_transform(
         raise FileNotFoundError(f"{vector} is not a valid GeoJSON or Shapefile.")
 
     with open(projected, "w") as sink:
-        output = geojson_object_transform(src, source_crs, target_crs, **kwargs)
+        output = geojson_object_transform(src, source_crs, target_crs)
         sink.write(f"{json.dumps(output)}")
 
     return projected
@@ -336,7 +327,7 @@ def shapefile_to_dataframe(shp_path: Union[str, PathLike, Shapefile]) -> pd.Data
 
     fields = [x[0] for x in sf.fields][1:]
     records = sf.records()
-    geoms = [s.points for s in sf.shapes()]
+    geoms = [shape(s) for s in sf.shapes()]
 
     # write into a dataframe
     df = pd.DataFrame(columns=fields, data=records)
