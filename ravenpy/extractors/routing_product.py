@@ -355,13 +355,12 @@ class RoutingProductGridWeightExtractor:
             self._gauge_ids and self._sub_ids
         ), "Only one of gauge_ids or sub_ids can be specified"
 
-        self._input_is_netcdf = True
-
         input_file_path = Path(input_file_path)
         if input_file_path.suffix.lower() in {".nc", ".nc4"}:
             # Note that we cannot use xarray because it complains about variables and dimensions
             # having the same name.
             self._input_data = nc4.Dataset(input_file_path)
+            self._input_is_netcdf = True
         elif input_file_path.suffix.lower() in {".zip", ".shp"}:
             # self._input_data = geopandas.read_file(f"zip://{input_file_path}")
             if input_file_path.suffix.lower() == ".zip":
@@ -377,6 +376,15 @@ class RoutingProductGridWeightExtractor:
                 # )
                 self._input_data = shapefile_to_dataframe(input_file_path.as_posix())
                 self._input_is_netcdf = False
+
+                if self._input_data_crs != self.CRS_LLDEG:
+                    self._input_data.geometry = self._input_data.geometry.apply(
+                        geom_transform,
+                        source_crs=self._input_data_crs,
+                        target_crs=self.CRS_LLDEG,
+                    )
+                    self._input_data_crs = self.CRS_LLDEG
+
         else:
             raise ValueError(
                 "The input file must be a shapefile (.shp or .zip) or a NetCDF."
@@ -398,6 +406,14 @@ class RoutingProductGridWeightExtractor:
             #     json.dumps(Reader(routing_file_path.as_posix()).__geo_interface__)
             # )
             self._routing_data = shapefile_to_dataframe(routing_file_path.as_posix())
+
+            if self._routing_data_crs != self.CRS_LLDEG:
+                self._routing_data.geometry = self._routing_data.geometry.apply(
+                    geom_transform,
+                    source_crs=self._routing_data_crs,
+                    target_crs=self.CRS_LLDEG,
+                )
+                self._routing_data_crs = self.CRS_LLDEG
         else:
             raise ValueError("The routing file must be a shapefile (.shp or .zip).")
 
@@ -771,9 +787,7 @@ class RoutingProductGridWeightExtractor:
                 #     0.0
                 # )  # We add an empty buffer here to fix problems with bad polygon topology (actually caused by ESRI's historical incompetence)
 
-                grid_cell_geom_gpd_wkt[ishape][0] = sgeo.shape(
-                    self._input_data[idx[0]].geometry
-                )
+                grid_cell_geom_gpd_wkt[ishape][0] = self._input_data.geometry[idx[0]]
 
         return grid_cell_geom_gpd_wkt
 
