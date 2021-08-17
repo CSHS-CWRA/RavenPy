@@ -3,11 +3,7 @@ from pathlib import Path
 
 import click
 
-from ravenpy.utilities.vector import (
-    archive_sniffer,
-    generic_extract_archive,
-    shapefile_to_dataframe,
-)
+from ravenpy.utilities.vector import archive_sniffer, vector_to_dataframe
 
 # import geopandas as gpd
 
@@ -32,9 +28,9 @@ def collect_subbasins_upstream_of_gauge(
     input_file = Path(input_file)
 
     if input_file.suffix == ".zip":
-        input_file = next(iter(archive_sniffer(generic_extract_archive(input_file))))
+        input_file = next(iter(archive_sniffer(input_file)))
     if input_file.suffix.lower() == ".shp":
-        df = shapefile_to_dataframe(input_file.as_posix())
+        df = vector_to_dataframe(input_file.as_posix())
     else:
         raise FileNotFoundError()
 

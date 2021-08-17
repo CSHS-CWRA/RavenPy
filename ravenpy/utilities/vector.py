@@ -14,9 +14,8 @@ from typing import Iterable, List, Optional, Union
 
 import geojson
 import pandas as pd
+import shapefile
 from pyproj import CRS
-from shapefile import Reader
-from shapefile import Shape as Shapefile
 from shapely.geometry import (
     GeometryCollection,
     MultiPolygon,
@@ -191,13 +190,13 @@ def generic_vector_file_transform(
         warnings.warn(
             f"File {Path(vector).name} should be extracted from archive before reprojection."
         )
-        vector = next(iter(archive_sniffer(generic_extract_archive(vector))))
+        vector = next(iter(archive_sniffer(_generic_extract_archive(vector))))
 
     if isinstance(vector, Path):
         vector = vector.as_posix()
 
     if vector.lower().endswith(".shp"):
-        src = geojson.loads(json.dumps(Reader(vector).__geo_interface__))
+        src = geojson.loads(json.dumps(shapefile.Reader(vector).__geo_interface__))
     elif vector.lower().endswith("json"):
         src = geojson.load(open(vector))
     else:
@@ -210,7 +209,7 @@ def generic_vector_file_transform(
     return projected
 
 
-def generic_extract_archive(
+def _generic_extract_archive(
     resources: Union[str, PathLike, List[Union[bytes, str, PathLike]]],
     output_dir: Optional[Union[str, PathLike]] = None,
 ) -> List[str]:
@@ -300,37 +299,66 @@ def archive_sniffer(
     if not extensions:
         extensions = [".gml", ".shp", ".geojson", ".gpkg", ".json"]
 
-    decompressed_files = generic_extract_archive(archives, output_dir=working_dir)
+    decompressed_files = _generic_extract_archive(archives, output_dir=working_dir)
     for file in decompressed_files:
         if any(ext in Path(file).suffix for ext in extensions):
             potential_files.append(file)
     return potential_files
 
 
-def shapefile_to_dataframe(shp_path: Union[str, PathLike, Shapefile]) -> pd.DataFrame:
+def vector_to_dataframe(
+    shp_path: Union[str, PathLike, shapefile.Shape, geojson.feature.FeatureCollection]
+) -> pd.DataFrame:
     """
     Read a shapefile into a Pandas dataframe with a 'coords' column holding
     the geometry information. This uses the pyshp package.
 
     Parameters
     ----------
-    shp_path : str or os.PathLike or
+    shp_path : str or os.PathLike or shapefile.Shape or geojson.feature.FeatureCollection
 
     Notes
     -----
     Example adapted from https://gist.github.com/aerispaha/f098916ac041c286ae92d037ba5c37ba
     """
-    if isinstance(shp_path, Shapefile):
-        sf = shp_path
-    else:
-        sf = Reader(shp_path)
+    if isinstance(shp_path, (str, PathLike)):
+        shp_path = Path(shp_path)
 
-    fields = [x[0] for x in sf.fields][1:]
-    records = sf.records()
-    geoms = [shape(s) for s in sf.shapes()]
+    try:
+        import geopandas as gpd
 
-    # write into a dataframe
-    df = pd.DataFrame(columns=fields, data=records)
-    df = df.assign(geometry=geoms)
+        df = gpd.read_file(shp_path)
+
+    except ModuleNotFoundError:
+        try:
+            if isinstance(shp_path, shapefile.Shape):
+                sf = shp_path
+            else:
+                sf = shapefile.Reader(shp_path.as_posix())
+
+            fields = [x[0] for x in sf.fields][1:]
+            records = sf.records()
+            geoms = [s for s in sf.shapes()]
+
+            # write into a dataframe
+            df = pd.DataFrame(columns=fields, data=records)
+            df = df.assign(geometry=geoms)
+            df.geometry = df.geometry.apply(shape)
+
+        except shapefile.ShapefileException:
+            try:
+                if shp_path.suffix.lower() in {"json", "geojson"}:
+                    shp_path = geojson.load(open(shp_path))
+
+                if isinstance(shp_path, geojson.feature.FeatureCollection):
+                    df = pd.json_normalize(shp_path.features)
+                    df.geometry = df.df.geometry.apply(shape)
+                else:
+                    raise FileNotFoundError()
+
+            except (FileNotFoundError, UnicodeDecodeError) as e:
+                raise ValueError(
+                    "Unable to find vector in {}".format(str(shp_path))
+                ) from e
 
     return df
