@@ -109,8 +109,6 @@ class RoutingProductShapefileExtractor:
 
         # Collect all subbasin_ids for fast lookup in next loop
         subbasin_ids = set(self._df["SubId"].unique())
-        # subbasin_ids = {int(row["SubId"]) for _, row in self._df.iterrows()}
-        # subbasin_ids = {int(feat.properties["SubId"]) for feat in self._df.iterrows()}
 
         for _, feat_properties in self._df.iterrows():
             # feat_properties = feat.properties
@@ -372,9 +370,8 @@ class RoutingProductGridWeightExtractor:
 
                 if self._input_data_crs != self.CRS_LLDEG:
                     if geopandas:
-                        self._input_data.to_crs(self.CRS_LLDEG)
-
-                    elif self._input_data_crs != self.CRS_LLDEG:
+                        self._input_data.to_crs(self.CRS_LLDEG, inplace=True)
+                    else:
                         self._input_data.geometry = self._input_data.geometry.apply(
                             geom_transform,
                             source_crs=self._input_data_crs,
@@ -400,7 +397,7 @@ class RoutingProductGridWeightExtractor:
 
             if self._routing_data_crs != self.CRS_LLDEG:
                 if geopandas:
-                    self._routing_data.to_crs(epsg=self.CRS_LLDEG)
+                    self._routing_data.to_crs(epsg=self.CRS_LLDEG, inplace=True)
                 else:
                     self._routing_data.geometry = self._routing_data.geometry.apply(
                         geom_transform,
@@ -427,8 +424,8 @@ class RoutingProductGridWeightExtractor:
         # )
 
         if geopandas:
-            self._routing_data = self._routing_data.to_crs(
-                epsg=RoutingProductGridWeightExtractor.CRS_CAEA
+            self._routing_data.to_crs(
+                epsg=RoutingProductGridWeightExtractor.CRS_CAEA, inplace=True
             )
         else:
             self._routing_data.geometry = self._routing_data.geometry.apply(
@@ -655,7 +652,9 @@ class RoutingProductGridWeightExtractor:
             # input data is a shapefile
 
             if geopandas:
-                self._input_data.to_crs(epsg=RoutingProductGridWeightExtractor.CRS_CAEA)
+                self._input_data.to_crs(
+                    epsg=RoutingProductGridWeightExtractor.CRS_CAEA, inplace=True
+                )
             else:
                 self._input_data.geometry = self._input_data.geometry.apply(
                     geom_transform,
@@ -753,15 +752,19 @@ class RoutingProductGridWeightExtractor:
                     raise ValueError("Polygon ID not found.")
                 if len(idx) > 1:
                     raise ValueError("Polygon ID not unique.")
-                # idx = idx[0]
-                # poly = self._input_data_table.loc[idx].geometry
-                # grid_cell_geom_gpd_wkt[ishape][0] = ogr.CreateGeometryFromWkt(
-                #     poly.to_wkt()
-                # ).Buffer(
-                #     0.0
-                # )  # We add an empty buffer here to fix problems with bad polygon topology (actually caused by ESRI's historical incompetence)
 
-                grid_cell_geom_gpd_wkt[ishape][0] = self._input_data.geometry[idx[0]]
+                if osgeo_version:
+                    idx = idx[0]
+                    poly = self._input_data.loc[idx].geometry
+                    grid_cell_geom_gpd_wkt[ishape][0] = ogr.CreateGeometryFromWkt(
+                        poly.to_wkt()
+                    ).Buffer(
+                        0.0
+                    )  # We add an empty buffer here to fix problems with bad polygon topology (actually caused by ESRI's historical incompetence)
+                else:
+                    grid_cell_geom_gpd_wkt[ishape][0] = self._input_data.geometry[
+                        idx[0]
+                    ]
 
         return grid_cell_geom_gpd_wkt
 
@@ -826,6 +829,7 @@ class RoutingProductGridWeightExtractor:
 
             poly_shape = ogr.Geometry(ogr.wkbPolygon)
             poly_shape.AddGeometry(ring_shape)
+
         else:
             poly_shape = sgeo.Polygon(shape_from_jsonfile)
 
