@@ -6,6 +6,7 @@ from typing import List
 import netCDF4 as nc4
 import numpy as np
 import shapely.geometry as sgeo
+from shapely.strtree import STRtree
 
 from ravenpy.config.commands import (
     ChannelProfileCommand,
@@ -539,10 +540,10 @@ class RoutingProductGridWeightExtractor:
             area_all = 0.0
             row_grid_weights = list()
 
-            for ilat in range(self._nlat):
-                for ilon in range(self._nlon):
+            if osgeo_version:
+                for ilat in range(self._nlat):
+                    for ilon in range(self._nlon):
 
-                    if osgeo_version:
                         # bounding box around grid-cell (for easy check of proximity)
                         enve_gridcell = grid_cell_geom_gpd_wkt[ilat][ilon].GetEnvelope()
 
@@ -560,20 +561,44 @@ class RoutingProductGridWeightExtractor:
                         )
 
                         area_intersect = inter.Area()
-                    else:
-                        gridcell = grid_cell_geom_gpd_wkt[ilat][ilon].buffer(0.0)
 
-                        if not gridcell.envelope.intersects(poly.envelope):
-                            continue
-                        area_intersect = gridcell.intersection(poly).area
+                        # else:
+                        #
+                        #     gridcell = grid_cell_geom_gpd_wkt[ilat][ilon].buffer(0.0)
+                        #
+                        #     if not gridcell.envelope.intersects(poly.envelope):
+                        #         continue
+                        #
+                        #     area_intersect = gridcell.intersection(poly).area
+                        #
+                        #     area_all += area_intersect
 
+                        if area_intersect > 0:
+                            hru_id = int(row[self._routing_id_field])
+                            cell_id = ilat * self._nlon + ilon
+                            weight = area_intersect / area_basin
+                            row_grid_weights.append((hru_id, cell_id, weight))
+            else:
+
+                # leverage shapely STRtree for optimized performance
+                enve_gridcells = STRtree(sum(grid_cell_geom_gpd_wkt, []))
+
+                # find all overlapping geometries
+                intersecting_cells = enve_gridcells.query(poly)
+
+                for enve_gridcell in intersecting_cells:
+                    area_intersect = enve_gridcell.intersection(poly).area
                     area_all += area_intersect
 
+                    # meed to traverse the nested loops to find the ilon and ilat
                     if area_intersect > 0:
-                        hru_id = int(row[self._routing_id_field])
-                        cell_id = ilat * self._nlon + ilon
-                        weight = area_intersect / area_basin
-                        row_grid_weights.append((hru_id, cell_id, weight))
+                        for ilat in range(self._nlat):
+                            for ilon in range(self._nlon):
+                                if grid_cell_geom_gpd_wkt[ilat][ilon] == enve_gridcell:
+                                    hru_id = int(row[self._routing_id_field])
+                                    cell_id = ilat * self._nlon + ilon
+                                    weight = area_intersect / area_basin
+                                    row_grid_weights.append((hru_id, cell_id, weight))
 
             # mismatch between area of subbasin (routing product) and sum of all contributions of grid cells (model output)
             error = (area_basin - area_all) / area_basin
@@ -855,7 +880,9 @@ class RoutingProductGridWeightExtractor:
         return poly_shape
 
     @staticmethod
-    def _check_proximity_of_envelops(gridcell_envelop, shape_envelop):
+    def _check_proximity_of_envelops(
+        gridcell_envelop, shape_envelop, using_gdal: bool = True
+    ):
 
         # checks if two envelops are in proximity (intersect)
 
@@ -863,13 +890,20 @@ class RoutingProductGridWeightExtractor:
         # maxX  --> env[1]
         # minY  --> env[2]
         # maxY  --> env[3]
-
-        return (
-            gridcell_envelop[0] <= shape_envelop[1]
-            and gridcell_envelop[1] >= shape_envelop[0]
-            and gridcell_envelop[2] <= shape_envelop[3]
-            and gridcell_envelop[3] >= shape_envelop[2]
-        )
+        if using_gdal:
+            return (
+                gridcell_envelop[0] <= shape_envelop[1]
+                and gridcell_envelop[1] >= shape_envelop[0]
+                and gridcell_envelop[2] <= shape_envelop[3]
+                and gridcell_envelop[3] >= shape_envelop[2]
+            )
+        else:
+            return (
+                gridcell_envelop[0] <= shape_envelop[2]
+                and gridcell_envelop[1] >= shape_envelop[0]
+                and gridcell_envelop[2] <= shape_envelop[3]
+                and gridcell_envelop[3] >= shape_envelop[2]
+            )
 
     @staticmethod
     def _check_gridcell_in_proximity_of_shape(gridcell_edges, shape_from_jsonfile):
