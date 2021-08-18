@@ -60,11 +60,11 @@ jobs:
     - name: Install tox
       run: pip install tox
     - name: Test with tox (GDAL)
-      if: ${{ matrix.uses-gdal }}
-      run: env GDAL_VERSION="$(gdal-config --version)" tox -e ${{ matrix.tox-env }}-gdal
+      if: ${{ matrix.uses-gdal }} == True
+      run: env GDAL_VERSION="$(gdal-config --version)" tox -e ${{ matrix.tox-env }}-gdal-slow
     - name: Test with tox (no GDAL)
       if: ${{ matrix.uses-gdal }} == False
-      run: tox -e ${{ matrix.tox-env }}
+      run: tox -e ${{ matrix.tox-env }}-slow
 
   conda:
     name: Conda
