@@ -371,11 +371,15 @@ class RoutingProductGridWeightExtractor:
                 self._input_is_netcdf = False
 
                 if self._input_data_crs != self.CRS_LLDEG:
-                    self._input_data.geometry = self._input_data.geometry.apply(
-                        geom_transform,
-                        source_crs=self._input_data_crs,
-                        target_crs=self.CRS_LLDEG,
-                    )
+                    if geopandas:
+                        self._input_data.to_crs(self.CRS_LLDEG)
+
+                    elif self._input_data_crs != self.CRS_LLDEG:
+                        self._input_data.geometry = self._input_data.geometry.apply(
+                            geom_transform,
+                            source_crs=self._input_data_crs,
+                            target_crs=self.CRS_LLDEG,
+                        )
                     self._input_data_crs = self.CRS_LLDEG
 
         else:
@@ -395,7 +399,7 @@ class RoutingProductGridWeightExtractor:
             self._routing_data = vector_to_dataframe(routing_file_path.as_posix())
 
             if self._routing_data_crs != self.CRS_LLDEG:
-                if isinstance(self._routing_data, geopandas.GeoDataFrame):
+                if geopandas:
                     self._routing_data.to_crs(epsg=self.CRS_LLDEG)
                 else:
                     self._routing_data.geometry = self._routing_data.geometry.apply(
@@ -422,7 +426,7 @@ class RoutingProductGridWeightExtractor:
         #     RoutingProductGridWeightExtractor.CRS_CAEA,
         # )
 
-        if isinstance(self._routing_data, geopandas.GeoDataFrame):
+        if geopandas:
             self._routing_data = self._routing_data.to_crs(
                 epsg=RoutingProductGridWeightExtractor.CRS_CAEA
             )
@@ -536,8 +540,6 @@ class RoutingProductGridWeightExtractor:
                 enve_basin = poly.envelope
 
             area_all = 0.0
-            # ncells = 0
-
             row_grid_weights = list()
 
             for ilat in range(self._nlat):
@@ -652,17 +654,7 @@ class RoutingProductGridWeightExtractor:
 
             # input data is a shapefile
 
-            # self._input_data = self._input_data.to_crs(
-            #     epsg=RoutingProductGridWeightExtractor.CRS_CAEA
-            # )
-
-            # self._input_data["geometry"] = geom_transform(
-            #     self._input_data,
-            #     source_crs=self._input_data_crs,
-            #     target_crs=RoutingProductGridWeightExtractor.CRS_CAEA,
-            # )
-
-            if isinstance(self._input_data, geopandas.GeoDataFrame):
+            if geopandas:
                 self._input_data.to_crs(epsg=RoutingProductGridWeightExtractor.CRS_CAEA)
             else:
                 self._input_data.geometry = self._input_data.geometry.apply(
@@ -758,18 +750,8 @@ class RoutingProductGridWeightExtractor:
             for ishape in range(self._nlat):
                 idx = np.where(self._input_data[self._netcdf_input_field] == ishape)[0]
                 if len(idx) == 0:
-                    # print(
-                    #     "Polygon ID = {} not found in '{}'. Numbering of shapefile attribute '{}' needs to be [0 ... {}-1].".format(
-                    #         ishape, input_file, key_colname_model, nshapes
-                    #     )
-                    # )
                     raise ValueError("Polygon ID not found.")
                 if len(idx) > 1:
-                    # print(
-                    #     "Polygon ID = {} found multiple times in '{}' but needs to be unique. Numbering of shapefile attribute '{}' needs to be [0 ... {}-1].".format(
-                    #         ishape, input_file, key_colname_model, nshapes
-                    #     )
-                    # )
                     raise ValueError("Polygon ID not unique.")
                 # idx = idx[0]
                 # poly = self._input_data_table.loc[idx].geometry
@@ -829,11 +811,10 @@ class RoutingProductGridWeightExtractor:
 
     @staticmethod
     def _gridcells_to_projected_geometry(
-        shape_from_jsonfile, source_crs=CRS_LLDEG, target_crs=None
+        shape_from_jsonfile, source_crs: int = CRS_LLDEG, target_crs: int = None
     ):
 
         # converts shape read from shapefile to geometry
-        # epsg :: integer EPSG code
 
         if osgeo_version:
             ring_shape = ogr.Geometry(ogr.wkbLinearRing)
