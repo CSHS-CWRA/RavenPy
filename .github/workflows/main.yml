@@ -53,17 +53,17 @@ jobs:
         sudo apt-get update
         sudo apt-get install libnetcdf-dev
     - name: Install GDAL
-      if: matrix.uses-gdal == 'True'
+      if: ${{ matrix.uses-gdal }} == True
       run: |
         sudo apt-get update
         sudo apt-get install libgdal-dev
     - name: Install tox
       run: pip install tox
     - name: Test with tox (GDAL)
-      if: matrix.uses-gdal == 'True'
+      if: ${{ matrix.uses-gdal }} == True
       run: env GDAL_VERSION="$(gdal-config --version)" tox -e ${{ matrix.tox-env }}-gdal-slow
     - name: Test with tox (no GDAL)
-      if: matrix.uses-gdal == 'False'
+      if: ${{ matrix.uses-gdal }} == False
       run: tox -e ${{ matrix.tox-env }}-slow
 
   conda:
