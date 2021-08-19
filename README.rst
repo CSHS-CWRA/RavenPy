@@ -13,7 +13,7 @@ RavenPy
     :alt: Build status
 
 .. image:: https://readthedocs.org/projects/ravenpy/badge/?version=latest
-    :target: https://ravenpy.readthedocs.io/en/latest/?badge=latest
+    :target: https://ravenpy.readthedocs.io/en/latest/?version=latest
     :alt: Documentation Status
 
 A Python wrapper to setup and run the hydrologic modelling framework Raven_.
