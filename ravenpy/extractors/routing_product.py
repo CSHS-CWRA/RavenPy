@@ -568,7 +568,7 @@ class RoutingProductGridWeightExtractor:
                             row_grid_weights.append((hru_id, cell_id, weight))
             else:
 
-                # leverage shapely STRtree for optimized performance
+                # leverage shapely STRtree for optimized performance (requires GEOS)
                 enve_gridcells = STRtree(sum(grid_cell_geom_gpd_wkt, []))
 
                 # find all overlapping geometries

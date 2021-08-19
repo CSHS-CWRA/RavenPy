@@ -48,10 +48,10 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install NetCDF
+    - name: Install NetCDF and GEOS
       run: |
         sudo apt-get update
-        sudo apt-get install libnetcdf-dev
+        sudo apt-get install libnetcdf-dev libgeos-dev
     - name: Install GDAL
       if: ${{ matrix.uses-gdal }}
       run: |
