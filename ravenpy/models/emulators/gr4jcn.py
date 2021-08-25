@@ -423,3 +423,7 @@ class GR4JCN_OST(Ostrich, GR4JCN):
         EndDDSAlg
         """
         self.config.ost.set_tmpl(ost_tmpl)
+
+    def derived_parameters(self):
+        """Derived parameters are computed by Ostrich."""
+        pass
