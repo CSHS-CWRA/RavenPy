@@ -2,6 +2,12 @@
 History
 =======
 
+
+0.7.1
+-----
+* Update cruft
+* Subclass `derived_parameters` in Ostrich emulators to avoid having to pass `params`.
+
 0.7.0
 -----
 
