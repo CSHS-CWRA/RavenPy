@@ -159,40 +159,13 @@ Initial Release
 In order to prepare an initial release on conda-forge, we *strongly* suggest consulting the following links:
  * https://conda-forge.org/docs/maintainer/adding_pkgs.html
  * https://github.com/conda-forge/staged-recipes
+ 
+ Before updating the main conda-forge recipe, we echo the conda-forge documenattion and *strongly* suggest performing the following checks:
+ * Ensure that dependencies and dependency versions correspond with those of the tagged version, with open or pinned versions for the `host` requirements.
+ * If possible, configure tests within the conda-forge build CI (e.g. `imports: ravenpy`, `commands: pytest ravenpy`)
 
 Subsequent releases
 ^^^^^^^^^^^^^^^^^^^
 
 If the conda-forge feedstock recipe is built from PyPI, then when a new release is published on PyPI, `regro-cf-autotick-bot` will open Pull Requests automatically on the conda-forge feedstock.
 It is up to the conda-forge feedstock maintainers to verify that the package is building properly before merging the Pull Request to the main branch.
-
-Before updating the main conda-forge recipe, we *strongly* suggest performing the following checks:
- * Ensure that dependencies and dependency versions correspond with those of the tagged version, with open or pinned versions for the `host` requirements.
- * If possible, configure tests within the conda-forge build CI (e.g. `imports: ravenpy`, `commands: pytest ravenpy`)
-
-Building sources for wide support with `manylinux` image
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. warning::
-    This section is for building source files that link to or provide links to C/C++ dependencies.
-    It is not necessary to perform the following when building pure Python packages.
-
-In order to do ensure best compatibility across architectures, we suggest building wheels using the `PyPA`'s `manylinux`
-docker images (at time of writing, we endorse using `manylinux_2_24_x86_64`).
-
-With `docker` installed and running, begin by pulling the image::
-
-    $ sudo docker pull quay.io/pypa/manylinux_2_24_x86_64
-
-From the ravenpy source folder we can enter into the docker container, providing access to the `ravenpy` source files by linking them to the running image::
-
-    $ sudo docker run --rm -ti -v $(pwd):/ravenpy -w /ravenpy quay.io/pypa/manylinux_2_24_x86_64 bash
-
-Finally, to build the wheel, we run it against the provided Python3.7 binary::
-
-    $ /opt/python/cp37-cp37m/bin/python setup.py sdist bdist_wheel
-
-This will then place two files in `ravenpy/dist/` ("ravenpy-1.2.3-py3-none-any.whl" and "ravenpy-1.2.3.tar.gz").
-We can now leave our docker container (`$ exit`) and continue with uploading the files to PyPI::
-
-    $ twine upload dist/*
