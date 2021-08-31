@@ -2,6 +2,9 @@
 History
 =======
 
+0.7.3
+-----
+* Pinned xclim below v0.29.0
 
 0.7.2
 -----
