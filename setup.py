@@ -39,7 +39,7 @@ requirements = [
     "statsmodels",
     "xarray>=0.18",
     "cf-xarray",
-    "xclim>=0.26.1",
+    "xclim>=0.26.1,<0.29.0",
     "wheel",
     "xskillscore",
 ]
