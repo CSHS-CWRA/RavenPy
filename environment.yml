@@ -10,9 +10,6 @@ dependencies:
   - click
   - climpred >=2.1
   - dask
-#  - fiona
-#  - gdal >=3.0.0
-#  - geopandas >=0.9
   - haversine
   - holoviews
   - hvplot
@@ -32,6 +29,6 @@ dependencies:
   - shapely
   - statsmodels
   - xarray >=0.18
-  - xclim >=0.28.1
+  - xclim >=0.28.1,<0.29.0
   - xskillscore
   - wheel

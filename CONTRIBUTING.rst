@@ -115,8 +115,8 @@ To run a subset of tests::
 $ pytest tests.test_ravenpy
 
 
-Deploying
----------
+Versioning/Tagging
+------------------
 
 A reminder for the maintainers on how to deploy.
 Make sure all your changes are committed (including an entry in HISTORY.rst).
@@ -126,4 +126,46 @@ $ bumpversion patch # possible: major / minor / patch
 $ git push
 $ git push --tags
 
-Travis will then deploy to PyPI if tests pass.
+Packaging
+---------
+
+When a new version has been minted (features have been successfully integrated test coverage and stability is adequate),
+maintainers should update the pip-installable package (wheel and source release) on PyPI as well as the binary on conda-forge.
+
+The simple approach
+~~~~~~~~~~~~~~~~~~~
+
+The simplest approach to packaging for general support (pip wheels) requires the following packages installed:
+ * setuptools
+ * wheel
+ * twine
+
+From the command line on your Linux distribution, simply run the following from the clone's main dev branch::
+
+    # To build the packages (sources and wheel)
+    $ python setup.py sdist bdist_wheel
+
+    # To upload to PyPI
+    $ twine upload dist/*
+
+The new version based off of the version checked out will now be available via `pip` (`$ pip install ravenpy`).
+
+Releasing on conda-forge
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Initial Release
+^^^^^^^^^^^^^^^
+
+In order to prepare an initial release on conda-forge, we *strongly* suggest consulting the following links:
+ * https://conda-forge.org/docs/maintainer/adding_pkgs.html
+ * https://github.com/conda-forge/staged-recipes
+
+Before updating the main conda-forge recipe, we echo the conda-forge documentation and *strongly* suggest performing the following checks:
+ * Ensure that dependencies and dependency versions correspond with those of the tagged version, with open or pinned versions for the `host` requirements.
+ * If possible, configure tests within the conda-forge build CI (e.g. `imports: ravenpy`, `commands: pytest ravenpy`)
+
+Subsequent releases
+^^^^^^^^^^^^^^^^^^^
+
+If the conda-forge feedstock recipe is built from PyPI, then when a new release is published on PyPI, `regro-cf-autotick-bot` will open Pull Requests automatically on the conda-forge feedstock.
+It is up to the conda-forge feedstock maintainers to verify that the package is building properly before merging the Pull Request to the main branch.

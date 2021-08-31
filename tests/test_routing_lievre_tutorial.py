@@ -139,9 +139,7 @@ class TestRouting:
         {channel_profiles}
         """
 
-        total_area_in_m2 = sum(
-            [hru.area * 1000 * 1000 for hru in model.config.rvh.hrus]
-        )
+        total_area_in_m2 = sum(hru.area * 1000 * 1000 for hru in model.config.rvh.hrus)
         model.config.rvp.avg_annual_runoff = get_average_annual_runoff(
             observation_data_nc_path, total_area_in_m2, obs_var="Q"
         )
@@ -379,9 +377,7 @@ class TestRouting:
         {channel_profiles}
         """
 
-        total_area_in_m2 = sum(
-            [hru.area * 1000 * 1000 for hru in model.config.rvh.hrus]
-        )
+        total_area_in_m2 = sum(hru.area * 1000 * 1000 for hru in model.config.rvh.hrus)
         model.config.rvp.avg_annual_runoff = get_average_annual_runoff(
             observation_data_nc_path, total_area_in_m2, obs_var="Q"
         )

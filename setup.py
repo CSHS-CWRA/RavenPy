@@ -43,7 +43,7 @@ requirements = [
     "statsmodels",
     "xarray>=0.18",
     "cf-xarray",
-    "xclim>=0.26.1",
+    "xclim>=0.26.1,<0.29.0",
     "wheel",
     "xskillscore",
 ]
@@ -235,7 +235,7 @@ setup(
         docs=docs_requirements,
     ),
     url="https://github.com/CSHS-CWRA/ravenpy",
-    version="0.7.0",
+    version="0.7.2",
     zip_safe=False,
     cmdclass={
         "install": create_external_deps_install_class(install),
