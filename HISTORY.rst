@@ -2,6 +2,10 @@
 History
 =======
 
+0.7.4
+-----
+* Pinned climpred below v2.1.6
+
 0.7.3
 -----
 * Pinned xclim below v0.29.0
