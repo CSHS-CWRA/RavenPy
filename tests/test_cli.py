@@ -1,6 +1,7 @@
 import re
 
 import netCDF4 as nc4
+import pytest
 from click.testing import CliRunner
 
 from ravenpy.cli import aggregate_forcings_to_hrus, generate_grid_weights
@@ -67,6 +68,7 @@ class TestGenerateGridWeights:
         weight = float(re.search("1 52 (.+)", output).group(1))
         assert abs(weight - 0.2610203097218425) < 1e-04
 
+    @pytest.mark.slow
     def test_generate_grid_weights_with_nc_input_and_1d_coords(self, tmp_path):
         runner = CliRunner()
         output_path = tmp_path / "bla.rvt"
@@ -96,6 +98,7 @@ class TestGenerateGridWeights:
         weight = float(re.search("4 3731 (.+)", output).group(1))
         assert abs(weight - 0.0034512752779023515) < 1e-04
 
+    @pytest.mark.slow
     def test_generate_grid_weights_with_shp_input(self, tmp_path):
         runner = CliRunner()
         output_path = tmp_path / "bla.rvt"
@@ -104,6 +107,8 @@ class TestGenerateGridWeights:
             get_local_testdata("raven-routing-sample/finalcat_hru_info.zip"),
             "-o",
             output_path,
+            "-i",
+            3162,
         ]
         params = map(str, params)
 
@@ -122,6 +127,7 @@ class TestGenerateGridWeights:
         weight = float(re.search("13 238 (.+)", output).group(1))
         assert abs(weight - 0.5761414847779369) < 1e-04
 
+    @pytest.mark.slow
     def test_generate_grid_weights_with_weight_rescaling(self, tmp_path):
         runner = CliRunner()
         output_path = tmp_path / "bla.rvt"
@@ -132,6 +138,8 @@ class TestGenerateGridWeights:
             "0.42",
             "-o",
             output_path,
+            "--input-shape-crs",
+            3162,
         ]
         params = map(str, params)
 

@@ -3,18 +3,10 @@ from collections import defaultdict
 from pathlib import Path
 from typing import List
 
-from ravenpy.utilities import gis_import_error_message
-
-try:
-    import geopandas
-    from osgeo import __version__ as osgeo_version  # noqa
-    from osgeo import ogr, osr  # noqa
-except (ImportError, ModuleNotFoundError) as e:
-    msg = gis_import_error_message.format(Path(__file__).stem)
-    raise ImportError(msg) from e
-
 import netCDF4 as nc4
 import numpy as np
+import shapely.geometry as sgeo
+from shapely.strtree import STRtree
 
 from ravenpy.config.commands import (
     ChannelProfileCommand,
@@ -23,6 +15,22 @@ from ravenpy.config.commands import (
     ReservoirCommand,
     SubBasinsCommand,
 )
+from ravenpy.utilities.vector import (
+    archive_sniffer,
+    geom_transform,
+    vector_to_dataframe,
+)
+
+try:
+    import geopandas
+    from osgeo import __version__ as osgeo_version  # noqa
+    from osgeo import ogr, osr
+except (ImportError, ModuleNotFoundError):
+    warnings.warn(
+        "GIS libraries not found. Continuing without. Expect slower CRS transformation speeds."
+    )
+    geopandas = None
+    osgeo_version = None
 
 
 class RoutingProductShapefileExtractor:
@@ -49,11 +57,17 @@ class RoutingProductShapefileExtractor:
         routing_product_version=ROUTING_PRODUCT_VERSION,
     ):
         if isinstance(shapefile_path, (Path, str)):
-            if Path(shapefile_path).suffix == ".zip":
-                shapefile_path = f"zip://{shapefile_path}"
-            self._df = geopandas.read_file(shapefile_path)
-        elif isinstance(shapefile_path, geopandas.GeoDataFrame):
-            self._df = shapefile_path
+            shapefile = Path(next(iter(archive_sniffer(shapefile_path))))
+            if shapefile.suffix.lower() == ".shp":
+                self._df = vector_to_dataframe(shapefile.as_posix())
+            else:
+                raise ValueError("Shapefile not found.")
+
+        #     if Path(shapefile_path).suffix == ".zip":
+        #         shapefile_path = f"zip://{shapefile_path}"
+        #     self._df = geopandas.read_file(shapefile_path)
+        # elif isinstance(shapefile_path, geopandas.GeoDataFrame):
+        #     self._df = shapefile_path
 
         self.hru_aspect_convention = hru_aspect_convention
         self.routing_product_version = routing_product_version
@@ -95,14 +109,15 @@ class RoutingProductShapefileExtractor:
         hru_recs = []
 
         # Collect all subbasin_ids for fast lookup in next loop
-        subbasin_ids = {int(row["SubId"]) for _, row in self._df.iterrows()}
+        subbasin_ids = set(self._df["SubId"].unique())
 
-        for _, row in self._df.iterrows():
+        for _, feat_properties in self._df.iterrows():
+            # feat_properties = feat.properties
 
             # HRU
-            hru_recs.append(self._extract_hru(row))
+            hru_recs.append(self._extract_hru(feat_properties))
 
-            subbasin_id = int(row["SubId"])
+            subbasin_id = int(feat_properties["SubId"])
 
             is_lake = False
 
@@ -110,21 +125,21 @@ class RoutingProductShapefileExtractor:
                 "IsLake" if self.routing_product_version == "1.0" else "Lake_Cat"
             )
 
-            if row[lake_field] > 0 and row["HRU_IsLake"] > 0:
+            if feat_properties[lake_field] > 0 and feat_properties["HRU_IsLake"] > 0:
                 lake_sb_ids.append(subbasin_id)
-                reservoir_cmds.append(self._extract_reservoir(row))
+                reservoir_cmds.append(self._extract_reservoir(feat_properties))
                 is_lake = True
-            elif row[lake_field] > 0:
+            elif feat_properties[lake_field] > 0:
                 continue
             else:
                 land_sb_ids.append(subbasin_id)
 
             # Subbasin
-            sb = self._extract_subbasin(row, is_lake, subbasin_ids)
+            sb = self._extract_subbasin(feat_properties, is_lake, subbasin_ids)
             subbasin_recs.append(sb)
 
             # ChannelProfile
-            channel_profile_cmds.append(self._extract_channel_profile(row))
+            channel_profile_cmds.append(self._extract_channel_profile(feat_properties))
 
         return dict(
             subbasins=subbasin_recs,
@@ -319,6 +334,8 @@ class RoutingProductGridWeightExtractor:
         gauge_ids=None,
         sub_ids=None,
         area_error_threshold=AREA_ERROR_THRESHOLD,
+        input_shape_crs=CRS_LLDEG,
+        routing_shape_crs=CRS_LLDEG,
     ):
         self._dim_names = tuple(dim_names)
         self._var_names = tuple(var_names)
@@ -327,33 +344,70 @@ class RoutingProductGridWeightExtractor:
         self._gauge_ids = gauge_ids or []
         self._sub_ids = sub_ids or []
         self._area_error_threshold = area_error_threshold
+        self._input_data_crs = input_shape_crs
+        self._routing_data_crs = routing_shape_crs
 
         assert not (
             self._gauge_ids and self._sub_ids
         ), "Only one of gauge_ids or sub_ids can be specified"
 
-        self._input_is_netcdf = True
-
         input_file_path = Path(input_file_path)
-        if input_file_path.suffix == ".nc":
+        if input_file_path.suffix.lower() in {".nc", ".nc4"}:
             # Note that we cannot use xarray because it complains about variables and dimensions
             # having the same name.
             self._input_data = nc4.Dataset(input_file_path)
-        elif input_file_path.suffix == ".zip":
-            self._input_data = geopandas.read_file(f"zip://{input_file_path}")
-            self._input_is_netcdf = False
-        elif input_file_path.suffix == ".shp":
-            self._input_data = geopandas.read_file(input_file_path)
-            self._input_is_netcdf = False
+            self._input_is_netcdf = True
+        elif input_file_path.suffix.lower() in {".zip", ".shp"}:
+            # self._input_data = geopandas.read_file(f"zip://{input_file_path}")
+            if input_file_path.suffix.lower() == ".zip":
+                input_file_path = Path(next(iter(archive_sniffer(input_file_path))))
+            if input_file_path.suffix.lower() == ".shp":
+                # self._input_data = geopandas.read_file(input_file_path)
+                # self._input_data = geojson.loads(
+                #     json.dumps(Reader(input_file_path.as_posix()).__geo_interface__)
+                # )
+                self._input_data = vector_to_dataframe(input_file_path.as_posix())
+                self._input_is_netcdf = False
+
+                if self._input_data_crs != self.CRS_LLDEG:
+                    if geopandas:
+                        self._input_data.to_crs(self.CRS_LLDEG, inplace=True)
+                    else:
+                        self._input_data.geometry = self._input_data.geometry.apply(
+                            geom_transform,
+                            source_crs=self._input_data_crs,
+                            target_crs=self.CRS_LLDEG,
+                        )
+                    self._input_data_crs = self.CRS_LLDEG
+
         else:
             raise ValueError(
-                "The input file must be a shapefile (.shp or .zip) or NetCDF"
+                "The input file must be a shapefile (.shp or .zip) or a NetCDF."
             )
 
         routing_file_path = Path(routing_file_path)
-        if routing_file_path.suffix == ".zip":
-            routing_file_path = f"zip://{routing_file_path}"
-        self._routing_data = geopandas.read_file(routing_file_path)
+        # if routing_file_path.suffix == ".zip":
+        #     routing_file_path = f"zip://{routing_file_path}"
+        # self._routing_data = geopandas.read_file(routing_file_path)
+
+        if routing_file_path.suffix.lower() == ".zip":
+            # self._input_data = geopandas.read_file(f"zip://{input_file_path}")
+            routing_file_path = Path(next(iter(archive_sniffer(routing_file_path))))
+        if routing_file_path.suffix.lower() == ".shp":
+            self._routing_data = vector_to_dataframe(routing_file_path.as_posix())
+
+            if self._routing_data_crs != self.CRS_LLDEG:
+                if geopandas:
+                    self._routing_data.to_crs(epsg=self.CRS_LLDEG, inplace=True)
+                else:
+                    self._routing_data.geometry = self._routing_data.geometry.apply(
+                        geom_transform,
+                        source_crs=self._routing_data_crs,
+                        target_crs=self.CRS_LLDEG,
+                    )
+                self._routing_data_crs = self.CRS_LLDEG
+        else:
+            raise ValueError("The routing file must be a shapefile (.shp or .zip).")
 
     def extract(self) -> GridWeightsCommand:
         self._prepare_input_data()
@@ -361,9 +415,25 @@ class RoutingProductGridWeightExtractor:
         # Read routing data
 
         # WGS 84 / North Pole LAEA Canada
-        self._routing_data = self._routing_data.to_crs(
-            epsg=RoutingProductGridWeightExtractor.CRS_CAEA
-        )
+        # self._routing_data = self._routing_data.to_crs(
+        #     epsg=RoutingProductGridWeightExtractor.CRS_CAEA
+        # )
+        # self._routing_data = geojson_object_transform(
+        #     self._routing_data,
+        #     self._routing_data_crs,
+        #     RoutingProductGridWeightExtractor.CRS_CAEA,
+        # )
+
+        if geopandas:
+            self._routing_data.to_crs(
+                epsg=RoutingProductGridWeightExtractor.CRS_CAEA, inplace=True
+            )
+        else:
+            self._routing_data.geometry = self._routing_data.geometry.apply(
+                geom_transform,
+                source_crs=self._routing_data_crs,
+                target_crs=RoutingProductGridWeightExtractor.CRS_CAEA,
+            )
 
         def keep_only_valid_downsubid_and_obs_nm(g):
             """
@@ -393,7 +463,7 @@ class RoutingProductGridWeightExtractor:
 
             return row
 
-        # Remove duplicate HRU_IDs while making sure that we keed relevant DowSubId and Obs_NM values
+        # Remove duplicate HRU_IDs while making sure that we keep relevant DowSubId and Obs_NM values
         self._routing_data = self._routing_data.groupby(self._routing_id_field).apply(
             keep_only_valid_downsubid_and_obs_nm
         )
@@ -419,6 +489,7 @@ class RoutingProductGridWeightExtractor:
             # starting from the list supplied by the user (either directly, or via their gauge IDs).. We first
             # build a map of downSubID -> subID for efficient lookup
             downsubid_to_subids = defaultdict(set)
+
             for _, r in self._routing_data.iterrows():
                 downsubid_to_subids[r.DowSubId].add(r.SubId)
 
@@ -452,50 +523,70 @@ class RoutingProductGridWeightExtractor:
         # Derive overlay and calculate weights
         # -------------------------------
 
-        grid_weights = []
+        grid_weights = list()
 
         for _, row in self._routing_data.iterrows():
 
-            poly = ogr.CreateGeometryFromWkt(row.geometry.to_wkt())
-
-            area_basin = poly.Area()
-            # bounding box around basin (for easy check of proximity)
-            enve_basin = poly.GetEnvelope()
+            if osgeo_version:
+                poly = ogr.CreateGeometryFromWkt(row.geometry.to_wkt())
+                area_basin = poly.Area()
+            else:
+                poly = row.geometry.buffer(0.0)
+                area_basin = poly.area
 
             area_all = 0.0
-            # ncells = 0
+            row_grid_weights = list()
 
-            row_grid_weights = []
+            if osgeo_version:
+                enve_basin = poly.GetEnvelope()
+                for ilat in range(self._nlat):
+                    for ilon in range(self._nlon):
 
-            for ilat in range(self._nlat):
-                for ilon in range(self._nlon):
+                        # bounding box around grid-cell (for easy check of proximity)
+                        enve_gridcell = grid_cell_geom_gpd_wkt[ilat][ilon].GetEnvelope()
 
-                    # bounding box around grid-cell (for easy check of proximity)
-                    enve_gridcell = grid_cell_geom_gpd_wkt[ilat][ilon].GetEnvelope()
+                        grid_is_close = self._check_proximity_of_envelops(
+                            enve_gridcell, enve_basin
+                        )
 
-                    grid_is_close = self._check_proximity_of_envelops(
-                        enve_gridcell, enve_basin
-                    )
+                        # this check decreases runtime DRASTICALLY (from ~6h to ~1min)
+                        if not grid_is_close:
+                            continue
 
-                    # this check decreases runtime DRASTICALLY (from ~6h to ~1min)
-                    if not grid_is_close:
-                        continue
+                        # "fake" buffer to avoid invalid polygons and weirdos dumped by ArcGIS
+                        inter = grid_cell_geom_gpd_wkt[ilat][ilon].Intersection(
+                            poly.Buffer(0.0)
+                        )
 
-                    # grid_cell_area = grid_cell_geom_gpd_wkt[ilat][ilon].Area()
+                        area_intersect = inter.Area()
 
-                    # "fake" buffer to avoid invalid polygons and weirdos dumped by ArcGIS
-                    inter = grid_cell_geom_gpd_wkt[ilat][ilon].Intersection(
-                        poly.Buffer(0.0)
-                    )
+                        if area_intersect > 0:
+                            area_all += area_intersect
+                            hru_id = int(row[self._routing_id_field])
+                            cell_id = ilat * self._nlon + ilon
+                            weight = area_intersect / area_basin
+                            row_grid_weights.append((hru_id, cell_id, weight))
+            else:
 
-                    area_intersect = inter.Area()
+                # leverage shapely STRtree for optimized performance (requires GEOS)
+                enve_gridcells = STRtree(sum(grid_cell_geom_gpd_wkt, []))
 
-                    area_all += area_intersect
+                # find all overlapping geometries
+                intersecting_cells = enve_gridcells.query(poly)
 
+                for enve_gridcell in intersecting_cells:
+                    area_intersect = enve_gridcell.intersection(poly).area
+
+                    # meed to traverse the nested loops to find the ilon and ilat
                     if area_intersect > 0:
+                        area_all += area_intersect
                         hru_id = int(row[self._routing_id_field])
-                        cell_id = ilat * self._nlon + ilon
                         weight = area_intersect / area_basin
+                        cell_id = list()
+                        for ilat in range(self._nlat):
+                            for ilon in range(self._nlon):
+                                if grid_cell_geom_gpd_wkt[ilat][ilon] == enve_gridcell:
+                                    cell_id = ilat * self._nlon + ilon
                         row_grid_weights.append((hru_id, cell_id, weight))
 
             # mismatch between area of subbasin (routing product) and sum of all contributions of grid cells (model output)
@@ -574,19 +665,38 @@ class RoutingProductGridWeightExtractor:
 
             # input data is a shapefile
 
-            self._input_data = self._input_data.to_crs(
-                epsg=RoutingProductGridWeightExtractor.CRS_CAEA
-            )
+            if geopandas:
+                self._input_data.to_crs(
+                    epsg=RoutingProductGridWeightExtractor.CRS_CAEA, inplace=True
+                )
+            else:
+                self._input_data.geometry = self._input_data.geometry.apply(
+                    geom_transform,
+                    source_crs=self._input_data_crs,
+                    target_crs=RoutingProductGridWeightExtractor.CRS_CAEA,
+                )
 
             self._nlon = 1  # only for consistency
 
+            # FIXME: This is not counting shapes, this is counting the number of features with geometry fields.
             # number of shapes in model "discretization" shapefile (not routing toolbox shapefile)
-            self._nlat = self._input_data.geometry.count()  # only for consistency
+            # self._nlat = len(self._input_data.geometry.count()  # only for consistency
 
-    def _compute_grid_cell_polygons(self):
+            # FIXME: This counts the number of shapes but is not needed.
+            # self._nlat = 0
+            # for i in self._input_data.features:
+            #     geom_type = sgeo.shape(i.geometry).geometryType()
+            #     if geom_type == "MultiPolygon":
+            #         self._nlat += len(list(sgeo.shape(i.geometry)))
+            #     else:
+            #         self._nlat += 1
 
-        grid_cell_geom_gpd_wkt: List[List[List[ogr.Geometry]]] = [
-            [[] for ilon in range(self._nlon)] for ilat in range(self._nlat)
+            self._nlat = len(self._input_data)
+
+    def _compute_grid_cell_polygons(self, source_crs=CRS_LLDEG):
+
+        grid_cell_geom_gpd_wkt: List[List[List[sgeo.shape]]] = [
+            [[] for _ in range(self._nlon)] for _ in range(self._nlat)
         ]
 
         if self._input_is_netcdf:
@@ -620,7 +730,7 @@ class RoutingProductGridWeightExtractor:
                     # Graham             Python 3.6.3 GDAL 2.2.1 --> lon/lat (Julie)
                     # Ubuntu 18.04.2 LTS Python 3.6.8 GDAL 2.2.3 --> lon/lat (Etienne)
                     #
-                    if osgeo_version < "3.0":
+                    if not osgeo_version or (osgeo_version < "3.0"):
                         gridcell_edges = [
                             [
                                 lonh[ilat, ilon],
@@ -641,37 +751,34 @@ class RoutingProductGridWeightExtractor:
                             [lath[ilat, ilon + 1], lonh[ilat, ilon + 1]],
                         ]
 
-                    tmp = self._shape_to_geometry(
-                        gridcell_edges, epsg=RoutingProductGridWeightExtractor.CRS_CAEA
+                    tmp = self._gridcells_to_projected_geometry(
+                        gridcell_edges,
+                        source_crs=source_crs,
+                        target_crs=RoutingProductGridWeightExtractor.CRS_CAEA,
                     )
                     grid_cell_geom_gpd_wkt[ilat][ilon] = tmp
 
         else:
 
             for ishape in range(self._nlat):
-
                 idx = np.where(self._input_data[self._netcdf_input_field] == ishape)[0]
                 if len(idx) == 0:
-                    # print(
-                    #     "Polygon ID = {} not found in '{}'. Numbering of shapefile attribute '{}' needs to be [0 ... {}-1].".format(
-                    #         ishape, input_file, key_colname_model, nshapes
-                    #     )
-                    # )
                     raise ValueError("Polygon ID not found.")
                 if len(idx) > 1:
-                    # print(
-                    #     "Polygon ID = {} found multiple times in '{}' but needs to be unique. Numbering of shapefile attribute '{}' needs to be [0 ... {}-1].".format(
-                    #         ishape, input_file, key_colname_model, nshapes
-                    #     )
-                    # )
                     raise ValueError("Polygon ID not unique.")
-                idx = idx[0]
-                poly = self._input_data.loc[idx].geometry
-                grid_cell_geom_gpd_wkt[ishape][0] = ogr.CreateGeometryFromWkt(
-                    poly.to_wkt()
-                ).Buffer(
-                    0.0
-                )  # We add an empty buffer here to fix problems with bad polygon topology (actually caused by ESRI's historical incompetence)
+
+                if osgeo_version:
+                    idx = idx[0]
+                    poly = self._input_data.loc[idx].geometry
+                    grid_cell_geom_gpd_wkt[ishape][0] = ogr.CreateGeometryFromWkt(
+                        poly.to_wkt()
+                    ).Buffer(
+                        0.0
+                    )  # We add an empty buffer here to fix problems with bad polygon topology (actually caused by ESRI's historical incompetence)
+                else:
+                    grid_cell_geom_gpd_wkt[ishape][0] = self._input_data.geometry[
+                        idx[0]
+                    ]
 
         return grid_cell_geom_gpd_wkt
 
@@ -719,35 +826,50 @@ class RoutingProductGridWeightExtractor:
 
         return [lath, lonh]
 
-    def _shape_to_geometry(self, shape_from_jsonfile, epsg=None):
+    @staticmethod
+    def _gridcells_to_projected_geometry(
+        shape_from_jsonfile, source_crs: int = CRS_LLDEG, target_crs: int = None
+    ):
 
         # converts shape read from shapefile to geometry
-        # epsg :: integer EPSG code
 
-        ring_shape = ogr.Geometry(ogr.wkbLinearRing)
+        if osgeo_version:
+            ring_shape = ogr.Geometry(ogr.wkbLinearRing)
 
-        for ii in shape_from_jsonfile:
-            ring_shape.AddPoint_2D(ii[0], ii[1])
-        # close ring
-        ring_shape.AddPoint_2D(shape_from_jsonfile[0][0], shape_from_jsonfile[0][1])
+            for ii in shape_from_jsonfile:
+                ring_shape.AddPoint_2D(ii[0], ii[1])
+            # close ring
+            ring_shape.AddPoint_2D(shape_from_jsonfile[0][0], shape_from_jsonfile[0][1])
 
-        poly_shape = ogr.Geometry(ogr.wkbPolygon)
-        poly_shape.AddGeometry(ring_shape)
+            poly_shape = ogr.Geometry(ogr.wkbPolygon)
+            poly_shape.AddGeometry(ring_shape)
 
-        if epsg:
-            source = osr.SpatialReference()
-            # usual lat/lon projection
-            source.ImportFromEPSG(RoutingProductGridWeightExtractor.CRS_LLDEG)
+        else:
+            poly_shape = sgeo.Polygon(shape_from_jsonfile)
 
-            target = osr.SpatialReference()
-            target.ImportFromEPSG(epsg)  # any projection to convert to
+        if target_crs:
+            if osgeo_version:
+                source = osr.SpatialReference()
+                # usual lat/lon projection
+                source.ImportFromEPSG(source_crs)
 
-            transform = osr.CoordinateTransformation(source, target)
-            poly_shape.Transform(transform)
+                target = osr.SpatialReference()
+                target.ImportFromEPSG(target_crs)  # any projection to convert to
+
+                transform = osr.CoordinateTransformation(source, target)
+                poly_shape.Transform(transform)
+            else:
+                poly_shape = geom_transform(
+                    poly_shape,
+                    source_crs=source_crs,
+                    target_crs=target_crs,
+                    always_xy=True,  # This kwarg is VERY important. No touching!
+                )
 
         return poly_shape
 
-    def _check_proximity_of_envelops(self, gridcell_envelop, shape_envelop):
+    @staticmethod
+    def _check_proximity_of_envelops(gridcell_envelop, shape_envelop):
 
         # checks if two envelops are in proximity (intersect)
 
@@ -755,7 +877,6 @@ class RoutingProductGridWeightExtractor:
         # maxX  --> env[1]
         # minY  --> env[2]
         # maxY  --> env[3]
-
         return (
             gridcell_envelop[0] <= shape_envelop[1]
             and gridcell_envelop[1] >= shape_envelop[0]
@@ -763,9 +884,8 @@ class RoutingProductGridWeightExtractor:
             and gridcell_envelop[3] >= shape_envelop[2]
         )
 
-    def _check_gridcell_in_proximity_of_shape(
-        self, gridcell_edges, shape_from_jsonfile
-    ):
+    @staticmethod
+    def _check_gridcell_in_proximity_of_shape(gridcell_edges, shape_from_jsonfile):
 
         # checks if a grid cell falls into the bounding box of the shape
         # does not mean it intersects but it is a quick and cheap way to

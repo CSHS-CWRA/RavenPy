@@ -4,8 +4,6 @@ This module contains functions creating web-friendly interactive graphics using 
 The graphic outputs are meant to be displayed in a notebook.
 In a console, use `hvplot.show(fig)` to render the figures.
 """
-from pathlib import Path
-
 import numpy as np
 import xarray as xr
 from matplotlib import pyplot as plt

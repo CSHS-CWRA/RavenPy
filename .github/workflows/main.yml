@@ -24,7 +24,7 @@ jobs:
         run: tox -e ${{ matrix.tox-env }}
 
   pip:
-    name: Pip with Python${{ matrix.python-version }}
+    name: Pip with Python${{ matrix.python-version }} (GDAL=${{ matrix.uses-gdal }})
     needs: black
     runs-on: ubuntu-latest
     strategy:
@@ -32,24 +32,39 @@ jobs:
         include:
           - tox-env: py37
             python-version: 3.7
+            uses-gdal: true
           - tox-env: py38
             python-version: 3.8
+            uses-gdal: true
+          - tox-env: py38
+            python-version: 3.8
+            uses-gdal: false
           - tox-env: py39
             python-version: 3.9
+            uses-gdal: true
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
+    - name: Install NetCDF and GEOS
+      run: |
+        sudo apt-get update
+        sudo apt-get install libnetcdf-dev libgeos-dev
     - name: Install GDAL
+      if: ${{ matrix.uses-gdal }}
       run: |
         sudo apt-get update
         sudo apt-get install libgdal-dev
     - name: Install tox
       run: pip install tox
-    - name: Test with tox
-      run: env GDAL_VERSION="$(gdal-config --version)" tox -e ${{ matrix.tox-env }}
+    - name: Test with tox (GDAL)
+      if: ${{ matrix.uses-gdal }}
+      run: env GDAL_VERSION="$(gdal-config --version)" tox -e ${{ matrix.tox-env }}-gdal-slow
+    - name: Test with tox (no GDAL)
+      if: ${{ !matrix.uses-gdal }}
+      run: tox -e ${{ matrix.tox-env }}-slow
 
   conda:
     name: Conda
