@@ -1,4 +1,5 @@
 import xarray as xr
+import xclim.sdba
 import xclim.sdba as sdba
 from xclim.core.calendar import convert_calendar
 
@@ -24,25 +25,40 @@ class TestBiasCorrect:
             get_local_testdata("nrcan/NRCAN_1971-1972_subset.nc")
         )
         ds_his_sub = convert_calendar(ds_his_sub, "noleap")
-
-        group_month_nowindow = sdba.utils.Grouper("time.month")
-        Adj = sdba.DetrendedQuantileMapping(
-            nquantiles=50, kind="+", group=group_month_nowindow
-        )
+        group = xclim.sdba.Grouper("time.month")
         # Train the model to find the correction factors
-        Adj.train(ds_ref_sub["pr"], ds_his_sub["pr"])
+        Adj = sdba.DetrendedQuantileMapping.train(
+            ref=ds_ref_sub["pr"],
+            hist=ds_his_sub["pr"],
+            nquantiles=50,
+            kind="+",
+            group=group,
+        )
 
         # Apply the factors to the future data to bias-correct
         Adj.adjust(ds_fut_sub["pr"], interp="linear")
 
         # Repeat for temperature max
-        Adj.train(ds_ref_sub["tasmax"], ds_his_sub["tasmax"])
+        Adj = sdba.DetrendedQuantileMapping.train(
+            ref=ds_ref_sub["tasmax"],
+            hist=ds_his_sub["tasmax"],
+            nquantiles=50,
+            kind="+",
+            group=group,
+        )
 
         # Apply the factors to the future data to bias-correct
         Adj.adjust(ds_fut_sub["tasmax"], interp="linear")
 
         # Repeat for tasmin
-        Adj.train(ds_ref_sub["tasmin"], ds_his_sub["tasmin"])
+        Adj = sdba.DetrendedQuantileMapping.train(
+            ref=ds_ref_sub["tasmin"],
+            hist=ds_his_sub["tasmin"],
+            nquantiles=50,
+            kind="+",
+            group=group,
+        )
+
         Adj.adjust(ds_fut_sub["tasmin"], interp="linear")
 
         # TODO: Add numerical check
