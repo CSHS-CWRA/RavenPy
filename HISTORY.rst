@@ -2,6 +2,11 @@
 History
 =======
 
+
+0.7.5
+-----
+Update test so that it works with xclim 0.29.
+
 0.7.4
 -----
 * Pinned climpred below v2.1.6
