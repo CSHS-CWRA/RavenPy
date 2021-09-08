@@ -26,7 +26,7 @@ setup_requirements = ["pip", "wheel"]
 
 requirements = [
     "click",
-    "climpred>=2.1,<2.1.6",
+    "climpred>=2.1",
     "dask",
     "haversine",
     "matplotlib",
