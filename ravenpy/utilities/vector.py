@@ -14,6 +14,7 @@ from typing import Iterable, List, Optional, Union
 
 import geojson
 import pandas as pd
+import pygml
 import shapefile
 from pyproj import CRS
 from shapely.geometry import (
@@ -170,7 +171,7 @@ def generic_vector_file_transform(
     Parameters
     ----------
     vector : str or PathLike
-      Path to a file containing a valid vector layer (GeoJSON or Shapefile).
+      Path to a file containing a valid vector layer (GeoJSON, Shapefile, or vector GML).
     projected: str or PathLike
       Path to a file to be written.
     source_crs : Union[str, dict, CRS]
@@ -199,6 +200,10 @@ def generic_vector_file_transform(
         src = geojson.loads(json.dumps(shapefile.Reader(vector).__geo_interface__))
     elif vector.lower().endswith("json"):
         src = geojson.load(open(vector))
+    elif vector.lower().endswith("gml"):
+        src = geojson.load(
+            json.dumps(pygml.parse(open(vector, "rb").read()).__geo_interface__)
+        )
     else:
         raise FileNotFoundError(f"{vector} is not a valid GeoJSON or Shapefile.")
 
