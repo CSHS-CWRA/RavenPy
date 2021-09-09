@@ -4,6 +4,6 @@ geopandas>=0.9.0
 lxml
 owslib
 pyproj>=3.0.0
-rasterio
+rasterio<= 1.2.6
 rioxarray
 shapely
