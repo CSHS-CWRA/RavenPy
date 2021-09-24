@@ -35,6 +35,7 @@ requirements = [
     "numpy",
     "pandas",
     "pydantic",
+    "pygml",
     "pyproj",
     "pyshp",
     "requests",

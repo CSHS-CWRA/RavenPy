@@ -21,6 +21,7 @@ dependencies:
   - pip
   - pre-commit
   - pydantic
+  - pygml
   - pyproj>=3
   - requests
   - scikit-learn ==0.24.2

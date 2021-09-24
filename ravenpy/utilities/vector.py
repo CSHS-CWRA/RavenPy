@@ -201,6 +201,7 @@ def generic_vector_file_transform(
     elif vector.lower().endswith("json"):
         src = geojson.load(open(vector))
     elif vector.lower().endswith("gml"):
+        raise NotImplementedError()
         src = geojson.load(
             json.dumps(pygml.parse(open(vector, "rb").read()).__geo_interface__)
         )
