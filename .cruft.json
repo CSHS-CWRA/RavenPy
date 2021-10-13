@@ -1,6 +1,6 @@
 {
   "template": "https://github.com/Ouranosinc/cookiecutter-pypackage",
-  "commit": "e53402ed1ea63ef255052e4892e1d611db8f315d",
+  "commit": "d5583e5bd45c5f5453a3362381f47036086e4de9",
   "context": {
     "cookiecutter": {
       "full_name": "David Huard",
@@ -12,6 +12,7 @@
       "pypi_username": "CSHS-CWRA",
       "version": "0.7.5",
       "use_pytest": "y",
+      "use_black": "y",
       "use_pypi_deployment_with_travis": "y",
       "add_pyup_badge": "y",
       "make_docs": "y",
