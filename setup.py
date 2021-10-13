@@ -31,7 +31,6 @@ requirements = [
     "haversine",
     "matplotlib",
     "netCDF4",
-    "numpy",
     "pandas",
     "pydantic",
     "requests",

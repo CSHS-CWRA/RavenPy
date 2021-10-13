@@ -2,6 +2,7 @@ affine
 fiona
 geopandas>=0.9.0
 lxml
+numpy
 owslib
 pyproj>=3.0.0
 rasterio<= 1.2.6
