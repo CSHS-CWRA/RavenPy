@@ -2,10 +2,13 @@
 History
 =======
 
+0.7.6 (Unreleased)
+------------------
+* Automate release pipeline to PyPI using GitHub CI actions
 
 0.7.5
 -----
-Update test so that it works with xclim 0.29.
+* Update test so that it works with xclim 0.29.
 
 0.7.4
 -----

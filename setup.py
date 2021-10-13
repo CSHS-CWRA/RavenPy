@@ -36,6 +36,7 @@ requirements = [
     "pydantic",
     "requests",
     "scipy",
+    "setuptools<58.0.0",
     "statsmodels",
     "xarray>=0.18",
     "cf-xarray",
