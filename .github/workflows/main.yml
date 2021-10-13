@@ -87,7 +87,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install libgdal-dev
       - name: Build a binary wheel and a source tarball
-        run: python setup.py sdist bdist_wheel
+        run: env GDAL_VERSION="$(gdal-config --version)" python setup.py sdist bdist_wheel
       - name: Publish distribution 📦 to Test PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
