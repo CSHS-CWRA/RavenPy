@@ -81,6 +81,14 @@ If desired, the core functions of `RavenPy` can be installed without its GIS fun
 This implementation of RavenPy is much lighter on dependencies and can be installed easily with `pip`,
 without the need for `conda` or `virtualenv`.
 
+The system libraries required for RavenPy in this approach are a C++ compiler and the NetCDF4 development libraries.
+To install them on Debian/Ubuntu-based systems, run:
+
+.. code-block:: console
+  $ sudo apt-get install gcc libnetcdf-dev
+
+Then, from your python environment, run:
+
 .. code-block:: console
 
   $ pip install ravenpy
