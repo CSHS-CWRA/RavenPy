@@ -85,6 +85,7 @@ The system libraries required for RavenPy in this approach are a C++ compiler an
 To install them on Debian/Ubuntu-based systems, run:
 
 .. code-block:: console
+
   $ sudo apt-get install gcc libnetcdf-dev
 
 Then, from your python environment, run:
