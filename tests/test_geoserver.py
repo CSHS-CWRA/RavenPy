@@ -207,7 +207,7 @@ class TestWCS:
                     assert src.width == 650
                     assert src.height == 744
                     np.testing.assert_array_equal(
-                        src.lnglat(), (-106.64193764047552, 52.1564202369763)
+                        src.lnglat(), (-106.641957, 52.156555)
                     )
                     data = src.read()
                     assert np.unique(data).tolist() == [1, 5, 8, 10, 14, 15, 16, 17, 18]
