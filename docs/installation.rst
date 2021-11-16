@@ -38,7 +38,7 @@ downloaded, compiled, and made available on your `PATH`. There are currently two
 
    (ravenpy-env) $ pip install ravenpy --verbose --install-option="--with-binaries"
 
-.. warning:: console
+.. warning::
 
   It is imperative that the Python dependencies are pre-installed before running the `--with-binaries`
   option; This install step will fail otherwise.
