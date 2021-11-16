@@ -10,11 +10,11 @@ Full Installation (Anaconda)
 For many reasons, we recommend using a `Conda environment
 <https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_
 to work with the full RavenPy installation. This implementation is able to manage
-the harder to install GIS dependencies, like `GDAL`.
+the harder to install GIS dependencies, like `GDAL`. Begin by creating an environment:
 
 .. code-block:: console
 
-   $ conda create -c conda-forge --name ravenpy-env click clisops matplotlib pip proj statsmodels xarray xclim xskillscore
+   $ conda create -c conda-forge --name ravenpy-env
 
 The newly created environment must then be activated:
 
@@ -22,44 +22,55 @@ The newly created environment must then be activated:
 
    $ conda activate ravenpy-env
 
-To install the remaining Python dependencies, run:
+RavenPy can then be installed directly via its `conda-forge` package by running:
 
 .. code-block:: console
 
-   (ravenpy-env) $ pip install ravenpy[gis]
+   (ravenpy-env) $ conda install -c conda-forge ravenpy
 
-`RavenPy` relies on the `Raven <http://raven.uwaterloo.ca>`_ and `OSTRICH
-<http://www.civil.uwaterloo.ca/envmodelling/Ostrich.html>`_ binaries, which can be conveniently
-downloaded, compiled, and made available on your `PATH`. There are currently two options available:
+This approach also installs both the `Raven <http://raven.uwaterloo.ca>`_ and `OSTRICH
+<http://www.civil.uwaterloo.ca/envmodelling/Ostrich.html>`_ binaries directly to your environment `PATH`,
+as well as installs all the necessary libraries supporting GIS functionalities.
 
-* To directly download, compile, and place them in the `bin` folder of your environment, use this command:
+Custom Installation (Python/Pip)
+--------------------------------
+
+If you wish to install RavenPy and its C-libraries manually, compiling the `Raven` and `Ostrich binarioes for your system,
+you can install the entire system directly, placing them in the `bin` folder of your environment.
+In order to perform this from Ubuntu/Debian:
 
 .. code-block:: console
 
-   (ravenpy-env) $ pip install ravenpy --verbose --install-option="--with-binaries"
+   $ sudo apt-get install gcc libnetcdf-dev gdal proj geos geopandas
+
+Then, from your python environment, run:
+
+.. code-block:: console
+
+   $ pip install ravenpy[gis]
+   $ pip install ravenpy[gis] --verbose --install-option="--with-binaries"
+
+If desired, the core functions of `RavenPy` can be installed without its GIS functionalities as well.
+This implementation of RavenPy is much lighter on dependencies and can be installed easily with `pip`,
+without the need for `conda` or `virtualenv`.
+
+The only libraries required for RavenPy in this approach are a C++ compiler and the NetCDF4 development libraries.
+
+.. code-block:: console
+
+   $ sudo apt-get install gcc libnetcdf-dev
+
+.. code-block:: console
+
+   $ pip install ravenpy
+   $ pip install ravenpy --verbose --install-option="--with-binaries"
 
 .. warning::
 
   It is imperative that the Python dependencies are pre-installed before running the `--with-binaries`
   option; This install step will fail otherwise.
 
-* Alternatively, the Raven and Ostrich binaries can be installed directly from `conda` with the following command:
-
-.. code-block:: console
-
-  (ravenpy-env) $ conda install -c zeitsperre raven ostrich
-
-If successful, this should install ``raven`` and ``ostrich`` binaries in the ``bin``
-folder of your environment, which should then be already available in your
-path, and that you can verify by doing:
-
-.. code-block:: console
-
-   (ravenpy-env) $ which raven
-   (ravenpy-env) $ which ostrich
-
-If for any reason you prefer to install without the binaries, you can
-simply omit the option:
+If for any reason you prefer to install without the binaries, from a fresh python environment, run the following:
 
 .. code-block:: console
 
@@ -73,27 +84,6 @@ variables (both as absolute paths) at runtime.
 
   The `virtualenv <https://virtualenv.pypa.io/en/latest/>`_ implementation also works well, but the
   GIS system libraries it depends on (specifically `GDAL` and `GEOS`) can be more difficult to configure.
-
-Light Installation
-------------------
-
-If desired, the core functions of `RavenPy` can be installed without its GIS functionalities as well.
-This implementation of RavenPy is much lighter on dependencies and can be installed easily with `pip`,
-without the need for `conda` or `virtualenv`.
-
-The system libraries required for RavenPy in this approach are a C++ compiler and the NetCDF4 development libraries.
-To install them on Debian/Ubuntu-based systems, run:
-
-.. code-block:: console
-
-  $ sudo apt-get install gcc libnetcdf-dev
-
-Then, from your python environment, run:
-
-.. code-block:: console
-
-  $ pip install ravenpy
-  $ pip install ravenpy --verbose --install-option="--with-binaries"
 
 Development Installation (from sources)
 ---------------------------------------
