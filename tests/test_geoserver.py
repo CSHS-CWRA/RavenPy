@@ -205,7 +205,7 @@ class TestWCS:
                 rf.close()
                 with self.rasterio.open(rf.name) as src:
                     assert src.width == 650
-                    assert src.height == 745
+                    assert src.height == 744
                     np.testing.assert_array_equal(
                         src.lnglat(), (-106.64193764047552, 52.1564202369763)
                     )
