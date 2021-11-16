@@ -24,7 +24,7 @@ The newly created environment must then be activated:
 
 To install the remaining Python dependencies, run:
 
-.. code-block::
+.. code-block:: console
 
    (ravenpy-env) $ pip install ravenpy[gis]
 
@@ -38,14 +38,14 @@ downloaded, compiled, and made available on your `PATH`. There are currently two
 
    (ravenpy-env) $ pip install ravenpy --verbose --install-option="--with-binaries"
 
-.. warning::
+.. warning:: console
 
   It is imperative that the Python dependencies are pre-installed before running the `--with-binaries`
   option; This install step will fail otherwise.
 
 * Alternatively, the Raven and Ostrich binaries can be installed directly from `conda` with the following command:
 
-.. code-block::
+.. code-block:: console
 
   (ravenpy-env) $ conda install -c zeitsperre raven ostrich
 
