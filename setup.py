@@ -22,8 +22,6 @@ with open("README.rst") as readme_file:
 with open("HISTORY.rst") as history_file:
     history = history_file.read()
 
-setup_requirements = ["pip", "wheel"]
-
 requirements = [
     "click",
     "climpred>=2.1",
@@ -237,7 +235,6 @@ setup(
             "ravenpy.*",
         ],
     ),
-    setup_requires=setup_requirements,
     test_suite="tests",
     tests_require=test_requirements,
     extras_require=dict(

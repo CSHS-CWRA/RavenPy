@@ -50,6 +50,11 @@ jobs:
       run: pip install tox
     - name: Test with tox
       run: env GDAL_VERSION="$(gdal-config --version)" tox -e ${{ matrix.tox-env }}
+    - name: report coverage
+      uses: AndreMiras/coveralls-python-action@develop
+      with:
+        flag-name: run-${{ matrix.tox-env }}
+        parallel: true
 
   conda:
     name: Conda
@@ -71,3 +76,17 @@ jobs:
           pip install -e ".[dev]"
           git clone https://github.com/Ouranosinc/raven-testdata $GITHUB_WORKSPACE/raven-testdata
           env RAVENPY_TESTDATA_PATH=$GITHUB_WORKSPACE/raven-testdata pytest --cov ravenpy
+      - name: report coverage
+        uses: AndreMiras/coveralls-python-action@develop
+        with:
+          flag-name: run-conda
+          parallel: true
+
+  finish:
+    needs: [pip, conda]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Coveralls Finished
+      uses: AndreMiras/coveralls-python-action@develop
+      with:
+        parallel-finished: true
