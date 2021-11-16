@@ -206,8 +206,8 @@ class TestWCS:
                 with self.rasterio.open(rf.name) as src:
                     assert src.width == 650
                     assert src.height == 744
-                    np.testing.assert_array_equal(
-                        src.lnglat(), (-106.641957, 52.156555)
+                    np.testing.assert_allclose(
+                        src.lnglat(), (-106.641957, 52.156555), rtol=1e-5
                     )
                     data = src.read()
                     assert np.unique(data).tolist() == [1, 5, 8, 10, 14, 15, 16, 17, 18]
