@@ -49,7 +49,9 @@ jobs:
     - name: Install tox
       run: pip install tox
     - name: Test with tox
-      run: env GDAL_VERSION="$(gdal-config --version)" tox -e ${{ matrix.tox-env }}
+      run: |
+        export LD_PRELOAD=/lib/x86_64-linux-gnu/libstdc++.so.6:$LD_PRELOAD
+        env GDAL_VERSION="$(gdal-config --version)" tox -e ${{ matrix.tox-env }}
     - name: report coverage
       uses: AndreMiras/coveralls-python-action@develop
       with:
