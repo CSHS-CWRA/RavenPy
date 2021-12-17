@@ -205,7 +205,7 @@ def create_external_deps_install_class(command_cls):
 setup(
     author="David Huard",
     author_email="huard.david@ouranos.ca",
-    python_requires=">=3.6",
+    python_requires=">=3.7",
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
         "Intended Audience :: Developers",

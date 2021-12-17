@@ -15,7 +15,7 @@ RavenPy
 .. image:: https://readthedocs.org/projects/ravenpy/badge/?version=latest
     :target: https://ravenpy.readthedocs.io/en/latest/?version=latest
     :alt: Documentation Status
-    
+
 .. image:: https://coveralls.io/repos/github/CSHS-CWRA/RavenPy/badge.svg?branch=master
     :target: https://coveralls.io/github/CSHS-CWRA/RavenPy?branch=master
     :alt: Coveralls
