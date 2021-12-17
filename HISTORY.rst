@@ -8,6 +8,7 @@ History
 * Automate release pipeline to PyPI using GitHub CI actions.
 * Added coverage monitoring GitHub CI action.
 * Various documentation adjustments.
+* Various metadata adjustments.
 
 0.7.5
 -----
