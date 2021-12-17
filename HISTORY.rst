@@ -9,6 +9,7 @@ History
 * Added coverage monitoring GitHub CI action.
 * Various documentation adjustments.
 * Various metadata adjustments.
+* Pinned owslib to 0.24.1 and above.
 
 0.7.5
 -----
