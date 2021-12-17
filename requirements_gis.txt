@@ -2,7 +2,7 @@ affine
 fiona
 geopandas>=0.9.0
 lxml
-owslib
+owslib>=0.24.1
 pyproj>=3.0.0
 rasterio<=1.2.6
 rioxarray
