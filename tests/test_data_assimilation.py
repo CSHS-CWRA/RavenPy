@@ -6,8 +6,6 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from ravenpy.config.commands import BasinIndexCommand, HRUState
-from ravenpy.config.rvs import RVC
 from ravenpy.models import GR4JCN
 from ravenpy.utilities.data_assimilation import assimilate, perturbation
 from ravenpy.utilities.testdata import get_local_testdata
@@ -48,7 +46,7 @@ class TestAssimilationGR4JCN:
             "prsn": 0.30,
             "tasmin": 2.0,
             "tasmax": 2.0,
-            "water_volume_transport_in_river_channel": 0.15,
+            "water_volume_transport_in_river_channel": 0.10,
         }
 
         # Use the same random seed for both tasmin and tasmax
