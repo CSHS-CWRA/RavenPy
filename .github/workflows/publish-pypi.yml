@@ -18,6 +18,8 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install libgdal-dev
+    - name: Install packaging libraries
+      run: pip install wheel
     - name: Build a binary wheel and a source tarball
       run: |
         export LD_PRELOAD=/lib/x86_64-linux-gnu/libstdc++.so.6:$LD_PRELOAD
