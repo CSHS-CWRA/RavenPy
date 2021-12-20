@@ -8,6 +8,9 @@ History
 * Automate release pipeline to PyPI using GitHub CI actions.
 * Added coverage monitoring GitHub CI action.
 * Various documentation adjustments.
+* Various metadata adjustments.
+* Pinned owslib to 0.24.1 and above.
+* Circumvented a bug in GitHub CI that was causing tests to fail at collection stage.
 
 0.7.5
 -----
