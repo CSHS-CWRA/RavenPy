@@ -2,6 +2,10 @@
 History
 =======
 
+0.7.7
+-----
+* Updated internal shapely calls to remove deprecated `.to_wkt()` methods.
+
 0.7.6
 -----
 
