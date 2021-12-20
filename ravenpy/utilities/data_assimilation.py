@@ -23,23 +23,6 @@ qobs = standard deviation used to sample observed streamflow, normal dist (fract
 """
 
 
-"""
-Suggestion:
-This was initially suggested to make parallel and faster. However, I was blocked and could not make it work
-I've reverted to coding it in series but it will need to be made parallel as right now it's way too slow (4h for 300 assimilation periods)
-
-Then use model.rvt.nc_index to run parallel simulations with different hru_state.
-
-model(p_fn, hru_state=[list of hru_states to start the simulation with], nc_index=range(n_members))
-
-You can probably then do something like
-
-last_storage = xr.concat(model.storage, dim="members").isel(time=-1)
-last_storage["Soil Water[0]"]
-
-"""
-
-
 def assimilate(model, ts, q_obs, keys, basin_states, hru_states, days):
     """Assimilate streamflow over one day.
 
@@ -98,8 +81,8 @@ def assimilate(model, ts, q_obs, keys, basin_states, hru_states, days):
             xa = x_matrix
         else:
             # Prepare the perturbed Qobs and Qobs errors for each member
-            qobs_pert = perturbed[qkey].isel(time=-1)
-            qobs_error = q_obs.isel(time=-1) - qobs_pert
+            qobs_pert = perturbed[qkey].sel(time=days[-1])
+            qobs_error = q_obs.sel(time=days[-1]) - qobs_pert
 
             # Do the assimilation, return the assimilated states for the next period
             xa = update_state(
