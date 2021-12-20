@@ -2,8 +2,8 @@
 History
 =======
 
-0.7.6 (Unreleased)
-------------------
+0.7.6
+-----
 
 * Automate release pipeline to PyPI using GitHub CI actions.
 * Added coverage monitoring GitHub CI action.
