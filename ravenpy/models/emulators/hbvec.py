@@ -43,16 +43,11 @@ class HBVEC(Raven):
         par_x20: float
         par_x21: float
 
-    @dataclass
-    class DerivedParams:
-        one_plus_par_x15: float
-        par_x11_half: float
-
     def __init__(self, *args, **kwds):
+        kwds["identifier"] = kwds.get("identifier", "hbvec")
         super().__init__(*args, **kwds)
 
         self.config.update(
-            identifier="hbvec",
             hrus=(GR4JCN.LandHRU(),),
             subbasins=(
                 Sub(
@@ -98,7 +93,7 @@ class HBVEC(Raven):
           #                        HBV_PARA_05,   HBV_PARA_06, HBV_PARA_14, HBV_PARA_07,       HBV_PARA_16,     CONSTANT,      CONSTANT,              CONSTANT,
             [DEFAULT],               {params.par_x05},     {params.par_x06},   {params.par_x14},    {params.par_x07},        {params.par_x16},          0.0,           0.0,                   0.0
           #                                                       CONSTANT,                                  HBV_PARA_08,   HBV_PARA_09, 1+HBV_PARA_15=1+ALPHA,
-             FAST_RES,                _DEFAULT,      _DEFAULT,         0.0,    _DEFAULT,          _DEFAULT,    {params.par_x08},     {params.par_x09},    {derived_params.one_plus_par_x15}
+             FAST_RES,                _DEFAULT,      _DEFAULT,         0.0,    _DEFAULT,          _DEFAULT,    {params.par_x08},     {params.par_x09},    {one_plus_par_x15}
           #                                                       CONSTANT,                                                 HBV_PARA_10,              CONSTANT,
              SLOW_RES,                _DEFAULT,      _DEFAULT,         0.0,    _DEFAULT,          _DEFAULT,     _DEFAULT,     {params.par_x10},                   1.0
         :EndSoilParameterList
@@ -240,14 +235,12 @@ class HBVEC(Raven):
 
     def derived_parameters(self):
         params = cast(HBVEC.Params, self.config.rvp.params)
-        self.config.rvp.derived_params = HBVEC.DerivedParams(
-            one_plus_par_x15=(params.par_x15 + 1.0), par_x11_half=params.par_x11 / 2.0
+        self.config.rvp.set_extra_attributes(
+            one_plus_par_x15=params.par_x15 + 1.0, par_x11_half=params.par_x11 / 2.0
         )
 
-        # These need to be injected in the RVH
         self.config.rvh.set_extra_attributes(
-            par_x11=params.par_x11,
-            par_x11_half=self.config.rvp.derived_params.par_x11_half,
+            par_x11=params.par_x11, par_x11_half=params.par_x11 / 2.0
         )
 
         self.config.rvt.rain_correction = params.par_x20
@@ -301,10 +294,10 @@ class HBVEC(Raven):
 
 class HBVEC_OST(Ostrich, HBVEC):
     def __init__(self, *args, **kwds):
+        kwds["identifier"] = kwds.get("identifier", "hbvec-ost")
         super().__init__(*args, **kwds)
 
         self.config.update(
-            identifier="hbvec-ost",
             algorithm="DDS",
             max_iterations=50,
             run_name="run",
@@ -536,15 +529,16 @@ class HBVEC_OST(Ostrich, HBVEC):
 
         BeginResponseVars
           #name   filename                              keyword         line    col     token
-          NS      ./model/output/{run_name}-{run_index}_Diagnostics.csv;       OST_NULL        1       3       ','
+          RawMetric  ./model/output/{run_name}-{run_index}_Diagnostics.csv;       OST_NULL        1       3       ','
         EndResponseVars
 
         BeginTiedRespVars
-          NegNS 1 NS wsum -1.00
+        # <name1> <np1> <pname 1,1 > <pname 1,2 > ... <pname 1,np1 > <type1> <type_data1>
+          Metric 1 RawMetric wsum {evaluation_metric_multiplier}
         EndTiedRespVars
 
         BeginGCOP
-          CostFunction NegNS
+          CostFunction Metric
           PenaltyFunction APM
         EndGCOP
 

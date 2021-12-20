@@ -2,6 +2,53 @@
 History
 =======
 
+0.7.6 (Unreleased)
+------------------
+
+* Automate release pipeline to PyPI using GitHub CI actions.
+* Added coverage monitoring GitHub CI action.
+* Various documentation adjustments.
+
+0.7.5
+-----
+
+* Update test so that it works with xclim 0.29.
+
+0.7.4
+-----
+
+* Pinned climpred below v2.1.6.
+
+0.7.3
+-----
+
+* Pinned xclim below v0.29.
+
+0.7.2
+-----
+
+* Update cruft
+* Subclass `derived_parameters` in Ostrich emulators to avoid having to pass `params`.
+
+0.7.0
+-----
+
+* Add support for V2.1 of the Routing Product in ``ravenpy.extractors.routing_product``.
+* Add ``collect-subbasins-upstream-of-gauge`` CLI script.
+* Modify WFS request functions to use spatial filtering (``Intersects``) supplied by OWSLib.
+
+0.6.0
+-----
+
+* Add support for EvaluationPeriod commands. Note that as a result of this, the model's ``diagnostics`` property contains one list per key, instead of a single scalar. Also note that for calibration, Ostrich will use the first period and the first evaluation metric.
+* Add ``SACSMA``, ``CANADIANSHIELD`` and ``HYPR`` model emulators.
+
+0.5.2
+-----
+
+* Simplify RVC configuration logic.
+* Add ``ravenpy.utilities.testdata.file_md5_checksum`` (previously in ``xarray.tutorial``).
+
 0.5.1
 -----
 
@@ -23,7 +70,7 @@ History
 0.4.2
 -----
 
-* Update to RavenC revision 318 to fix OPENDAP access for StationForcing commands.
+* Update to RavenC revision 318 to fix OPeNDAP access for StationForcing commands.
 * Fix grid_weights set to None by default.
 * Pass nc_index to ObservationData command.
 * Expose more cleanly RavenC errors and warnings.
@@ -40,12 +87,10 @@ History
 0.4.0
 -----
 
-This is an interim version making one step toward semi-distributed
-modeling support. Model configuration is still in flux and will be
-significantly modified with 0.5. The major change in this version is
-that model configuration supports passing multiple HRU objects,
-instead of simply passing area, latitude, longitude and elevation for
-a single HRU.
+This is an interim version making one step toward semi-distributed modeling support.
+Model configuration is still in flux and will be significantly modified with 0.5.
+The major change in this version is that model configuration supports passing multiple HRU objects,
+instead of simply passing area, latitude, longitude and elevation for a single HRU.
 
 * GR4JCN emulator now supports routing mode.
 * Add BLENDED model emulator.
@@ -110,7 +155,6 @@ a single HRU.
 ------------------
 
 * Release with docs.
-
 
 0.1.0 (2020-12-20)
 ------------------

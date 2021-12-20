@@ -12,6 +12,14 @@ ravenpy.cli.aggregate\_forcings\_to\_hrus module
    :undoc-members:
    :show-inheritance:
 
+ravenpy.cli.collect\_subbasins\_upstream\_of\_gauge module
+----------------------------------------------------------
+
+.. automodule:: ravenpy.cli.collect_subbasins_upstream_of_gauge
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 ravenpy.cli.generate\_grid\_weights module
 ------------------------------------------
 

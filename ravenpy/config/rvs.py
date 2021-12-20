@@ -13,6 +13,7 @@ import numpy as np
 import xarray as xr
 from numpy.distutils.misc_util import is_sequence
 
+from ravenpy import __version__
 from ravenpy.config.commands import (
     HRU,
     BaseDataCommand,
@@ -41,6 +42,16 @@ from ravenpy.config.commands import (
 
 
 class RV(ABC):
+
+    # This header will be prepended to all RV files when they are rendered
+    tmpl_header = """
+    ###########################################################################################################
+    :FileType          {rv_type} ASCII Raven {raven_version}
+    :WrittenBy         PAVICS RavenPy {ravenpy_version} based on setups provided by James Craig and Juliane Mai
+    :CreationDate      {date}{model_and_description}
+    #----------------------------------------------------------------------------------------------------------
+    """
+
     def __init__(self, config, **kwds):
         # Each RV has a reference to their parent object in order to access sibling RVs.
         self._config = config
@@ -69,8 +80,8 @@ class RV(ABC):
     def get_extra_attribute(self, k):
         return self._extra_attributes[k]
 
-    def set_tmpl(self, tmpl, is_ostrich=False):
-        self.tmpl = tmpl  # type: ignore
+    def set_tmpl(self, tmpl=None, is_ostrich=False):
+        self.tmpl = tmpl or self.tmpl  # type: ignore
         self.is_ostrich_tmpl = is_ostrich
 
     @property
@@ -79,8 +90,27 @@ class RV(ABC):
         pass
 
     @abstractmethod
-    def to_rv(self) -> str:
-        pass
+    def to_rv(self, s: str, rv_type: str) -> str:
+        if not self._config:
+            # In the case where the RV file has been created outside the context of a
+            # Config object, don't include the header
+            return s
+        d = {
+            "rv_type": rv_type,
+            "raven_version": self._config.model.raven_version,
+            "ravenpy_version": __version__,
+            "date": dt.datetime.now().isoformat(),
+            "model_and_description": "",
+        }
+        model = ""
+        description = self._config.model.description or ""
+        if self._config.model.__class__.__name__ not in ["Raven", "Ostrich"]:
+            model = f"Emulation of {self._config.model.__class__.__name__}"
+        model_and_description = list(filter(None, [model, description]))
+        if model_and_description:
+            model_and_description = ": ".join(model_and_description)
+            d["model_and_description"] = f"\n#\n# {model_and_description}"
+        return dedent(self.tmpl_header.lstrip("\n")).format(**d) + s
 
 
 #########
@@ -129,7 +159,7 @@ class RVC(RV):
 
         d.update(self._extra_attributes)
 
-        return dedent(self.tmpl).format(**d)
+        return super().to_rv(dedent(self.tmpl.lstrip("\n")).format(**d), "RVC")
 
 
 #########
@@ -186,7 +216,7 @@ class RVH(RV):
 
         d.update(self._extra_attributes)
 
-        return dedent(self.tmpl).format(**d)
+        return super().to_rv(dedent(self.tmpl.lstrip("\n")).format(**d), "RVH")
 
 
 #########
@@ -212,6 +242,7 @@ class RVI(RV):
     # come after `:SoilModel`
     _post_tmpl = """
     :EvaluationMetrics     {evaluation_metrics}
+    {evaluation_periods}
     :WriteNetcdfFormat     yes
     #:WriteForcingFunctions
     :SilentMode
@@ -289,7 +320,6 @@ class RVI(RV):
         # These are attributes that can be modified/set directly
         self.run_name: Optional[str] = "run"
         self.run_index = 0
-        self.raven_version = "3.X.X"
         self.time_step = 1.0
 
         # These correspond to properties whose setters will pass their value through
@@ -307,6 +337,7 @@ class RVI(RV):
             RVI.EvaluationMetrics.NASH_SUTCLIFFE,
             RVI.EvaluationMetrics.RMSE,
         ]
+        self._evaluation_periods = []
         self._suppress_output = False
 
     def configure_from_nc_data(self, fns):
@@ -321,6 +352,10 @@ class RVI(RV):
             self.end_date = end
 
         self.calendar = RVI.CalendarOptions(cal.upper())
+
+    @property
+    def raven_version(self):
+        return self._config.model.raven_version
 
     @property
     def start_date(self):
@@ -378,13 +413,25 @@ class RVI(RV):
 
     @evaluation_metrics.setter
     def evaluation_metrics(self, values):
-        if not isinstance(values, (list, set, tuple)):
+
+        if not is_sequence(values):
             values = [values]
         ms = []
         for v in values:
             v = v.upper() if isinstance(v, str) else v.value
             ms.append(RVI.EvaluationMetrics(v))
         self._evaluation_metrics = ms
+
+    @property
+    def evaluation_periods(self):
+        """:EvaluationPeriod option. Instantiate with list of EvaluationPeriod commands."""
+        return "\n".join([str(p) for p in self._evaluation_periods])
+
+    @evaluation_periods.setter
+    def evaluation_periods(self, values):
+        if not isinstance(values, (list, set, tuple)):
+            values = [values]
+        self._evaluation_periods = values
 
     def _update_duration(self):
         if self.end_date is not None and self.start_date is not None:
@@ -473,13 +520,18 @@ class RVI(RV):
 
         d = {attr: getattr(self, attr) for attr in a + p}
 
-        d["identifier"] = self._config.identifier
+        d["identifier"] = self._config.model.identifier
         d["now"] = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         d.update(self._extra_attributes)
 
-        t = dedent(self._pre_tmpl) + dedent(self.tmpl) + dedent(self._post_tmpl)
-        return t.format(**d)
+        t = (
+            dedent(self._pre_tmpl.lstrip("\n"))
+            + dedent(self.tmpl.lstrip("\n"))
+            + dedent(self._post_tmpl.lstrip("\n"))
+        )
+
+        return super().to_rv(t.format(**d), "RVI")
 
 
 ##########
@@ -496,9 +548,8 @@ class RVP(RV):
     def __init__(self, config):
         super().__init__(config)
 
-        # Model specific params and derived params
+        # Model specific params
         self.params = None
-        self.derived_params = None
 
         self.soil_classes: Tuple[SoilClassesCommand.Record, ...] = ()
         self.soil_profiles: Tuple[SoilProfilesCommand.Record, ...] = ()
@@ -510,17 +561,10 @@ class RVP(RV):
     def update(self, key, value):
         if key == "params":
             if is_sequence(value):
-                self.params = self._config.model_cls.Params(*value)
+                self.params = self._config.model.Params(*value)
             else:
-                assert isinstance(value, self._config.model_cls.Params)
+                assert isinstance(value, self._config.model.Params)
                 self.params = value
-            return True
-        elif key == "derived_params":
-            if is_sequence(value):
-                self.derived_params = self._config.model_cls.DerivedParams(*value)
-            else:
-                assert isinstance(value, self._config.model_cls.DerivedParams)
-                self.derived_params = value
             return True
         else:
             return super().update(key, value)
@@ -528,7 +572,6 @@ class RVP(RV):
     def to_rv(self):
         d = {
             "params": self.params,
-            "derived_params": self.derived_params,
             "soil_classes": SoilClassesCommand(self.soil_classes),
             "soil_profiles": SoilProfilesCommand(self.soil_profiles),
             "vegetation_classes": VegetationClassesCommand(self.vegetation_classes),
@@ -541,7 +584,7 @@ class RVP(RV):
 
         d.update(self._extra_attributes)
 
-        return dedent(self.tmpl).format(**d)
+        return super().to_rv(dedent(self.tmpl.lstrip("\n")).format(**d), "RVP")
 
 
 #########
@@ -686,10 +729,7 @@ class RVT(RV):
         if key in self._var_specs:
             self._var_specs[key].update(value)
             return True
-        elif key == "nc_index":
-            self.nc_index = value
-            return True
-        return False
+        return super().update(key, value)
 
     def to_rv(self):
         """
@@ -787,7 +827,7 @@ class RVT(RV):
                 d["observed_data"] = cmd  # type: ignore
                 break
 
-        return dedent(self.tmpl).format(**d)
+        return super().to_rv(dedent(self.tmpl.lstrip("\n")).format(**d), "RVT")
 
 
 #########
@@ -799,6 +839,21 @@ class OST(RV):
 
     tmpl = """
     """
+
+    # Multiplier applied to metric before passing to minimization algorithm.
+    _evaluation_metrics_multiplier = dict(
+        NASH_SUTCLIFFE=-1,
+        LOG_NASH=-1,
+        RMSE=1,
+        PCT_BIAS="Not Supported",
+        ABSERR=1,
+        ABSMAX=1,
+        PDIFF=1,
+        TMVOL=1,
+        RCOEFF=1,
+        NSC=-1,
+        KLING_GUPTA=-1,
+    )
 
     def __init__(self, config):
         super().__init__(config)
@@ -814,9 +869,9 @@ class OST(RV):
     def update(self, key, value):
         if key in ["lowerBounds", "upperBounds"]:
             if is_sequence(value):
-                setattr(self, key, self._config.model_cls.Params(*value))
+                setattr(self, key, self._config.model.Params(*value))
             else:
-                assert isinstance(value, self._config.model_cls.Params)
+                assert isinstance(value, self._config.model.Params)
                 setattr(self, key, value)
             return True
         else:
@@ -847,8 +902,18 @@ class OST(RV):
             self._random_seed = None
 
     @property
+    def evaluation_metric_multiplier(self):
+        """For Ostrich."""
+        m = self._config.rvi._evaluation_metrics[0]
+        if m.name == "PCT_BIAS":
+            raise ValueError(
+                "PCT_BIAS cannot be properly minimized. Select another evaluation metric."
+            )
+        return self._evaluation_metrics_multiplier[m.value]
+
+    @property
     def identifier(self):
-        return self._config.identifier
+        return self._config.model.identifier
 
     def to_rv(self):
         # Get those from RVI (there's probably a better way to do this!)
@@ -868,19 +933,20 @@ class OST(RV):
 
         d = {attr: getattr(self, attr) for attr in a + p}
 
-        return dedent(self.tmpl).format(**d)
+        d.update(self._extra_attributes)
+
+        return super().to_rv(dedent(self.tmpl.lstrip("\n")).format(**d), "OST")
 
 
 class Config:
-    def __init__(self, model_cls, **kwargs):
-        self.model_cls = model_cls
+    def __init__(self, model, **kwargs):
+        self.model = model
         self.rvc = RVC(self)
         self.rvh = RVH(self)
         self.rvi = RVI(self)
         self.rvp = RVP(self)
         self.rvt = RVT(self)
         self.ost = OST(self)
-        self.identifier = None
         self.update(**kwargs)
 
     def update(self, key=None, value=None, **kwargs):
@@ -895,10 +961,6 @@ class Config:
                 raise AttributeError(
                     f"No field named `{key}` found in any RV* conf class"
                 )
-
-        identifier = kwargs.pop("identifier", None)
-        if identifier:
-            self.identifier = identifier
 
         if key is None and value is None:
             for k, v in kwargs.items():
@@ -915,12 +977,6 @@ class Config:
             rvo = getattr(self, rvx, None) or self.ost
             rvo.content = fn.read_text()
             rvo.is_ostrich_tmpl = fn.suffixes[-1] == ".tpl"
-            if not self.identifier:
-                # Get the "true" stem if there are more than one suffixes
-                identifier = fn
-                while identifier.suffixes:
-                    identifier = Path(identifier.stem)
-                self.identifier = identifier.as_posix()
             # This is a sorry hack: I want to have rvi.run_name have a default of "run"
             # because I don't want to burden the user with setting it.. but the problem
             # is that externally supplied rv files might not have it (to be discussed)

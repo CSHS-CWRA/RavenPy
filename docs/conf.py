@@ -65,6 +65,7 @@ autodoc_mock_imports = [
     "netCDF4",
     "osgeo",
     "geopandas",
+    "haversine",
     "holoviews",
     "hvplot",
     "lxml",

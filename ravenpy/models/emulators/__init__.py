@@ -1,8 +1,11 @@
 from .blended import *
+from .canadianshield import *
 from .gr4jcn import *
 from .hbvec import *
 from .hmets import *
+from .hypr import *
 from .mohyse import *
+from .sacsma import *
 
 
 def get_model(name):

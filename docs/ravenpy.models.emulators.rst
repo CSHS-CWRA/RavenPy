@@ -12,6 +12,14 @@ ravenpy.models.emulators.blended module
    :undoc-members:
    :show-inheritance:
 
+ravenpy.models.emulators.canadianshield module
+----------------------------------------------
+
+.. automodule:: ravenpy.models.emulators.canadianshield
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 ravenpy.models.emulators.gr4jcn module
 --------------------------------------
 
@@ -36,10 +44,26 @@ ravenpy.models.emulators.hmets module
    :undoc-members:
    :show-inheritance:
 
+ravenpy.models.emulators.hypr module
+------------------------------------
+
+.. automodule:: ravenpy.models.emulators.hypr
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 ravenpy.models.emulators.mohyse module
 --------------------------------------
 
 .. automodule:: ravenpy.models.emulators.mohyse
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+ravenpy.models.emulators.sacsma module
+--------------------------------------
+
+.. automodule:: ravenpy.models.emulators.sacsma
    :members:
    :undoc-members:
    :show-inheritance:

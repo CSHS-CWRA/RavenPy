@@ -1,5 +1,3 @@
-"""Console script for ravenpy."""
-
 from pathlib import Path
 
 import click

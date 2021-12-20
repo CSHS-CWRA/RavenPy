@@ -11,6 +11,7 @@ import xarray as xr
 
 from ravenpy.config.commands import (
     ChannelProfileCommand,
+    EvaluationPeriod,
     GriddedForcingCommand,
     GridWeightsCommand,
     HRUStateVariableTableCommand,
@@ -70,7 +71,7 @@ def test_race():
 
 # Salmon catchment is now split into land- and lake-part.
 # The areas do not sum up to overall area of 4250.6 [km2].
-# This is the reason the "test_routing" will give differnt
+# This is the reason the "test_routing" will give different
 # results compared to "test_simple". The "salmon_land_hru"
 # however is kept at the overall area of 4250.6 [km2] such
 # that other tests still obtain same results as before.
@@ -436,6 +437,32 @@ class TestGR4JCN:
 
         np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.117301, 4)
 
+    def test_evaluation(self):
+        model = GR4JCN()
+
+        model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
+
+        model(
+            TS,
+            area=4250.6,
+            elevation=843.0,
+            latitude=54.4848,
+            longitude=-123.3659,
+            start_date=dt.datetime(2000, 1, 1),
+            end_date=dt.datetime(2002, 1, 1),
+            params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
+            suppress_output=False,
+            evaluation_metrics=["RMSE", "KLING_GUPTA"],
+            evaluation_periods=[
+                EvaluationPeriod("period1", "2000-01-01", "2000-12-31"),
+                EvaluationPeriod("period2", "2001-01-01", "2001-12-31"),
+            ],
+        )
+        d = model.diagnostics
+        assert "DIAG_RMSE" in d
+        assert "DIAG_KLING_GUPTA" in d
+        assert len(d["DIAG_RMSE"]) == 3  # ALL, period1, period2
+
     def test_run_new_hrus_param(self):
         model = GR4JCN()
 
@@ -643,10 +670,10 @@ class TestGR4JCN:
 
     def test_version(self):
         model = Raven()
-        assert model.version == "3.0.4"
+        assert model.raven_version == "3.0.4"
 
         model = GR4JCN()
-        assert model.version == "3.0.4"
+        assert model.raven_version == "3.0.4"
 
     def test_parallel_params(self):
         model = GR4JCN()
@@ -738,7 +765,8 @@ class TestGR4JCN_OST:
     def test_simple(self):
         model = GR4JCN_OST()
         model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
-        params = (0.529, -3.396, 407.29, 1.072, 16.9, 0.053)
+
+        # Parameter bounds
         low = (0.01, -15.0, 10.0, 0.0, 1.0, 0.0)
         high = (2.5, 10.0, 700.0, 7.0, 30.0, 1.0)
 
@@ -750,7 +778,6 @@ class TestGR4JCN_OST:
             TS,
             start_date=dt.datetime(1954, 1, 1),
             duration=208,
-            params=params,
             lowerBounds=low,
             upperBounds=high,
             algorithm="DDS",
@@ -860,29 +887,7 @@ class TestHMETS_OST:
             get_local_testdata("ostrich-gr4j-cemaneige/OstRandomNumbers.txt")
         )
 
-        params = (
-            9.5019,
-            0.2774,
-            6.3942,
-            0.6884,
-            1.2875,
-            5.4134,
-            2.3641,
-            0.0973,
-            0.0464,
-            0.1998,
-            0.0222,
-            -1.0919,
-            2.6851,
-            0.3740,
-            1.0000,
-            0.4739,
-            0.0114,
-            0.0243,
-            0.0069,
-            310.7211,
-            916.1947,
-        )
+        # Parameter bounds
         low = (
             0.3,
             0.01,
@@ -938,7 +943,6 @@ class TestHMETS_OST:
             elevation=843.0,
             latitude=54.4848,
             longitude=-123.3659,
-            params=params,
             lowerBounds=low,
             upperBounds=high,
             algorithm="DDS",
@@ -1077,19 +1081,7 @@ class TestMOHYSE_OST:
             get_local_testdata("ostrich-gr4j-cemaneige/OstRandomNumbers.txt")
         )
 
-        params = (
-            1.0,
-            0.0468,
-            4.2952,
-            2.658,
-            0.4038,
-            0.0621,
-            0.0273,
-            0.0453,
-            0.9039,
-            5.6167,
-        )
-
+        # Parameter bounds
         low_p = (0.01, 0.01, 0.01, -5.00, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01)
         high_p = (20.0, 1.0, 20.0, 5.0, 0.5, 1.0, 1.0, 1.0, 15.0, 15.0)
 
@@ -1101,7 +1093,6 @@ class TestMOHYSE_OST:
             elevation=843.0,
             latitude=54.4848,
             longitude=-123.3659,
-            params=params,
             lowerBounds=low_p,
             upperBounds=high_p,
             algorithm="DDS",
@@ -1273,30 +1264,7 @@ class TestHBVEC_OST:
             get_local_testdata("ostrich-gr4j-cemaneige/OstRandomNumbers.txt")
         )
 
-        params = (
-            0.05984519,
-            4.072232,
-            2.001574,
-            0.03473693,
-            0.09985144,
-            0.506052,
-            3.438486,
-            38.32455,
-            0.4606565,
-            0.06303738,
-            2.277781,
-            4.873686,
-            0.5718813,
-            0.04505643,
-            0.877607,
-            18.94145,
-            2.036937,
-            0.4452843,
-            0.6771759,
-            1.141608,
-            1.024278,
-        )
-
+        # Parameter bounds
         low = (
             -3.0,
             0.0,
@@ -1352,7 +1320,6 @@ class TestHBVEC_OST:
             elevation=843.0,
             latitude=54.4848,
             longitude=-123.3659,
-            params=params,
             lowerBounds=low,
             upperBounds=high,
             algorithm="DDS",

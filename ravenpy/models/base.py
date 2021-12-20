@@ -6,6 +6,7 @@ The `Raven` class is the base class that implements model setup, execution and o
 class is the base class adapting `Raven` to work with the Ostrich calibration tool.
 
 """
+import collections
 import csv
 import datetime as dt
 import operator
@@ -72,12 +73,16 @@ class Raven:
         "region_id",
     ]
 
-    # This is just to satisfy mypy, which wants to know about those internal classes defined
+    # This is just to satisfy mypy, which wants to know about this internal class defined
     # by the emulators (which are Raven subclasses)
     Params: Any
-    DerivedParams: Any
 
-    def __init__(self, workdir: Union[str, Path] = None):  # , identifier: str = None):
+    def __init__(
+        self,
+        workdir: Union[str, Path] = None,
+        identifier: str = "raven-generic",
+        description: str = None,
+    ):
         """Initialize the RAVEN model.
 
         Directory for the model configuration and outputs. If None, a temporary directory will be created.
@@ -96,6 +101,14 @@ class Raven:
         self.raven_exec = RAVEN_EXEC_PATH
         self.ostrich_exec = OSTRICH_EXEC_PATH
 
+        # Get version from Raven binary CLI output
+        out = subprocess.check_output([self.raven_exec], input="\n", text=True)
+        match = re.search(r"Version (\S+) ", out)
+        if match:
+            self.raven_version = match.groups()[0]
+        else:
+            raise AttributeError(f"Raven version not found: {out}")
+
         self.workdir = Path(workdir or tempfile.mkdtemp())
 
         # Individual files for all simulations
@@ -112,6 +125,14 @@ class Raven:
         self.final_dir = "final"
         self.output_dir = "output"
 
+        # This value is used as the stem of the generated RV file names.
+        # If it's not specified by the constructor caller, it will be either:
+        # (1) "raven-generic" or "ostrich-generic" for `models.base` classes
+        # (2) the name in lowercase for `models.emulators` classes
+        # (3) the common stem of the filenames passed to `models.base.Raven.configure`, if used
+        self.identifier = identifier
+        self.description = description
+
         self.exec_path = self.workdir / "exec"
         self.final_path = self.workdir / self.final_dir
 
@@ -119,7 +140,7 @@ class Raven:
         self._psim = 0
         self._pdim = ""  # Parallel dimension (either initparam, params or region)
 
-        self.config = Config(model_cls=self.__class__, raven_version=self.version)
+        self.config = Config(model=self)
 
     @property
     def output_path(self):
@@ -133,15 +154,6 @@ class Raven:
     def raven_cmd(self):
         """Path to the Raven executable."""
         return self.model_path / "raven"
-
-    @property
-    def version(self):
-        out = subprocess.check_output([self.raven_exec], input="\n", text=True)
-        match = re.search(r"Version (\S+) ", out)
-        if match:
-            return match.groups()[0]
-        else:
-            raise AttributeError(f"Version not found: {out}")
 
     @property
     def psim(self):
@@ -162,8 +174,7 @@ class Raven:
     @property
     def bash_cmd(self):
         """Bash command arguments."""
-        identifier = self.config.identifier or "raven-generic"
-        return [self.cmd, identifier, "-o", str(self.output_path)]
+        return [self.cmd, self.identifier, "-o", str(self.output_path)]
 
     @property
     def cmd_path(self):
@@ -175,27 +186,40 @@ class Raven:
         return
 
     def configure(self, fns):
-        """Read configuration files."""
+        """Set configuration from existing RV files. The `self.identifier` attribute will be updated
+        as the stem of the input files (which must be common to the set).
+        """
         if not is_sequence(fns):
             fns = [fns]
+        stems = set()
+        for fn in map(Path, fns):
+            identifier = fn
+            while identifier.suffixes:
+                identifier = Path(identifier.stem)
+            stems.add(identifier)
+        assert len(stems) == 1
+        # Update identifier with stem
+        self.identifier = str(next(iter(stems)))
         for fn in map(Path, fns):
             self.config.set_rv_file(fn)
 
     def _dump_rv(self):
         """Write configuration files to disk."""
 
-        identifier = self.config.identifier or "raven-generic"
+        # identifier = self.config.identifier
 
         for rvx in ["rvt", "rvh", "rvp", "rvc", "rvi"]:
             rvo = getattr(self.config, rvx)
             if rvo.is_ostrich_tmpl:
-                fn = self.exec_path / f"{identifier}.{rvx}.tpl"
+                fn = self.exec_path / f"{self.identifier}.{rvx}.tpl"
             else:
-                fn = self.model_path / f"{identifier}.{rvx}"
+                fn = self.model_path / f"{self.identifier}.{rvx}"
             with open(fn, "w") as f:
                 self._rv_paths.append(fn)
                 content = rvo.content or rvo.to_rv()
-                assert content.strip(), f"{rvx} has no content!"
+                assert (
+                    content.strip()
+                ), f"{rvx} has no content! (did you forget to use `RV.set_tmpl`?)"
                 f.write(content)
 
     def setup(self, overwrite=False):
@@ -586,21 +610,24 @@ class Raven:
 
     @property
     def diagnostics(self):
+        """Return a nested dictionary of performance metrics keyed by diagnostic name and period. The default period
+        is called "ALL".
+        """
         diag = []
+        out = collections.defaultdict(list)
         for fn in self.ind_outputs["diagnostics"]:
             with open(fn) as f:
                 reader = csv.reader(f.readlines())
                 header = next(reader)
-                content = next(reader)
+                for row in reader:
+                    for (key, val) in zip(header, row):
+                        if "DIAG" in key:
+                            val = float(val)  # type: ignore
+                        out[key].append(val)
 
-                out: Dict[str, Union[str, float]] = dict(zip(header, content))
                 out.pop("")
 
-            for key, val in out.items():
-                if "DIAG" in key:
-                    out[key] = float(val)
             diag.append(out)
-
         return diag if len(diag) > 1 else diag[0]
 
 
@@ -622,6 +649,10 @@ class Ostrich(Raven):
     >>> r = Ostrich('/tmp/testdir')
     >>> r.configure()
     """
+
+    def __init__(self, *args, **kwds):
+        kwds["identifier"] = kwds.get("identifier", "ostrich-generic")
+        super().__init__(*args, **kwds)
 
     @property
     def model_path(self):
@@ -654,8 +685,7 @@ class Ostrich(Raven):
 
     def write_ostrich_runs_raven(self):
         fn = self.exec_path / "ostrich-runs-raven.sh"
-        identifier = self.config.identifier or "ostrich-generic"
-        fn.write_text(ostrich_runs_raven.format(identifier=identifier))
+        fn.write_text(ostrich_runs_raven.format(identifier=self.identifier))
         make_executable(fn)
 
     def setup(self, overwrite=False):
@@ -672,7 +702,32 @@ class Ostrich(Raven):
         self.write_save_best()
 
         # Create symbolic link to executable
-        os.symlink(self.ostrich_exec, str(self.cmd))
+        if not self.cmd.exists():
+            os.symlink(self.ostrich_exec, str(self.cmd))
+
+    def configure(self, fns):
+        """Set configuration from existing RV files. The `self.identifier` attribute will be updated
+        as the stem of the input files (which must be common to the set).
+        """
+        if not is_sequence(fns):
+            fns = [fns]
+        stems = set()
+        for fn in map(Path, fns):
+            identifier = fn
+            while identifier.suffixes:
+                identifier = Path(identifier.stem)
+            # OST-related files have a different stem
+            if not str(identifier).lower().startswith("ost"):
+                stems.add(identifier)
+        if not stems:
+            # Special case
+            assert fns[0].name == "OstRandomNumbers.txt"
+        else:
+            assert len(stems) == 1
+            # Update identifier with stem
+            self.identifier = str(next(iter(stems)))
+        for fn in map(Path, fns):
+            self.config.set_rv_file(fn)
 
     def _dump_rv(self):
         """write configuration files to disk."""
@@ -683,7 +738,11 @@ class Ostrich(Raven):
         fn = self.exec_path / "ostIn.txt"
         with open(fn, "w") as f:
             self._rv_paths.append(fn)
-            f.write(self.config.ost.content or self.config.ost.to_rv())
+            content = self.config.ost.content or self.config.ost.to_rv()
+            assert (
+                content.strip()
+            ), "OST has no content! (did you forget to use `RV.set_tmpl`?)"
+            f.write(content)
 
         # OstRandomNumbers.txt
         if self.config.ost.random_numbers_path:
@@ -754,24 +813,31 @@ class Ostrich(Raven):
         p = re.findall(r"(\w+)\s*:\s*([\S]+)", ops[0])
         return OrderedDict((k, float(v)) for k, v in p)
 
-    def ost2raven(self, ops):
+    def ost2raven(self, ostrich_params):
         """Return model parameters.
 
-        Notes
-        -----
-        This method should be subclassed by emulators for which Ostrich has different parameters than the original
-        Raven model.
+        Parameters
+        ----------
+        ostrich_params: dict
+
+        If this method is used in the context of an emulator subclass, it will return
+        an instance of the Params dataclass of the emulator (it will also make sure that the param
+        name conversion from Ostrich to Raven is performed); if not, it will return the list of values.
+
         """
 
         if hasattr(self, "Params"):
-            # We are using an emulator, so it has a `Params` internal class
-            n = len(fields(self.Params))
-            pattern = "par_x{}" if n < 8 else "par_x{:02}"
-            names = [pattern.format(i + 1) for i in range(n)]
-            return self.Params(*[ops[n] for n in names])
+            # We are in an emulator subclass, so a properly typed Params dataclass is available
+            raven_params = {}
+            # Perform Ostrich to Raven param name conversion if needed
+            o2r = getattr(self, "ostrich_to_raven_param_conversion", {})
+            r2o = {r: o for o, r in o2r.items()}
+            for f in fields(self.Params):
+                raven_params[f.name] = ostrich_params[r2o.get(f.name, f.name)]
+            return self.Params(**raven_params)
         else:
             # We are using generic Ostrich
-            return ops.values()
+            return ostrich_params.values()
 
     @property
     def calibrated_params(self):
@@ -804,13 +870,17 @@ def make_executable(fn):
 
 
 def get_average_annual_runoff(
-    nc_file_path, area_in_m2, time_dim="time", na_value=RAVEN_NO_DATA_VALUE
+    nc_file_path,
+    area_in_m2,
+    time_dim="time",
+    obs_var="qobs",
+    na_value=RAVEN_NO_DATA_VALUE,
 ):
     """
     Compute the average annual runoff from observed data.
     """
     with xr.open_dataset(nc_file_path) as ds:
-        qobs = ds.where(ds["qobs"] != na_value)["qobs"]
+        qobs = ds.where(ds[obs_var] != na_value)[obs_var]
         qobs *= 86400.0  # convert m**3/s to m**3/d
         axis = qobs.dims.index(time_dim)
         # avg daily runoff [m3/d] for each year in record

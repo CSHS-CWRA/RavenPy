@@ -4,8 +4,8 @@ RavenPy
 
 .. image:: https://img.shields.io/pypi/v/ravenpy.svg
     :target: https://pypi.python.org/pypi/ravenpy
-    
-.. image:: https://anaconda.org/conda-forge/ravenpy/badges/installer/conda.svg   
+
+.. image:: https://anaconda.org/conda-forge/ravenpy/badges/installer/conda.svg
     :target: https://conda.anaconda.org/conda-forge
 
 .. image:: https://github.com/CSHS-CWRA/RavenPy/actions/workflows/main.yml/badge.svg
@@ -13,8 +13,12 @@ RavenPy
     :alt: Build status
 
 .. image:: https://readthedocs.org/projects/ravenpy/badge/?version=latest
-    :target: https://ravenpy.readthedocs.io/en/latest/?badge=latest
+    :target: https://ravenpy.readthedocs.io/en/latest/?version=latest
     :alt: Documentation Status
+    
+.. image:: https://coveralls.io/repos/github/CSHS-CWRA/RavenPy/badge.svg?branch=master
+    :target: https://coveralls.io/github/CSHS-CWRA/RavenPy?branch=master
+    :alt: Coveralls
 
 A Python wrapper to setup and run the hydrologic modelling framework Raven_.
 

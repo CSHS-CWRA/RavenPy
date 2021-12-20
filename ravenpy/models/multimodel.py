@@ -32,7 +32,7 @@ class RavenMultiModel(Raven):
         if (run_name is not None) or (len(rns) < len(self._models)):
             for m in self._models:
                 rn = run_name or m.config.rvi.run_name
-                m.config.rvi.run_name = rn + "-" + m.config.identifier
+                m.config.rvi.run_name = rn + "-" + m.identifier
 
     def resume(self, solution=None):
         # TODO: Add support for model dependent solutions.
@@ -55,14 +55,14 @@ class RavenMultiModel(Raven):
 
         p = {}
         for m in self._models:
-            p[m.config.identifier] = kwds.pop(m.config.identifier, None)
+            p[m.identifier] = kwds.pop(m.identifier, None)
 
         procs = []
         for m in self._models:
             # Add params to kwds if passed in run.
             kw = kwds.copy()
-            if p[m.config.identifier]:
-                kw["params"] = p[m.config.identifier]
+            if p[m.identifier]:
+                kw["params"] = p[m.identifier]
 
             procs.extend(m.run(ts, **kw))
 

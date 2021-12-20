@@ -12,6 +12,7 @@ def test_get_CASPAR_dataset():
 
 
 @pytest.mark.online
+@pytest.mark.xfail(error=OSError, reason="Network may be unreliable")
 def test_get_ECCC_dataset():
     ds, _ = get_ECCC_dataset("GEPS")
 

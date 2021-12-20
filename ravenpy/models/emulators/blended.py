@@ -59,14 +59,6 @@ class BLENDED(Raven):
         par_r08: float
 
     @dataclass
-    class DerivedParams:
-        POW_X04: float
-        POW_X11: float
-        SUM_X09_X10: float
-        SUM_X13_X14: float
-        SUM_X24_X25: float
-
-    @dataclass
     class ForestHRU(HRU):
         land_use_class: str = "FOREST"
         veg_class: str = "FOREST"
@@ -75,10 +67,10 @@ class BLENDED(Raven):
         terrain_class: str = "DEFAULT_T"
 
     def __init__(self, *args, **kwds):
+        kwds["identifier"] = kwds.get("identifier", "blended")
         super().__init__(*args, **kwds)
 
         self.config.update(
-            identifier="blended",
             hrus=(BLENDED.ForestHRU(),),
             subbasins=(
                 Sub(
@@ -159,7 +151,7 @@ class BLENDED(Raven):
         # Global Parameters
         #-----------------------------------------------------------------
         :GlobalParameter         SNOW_SWI_MIN {params.par_x13}  #  x(13)
-        :GlobalParameter         SNOW_SWI_MAX {derived_params.SUM_X13_X14}     #  x(13)+x(14)
+        :GlobalParameter         SNOW_SWI_MAX {params.par_x14}  #  x(13)+x(14)
         :GlobalParameter     SWI_REDUCT_COEFF {params.par_x15}  #  x(15)
         :GlobalParameter             SNOW_SWI {params.par_x19}  #  x(19)
         :GlobalParameter        RAINSNOW_TEMP {params.par_x31}  #  x(31)
@@ -171,30 +163,30 @@ class BLENDED(Raven):
         # Soil Parameters
         #-----------------------------------------------------------------
         :SoilParameterList
-          :Parameters,        POROSITY,           PERC_COEFF,  PET_CORRECTION,  BASEFLOW_COEFF,        B_EXP,     HBV_BETA, MAX_BASEFLOW_RATE,   BASEFLOW_N, FIELD_CAPACITY,     SAT_WILT,
-               :Units,               -,                  1/d,               -,             1/d
-              TOPSOIL,             1.0,         {params.par_x28},    {params.par_x08},       {derived_params.POW_X04}, {params.par_x02}, {params.par_x03}, 	 {params.par_x05}, {params.par_x06},  {derived_params.SUM_X09_X10}, {params.par_x09},
-             PHREATIC,             1.0,         {params.par_x35},             0.0,       {derived_params.POW_X11},          0.0,          0.0, 	          0.0, {params.par_x12},            0.0,          0.0,
-              DEEP_GW,             1.0,             0.0,                  0.0,             0.0,          0.0,          0.0, 	          0.0,          0.0,            0.0,          0.0,
-         #    TOPSOIL,             1.0,           x(28),                x(08),           x(04),        x(02),        x(03), 	        x(05),        x(06),    x(09)+x(10),        x(09),
-         #   PHREATIC,             1.0,           x(35),                  0.0,           x(11),          0.0,          0.0, 	          0.0,        x(12),            0.0,          0.0,
-         #    DEEP_GW,             1.0,             0.0,                  0.0,             0.0,          0.0,          0.0, 	          0.0,          0.0,            0.0,          0.0,
+          :Parameters,        POROSITY,        PERC_COEFF,    PET_CORRECTION,     BASEFLOW_COEFF,             B_EXP,          HBV_BETA,   MAX_BASEFLOW_RATE,       BASEFLOW_N,    FIELD_CAPACITY,         SAT_WILT,
+               :Units,               -,               1/d,                 -,                1/d,
+              TOPSOIL,             1.0,  {params.par_x28},  {params.par_x08},    {params.par_x04}, {params.par_x02},  {params.par_x03},    {params.par_x05}, {params.par_x06},  {params.par_x10}, {params.par_x09},
+             PHREATIC,             1.0,  {params.par_x35},               0.0,    {params.par_x11},              0.0,               0.0,                 0.0, {params.par_x12},               0.0,              0.0,
+              DEEP_GW,             1.0,               0.0,               0.0,                 0.0,              0.0,               0.0,                 0.0,              0.0,               0.0,              0.0,
+         #    TOPSOIL,             1.0,             x(28),             x(08),               x(04),            x(02),             x(03),               x(05),            x(06),       x(09)+x(10),            x(09),
+         #   PHREATIC,             1.0,             x(35),               0.0,               x(11),              0.0,               0.0,                 0.0,            x(12),               0.0,              0.0,
+         #    DEEP_GW,             1.0,               0.0,               0.0,                 0.0,              0.0,               0.0,                 0.0,              0.0,               0.0,              0.0,
         :EndSoilParameterList
 
         #-----------------------------------------------------------------
         # Land Use Parameters
         #-----------------------------------------------------------------
         :LandUseParameterList
-          :Parameters, MIN_MELT_FACTOR,     MAX_MELT_FACTOR,    DD_MELT_TEMP,  DD_AGGRADATION, REFREEZE_FACTOR, REFREEZE_EXP, DD_REFREEZE_TEMP, HMETS_RUNOFF_COEFF,
-               :Units,          mm/d/C,              mm/d/C,               C,            1/mm,          mm/d/C,            -,                C,                  -,
-            [DEFAULT],    {params.par_x24},       {derived_params.SUM_X24_X25},    {params.par_x26},    {params.par_x27},    {params.par_x18}, {params.par_x17},     {params.par_x16},       {params.par_x01},
-        #                        x(24),         x(24)+x(25),           x(26),           x(27),           x(18),        x(17),            x(16),              x(01),
+          :Parameters,  MIN_MELT_FACTOR,     MAX_MELT_FACTOR,     DD_MELT_TEMP,   DD_AGGRADATION,  REFREEZE_FACTOR,     REFREEZE_EXP,     DD_REFREEZE_TEMP,     HMETS_RUNOFF_COEFF,
+               :Units,           mm/d/C,              mm/d/C,                C,             1/mm,           mm/d/C,                -,                    C,                      -,
+            [DEFAULT], {params.par_x24},    {params.par_x25}, {params.par_x26}, {params.par_x27}, {params.par_x18}, {params.par_x17},     {params.par_x16},       {params.par_x01},
+        #                        x(24),         x(24)+x(25),           x(26),           x(27),               x(18),            x(17),                x(16),                  x(01),
         :EndLandUseParameterList
         :LandUseParameterList
-          :Parameters,   GAMMA_SHAPE,     GAMMA_SCALE,    GAMMA_SHAPE2,    GAMMA_SCALE2,    FOREST_SPARSENESS,
-               :Units,             -,               -,               -,               -,                    -,
+          :Parameters,       GAMMA_SHAPE,         GAMMA_SCALE,        GAMMA_SHAPE2,        GAMMA_SCALE2,    FOREST_SPARSENESS,
+               :Units,                 -,                   -,                   -,                   -,                    -,
             [DEFAULT],  {params.par_x20},    {params.par_x21},    {params.par_x22},    {params.par_x23},                  0.0,
-            #                  x(20),           x(21),           x(22),           x(23),                  0.0,
+            #                      x(20),               x(21),               x(22),               x(23),                  0.0,
         :EndLandUseParameterList
 
         #-----------------------------------------------------------------
@@ -274,13 +266,6 @@ class BLENDED(Raven):
         self.config.rvi.set_extra_attributes(params=self.config.rvp.params)
 
         params = cast(BLENDED.Params, self.config.rvp.params)
-        self.config.rvp.derived_params = BLENDED.DerivedParams(
-            SUM_X09_X10=params.par_x10,
-            SUM_X13_X14=params.par_x14,
-            SUM_X24_X25=params.par_x25,
-            POW_X04=params.par_x04,
-            POW_X11=params.par_x11,
-        )
 
         topsoil_hlf = params.par_x29 * 0.5 * 1000
         phreatic_hlf = params.par_x30 * 0.5 * 1000
@@ -292,11 +277,20 @@ class BLENDED(Raven):
 
 
 class BLENDED_OST(Ostrich, BLENDED):
+
+    ostrich_to_raven_param_conversion = {
+        "sum_x09_x10": "par_x10",
+        "sum_x13_x14": "par_x14",
+        "sum_x24_x25": "par_x25",
+        "pow_x04": "par_x04",
+        "pow_x11": "par_x11",
+    }
+
     def __init__(self, *args, **kwds):
+        kwds["identifier"] = kwds.get("identifier", "blended-ost")
         super().__init__(*args, **kwds)
 
         self.config.update(
-            identifier="blended-ost",
             algorithm="DDS",
             max_iterations=50,
             suppress_output=True,
@@ -330,13 +324,6 @@ class BLENDED_OST(Ostrich, BLENDED):
         ####################
 
         rvi_tmpl = """
-        :Calendar              {calendar}
-        :RunName               {run_name}-{run_index}
-        :StartDate             {start_date}
-        :EndDate               {end_date}
-        :TimeStep              {time_step}
-        :Method                ORDERED_SERIES
-
         :PotentialMeltMethod     POTMELT_HMETS
         :RainSnowFraction        {rain_snow_fraction}
         :Evaporation             {evaporation}         # PET_OUDIN
@@ -379,16 +366,6 @@ class BLENDED_OST(Ostrich, BLENDED):
                         #:SnowBalance    SNOBAL_GAWSER           MULTIPLE       MULTIPLE
           :EndProcessGroup CALCULATE_WTS par_r07 par_r08
         :EndHydrologicProcesses
-
-        #:CreateRVPTemplate
-
-        #---------------------------------------------------------
-        # Output Options
-        #
-        :EvaluationMetrics NASH_SUTCLIFFE RMSE KLING_GUPTA
-        :SuppressOutput
-        :SilentMode
-        :DontWriteWatershedStorage
         """
         self.config.rvi.set_tmpl(rvi_tmpl, is_ostrich=True)
 
@@ -686,15 +663,16 @@ class BLENDED_OST(Ostrich, BLENDED):
 
         BeginResponseVars
           #name   filename                              keyword         line    col     token
-          NS      ./model/output/{run_name}-{run_index}_Diagnostics.csv;       OST_NULL        1       3       ','
+          RawMetric  ./model/output/{run_name}-{run_index}_Diagnostics.csv;       OST_NULL        1       3       ','
         EndResponseVars
 
         BeginTiedRespVars
-          NegNS 1 NS wsum -1.00
+        # <name1> <np1> <pname 1,1 > <pname 1,2 > ... <pname 1,np1 > <type1> <type_data1>
+          Metric 1 RawMetric wsum {evaluation_metric_multiplier}
         EndTiedRespVars
 
         BeginGCOP
-          CostFunction NegNS
+          CostFunction Metric
           PenaltyFunction APM
         EndGCOP
 
@@ -722,28 +700,3 @@ class BLENDED_OST(Ostrich, BLENDED):
         """Derived parameters are computed by Ostrich."""
         self.config.rvt.rain_correction = "par_x33"
         self.config.rvt.snow_correction = "par_x34"
-
-    def ost2raven(self, ops):
-        """Return a list of parameter names calibrated by Ostrich that match Raven's parameters.
-
-        Parameters
-        ----------
-        ops: dict
-          Optimal parameter set returned by Ostrich.
-
-        Returns
-        -------
-        BLENDEDParams named tuple
-          Parameters expected by Raven.
-        """
-        names = ["par_x{:02}".format(i) for i in range(1, 36)] + [
-            "par_r{:02}".format(i) for i in range(1, 9)
-        ]
-        names[3] = "pow_x04"
-        names[9] = "sum_x09_x10"
-        names[10] = "pow_x11"
-        names[13] = "sum_x13_x14"
-        names[24] = "sum_x24_x25"
-
-        out = [ops[n] for n in names]
-        return BLENDED.Params(*out)

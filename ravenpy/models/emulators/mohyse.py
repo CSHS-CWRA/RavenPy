@@ -25,15 +25,11 @@ class MOHYSE(Raven):
         par_x09: float
         par_x10: float
 
-    @dataclass
-    class DerivedParams:
-        par_rezi_x10: float
-
     def __init__(self, *args, **kwds):
+        kwds["identifier"] = kwds.get("identifier", "mohyse")
         super().__init__(*args, **kwds)
 
         self.config.update(
-            identifier="mohyse",
             hrus=(GR4JCN.LandHRU(),),
             subbasins=(
                 Sub(
@@ -195,23 +191,23 @@ class MOHYSE(Raven):
 
     def derived_parameters(self):
         params = cast(MOHYSE.Params, self.config.rvp.params)
-        self.config.rvp.derived_params = MOHYSE.DerivedParams(
-            par_rezi_x10=(1.0 / params.par_x10)
-        )
 
-        # These need to be injected in the RVH
+        par_rezi_x10 = 1.0 / params.par_x10
+
+        self.config.rvp.set_extra_attributes(par_rezi_x10=par_rezi_x10)
+
         self.config.rvh.set_extra_attributes(
-            par_rezi_x10=self.config.rvp.derived_params.par_rezi_x10,
+            par_rezi_x10=par_rezi_x10,
             par_x09=params.par_x09,
         )
 
 
 class MOHYSE_OST(Ostrich, MOHYSE):
     def __init__(self, *args, **kwds):
+        kwds["identifier"] = kwds.get("identifier", "mohyse-ost")
         super().__init__(*args, **kwds)
 
         self.config.update(
-            identifier="mohyse-ost",
             algorithm="DDS",
             max_iterations=50,
             run_name="run",
@@ -386,15 +382,16 @@ class MOHYSE_OST(Ostrich, MOHYSE):
 
         BeginResponseVars
           #name   filename                              keyword         line    col     token
-          NS      ./model/output/{run_name}-{run_index}_Diagnostics.csv;       OST_NULL        1       3       ','
+          RawMetric  ./model/output/{run_name}-{run_index}_Diagnostics.csv;       OST_NULL        1       3       ','
         EndResponseVars
 
         BeginTiedRespVars
-          NegNS 1 NS wsum -1.00
+        # <name1> <np1> <pname 1,1 > <pname 1,2 > ... <pname 1,np1 > <type1> <type_data1>
+          Metric 1 RawMetric wsum {evaluation_metric_multiplier}
         EndTiedRespVars
 
         BeginGCOP
-          CostFunction NegNS
+          CostFunction Metric
           PenaltyFunction APM
         EndGCOP
 

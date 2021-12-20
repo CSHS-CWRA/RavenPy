@@ -1,3 +1,4 @@
+from dataclasses import fields
 from pathlib import Path
 from typing import Dict, cast
 
@@ -34,13 +35,6 @@ class HMETS(Raven):
         PHREATIC: float
 
     @dataclass
-    class DerivedParams:
-        TOPSOIL_m: float
-        PHREATIC_m: float
-        SUM_MELT_FACTOR: float
-        SUM_SNOW_SWI: float
-
-    @dataclass
     class ForestHRU(HRU):
         land_use_class: str = "FOREST"
         veg_class: str = "FOREST"
@@ -49,10 +43,10 @@ class HMETS(Raven):
         terrain_class: str = "[NONE]"
 
     def __init__(self, *args, **kwds):
+        kwds["identifier"] = kwds.get("identifier", "hmets")
         super().__init__(*args, **kwds)
 
         self.config.update(
-            identifier="hmets",
             hrus=(HMETS.ForestHRU(),),
             subbasins=(
                 Sub(
@@ -104,7 +98,7 @@ class HMETS(Raven):
         :SoilProfiles
                  LAKE, 0
                  ROCK, 0
-          DEFAULT_P, 2, TOPSOIL,  {derived_params.TOPSOIL_m}, PHREATIC, {derived_params.PHREATIC_m},
+          DEFAULT_P, 2, TOPSOIL,  {TOPSOIL_m}, PHREATIC, {PHREATIC_m},
         # DEFAULT_P, 2, TOPSOIL,   x(20)/1000, PHREATIC,   x(21)/1000,
         :EndSoilProfiles
 
@@ -112,7 +106,7 @@ class HMETS(Raven):
         # Global Parameters
         #-----------------------------------------------------------------
         :GlobalParameter         SNOW_SWI_MIN {params.SNOW_SWI_MIN}     # x(9)
-        :GlobalParameter         SNOW_SWI_MAX {derived_params.SUM_SNOW_SWI}     # x(9)+x(10)
+        :GlobalParameter         SNOW_SWI_MAX {SUM_SNOW_SWI}     # x(9)+x(10)
         :GlobalParameter     SWI_REDUCT_COEFF {params.SWI_REDUCT_COEFF} # x(11)
         :GlobalParameter             SNOW_SWI 0.05         # not sure why/if needed...
 
@@ -134,7 +128,7 @@ class HMETS(Raven):
         :LandUseParameterList
           :Parameters, MIN_MELT_FACTOR,  MAX_MELT_FACTOR,    DD_MELT_TEMP,  DD_AGGRADATION,  REFREEZE_FACTOR,    REFREEZE_EXP,  DD_REFREEZE_TEMP,  HMETS_RUNOFF_COEFF,
                :Units,          mm/d/C,          mm/d/C,               C,            1/mm,          mm/d/C,               -,                C,                  -,
-            [DEFAULT],{params.MIN_MELT_FACTOR},{derived_params.SUM_MELT_FACTOR},  {params.DD_MELT_TEMP},{params.DD_AGGRADATION},{params.REFREEZE_FACTOR},  {params.REFREEZE_EXP},{params.DD_REFREEZE_TEMP},{params.HMETS_RUNOFF_COEFF},
+            [DEFAULT],{params.MIN_MELT_FACTOR},{SUM_MELT_FACTOR},  {params.DD_MELT_TEMP},{params.DD_AGGRADATION},{params.REFREEZE_FACTOR},  {params.REFREEZE_EXP},{params.DD_REFREEZE_TEMP},{params.HMETS_RUNOFF_COEFF},
         #                         x(5),       x(5)+x(6),            x(7),            x(8),           x(13),           x(14),            x(12),              x(16),
         :EndLandUseParameterList
         :LandUseParameterList
@@ -190,11 +184,12 @@ class HMETS(Raven):
 
     def derived_parameters(self):
         params = cast(HMETS.Params, self.config.rvp.params)
-        self.config.rvp.derived_params = HMETS.DerivedParams(
-            TOPSOIL_m=(params.TOPSOIL / 1000.0),
-            PHREATIC_m=(params.PHREATIC / 1000.0),
-            SUM_MELT_FACTOR=(params.MAX_MELT_FACTOR),
-            SUM_SNOW_SWI=(params.SNOW_SWI_MAX),
+
+        self.config.rvp.set_extra_attributes(
+            TOPSOIL_m=params.TOPSOIL / 1000.0,
+            PHREATIC_m=params.PHREATIC / 1000.0,
+            SUM_MELT_FACTOR=params.MAX_MELT_FACTOR,
+            SUM_SNOW_SWI=params.SNOW_SWI_MAX,
         )
 
         if not self.config.rvc.hru_states:
@@ -204,11 +199,38 @@ class HMETS(Raven):
 
 
 class HMETS_OST(Ostrich, HMETS):
+
+    ostrich_to_raven_param_conversion = {
+        "par_x01": "GAMMA_SHAPE",
+        "par_x02": "GAMMA_SCALE",
+        "par_x03": "GAMMA_SHAPE2",
+        "par_x04": "GAMMA_SCALE2",
+        "par_x05": "MIN_MELT_FACTOR",
+        "par_x06": "MAX_MELT_FACTOR",
+        "par_x07": "DD_MELT_TEMP",
+        "par_x08": "DD_AGGRADATION",
+        "par_x09": "SNOW_SWI_MIN",
+        "par_x10": "SNOW_SWI_MAX",
+        "par_x11": "SWI_REDUCT_COEFF",
+        "par_x12": "DD_REFREEZE_TEMP",
+        "par_x13": "REFREEZE_FACTOR",
+        "par_x14": "REFREEZE_EXP",
+        "par_x15": "PET_CORRECTION",
+        "par_x16": "HMETS_RUNOFF_COEFF",
+        "par_x17": "PERC_COEFF",
+        "par_x18": "BASEFLOW_COEFF_1",
+        "par_x19": "BASEFLOW_COEFF_2",
+        "par_x20": "TOPSOIL",
+        "par_x21": "PHREATIC",
+        "par_sum_x05_x06": "MAX_MELT_FACTOR",
+        "par_sum_x09_x10": "SNOW_SWI_MAX",
+    }
+
     def __init__(self, *args, **kwds):
+        kwds["identifier"] = kwds.get("identifier", "hmets-ost")
         super().__init__(*args, **kwds)
 
         self.config.update(
-            identifier="hmets-ost",
             algorithm="DDS",
             max_iterations=50,
             run_name="run",
@@ -421,15 +443,16 @@ class HMETS_OST(Ostrich, HMETS):
 
         BeginResponseVars
           #name   filename                              keyword         line    col     token
-          NS      ./model/output/{run_name}-{run_index}_Diagnostics.csv;       OST_NULL        1       3       ','
+          RawMetric  ./model/output/{run_name}-{run_index}_Diagnostics.csv;       OST_NULL        1       3       ','
         EndResponseVars
 
         BeginTiedRespVars
-          NegNS 1 NS wsum -1.00
+        # <name1> <np1> <pname 1,1 > <pname 1,2 > ... <pname 1,np1 > <type1> <type_data1>
+          Metric 1 RawMetric wsum {evaluation_metric_multiplier}
         EndTiedRespVars
 
         BeginGCOP
-          CostFunction NegNS
+          CostFunction Metric
           PenaltyFunction APM
         EndGCOP
 
@@ -457,24 +480,16 @@ class HMETS_OST(Ostrich, HMETS):
         """Derived parameters are computed by Ostrich."""
         pass
 
-    def ost2raven(self, ops) -> HMETS.Params:
-        """Return a list of parameter names calibrated by Ostrich that match Raven's parameters.
+    def ost2raven(self, ostrich_params) -> HMETS.Params:
+        raven_params = {}
+        o2r = getattr(self, "ostrich_to_raven_param_conversion", {})
+        r2o = {r: o for o, r in o2r.items()}
+        for f in fields(self.Params):
+            raven_params[f.name] = ostrich_params[r2o.get(f.name, f.name)]
 
-        Parameters
-        ----------
-        ops: dict
-          Optimal parameter set returned by Ostrich.
+        # Not sure why this isn't done with Ostrich, as extra "tied params", as it's
+        # done for other emulators
+        raven_params["TOPSOIL"] *= 1000
+        raven_params["PHREATIC"] *= 1000
 
-        Returns
-        -------
-        HMETSParams named tuple
-          Parameters expected by Raven.
-        """
-        names = ["par_x{:02}".format(i) for i in range(1, 22)]
-        names[5] = "par_sum_x05_x06"
-        names[9] = "par_sum_x09_x10"
-
-        out = [ops[n] for n in names]
-        out[19] *= 1000
-        out[20] *= 1000
-        return HMETS.Params(*out)
+        return self.Params(**raven_params)

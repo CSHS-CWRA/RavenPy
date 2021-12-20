@@ -7,6 +7,8 @@ from ravenpy.utilities.testdata import get_local_testdata
 
 pytestmark = pytest.mark.online
 
+# FIXME: Remove XFAIL marks once OWSLib > 0.24.1 is released.
+
 
 class TestHydroBASINS:
     geoserver = pytest.importorskip("ravenpy.utilities.geoserver")
@@ -25,22 +27,27 @@ class TestHydroBASINS:
         dom = self.geoserver.select_hybas_domain(bbox)
         assert dom == "ar"
 
+    @pytest.mark.xfail(reason="OWSLib>0.24.1 is needed.")
     def test_get_hydrobasins_location_wfs(self, tmp_path):
-        lake_winnipeg = (-98.03575958286369, 52.88238524279493)
-        resp = self.geoserver.get_hydrobasins_location_wfs(
-            coordinates=lake_winnipeg * 2, domain="na"
+        lake_winnipeg = (
+            -98.03575958286369,
+            52.88238524279493,
         )
-        feat = self.gpd.read_file(resp.decode())
+        resp = self.geoserver.get_hydrobasins_location_wfs(
+            coordinates=lake_winnipeg, domain="na"
+        )
+        feat = self.gpd.GeoDataFrame.from_features(resp)
         geom = self.sgeo.shape(feat["geometry"][0])
         assert geom.bounds == (-99.2731, 50.3603, -96.2578, 53.8705)
         np.testing.assert_almost_equal(geom.area, 3.2530867)
 
+    @pytest.mark.xfail(reason="OWSLib>0.24.1 is needed.")
     def test_get_hydrobasins_attributes_wfs(self, tmp_path):
         rio_grande = (-80.475, 8.4)
         resp = self.geoserver.get_hydrobasins_location_wfs(
             coordinates=rio_grande * 2, domain="na"
         )
-        feat = self.gpd.read_file(resp.decode())
+        feat = self.gpd.GeoDataFrame.from_features(resp)
         main_bas = feat["MAIN_BAS"][0]
 
         region_url = self.geoserver.filter_hydrobasins_attributes_wfs(
@@ -58,12 +65,13 @@ class TestHydroBASINS:
             np.array([[-80.8542, 8.2459, -80.1375, 8.7004]]),
         )
 
+    @pytest.mark.xfail(reason="OWSLib>0.24.1 is needed.")
     def test_hydrobasins_upstream_aggregate(self, tmp_path):
-        puerto_cortes = (-83.525, 8.96)
+        puerto_cortes = (-83.525, 8.96, -83.520, 8.97)
         resp = self.geoserver.get_hydrobasins_location_wfs(
-            coordinates=puerto_cortes * 2, domain="na"
+            coordinates=puerto_cortes, domain="na"
         )
-        feat = self.gpd.read_file(resp.decode())
+        feat = self.gpd.GeoDataFrame.from_features(resp)
 
         gdf_upstream = self.geoserver.hydrobasins_upstream(feat.loc[0], domain="na")
         assert len(gdf_upstream) == 73
@@ -84,12 +92,16 @@ class TestHydroRouting:
     gpd = pytest.importorskip("geopandas")
     sgeo = pytest.importorskip("shapely.geometry")
 
+    @pytest.mark.xfail(reason="OWSLib>0.24.1 is needed.")
     def test_hydro_routing_locations(self, tmp_path):
-        lake_winnipeg = (-98.03575958286369, 52.88238524279493)
-        resp = self.geoserver.get_hydro_routing_location_wfs(
-            coordinates=lake_winnipeg * 2, lakes="all"
+        lake_winnipeg = (
+            -98.03575958286369,
+            52.88238524279493,
         )
-        feat = self.gpd.read_file(resp.decode())
+        resp = self.geoserver.get_hydro_routing_location_wfs(
+            coordinates=lake_winnipeg, lakes="all"
+        )
+        feat = self.gpd.GeoDataFrame.from_features(resp)
         geom = feat["geometry"][0]
         assert geom.bounds == (-99.3083, 50.1875, -95.9875, 54.0542)
         # Note: This value is not in sq. km.
@@ -104,13 +116,14 @@ class TestHydroRouting:
         assert len(gdf) == 11415
 
     @pytest.mark.slow
+    @pytest.mark.xfail(reason="OWSLib>0.24.1 is needed.")
     def test_hydro_routing_upstream(self, tmp_path):
-        amadjuak = (-71.225, 65.05)
+        amadjuak = (-71.225, 65.05, -71.220, 65.10)
         resp = self.geoserver.get_hydro_routing_location_wfs(
-            coordinates=amadjuak * 2, lakes="1km", level=7
+            coordinates=amadjuak, lakes="1km", level=7
         )
-        feature = self.gpd.read_file(resp.decode())
-        subbasin_id = feature["SubId"][0]
+        feat = self.gpd.GeoDataFrame.from_features(resp)
+        subbasin_id = feat["SubId"][0]
 
         gdf_upstream = self.geoserver.hydro_routing_upstream(
             subbasin_id, lakes="1km", level=7
@@ -126,18 +139,26 @@ class TestWFS:
     gpd = pytest.importorskip("geopandas")
     sgeo = pytest.importorskip("shapely.geometry")
 
-    def test_get_location_wfs(self, tmp_path):
+    @pytest.mark.xfail(reason="OWSLib>0.24.1 is needed.")
+    def test_get_location_wfs_point(self, tmp_path):
         las_vegas = (-115.136389, 36.175)
         usa_admin_bounds = "public:usa_admin_boundaries"
-        resp = self.geoserver._get_location_wfs(
-            coordinates=las_vegas * 2, layer=usa_admin_bounds
-        )
-        feat = self.gpd.read_file(resp.decode())
+        resp = self.geoserver._get_location_wfs(point=las_vegas, layer=usa_admin_bounds)
+        feat = self.gpd.GeoDataFrame.from_features(resp)
 
         geom = feat["geometry"][0]
         assert geom.bounds == (-120.001, 35.0019, -114.0417, 41.9948)
         # Note: This value is not in sq. km.
         np.testing.assert_almost_equal(geom.area, 29.9690150)
+
+    def test_get_location_wfs_bbox(self, tmp_path):
+        new_vegas = (-115.697, 34.742, -114.279, 36.456)
+        usa_admin_bounds = "public:usa_admin_boundaries"
+        resp = self.geoserver._get_location_wfs(bbox=new_vegas, layer=usa_admin_bounds)
+        feat = self.gpd.GeoDataFrame.from_features(resp)
+
+        assert len(feat["geometry"]) == 3
+        assert set(feat.STATE_NAME.unique()) == {"Nevada", "California", "Arizona"}
 
     def test_get_feature_attributes_wfs(self):
         state_name = "Nevada"
@@ -184,9 +205,9 @@ class TestWCS:
                 rf.close()
                 with self.rasterio.open(rf.name) as src:
                     assert src.width == 650
-                    assert src.height == 745
-                    np.testing.assert_array_equal(
-                        src.lnglat(), (-106.64193764047552, 52.1564202369763)
+                    assert src.height == 744
+                    np.testing.assert_allclose(
+                        src.lnglat(), (-106.641957, 52.156555), rtol=1e-5
                     )
                     data = src.read()
                     assert np.unique(data).tolist() == [1, 5, 8, 10, 14, 15, 16, 17, 18]
