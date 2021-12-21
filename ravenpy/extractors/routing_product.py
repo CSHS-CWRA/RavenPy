@@ -9,6 +9,7 @@ try:
     import geopandas
     from osgeo import __version__ as osgeo_version  # noqa
     from osgeo import ogr, osr  # noqa
+    from shapely import wkt
 except (ImportError, ModuleNotFoundError) as e:
     msg = gis_import_error_message.format(Path(__file__).stem)
     raise ImportError(msg) from e
@@ -456,7 +457,7 @@ class RoutingProductGridWeightExtractor:
 
         for _, row in self._routing_data.iterrows():
 
-            poly = ogr.CreateGeometryFromWkt(row.geometry.to_wkt())
+            poly = ogr.CreateGeometryFromWkt(wkt.dumps(row.geometry))
 
             area_basin = poly.Area()
             # bounding box around basin (for easy check of proximity)
@@ -668,7 +669,7 @@ class RoutingProductGridWeightExtractor:
                 idx = idx[0]
                 poly = self._input_data.loc[idx].geometry
                 grid_cell_geom_gpd_wkt[ishape][0] = ogr.CreateGeometryFromWkt(
-                    poly.to_wkt()
+                    wkt.dumps(poly)
                 ).Buffer(
                     0.0
                 )  # We add an empty buffer here to fix problems with bad polygon topology (actually caused by ESRI's historical incompetence)

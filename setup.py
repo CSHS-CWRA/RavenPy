@@ -243,7 +243,7 @@ setup(
         gis=gis_requirements,
     ),
     url="https://github.com/CSHS-CWRA/ravenpy",
-    version="0.7.6",
+    version="0.7.7",
     zip_safe=False,
     cmdclass={
         "install": create_external_deps_install_class(install),
