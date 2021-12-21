@@ -4,7 +4,10 @@ Created on Sun Nov  1 20:48:03 2020
 @author: Richard
 """
 
+import datetime as dt
+import math
 from copy import deepcopy
+from dataclasses import replace
 
 import numpy as np
 import xarray as xr
@@ -191,3 +194,173 @@ def update_state(x, qobs_pert, qobs_error, qsim):
     xa = np.maximum(xa, 0)
 
     return xa
+
+
+def perturb_full_series(model, std, start_date, end_date, dists, n_members=25):
+    """
+    This function will take a timeseries as input and perturb each variable
+    according to the desired uncertainty/confidence level and distribution of
+    each variable. Returns an Xarray Dataset object with n_members x time values
+    for each variable.
+
+    Parameters
+    ----------
+    model : Raven model class object
+        The model that will be used to perform the simulations and assimilation
+    std : tuple
+        Pairs of variable: standard deviation of the uncertainty.
+    start_date : datetime object
+        Start date of the assimilation run.
+    end_date : datetime object
+        End date of the assimilation run.
+    dists : tuple
+        Pairs of variable:distribution to identify the type of distribution each variable follows.
+    n_members : integer
+        Number of members to use in the Ensemble Kalman Filter.
+
+    Returns
+    -------
+    perturbed: path object (string)
+        Path to the perturbed hydrometeorological timeseries for the entire period.
+    """
+
+    # Use the same random seed for both tasmin and tasmax
+    rs = np.random.SeedSequence(None).generate_state(1)[0]
+    seed = {"tasmin": rs, "tasmax": rs}
+
+    # === Create perturbed time series for full assimilation period ====
+    perturbed = {}
+    for key, s in std.items():
+        nc = model.config.rvt._var_cmds[key]
+
+        with xr.open_dataset(nc.file_name_nc) as ds:
+            da = ds.get(nc.var_name_nc).sel(time=slice(start_date, end_date))
+
+            perturbed[key] = perturbation(
+                da,
+                dists.get(key, "norm"),
+                std=s,
+                seed=seed.get(key, None),
+                member=n_members,
+            )
+
+            # Save flow for later
+            if key == "water_volume_transport_in_river_channel":
+                q_obs = da
+
+    # Create netcdf for the model.
+    p_fn = model.workdir / "perturbed_forcing.nc"
+    perturbed = xr.Dataset(perturbed)
+    perturbed.to_netcdf(p_fn, mode="w")
+
+    return p_fn, q_obs
+
+
+def assimilation_initialization(
+    model,
+    ts,
+    start_date,
+    end_date,
+    area,
+    elevation,
+    latitude,
+    longitude,
+    params,
+    assim_var,
+    n_members=25,
+):
+
+    # Set model options
+    model(
+        ts=ts,
+        start_date=start_date,
+        end_date=end_date,
+        area=area,
+        elevation=elevation,
+        latitude=latitude,
+        longitude=longitude,
+        params=params,
+    )
+    """
+    # This section of code was the old way of doing it. Should be removed
+    # when notebooks will be working with the new implementations.
+
+    model.config.rvh.hrus = (
+        GR4JCN.LandHRU(
+            area=4250.6, elevation=843.0, latitude=54.4848, longitude=-123.3659
+        ),
+    )
+
+    model.config.rvp.params = GR4JCN.Params(
+        0.1353389, -0.005067198, 576.8007, 6.986121, 1.102917, 0.9224778
+    )  # SALMON
+
+    # ==== Initialization (just to get reasonable states) ====
+    # Set initialization run options
+    model.config.rvi.run_name = "init"
+    model.config.rvi.start_date = start_date
+    # Richard: what is the end date policy for the init run ?
+    model.config.rvi.end_date = start_date + dt.timedelta(days=assim_days[0])
+
+    # Run the model
+    model([ts])
+    """
+    # Extract final model states
+    hru_state, basin_state = model.get_final_state()
+    xa = n_members * [getattr(hru_state, key) for key in assim_var]
+    hru_states = n_members * [hru_state]
+    basin_states = n_members * [basin_state]
+
+    return model, xa, hru_states, basin_states
+
+
+def sequential_assimilation(
+    model,
+    hru_states,
+    basin_states,
+    perturbed_dataset,
+    q_obs,
+    assim_var,
+    start_date,
+    end_date,
+    n_members=25,
+    assim_step_days=7,
+):
+
+    # ==== Assimilation ====
+    q_assim = []
+    sd = start_date
+
+    # Make list of days on which we will assimilate
+    number_days = end_date - start_date
+    number_days = number_days.days
+    assim_dates = math.floor(number_days / assim_step_days) * [assim_step_days]
+
+    for i, ndays in enumerate(assim_dates):
+
+        dates = [sd + dt.timedelta(days=x) for x in range(ndays)]
+        model.config.rvi.end_date = dates[-1]
+        model.config.rvi.run_name = f"assim_{i}"
+
+        # Perform the first assimilation step here
+        [xa, model] = assimilate(
+            model, perturbed_dataset, q_obs, assim_var, basin_states, hru_states, dates
+        )
+
+        # Save streamflow simulation
+        q_assim.append(model.q_sim.isel(nbasins=0))
+
+        # Update the start-time for the next loop
+        sd += dt.timedelta(days=ndays)
+        model.config.rvi.start_date = sd
+
+        # Get new initial conditions and feed assimilated values
+        hru_states, basin_states = model.get_final_state()
+        hru_states = [
+            replace(hru_states[i], **dict(zip(assim_var, xa[:, i])))
+            for i in range(n_members)
+        ]
+
+    q_assim = xr.concat(q_assim, dim="time")
+
+    return q_assim, hru_states, basin_states

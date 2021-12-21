@@ -1,13 +1,18 @@
 import datetime as dt
-from dataclasses import replace
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 import xarray as xr
+import xskillscore as xss
 
 from ravenpy.models import GR4JCN
-from ravenpy.utilities.data_assimilation import assimilate, perturbation
+from ravenpy.utilities.data_assimilation import (
+    assimilation_initialization,
+    perturb_full_series,
+    perturbation,
+    sequential_assimilation,
+)
 from ravenpy.utilities.testdata import get_local_testdata
 
 
@@ -49,10 +54,6 @@ class TestAssimilationGR4JCN:
             "water_volume_transport_in_river_channel": 0.10,
         }
 
-        # Use the same random seed for both tasmin and tasmax
-        rs = np.random.SeedSequence(None).generate_state(1)[0]
-        seed = {"tasmin": rs, "tasmax": rs}
-
         # Perturbation distribution
         dists = {
             "pr": "gamma",
@@ -68,99 +69,61 @@ class TestAssimilationGR4JCN:
         # Assimilation variables (from HRUStateVariable)
         assim_var = ("soil0", "soil1")
 
-        # Assimilation periods
-        assim_days = [10] + 4 * [3]
+        # Assimilation period (days between each assimilation step)
+        assim_step_days = 3
 
         # GR4JCN model instance
         model = GR4JCN()
 
         # set the start and end dates for the first assimilation period, warm-up
-        start_date = dt.datetime(2000, 6, 1)
-        end_date = start_date + dt.timedelta(days=sum(assim_days))
+        start_date = dt.datetime(1996, 9, 1)
+        end_date = dt.datetime(1996, 9, 30)
 
-        # Set model options
+        # Catchment properties to populate model
+        area = 4250.6
+        elevation = 843.0
+        latitude = 54.4848
+        longitude = -123.3659
+        params = (0.1353389, -0.005067198, 576.8007, 6.986121, 1.102917, 0.9224778)
 
-        model.config.rvh.hrus = (
-            GR4JCN.LandHRU(
-                area=4250.6, elevation=843.0, latitude=54.4848, longitude=-123.3659
-            ),
+        # Do the first assimilation pass to get hru_states and basin_states.
+        # Can be skipped if there is already this data from a previous run.
+        model, xa, hru_states, basin_states = assimilation_initialization(
+            model,
+            ts,
+            start_date=start_date,
+            end_date=start_date + dt.timedelta(days=assim_step_days - 1),
+            area=area,
+            elevation=elevation,
+            latitude=latitude,
+            longitude=longitude,
+            params=params,
+            assim_var=assim_var,
+            n_members=n_members,
         )
 
-        model.config.rvp.params = GR4JCN.Params(
-            0.1353389, -0.005067198, 576.8007, 6.986121, 1.102917, 0.9224778
-        )  # SALMON
+        # Perturb the inputs for the rest of the assimilation
+        perturbed_dataset, q_obs = perturb_full_series(
+            model,
+            std=std,
+            start_date=start_date,
+            end_date=end_date,
+            dists=dists,
+            n_members=n_members,
+        )
 
-        # ==== Initialization (just to get reasonable states) ====
-        # Set initialization run options
-        model.config.rvi.run_name = "init"
-        model.config.rvi.start_date = start_date
-        # Richard: what is the end date policy for the init run ?
-        model.config.rvi.end_date = start_date + dt.timedelta(days=assim_days[0])
-
-        # Run the model
-        model([ts])
-
-        # Extract final model states
-        hru_state, basin_state = model.get_final_state()
-        xa = n_members * [getattr(hru_state, key) for key in assim_var]
-        hru_states = n_members * [hru_state]
-        basin_states = n_members * [basin_state]
-
-        # === Create perturbed time series for full assimilation period ====
-        perturbed = {}
-        for key, s in std.items():
-            nc = model.config.rvt._var_cmds[key]
-
-            with xr.open_dataset(nc.file_name_nc) as ds:
-                da = ds.get(nc.var_name_nc).sel(time=slice(start_date, end_date))
-
-                perturbed[key] = perturbation(
-                    da,
-                    dists.get(key, "norm"),
-                    std=s,
-                    seed=seed.get(key, None),
-                    member=n_members,
-                )
-
-                # Save flow for later
-                if key == qkey:
-                    q_obs = da
-
-        # Write to disk
-        p_fn = model.workdir / "perturbed_forcing.nc"
-        perturbed = xr.Dataset(perturbed)
-        perturbed.to_netcdf(p_fn, mode="w")
-
-        # ==== Assimilation ====
-        q_assim = []
-        sd = start_date
-
-        for i, ndays in enumerate(assim_days):
-
-            dates = [sd + dt.timedelta(days=x) for x in range(ndays)]
-            model.config.rvi.end_date = dates[-1]
-            model.config.rvi.run_name = f"assim_{i}"
-
-            # Perform the first assimilation step here
-            [xa, model] = assimilate(
-                model, p_fn, q_obs, assim_var, basin_states, hru_states, dates
-            )
-
-            # Save streamflow simulation
-            q_assim.append(model.q_sim.isel(nbasins=0))
-
-            # Update the start-time for the next loop
-            sd += dt.timedelta(days=ndays)
-            model.config.rvi.start_date = sd
-
-            # Get new initial conditions and feed assimilated values
-            hru_states, basin_states = model.get_final_state()
-            hru_states = [
-                replace(hru_states[i], **dict(zip(assim_var, xa[:, i])))
-                for i in range(n_members)
-            ]
-
-        q_assim = xr.concat(q_assim, dim="time")
+        q_assim, hru_states, basin_states = sequential_assimilation(
+            model,
+            hru_states,
+            basin_states,
+            perturbed_dataset,
+            q_obs,
+            assim_var,
+            start_date=start_date + dt.timedelta(days=assim_step_days),
+            end_date=end_date,
+            n_members=n_members,
+            assim_step_days=assim_step_days,
+        )
 
         # ==== Reference run ====
         model.config.rvi.run_name = "ref"
@@ -183,5 +146,7 @@ class TestAssimilationGR4JCN:
         # plt.legend()
         # plt.show()
 
+        # print('RMSE - Assimilated: ' + str(xss.rmse(q_assim.mean(dim='state').T,q_obs[0:q_assim.shape[1]].T).data))
+        # print('RMSE - Open-Loop: ' + str(xss.rmse(model.q_sim[0:q_assim.shape[1],0],q_obs[0:q_assim.shape[1]].T).data))
+
         assert q_assim.shape[0] == n_members
-        assert q_assim.shape[1] == sum(assim_days)
