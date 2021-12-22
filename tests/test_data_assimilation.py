@@ -103,7 +103,7 @@ class TestAssimilationGR4JCN:
         )
 
         # Perturb the inputs for the rest of the assimilation
-        perturbed, q_obs = perturb_full_series(
+        perturbed = perturb_full_series(
             model,
             std=std,
             start_date=start_date,
@@ -111,6 +111,9 @@ class TestAssimilationGR4JCN:
             dists=dists,
             n_members=n_members,
         )
+
+        # Get observed streamflow for computing results later
+        q_obs = xr.open_dataset(ts)["qobs"].sel(time=slice(start_date, end_date))
 
         # Create netcdf for the model.
         p_fn = model.workdir / "perturbed_forcing.nc"

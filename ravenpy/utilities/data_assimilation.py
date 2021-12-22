@@ -243,11 +243,7 @@ def perturb_full_series(model, std, start_date, end_date, dists, n_members=25):
                 member=n_members,
             )
 
-            # Save flow for later
-            if key == "water_volume_transport_in_river_channel":
-                q_obs = da
-
-    return perturbed, q_obs
+    return perturbed
 
 
 def assimilation_initialization(
