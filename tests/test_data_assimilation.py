@@ -103,7 +103,7 @@ class TestAssimilationGR4JCN:
         )
 
         # Perturb the inputs for the rest of the assimilation
-        perturbed_dataset, q_obs = perturb_full_series(
+        perturbed, q_obs = perturb_full_series(
             model,
             std=std,
             start_date=start_date,
@@ -112,11 +112,17 @@ class TestAssimilationGR4JCN:
             n_members=n_members,
         )
 
+        # Create netcdf for the model.
+        p_fn = model.workdir / "perturbed_forcing.nc"
+        perturbed = xr.Dataset(perturbed)
+        perturbed.to_netcdf(p_fn, mode="w")
+
+        # Run the sequential assimilation for the entire period.
         q_assim, hru_states, basin_states = sequential_assimilation(
             model,
             hru_states,
             basin_states,
-            perturbed_dataset,
+            p_fn,
             q_obs,
             assim_var,
             start_date=start_date + dt.timedelta(days=assim_step_days),
