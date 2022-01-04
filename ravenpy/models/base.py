@@ -458,7 +458,7 @@ class Raven:
 
             fns.sort()
             self.ind_outputs[key] = fns
-            self.outputs[key] = self._merge_output(fns, pattern[1:])
+            self.outputs[key] = self._merge_output(fns, pattern.replace("*", "_ALL_"))
 
         self.outputs["rv_config"] = self._merge_output(self._rv_paths, "rv.zip")
 
