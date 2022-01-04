@@ -21,6 +21,7 @@ from collections import OrderedDict
 from dataclasses import astuple, fields, is_dataclass, replace
 from pathlib import Path
 from typing import Any, Dict, List, Union, cast
+from warnings import warn
 
 import numpy as np
 import xarray as xr
@@ -46,6 +47,15 @@ class RavenError(Exception):
     """
     This is an error that is meant to be raised whenever a message of type "ERROR" is found
     in the Raven_errors.txt file resulting from a Raven (i.e. the C program) run.
+    """
+
+    pass
+
+
+class RavenWarning(Warning):
+    """
+    This is a warning corresponding to a message of type "WARNING" in the Raven_errors.txt
+    file resulting from a Raven (i.e. the C program) run.
     """
 
     pass
@@ -413,6 +423,9 @@ class Raven:
 
         if messages["ERROR"]:
             raise RavenError("\n".join(messages["ERROR"]))
+
+        for msg in messages["WARNING"]:
+            warn(msg, category=RavenWarning)
 
         assert messages["SIMULATION COMPLETE"]
 
