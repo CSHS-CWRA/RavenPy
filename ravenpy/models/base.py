@@ -267,7 +267,7 @@ class Raven:
         # Create symbolic link to input files
         for fn in ts:
             if not (self.model_path / Path(fn).name).exists():
-                os.symlink(str(fn), str(self.model_path / Path(fn).name))
+                os.symlink(os.path.realpath(fn), str(self.model_path / Path(fn).name))
 
         # Create symbolic link to Raven executable
         if not self.raven_cmd.exists():
