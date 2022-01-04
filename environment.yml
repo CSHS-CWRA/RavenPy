@@ -31,7 +31,7 @@ dependencies:
   - rioxarray
   - scikit-learn ==0.24.2
   - scipy
-  - setuptools >50.0
+  - setuptools
   - shapely
   - statsmodels
   - xarray >=0.18
