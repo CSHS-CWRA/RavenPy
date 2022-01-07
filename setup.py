@@ -2,6 +2,7 @@
 
 """The setup script."""
 
+import os
 import shutil
 import subprocess
 import urllib.request
@@ -54,13 +55,17 @@ gis_requirements = [
     dependency for dependency in open("requirements_gis.txt").readlines()
 ]
 # Special GDAL handling
-try:
-    gdal_version = subprocess.run(
-        ["gdal-config", "--version"], capture_output=True
-    ).stdout.decode("utf-8")
-    gis_requirements.append(f"gdal=={gdal_version}")
-except subprocess.CalledProcessError:
-    pass
+on_conda = os.getenv("CONDA_BUILD")
+if not on_conda:
+    try:
+        gdal_version = subprocess.run(
+            ["gdal-config", "--version"], capture_output=True
+        ).stdout.decode("utf-8")
+        gis_requirements.append(f"gdal=={gdal_version}")
+    except subprocess.CalledProcessError:
+        pass
+else:
+    gis_requirements.append("gdal")
 
 dev_requirements = gis_requirements.copy()
 dev_requirements.extend(
