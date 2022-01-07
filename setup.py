@@ -56,7 +56,7 @@ gis_requirements = [
 ]
 # Special GDAL handling
 on_conda = os.getenv("CONDA_BUILD")
-if not on_conda:
+if on_conda is None:
     try:
         gdal_version = subprocess.run(
             ["gdal-config", "--version"], capture_output=True
