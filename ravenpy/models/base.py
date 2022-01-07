@@ -120,7 +120,10 @@ class Raven:
             raise AttributeError(f"Raven version not found: {out}")
 
         # Remove this file that has been produced by the previous raven call to get the version
-        Path("Raven_errors.txt").unlink(missing_ok=True)
+        try:
+            os.remove("Raven_errors.txt")
+        except OSError:
+            pass
 
         self.workdir = Path(os.path.realpath(workdir) or tempfile.mkdtemp())
 
