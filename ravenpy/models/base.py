@@ -119,7 +119,7 @@ class Raven:
         else:
             raise AttributeError(f"Raven version not found: {out}")
 
-        self.workdir = Path(workdir or tempfile.mkdtemp())
+        self.workdir = Path(os.path.realpath(workdir) or tempfile.mkdtemp())
 
         # Individual files for all simulations
         self.ind_outputs: Dict[str, List[Path]] = {}
