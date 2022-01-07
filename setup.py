@@ -56,7 +56,9 @@ gis_requirements = [
 ]
 # Special GDAL handling
 on_conda = os.getenv("CONDA_BUILD")
-if on_conda is None:
+if on_conda == "1":
+    gis_requirements.append("gdal")
+else:
     try:
         gdal_version = subprocess.run(
             ["gdal-config", "--version"], capture_output=True
@@ -64,8 +66,6 @@ if on_conda is None:
         gis_requirements.append(f"gdal=={gdal_version}")
     except subprocess.CalledProcessError:
         pass
-else:
-    gis_requirements.append("gdal")
 
 dev_requirements = gis_requirements.copy()
 dev_requirements.extend(
