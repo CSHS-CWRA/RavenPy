@@ -21,6 +21,7 @@ from collections import OrderedDict
 from dataclasses import astuple, fields, is_dataclass, replace
 from pathlib import Path
 from typing import Any, Dict, List, Union, cast
+from warnings import warn
 
 import numpy as np
 import xarray as xr
@@ -46,6 +47,15 @@ class RavenError(Exception):
     """
     This is an error that is meant to be raised whenever a message of type "ERROR" is found
     in the Raven_errors.txt file resulting from a Raven (i.e. the C program) run.
+    """
+
+    pass
+
+
+class RavenWarning(Warning):
+    """
+    This is a warning corresponding to a message of type "WARNING" in the Raven_errors.txt
+    file resulting from a Raven (i.e. the C program) run.
     """
 
     pass
@@ -109,7 +119,13 @@ class Raven:
         else:
             raise AttributeError(f"Raven version not found: {out}")
 
-        self.workdir = Path(workdir or tempfile.mkdtemp())
+        # Remove this file that has been produced by the previous raven call to get the version
+        try:
+            os.remove("Raven_errors.txt")
+        except OSError:
+            pass
+
+        self.workdir = Path(os.path.realpath(workdir or tempfile.mkdtemp()))
 
         # Individual files for all simulations
         self.ind_outputs: Dict[str, List[Path]] = {}
@@ -267,7 +283,7 @@ class Raven:
         # Create symbolic link to input files
         for fn in ts:
             if not (self.model_path / Path(fn).name).exists():
-                os.symlink(str(fn), str(self.model_path / Path(fn).name))
+                os.symlink(os.path.realpath(fn), str(self.model_path / Path(fn).name))
 
         # Create symbolic link to Raven executable
         if not self.raven_cmd.exists():
@@ -413,6 +429,9 @@ class Raven:
 
         if messages["ERROR"]:
             raise RavenError("\n".join(messages["ERROR"]))
+
+        for msg in messages["WARNING"]:
+            warn(msg, category=RavenWarning)
 
         assert messages["SIMULATION COMPLETE"]
 
