@@ -21,7 +21,7 @@ dependencies:
   - matplotlib
   - numpy
   - owslib >=0.24.1
-  - pandas <1.3
+  - pandas
   - pip
   - pre-commit
   - pydantic
