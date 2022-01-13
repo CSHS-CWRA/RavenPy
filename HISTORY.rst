@@ -2,6 +2,14 @@
 History
 =======
 
+0.7.8
+-----
+* Added functionalities in Data Assimilation utils and simplified tests.
+* Removed pin on setuptools.
+* Fixed issues related to symlinks, working directory, and output filenames.
+* Fixed issues related to GDAL version handling in conda-forge.
+* Updated jupyter notebooks.
+
 0.7.7
 -----
 * Updated internal shapely calls to remove deprecated `.to_wkt()` methods.
