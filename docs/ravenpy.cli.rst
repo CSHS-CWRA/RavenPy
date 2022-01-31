@@ -28,6 +28,14 @@ ravenpy.cli.generate\_grid\_weights module
    :undoc-members:
    :show-inheritance:
 
+ravenpy.cli.generate\_hrus\_from\_routing\_product
+------------------------------------------
+
+.. automodule:: ravenpy.cli.generate_hrus_from_routing_product
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Module contents
 ---------------
 

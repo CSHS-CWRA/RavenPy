@@ -13,3 +13,7 @@ Utility Scripts
 .. click:: ravenpy.cli:collect_subbasins_upstream_of_gauge
    :prog: ravenpy collect-subbasins-upstream-of-gauge
    :nested: full
+
+.. click:: ravenpy.cli:generate_hrus_from_routing_product
+   :prog: ravenpy generate-hrus-from-routing-product
+   :nested: full
