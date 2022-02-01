@@ -102,7 +102,6 @@ def generate_hrus_from_routing_product(input_file, output):
         hru_info.loc[i_hru, "HRU_A_mean"] = subbasin_info["BasAspect"].values[i_sub]
         hru_info.loc[i_hru, "HRU_E_mean"] = subbasin_info["MeanElev"].values[i_sub]
 
-        # assigin hru attribute if hru is lake
         if is_lake_HRU:
             hru_info.loc[i_hru, "HRU_IsLake"] = 1
             hru_info.loc[i_hru, "Soil_ID"] = -1
