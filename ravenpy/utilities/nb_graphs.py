@@ -167,7 +167,7 @@ def ts_fit_graph(ts, params):
             for (key, x) in zip(params.dparams.data, params.values)
         ]
     )
-    label = "{}({})".format(dist, ps)
+    label = f"{dist}({ps})"
 
     # PDF graphic object
     p = pdf.hvplot.line(label=label, xlabel=ts.attrs["long_name"], color="orange")

@@ -139,7 +139,7 @@ def perturbation(
         out = da + xr.DataArray(r, dims=dims, coords={"time": da.time})
 
     elif dist == "gamma":
-        shape = (da ** 2) / (std * da) ** 2
+        shape = (da**2) / (std * da) ** 2
         scale = ((std * da) ** 2) / da
         r = np.nan_to_num(rs.gamma(shape=shape, scale=scale, size=size), nan=0.0)
         out = xr.DataArray(r, dims=dims, coords={"time": da.time})
@@ -195,7 +195,7 @@ def update_state(
     # Equations 4.1 from Mandel, 2006
     re = np.dot(qobs_error, qobs_error.transpose()) / n_members
     p = re + (np.dot(ha, ha.transpose())) / (n_members - 1)
-    m = np.dot(p ** -1, y)
+    m = np.dot(p**-1, y)
     z = (ha.transpose()) * m
     a = (
         x

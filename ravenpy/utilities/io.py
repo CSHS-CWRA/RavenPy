@@ -109,9 +109,7 @@ def generic_extract_archive(
                 else:
                     LOGGER.debug('File extension "%s" unknown' % file)
             except Exception as e:
-                LOGGER.error(
-                    "Failed to extract sub archive {{{}}}: {{{}}}".format(arch, e)
-                )
+                LOGGER.error(f"Failed to extract sub archive {{{arch}}}: {{{e}}}")
         else:
             LOGGER.warning("No archives found. Continuing...")
             return resources

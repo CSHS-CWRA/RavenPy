@@ -237,7 +237,7 @@ def generic_vector_reproject(
                         output["features"].append(feature)
                     except Exception as err:
                         LOGGER.exception(
-                            "{}: Unable to reproject feature {}".format(err, feature)
+                            f"{err}: Unable to reproject feature {feature}"
                         )
                         raise
 
