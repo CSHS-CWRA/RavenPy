@@ -3,12 +3,13 @@ default_language_version:
 
 repos:
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v2.29.1
+    rev: v2.31.0
     hooks:
     -   id: pyupgrade
         language_version: python3
+        args: [--py37-plus]
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.0.1
+    rev: v4.1.0
     hooks:
     -   id: trailing-whitespace
         language_version: python3
@@ -20,8 +21,8 @@ repos:
         language_version: python3
     -   id: debug-statements
         language_version: python3
--   repo: https://github.com/ambv/black
-    rev: 21.12b0
+-   repo: https://github.com/psf/black
+    rev: 22.1.0
     hooks:
     -   id: black
         language_version: python3
@@ -47,3 +48,14 @@ repos:
     hooks:
     -   id: check-hooks-apply
     -   id: check-useless-excludes
+
+ci:
+  autofix_commit_msg: |
+        [pre-commit.ci] auto fixes from pre-commit.com hooks
+        for more information, see https://pre-commit.ci
+  autofix_prs: true
+  autoupdate_branch: ''
+  autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
+  autoupdate_schedule: weekly
+  skip: []
+  submodules: false
