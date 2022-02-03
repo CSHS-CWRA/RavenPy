@@ -194,4 +194,4 @@ def generate_hrus_from_routing_product(input_file, output):
 
     hru_info.to_file(output_file)
 
-    print(f"created {output_file}")
+    click.echo(f"Created {output_file}")
