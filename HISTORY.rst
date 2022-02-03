@@ -2,8 +2,14 @@
 History
 =======
 
+0.7.X
+-----
+
+* Add ``generate-hrus-from-routing-product`` script.
+
 0.7.8
 -----
+
 * Added functionalities in Data Assimilation utils and simplified tests.
 * Removed pin on setuptools.
 * Fixed issues related to symlinks, working directory, and output filenames.
@@ -12,7 +18,8 @@ History
 
 0.7.7
 -----
-* Updated internal shapely calls to remove deprecated `.to_wkt()` methods.
+
+* Updated internal shapely calls to remove deprecated ``.to_wkt()`` methods.
 
 0.7.6
 -----
@@ -42,8 +49,8 @@ History
 0.7.2
 -----
 
-* Update cruft
-* Subclass `derived_parameters` in Ostrich emulators to avoid having to pass `params`.
+* Update cruft.
+* Subclass ``derived_parameters`` in Ostrich emulators to avoid having to pass ``params``.
 
 0.7.0
 -----
