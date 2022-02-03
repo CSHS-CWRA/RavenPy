@@ -164,7 +164,7 @@ class Raven:
 
     @property
     def model_path(self):
-        return self.exec_path / self.model_dir / "p{:02}".format(self.psim)
+        return self.exec_path / self.model_dir / f"p{self.psim:02}"
 
     @property
     def raven_cmd(self):
@@ -555,7 +555,7 @@ class Raven:
 
         if len(files) == 0:
             if not self.config.rvi.suppress_output:
-                raise UserWarning("No output files for {} in {}.".format(pattern, path))
+                raise UserWarning(f"No output files for {pattern} in {path}.")
 
         return [f.absolute() for f in files]
 

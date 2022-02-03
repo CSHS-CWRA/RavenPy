@@ -40,6 +40,6 @@ def param(model):
         data=np.array([f.name for f in fields(model_cls.Params)]),
         attrs={
             "standard_name": "parameter",
-            "long_name": "{} model parameter name".format(model),
+            "long_name": f"{model} model parameter name",
         },
     )

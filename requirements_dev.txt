@@ -14,7 +14,7 @@ Click
 pytest
 pytest-runner
 pytest-cov
-black==21.12b0
+black
 isort
 pre-commit
 holoviews
