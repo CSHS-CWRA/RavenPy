@@ -137,7 +137,7 @@ def regionalize(
     ):  # Here we are replacing the mean by the IDW average, keeping attributes and dimensions.
         qsim = IDW(qsims, sdist)
     else:
-        raise ValueError("No matching algorithm for {}".format(method))
+        raise ValueError(f"No matching algorithm for {method}")
 
     # Metadata handling
     # TODO: Store the basin_name
@@ -155,10 +155,10 @@ def regionalize(
         attrs={
             "title": "Regionalization ensemble",
             "institution": "",
-            "source": "RAVEN V.{} - {}".format(m.raven_version, model),
+            "source": f"RAVEN V.{m.raven_version} - {model}",
             "history": "Created by raven regionalize.",
             "references": "",
-            "comment": "Regionalization method: {}".format(method),
+            "comment": f"Regionalization method: {method}",
         },
     )
 

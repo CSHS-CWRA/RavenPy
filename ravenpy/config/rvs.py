@@ -884,14 +884,14 @@ class OST(RV):
     @max_iterations.setter
     def max_iterations(self, x):
         if x < 1:
-            raise ValueError("Max iteration should be a positive integer: {}".format(x))
+            raise ValueError(f"Max iteration should be a positive integer: {x}")
         else:
             self._max_iterations = x
 
     @property
     def random_seed(self):
         if self._random_seed is not None:
-            return "RandomSeed {}".format(self._random_seed)
+            return f"RandomSeed {self._random_seed}"
         return ""
 
     @random_seed.setter

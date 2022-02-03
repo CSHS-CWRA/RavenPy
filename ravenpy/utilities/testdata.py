@@ -66,7 +66,7 @@ def _get(
 ) -> Path:
     cache_dir = cache_dir.absolute()
     local_file = cache_dir / branch / fullname
-    md5name = fullname.with_suffix("{}.md5".format(suffix))
+    md5name = fullname.with_suffix(f"{suffix}.md5")
     md5file = cache_dir / branch / md5name
 
     if not local_file.is_file():

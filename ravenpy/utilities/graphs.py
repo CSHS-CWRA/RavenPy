@@ -358,11 +358,11 @@ def ts_fit_graph(ts, params):
         q = np.linspace(mn, mx, 200)
         pdf = dc.pdf(q)
 
-        ps = ", ".join(["{:.1f}".format(x) for x in p.values])
+        ps = ", ".join([f"{x:.1f}" for x in p.values])
         ax.plot(q, pdf, "-", label="{}({})".format(params.attrs["scipy_dist"], ps))
 
         # Labels
-        ax.set_xlabel("{} (${:~P}$)".format(ts.long_name, units2pint(ts.units)))
+        ax.set_xlabel(f"{ts.long_name} (${units2pint(ts.units):~P}$)")
         ax.set_ylabel("Probability density")
         ax2.set_ylabel("Histogram count")
 

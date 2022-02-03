@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Wed Jul 29 09:16:06 2015
 @author: Michael Schramm

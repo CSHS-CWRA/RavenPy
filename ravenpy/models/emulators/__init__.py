@@ -25,6 +25,6 @@ def get_model(name):
     model_cls = getattr(emulators, name.upper(), None)
 
     if model_cls is None:
-        raise ValueError("Model {} is not recognized.".format(name))
+        raise ValueError(f"Model {name} is not recognized.")
 
     return model_cls
