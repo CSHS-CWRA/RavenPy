@@ -32,7 +32,7 @@ repos:
     -   id: flake8
         language_version: python3
         args: ['--config=setup.cfg']
--   repo: https://github.com/timothycrosley/isort
+-   repo: https://github.com/PyCQA/isort
     rev: 5.10.1
     hooks:
     -   id: isort
