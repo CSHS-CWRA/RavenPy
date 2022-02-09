@@ -10,6 +10,7 @@ from ravenpy.config.commands import (
     BasinIndexCommand,
     HRUState,
     SoilClassesCommand,
+    SoilProfilesCommand,
     Sub,
     VegetationClassesCommand,
 )
@@ -84,7 +85,16 @@ class GR4JCN(Raven):
                 VegetationClassesCommand.Record("VEG_WATER", 0, 0, 0),
             ),
             land_use_classes=(LU("LU_ALL", 0, 0), LU("LU_WATER", 0, 0)),
+            soil_profiles=(
+                SoilProfilesCommand.Record(
+                    "DEFAULT_P",
+                    ("SOIL_PROD", "SOIL_ROUT", "SOIL_TEMP", "SOIL_GW"),
+                    ("params.GR4J_X1", 0.3, 1, 1),
+                ),
+                SoilProfilesCommand.Record("LAKE"),
+            ),
         )
+
         #########
         # R V P #
         #########
@@ -119,12 +129,13 @@ class GR4JCN(Raven):
         :EndSoilParameterList
 
         # ----Soil Profiles--------------------------------------------
+        {soil_profiles}
         #     name,#horizons,(soiltype,thickness)x(#horizons)
         #     GR4J_X1 is thickness of first layer (SOIL_PROD), here {params.GR4J_X1}
-        :SoilProfiles
-          DEFAULT_P,      4, SOIL_PROD   ,   {params.GR4J_X1}, SOIL_ROUT  ,   0.300, SOIL_TEMP  ,   1.000, SOIL_GW  ,   1.000,
-          LAKE,           0
-        :EndSoilProfiles
+        #:SoilProfiles
+        #  DEFAULT_P,      4, SOIL_PROD, {params.GR4J_X1}, SOIL_ROUT, 0.300, SOIL_TEMP, 1.000, SOIL_GW, 1.000,
+        #  LAKE,           0
+        #:EndSoilProfiles
 
         # ----Vegetation Classes---------------------------------------
         {vegetation_classes}

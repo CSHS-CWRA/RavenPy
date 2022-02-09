@@ -100,7 +100,7 @@ class TestGR4JCN:
         )
 
     def test_simple(self):
-        model = GR4JCN()
+        model = GR4JCN(workdir="/tmp/test_simple")
 
         model.config.rvi.start_date = dt.datetime(2000, 1, 1)
         model.config.rvi.end_date = dt.datetime(2002, 1, 1)
