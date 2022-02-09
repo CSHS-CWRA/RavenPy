@@ -4,7 +4,15 @@ from typing import cast
 
 from pydantic.dataclasses import dataclass
 
-from ravenpy.config.commands import HRU, LU, BasinIndexCommand, HRUState, Sub
+from ravenpy.config.commands import (
+    HRU,
+    LU,
+    BasinIndexCommand,
+    HRUState,
+    SoilClassesCommand,
+    Sub,
+    VegetationClassesCommand,
+)
 from ravenpy.config.rvs import RVI
 from ravenpy.models.base import Ostrich, Raven
 
@@ -65,8 +73,18 @@ class GR4JCN(Raven):
                     gauged=True,
                 ),
             ),
+            soil_classes=tuple(
+                map(
+                    SoilClassesCommand.Record,
+                    ["SOIL_PROD", "SOIL_ROUT", "SOIL_TEMP", "SOIL_GW", "AQUIFER"],
+                )
+            ),
+            vegetation_classes=(
+                VegetationClassesCommand.Record("VEG_ALL", 0, 0, 0),
+                VegetationClassesCommand.Record("VEG_WATER", 0, 0, 0),
+            ),
+            land_use_classes=(LU("LU_ALL", 0, 0), LU("LU_WATER", 0, 0)),
         )
-
         #########
         # R V P #
         #########
@@ -82,15 +100,18 @@ class GR4JCN(Raven):
         :AdiabaticLapseRate 0.0065
 
         # - Soil classes ---------------------------------------------
-        :SoilClasses
-          :Attributes
-          :Units
-           SOIL_PROD
-           SOIL_ROUT
-           SOIL_TEMP
-           SOIL_GW
-           AQUIFER
-        :EndSoilClasses
+        {soil_classes}
+
+        #:SoilClasses
+        #  :Attributes
+        #  :Units
+        #   SOIL_PROD
+        #   SOIL_ROUT
+        #   SOIL_TEMP
+        #   SOIL_GW
+        #   AQUIFER
+        #:EndSoilClasses
+
         :SoilParameterList
          :Parameters, POROSITY ,  GR4J_X3, GR4J_X2
          :Units     ,     none ,       mm,    mm/d
@@ -106,20 +127,25 @@ class GR4JCN(Raven):
         :EndSoilProfiles
 
         # ----Vegetation Classes---------------------------------------
-        :VegetationClasses
-           :Attributes,       MAX_HT,       MAX_LAI,      MAX_LEAF_COND
-                :Units,            m,          none,           mm_per_s
-               VEG_ALL,           0.0,          0.0,                0.0
-               VEG_WATER,         0.0,          0.0,                0.0
-        :EndVegetationClasses
+        {vegetation_classes}
+
+        #:VegetationClasses
+        #   :Attributes,       MAX_HT,       MAX_LAI,      MAX_LEAF_COND
+        #        :Units,            m,          none,           mm_per_s
+        #       VEG_ALL,           0.0,          0.0,                0.0
+        #       VEG_WATER,         0.0,          0.0,                0.0
+        #:EndVegetationClasses
 
         # --Land Use Classes------------------------------------------
-        :LandUseClasses
-          :Attributes, IMPERM, FOREST_COV
-          :Units     ,   frac,       frac
-               LU_ALL,    0.0,        0.0
-               LU_WATER,  0.0,        0.0
-        :EndLandUseClasses
+        {land_use_classes}
+
+        #:LandUseClasses
+        #  :Attributes, IMPERM, FOREST_COV
+        #  :Units     ,   frac,       frac
+        #       LU_ALL,    0.0,        0.0
+        #       LU_WATER,  0.0,        0.0
+        #:EndLandUseClasses
+
         :LandUseParameterList
          :Parameters, GR4J_X4, MELT_FACTOR
          :Units     ,       d,      mm/d/C

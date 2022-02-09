@@ -79,13 +79,14 @@ class HBVEC(Raven):
 
         #---------------------------------------------------------
         # Soil classes
-        :SoilClasses
-         :Attributes,
-         :Units,
-           TOPSOIL,      1.0,    0.0,       0
-           SLOW_RES,     1.0,    0.0,       0
-           FAST_RES,     1.0,    0.0,       0
-        :EndSoilClasses
+        {soil_classes}
+#        :SoilClasses
+#         :Attributes,
+#         :Units,
+#           TOPSOIL,      1.0,    0.0,       0
+#           SLOW_RES,     1.0,    0.0,       0
+#           FAST_RES,     1.0,    0.0,       0
+#        :EndSoilClasses
 
         :SoilParameterList
           :Parameters,                POROSITY,FIELD_CAPACITY,    SAT_WILT,    HBV_BETA, MAX_CAP_RISE_RATE,MAX_PERC_RATE,BASEFLOW_COEFF,            BASEFLOW_N
@@ -102,20 +103,23 @@ class HBVEC(Raven):
         # Soil profiles
         # name, layers, (soilClass, thickness) x layers
         #
-        :SoilProfiles
+        {soil_profiles}
+        #:SoilProfiles
         #                        HBV_PARA_17,           CONSTANT,           CONSTANT,
-           DEFAULT_P, 3, TOPSOIL,  {params.par_x17}, FAST_RES,    100.0, SLOW_RES,    100.0
-        :EndSoilProfiles
+        #   DEFAULT_P, 3, TOPSOIL,  {params.par_x17}, FAST_RES,    100.0, SLOW_RES,    100.0
+        #:EndSoilProfiles
 
         #---------------------------------------------------------
         # Vegetation classes
         #
-        :VegetationClasses
-         :Attributes,   MAX_HT,  MAX_LAI, MAX_LEAF_COND
-         :Units,             m,     none,      mm_per_s
-           VEG_ALL,         25,      6.0,           5.3
-        :EndVegetationClasses
+        {vegetation_classes}
+        #:VegetationClasses
+        # :Attributes,   MAX_HT,  MAX_LAI, MAX_LEAF_COND
+        # :Units,             m,     none,      mm_per_s
+        #   VEG_ALL,         25,      6.0,           5.3
+        #:EndVegetationClasses
 
+        {vegetation_parameter_list}
         :VegetationParameterList
           :Parameters,  MAX_CAPACITY, MAX_SNOW_CAPACITY,  TFRAIN,  TFSNOW,
           :Units,                 mm,                mm,    frac,    frac,

@@ -821,6 +821,37 @@ class VegetationClassesCommand(RavenCommand):
 
 
 @dataclass
+class VegetationParameterListCommand(RavenCommand):
+    @dataclass
+    class Record(RavenCommand):
+        name: str = ""
+        max_capacity: float = 0
+        max_snow_capacity: float = 0
+        tfrain: float = 0
+        tfsnow: float = 0
+
+        def to_rv(self):
+            return " ".join(map(str, asdict(self).values()))
+
+    vegetation_parameter_list: Tuple[Record, ...] = ()
+
+    template = """
+    :VegetationParameterList
+          :Parameters,  MAX_CAPACITY, MAX_SNOW_CAPACITY,  TFRAIN,  TFSNOW,
+          :Units,                 mm,                mm,    frac,    frac,
+          {vegetation_parameter_list_records}
+        :EndVegetationParameterList
+    """
+
+    def to_rv(self):
+        return dedent(self.template).format(
+            vegetation_parameter_list_records="\n".join(
+                map(str, self.vegetation_parameter_list)
+            )
+        )
+
+
+@dataclass
 class LandUseClassesCommand(RavenCommand):
     @dataclass
     class Record(RavenCommand):

@@ -38,6 +38,7 @@ from ravenpy.config.commands import (
     SubBasinGroupCommand,
     SubBasinsCommand,
     VegetationClassesCommand,
+    VegetationParameterListCommand,
 )
 
 
@@ -554,6 +555,9 @@ class RVP(RV):
         self.soil_classes: Tuple[SoilClassesCommand.Record, ...] = ()
         self.soil_profiles: Tuple[SoilProfilesCommand.Record, ...] = ()
         self.vegetation_classes: Tuple[VegetationClassesCommand.Record, ...] = ()
+        self.vegetation_parameter_list: Tuple[
+            VegetationParameterListCommand.Record, ...
+        ] = ()
         self.land_use_classes: Tuple[LandUseClassesCommand.Record, ...] = ()
         self.channel_profiles: Tuple[ChannelProfileCommand, ...] = ()
         self.avg_annual_runoff: Optional[float] = None
@@ -575,6 +579,9 @@ class RVP(RV):
             "soil_classes": SoilClassesCommand(self.soil_classes),
             "soil_profiles": SoilProfilesCommand(self.soil_profiles),
             "vegetation_classes": VegetationClassesCommand(self.vegetation_classes),
+            "vegetation_parameter_list": VegetationParameterListCommand(
+                self.vegetation_parameter_list
+            ),
             "land_use_classes": LandUseClassesCommand(self.land_use_classes),
             "channel_profiles": "\n\n".join(map(str, self.channel_profiles)),
             "avg_annual_runoff": f":AvgAnnualRunoff {self.avg_annual_runoff}"
