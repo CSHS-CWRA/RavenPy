@@ -577,7 +577,7 @@ class RVP(RV):
         d = {
             "params": self.params,
             "soil_classes": SoilClassesCommand(self.soil_classes),
-            "soil_profiles": SoilProfilesCommand(self.soil_profiles),
+            "soil_profiles": SoilProfilesCommand(self.soil_profiles, self.params),
             "vegetation_classes": VegetationClassesCommand(self.vegetation_classes),
             "vegetation_parameter_list": VegetationParameterListCommand(
                 self.vegetation_parameter_list
