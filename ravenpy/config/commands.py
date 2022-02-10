@@ -772,7 +772,6 @@ class SoilProfilesCommand(RavenCommand):
         def to_rv(self, model_params):
             # From the Raven manual: {profile_name,#horizons,{soil_class_name,thick.}x{#horizons}}x[NP]
             n_horizons = len(self.soil_class_names)
-
             thicknesses = []
             for t in self.thicknesses:
                 if isinstance(t, str):
