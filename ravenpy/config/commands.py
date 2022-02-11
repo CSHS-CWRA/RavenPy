@@ -849,7 +849,7 @@ class SoilParameterListCommand(RavenCommand):
         vals: Tuple[Any, ...] = ()  # Soil parameter values
 
         def to_rv(self):
-            return f"{self.name}, " + ",".join(map(str, self.vals))
+            return f"{self.name}, " + ", ".join(map(str, self.vals))
 
     names: Tuple[SoilParameters, ...] = ()  # Soil parameter names
     records: Tuple[Record, ...] = ()
@@ -857,13 +857,14 @@ class SoilParameterListCommand(RavenCommand):
     template = """
     :SoilParameterList
         :Parameters, {soil_parameter_names}
+        :Units,
         {soil_parameter_list_records}
     :EndSoilParameterList
     """
 
     def to_rv(self):
         return dedent(self.template).format(
-            soil_parameter_names=",".join(self.names),
+            soil_parameter_names=", ".join(self.names),
             soil_parameter_list_records="\n".join(map(str, self.records)),
         )
 

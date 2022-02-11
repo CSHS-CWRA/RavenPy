@@ -99,7 +99,7 @@ class GR4JCN(Raven):
                 records=(
                     SoilParameterListCommand.Record(
                         name="[DEFAULT]",
-                        vals=(1, "{params.GR4J_X3}", "{params.GR4J_X2}"),
+                        vals=(1.0, "{params.GR4J_X3}", "{params.GR4J_X2}"),
                     ),
                 ),
             ),

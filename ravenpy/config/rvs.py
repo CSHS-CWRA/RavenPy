@@ -32,6 +32,7 @@ from ravenpy.config.commands import (
     ReservoirCommand,
     SBGroupPropertyMultiplierCommand,
     SoilClassesCommand,
+    SoilParameterListCommand,
     SoilProfilesCommand,
     StationForcingCommand,
     Sub,
@@ -554,6 +555,7 @@ class RVP(RV):
 
         self.soil_classes: Tuple[SoilClassesCommand.Record, ...] = ()
         self.soil_profiles: Tuple[SoilProfilesCommand.Record, ...] = ()
+        self.soil_parameter_list: SoilParameterListCommand = None
         self.vegetation_classes: Tuple[VegetationClassesCommand.Record, ...] = ()
         self.vegetation_parameter_list: Tuple[
             VegetationParameterListCommand.Record, ...
