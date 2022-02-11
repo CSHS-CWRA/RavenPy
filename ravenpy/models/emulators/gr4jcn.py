@@ -10,6 +10,7 @@ from ravenpy.config.commands import (
     BasinIndexCommand,
     HRUState,
     SoilClassesCommand,
+    SoilParameterListCommand,
     SoilProfilesCommand,
     Sub,
     VegetationClassesCommand,
@@ -89,9 +90,18 @@ class GR4JCN(Raven):
                 SoilProfilesCommand.Record(
                     "DEFAULT_P",
                     ("SOIL_PROD", "SOIL_ROUT", "SOIL_TEMP", "SOIL_GW"),
-                    ("params.GR4J_X1", 0.3, 1, 1),
+                    ("{params.GR4J_X1}", 0.3, 1, 1),
                 ),
                 SoilProfilesCommand.Record("LAKE"),
+            ),
+            soil_parameter_list=SoilParameterListCommand(
+                names=("POROSITY", "GR4J_X3", "GR4J_X2"),
+                records=(
+                    SoilParameterListCommand.Record(
+                        name="[DEFAULT]",
+                        vals=(1, "{params.GR4J_X3}", "{params.GR4J_X2}"),
+                    ),
+                ),
             ),
         )
 
@@ -122,11 +132,12 @@ class GR4JCN(Raven):
         #   AQUIFER
         #:EndSoilClasses
 
-        :SoilParameterList
-         :Parameters, POROSITY ,  GR4J_X3, GR4J_X2
-         :Units     ,     none ,       mm,    mm/d
-           [DEFAULT],      1.0 ,     {params.GR4J_X3},     {params.GR4J_X2}
-        :EndSoilParameterList
+        {soil_parameter_list}
+        #:SoilParameterList
+        # :Parameters, POROSITY ,  GR4J_X3, GR4J_X2
+        # :Units     ,     none ,       mm,    mm/d
+        #   [DEFAULT],      1.0 ,     {params.GR4J_X3},     {params.GR4J_X2}
+        #:EndSoilParameterList
 
         # ----Soil Profiles--------------------------------------------
         {soil_profiles}

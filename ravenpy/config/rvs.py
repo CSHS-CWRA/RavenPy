@@ -578,6 +578,7 @@ class RVP(RV):
             "params": self.params,
             "soil_classes": SoilClassesCommand(self.soil_classes),
             "soil_profiles": SoilProfilesCommand(self.soil_profiles),
+            "soil_parameter_list": self.soil_parameter_list,  # already a command
             "vegetation_classes": VegetationClassesCommand(self.vegetation_classes),
             "vegetation_parameter_list": VegetationParameterListCommand(
                 self.vegetation_parameter_list
@@ -591,7 +592,11 @@ class RVP(RV):
 
         d.update(self._extra_attributes)
 
-        return super().to_rv(dedent(self.tmpl.lstrip("\n")).format(**d), "RVP")
+        return (
+            super()
+            .to_rv(dedent(self.tmpl.lstrip("\n")).format(**d), "RVP")
+            .format(params=self.params)
+        )
 
 
 #########

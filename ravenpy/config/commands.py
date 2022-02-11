@@ -6,12 +6,61 @@ from dataclasses import asdict, field
 from enum import Enum
 from pathlib import Path
 from textwrap import dedent
-from typing import Any, Dict, Optional, Tuple, Union, no_type_check
+from typing import Any, Dict, Literal, Optional, Tuple, Union, no_type_check
 
 from pydantic.dataclasses import dataclass
 
 INDENT = " " * 4
 VALUE_PADDING = 10
+
+# Allowed soil parameters
+SoilParameters = Literal[
+    "SAND_CON",
+    "CLAY_CON",
+    "SILT_CON",
+    "ORG_CON",
+    "POROSITY",
+    "STONE_FRAC",
+    "SAT_WILT",
+    "FIELD_CAPACITY",
+    "BULK_DENSITY",
+    "HYDRAUL_COND",
+    "CLAPP_B",
+    "CLAPP N,CLAPP M",
+    "SAT_RES",
+    "AIR_ENTRY_PRESSURE",
+    "WILTING_PRESSURE",
+    "HEAT_CAPACITY",
+    "THERMAL_COND",
+    "WETTING_FRONT_PSI",
+    "EVAP_RES_FC",
+    "SHUTTLEWORTH_B",
+    "ALBEDO_WET",
+    "ALBEDO_DRY",
+    "VIZ_ZMIN",
+    "VIC_ZMAX",
+    "VIC ALPHA",
+    "VIC_EVAP_GAMMA",
+    "MAX_PERC_RATE",
+    "PERC_N",
+    "SAC_PERC_ALPHA",
+    "SAC_PERC_EXPON",
+    "HBV_BETA",
+    "MAX_BASEFLOW_RATE",
+    "BASEFLOW_N",
+    "BASEFLOW_COEFF",
+    "BASEFLOW_COEF2",
+    "BASEFLOW_THRESH",
+    "BF_LOSS_FRACTION",
+    "STORAGE_THRESHOLD",
+    "MAX_CAP_RISE_RATE",
+    "MAX_INTERFLOW_RATE",
+    "INTERFLOW_COEF",
+    "UBC_EVAL_SOIL_DEF",
+    "UBC_INFIL_SOIL_DEF",
+    "GR4J_X2",
+    "GR4J_X3",
+]
 
 
 class RavenCommand(ABC):
@@ -767,7 +816,7 @@ class SoilProfilesCommand(RavenCommand):
     class Record(RavenCommand):
         profile_name: str = ""
         soil_class_names: Tuple[str, ...] = ()
-        thicknesses: Tuple[float, ...] = ()
+        thicknesses: Tuple[Any, ...] = ()
 
         def to_rv(self):
             # From the Raven manual: {profile_name,#horizons,{soil_class_name,thick.}x{#horizons}}x[NP]
@@ -789,6 +838,33 @@ class SoilProfilesCommand(RavenCommand):
     def to_rv(self):
         return dedent(self.template).format(
             soil_profile_records="\n".join(map(str, self.soil_profiles))
+        )
+
+
+@dataclass
+class SoilParameterListCommand(RavenCommand):
+    @dataclass
+    class Record(RavenCommand):
+        name: str = ""  # Soil class name
+        vals: Tuple[Any, ...] = ()  # Soil parameter values
+
+        def to_rv(self):
+            return f"{self.name}, " + ",".join(map(str, self.vals))
+
+    names: Tuple[SoilParameters, ...] = ()  # Soil parameter names
+    records: Tuple[Record, ...] = ()
+
+    template = """
+    :SoilParameterList
+        :Parameters, {soil_parameter_names}
+        {soil_parameter_list_records}
+    :EndSoilParameterList
+    """
+
+    def to_rv(self):
+        return dedent(self.template).format(
+            soil_parameter_names=",".join(self.names),
+            soil_parameter_list_records="\n".join(map(str, self.records)),
         )
 
 
