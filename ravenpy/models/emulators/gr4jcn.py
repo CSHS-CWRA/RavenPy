@@ -60,50 +60,14 @@ class GR4JCN(Raven):
         terrain_class: str = "[NONE]"
         hru_type: str = "lake"
 
-    def __init__(self, *args, **kwds):
+    def __init__(self, config, *args, **kwds):
         kwds["identifier"] = kwds.get("identifier", "gr4jcn")
         super().__init__(*args, **kwds)
 
-        self.config.update(
-            hrus=(GR4JCN.LandHRU(),),
-            subbasins=(
-                Sub(
-                    subbasin_id=1,
-                    name="sub_001",
-                    downstream_id=-1,
-                    profile="None",
-                    gauged=True,
-                ),
-            ),
-            soil_classes=tuple(
-                map(
-                    SoilClassesCommand.Record,
-                    ["SOIL_PROD", "SOIL_ROUT", "SOIL_TEMP", "SOIL_GW", "AQUIFER"],
-                )
-            ),
-            vegetation_classes=(
-                VegetationClassesCommand.Record("VEG_ALL", 0, 0, 0),
-                VegetationClassesCommand.Record("VEG_WATER", 0, 0, 0),
-            ),
-            land_use_classes=(LU("LU_ALL", 0, 0), LU("LU_WATER", 0, 0)),
-            soil_profiles=(
-                SoilProfilesCommand.Record(
-                    "DEFAULT_P",
-                    ("SOIL_PROD", "SOIL_ROUT", "SOIL_TEMP", "SOIL_GW"),
-                    ("{params.GR4J_X1}", 0.3, 1, 1),
-                ),
-                SoilProfilesCommand.Record("LAKE"),
-            ),
-            soil_parameter_list=SoilParameterListCommand(
-                names=("POROSITY", "GR4J_X3", "GR4J_X2"),
-                records=(
-                    SoilParameterListCommand.Record(
-                        name="[DEFAULT]",
-                        vals=(1.0, "{params.GR4J_X3}", "{params.GR4J_X2}"),
-                    ),
-                ),
-            ),
-        )
+        self.config = config
+        self.config.model = self
+
+        self.set_default_config()
 
         #########
         # R V P #
@@ -229,6 +193,55 @@ class GR4JCN(Raven):
 
         self.config.rvi.rain_snow_fraction = RVI.RainSnowFractionOptions.DINGMAN
         self.config.rvi.evaporation = "PET_OUDIN"
+
+    def set_default_config(self):
+        self.config.update(
+            overwrite=False,
+            hrus=(GR4JCN.LandHRU(),),
+            subbasins=(
+                Sub(
+                    subbasin_id=1,
+                    name="sub_001",
+                    downstream_id=-1,
+                    profile="None",
+                    gauged=True,
+                ),
+            ),
+            soil_classes=tuple(
+                map(
+                    SoilClassesCommand.Record,
+                    ["SOIL_PROD", "SOIL_ROUT", "SOIL_TEMP", "SOIL_GW", "AQUIFER"],
+                )
+            ),
+            vegetation_classes=(
+                VegetationClassesCommand.Record("VEG_ALL", 0, 0, 0),
+                VegetationClassesCommand.Record("VEG_WATER", 0, 0, 0),
+            ),
+            land_use_classes=(LU("LU_ALL", 0, 0), LU("LU_WATER", 0, 0)),
+        )
+
+        params = self.config.rvp.params
+        if params:
+            self.config.update(
+                overwrite=False,
+                soil_profiles=(
+                    SoilProfilesCommand.Record(
+                        "DEFAULT_P",
+                        ("SOIL_PROD", "SOIL_ROUT", "SOIL_TEMP", "SOIL_GW"),
+                        (params.GR4J_X1, 0.3, 1, 1),
+                    ),
+                    SoilProfilesCommand.Record("LAKE"),
+                ),
+                soil_parameter_list=SoilParameterListCommand(
+                    names=("POROSITY", "GR4J_X3", "GR4J_X2"),
+                    records=(
+                        SoilParameterListCommand.Record(
+                            name="[DEFAULT]",
+                            vals=(1.0, params.GR4J_X3, params.GR4J_X2),
+                        ),
+                    ),
+                ),
+            )
 
     def derived_parameters(self):
 

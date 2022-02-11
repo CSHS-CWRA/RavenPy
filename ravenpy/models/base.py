@@ -400,6 +400,8 @@ class Raven:
                     else:
                         self.config.update(key, val[self.psim])
 
+            self.set_default_config()
+
             cmd = self.setup_model_run(tuple(map(Path, ts)))
 
             procs.append(

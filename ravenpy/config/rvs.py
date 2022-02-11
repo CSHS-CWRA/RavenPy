@@ -567,9 +567,15 @@ class RVP(RV):
     def update(self, key, value):
         if key == "params":
             if is_sequence(value):
-                self.params = self._config.model.Params(*value)
+                if self._config.model:
+                    self.params = self._config.model.Params(*value)
+                else:
+                    # Assume that it was set as the proper model.Params type
+                    self.params = value
             else:
-                assert isinstance(value, self._config.model.Params)
+                if self._config.model:
+                    assert isinstance(value, self._config.model.Params)
+                # else assume that it was set as the proper model.Params type
                 self.params = value
             return True
         else:
@@ -594,11 +600,7 @@ class RVP(RV):
 
         d.update(self._extra_attributes)
 
-        return (
-            super()
-            .to_rv(dedent(self.tmpl.lstrip("\n")).format(**d), "RVP")
-            .format(params=self.params)
-        )
+        return super().to_rv(dedent(self.tmpl.lstrip("\n")).format(**d), "RVP")
 
 
 #########
@@ -953,7 +955,7 @@ class OST(RV):
 
 
 class Config:
-    def __init__(self, model, **kwargs):
+    def __init__(self, model=None, **kwargs):
         self.model = model
         self.rvc = RVC(self)
         self.rvh = RVH(self)
@@ -963,13 +965,15 @@ class Config:
         self.ost = OST(self)
         self.update(**kwargs)
 
-    def update(self, key=None, value=None, **kwargs):
+    def update(self, key=None, value=None, overwrite=True, **kwargs):
         def _update_single(key, value):
             updated = False
             for rv in [self.rvc, self.rvi, self.rvh, self.rvp, self.rvt, self.ost]:
                 # Note that in certain cases we might need to update a key
                 # for more than one rv object.
-                if rv.update(key, value):
+                if not overwrite and hasattr(rv, key) and getattr(rv, key):
+                    updated = True
+                elif rv.update(key, value):
                     updated = True
             if not updated:
                 raise AttributeError(

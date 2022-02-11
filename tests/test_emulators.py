@@ -23,7 +23,7 @@ from ravenpy.config.commands import (
     Sub,
     VegetationClassesCommand,
 )
-from ravenpy.config.rvs import RVI
+from ravenpy.config.rvs import RVI, Config
 from ravenpy.models import (
     GR4JCN,
     GR4JCN_OST,
@@ -86,11 +86,11 @@ salmon_land_hru_2 = dict(
 
 class TestGR4JCN:
     def test_error(self):
-        model = GR4JCN()
+        config = Config()
 
-        model.config.rvp.params = model.Params(
-            0.529, -3.396, 407.29, 1.072, 16.9, 0.947
-        )
+        config.rvp.params = GR4JCN.Params(0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
+
+        model = GR4JCN(config)
 
         with pytest.raises(RavenError) as exc:
             model(TS)
@@ -100,28 +100,25 @@ class TestGR4JCN:
         )
 
     def test_simple(self):
-        model = GR4JCN(workdir="/tmp/test_simple")
 
-        model.config.rvi.start_date = dt.datetime(2000, 1, 1)
-        model.config.rvi.end_date = dt.datetime(2002, 1, 1)
-        model.config.rvi.run_name = "test"
+        config = Config()
 
-        model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
+        config.rvi.start_date = dt.datetime(2000, 1, 1)
+        config.rvi.end_date = dt.datetime(2002, 1, 1)
+        config.rvi.run_name = "test"
 
-        model.config.rvp.params = model.Params(
-            0.529, -3.396, 407.29, 1.072, 16.9, 0.947
-        )
+        config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
 
-        total_area_in_m2 = model.config.rvh.hrus[0].area * 1000 * 1000
-        model.config.rvp.avg_annual_runoff = get_average_annual_runoff(
-            TS, total_area_in_m2
-        )
+        config.rvp.params = GR4JCN.Params(0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
 
-        np.testing.assert_almost_equal(
-            model.config.rvp.avg_annual_runoff, 208.4805694844741
-        )
+        total_area_in_m2 = config.rvh.hrus[0].area * 1000 * 1000
+        config.rvp.avg_annual_runoff = get_average_annual_runoff(TS, total_area_in_m2)
 
-        assert model.config.rvi.suppress_output == ""
+        np.testing.assert_almost_equal(config.rvp.avg_annual_runoff, 208.4805694844741)
+
+        assert config.rvi.suppress_output == ""
+
+        model = GR4JCN(config)
 
         model(TS)
 
@@ -181,7 +178,7 @@ class TestGR4JCN:
 
     def test_routing(self):
         """We need at least 2 subbasins to activate routing."""
-        model = GR4JCN()
+        config = Config()
 
         ts_2d = get_local_testdata(
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_2d.nc"
@@ -191,10 +188,10 @@ class TestGR4JCN:
         # R V I #
         #########
 
-        model.config.rvi.start_date = dt.datetime(2000, 1, 1)
-        model.config.rvi.end_date = dt.datetime(2002, 1, 1)
-        model.config.rvi.run_name = "test_gr4jcn_routing"
-        model.config.rvi.routing = "ROUTE_DIFFUSIVE_WAVE"
+        config.rvi.start_date = dt.datetime(2000, 1, 1)
+        config.rvi.end_date = dt.datetime(2002, 1, 1)
+        config.rvi.run_name = "test_gr4jcn_routing"
+        config.rvi.routing = "ROUTE_DIFFUSIVE_WAVE"
 
         #########
         # R V H #
@@ -213,14 +210,14 @@ class TestGR4JCN:
         # the second basin.
 
         # HRU IDs are 1 to 3
-        model.config.rvh.hrus = (
+        config.rvh.hrus = (
             GR4JCN.LandHRU(hru_id=1, subbasin_id=10, **salmon_land_hru_1),
             GR4JCN.LakeHRU(hru_id=2, subbasin_id=10, **salmon_lake_hru_1),
             GR4JCN.LandHRU(hru_id=3, subbasin_id=20, **salmon_land_hru_2),
         )
 
         # Sub-basin IDs are 10 and 20 (not 1 and 2), to help disambiguate
-        model.config.rvh.subbasins = (
+        config.rvh.subbasins = (
             # gauged = False:
             # Usually this output would only be written for user's convenience.
             # There is usually no observation of streamflow available within
@@ -245,11 +242,11 @@ class TestGR4JCN:
             ),
         )
 
-        model.config.rvh.land_subbasin_property_multiplier = (
-            SBGroupPropertyMultiplierCommand("Land", "MANNINGS_N", 1.0)
+        config.rvh.land_subbasin_property_multiplier = SBGroupPropertyMultiplierCommand(
+            "Land", "MANNINGS_N", 1.0
         )
-        model.config.rvh.lake_subbasin_property_multiplier = (
-            SBGroupPropertyMultiplierCommand("Lakes", "RESERVOIR_CREST_WIDTH", 1.0)
+        config.rvh.lake_subbasin_property_multiplier = SBGroupPropertyMultiplierCommand(
+            "Lakes", "RESERVOIR_CREST_WIDTH", 1.0
         )
 
         #########
@@ -264,25 +261,21 @@ class TestGR4JCN:
             data=((1, 0, 1.0), (2, 0, 1.0), (3, 0, 1.0)),
         )
         # These will be shared (inline) to all the StationForcing commands in the RVT
-        model.config.rvt.grid_weights = gws
+        config.rvt.grid_weights = gws
 
         #########
         # R V P #
         #########
 
-        model.config.rvp.params = model.Params(
-            0.529, -3.396, 407.29, 1.072, 16.9, 0.947
-        )
+        config.rvp.params = GR4JCN.Params(0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
 
-        total_area_in_km2 = sum(hru.area for hru in model.config.rvh.hrus)
+        total_area_in_km2 = sum(hru.area for hru in config.rvh.hrus)
         total_area_in_m2 = total_area_in_km2 * 1000 * 1000
-        model.config.rvp.avg_annual_runoff = get_average_annual_runoff(
+        config.rvp.avg_annual_runoff = get_average_annual_runoff(
             ts_2d, total_area_in_m2
         )
 
-        np.testing.assert_almost_equal(
-            model.config.rvp.avg_annual_runoff, 139.5407534171111
-        )
+        np.testing.assert_almost_equal(config.rvp.avg_annual_runoff, 139.5407534171111)
 
         # These channel profiles describe the geometry of the actual river crossection.
         # The eight points (x) to describe the following geometry are given in each
@@ -295,7 +288,7 @@ class TestGR4JCN:
         #               \   RIVERBED   /
         #                 x----------x
         #
-        model.config.rvp.channel_profiles = [
+        config.rvp.channel_profiles = [
             ChannelProfileCommand(
                 name="chn_10",
                 bed_slope=7.62066e-05,
@@ -339,6 +332,8 @@ class TestGR4JCN:
         #############
         # Run model #
         #############
+
+        model = GR4JCN(config)
 
         model(ts_2d)
 
@@ -386,41 +381,44 @@ class TestGR4JCN:
         np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.0141168, 4)
 
     def test_config_update(self):
-        model = GR4JCN()
+        config = Config()
 
         # This is a regular attribute member
-        model.config.update("run_name", "test")
-        assert model.config.rvi.run_name == "test"
+        config.update("run_name", "test")
+        assert config.rvi.run_name == "test"
 
         # This is a computed property
-        model.config.update("evaporation", "PET_FROMMONTHLY")
-        assert model.config.rvi.evaporation == "PET_FROMMONTHLY"
+        config.update("evaporation", "PET_FROMMONTHLY")
+        assert config.rvi.evaporation == "PET_FROMMONTHLY"
 
         # Existing property but wrong value (the enum cast should throw an error)
         with pytest.raises(ValueError):
-            model.config.update("routing", "WRONG")
+            config.update("routing", "WRONG")
 
         # Non-existing attribute
         with pytest.raises(AttributeError):
-            model.config.update("why", "not?")
+            config.update("why", "not?")
 
         # Params
 
-        model.config.update(
-            "params", np.array([0.529, -3.396, 407.29, 1.072, 16.9, 0.947])
-        )
-        assert model.config.rvp.params.GR4J_X1 == 0.529
+        # emulator must be instantiated to determine the right Params type
+        _ = GR4JCN(config)
 
-        model.config.update("params", [0.529, -3.396, 407.29, 1.072, 16.9, 0.947])
-        assert model.config.rvp.params.GR4J_X1 == 0.529
+        config.update("params", np.array([0.529, -3.396, 407.29, 1.072, 16.9, 0.947]))
+        assert config.rvp.params.GR4J_X1 == 0.529
 
-        model.config.update("params", (0.529, -3.396, 407.29, 1.072, 16.9, 0.947))
-        assert model.config.rvp.params.GR4J_X1 == 0.529
+        config.update("params", [0.529, -3.396, 407.29, 1.072, 16.9, 0.947])
+        assert config.rvp.params.GR4J_X1 == 0.529
+
+        config.update("params", (0.529, -3.396, 407.29, 1.072, 16.9, 0.947))
+        assert config.rvp.params.GR4J_X1 == 0.529
 
     def test_run(self):
-        model = GR4JCN()
+        config = Config()
 
-        model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
+        config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
+
+        model = GR4JCN(config, workdir="/tmp/test_run")
 
         model(
             TS,
@@ -438,9 +436,11 @@ class TestGR4JCN:
         np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.117301, 4)
 
     def test_evaluation(self):
-        model = GR4JCN()
+        config = Config()
 
-        model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
+        config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
+
+        model = GR4JCN(config)
 
         model(
             TS,
@@ -464,7 +464,9 @@ class TestGR4JCN:
         assert len(d["DIAG_RMSE"]) == 3  # ALL, period1, period2
 
     def test_run_new_hrus_param(self):
-        model = GR4JCN()
+        config = Config()
+
+        model = GR4JCN(config)
 
         model(
             TS,
@@ -480,9 +482,11 @@ class TestGR4JCN:
 
     # @pytest.mark.skip
     def test_overwrite(self):
-        model = GR4JCN()
+        config = Config()
 
-        model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
+        config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
+
+        model = GR4JCN(config)
 
         model(
             TS,
@@ -528,12 +532,13 @@ class TestGR4JCN:
         assert model.q_sim.isel(time=1).values[0] < qsim2.isel(time=1).values[0]
 
     def test_resume(self):
-        model_ab = GR4JCN()
-        model_ab.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
+        config = Config()
+        config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
         kwargs = dict(
             params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
         )
         # Reference run
+        model_ab = GR4JCN(config)
         model_ab(
             TS,
             run_name="run_ab",
@@ -542,9 +547,9 @@ class TestGR4JCN:
             **kwargs,
         )
 
-        model_a = GR4JCN()
+        config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
 
-        model_a.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
+        model_a = GR4JCN(config)
         model_a(
             TS,
             run_name="run_a",
@@ -573,8 +578,8 @@ class TestGR4JCN:
             )
 
         # Resume with final state from saved solution file
-        model_b = GR4JCN()
-        model_b.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
+        config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
+        model_b = GR4JCN(config)
         model_b.resume(
             rvc
         )  # <--------- And this is how you feed it to a brand new model.
@@ -601,8 +606,9 @@ class TestGR4JCN:
         solution."""
         params = (0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
         # Reference run
-        model = GR4JCN()
-        model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
+        config = Config()
+        config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
+        model = GR4JCN(config)
         model(
             TS,
             run_name="run_a",
@@ -638,7 +644,8 @@ class TestGR4JCN:
     def test_update_soil_water(self):
         params = (0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
         # Reference run
-        model = GR4JCN()
+        config = Config()
+        model = GR4JCN(config)
         model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
         model(
             TS,
@@ -672,12 +679,14 @@ class TestGR4JCN:
         model = Raven()
         assert model.raven_version == "3.0.4"
 
-        model = GR4JCN()
+        model = GR4JCN(Config())
         assert model.raven_version == "3.0.4"
 
     def test_parallel_params(self):
-        model = GR4JCN()
-        model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
+        config = Config()
+        config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
+
+        model = GR4JCN(config)
 
         model(
             TS,
@@ -697,8 +706,11 @@ class TestGR4JCN:
 
     def test_parallel_basins(self, input2d):
         ts = input2d
-        model = GR4JCN()
-        model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
+
+        config = Config()
+        config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
+
+        model = GR4JCN(config)
 
         model(
             ts,
@@ -721,19 +733,20 @@ class TestGR4JCN:
     @pytest.mark.online
     def test_dap(self):
         """Test Raven with DAP link instead of local netCDF file."""
-        model = GR4JCN()
-        config = dict(
+        config = Config(
             start_date=dt.datetime(2000, 6, 1),
             end_date=dt.datetime(2000, 6, 10),
             run_name="test",
             hrus=(GR4JCN.LandHRU(**salmon_land_hru_1),),
-            params=model.Params(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
+            params=GR4JCN.Params(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
         )
+
+        model = GR4JCN(config)
 
         ts = (
             f"{TDS}/raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
         )
-        model(ts, **config)
+        model(ts)
 
     @pytest.mark.online
     def test_canopex(self):
@@ -741,8 +754,7 @@ class TestGR4JCN:
             "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/birdhouse/ets"
             "/Watersheds_5797_cfcompliant.nc"
         )
-        model = GR4JCN()
-        config = dict(
+        config = Config(
             start_date=dt.datetime(2010, 6, 1),
             end_date=dt.datetime(2010, 6, 10),
             nc_index=5600,
@@ -752,13 +764,16 @@ class TestGR4JCN:
             tasmin={"offset": -273.15},
             pr={"scale": 86400.0},
             hrus=[
-                model.LandHRU(
+                GR4JCN.LandHRU(
                     area=3650.47, latitude=49.51, longitude=-95.72, elevation=330.59
                 )
             ],
-            params=model.Params(108.02, 2.8693, 25.352, 1.3696, 1.2483, 0.30679),
+            params=GR4JCN.Params(108.02, 2.8693, 25.352, 1.3696, 1.2483, 0.30679),
         )
-        model(ts=CANOPEX_DAP, **config)
+
+        model = GR4JCN(config)
+
+        model(ts=CANOPEX_DAP)
 
 
 class TestGR4JCN_OST:
