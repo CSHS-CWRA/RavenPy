@@ -767,32 +767,18 @@ class SoilProfilesCommand(RavenCommand):
     class Record(RavenCommand):
         profile_name: str = ""
         soil_class_names: Tuple[str, ...] = ()
-        thicknesses: Tuple[Union[float, str], ...] = ()
+        thicknesses: Tuple[float, ...] = ()
 
-        def to_rv(self, model_params):
+        def to_rv(self):
             # From the Raven manual: {profile_name,#horizons,{soil_class_name,thick.}x{#horizons}}x[NP]
             n_horizons = len(self.soil_class_names)
-
-            thicknesses = []
-            for t in self.thicknesses:
-                if isinstance(t, str):
-                    m = re.match("params[.](.+)", t)
-                    err_msg = f"Expected a value like 'params.<name_of_model_param>', you provided '{t}'"
-                    if m:
-                        try:
-                            thicknesses.append(getattr(model_params, m.group(1)))
-                        except AttributeError:
-                            raise ValueError(err_msg)
-                    else:
-                        raise ValueError(err_msg)
-                else:
-                    thicknesses.append(t)
-            horizon_data = itertools.chain(*zip(self.soil_class_names, thicknesses))
+            horizon_data = itertools.chain(
+                *zip(self.soil_class_names, self.thicknesses)
+            )
             horizon_data_str = ", ".join(map(str, horizon_data))
             return f"{self.profile_name}, {n_horizons}, {horizon_data_str}"
 
     soil_profiles: Tuple[Record, ...] = ()
-    model_params: Optional[Any] = None
 
     template = """
     :SoilProfiles
@@ -801,12 +787,8 @@ class SoilProfilesCommand(RavenCommand):
     """
 
     def to_rv(self):
-        soil_profiles_rendered = [
-            sp.to_rv(self.model_params) for sp in self.soil_profiles
-        ]
-
         return dedent(self.template).format(
-            soil_profile_records="\n".join(soil_profiles_rendered)
+            soil_profile_records="\n".join(map(str, self.soil_profiles))
         )
 
 
