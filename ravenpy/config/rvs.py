@@ -99,14 +99,21 @@ class RV(ABC):
             return s
         d = {
             "rv_type": rv_type,
-            "raven_version": self._config.model.raven_version,
+            "raven_version": self._config.model.raven_version
+            if self._config.model
+            else "",
             "ravenpy_version": __version__,
             "date": dt.datetime.now().isoformat(),
             "model_and_description": "",
         }
         model = ""
-        description = self._config.model.description or ""
-        if self._config.model.__class__.__name__ not in ["Raven", "Ostrich"]:
+        description = (
+            (self._config.model.description or "") if self._config.model else ""
+        )
+        if self._config.model and self._config.model.__class__.__name__ not in [
+            "Raven",
+            "Ostrich",
+        ]:
             model = f"Emulation of {self._config.model.__class__.__name__}"
         model_and_description = list(filter(None, [model, description]))
         if model_and_description:
