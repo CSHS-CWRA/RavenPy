@@ -2,6 +2,7 @@ import datetime as dt
 import itertools
 import re
 from abc import ABC, abstractmethod
+from collections import defaultdict
 from dataclasses import asdict, field
 from enum import Enum
 from pathlib import Path
@@ -621,22 +622,26 @@ class HRUStateVariableTableCommand(RavenCommand):
 
     @classmethod
     def parse(cls, sol):
-        pat = r"""
-        :HRUStateVariableTable
-        \s*:Attributes.*?
-        \s*:Units.*?
-        (.+)
-        :EndHRUStateVariableTable
-        """
-        m = re.search(dedent(pat).strip(), sol, re.DOTALL)
-        lines = m.group(1).strip().splitlines()  # type: ignore
-        lines = [re.split(r",|\s+", line.strip()) for line in lines]
+        pat = re.compile(
+            r"^:HRUStateVariableTable$\s*:Attributes,(?P<atts>.+)$\s*:Units,.*$\s*(?:(?P<vars>.+)$)+\s*:EndHRUStateVariableTable",
+            re.MULTILINE,
+        )
+
+        matches = pat.findall(sol)
+        d = defaultdict(dict)
+        for m in matches:
+            atts = [
+                a.strip().lower().replace("[", "").replace("]", "")
+                for a in m[0].strip(",").split(",")
+            ]
+            vals = [[v.strip() for v in line.strip(",").split(",")] for line in m[1:]]
+            for val in vals:
+                idx, *values = val
+                d[idx].update(dict(zip(atts, values)))
+
         hru_states = {}
-        for line in lines:
-            idx, *values = line
-            idx = int(idx)
-            values = list(map(float, values))
-            hru_states[idx] = cls.Record(*([idx] + values))
+        for idx, values in d.items():
+            hru_states[idx] = cls.Record(index=idx, **values)
         return cls(hru_states)
 
     def to_rv(self):
