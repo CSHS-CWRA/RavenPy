@@ -180,6 +180,8 @@ def extract_rv_objects_from_shapefile(shapefile_path):
         # Each row corresponds to an HRU
         hru_recs.append(extract_hru(row))
 
+        # The subbasins are redundantly extracted so we collect them in a dict,
+        # keyed by their IDs, which we'll transform into a list in the end
         sb = extract_subbasin(row, subbasin_ids)
         subbasin_recs[sb.subbasin_id] = sb
 
