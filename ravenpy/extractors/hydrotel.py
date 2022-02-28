@@ -162,7 +162,7 @@ def extract_channel_profile(row) -> ChannelProfileCommand:
     )
 
 
-def extract_lists_from_shapefile(shapefile_path):
+def extract_rv_objects_from_shapefile(shapefile_path):
     if Path(shapefile_path).suffix == ".zip":
         shapefile_path = f"zip://{shapefile_path}"
     df = geopandas.read_file(shapefile_path)
