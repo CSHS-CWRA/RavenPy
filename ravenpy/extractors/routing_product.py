@@ -124,10 +124,12 @@ class RoutingProductShapefileExtractor:
 
             # Subbasin
             sb = self._extract_subbasin(row, is_lake, subbasin_ids)
-            subbasin_recs[sb.subbasin_id] = sb
 
-            # ChannelProfile
-            channel_profile_cmds.append(self._extract_channel_profile(row))
+            if sb.subbasin_id not in subbasin_recs:
+                subbasin_recs[sb.subbasin_id] = sb
+
+                # ChannelProfile
+                channel_profile_cmds.append(self._extract_channel_profile(row))
 
         return dict(
             subbasins=list(subbasin_recs.values()),
