@@ -88,12 +88,14 @@ class RoutingProductShapefileExtractor:
         """
         self.model_cls = model
 
-        subbasin_recs = []
+        # As one subbasin can be mapped to many rows (HRUs), we use a dict,
+        # keyed by their IDs, which we'll transform into a list in the end
+        subbasin_recs = {}  #
         land_sb_ids = []
         lake_sb_ids = []
         reservoir_cmds = []  # those are meant to be injected inline in the RVH
-        channel_profile_cmds = []  # those are meant to be injected inline in the RVH
-        hru_recs = []
+        channel_profile_cmds = []  # those are meant to be injected inline in the RVP
+        hru_recs = []  # each row corresponds to a HRU
 
         # Collect all subbasin_ids for fast lookup in next loop
         subbasin_ids = {int(row["SubId"]) for _, row in self._df.iterrows()}
@@ -116,19 +118,19 @@ class RoutingProductShapefileExtractor:
                 reservoir_cmds.append(self._extract_reservoir(row))
                 is_lake = True
             elif row[lake_field] > 0:
-                continue
+                pass  # not sure about this condition!
             else:
                 land_sb_ids.append(subbasin_id)
 
             # Subbasin
             sb = self._extract_subbasin(row, is_lake, subbasin_ids)
-            subbasin_recs.append(sb)
+            subbasin_recs[sb.subbasin_id] = sb
 
             # ChannelProfile
             channel_profile_cmds.append(self._extract_channel_profile(row))
 
         return dict(
-            subbasins=subbasin_recs,
+            subbasins=list(subbasin_recs.values()),
             land_subbasin_ids=land_sb_ids,
             lake_subbasin_ids=lake_sb_ids,
             reservoirs=reservoir_cmds,
