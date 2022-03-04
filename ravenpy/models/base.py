@@ -89,6 +89,7 @@ class Raven:
 
     def __init__(
         self,
+        config,
         workdir: Union[str, Path] = None,
         identifier: str = "raven-generic",
         description: str = None,
@@ -125,6 +126,9 @@ class Raven:
         except OSError:
             pass
 
+        self.config = config
+        self.config.model = self
+
         self.workdir = Path(os.path.realpath(workdir or tempfile.mkdtemp()))
 
         # Individual files for all simulations
@@ -155,8 +159,6 @@ class Raven:
         # Parallel simulations (one Raven config folder will be created for each)
         self._psim = 0
         self._pdim = ""  # Parallel dimension (either initparam, params or region)
-
-        self.config = Config(model=self)
 
     @property
     def output_path(self):
@@ -196,10 +198,6 @@ class Raven:
     def cmd_path(self):
         """This is the main executable."""
         return self.model_path
-
-    def derived_parameters(self):
-        """Subclassed by emulators. Defines model parameters that are a function of other parameters."""
-        return
 
     def configure(self, fns):
         """Set configuration from existing RV files. The `self.identifier` attribute will be updated
@@ -270,9 +268,6 @@ class Raven:
         index : int
           Run index (starts at 1)
         """
-        # Compute derived parameters
-        self.derived_parameters()
-
         # Write configuration files in model directory
         if not self.model_path.exists():
             os.makedirs(self.model_path)
@@ -333,10 +328,12 @@ class Raven:
         for p in self._parallel_parameters:
             val = kwds.pop(p, None)
             if val is not None and p == "params":
-                assert hasattr(self, "Params")  # make sure we are in an emulator
+                assert hasattr(
+                    self.config, "Params"
+                )  # make sure we are using an emulator
                 # Special case where we have `Params(..)` or `[Params(), ..]`
                 lval = [val] if not is_sequence(val) else val
-                if isinstance(lval[0], self.Params):
+                if isinstance(lval[0], self.config.Params):
                     pdict[p] = np.atleast_1d(val)
                 else:
                     pdict[p] = np.atleast_2d(val)
@@ -400,7 +397,7 @@ class Raven:
                     else:
                         self.config.update(key, val[self.psim])
 
-            self.set_default_config()
+            self.config.finalize()
 
             cmd = self.setup_model_run(tuple(map(Path, ts)))
 

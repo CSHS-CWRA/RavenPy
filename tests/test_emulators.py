@@ -86,11 +86,11 @@ salmon_land_hru_2 = dict(
 
 class TestGR4JCN:
     def test_error(self):
-        config = Config()
+        config = GR4JCN()
 
         config.rvp.params = GR4JCN.Params(0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
 
-        model = GR4JCN(config)
+        model = Raven(config)
 
         with pytest.raises(RavenError) as exc:
             model(TS)
@@ -101,7 +101,7 @@ class TestGR4JCN:
 
     def test_simple(self):
 
-        config = Config()
+        config = GR4JCN()
 
         config.rvi.start_date = dt.datetime(2000, 1, 1)
         config.rvi.end_date = dt.datetime(2002, 1, 1)
@@ -118,7 +118,7 @@ class TestGR4JCN:
 
         assert config.rvi.suppress_output == ""
 
-        model = GR4JCN(config)
+        model = Raven(config)
 
         model(TS)
 
@@ -178,7 +178,7 @@ class TestGR4JCN:
 
     def test_routing(self):
         """We need at least 2 subbasins to activate routing."""
-        config = Config()
+        config = GR4JCN()
 
         ts_2d = get_local_testdata(
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_2d.nc"
@@ -333,7 +333,7 @@ class TestGR4JCN:
         # Run model #
         #############
 
-        model = GR4JCN(config)
+        model = Raven(config)
 
         model(ts_2d)
 
@@ -381,7 +381,7 @@ class TestGR4JCN:
         np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.0141168, 4)
 
     def test_config_update(self):
-        config = Config()
+        config = GR4JCN()
 
         # This is a regular attribute member
         config.update("run_name", "test")
@@ -402,7 +402,7 @@ class TestGR4JCN:
         # Params
 
         # emulator must be instantiated to determine the right Params type
-        _ = GR4JCN(config)
+        _ = Raven(config)
 
         config.update("params", np.array([0.529, -3.396, 407.29, 1.072, 16.9, 0.947]))
         assert config.rvp.params.GR4J_X1 == 0.529
@@ -414,11 +414,11 @@ class TestGR4JCN:
         assert config.rvp.params.GR4J_X1 == 0.529
 
     def test_run(self):
-        config = Config()
+        config = GR4JCN()
 
         config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
 
-        model = GR4JCN(config, workdir="/tmp/test_run")
+        model = Raven(config, workdir="/tmp/test_run")
 
         model(
             TS,
@@ -436,11 +436,11 @@ class TestGR4JCN:
         np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.117301, 4)
 
     def test_evaluation(self):
-        config = Config()
+        config = GR4JCN()
 
         config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
 
-        model = GR4JCN(config)
+        model = Raven(config)
 
         model(
             TS,
@@ -464,9 +464,9 @@ class TestGR4JCN:
         assert len(d["DIAG_RMSE"]) == 3  # ALL, period1, period2
 
     def test_run_new_hrus_param(self):
-        config = Config()
+        config = GR4JCN()
 
-        model = GR4JCN(config)
+        model = Raven(config)
 
         model(
             TS,
@@ -482,11 +482,11 @@ class TestGR4JCN:
 
     # @pytest.mark.skip
     def test_overwrite(self):
-        config = Config()
+        config = GR4JCN()
 
         config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
 
-        model = GR4JCN(config)
+        model = Raven(config)
 
         model(
             TS,
@@ -532,13 +532,13 @@ class TestGR4JCN:
         assert model.q_sim.isel(time=1).values[0] < qsim2.isel(time=1).values[0]
 
     def test_resume(self):
-        config = Config()
+        config = GR4JCN()
         config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
         kwargs = dict(
             params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
         )
         # Reference run
-        model_ab = GR4JCN(config)
+        model_ab = Raven(config)
         model_ab(
             TS,
             run_name="run_ab",
@@ -549,7 +549,7 @@ class TestGR4JCN:
 
         config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
 
-        model_a = GR4JCN(config)
+        model_a = Raven(config)
         model_a(
             TS,
             run_name="run_a",
@@ -579,7 +579,7 @@ class TestGR4JCN:
 
         # Resume with final state from saved solution file
         config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
-        model_b = GR4JCN(config)
+        model_b = Raven(config)
         model_b.resume(
             rvc
         )  # <--------- And this is how you feed it to a brand new model.
@@ -606,9 +606,9 @@ class TestGR4JCN:
         solution."""
         params = (0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
         # Reference run
-        config = Config()
+        config = GR4JCN()
         config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
-        model = GR4JCN(config)
+        model = Raven(config)
         model(
             TS,
             run_name="run_a",
@@ -644,8 +644,8 @@ class TestGR4JCN:
     def test_update_soil_water(self):
         params = (0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
         # Reference run
-        config = Config()
-        model = GR4JCN(config)
+        config = GR4JCN()
+        model = Raven(config)
         model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
         model(
             TS,
@@ -676,17 +676,14 @@ class TestGR4JCN:
         assert s_1 != model.storage["Soil Water[1]"].isel(time=-1)
 
     def test_version(self):
-        model = Raven()
-        assert model.raven_version == "3.0.4"
-
-        model = GR4JCN(Config())
+        model = Raven(GR4JCN())
         assert model.raven_version == "3.0.4"
 
     def test_parallel_params(self):
-        config = Config()
+        config = GR4JCN()
         config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
 
-        model = GR4JCN(config)
+        model = Raven(config)
 
         model(
             TS,
@@ -707,10 +704,10 @@ class TestGR4JCN:
     def test_parallel_basins(self, input2d):
         ts = input2d
 
-        config = Config()
+        config = GR4JCN()
         config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
 
-        model = GR4JCN(config)
+        model = Raven(config)
 
         model(
             ts,
@@ -733,7 +730,7 @@ class TestGR4JCN:
     @pytest.mark.online
     def test_dap(self):
         """Test Raven with DAP link instead of local netCDF file."""
-        config = Config(
+        config = GR4JCN(
             start_date=dt.datetime(2000, 6, 1),
             end_date=dt.datetime(2000, 6, 10),
             run_name="test",
@@ -741,7 +738,7 @@ class TestGR4JCN:
             params=GR4JCN.Params(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
         )
 
-        model = GR4JCN(config)
+        model = Raven(config)
 
         ts = (
             f"{TDS}/raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
@@ -754,7 +751,7 @@ class TestGR4JCN:
             "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/birdhouse/ets"
             "/Watersheds_5797_cfcompliant.nc"
         )
-        config = Config(
+        config = GR4JCN(
             start_date=dt.datetime(2010, 6, 1),
             end_date=dt.datetime(2010, 6, 10),
             nc_index=5600,
@@ -771,7 +768,7 @@ class TestGR4JCN:
             params=GR4JCN.Params(108.02, 2.8693, 25.352, 1.3696, 1.2483, 0.30679),
         )
 
-        model = GR4JCN(config)
+        model = Raven(config)
 
         model(ts=CANOPEX_DAP)
 

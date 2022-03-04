@@ -15,11 +15,11 @@ from ravenpy.config.commands import (
     Sub,
     VegetationClassesCommand,
 )
-from ravenpy.config.rvs import RVI
+from ravenpy.config.rvs import RVI, Config
 from ravenpy.models.base import Ostrich, Raven
 
 
-class GR4JCN(Raven):
+class GR4JCN(Config):
     """GR4J + Cemaneige global hydrological model
 
     References
@@ -60,14 +60,10 @@ class GR4JCN(Raven):
         terrain_class: str = "[NONE]"
         hru_type: str = "lake"
 
-    def __init__(self, config, *args, **kwds):
-        kwds["identifier"] = kwds.get("identifier", "gr4jcn")
-        super().__init__(*args, **kwds)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-        self.config = config
-        self.config.model = self
-
-        self.set_default_config()
+        self.identifier = "gr4jcn"
 
         #########
         # R V P #
@@ -143,7 +139,7 @@ class GR4JCN(Raven):
         # List of channel profiles
         {channel_profiles}
         """
-        self.config.rvp.set_tmpl(rvp_tmpl)
+        self.rvp.set_tmpl(rvp_tmpl)
 
         #########
         # R V I #
@@ -189,13 +185,16 @@ class GR4JCN(Raven):
          :Baseflow                 BASE_GR4J          ROUTING_STORE   SURFACE_WATER  			 # Qr
         :EndHydrologicProcesses
         """
-        self.config.rvi.set_tmpl(rvi_tmpl)
+        self.rvi.set_tmpl(rvi_tmpl)
 
-        self.config.rvi.rain_snow_fraction = RVI.RainSnowFractionOptions.DINGMAN
-        self.config.rvi.evaporation = "PET_OUDIN"
+        self.rvi.rain_snow_fraction = RVI.RainSnowFractionOptions.DINGMAN
+        self.rvi.evaporation = "PET_OUDIN"
 
-    def set_default_config(self):
-        self.config.update(
+    # def set_default_config(self):
+    def finalize(self):
+        # We use overwrite=False to make sure that if the user has already set any
+        # of these values, their change will stay.
+        self.update(
             overwrite=False,
             hrus=(GR4JCN.LandHRU(),),
             subbasins=(
@@ -220,9 +219,9 @@ class GR4JCN(Raven):
             land_use_classes=(LU("LU_ALL", 0, 0), LU("LU_WATER", 0, 0)),
         )
 
-        params = self.config.rvp.params
+        params = self.rvp.params
         if params:
-            self.config.update(
+            self.update(
                 overwrite=False,
                 soil_profiles=(
                     SoilProfilesCommand.Record(
@@ -243,42 +242,38 @@ class GR4JCN(Raven):
                 ),
             )
 
-    def derived_parameters(self):
-
-        params = cast(GR4JCN.Params, self.config.rvp.params)
-
-        self.config.rvp.set_extra_attributes(
+        self.rvp.set_extra_attributes(
             one_minus_CEMANEIGE_X2=(1.0 - params.CEMANEIGE_X2)
         )
 
         # subbassin_id -> has at least one LakeHRU
         sb_contains_lake = defaultdict(lambda: False)
 
-        if not self.config.rvc.hru_states:
+        if not self.rvc.hru_states:
             # If self.rvc.hru_states is set, it means that we are using `resume()` and we don't
             # want to interfere
 
             soil0 = params.GR4J_X1 * 1000.0 / 2.0
             soil1 = 15
 
-            for hru in self.config.rvh.hrus:
+            for hru in self.rvh.hrus:
                 if isinstance(hru, GR4JCN.LandHRU) or hru.hru_type == "land":
-                    self.config.rvc.hru_states[hru.hru_id] = HRUState(
+                    self.rvc.hru_states[hru.hru_id] = HRUState(
                         index=hru.hru_id, soil0=soil0, soil1=soil1
                     )
                 elif isinstance(hru, GR4JCN.LakeHRU) or hru.hru_type == "lake":
-                    self.config.rvc.hru_states[hru.hru_id] = HRUState(index=hru.hru_id)
+                    self.rvc.hru_states[hru.hru_id] = HRUState(index=hru.hru_id)
                     sb_contains_lake[hru.subbasin_id] = True
                 else:
                     raise Exception(
                         "Type of HRU must be either `GR4JCN.LandHRU` or `GR4JCN.LakeHRU`"
                     )
 
-        if not self.config.rvc.basin_states:
+        if not self.rvc.basin_states:
             # If self.rvc.basin_states is set, it means that we are using `resume()` and we don't
             # want to interfere
-            for sb in self.config.rvh.subbasins:
-                self.config.rvc.basin_states[sb.subbasin_id] = BasinIndexCommand(
+            for sb in self.rvh.subbasins:
+                self.rvc.basin_states[sb.subbasin_id] = BasinIndexCommand(
                     index=sb.subbasin_id
                 )
 

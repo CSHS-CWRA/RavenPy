@@ -529,7 +529,7 @@ class RVI(RV):
 
         d = {attr: getattr(self, attr) for attr in a + p}
 
-        d["identifier"] = self._config.model.identifier
+        d["identifier"] = self._config.identifier
         d["now"] = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         d.update(self._extra_attributes)
@@ -575,13 +575,13 @@ class RVP(RV):
         if key == "params":
             if is_sequence(value):
                 if self._config.model:
-                    self.params = self._config.model.Params(*value)
+                    self.params = self._config.Params(*value)
                 else:
                     # Assume that it was set as the proper model.Params type
                     self.params = value
             else:
                 if self._config.model:
-                    assert isinstance(value, self._config.model.Params)
+                    assert isinstance(value, self._config.Params)
                 # else assume that it was set as the proper model.Params type
                 self.params = value
             return True
@@ -936,7 +936,7 @@ class OST(RV):
 
     @property
     def identifier(self):
-        return self._config.model.identifier
+        return self._config.identifier
 
     def to_rv(self):
         # Get those from RVI (there's probably a better way to do this!)
@@ -970,6 +970,7 @@ class Config:
         self.rvp = RVP(self)
         self.rvt = RVT(self)
         self.ost = OST(self)
+        self.identifier = "raven-generic"
         self.update(**kwargs)
 
     def update(self, key=None, value=None, overwrite=True, **kwargs):
@@ -1006,3 +1007,9 @@ class Config:
             # because I don't want to burden the user with setting it.. but the problem
             # is that externally supplied rv files might not have it (to be discussed)
             self.rvi.run_name = None
+
+    def finalize(self):
+        """
+        This method is meant to be implemented by an emulator config that derives from this class.
+        """
+        pass
