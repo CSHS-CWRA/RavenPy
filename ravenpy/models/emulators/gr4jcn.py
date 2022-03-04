@@ -190,7 +190,6 @@ class GR4JCN(Config):
         self.rvi.rain_snow_fraction = RVI.RainSnowFractionOptions.DINGMAN
         self.rvi.evaporation = "PET_OUDIN"
 
-    # def set_default_config(self):
     def finalize(self):
         # We use overwrite=False to make sure that if the user has already set any
         # of these values, their change will stay.
