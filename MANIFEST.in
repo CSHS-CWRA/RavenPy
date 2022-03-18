@@ -15,3 +15,12 @@ recursive-include docs *.rst conf.py Makefile make.bat *.jpg *.png *.gif
 
 graft ravenpy/models
 graft ravenpy/data
+
+exclude .coveralls.yml
+exclude .editorconfig
+exclude .pre-commit-config.yaml
+exclude .readthedocs.yml
+exclude .yamllint.yaml
+exclude Makefile
+exclude environment-docs.yml
+exclude tox.ini
