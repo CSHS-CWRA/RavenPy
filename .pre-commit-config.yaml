@@ -47,7 +47,7 @@ repos:
       - id: yamllint
         args: [ '--config-file', '.yamllint.yaml' ]
   - repo: https://github.com/mgedmin/check-manifest
-    rev: "0.47"
+    rev: "0.48"
     hooks:
       - id: check-manifest
   - repo: meta
