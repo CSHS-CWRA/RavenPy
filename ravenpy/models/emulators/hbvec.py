@@ -19,6 +19,21 @@ from .gr4jcn import GR4JCN
 
 
 class HBVEC(Raven):
+    """Hydrologiska Byråns Vattenbalansavdelning – Environment Canada (HBV-EC)
+
+    References
+    ----------
+    Lindström, G., et al., 1997. Development and test of the distributed HBV-96 hydrological model. 
+    Journal of Hydrology, 201 (1–4), 272–288. doi:10.1016/S0022-1694(97)00041-3
+    
+    Hamilton, A.S., Hutchinson, D.G., and Moore, R.D., 2000. Estimating winter streamflow using 
+    conceptual streamflow model. Journal of Cold Regions Engineering, 14 (4), 158–175. 
+    doi:10.1061/(ASCE)0887-381X(2000)14:4(158)
+    
+    Canadian Hydraulics Centre, 2010. Green kenue reference manual. 
+    Ottawa, Ontario: National Research Council.
+    """
+    
     @dataclass
     class Params:
         par_x01: float
