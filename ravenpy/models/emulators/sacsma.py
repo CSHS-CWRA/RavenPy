@@ -10,12 +10,12 @@ from ravenpy.models.base import Ostrich, Raven
 
 
 class SACSMA(Raven):
-    """ Sacramento - Soil Moisture Accounting model
-    
+    """Sacramento - Soil Moisture Accounting model
+
     References
     ----------
-    Sorooshian, S., Duan, Q., and Gupta, V. K. (1993), Calibration of rainfall-runoff models: 
-    Application of global optimization to the Sacramento Soil Moisture Accounting Model, 
+    Sorooshian, S., Duan, Q., and Gupta, V. K. (1993), Calibration of rainfall-runoff models:
+    Application of global optimization to the Sacramento Soil Moisture Accounting Model,
     Water Resour. Res., 29( 4), 1185– 1194, doi:10.1029/92WR02617.
     """
 

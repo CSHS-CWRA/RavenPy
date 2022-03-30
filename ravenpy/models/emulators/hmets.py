@@ -15,10 +15,10 @@ class HMETS(Raven):
     References
     ----------
     Martel, J.-L., Demeester, K., Brissette, F., Arsenault, R., Poulin, A. 2017.
-    HMETS: A simple and efficient hydrology model for teaching hydrological modelling, 
+    HMETS: A simple and efficient hydrology model for teaching hydrological modelling,
     flow forecasting and climate change impacts. Int. J. Eng. Educ., 33, 1307–1316.
     """
-    
+
     @dataclass
     class Params:
         GAMMA_SHAPE: float

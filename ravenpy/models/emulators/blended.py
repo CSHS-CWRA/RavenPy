@@ -13,20 +13,20 @@ from .gr4jcn import GR4JCN
 
 class BLENDED(Raven):
     """Blended hydrological model for blending outputs from different submodules
-    
+
 
     References
     ----------
-    Mai, J., Craig, J. R., and Tolson, B. A.: Simultaneously determining global 
-    sensitivities of model parameters and model structure, Hydrol. Earth Syst. 
+    Mai, J., Craig, J. R., and Tolson, B. A.: Simultaneously determining global
+    sensitivities of model parameters and model structure, Hydrol. Earth Syst.
     Sci., 24, 5835–5858, https://doi.org/10.5194/hess-24-5835-2020, 2020.
-    
-    Chlumsky, R., Mai, J., Craig, J. R., & Tolson, B. A. (2021). Simultaneous 
-    calibration of hydrologic model structure and parameters using a blended 
-    model. Water Resources Research, 57, e2020WR029229. 
+
+    Chlumsky, R., Mai, J., Craig, J. R., & Tolson, B. A. (2021). Simultaneous
+    calibration of hydrologic model structure and parameters using a blended
+    model. Water Resources Research, 57, e2020WR029229.
     https://doi.org/10.1029/2020WR029229
     """
-    
+
     @dataclass
     class Params:
         par_x01: float
