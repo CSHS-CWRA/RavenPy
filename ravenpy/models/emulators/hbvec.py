@@ -8,10 +8,17 @@ from pydantic.dataclasses import dataclass
 from ravenpy.config.commands import (
     HRU,
     LU,
+    PL,
+    SOIL,
     BaseDataCommand,
     BasinIndexCommand,
     HRUState,
+    LandUseParameterListCommand,
+    SoilClassesCommand,
+    SoilParameterListCommand,
     Sub,
+    VegetationClassesCommand,
+    VegetationParameterListCommand,
 )
 from ravenpy.models.base import Ostrich, Raven
 
@@ -49,6 +56,98 @@ class HBVEC(Raven):
 
         self.config.update(
             hrus=(GR4JCN.LandHRU(),),
+            soil_classes=[
+                SoilClassesCommand.Record(n)
+                for n in ["TOPSOIL", "FAST_RES", "SLOW_RES"]
+            ],
+            vegetation_classes=[
+                VegetationClassesCommand.Record("VEG_ALL", 25, 6.0, 5.3)
+            ],
+            land_use_classes=[LU("LU_ALL", 0, 1)],
+            soil_profiles=[
+                SOIL(
+                    "DEFAULT_P",
+                    ["TOPSOIL", "FAST_RES", "SLOW_RES"],
+                    ["{params.par_x17}", 100.0, 100.0],
+                )
+            ],
+            soil_parameter_list=SoilParameterListCommand(
+                names=[
+                    "POROSITY",
+                    "FIELD_CAPACITY",
+                    "SAT_WILT",
+                    "HBV_BETA",
+                    "MAX_CAP_RISE_RATE",
+                    "MAX_PERC_RATE",
+                    "BASEFLOW_COEFF",
+                    "BASEFLOW_N",
+                ],
+                records=[
+                    PL(
+                        name="[DEFAULT]",
+                        vals=[
+                            "{params.par_x05}",
+                            "{params.par_x06}",
+                            "{params.par_x14}",
+                            "{params.par_x07}",
+                            "{params.par_x16}",
+                            0,
+                            0,
+                            0,
+                        ],
+                    ),
+                    PL(
+                        name="FAST_RES",
+                        vals=[
+                            None,
+                            None,
+                            0,
+                            None,
+                            None,
+                            "{params.par_x08}",
+                            "{params.par_x09}",
+                            "{params.par_x15}",
+                        ],
+                    ),
+                    PL(
+                        name="SLOW_RES",
+                        vals=[None, None, 0, None, None, None, "{params.par_x10}", 1],
+                    ),
+                ],
+            ),
+            vegetation_parameter_list=VegetationParameterListCommand(
+                names=["MAX_CAPACITY", "MAX_SNOW_CAPACITY", "TFRAIN", "TFSNOW"],
+                records=[PL(name="VEG_ALL", vals=[10000, 10000, 0.88, 0.88])],
+            ),
+            land_use_parameter_list=LandUseParameterListCommand(
+                names=[
+                    "MELT_FACTOR",
+                    "MIN_MELT_FACTOR",
+                    "HBV_MELT_FOR_CORR",
+                    "REFREEZE_FACTOR",
+                    "HBV_MELT_ASP_CORR",
+                    "HBV_MELT_GLACIER_CORR",
+                    "HBV_GLACIER_KMIN",
+                    "GLAC_STORAGE_COEFF",
+                    "HBV_GLACIER_AG",
+                ],
+                records=[
+                    PL(
+                        name="[DEFAULT]",
+                        vals=[
+                            "{params.par_x02}",
+                            2.2,
+                            "{params.par_x18}",
+                            "{params.par_x03}",
+                            0.48,
+                            1.64,
+                            0.05,
+                            "{params.par_x19}",
+                            0.05,
+                        ],
+                    )
+                ],
+            ),
             subbasins=(
                 Sub(
                     subbasin_id=1,
@@ -79,71 +178,31 @@ class HBVEC(Raven):
 
         #---------------------------------------------------------
         # Soil classes
-        :SoilClasses
-         :Attributes,
-         :Units,
-           TOPSOIL,      1.0,    0.0,       0
-           SLOW_RES,     1.0,    0.0,       0
-           FAST_RES,     1.0,    0.0,       0
-        :EndSoilClasses
 
-        :SoilParameterList
-          :Parameters,                POROSITY,FIELD_CAPACITY,    SAT_WILT,    HBV_BETA, MAX_CAP_RISE_RATE,MAX_PERC_RATE,BASEFLOW_COEFF,            BASEFLOW_N
-          :Units     ,                    none,          none,        none,        none,              mm/d,         mm/d,           1/d,                  none
-          #                        HBV_PARA_05,   HBV_PARA_06, HBV_PARA_14, HBV_PARA_07,       HBV_PARA_16,     CONSTANT,      CONSTANT,              CONSTANT,
-            [DEFAULT],               {params.par_x05},     {params.par_x06},   {params.par_x14},    {params.par_x07},        {params.par_x16},          0.0,           0.0,                   0.0
-          #                                                       CONSTANT,                                  HBV_PARA_08,   HBV_PARA_09, 1+HBV_PARA_15=1+ALPHA,
-             FAST_RES,                _DEFAULT,      _DEFAULT,         0.0,    _DEFAULT,          _DEFAULT,    {params.par_x08},     {params.par_x09},    {one_plus_par_x15}
-          #                                                       CONSTANT,                                                 HBV_PARA_10,              CONSTANT,
-             SLOW_RES,                _DEFAULT,      _DEFAULT,         0.0,    _DEFAULT,          _DEFAULT,     _DEFAULT,     {params.par_x10},                   1.0
-        :EndSoilParameterList
+        {soil_classes}
+
+        {soil_parameter_list}
 
         #---------------------------------------------------------
         # Soil profiles
         # name, layers, (soilClass, thickness) x layers
         #
-        :SoilProfiles
-        #                        HBV_PARA_17,           CONSTANT,           CONSTANT,
-           DEFAULT_P, 3, TOPSOIL,  {params.par_x17}, FAST_RES,    100.0, SLOW_RES,    100.0
-        :EndSoilProfiles
+
+        {soil_profiles}
 
         #---------------------------------------------------------
         # Vegetation classes
-        #
-        :VegetationClasses
-         :Attributes,   MAX_HT,  MAX_LAI, MAX_LEAF_COND
-         :Units,             m,     none,      mm_per_s
-           VEG_ALL,         25,      6.0,           5.3
-        :EndVegetationClasses
 
-        :VegetationParameterList
-          :Parameters,  MAX_CAPACITY, MAX_SNOW_CAPACITY,  TFRAIN,  TFSNOW,
-          :Units,                 mm,                mm,    frac,    frac,
-          VEG_ALL,             10000,             10000,    0.88,    0.88,
-        :EndVegetationParameterList
+        {vegetation_classes}
+
+        {vegetation_parameter_list}
 
         #---------------------------------------------------------
         # LandUse classes
-        #
-        :LandUseClasses
-         :Attributes,     IMPERM, FOREST_COV
-         :Units,            frac,       frac
-              LU_ALL,        0.0,          1
-        :EndLandUseClasses
 
-        :LandUseParameterList
-          :Parameters,   MELT_FACTOR, MIN_MELT_FACTOR,   HBV_MELT_FOR_CORR, REFREEZE_FACTOR, HBV_MELT_ASP_CORR
-          :Units     ,        mm/d/K,          mm/d/K,                none,          mm/d/K,              none
-          #              HBV_PARA_02,        CONSTANT,         HBV_PARA_18,     HBV_PARA_03,          CONSTANT
-            [DEFAULT],     {params.par_x02},             2.2,           {params.par_x18},       {params.par_x03},              0.48
-        :EndLandUseParameterList
+        {land_use_classes}
 
-        :LandUseParameterList
-         :Parameters, HBV_MELT_GLACIER_CORR,   HBV_GLACIER_KMIN, GLAC_STORAGE_COEFF, HBV_GLACIER_AG
-         :Units     ,                  none,                1/d,                1/d,           1/mm
-           #                       CONSTANT,           CONSTANT,        HBV_PARA_19,       CONSTANT,
-           [DEFAULT],                  1.64,               0.05,          {params.par_x19},           0.05
-        :EndLandUseParameterList
+        {land_use_parameter_list}
         """
         self.config.rvp.set_tmpl(rvp_tmpl)
 

@@ -6,9 +6,22 @@ from dataclasses import asdict, field
 from enum import Enum
 from pathlib import Path
 from textwrap import dedent
-from typing import Any, Dict, Optional, Tuple, Union, no_type_check
+from typing import (
+    Any,
+    ClassVar,
+    Dict,
+    Literal,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+    no_type_check,
+)
 
+from pydantic import validator
 from pydantic.dataclasses import dataclass
+
+from .constants import LandUseParameters, SoilParameters, VegetationParameters
 
 INDENT = " " * 4
 VALUE_PADDING = 10
@@ -742,12 +755,16 @@ class BasinStateVariablesCommand(RavenCommand):
 class SoilClassesCommand(RavenCommand):
     @dataclass
     class Record(RavenCommand):
+        """SoilClass record.
+
+        Note: does not support yet the %SAND,%CLAY,%SILT, %ORGANIC format."""
+
         name: str = ""
 
         def to_rv(self):
             return " ".join(map(str, asdict(self).values()))
 
-    soil_classes: Tuple[Record, ...] = ()
+    soil_classes: Sequence[Record] = ()
 
     template = """
     :SoilClasses
@@ -757,7 +774,7 @@ class SoilClassesCommand(RavenCommand):
 
     def to_rv(self):
         return dedent(self.template).format(
-            soil_class_records="\n".join(map(str, self.soil_classes))
+            soil_class_records="\n    ".join(map(str, self.soil_classes))
         )
 
 
@@ -767,7 +784,7 @@ class SoilProfilesCommand(RavenCommand):
     class Record(RavenCommand):
         profile_name: str = ""
         soil_class_names: Tuple[str, ...] = ()
-        thicknesses: Tuple[float, ...] = ()
+        thicknesses: Tuple[Any, ...] = ()
 
         def to_rv(self):
             # From the Raven manual: {profile_name,#horizons,{soil_class_name,thick.}x{#horizons}}x[NP]
@@ -775,8 +792,8 @@ class SoilProfilesCommand(RavenCommand):
             horizon_data = itertools.chain(
                 *zip(self.soil_class_names, self.thicknesses)
             )
-            horizon_data_str = ", ".join(map(str, horizon_data))
-            return f"{self.profile_name}, {n_horizons}, {horizon_data_str}"
+            fmt = "{:<16},{:>4}," + ",".join(n_horizons * ["{:>12},{:>6}"])
+            return fmt.format(self.profile_name, n_horizons, *horizon_data)
 
     soil_profiles: Tuple[Record, ...] = ()
 
@@ -788,7 +805,7 @@ class SoilProfilesCommand(RavenCommand):
 
     def to_rv(self):
         return dedent(self.template).format(
-            soil_profile_records="\n".join(map(str, self.soil_profiles))
+            soil_profile_records="\n    ".join(map(str, self.soil_profiles))
         )
 
 
@@ -802,21 +819,22 @@ class VegetationClassesCommand(RavenCommand):
         max_leaf_cond: float = 0
 
         def to_rv(self):
-            return " ".join(map(str, asdict(self).values()))
+            fmt = "{:<16}," + ",".join(3 * ["{:>14}"])
+            return fmt.format(*asdict(self).values())
 
-    vegetation_classes: Tuple[Record, ...] = ()
+    vegetation_classes: Sequence[Record] = ()
 
     template = """
     :VegetationClasses
-        :Attributes,                MAX_HT,       MAX_LAI,    MAX_LEAF_COND
-        :Units,                       m,            none,       mm_per_s
+        :Attributes     ,        MAX_HT,       MAX_LAI, MAX_LEAF_COND
+        :Units          ,             m,          none,      mm_per_s
         {vegetation_class_records}
     :EndVegetationClasses
     """
 
     def to_rv(self):
         return dedent(self.template).format(
-            vegetation_class_records="\n".join(map(str, self.vegetation_classes))
+            vegetation_class_records="\n    ".join(map(str, self.vegetation_classes))
         )
 
 
@@ -829,14 +847,15 @@ class LandUseClassesCommand(RavenCommand):
         forest_coverage: float = 0
 
         def to_rv(self):
-            return " ".join(map(str, asdict(self).values()))
+            fmt = "{:<16}," + ",".join(2 * ["{:>16}"])
+            return fmt.format(*asdict(self).values())
 
-    land_use_classes: Tuple[Record, ...] = ()
+    land_use_classes: Sequence[Record] = ()
 
     template = """
     :LandUseClasses
-        :Attributes,        IMPERMEABLE_FRAC,         FOREST_COVERAGE
-        :Units,                     fract,                    fract
+        :Attributes     ,IMPERMEABLE_FRAC, FOREST_COVERAGE
+        :Units          ,            frac,            frac
         {land_use_class_records}
     :EndLandUseClasses
     """
@@ -847,5 +866,68 @@ class LandUseClassesCommand(RavenCommand):
         )
 
 
+@dataclass
+class ParameterList(RavenCommand):
+    @dataclass
+    class Record(RavenCommand):
+        name: str = ""
+        vals: Sequence[Any] = ()
+
+        @validator("vals", pre=True)
+        def no_none_in_default(cls, v, values):
+            """Make sure that no values are None for the [DEFAULT] record."""
+            if values["name"] == "[DEFAULT]" and None in v:
+                raise ValueError("Default record can not contain None.")
+            return v
+
+        def to_rv(self):
+            fmt = "{:<16}" + len(self.vals) * ",{:>18}"
+            return fmt.format(
+                self.name, *[v if v is not None else "_DEFAULT" for v in self.vals]
+            )
+
+    names: Sequence[Any] = ()  # Subclass this with the right type.
+    records: Sequence[Record] = ()
+
+    _cmd: ClassVar[str]
+
+    def to_rv(self):
+        template = """
+        :{cmd}
+            :Parameters     {parameter_names}
+            :Units          ,
+            {records}
+        :End{cmd}
+        """
+
+        fmt = ",{:>18}" * len(self.names)
+        return dedent(template).format(
+            cmd=self._cmd,
+            parameter_names=fmt.format(*self.names),
+            records="\n    ".join(map(str, self.records)),
+        )
+
+
+@dataclass
+class SoilParameterListCommand(ParameterList):
+    names: Sequence[SoilParameters] = ()
+    _cmd = "SoilParameterList"
+
+
+@dataclass
+class VegetationParameterListCommand(ParameterList):
+    names: Sequence[VegetationParameters] = ()
+    _cmd = "VegetationParameterList"
+
+
+@dataclass
+class LandUseParameterListCommand(ParameterList):
+    names: Sequence[LandUseParameters] = ()
+    _cmd = "LandUseParameterList"
+
+
 # For convenience
 LU = LandUseClassesCommand.Record
+SOIL = SoilProfilesCommand.Record
+
+PL = ParameterList.Record

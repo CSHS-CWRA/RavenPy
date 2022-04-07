@@ -28,16 +28,19 @@ from ravenpy.config.commands import (
     HRUState,
     HRUStateVariableTableCommand,
     LandUseClassesCommand,
+    LandUseParameterListCommand,
     ObservationDataCommand,
     ReservoirCommand,
     SBGroupPropertyMultiplierCommand,
     SoilClassesCommand,
+    SoilParameterListCommand,
     SoilProfilesCommand,
     StationForcingCommand,
     Sub,
     SubBasinGroupCommand,
     SubBasinsCommand,
     VegetationClassesCommand,
+    VegetationParameterListCommand,
 )
 
 
@@ -551,10 +554,16 @@ class RVP(RV):
         # Model specific params
         self.params = None
 
-        self.soil_classes: Tuple[SoilClassesCommand.Record, ...] = ()
         self.soil_profiles: Tuple[SoilProfilesCommand.Record, ...] = ()
+
+        self.soil_classes: Tuple[SoilClassesCommand.Record, ...] = ()
         self.vegetation_classes: Tuple[VegetationClassesCommand.Record, ...] = ()
         self.land_use_classes: Tuple[LandUseClassesCommand.Record, ...] = ()
+
+        self.soil_parameter_list: SoilParameterListCommand = None
+        self.vegetation_parameter_list: VegetationParameterListCommand = None
+        self.land_use_parameter_list: LandUseParameterListCommand = None
+
         self.channel_profiles: Tuple[ChannelProfileCommand, ...] = ()
         self.avg_annual_runoff: Optional[float] = None
 
@@ -576,6 +585,9 @@ class RVP(RV):
             "soil_profiles": SoilProfilesCommand(self.soil_profiles),
             "vegetation_classes": VegetationClassesCommand(self.vegetation_classes),
             "land_use_classes": LandUseClassesCommand(self.land_use_classes),
+            "soil_parameter_list": self.soil_parameter_list,  # already a command
+            "vegetation_parameter_list": self.vegetation_parameter_list,
+            "land_use_parameter_list": self.land_use_parameter_list,
             "channel_profiles": "\n\n".join(map(str, self.channel_profiles)),
             "avg_annual_runoff": f":AvgAnnualRunoff {self.avg_annual_runoff}"
             if self.avg_annual_runoff
