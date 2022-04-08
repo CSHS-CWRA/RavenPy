@@ -613,7 +613,10 @@ class RVP(RV):
         d.update(self._extra_attributes)
 
         return super().to_rv(
-            dedent(self.tmpl.lstrip("\n")).format(**d).format(params=self.params), "RVP"
+            dedent(self.tmpl.lstrip("\n"))
+            .format(**d)
+            .format(params=self.params, **self._extra_attributes),
+            "RVP",
         )
 
 

@@ -107,7 +107,7 @@ class HBVEC(Raven):
                             None,
                             "{params.par_x08}",
                             "{params.par_x09}",
-                            "{params.par_x15}",
+                            "{one_plus_par_x15}",
                         ],
                     ),
                     PL(
@@ -304,6 +304,7 @@ class HBVEC(Raven):
             one_plus_par_x15=params.par_x15 + 1.0, par_x11_half=params.par_x11 / 2.0
         )
 
+        # DH: Why do we need this copy of par_x11 ?
         self.config.rvh.set_extra_attributes(
             par_x11=params.par_x11, par_x11_half=params.par_x11 / 2.0
         )
