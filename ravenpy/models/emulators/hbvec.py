@@ -123,7 +123,7 @@ class HBVEC(Raven):
                     "RAIN_ICEPT_PCT",
                     "SNOW_ICEPT_PCT",
                 ],
-                records=[PL(name="VEG_ALL", vals=[10000, 10000, 0.88, 0.88])],
+                records=[PL(name="VEG_ALL", vals=[10000, 10000, 0.12, 0.12])],
             ),
             land_use_parameter_list=LandUseParameterListCommand(
                 names=[
