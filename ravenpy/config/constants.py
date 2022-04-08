@@ -122,6 +122,4 @@ VegetationParameters = Literal[
     "MAX_INTERCEPT_RATE",
     "CHU_MATURITY",
     "PET_VEG_CORR",
-    "TFRAIN",
-    "TFSNOW",
 ]

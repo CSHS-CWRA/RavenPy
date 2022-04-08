@@ -310,12 +310,23 @@ class RVI(RV):
         HSPF = "RAINSNOW_HSPF"
 
     class RoutingOptions(Enum):
+        """:Routing"""
+
         DIFFUSIVE_WAVE = "ROUTE_DIFFUSIVE_WAVE"
         HYDROLOGIC = "ROUTE_HYDROLOGIC"
         NONE = "ROUTE_NONE"
         STORAGE_COEFF = "ROUTE_STORAGE_COEFF"
         PLUG_FLOW = "ROUTE_PLUG_FLOW"
         MUSKINGUM = "MUSKINGUM"
+
+    class CatchmentRoute(Enum):
+        """:CatchmentRoute"""
+
+        DUMP = "ROUTE_DUMP"
+        GAMMA = "ROUTE_GAMMA_CONVOLUTION"
+        TRI = "ROUTE_TRI_CONVOLUTION"
+        RESERVOIR = "ROUTE_RESERVOIR_SERIES"
+        EXP = "ROUTE_EXPONENTIAL"
 
     def __init__(self, config):
         super().__init__(config)
@@ -330,6 +341,7 @@ class RVI(RV):
         # getters will be used when rendering the template in the `to_rv` method
         self._calendar = RVI.CalendarOptions.STANDARD
         self._routing = RVI.RoutingOptions.NONE
+        self._catchment_route = RVI.CatchmentRoute.DUMP
         self._start_date = None
         self._end_date = None
         self._rain_snow_fraction = RVI.RainSnowFractionOptions.DATA
@@ -465,6 +477,10 @@ class RVI(RV):
         self._routing = RVI.RoutingOptions(v)
 
     @property
+    def catchment_route(self):
+        return self._catchment_route.value
+
+    @property
     def rain_snow_fraction(self):
         """Rain snow partitioning."""
         return self._rain_snow_fraction.value
@@ -596,7 +612,9 @@ class RVP(RV):
 
         d.update(self._extra_attributes)
 
-        return super().to_rv(dedent(self.tmpl.lstrip("\n")).format(**d), "RVP")
+        return super().to_rv(
+            dedent(self.tmpl.lstrip("\n")).format(**d).format(params=self.params), "RVP"
+        )
 
 
 #########
