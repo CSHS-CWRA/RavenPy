@@ -1,7 +1,7 @@
 import collections
 import datetime as dt
 from abc import ABC, abstractmethod
-from dataclasses import replace
+from dataclasses import asdict, replace
 from enum import Enum
 from pathlib import Path
 from textwrap import dedent
@@ -576,9 +576,9 @@ class RVP(RV):
         self.vegetation_classes: Tuple[VegetationClassesCommand.Record, ...] = ()
         self.land_use_classes: Tuple[LandUseClassesCommand.Record, ...] = ()
 
-        self.soil_parameter_list: SoilParameterListCommand = None
-        self.vegetation_parameter_list: VegetationParameterListCommand = None
-        self.land_use_parameter_list: LandUseParameterListCommand = None
+        self.soil_parameter_list: SoilParameterListCommand = ()
+        self.vegetation_parameter_list: VegetationParameterListCommand = ()
+        self.land_use_parameter_list: LandUseParameterListCommand = ()
 
         self.channel_profiles: Tuple[ChannelProfileCommand, ...] = ()
         self.avg_annual_runoff: Optional[float] = None
@@ -595,15 +595,25 @@ class RVP(RV):
             return super().update(key, value)
 
     def to_rv(self):
+        p = asdict(self.params) if self.params is not None else {}
+
         d = {
             "params": self.params,
-            "soil_classes": SoilClassesCommand(self.soil_classes),
-            "soil_profiles": SoilProfilesCommand(self.soil_profiles),
-            "vegetation_classes": VegetationClassesCommand(self.vegetation_classes),
-            "land_use_classes": LandUseClassesCommand(self.land_use_classes),
-            "soil_parameter_list": self.soil_parameter_list,  # already a command
-            "vegetation_parameter_list": self.vegetation_parameter_list,
-            "land_use_parameter_list": self.land_use_parameter_list,
+            "soil_classes": SoilClassesCommand(self.soil_classes).to_rv(**p),
+            "soil_profiles": SoilProfilesCommand(self.soil_profiles).to_rv(**p),
+            "vegetation_classes": VegetationClassesCommand(
+                self.vegetation_classes
+            ).to_rv(**p),
+            "land_use_classes": LandUseClassesCommand(self.land_use_classes).to_rv(**p),
+            "soil_parameter_list": "\n".join(
+                [pl.to_rv(**p) for pl in self.soil_parameter_list]
+            ),
+            "vegetation_parameter_list": "\n".join(
+                [pl.to_rv(**p) for pl in self.vegetation_parameter_list]
+            ),
+            "land_use_parameter_list": "\n".join(
+                [pl.to_rv(**p) for pl in self.land_use_parameter_list]
+            ),
             "channel_profiles": "\n\n".join(map(str, self.channel_profiles)),
             "avg_annual_runoff": f":AvgAnnualRunoff {self.avg_annual_runoff}"
             if self.avg_annual_runoff
@@ -613,9 +623,7 @@ class RVP(RV):
         d.update(self._extra_attributes)
 
         return super().to_rv(
-            dedent(self.tmpl.lstrip("\n"))
-            .format(**d)
-            .format(params=self.params, **self._extra_attributes),
+            dedent(self.tmpl.lstrip("\n")).format(**d),
             "RVP",
         )
 

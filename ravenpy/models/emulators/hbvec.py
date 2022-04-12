@@ -1,9 +1,11 @@
 from collections import defaultdict
+from dataclasses import asdict, field, make_dataclass
 from pathlib import Path
-from typing import cast
+from typing import Union, cast
 
 import xarray as xr
 from pydantic.dataclasses import dataclass
+from pymbolic.primitives import Variable
 
 from ravenpy.config.commands import (
     HRU,
@@ -12,6 +14,7 @@ from ravenpy.config.commands import (
     SOIL,
     BaseDataCommand,
     BasinIndexCommand,
+    Config,
     HRUState,
     LandUseParameterListCommand,
     SoilClassesCommand,
@@ -24,35 +27,28 @@ from ravenpy.models.base import Ostrich, Raven
 
 from .gr4jcn import GR4JCN
 
+Sym = Union[Variable, float]
+
 
 class HBVEC(Raven):
-    @dataclass
-    class Params:
-        par_x01: float
-        par_x02: float
-        par_x03: float
-        par_x04: float
-        par_x05: float
-        par_x06: float
-        par_x07: float
-        par_x08: float
-        par_x09: float
-        par_x10: float
-        par_x11: float
-        par_x12: float
-        par_x13: float
-        par_x14: float
-        par_x15: float
-        par_x16: float
-        par_x17: float
-        par_x18: float
-        par_x19: float
-        par_x20: float
-        par_x21: float
+
+    Params = dataclass(
+        make_dataclass(
+            "Params",
+            [
+                (f"par_x{i:02}", Sym, field(default=Variable(f"par_x{i:02}")))
+                for i in range(1, 22)
+            ],
+        ),
+        config=Config,
+    )
 
     def __init__(self, *args, **kwds):
         kwds["identifier"] = kwds.get("identifier", "hbvec")
         super().__init__(*args, **kwds)
+
+        # Initialize symbolic parameters
+        P = self.Params()
 
         self.config.update(
             routing="ROUTE_NONE",
@@ -69,91 +65,97 @@ class HBVEC(Raven):
                 SOIL(
                     "DEFAULT_P",
                     ["TOPSOIL", "FAST_RES", "SLOW_RES"],
-                    ["{params.par_x17}", 100.0, 100.0],
+                    [P.par_x17, 100.0, 100.0],
                 )
             ],
-            soil_parameter_list=SoilParameterListCommand(
-                names=[
-                    "POROSITY",
-                    "FIELD_CAPACITY",
-                    "SAT_WILT",
-                    "HBV_BETA",
-                    "MAX_CAP_RISE_RATE",
-                    "MAX_PERC_RATE",
-                    "BASEFLOW_COEFF",
-                    "BASEFLOW_N",
-                ],
-                records=[
-                    PL(
-                        name="[DEFAULT]",
-                        vals=[
-                            "{params.par_x05}",
-                            "{params.par_x06}",
-                            "{params.par_x14}",
-                            "{params.par_x07}",
-                            "{params.par_x16}",
-                            0,
-                            0,
-                            0,
-                        ],
-                    ),
-                    PL(
-                        name="FAST_RES",
-                        vals=[
-                            None,
-                            None,
-                            0,
-                            None,
-                            None,
-                            "{params.par_x08}",
-                            "{params.par_x09}",
-                            "{one_plus_par_x15}",
-                        ],
-                    ),
-                    PL(
-                        name="SLOW_RES",
-                        vals=[None, None, 0, None, None, None, "{params.par_x10}", 1],
-                    ),
-                ],
-            ),
-            vegetation_parameter_list=VegetationParameterListCommand(
-                names=[
-                    "MAX_CAPACITY",
-                    "MAX_SNOW_CAPACITY",
-                    "RAIN_ICEPT_PCT",
-                    "SNOW_ICEPT_PCT",
-                ],
-                records=[PL(name="VEG_ALL", vals=[10000, 10000, 0.12, 0.12])],
-            ),
-            land_use_parameter_list=LandUseParameterListCommand(
-                names=[
-                    "MELT_FACTOR",
-                    "MIN_MELT_FACTOR",
-                    "HBV_MELT_FOR_CORR",
-                    "REFREEZE_FACTOR",
-                    "HBV_MELT_ASP_CORR",
-                    "HBV_MELT_GLACIER_CORR",
-                    "HBV_GLACIER_KMIN",
-                    "GLAC_STORAGE_COEFF",
-                    "HBV_GLACIER_AG",
-                ],
-                records=[
-                    PL(
-                        name="[DEFAULT]",
-                        vals=[
-                            "{params.par_x02}",
-                            2.2,
-                            "{params.par_x18}",
-                            "{params.par_x03}",
-                            0.48,
-                            1.64,
-                            0.05,
-                            "{params.par_x19}",
-                            0.05,
-                        ],
-                    )
-                ],
-            ),
+            soil_parameter_list=[
+                SoilParameterListCommand(
+                    names=[
+                        "POROSITY",
+                        "FIELD_CAPACITY",
+                        "SAT_WILT",
+                        "HBV_BETA",
+                        "MAX_CAP_RISE_RATE",
+                        "MAX_PERC_RATE",
+                        "BASEFLOW_COEFF",
+                        "BASEFLOW_N",
+                    ],
+                    records=[
+                        PL(
+                            name="[DEFAULT]",
+                            vals=[
+                                P.par_x05,
+                                P.par_x06,
+                                P.par_x14,
+                                P.par_x07,
+                                P.par_x16,
+                                0,
+                                0,
+                                0,
+                            ],
+                        ),
+                        PL(
+                            name="FAST_RES",
+                            vals=[
+                                None,
+                                None,
+                                0,
+                                None,
+                                None,
+                                P.par_x08,
+                                P.par_x09,
+                                1 + P.par_x15,
+                            ],
+                        ),
+                        PL(
+                            name="SLOW_RES",
+                            vals=[None, None, 0, None, None, None, P.par_x10, 1],
+                        ),
+                    ],
+                )
+            ],
+            vegetation_parameter_list=[
+                VegetationParameterListCommand(
+                    names=[
+                        "MAX_CAPACITY",
+                        "MAX_SNOW_CAPACITY",
+                        "RAIN_ICEPT_PCT",
+                        "SNOW_ICEPT_PCT",
+                    ],
+                    records=[PL(name="VEG_ALL", vals=[10000, 10000, 0.12, 0.12])],
+                )
+            ],
+            land_use_parameter_list=[
+                LandUseParameterListCommand(
+                    names=[
+                        "MELT_FACTOR",
+                        "MIN_MELT_FACTOR",
+                        "HBV_MELT_FOR_CORR",
+                        "REFREEZE_FACTOR",
+                        "HBV_MELT_ASP_CORR",
+                        "HBV_MELT_GLACIER_CORR",
+                        "HBV_GLACIER_KMIN",
+                        "GLAC_STORAGE_COEFF",
+                        "HBV_GLACIER_AG",
+                    ],
+                    records=[
+                        PL(
+                            name="[DEFAULT]",
+                            vals=[
+                                P.par_x02,
+                                2.2,
+                                P.par_x18,
+                                P.par_x03,
+                                0.48,
+                                1.64,
+                                0.05,
+                                P.par_x19,
+                                0.05,
+                            ],
+                        )
+                    ],
+                )
+            ],
             subbasins=(
                 Sub(
                     subbasin_id=1,
@@ -300,9 +302,7 @@ class HBVEC(Raven):
 
     def derived_parameters(self):
         params = cast(HBVEC.Params, self.config.rvp.params)
-        self.config.rvp.set_extra_attributes(
-            one_plus_par_x15=params.par_x15 + 1.0, par_x11_half=params.par_x11 / 2.0
-        )
+        self.config.rvp.set_extra_attributes(par_x11_half=params.par_x11 / 2.0)
 
         # DH: Why do we need this copy of par_x11 ?
         self.config.rvh.set_extra_attributes(
@@ -369,86 +369,6 @@ class HBVEC_OST(Ostrich, HBVEC):
             run_name="run",
             run_index=0,
             suppress_output=True,
-            soil_profiles=[
-                SOIL(
-                    "DEFAULT_P",
-                    ["TOPSOIL", "FAST_RES", "SLOW_RES"],
-                    ["par_x17", 100.0, 100.0],
-                )
-            ],
-            soil_parameter_list=SoilParameterListCommand(
-                names=[
-                    "POROSITY",
-                    "FIELD_CAPACITY",
-                    "SAT_WILT",
-                    "HBV_BETA",
-                    "MAX_CAP_RISE_RATE",
-                    "MAX_PERC_RATE",
-                    "BASEFLOW_COEFF",
-                    "BASEFLOW_N",
-                ],
-                records=[
-                    PL(
-                        name="[DEFAULT]",
-                        vals=[
-                            "par_x05",
-                            "par_x06",
-                            "par_x14",
-                            "par_x07",
-                            "par_x16",
-                            0,
-                            0,
-                            0,
-                        ],
-                    ),
-                    PL(
-                        name="FAST_RES",
-                        vals=[
-                            None,
-                            None,
-                            0,
-                            None,
-                            None,
-                            "par_x08",
-                            "par_x09",
-                            "par_1_+_x15",
-                        ],
-                    ),
-                    PL(
-                        name="SLOW_RES",
-                        vals=[None, None, 0, None, None, None, "par_x10", 1],
-                    ),
-                ],
-            ),
-            land_use_parameter_list=LandUseParameterListCommand(
-                names=[
-                    "MELT_FACTOR",
-                    "MIN_MELT_FACTOR",
-                    "HBV_MELT_FOR_CORR",
-                    "REFREEZE_FACTOR",
-                    "HBV_MELT_ASP_CORR",
-                    "HBV_MELT_GLACIER_CORR",
-                    "HBV_GLACIER_KMIN",
-                    "GLAC_STORAGE_COEFF",
-                    "HBV_GLACIER_AG",
-                ],
-                records=[
-                    PL(
-                        name="[DEFAULT]",
-                        vals=[
-                            "par_x02",
-                            2.2,
-                            "par_x18",
-                            "par_x03",
-                            0.48,
-                            1.64,
-                            0.05,
-                            "par_x19",
-                            0.05,
-                        ],
-                    )
-                ],
-            ),
         )
 
         #########
