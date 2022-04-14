@@ -4,6 +4,7 @@ import re
 from abc import ABC, abstractmethod
 from dataclasses import asdict, field
 from enum import Enum
+from itertools import chain
 from pathlib import Path
 from textwrap import dedent
 from typing import (
@@ -1019,7 +1020,7 @@ class LandUseParameterListCommand(ParameterList):
     _cmd = "LandUseParameterList"
 
 
-class TierParamsMapper(pymbolic.mapper.stringifier.StringifyMapper):
+class TiedParamsMapper(pymbolic.mapper.stringifier.StringifyMapper):
     def map_sum(self, expr, enclosing_prec, *args, **kwargs):
         return self.join_rec("_add_", expr.children, 1, *args, **kwargs)
 
@@ -1031,52 +1032,52 @@ class TierParamsMapper(pymbolic.mapper.stringifier.StringifyMapper):
             "%s_over_%s", [expr.numerator, expr.denominator], 1, *args, **kwargs
         )
 
-    def format(self, s, *args):
-        """<name> <np> <pname 1 > <pname 2 >...<pname np> <type> <type data>
-        <name> : The name of the tied parameter, parameter names must be
-                 unique and correspond identically to the names used in the template
-                 file(s).
-        <np> : The number of non-tied parameters used in the calculation of
-               the tied parameter value. Valid values for <np> depend on the choice
-               of functional relationship, specified in the <type> field.
-        <pname i > : Non-tied parameter names that are used in the computation of the tied-parameter.
-        <type> : The type of function relationship between the tied and non-
-                 tied parameters. Valid values for <type> are:
-                 – linear : A linear relationship between the tied and non-tied
-                            parameter(s). If this choice is selected, the value of <np> must
-                            be either 1 or 2.
-                 – wsum : The tied parameter is the weighted sum of the listed parameters.
-        <type data> : Depending on the choice of <type>, the syntax of this
-                    field varies, as described below:
-                    – If <type> = ”linear” and <np> = "1" : The functional relation-
-                    ship is linear and has the form:
-                    X tied = c 0 + c 1 X
-                    where, X tied is the tied-parameter value, c 0 and c 1 are coefficients
-                    and X is the non-tied parameter value. <type data> should be
-                    replaced with the following syntax:  <c 1 > <c 0 >
+
+@dataclass(config=Config)
+class TiedParams(RavenCommand):
+    @dataclass(config=Config)
+    class Record(RavenCommand):
+        expr: Expression
+
+        def to_rv(self):
+            # Create expression name
+            name = "ex_" + TiedParamsMapper()(self.expr).replace(".", "d")
+
+            # Collect coefficients. Will raise if non-linear expression is given.
+            coefs = CoefficientCollector()(self.expr)
+
+            if 1 not in coefs:
+                coefs[1] = 0
+
+            # The parameters used in the expression
+            params = [k for (k, v) in coefs.items() if isinstance(k, Variable)]
+            np = len(params)
+
+            data = [
+                coefs[c]
+                for c in params
+                + [
+                    1,
+                ]
+            ]
+            if np == 2:
+                data.insert(0, 0)
+
+            return " ".join(
+                map(str, [name, np, *[p.name for p in params], "linear", *data, "free"])
+            )
+
+    exprs: Sequence[Expression]
+
+    def to_rv(self):
+        template = """
+        BeginTiedParams
+          {}
+        EndTiedParams
         """
-
-
-# @dataclass(config=Config)
-# class TiedParams:
-#     exprs: Sequence[Expression]
-#
-#     @dataclass(config=Config)
-#     class Record:
-#         expr: Expression
-#
-#         def to_rv(self):
-#             # Create expression name
-#             name = "ex_" + TierParamsMapper()(self.expr)
-#
-#             # Find coefficients
-#             coefs = CoefficientCollector()(self.expr)
-#
-#             params = [k.name for (k, v) in coefs.items() if isinstance(k, Variable)]
-#
-#             np = len(params)
-#             # data =
-#             # return f"{name} {np} {params} linear {data} free"
+        records = [TiedParams.Record(ex) for ex in self.exprs]
+        tied_params = "\n  ".join([e.to_rv() for e in records])
+        return dedent(template).format(tied_params)
 
 
 # For convenience

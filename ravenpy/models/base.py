@@ -752,7 +752,11 @@ class Ostrich(Raven):
     def _dump_rv(self):
         """write configuration files to disk."""
 
-        with registry(self.config.expressions):
+        # Explanations: the context manager creates an empty `registry` set in `self.config.ost.tied_params`.
+        # Each time the function `parse_symbolic` is called (for instance in `to_rv), it stores symbolic expressions in
+        # the registry, for example `0.5 * X10`. If the OST template contains `{tied_params}`, the `TiedParams`
+        # command will be used to convert the symbolic expressions into ostrich tied parameters (linear only).
+        with registry(self.config.ost.tied_params):
             # Store symbolic expressions
             super()._dump_rv()
 

@@ -39,6 +39,7 @@ from ravenpy.config.commands import (
     Sub,
     SubBasinGroupCommand,
     SubBasinsCommand,
+    TiedParams,
     VegetationClassesCommand,
     VegetationParameterListCommand,
     parse_symbolic,
@@ -916,6 +917,7 @@ class OST(RV):
         self.lowerBounds = None
         self.upperBounds = None
         self.algorithm = None
+        self._tied_params = None  # Symbolic expression for tied parameters
         # If there's an OstRandomNumbers.txt file this is its path
         self.random_numbers_path = None
 
@@ -929,6 +931,14 @@ class OST(RV):
             return True
         else:
             return super().update(key, value)
+
+    @property
+    def tied_params(self):
+        return TiedParams(self._tied_params).to_rv()
+
+    @tied_params.setter
+    def tied_params(self, value):
+        self._tied_params = value
 
     @property
     def max_iterations(self):

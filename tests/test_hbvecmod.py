@@ -66,4 +66,4 @@ def test_simple():
 
 
 def test_calib_simple():
-    HBVECMOD_OST()
+    HBVECMOD_OST(workdir="/tmp/test_hbv_mod_ost")

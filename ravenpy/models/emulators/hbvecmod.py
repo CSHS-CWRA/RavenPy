@@ -560,14 +560,7 @@ class HBVECMOD_OST(Ostrich, HBVECMOD):
           X27         random   {lowerBounds.X27}  {upperBounds.X27}  none   none        none
         EndParams
 
-        BeginTiedParams
-          # par_1_+_x15 = 1.0 + X15
-          # Xtied = (c1 * X1) + c0
-          # --> c0 = 1.0
-          # --> c1 = 1.0
-          #
-          par_1_+_x15 1 X15 linear 1.00 1.00 free
-        EndTiedParams
+        {tied_params}
 
         BeginResponseVars
           #name   filename                              keyword         line    col     token
