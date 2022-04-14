@@ -176,13 +176,13 @@ class HBVEC(Raven):
         # Global parameters
         #
         #                             HBV_PARA_13=TCALT
-        :AdiabaticLapseRate                   {params.par_x13}
+        :AdiabaticLapseRate                   {par_x13}
         #                                   HBV_PARA_01, CONSTANT,
-        :RainSnowTransition                   {params.par_x01},      2.0
+        :RainSnowTransition                   {par_x01},      2.0
         #                                   HBV_PARA_04,
-        :IrreducibleSnowSaturation            {params.par_x04}
+        :IrreducibleSnowSaturation            {par_x04}
         #                             HBV_PARA_12=PCALT
-        :GlobalParameter PRECIP_LAPSE         {params.par_x12}
+        :GlobalParameter PRECIP_LAPSE         {par_x12}
 
         #---------------------------------------------------------
         # Soil classes
@@ -415,63 +415,12 @@ class HBVEC_OST(Ostrich, HBVEC):
         ####################
         # R V P (OST TMPL) #
         ####################
-
-        rvp_tmpl = """
-
-        #------------------------------------------------------------------------
-        # Global parameters
-        #
-        #                             HBV_PARA_13=TCALT
-        :AdiabaticLapseRate                     par_x13
-        #                                   HBV_PARA_01, CONSTANT,
-        :RainSnowTransition                     par_x01       2.0
-        #                                   HBV_PARA_04,
-        :IrreducibleSnowSaturation              par_x04
-        #                             HBV_PARA_12=PCALT
-        :GlobalParameter PRECIP_LAPSE           par_x12
-
-        #---------------------------------------------------------
-        # Soil classes
-        {soil_classes}
-
-        {soil_parameter_list}
-
-        #---------------------------------------------------------
-        # Soil profiles
-        # name, layers, (soilClass, thickness) x layers
-        #
-
-        {soil_profiles}
-
-        #---------------------------------------------------------
-        # Vegetation classes
-
-        {vegetation_classes}
-
-        {vegetation_parameter_list}
-
-        #---------------------------------------------------------
-        # LandUse classes
-
-        {land_use_classes}
-
-        {land_use_parameter_list}
-
-        """
-        self.config.rvp.set_tmpl(rvp_tmpl, is_ostrich=True)
+        self.config.rvp.is_ostrich_tmpl = True
 
         ####################
         # R V T (OST TMPL) #
         ####################
-
-        rvt_tmpl = """
-        {gauge}
-
-        {forcing_list}
-
-        {observed_data}
-        """
-        self.config.rvt.set_tmpl(rvt_tmpl, is_ostrich=True)
+        self.config.rvt.is_ostrich = True
 
         #########
         # O S T #

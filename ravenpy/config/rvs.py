@@ -41,6 +41,8 @@ from ravenpy.config.commands import (
     SubBasinsCommand,
     VegetationClassesCommand,
     VegetationParameterListCommand,
+    parse_symbolic,
+    registry,
 )
 
 
@@ -317,7 +319,7 @@ class RVI(RV):
         NONE = "ROUTE_NONE"
         STORAGE_COEFF = "ROUTE_STORAGE_COEFF"
         PLUG_FLOW = "ROUTE_PLUG_FLOW"
-        MUSKINGUM = "MUSKINGUM"
+        MUSKINGUM = "ROUTE_MUSKINGUM"
 
     class CatchmentRoute(Enum):
         """:CatchmentRoute"""
@@ -480,6 +482,11 @@ class RVI(RV):
     def catchment_route(self):
         return self._catchment_route.value
 
+    @catchment_route.setter
+    def catchment_route(self, value):
+        v = value.upper() if isinstance(value, str) else value.value
+        self._catchment_route = RVI.CatchmentRoute(v)
+
     @property
     def rain_snow_fraction(self):
         """Rain snow partitioning."""
@@ -621,6 +628,11 @@ class RVP(RV):
         }
 
         d.update(self._extra_attributes)
+        d.update(
+            asdict(self.params)
+            if self.params is not None
+            else parse_symbolic(asdict(self._config.model.Params()))
+        )
 
         return super().to_rv(
             dedent(self.tmpl.lstrip("\n")).format(**d),

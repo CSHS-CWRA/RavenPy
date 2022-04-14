@@ -34,6 +34,7 @@ from ravenpy.config.commands import (
     HRUsCommand,
     ObservationDataCommand,
     StationForcingCommand,
+    registry,
 )
 from ravenpy.config.rvs import RVC, Config
 
@@ -751,7 +752,9 @@ class Ostrich(Raven):
     def _dump_rv(self):
         """write configuration files to disk."""
 
-        super()._dump_rv()
+        with registry(self.config.expressions):
+            # Store symbolic expressions
+            super()._dump_rv()
 
         # ostIn.txt
         fn = self.exec_path / "ostIn.txt"
