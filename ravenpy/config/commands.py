@@ -6,12 +6,95 @@ from dataclasses import asdict, field
 from enum import Enum
 from pathlib import Path
 from textwrap import dedent
-from typing import Any, Dict, Optional, Tuple, Union, no_type_check
+from typing import (
+    Any,
+    ClassVar,
+    Dict,
+    Literal,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+    no_type_check,
+)
 
+import pymbolic.primitives
+from pydantic import BaseModel, validator
 from pydantic.dataclasses import dataclass
+from pymbolic.mapper.coefficient import CoefficientCollector
+from pymbolic.mapper.evaluator import EvaluationMapper as EM
+from pymbolic.mapper.stringifier import StringifyMapper
+from pymbolic.primitives import Expression, Variable
+
+from .constants import LandUseParameters, SoilParameters, VegetationParameters
 
 INDENT = " " * 4
 VALUE_PADDING = 10
+
+
+class FSMapper(StringifyMapper):
+    def format(self, s, *args):
+        return "{" + s % args + "}"
+
+
+class Config:
+    arbitrary_types_allowed = True
+
+
+RavenExp = Union[Variable, Expression, float, None]
+
+REGISTRY = set()
+
+
+class registry:
+    def __init__(self, store, **kwds):
+        self.store = store
+        self.registry = REGISTRY
+
+    def __enter__(self):
+        self.registry = REGISTRY
+
+    def __exit__(self, type, value, traceback):
+        self.store = self.registry.copy()
+        return
+
+
+def parse_symbolic(value, **kwds):
+    if isinstance(value, dict):
+        return {k: parse_symbolic(v, **kwds) for k, v in value.items()}
+
+    elif isinstance(value, (list, tuple)):
+        return [parse_symbolic(v, **kwds) for v in value]
+
+    elif isinstance(value, (Variable, Expression)):
+        try:
+            # Convert to numerical value
+            return EM(context=kwds)(value)
+        except pymbolic.mapper.evaluator.UnknownVariableError:
+            # Store expression
+            if isinstance(value, Expression):
+                REGISTRY.add(value)
+
+            # Convert to expression string
+            return StringifyMapper()(value)
+        return value
+
+    else:
+        return value
+
+
+def parse_symexpr(value):
+    if isinstance(value, RavenCommand):
+        return {value.__name__: parse_symexpr(asdict(value))}
+
+    if isinstance(value, dict):
+        return {k: parse_symexpr(v) for k, v in value.items()}
+
+    elif isinstance(value, (list, tuple)):
+        return [parse_symexpr(v) for v in value]
+
+    elif isinstance(value, Expression):
+        return value
 
 
 class RavenCommand(ABC):
@@ -20,24 +103,39 @@ class RavenCommand(ABC):
     which must implement some specialized rendering logic.
     """
 
-    @abstractmethod
-    def to_rv(self):
-        pass
+    _fmt = "{}"
 
     def __str__(self):
         return self.to_rv()
 
+    def parse_symbolic(self, **kwds):
+        """Convert symbolic expressions to numerical values."""
+        return parse_symbolic(asdict(self), **kwds)
 
-@dataclass
+    def to_rv(self, **kwds):
+        """Return string representation of Command."""
+        vals = self.parse_symbolic(**kwds).values()
+        return self._fmt.format(*vals)
+
+
+#    @validator("*", pre=True)
+#    def convert_expression(cls, v):
+#        """This is used to convert pymbolic expressions into f-strings."""
+#        if isinstance(v, (Variable, Expression)):
+#            return FSMapper()(v)
+#        return v
+
+
+@dataclass(config=Config)
 class LinearTransform(RavenCommand):
-    scale: Optional[float] = 1
-    offset: Optional[float] = 0
+    scale: Optional[RavenExp] = 1
+    offset: Optional[RavenExp] = 0
 
-    template = ":LinearTransform {scale:.15f} {offset:.15f}"
+    _fmt = ":LinearTransform {:.15f} {:.15f}"
 
-    def to_rv(self):
+    def to_rv(self, **kwds):
         if (self.scale != 1) or (self.offset != 0):
-            return self.template.format(**asdict(self))
+            return RavenCommand.to_rv(self, **kwds)
         return ""
 
 
@@ -742,12 +840,16 @@ class BasinStateVariablesCommand(RavenCommand):
 class SoilClassesCommand(RavenCommand):
     @dataclass
     class Record(RavenCommand):
+        """SoilClass record.
+
+        Note: does not support yet the %SAND,%CLAY,%SILT, %ORGANIC format."""
+
         name: str = ""
 
         def to_rv(self):
             return " ".join(map(str, asdict(self).values()))
 
-    soil_classes: Tuple[Record, ...] = ()
+    soil_classes: Sequence[Record] = ()
 
     template = """
     :SoilClasses
@@ -755,28 +857,29 @@ class SoilClassesCommand(RavenCommand):
     :EndSoilClasses
     """
 
-    def to_rv(self):
+    def to_rv(self, **kwds):
         return dedent(self.template).format(
-            soil_class_records="\n".join(map(str, self.soil_classes))
+            soil_class_records="\n    ".join(map(str, self.soil_classes))
         )
 
 
 @dataclass
 class SoilProfilesCommand(RavenCommand):
-    @dataclass
+    @dataclass(config=Config)
     class Record(RavenCommand):
         profile_name: str = ""
         soil_class_names: Tuple[str, ...] = ()
-        thicknesses: Tuple[float, ...] = ()
+        thicknesses: Tuple[RavenExp, ...] = ()
 
-        def to_rv(self):
+        def to_rv(self, **kwds):
             # From the Raven manual: {profile_name,#horizons,{soil_class_name,thick.}x{#horizons}}x[NP]
-            n_horizons = len(self.soil_class_names)
+            attrs = self.parse_symbolic(**kwds)
+            n_horizons = len(attrs["soil_class_names"])
             horizon_data = itertools.chain(
-                *zip(self.soil_class_names, self.thicknesses)
+                *zip(attrs["soil_class_names"], attrs["thicknesses"])
             )
-            horizon_data_str = ", ".join(map(str, horizon_data))
-            return f"{self.profile_name}, {n_horizons}, {horizon_data_str}"
+            fmt = "{:<16},{:>4}," + ",".join(n_horizons * ["{:>12},{:>6}"])
+            return fmt.format(self.profile_name, n_horizons, *horizon_data)
 
     soil_profiles: Tuple[Record, ...] = ()
 
@@ -786,37 +889,38 @@ class SoilProfilesCommand(RavenCommand):
     :EndSoilProfiles
     """
 
-    def to_rv(self):
+    def to_rv(self, **kwds):
         return dedent(self.template).format(
-            soil_profile_records="\n".join(map(str, self.soil_profiles))
+            soil_profile_records="\n    ".join(
+                [sp.to_rv(**kwds) for sp in self.soil_profiles]
+            )
         )
 
 
 @dataclass
 class VegetationClassesCommand(RavenCommand):
-    @dataclass
+    @dataclass(config=Config)
     class Record(RavenCommand):
         name: str = ""
-        max_ht: float = 0
-        max_lai: float = 0
-        max_leaf_cond: float = 0
+        max_ht: RavenExp = 0
+        max_lai: RavenExp = 0
+        max_leaf_cond: RavenExp = 0
 
-        def to_rv(self):
-            return " ".join(map(str, asdict(self).values()))
+        _fmt = "{:<16}," + ",".join(3 * ["{:>14}"])
 
-    vegetation_classes: Tuple[Record, ...] = ()
+    vegetation_classes: Sequence[Record] = ()
 
-    template = """
-    :VegetationClasses
-        :Attributes,                MAX_HT,       MAX_LAI,    MAX_LEAF_COND
-        :Units,                       m,            none,       mm_per_s
-        {vegetation_class_records}
-    :EndVegetationClasses
-    """
+    def to_rv(self, **kwds):
+        template = """
+        :VegetationClasses
+            :Attributes     ,        MAX_HT,       MAX_LAI, MAX_LEAF_COND
+            :Units          ,             m,          none,      mm_per_s
+            {vegetation_class_records}
+        :EndVegetationClasses
+        """
 
-    def to_rv(self):
-        return dedent(self.template).format(
-            vegetation_class_records="\n".join(map(str, self.vegetation_classes))
+        return dedent(template).format(
+            vegetation_class_records="\n    ".join(map(str, self.vegetation_classes))
         )
 
 
@@ -829,23 +933,154 @@ class LandUseClassesCommand(RavenCommand):
         forest_coverage: float = 0
 
         def to_rv(self):
-            return " ".join(map(str, asdict(self).values()))
+            fmt = "{:<16}," + ",".join(2 * ["{:>16}"])
+            return fmt.format(*asdict(self).values())
 
-    land_use_classes: Tuple[Record, ...] = ()
+    land_use_classes: Sequence[Record] = ()
 
     template = """
     :LandUseClasses
-        :Attributes,        IMPERMEABLE_FRAC,         FOREST_COVERAGE
-        :Units,                     fract,                    fract
+        :Attributes     ,IMPERMEABLE_FRAC, FOREST_COVERAGE
+        :Units          ,            frac,            frac
         {land_use_class_records}
     :EndLandUseClasses
     """
 
-    def to_rv(self):
+    def to_rv(self, **kwds):
         return dedent(self.template).format(
             land_use_class_records="\n".join(map(str, self.land_use_classes))
         )
 
 
+@dataclass
+class ParameterList(RavenCommand):
+    @dataclass(config=Config)
+    class Record(RavenCommand):
+        name: str = ""
+        vals: Sequence[RavenExp] = ()
+
+        @validator("vals", pre=True)
+        def no_none_in_default(cls, v, values):
+            """Make sure that no values are None for the [DEFAULT] record."""
+            if values["name"] == "[DEFAULT]" and None in v:
+                raise ValueError("Default record can not contain None.")
+            return v
+
+        def to_rv(self, **kwds):
+            fmt = "{name:<16}" + len(self.vals) * ",{:>18}"
+            evals = []
+            for v in self.vals:
+                if v is None:
+                    ev = "_DEFAULT"
+                else:
+                    ev = parse_symbolic(v, **kwds)
+
+                evals.append(ev)
+
+            return fmt.format(name=self.name, *evals)
+
+    names: Sequence[Any] = ()  # Subclass this with the right type.
+    records: Sequence[Record] = ()
+
+    _cmd: ClassVar[str]
+
+    def to_rv(self, **kwds):
+        template = """
+        :{cmd}
+            :Parameters     {parameter_names}
+            :Units          ,
+            {records}
+        :End{cmd}
+        """
+
+        fmt = ",{:>18}" * len(self.names)
+        return dedent(template).format(
+            cmd=self._cmd,
+            parameter_names=fmt.format(*self.names),
+            records="\n    ".join([r.to_rv(**kwds) for r in self.records]),
+        )
+
+
+@dataclass
+class SoilParameterListCommand(ParameterList):
+    names: Sequence[SoilParameters] = ()
+    _cmd = "SoilParameterList"
+
+
+@dataclass
+class VegetationParameterListCommand(ParameterList):
+    names: Sequence[VegetationParameters] = ()
+    _cmd = "VegetationParameterList"
+
+
+@dataclass
+class LandUseParameterListCommand(ParameterList):
+    names: Sequence[LandUseParameters] = ()
+    _cmd = "LandUseParameterList"
+
+
+class TierParamsMapper(pymbolic.mapper.stringifier.StringifyMapper):
+    def map_sum(self, expr, enclosing_prec, *args, **kwargs):
+        return self.join_rec("_add_", expr.children, 1, *args, **kwargs)
+
+    def map_product(self, expr, enclosing_prec, *args, **kwargs):
+        return self.join_rec("_mul_", expr.children, 1, *args, **kwargs)
+
+    def map_quotient(self, expr, enclosing_prec, *args, **kwargs):
+        return self.join_rec(
+            "%s_over_%s", [expr.numerator, expr.denominator], 1, *args, **kwargs
+        )
+
+    def format(self, s, *args):
+        """<name> <np> <pname 1 > <pname 2 >...<pname np> <type> <type data>
+        <name> : The name of the tied parameter, parameter names must be
+                 unique and correspond identically to the names used in the template
+                 file(s).
+        <np> : The number of non-tied parameters used in the calculation of
+               the tied parameter value. Valid values for <np> depend on the choice
+               of functional relationship, specified in the <type> field.
+        <pname i > : Non-tied parameter names that are used in the computation of the tied-parameter.
+        <type> : The type of function relationship between the tied and non-
+                 tied parameters. Valid values for <type> are:
+                 – linear : A linear relationship between the tied and non-tied
+                            parameter(s). If this choice is selected, the value of <np> must
+                            be either 1 or 2.
+                 – wsum : The tied parameter is the weighted sum of the listed parameters.
+        <type data> : Depending on the choice of <type>, the syntax of this
+                    field varies, as described below:
+                    – If <type> = ”linear” and <np> = "1" : The functional relation-
+                    ship is linear and has the form:
+                    X tied = c 0 + c 1 X
+                    where, X tied is the tied-parameter value, c 0 and c 1 are coefficients
+                    and X is the non-tied parameter value. <type data> should be
+                    replaced with the following syntax:  <c 1 > <c 0 >
+        """
+
+
+# @dataclass(config=Config)
+# class TiedParams:
+#     exprs: Sequence[Expression]
+#
+#     @dataclass(config=Config)
+#     class Record:
+#         expr: Expression
+#
+#         def to_rv(self):
+#             # Create expression name
+#             name = "ex_" + TierParamsMapper()(self.expr)
+#
+#             # Find coefficients
+#             coefs = CoefficientCollector()(self.expr)
+#
+#             params = [k.name for (k, v) in coefs.items() if isinstance(k, Variable)]
+#
+#             np = len(params)
+#             # data =
+#             # return f"{name} {np} {params} linear {data} free"
+
+
 # For convenience
 LU = LandUseClassesCommand.Record
+SOIL = SoilProfilesCommand.Record
+VEG = VegetationClassesCommand.Record
+PL = ParameterList.Record

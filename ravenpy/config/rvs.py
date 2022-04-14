@@ -1,7 +1,7 @@
 import collections
 import datetime as dt
 from abc import ABC, abstractmethod
-from dataclasses import replace
+from dataclasses import asdict, replace
 from enum import Enum
 from pathlib import Path
 from textwrap import dedent
@@ -28,16 +28,21 @@ from ravenpy.config.commands import (
     HRUState,
     HRUStateVariableTableCommand,
     LandUseClassesCommand,
+    LandUseParameterListCommand,
     ObservationDataCommand,
     ReservoirCommand,
     SBGroupPropertyMultiplierCommand,
     SoilClassesCommand,
+    SoilParameterListCommand,
     SoilProfilesCommand,
     StationForcingCommand,
     Sub,
     SubBasinGroupCommand,
     SubBasinsCommand,
     VegetationClassesCommand,
+    VegetationParameterListCommand,
+    parse_symbolic,
+    registry,
 )
 
 
@@ -307,12 +312,23 @@ class RVI(RV):
         HSPF = "RAINSNOW_HSPF"
 
     class RoutingOptions(Enum):
+        """:Routing"""
+
         DIFFUSIVE_WAVE = "ROUTE_DIFFUSIVE_WAVE"
         HYDROLOGIC = "ROUTE_HYDROLOGIC"
         NONE = "ROUTE_NONE"
         STORAGE_COEFF = "ROUTE_STORAGE_COEFF"
         PLUG_FLOW = "ROUTE_PLUG_FLOW"
-        MUSKINGUM = "MUSKINGUM"
+        MUSKINGUM = "ROUTE_MUSKINGUM"
+
+    class CatchmentRoute(Enum):
+        """:CatchmentRoute"""
+
+        DUMP = "ROUTE_DUMP"
+        GAMMA = "ROUTE_GAMMA_CONVOLUTION"
+        TRI = "ROUTE_TRI_CONVOLUTION"
+        RESERVOIR = "ROUTE_RESERVOIR_SERIES"
+        EXP = "ROUTE_EXPONENTIAL"
 
     def __init__(self, config):
         super().__init__(config)
@@ -327,6 +343,7 @@ class RVI(RV):
         # getters will be used when rendering the template in the `to_rv` method
         self._calendar = RVI.CalendarOptions.STANDARD
         self._routing = RVI.RoutingOptions.NONE
+        self._catchment_route = RVI.CatchmentRoute.DUMP
         self._start_date = None
         self._end_date = None
         self._rain_snow_fraction = RVI.RainSnowFractionOptions.DATA
@@ -462,6 +479,15 @@ class RVI(RV):
         self._routing = RVI.RoutingOptions(v)
 
     @property
+    def catchment_route(self):
+        return self._catchment_route.value
+
+    @catchment_route.setter
+    def catchment_route(self, value):
+        v = value.upper() if isinstance(value, str) else value.value
+        self._catchment_route = RVI.CatchmentRoute(v)
+
+    @property
     def rain_snow_fraction(self):
         """Rain snow partitioning."""
         return self._rain_snow_fraction.value
@@ -551,10 +577,16 @@ class RVP(RV):
         # Model specific params
         self.params = None
 
-        self.soil_classes: Tuple[SoilClassesCommand.Record, ...] = ()
         self.soil_profiles: Tuple[SoilProfilesCommand.Record, ...] = ()
+
+        self.soil_classes: Tuple[SoilClassesCommand.Record, ...] = ()
         self.vegetation_classes: Tuple[VegetationClassesCommand.Record, ...] = ()
         self.land_use_classes: Tuple[LandUseClassesCommand.Record, ...] = ()
+
+        self.soil_parameter_list: SoilParameterListCommand = ()
+        self.vegetation_parameter_list: VegetationParameterListCommand = ()
+        self.land_use_parameter_list: LandUseParameterListCommand = ()
+
         self.channel_profiles: Tuple[ChannelProfileCommand, ...] = ()
         self.avg_annual_runoff: Optional[float] = None
 
@@ -570,12 +602,25 @@ class RVP(RV):
             return super().update(key, value)
 
     def to_rv(self):
+        p = asdict(self.params) if self.params is not None else {}
+
         d = {
             "params": self.params,
-            "soil_classes": SoilClassesCommand(self.soil_classes),
-            "soil_profiles": SoilProfilesCommand(self.soil_profiles),
-            "vegetation_classes": VegetationClassesCommand(self.vegetation_classes),
-            "land_use_classes": LandUseClassesCommand(self.land_use_classes),
+            "soil_classes": SoilClassesCommand(self.soil_classes).to_rv(**p),
+            "soil_profiles": SoilProfilesCommand(self.soil_profiles).to_rv(**p),
+            "vegetation_classes": VegetationClassesCommand(
+                self.vegetation_classes
+            ).to_rv(**p),
+            "land_use_classes": LandUseClassesCommand(self.land_use_classes).to_rv(**p),
+            "soil_parameter_list": "\n".join(
+                [pl.to_rv(**p) for pl in self.soil_parameter_list]
+            ),
+            "vegetation_parameter_list": "\n".join(
+                [pl.to_rv(**p) for pl in self.vegetation_parameter_list]
+            ),
+            "land_use_parameter_list": "\n".join(
+                [pl.to_rv(**p) for pl in self.land_use_parameter_list]
+            ),
             "channel_profiles": "\n\n".join(map(str, self.channel_profiles)),
             "avg_annual_runoff": f":AvgAnnualRunoff {self.avg_annual_runoff}"
             if self.avg_annual_runoff
@@ -583,8 +628,16 @@ class RVP(RV):
         }
 
         d.update(self._extra_attributes)
+        d.update(
+            asdict(self.params)
+            if self.params is not None
+            else parse_symbolic(asdict(self._config.model.Params()))
+        )
 
-        return super().to_rv(dedent(self.tmpl.lstrip("\n")).format(**d), "RVP")
+        return super().to_rv(
+            dedent(self.tmpl.lstrip("\n")).format(**d),
+            "RVP",
+        )
 
 
 #########
