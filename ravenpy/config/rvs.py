@@ -43,7 +43,6 @@ from ravenpy.config.commands import (
     VegetationClassesCommand,
     VegetationParameterListCommand,
     parse_symbolic,
-    registry,
 )
 
 
@@ -934,6 +933,8 @@ class OST(RV):
 
     @property
     def tied_params(self):
+        if self._tied_params is None:
+            return ""
         return TiedParams(self._tied_params).to_rv()
 
     @tied_params.setter

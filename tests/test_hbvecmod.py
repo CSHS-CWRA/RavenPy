@@ -51,13 +51,13 @@ bnds = [
     [0.05, 0.1],
     [0.5, 2],
     [0.02, 0.2],  # X20
-    [0, 100],
+    [0.01, 100],
     [0, 5],
     [0.01, 1],
     [0.001, 1],
     [1, 3],  # X25
     [0.001, 1],
-    [0, 5],
+    [0.001, 5],
 ]
 
 
@@ -68,4 +68,8 @@ def test_simple():
 
 
 def test_calib_simple():
-    HBVECMOD_OST(workdir="/tmp/test_hbv_mod_ost")
+    model = HBVECMOD_OST(workdir="/tmp/test_hbv_mod_ost")
+    low, high = zip(*bnds)
+    model.config.ost.lowerBounds = HBVECMOD.Params(*low)
+    model.config.ost.upperBounds = HBVECMOD.Params(*high)
+    model.setup_model_run(ts=[])

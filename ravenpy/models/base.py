@@ -7,6 +7,7 @@ class is the base class adapting `Raven` to work with the Ostrich calibration to
 
 """
 import collections
+import contextvars
 import csv
 import datetime as dt
 import operator
@@ -34,7 +35,8 @@ from ravenpy.config.commands import (
     HRUsCommand,
     ObservationDataCommand,
     StationForcingCommand,
-    registry,
+    symctx,
+    symex,
 )
 from ravenpy.config.rvs import RVC, Config
 
@@ -752,13 +754,12 @@ class Ostrich(Raven):
     def _dump_rv(self):
         """write configuration files to disk."""
 
-        # Explanations: the context manager creates an empty `registry` set in `self.config.ost.tied_params`.
         # Each time the function `parse_symbolic` is called (for instance in `to_rv), it stores symbolic expressions in
-        # the registry, for example `0.5 * X10`. If the OST template contains `{tied_params}`, the `TiedParams`
+        # symex, for example `0.5 * X10`. If the OST template contains `{tied_params}`, the `TiedParams`
         # command will be used to convert the symbolic expressions into ostrich tied parameters (linear only).
-        with registry(self.config.ost.tied_params):
-            # Store symbolic expressions
-            super()._dump_rv()
+        ctx = symctx.copy()
+        ctx.run(super()._dump_rv)
+        self.config.ost.tied_params = symex.get()
 
         # ostIn.txt
         fn = self.exec_path / "ostIn.txt"

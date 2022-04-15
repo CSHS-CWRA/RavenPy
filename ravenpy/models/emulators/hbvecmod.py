@@ -438,63 +438,62 @@ class HBVECMOD_OST(Ostrich, HBVECMOD):
             suppress_output=True,
         )
         p = self.config.rvp
-        p.soil_parameter_list = (
-            [
-                SoilParameterListCommand(
-                    names=[
-                        "POROSITY",
-                        "HBV_BETA",
-                        "FIELD_CAPACITY",
-                        "SAT_WILT",
-                        "MAX_CAP_RISE_RATE",
-                        "MAX_PERC_RATE",
-                        "BASEFLOW_COEFF",
-                        "BASEFLOW_N",
-                    ],
-                    records=[
-                        PL(
-                            name="TOPSOIL",
-                            vals=[
-                                P.X11 * 0.2,
-                                P.X12,
-                                P.X13 * 0.5,
-                                P.X14 * 0.01,
-                                0,
-                                0,
-                                0,
-                                0,
-                            ],
-                        ),
-                        PL(
-                            name="FAST_RES",
-                            vals=[
-                                P.X11 * 0.4,
-                                P.X12,
-                                P.X13 * 0.4,
-                                P.X14 * 0.01,
-                                P.X15,
-                                P.X16,
-                                P.X17,
-                                P.X19,
-                            ],
-                        ),
-                        PL(
-                            name="SLOW_RES",
-                            vals=[
-                                P.X11 * 0.3,
-                                P.X12,
-                                P.X13 * 0.2,
-                                P.X14 * 0.01,
-                                P.X15,
-                                P.X16,
-                                P.X18,
-                                P.X19,
-                            ],
-                        ),
-                    ],
-                )
-            ],
-        )
+        p.soil_parameter_list = [
+            SoilParameterListCommand(
+                names=[
+                    "POROSITY",
+                    "HBV_BETA",
+                    "FIELD_CAPACITY",
+                    "SAT_WILT",
+                    "MAX_CAP_RISE_RATE",
+                    "MAX_PERC_RATE",
+                    "BASEFLOW_COEFF",
+                    "BASEFLOW_N",
+                ],
+                records=[
+                    PL(
+                        name="TOPSOIL",
+                        vals=[
+                            P.X11 * 0.2,
+                            P.X12,
+                            P.X13 * 0.5,
+                            P.X14 * 0.01,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                    ),
+                    PL(
+                        name="FAST_RES",
+                        vals=[
+                            P.X11 * 0.4,
+                            P.X12,
+                            P.X13 * 0.4,
+                            P.X14 * 0.01,
+                            P.X15,
+                            P.X16,
+                            P.X17,
+                            P.X19,
+                        ],
+                    ),
+                    PL(
+                        name="SLOW_RES",
+                        vals=[
+                            P.X11 * 0.3,
+                            P.X12,
+                            P.X13 * 0.2,
+                            P.X14 * 0.01,
+                            P.X15,
+                            P.X16,
+                            P.X18,
+                            P.X19,
+                        ],
+                    ),
+                ],
+            )
+        ]
+
         #########
         # R V C #
         #########

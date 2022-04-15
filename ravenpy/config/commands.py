@@ -2,9 +2,8 @@ import datetime as dt
 import itertools
 import re
 from abc import ABC, abstractmethod
+from contextvars import ContextVar, copy_context
 from dataclasses import asdict, field
-from enum import Enum
-from itertools import chain
 from pathlib import Path
 from textwrap import dedent
 from typing import (
@@ -44,20 +43,9 @@ class Config:
 
 RavenExp = Union[Variable, Expression, float, None]
 
-REGISTRY = set()
-
-
-class registry:
-    def __init__(self, store, **kwds):
-        self.store = store
-        self.registry = REGISTRY
-
-    def __enter__(self):
-        self.registry = REGISTRY
-
-    def __exit__(self, type, value, traceback):
-        self.store = self.registry.copy()
-        return
+symex = ContextVar("symex", default=set())
+symex.set(set())
+symctx = copy_context()
 
 
 def parse_symbolic(value, **kwds):
@@ -72,9 +60,11 @@ def parse_symbolic(value, **kwds):
             # Convert to numerical value
             return EM(context=kwds)(value)
         except pymbolic.mapper.evaluator.UnknownVariableError:
-            # Store expression
-            if isinstance(value, Expression):
-                REGISTRY.add(value)
+
+            if isinstance(value, Expression) and not isinstance(value, Variable):
+                s = symex.get()
+                s.add(value)
+                symex.set(s)
 
             # Convert to expression string
             return StringifyMapper()(value)
@@ -94,7 +84,7 @@ def parse_symexpr(value):
     elif isinstance(value, (list, tuple)):
         return [parse_symexpr(v) for v in value]
 
-    elif isinstance(value, Expression):
+    if isinstance(value, Expression) and not isinstance(value, Variable):
         return value
 
 
@@ -1067,7 +1057,7 @@ class TiedParams(RavenCommand):
                 map(str, [name, np, *[p.name for p in params], "linear", *data, "free"])
             )
 
-    exprs: Sequence[Expression]
+    exprs: Sequence[Expression] = ()
 
     def to_rv(self):
         template = """
@@ -1075,6 +1065,7 @@ class TiedParams(RavenCommand):
           {}
         EndTiedParams
         """
+
         records = [TiedParams.Record(ex) for ex in self.exprs]
         tied_params = "\n  ".join([e.to_rv() for e in records])
         return dedent(template).format(tied_params)
