@@ -27,6 +27,38 @@ from .gr4jcn import GR4JCN
 
 
 class HBVECMOD(Raven):
+    """
+    # para dist       lower     upper     default   informative(0)_or_noninformative(1)_or_ignored(-1)    # comment
+    #                 mean      stddev
+    X01    uniform    1.0        4.0         1.0        1   # MAX_LAI              | rvp | :VegetationClasses        | MAX_LAI for forest
+    X02    uniform    1.0        2.0         1.0        1   # MAX_LAI              | rvp | :VegetationClasses        | MAX_LAI for agriculture, wetland, peatland
+    X03    uniform    0.05       0.25        0.21941    1   # Topsoil thickness    | rvp | :SoilProfiles             | thickness of 1st layer = 0.21941 [m]
+    X04    uniform    0.05       0.75        0.15725    1   # FAST_RES             | rvp | :SoilProfiles             | thickness of the 2nd layer = 0.15725 [m]
+    X05    uniform    0.05       100.0       2.65       1   # SLOW_RES             | rvp | :SoilProfiles             | thickness of the 3rd layer = 2.65 [m]
+    X06    uniform   -1.0        1.0         0.0        1   # RAINSNOW_TEMP        | rvp | :GlobalParameter          | rain/snow halfway transition temperature
+    X07    uniform    0.0        4.0         1.0        1   # RAINSNOW_DELTA       | rvp | :GlobalParameter          | range of rain-snow transition zone
+    X08    uniform    0.0        7.0         4.0        1   # ADIABATIC_LAPSE      | rvp | :GlobalParameter          | adiabatic temperature lapse rate
+    X09    uniform    0.04       0.07        0.0464     1   # SNOW_SWI             | rvp | :GlobalParameter          | water saturation fraction of snow
+    X10    uniform    0.0        5.0         1.0        1   # PRECIP_LAPSE         | rvp | :GlobalParameter          | PRECIP_LAPSE
+    X11    uniform    0.5        2.0         1.0        1   # POROSITY             | rvp | :SoilParameterList        | effective porosity of the soil
+    X12    uniform    1.0        7.0         1.0        1   # HBV_BETA             | rvp | :SoilParameterList        | HBV_BETA
+    X13    uniform    0.5        2.0         1.0        1   # FIELD_CAPACITY       | rvp | :SoilParameterList        | field capacity saturation of the soil
+    X14    uniform    0.01       1.0         0.01       1   # SAT_WILT             | rvp | :SoilParameterList        | SAT_WILT
+    X15    uniform    0.01       1.0         0.01       1   # MAX_CAP_RISE_RATE    | rvp | :SoilParameterList        | HBV max capillary rise rate
+    X16    uniform    0.01       10.0        1.0        1   # MAX_PERC_RATE        | rvp | :SoilParameterList        | VIC/ARNO/GAWSER percolation rate
+    X17    uniform    0.01       1.0         0.03       1   # BASEFLOW_COEFF       | rvp | :SoilParameterList        | linear baseflow storage/routing coefficient for the FAST_RES
+    X18    uniform    0.05       0.1         0.03       1   # BASEFLOW_COEFF       | rvp | :SoilParameterList        | linear baseflow storage/routing coefficient for the SLOW_RES
+    X19    uniform    0.5        2.0         1.1        1   # BASEFLOW_N           | rvp | :SoilParameterList        | VIC/ARNO baseflow exponent
+    X20    uniform    0.02       0.2         0.02       1   # RAIN_ICEPT_PCT       | rvp | :VegetationParameterList  | relates percentage of throughfall of rain/snow to LAI+SAI
+    X21    uniform    0.01       100.0       100.0      1   # MAX_CAPACITY         | rvp | :VegetationParameterList  | maximum canopy storage capacity
+    X22    uniform    0.0        5.0         0.01       1   # MELT_FACTOR          | rvp | :LandUseParameterList     | maximum snow melt factor used in degree day models
+    X23    uniform    0.01       1.0         0.01       1   # MIN_MELT_FACTOR      | rvp | :LandUseParameterList     | minimum snow melt factor used in degree day models
+    X24    uniform    0.001      1.0         0.1        1   # HBV_MELT_FOR_CORR    | rvp | :LandUseParameterList     | HBV snowmelt forest correction (MRF in HBV-EC)
+    X25    uniform    1.0        3.0         1.0        1   # REFREEZE_FACTOR      | rvp | :LandUseParameterList     | maximum refreeze factor used in degree day models
+    X26    uniform    0.001      1.0         0.1        1   # HBV_MELT_ASP_CORR    | rvp | :LandUseParameterList     | HBV snowmelt aspect correction (AM in HBV-EC)
+    X27    uniform    0.001      5.0         0.01       1   # GLAC_STORAGE_COEF    | rvp | :LandUseParameterList     | maximum linear storage coefficient for glacial melt
+    """
+
     Params = dataclass(
         make_dataclass(
             "Params",
@@ -52,13 +84,13 @@ class HBVECMOD(Raven):
         #
         # --- Parameter Specification ----------------------------
         #                                  X6=[-1.0,1.0];  default = 0.0
-        :GlobalParameter RAINSNOW_TEMP     {X6}
+        :GlobalParameter RAINSNOW_TEMP     {X06}
         #                                  X7 =[0.0,4.0];  default = 1.0
-        :GlobalParameter RAINSNOW_DELTA    {X7}
+        :GlobalParameter RAINSNOW_DELTA    {X07}
         #                                  X8=[0.0,7.0];   default = 4.0
-        :GlobalParameter ADIABATIC_LAPSE   {X8}
+        :GlobalParameter ADIABATIC_LAPSE   {X08}
         #                                  X9=[0.04,0.07]; default = 0.04
-        :Globalparameter SNOW_SWI          {X9}
+        :Globalparameter SNOW_SWI          {X09}
 
         # The PRECIP_LAPSE is the parameter for the simple linear precipitation lapse rate [mm/d/km], as used in the
         # OROCORR_SIMPLELAPSE orographic correction algorithm
@@ -99,123 +131,120 @@ class HBVECMOD(Raven):
         p.soil_classes = [
             SoilClassesCommand.Record(n) for n in ["TOPSOIL", "FAST_RES", "SLOW_RES"]
         ]
-        p.vegetation_classes = (
-            [
-                VEG("AGRICULTURE", 5, 1 + P.X02, 5),
-                VEG("BARE_SOIL", 0, 1, 5),
-                VEG("CONIFEROUS_FOREST", 5, 1 + P.X01, 5),
-                VEG("DECIDUOUS_FOREST", 5, 1 + P.X01, 5),
-                VEG("IMPERMEABLE_SURFACE", 0, 1 + P.X01, 5),
-                VEG("PEATLAND", 2, 1 + P.X02, 5),
-                VEG("WATER", 0, 1, 5),
-                VEG("WETLAND", 4, 1 + P.X02, 5),
-            ],
-        )
-        p.land_use_classes = (
-            [
-                LU("AGRICULTURE", 0, 0.5),
-                LU("BARE_SOIL", 0, 0),
-                LU("CONIFEROUS_FOREST", 0, 1),
-                LU("DECIDUOUS_FOREST", 0, 1),
-                LU("IMPERMEABLE_SURFACE", 1, 0),
-                LU("PEATLAND", 0, 0),
-                LU("WATER", 0, 0),
-                LU("WETLAND", 0, 0),
-            ],
-        )
-        p.soil_profiles = (
-            [
-                SOIL(
-                    "sand",
-                    ["TOPSOIL", "FAST_RES", "SLOW_RES"],
-                    [P.X03, P.X04, P.X05],
-                ),
+
+        p.vegetation_classes = [
+            VEG("AGRICULTURE", 5, 1 + P.X02, 5),
+            VEG("BARE_SOIL", 0, 1, 5),
+            VEG("CONIFEROUS_FOREST", 5, 1 + P.X01, 5),
+            VEG("DECIDUOUS_FOREST", 5, 1 + P.X01, 5),
+            VEG("IMPERMEABLE_SURFACE", 0, 1 + P.X01, 5),
+            VEG("PEATLAND", 2, 1 + P.X02, 5),
+            VEG("WATER", 0, 1, 5),
+            VEG("WETLAND", 4, 1 + P.X02, 5),
+        ]
+
+        p.land_use_classes = [
+            LU("AGRICULTURE", 0, 0.5),
+            LU("BARE_SOIL", 0, 0),
+            LU("CONIFEROUS_FOREST", 0, 1),
+            LU("DECIDUOUS_FOREST", 0, 1),
+            LU("IMPERMEABLE_SURFACE", 1, 0),
+            LU("PEATLAND", 0, 0),
+            LU("WATER", 0, 0),
+            LU("WETLAND", 0, 0),
+        ]
+
+        p.soil_profiles = [
+            SOIL(
+                "sand",
+                ["TOPSOIL", "FAST_RES", "SLOW_RES"],
+                [P.X03, P.X04, P.X05],
+            ),
+            SOIL(
                 "loamy_sand",
                 ["TOPSOIL", "FAST_RES", "SLOW_RES"],
                 [P.X03, P.X04, P.X05],
-            ],
-        )
+            ),
+        ]
 
-        p.soil_parameter_list = (
-            [
-                SoilParameterListCommand(
-                    names=[
-                        "POROSITY",
-                        "HBV_BETA",
-                        "FIELD_CAPACITY",
-                        "SAT_WILT",
-                        "MAX_CAP_RISE_RATE",
-                        "MAX_PERC_RATE",
-                        "BASEFLOW_COEFF",
-                        "BASEFLOW_N",
-                    ],
-                    records=[
-                        PL(
-                            name="TOPSOIL",
-                            vals=[
-                                P.X11 * 0.2,
-                                P.X12,
-                                P.X13 * 0.5,
-                                P.X14 * 0.01,
-                                0,
-                                0,
-                                0,
-                                0,
-                            ],
-                        ),
-                        PL(
-                            name="FAST_RES",
-                            vals=[
-                                P.X11 * 0.4,
-                                P.X12,
-                                P.X13 * 0.4,
-                                P.X14 * 0.01,
-                                P.X15,
-                                P.X16,
-                                P.X17,
-                                P.X19,
-                            ],
-                        ),
-                        PL(
-                            name="SLOW_RES",
-                            vals=[
-                                P.X11 * 0.3,
-                                P.X12,
-                                P.X13 * 0.2,
-                                P.X14 * 0.01,
-                                P.X15,
-                                P.X16,
-                                P.X18,
-                                P.X19,
-                            ],
-                        ),
-                    ],
-                )
-            ],
-        )
-        p.vegetation_parameter_list = (
-            [
-                VegetationParameterListCommand(
-                    names=[
-                        "SAI_HT_RATIO",
-                        "RAIN_ICEPT_PCT",
-                        "SNOW_ICEPT_PCT",
-                        "MAX_CAPACITY",
-                        "MAX_SNOW_CAPACITY",
-                    ],
-                    records=[
-                        PL(name="AGRICULTURE", vals=[2, 0, 0, 0, 0]),
-                        PL("BARE_SOIL", vals=[1, 0, 0, 0, 0]),
-                        PL("CONIFEROUS_FOREST", vals=[3, P.X20, P.X20, P.X21, P.X21]),
-                        PL("DECIDUOUS_FOREST", vals=[3, P.X20, P.X20, P.X21, P.X21]),
-                        PL("IMPERMEABLE_SURFACE", vals=[1, 0, 0, 0, 0]),
-                        PL("PEATLAND", vals=[1, 0, 0, 0, 0]),
-                        PL("WATER", vals=[1, 0, 0, 0, 0]),
-                        PL("WETLAND", vals=[2, 0, 0, 0, 0]),
-                    ],
-                )
-            ],
-        )
+        p.soil_parameter_list = [
+            SoilParameterListCommand(
+                names=[
+                    "POROSITY",
+                    "HBV_BETA",
+                    "FIELD_CAPACITY",
+                    "SAT_WILT",
+                    "MAX_CAP_RISE_RATE",
+                    "MAX_PERC_RATE",
+                    "BASEFLOW_COEFF",
+                    "BASEFLOW_N",
+                ],
+                records=[
+                    PL(
+                        name="TOPSOIL",
+                        vals=[
+                            P.X11 * 0.2,
+                            P.X12,
+                            P.X13 * 0.5,
+                            P.X14 * 0.01,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                    ),
+                    PL(
+                        name="FAST_RES",
+                        vals=[
+                            P.X11 * 0.4,
+                            P.X12,
+                            P.X13 * 0.4,
+                            P.X14 * 0.01,
+                            P.X15,
+                            P.X16,
+                            P.X17,
+                            P.X19,
+                        ],
+                    ),
+                    PL(
+                        name="SLOW_RES",
+                        vals=[
+                            P.X11 * 0.3,
+                            P.X12,
+                            P.X13 * 0.2,
+                            P.X14 * 0.01,
+                            P.X15,
+                            P.X16,
+                            P.X18,
+                            P.X19,
+                        ],
+                    ),
+                ],
+            )
+        ]
+
+        p.vegetation_parameter_list = [
+            VegetationParameterListCommand(
+                names=[
+                    "SAI_HT_RATIO",
+                    "RAIN_ICEPT_PCT",
+                    "SNOW_ICEPT_PCT",
+                    "MAX_CAPACITY",
+                    "MAX_SNOW_CAPACITY",
+                ],
+                records=[
+                    PL(name="AGRICULTURE", vals=[2, 0, 0, 0, 0]),
+                    PL("BARE_SOIL", vals=[1, 0, 0, 0, 0]),
+                    PL("CONIFEROUS_FOREST", vals=[3, P.X20, P.X20, P.X21, P.X21]),
+                    PL("DECIDUOUS_FOREST", vals=[3, P.X20, P.X20, P.X21, P.X21]),
+                    PL("IMPERMEABLE_SURFACE", vals=[1, 0, 0, 0, 0]),
+                    PL("PEATLAND", vals=[1, 0, 0, 0, 0]),
+                    PL("WATER", vals=[1, 0, 0, 0, 0]),
+                    PL("WETLAND", vals=[2, 0, 0, 0, 0]),
+                ],
+            )
+        ]
+
         p.land_use_parameter_list = [
             LandUseParameterListCommand(
                 names=[

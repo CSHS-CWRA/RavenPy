@@ -62,7 +62,9 @@ bnds = [
 
 
 def test_simple():
-    HBVECMOD()
+    model = HBVECMOD(workdir="/tmp/hbvecmod")
+    model.config.rvp.params = HBVECMOD.Params(*range(1, 28))
+    model.setup_model_run(ts=[])
 
 
 def test_calib_simple():

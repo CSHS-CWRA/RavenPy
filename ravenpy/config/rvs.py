@@ -606,7 +606,7 @@ class RVP(RV):
         p = asdict(self.params) if self.params is not None else {}
 
         d = {
-            "params": self.params,
+            "params": self.params,  # For compatibility with other emulators
             "soil_classes": SoilClassesCommand(self.soil_classes).to_rv(**p),
             "soil_profiles": SoilProfilesCommand(self.soil_profiles).to_rv(**p),
             "vegetation_classes": VegetationClassesCommand(

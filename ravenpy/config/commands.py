@@ -869,8 +869,8 @@ class SoilProfilesCommand(RavenCommand):
     @dataclass(config=Config)
     class Record(RavenCommand):
         profile_name: str = ""
-        soil_class_names: Tuple[str, ...] = ()
-        thicknesses: Tuple[RavenExp, ...] = ()
+        soil_class_names: Sequence[str] = ()
+        thicknesses: Sequence[RavenExp] = ()
 
         def to_rv(self, **kwds):
             # From the Raven manual: {profile_name,#horizons,{soil_class_name,thick.}x{#horizons}}x[NP]
@@ -882,7 +882,7 @@ class SoilProfilesCommand(RavenCommand):
             fmt = "{:<16},{:>4}," + ",".join(n_horizons * ["{:>12},{:>6}"])
             return fmt.format(self.profile_name, n_horizons, *horizon_data)
 
-    soil_profiles: Tuple[Record, ...] = ()
+    soil_profiles: Sequence[Record] = ()
 
     template = """
     :SoilProfiles
