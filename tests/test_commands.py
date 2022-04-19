@@ -155,15 +155,15 @@ def test_land_use_parameter_list():
 def test_tied_params():
     X1 = var("X1")
     X2 = var("X2")
-    exprs = [0.2 * X1, 2 * X1 + 3 * X2 + 10, 50 + X2]
+    exprs = {"ex_1": 0.2 * X1, "ex_2": 2 * X1 + 3 * X2 + 10, "ex_3": 50 + X2}
     tp = TiedParams(exprs)
 
     assert dedent(tp.to_rv()) == dedent(
         """
         BeginTiedParams
-          ex_0d2_mul_X1 1 X1 linear 0.2 0 free
-          ex_2_mul_X1_add_3_mul_X2_add_10 2 X1 X2 linear 0 2 3 10 free
-          ex_50_add_X2 1 X2 linear 1 50 free
+          ex_1 1 X1 linear 0.2 0 free
+          ex_2 2 X1 X2 linear 0 2 3 10 free
+          ex_3 1 X2 linear 1 50 free
         EndTiedParams
         """
     )

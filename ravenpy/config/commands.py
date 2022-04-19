@@ -11,6 +11,7 @@ from typing import (
     ClassVar,
     Dict,
     Literal,
+    Mapping,
     Optional,
     Sequence,
     Tuple,
@@ -37,14 +38,39 @@ class FSMapper(StringifyMapper):
         return "{" + s % args + "}"
 
 
+class TiedParamsMapper(pymbolic.mapper.stringifier.StringifyMapper):
+    """Return a string representation of an expression.
+
+    This is used to identify expressions for Ostrich.
+
+    Notes
+    -----
+    No guarantee that this returns unique identifiers.
+    """
+
+    def format(self, s, *args):
+        return (s % args).replace(".", "d")
+
+    def map_sum(self, expr, enclosing_prec, *args, **kwargs):
+        return self.join_rec("_add_", expr.children, 1, *args, **kwargs)
+
+    def map_product(self, expr, enclosing_prec, *args, **kwargs):
+        return self.join_rec("_mul_", expr.children, 1, *args, **kwargs)
+
+    def map_quotient(self, expr, enclosing_prec, *args, **kwargs):
+        return self.join_rec(
+            "%s_over_%s", [expr.numerator, expr.denominator], 1, *args, **kwargs
+        )
+
+
 class Config:
     arbitrary_types_allowed = True
 
 
 RavenExp = Union[Variable, Expression, float, None]
 
-symex = ContextVar("symex", default=set())
-symex.set(set())
+symex = ContextVar("symex", default=dict())
+symex.set(dict())
 symctx = copy_context()
 
 
@@ -62,9 +88,11 @@ def parse_symbolic(value, **kwds):
         except pymbolic.mapper.evaluator.UnknownVariableError:
 
             if isinstance(value, Expression) and not isinstance(value, Variable):
+                key = "EX_" + TiedParamsMapper()(value)
                 s = symex.get()
-                s.add(value)
+                s[key] = value
                 symex.set(s)
+                return key
 
             # Convert to expression string
             return StringifyMapper()(value)
@@ -1010,29 +1038,14 @@ class LandUseParameterListCommand(ParameterList):
     _cmd = "LandUseParameterList"
 
 
-class TiedParamsMapper(pymbolic.mapper.stringifier.StringifyMapper):
-    def map_sum(self, expr, enclosing_prec, *args, **kwargs):
-        return self.join_rec("_add_", expr.children, 1, *args, **kwargs)
-
-    def map_product(self, expr, enclosing_prec, *args, **kwargs):
-        return self.join_rec("_mul_", expr.children, 1, *args, **kwargs)
-
-    def map_quotient(self, expr, enclosing_prec, *args, **kwargs):
-        return self.join_rec(
-            "%s_over_%s", [expr.numerator, expr.denominator], 1, *args, **kwargs
-        )
-
-
 @dataclass(config=Config)
 class TiedParams(RavenCommand):
     @dataclass(config=Config)
     class Record(RavenCommand):
+        name: str
         expr: Expression
 
         def to_rv(self):
-            # Create expression name
-            name = "ex_" + TiedParamsMapper()(self.expr).replace(".", "d")
-
             # Collect coefficients. Will raise if non-linear expression is given.
             coefs = CoefficientCollector()(self.expr)
 
@@ -1043,21 +1056,18 @@ class TiedParams(RavenCommand):
             params = [k for (k, v) in coefs.items() if isinstance(k, Variable)]
             np = len(params)
 
-            data = [
-                coefs[c]
-                for c in params
-                + [
-                    1,
-                ]
-            ]
+            data = [coefs[c] for c in params + [1]]
             if np == 2:
                 data.insert(0, 0)
 
             return " ".join(
-                map(str, [name, np, *[p.name for p in params], "linear", *data, "free"])
+                map(
+                    str,
+                    [self.name, np, *[p.name for p in params], "linear", *data, "free"],
+                )
             )
 
-    exprs: Sequence[Expression] = ()
+    exprs: Mapping[str, Expression] = None
 
     def to_rv(self):
         template = """
@@ -1066,7 +1076,7 @@ class TiedParams(RavenCommand):
         EndTiedParams
         """
 
-        records = [TiedParams.Record(ex) for ex in self.exprs]
+        records = [TiedParams.Record(key, ex) for (key, ex) in self.exprs.items()]
         tied_params = "\n  ".join([e.to_rv() for e in records])
         return dedent(template).format(tied_params)
 
