@@ -1,8 +1,7 @@
 import datetime as dt
 import itertools
 import re
-from abc import ABC, abstractmethod
-from contextvars import ContextVar, copy_context
+from abc import ABC
 from dataclasses import asdict, field
 from pathlib import Path
 from textwrap import dedent
@@ -19,101 +18,20 @@ from typing import (
     no_type_check,
 )
 
-import pymbolic.primitives
-from pydantic import BaseModel, validator
+from pydantic import validator
 from pydantic.dataclasses import dataclass
 from pymbolic.mapper.coefficient import CoefficientCollector
-from pymbolic.mapper.evaluator import EvaluationMapper as EM
-from pymbolic.mapper.stringifier import StringifyMapper
 from pymbolic.primitives import Expression, Variable
 
 from .constants import LandUseParameters, SoilParameters, VegetationParameters
+from .symbolic import RavenExp, parse_symbolic
 
 INDENT = " " * 4
 VALUE_PADDING = 10
 
 
-class FSMapper(StringifyMapper):
-    def format(self, s, *args):
-        return "{" + s % args + "}"
-
-
-class TiedParamsMapper(pymbolic.mapper.stringifier.StringifyMapper):
-    """Return a string representation of an expression.
-
-    This is used to identify expressions for Ostrich.
-
-    Notes
-    -----
-    No guarantee that this returns unique identifiers.
-    """
-
-    def format(self, s, *args):
-        return (s % args).replace(".", "d")
-
-    def map_sum(self, expr, enclosing_prec, *args, **kwargs):
-        return self.join_rec("_add_", expr.children, 1, *args, **kwargs)
-
-    def map_product(self, expr, enclosing_prec, *args, **kwargs):
-        return self.join_rec("_mul_", expr.children, 1, *args, **kwargs)
-
-    def map_quotient(self, expr, enclosing_prec, *args, **kwargs):
-        return self.join_rec(
-            "%s_over_%s", [expr.numerator, expr.denominator], 1, *args, **kwargs
-        )
-
-
 class Config:
     arbitrary_types_allowed = True
-
-
-RavenExp = Union[Variable, Expression, float, None]
-
-symex = ContextVar("symex", default=dict())
-symex.set(dict())
-symctx = copy_context()
-
-
-def parse_symbolic(value, **kwds):
-    if isinstance(value, dict):
-        return {k: parse_symbolic(v, **kwds) for k, v in value.items()}
-
-    elif isinstance(value, (list, tuple)):
-        return [parse_symbolic(v, **kwds) for v in value]
-
-    elif isinstance(value, (Variable, Expression)):
-        try:
-            # Convert to numerical value
-            return EM(context=kwds)(value)
-        except pymbolic.mapper.evaluator.UnknownVariableError:
-
-            if isinstance(value, Expression) and not isinstance(value, Variable):
-                key = "EX_" + TiedParamsMapper()(value)
-                s = symex.get()
-                s[key] = value
-                symex.set(s)
-                return key
-
-            # Convert to expression string
-            return StringifyMapper()(value)
-        return value
-
-    else:
-        return value
-
-
-def parse_symexpr(value):
-    if isinstance(value, RavenCommand):
-        return {value.__name__: parse_symexpr(asdict(value))}
-
-    if isinstance(value, dict):
-        return {k: parse_symexpr(v) for k, v in value.items()}
-
-    elif isinstance(value, (list, tuple)):
-        return [parse_symexpr(v) for v in value]
-
-    if isinstance(value, Expression) and not isinstance(value, Variable):
-        return value
 
 
 class RavenCommand(ABC):
@@ -135,14 +53,6 @@ class RavenCommand(ABC):
         """Return string representation of Command."""
         vals = self.parse_symbolic(**kwds).values()
         return self._fmt.format(*vals)
-
-
-#    @validator("*", pre=True)
-#    def convert_expression(cls, v):
-#        """This is used to convert pymbolic expressions into f-strings."""
-#        if isinstance(v, (Variable, Expression)):
-#            return FSMapper()(v)
-#        return v
 
 
 @dataclass(config=Config)
