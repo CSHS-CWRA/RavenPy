@@ -152,6 +152,7 @@ class HRUsCommand(RavenCommand):
         def to_rv(self):
             d = asdict(self)
             del d["hru_type"]
+            # fmt = "".join("{:>%n}"%(len(n) for n in d.keys())
             return " ".join(f"{v: <{VALUE_PADDING * 2}}" for v in d.values())
 
     hrus: Tuple[Record, ...] = ()
@@ -159,7 +160,7 @@ class HRUsCommand(RavenCommand):
     template = """
     :HRUs
         :Attributes      AREA  ELEVATION       LATITUDE      LONGITUDE BASIN_ID       LAND_USE_CLASS           VEG_CLASS      SOIL_PROFILE  AQUIFER_PROFILE TERRAIN_CLASS      SLOPE     ASPECT
-        :Units            km2          m            deg            deg     none                  none               none              none             none          none        deg       degN
+        :Units            km2          m            deg            deg     none                 none                none              none             none          none        deg       degN
     {hru_records}
     :EndHRUs
     """
@@ -877,7 +878,7 @@ class LandUseClassesCommand(RavenCommand):
 
     def to_rv(self, **kwds):
         return dedent(self.template).format(
-            land_use_class_records="\n".join(map(str, self.land_use_classes))
+            land_use_class_records="\n    ".join(map(str, self.land_use_classes))
         )
 
 
@@ -917,15 +918,17 @@ class ParameterList(RavenCommand):
         template = """
         :{cmd}
             :Parameters     {parameter_names}
-            :Units          ,
+            :Units          {units}
             {records}
         :End{cmd}
         """
 
         fmt = ",{:>18}" * len(self.names)
+        units = ",              none" * len(self.names)
         return dedent(template).format(
             cmd=self._cmd,
             parameter_names=fmt.format(*self.names),
+            units=units,
             records="\n    ".join([r.to_rv(**kwds) for r in self.records]),
         )
 

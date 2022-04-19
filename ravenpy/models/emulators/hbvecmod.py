@@ -46,7 +46,8 @@ class HBVECMOD(Raven):
     X14    uniform    0.01       1.0         0.01       1   # SAT_WILT             | rvp | :SoilParameterList        | SAT_WILT
     X15    uniform    0.01       1.0         0.01       1   # MAX_CAP_RISE_RATE    | rvp | :SoilParameterList        | HBV max capillary rise rate
     X16    uniform    0.01       10.0        1.0        1   # MAX_PERC_RATE        | rvp | :SoilParameterList        | VIC/ARNO/GAWSER percolation rate
-    X17    uniform    0.01       1.0         0.03       1   # BASEFLOW_COEFF       | rvp | :SoilParameterList        | linear baseflow storage/routing coefficient for the FAST_RES
+    X17    uniform    0.01       1.0         0.03       1   # BASEFLOW_COEFF       | rvp | :SoilParameterList
+    | linear baseflow storage/routing coefficient for the FAST_RES
     X18    uniform    0.05       0.1         0.03       1   # BASEFLOW_COEFF       | rvp | :SoilParameterList        | linear baseflow storage/routing coefficient for the SLOW_RES
     X19    uniform    0.5        2.0         1.1        1   # BASEFLOW_N           | rvp | :SoilParameterList        | VIC/ARNO baseflow exponent
     X20    uniform    0.02       0.2         0.02       1   # RAIN_ICEPT_PCT       | rvp | :VegetationParameterList  | relates percentage of throughfall of rain/snow to LAI+SAI
@@ -66,13 +67,31 @@ class HBVECMOD(Raven):
         )
     )
 
+    @dataclass
+    class LandHRU(HRU):
+        land_use_class: str = "CONIFEROUS_FOREST"
+        veg_class: str = "CONIFEROUS_FOREST"
+        soil_profile: str = "sand"
+        aquifer_profile: str = "[NONE]"
+        terrain_class: str = "[NONE]"
+        hru_type: str = "land"
+
+    @dataclass
+    class LakeHRU(HRU):
+        land_use_class: str = "WATER"
+        veg_class: str = "WATER"
+        soil_profile: str = "LAKE"
+        aquifer_profile: str = "[NONE]"
+        terrain_class: str = "[NONE]"
+        hru_type: str = "lake"
+
     def __init__(self, *args, **kwds):
         kwds["identifier"] = kwds.get("identifier", "hbvecmod")
         super().__init__(*args, **kwds)
 
         P = HBVECMOD.Params
 
-        self.config.update(hrus=(GR4JCN.LandHRU(),))
+        self.config.update(hrus=(HBVECMOD.LandHRU(),))
 
         #########
         # R V P #
@@ -97,7 +116,7 @@ class HBVECMOD(Raven):
         #                                  X10=[0.0,5.0] ; default = 1.002140; X10 NOT calibrated in Famine
         :GlobalParameter PRECIP_LAPSE      {X10}
         #
-        :GlobalParameter AVG_ANNUAL_RUNOFF {avg_annual_runoff}
+        {avg_annual_runoff}
         #---------------------------------------------------------
         # Soil classes
 
@@ -125,6 +144,9 @@ class HBVECMOD(Raven):
         {land_use_classes}
 
         {land_use_parameter_list}
+
+        # List of channel profiles
+        {channel_profiles}
         """
         p = self.config.rvp
         p.set_tmpl(rvp_tmpl)
@@ -165,6 +187,7 @@ class HBVECMOD(Raven):
                 ["TOPSOIL", "FAST_RES", "SLOW_RES"],
                 [P.X03, P.X04, P.X05],
             ),
+            SOIL("LAKE", [], []),
         ]
 
         p.soil_parameter_list = [
@@ -380,13 +403,30 @@ class HBVECMOD(Raven):
     def derived_parameters(self):
         self._monthly_average()
 
-        # Default initial conditions if none are given
         if not self.config.rvc.hru_states:
-            soil2 = 0.50657
-            self.config.rvc.hru_states[1] = HRUState(soil2=soil2)
+            # If self.rvc.hru_states is set, it means that we are using `resume()` and we don't
+            # want to interfere
+            for hru in self.config.rvh.hrus:
+                if isinstance(hru, HBVECMOD.LandHRU) or hru.soil_profile in [
+                    "SAND",
+                    "LOAMY_SAND",
+                ]:
+                    self.config.rvc.hru_states[hru.hru_id] = HRUState(index=hru.hru_id)
+                elif isinstance(hru, HBVECMOD.LakeHRU) or hru.soil_profile in ["LAKE"]:
+                    self.config.rvc.hru_states[hru.hru_id] = HRUState(index=hru.hru_id)
+
+                else:
+                    raise Exception(
+                        "Type of HRU must be either `GR4JCN.LandHRU` or `GR4JCN.LakeHRU`"
+                    )
 
         if not self.config.rvc.basin_states:
-            self.config.rvc.basin_states[1] = BasinIndexCommand()
+            # If self.rvc.basin_states is set, it means that we are using `resume()` and we don't
+            # want to interfere
+            for sb in self.config.rvh.subbasins:
+                self.config.rvc.basin_states[sb.subbasin_id] = BasinIndexCommand(
+                    index=sb.subbasin_id
+                )
 
     # TODO: Support index specification and unit changes.
     def _monthly_average(self):
