@@ -6,7 +6,7 @@ from ravenpy.config.commands import SoilProfilesCommand
 from ravenpy.extractors.HydrotelShapefileExtractor import HydrotelShapefileExtractor
 from ravenpy.extractors.routing_product import RoutingProductShapefileExtractor
 
-pth = '/home/mohammad/Dossier_travail/Hydrotel/DEH/MG24HA/SLSO_MG24HA_2020/physitel/HRU/raven-testdata/famine/hru_Famine_final.zip'
+pth = "/home/mohammad/Dossier_travail/Hydrotel/DEH/MG24HA/SLSO_MG24HA_2020/physitel/HRU/raven-testdata/famine/hru_Famine_final.zip"
 rvh_extractor = RoutingProductShapefileExtractor(
     pth,
     hru_aspect_convention="ArcGIS",

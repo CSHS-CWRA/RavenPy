@@ -28,7 +28,7 @@ from ravenpy.extractors.routing_product import RoutingProductShapefileExtractor
 from ravenpy.utilities.testdata import get_local_testdata
 
 # routing_product_shp_path = get_local_testdata("Famine/HRU_Famine.zip")
-pth = '/home/mohammad/Dossier_travail/Hydrotel/DEH/MG24HA/SLSO_MG24HA_2020/physitel/HRU/raven-testdata/famine/hru_Famine_final.zip'
+pth = "/home/mohammad/Dossier_travail/Hydrotel/DEH/MG24HA/SLSO_MG24HA_2020/physitel/HRU/raven-testdata/famine/hru_Famine_final.zip"
 
 rvh_extractor = RoutingProductShapefileExtractor(
     pth,
