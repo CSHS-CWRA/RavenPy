@@ -1,6 +1,5 @@
 pip
 bump2version
-setuptools
 wheel
 watchdog
 flake8
@@ -9,13 +8,12 @@ coverage
 coveralls
 Sphinx
 twine
-setuptools
 Click
 pytest
-pytest-runner
 pytest-cov
 black
 isort
 pre-commit
 holoviews
 hvplot
+setuptools
