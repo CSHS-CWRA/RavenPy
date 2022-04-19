@@ -140,7 +140,7 @@ class GR4JCN(Raven):
         rvi_tmpl = """
         :SoilModel             SOIL_MULTILAYER  4
         :Routing               {routing}
-        :CatchmentRoute        ROUTE_DUMP
+        :CatchmentRoute        {catchment_route}
         :Evaporation           {evaporation}
         :RainSnowFraction      {rain_snow_fraction}
 
