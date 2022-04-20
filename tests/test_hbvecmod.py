@@ -27,8 +27,8 @@ default = [
     1.1,
     0.02,
     100.0,
-    0.01,
-    0.01,
+    5,
+    1,
     0.1,
     1.0,
     0.1,
@@ -75,7 +75,7 @@ def test_simple():
     model = HBVECMOD(workdir="/tmp/hbvecmod")
     model.config.rvp.params = HBVECMOD.Params(*default)
     model.config.rvp.avg_annual_runoff = get_average_annual_runoff(
-        TS, area * 1e6, obs_var="obs"
+        TS, area * 1e6, obs_var="qobs"
     )
     rv_objs = extractor.extract()
     model.config.rvp.channel_profiles = rv_objs.pop("channel_profiles")
@@ -84,7 +84,7 @@ def test_simple():
         model.config.rvh.update(k, v)
 
     # model.setup_model_run(ts=["/home/david/src/raven-testdata/famine/famine_input.nc"])
-    model(ts=["/home/david/src/raven-testdata/famine/famine_input.nc"], overwrite=True)
+    model(ts=[TS], overwrite=True)
 
 
 def test_calib_simple():
@@ -92,4 +92,5 @@ def test_calib_simple():
     low, high = zip(*bnds)
     model.config.ost.lowerBounds = HBVECMOD.Params(*low)
     model.config.ost.upperBounds = HBVECMOD.Params(*high)
-    model.setup_model_run(ts=[])
+    model.config.ost.max_iterations = 10
+    model(ts=[TS], overwrite=True)

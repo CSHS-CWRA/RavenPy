@@ -280,11 +280,11 @@ class HBVECMOD(Raven):
                 records=[
                     PL(
                         "AGRICULTURE",
-                        vals=[0, P.X22 + 3 * P.X23, P.X24, P.X25, 0.5 * P.X26],
+                        vals=[0, P.X22, P.X24, P.X25, 0.5 * P.X26],
                     ),
                     PL(
                         "BARE_SOIL",
-                        vals=[0, P.X22 + 3 * P.X23, 0.5, P.X25, 0.4 * P.X26],
+                        vals=[0, P.X22, 0.5, P.X25, 0.4 * P.X26],
                     ),
                     PL(
                         "CONIFEROUS_FOREST",
@@ -302,12 +302,10 @@ class HBVECMOD(Raven):
                     ),
                     PL(
                         "IMPERMEABLE_SURFACE",
-                        vals=[0, P.X22 + 3 * P.X23, 0.2, P.X25, 0.4 * P.X26],
+                        vals=[0, P.X22, 0.2, P.X25, 0.4 * P.X26],
                     ),
-                    PL(
-                        "PEATLAND", vals=[0, P.X22 + 3 * P.X23, 0.1, P.X25, 0.4 * P.X26]
-                    ),
-                    PL("WATER", vals=[0, P.X22 + 3 * P.X23, 0.2, P.X25, 0.4 * P.X26]),
+                    PL("PEATLAND", vals=[0, P.X22, 0.1, P.X25, 0.4 * P.X26]),
+                    PL("WATER", vals=[0, P.X22, 0.2, P.X25, 0.4 * P.X26]),
                     PL(
                         "WETLAND",
                         vals=[3 * P.X23, P.X22 + 3 * P.X23, 0.4, P.X25, P.X26],

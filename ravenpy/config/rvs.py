@@ -865,8 +865,6 @@ class RVT(RV):
         # observation variable? For now we don't.
         for cmd in self._var_cmds.values():
             if isinstance(cmd, ObservationDataCommand):
-                # Search for the gauged SB, not sure what should happen when there are
-                # more than one (should it be even supported?)
                 for sb in self._config.rvh.subbasins:
                     if sb.gauged:
                         cmd.subbasin_id = sb.subbasin_id
