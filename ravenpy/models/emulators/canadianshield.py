@@ -22,7 +22,8 @@ class CANADIANSHIELD(Raven):
     """
     The Canadian Shield model is a useful configuration of Raven for
     Canadian shield basins characterized by shallow soils atop rock,
-    with ample exposed rock and lakes.
+    with ample exposed rock and lakes. It is a custom model for this
+    type of region, but there is no reference to it in the literature.
     """
 
     @dataclass

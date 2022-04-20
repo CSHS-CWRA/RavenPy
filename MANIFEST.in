@@ -10,8 +10,23 @@ include requirements_gis.txt
 recursive-include tests *
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]
+recursive-include benchmark *.ipynb *.txt
+recursive-include docs *.rst conf.py Makefile make.bat *.jpg *.png *.gif *.ipynb
 
-recursive-include docs *.rst conf.py Makefile make.bat *.jpg *.png *.gif
+recursive-exclude * .ipynb_checkpoints
+recursive-exclude docs/_build *
 
 graft ravenpy/models
 graft ravenpy/data
+
+exclude .coveralls.yml
+exclude .cruft.json
+exclude .editorconfig
+exclude .pre-commit-config.yaml
+exclude .readthedocs.yml
+exclude .yamllint.yaml
+exclude Makefile
+exclude environment.yml
+exclude environment-rtd.yml
+exclude mypy.ini
+exclude tox.ini
