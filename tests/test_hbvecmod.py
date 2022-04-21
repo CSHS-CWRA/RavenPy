@@ -96,5 +96,20 @@ def test_calib_simple():
     low, high = zip(*bnds)
     model.config.ost.lowerBounds = HBVECMOD.Params(*low)
     model.config.ost.upperBounds = HBVECMOD.Params(*high)
+    model.config.rvp.avg_annual_runoff = get_average_annual_runoff(
+        TS, area * 1e6, obs_var="qobs"
+    )
+    rv_objs = extractor.extract()
+    model.config.rvp.channel_profiles = rv_objs.pop("channel_profiles")
+
+    for k, v in rv_objs.items():
+        model.config.rvh.update(k, v)
+
+    for sb in model.config.rvh.subbasins:
+        sb.gauged = sb.subbasin_id == 160
+
+    model.config.rvt.station_idx = 0
+    model.config.rvt.hydro_idx = 1
+
     model.config.ost.max_iterations = 10
     model(ts=[TS], overwrite=True)

@@ -57,7 +57,7 @@ def parse_symbolic(value, **kwds):
         except pymbolic.mapper.evaluator.UnknownVariableError:
             # Convert to string, an identifier for expressions, and the variable name for variables.
             if isinstance(value, Expression) and not isinstance(value, Variable):
-                key = "EX_" + TiedParamsMapper()(value)
+                key = "par_" + TiedParamsMapper()(value).lower()
                 s = symex.get()
                 s[key] = value
                 symex.set(s)

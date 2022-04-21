@@ -60,6 +60,7 @@ class HBVECMOD(Raven):
     X27    uniform    0.001      5.0         0.01       1   # GLAC_STORAGE_COEF    | rvp | :LandUseParameterList     | maximum linear storage coefficient for glacial melt
     """
 
+    # TODO: enforce upper case for param names - needed for ostrich tied params.
     Params = dataclass(
         make_dataclass(
             "Params",
@@ -589,8 +590,6 @@ class HBVECMOD_OST(Ostrich, HBVECMOD):
 
         BeginFilePairs
           {identifier}.rvp.tpl;  {identifier}.rvp
-          {identifier}.rvh.tpl;  {identifier}.rvh
-          {identifier}.rvt.tpl;  {identifier}.rvt
           #can be multiple (.rvh, .rvi)
         EndFilePairs
 
