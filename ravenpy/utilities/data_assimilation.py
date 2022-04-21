@@ -68,7 +68,12 @@ def assimilate(
     n_members = len(basin_states)
 
     # Run simulation with perturbed inputs
-    model(ts, hru_state=hru_states, basin_state=basin_states, nc_index=range(n_members))
+    model(
+        ts,
+        parallel=dict(
+            hru_state=hru_states, basin_state=basin_states, nc_index=range(n_members)
+        ),
+    )
 
     # Extract final states (n_states, n_members)
     f_hru_states, f_basin_states = model.get_final_state()
@@ -84,6 +89,7 @@ def assimilate(
     # x_matrix = model.storage.isel(time=-1)[vnames].to_array()
 
     # Last time step for assimilation
+    # The parallel dimension is state, not nbasins.
     qsim_vector = model.q_sim.isel(time=-1, nbasins=0).values
 
     # If there are problems related to missing Qobs or other variables, do not assimilate.

@@ -2,10 +2,17 @@
 History
 =======
 
-0.7.X
+
+
+
+0.8.0
 -----
 
+Breaking changes:
+  * Parallel parameters must be provided explicitly using the `parallel` argument when calling emulators.
+
 * Add ``generate-hrus-from-routing-product`` script.
+
 
 0.7.8
 -----
