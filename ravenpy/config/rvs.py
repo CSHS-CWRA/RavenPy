@@ -695,7 +695,8 @@ class RVT(RV):
         # Specifies whether the variables must be configured using file NC data
         self._auto_nc_configure = True
 
-        self.nc_index = 0
+        self.nc_index = self.station_idx = 0  # For meteo forcing files
+        self.hydro_idx = 0  # For streamflow observation file
         self.grid_weights = None
         self.rain_correction = None
         self.snow_correction = None
@@ -729,7 +730,8 @@ class RVT(RV):
             if std_name == "water_volume_transport_in_river_channel" or is_obs_var:
                 cmd = ObservationDataCommand(**kwargs)
             else:
-                cmd = StationForcingCommand(**kwargs)
+                cmd = DataCommand(**kwargs)
+                # cmd = StationForcingCommand(**kwargs)
         else:
             cmd = GriddedForcingCommand(**kwargs)
 
@@ -806,29 +808,29 @@ class RVT(RV):
                     data_cmds.append(cmd)
 
             if (
-                self._nc_latitude
+                self._nc_latitude is not None
                 and self._nc_latitude.shape
-                and len(self._nc_latitude) > self.nc_index
+                and len(self._nc_latitude) > self.station_idx
             ):
-                lat = self._nc_latitude.values[self.nc_index]
+                lat = self._nc_latitude.values[self.station_idx]
             else:
                 lat = self._config.rvh.hrus[0].latitude
 
             if (
-                self._nc_longitude
+                self._nc_longitude is not None
                 and self._nc_longitude.shape
-                and len(self._nc_longitude) > self.nc_index
+                and len(self._nc_longitude) > self.station_idx
             ):
-                lon = self._nc_longitude.values[self.nc_index]
+                lon = self._nc_longitude.values[self.station_idx]
             else:
                 lon = self._config.rvh.hrus[0].longitude
 
             if (
-                self._nc_elevation
-                and self._nc_elevation
-                and len(self._nc_elevation) > self.nc_index
+                self._nc_elevation is not None
+                and self._nc_elevation.shape
+                and len(self._nc_elevation) > self.station_idx
             ):
-                elev = self._nc_elevation.values[self.nc_index]
+                elev = self._nc_elevation.values[self.station_idx]
             else:
                 elev = self._config.rvh.hrus[0].elevation
 
@@ -844,7 +846,9 @@ class RVT(RV):
             )  # type: ignore
         else:
             # Construct default grid weights applying equally to all HRUs
-            data = [(hru.hru_id, self.nc_index, 1.0) for hru in self._config.rvh.hrus]
+            data = [
+                (hru.hru_id, self.station_idx, 1.0) for hru in self._config.rvh.hrus
+            ]
             gw = self.grid_weights or GridWeightsCommand(
                 number_hrus=len(data),
                 number_grid_cells=self._number_grid_cells,
@@ -874,7 +878,7 @@ class RVT(RV):
                         "Could not find an outlet subbasin for observation data"
                     )
                 # Set the :StationxIdx (which starts at 1)
-                cmd.index = self.nc_index + 1
+                cmd.index = self.hydro_idx + 1
                 d["observed_data"] = cmd  # type: ignore
                 break
 

@@ -83,7 +83,11 @@ def test_simple():
     for k, v in rv_objs.items():
         model.config.rvh.update(k, v)
 
-    # model.setup_model_run(ts=["/home/david/src/raven-testdata/famine/famine_input.nc"])
+    for sb in model.config.rvh.subbasins:
+        sb.gauged = sb.subbasin_id == 160
+
+    model.config.rvt.station_idx = 0
+    model.config.rvt.hydro_idx = 1
     model(ts=[TS], overwrite=True)
 
 
