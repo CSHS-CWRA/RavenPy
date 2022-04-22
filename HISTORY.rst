@@ -2,10 +2,19 @@
 History
 =======
 
-0.7.X
+
+
+
+0.8.0
 -----
 
+Breaking changes:
+  * Parallel parameters must be provided explicitly using the `parallel` argument when calling emulators.
+  * Multiple `nc_index` values generate multiple *gauges*, instead of being parallelized.
+
 * Add ``generate-hrus-from-routing-product`` script.
+
+
 
 0.7.8
 -----

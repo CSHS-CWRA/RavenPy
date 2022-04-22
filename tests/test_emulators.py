@@ -101,7 +101,7 @@ class TestGR4JCN:
 
     def test_simple(self):
         model = GR4JCN()
-
+        print(model.workdir)
         model.config.rvi.start_date = dt.datetime(2000, 1, 1)
         model.config.rvi.end_date = dt.datetime(2002, 1, 1)
         model.config.rvi.run_name = "test"
@@ -683,11 +683,13 @@ class TestGR4JCN:
             TS,
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2002, 1, 1),
-            params=[
-                (0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
-                (0.528, -3.4, 407.3, 1.07, 17, 0.95),
-            ],
             suppress_output=False,
+            parallel={
+                "params": [
+                    (0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
+                    (0.528, -3.4, 407.3, 1.07, 17, 0.95),
+                ]
+            },
         )
 
         assert len(model.diagnostics) == 2
@@ -705,9 +707,9 @@ class TestGR4JCN:
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2002, 1, 1),
             params=[0.529, -3.396, 407.29, 1.072, 16.9, 0.947],
-            nc_index=[0, 0],
             # name=["basin1", "basin2"],  # Not sure about this..
             suppress_output=False,
+            parallel={"nc_index": [0, 0]},
         )
 
         assert len(model.diagnostics) == 2

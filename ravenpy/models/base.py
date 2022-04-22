@@ -27,14 +27,6 @@ import numpy as np
 import xarray as xr
 from numpy.distutils.misc_util import is_sequence
 
-import ravenpy
-from ravenpy.config.commands import (
-    DataCommand,
-    GriddedForcingCommand,
-    HRUsCommand,
-    ObservationDataCommand,
-    StationForcingCommand,
-)
 from ravenpy.config.rvs import RVC, Config
 from ravenpy.config.symbolic import symctx, symex
 
@@ -71,18 +63,6 @@ class Raven:
     r = Raven('/tmp/testdir')
     r.configure()
     """
-
-    _parallel_parameters = [
-        "params",
-        "hru_state",
-        "basin_state",
-        "nc_index",
-        "area",
-        "elevation",
-        "latitude",
-        "longitude",
-        "region_id",
-    ]
 
     # This is just to satisfy mypy, which wants to know about this internal class defined
     # by the emulators (which are Raven subclasses)
@@ -268,8 +248,6 @@ class Raven:
         ----------
         ts : sequence
           Paths to input forcing files.
-        index : int
-          Run index (starts at 1)
         """
         # Compute derived parameters
         self.derived_parameters()
@@ -292,7 +270,7 @@ class Raven:
 
         return self.bash_cmd
 
-    def run(self, ts, overwrite=False, **kwds):
+    def run(self, ts, overwrite=False, parallel={}, **kwds):
         """Run the model.
 
         Parameters
@@ -301,6 +279,8 @@ class Raven:
           Sequence of input file paths. Symbolic links to those files will be created in the model directory.
         overwrite : bool
           Whether or not to overwrite existing model and output files.
+        parallel : {}
+          Parameters that should be distributed across parallel simulations.
         **kwds : dict
           Raven parameters used to fill configuration file templates.
 
@@ -329,48 +309,21 @@ class Raven:
             assert len(self.config.rvh.hrus) == 1
             self.config.rvh.hrus = (replace(self.config.rvh.hrus[0], **hru_attrs),)
 
-        # Case for potentially parallel parameters
-        pdict = {}
-        for p in self._parallel_parameters:
-            val = kwds.pop(p, None)
-            if val is not None and p == "params":
-                assert hasattr(self, "Params")  # make sure we are in an emulator
-                # Special case where we have `Params(..)` or `[Params(), ..]`
-                lval = [val] if not is_sequence(val) else val
-                if isinstance(lval[0], self.Params):
-                    pdict[p] = np.atleast_1d(val)
-                else:
-                    pdict[p] = np.atleast_2d(val)
-            else:
-                pdict[p] = np.atleast_1d(val)
+        # Parallel parameters handling
+        plen = {p: len(v) for (p, v) in parallel.items()}
+        if len(set(plen.values())) > 1:
+            raise ValueError("All parallel parameters should have the same length.")
 
-        # Number of parallel loops is dictated by the number of parallel parameters or nc_index.
-        plen = {pp: len(pdict[pp]) for pp in self._parallel_parameters + ["nc_index"]}
+        nloops = max(plen.values()) if plen else 1
 
-        # Find the longest parallel array and its length
-        longer, nloops = max(plen.items(), key=operator.itemgetter(1))
-
-        # Assign the name of the parallel dimension
-        # nbasins is set by RavenC++
-        if nloops > 1:
-            self._pdim = {
-                "params": "params",
-                "hru_state": "state",
-                "basin_state": "state",
-                "nc_index": "nbasins",
-            }[longer]
-
-        for key, val in pdict.items():
-            if len(val) not in [1, nloops]:
-                raise ValueError(
-                    "Parameter {} has incompatible dimension: {}. "
-                    "Should be 1 or {}.".format(key, len(val), nloops)
-                )
-
-        # Resize parallel parameters to the largest size
-        for key, val in pdict.items():
-            if len(val) == 1:
-                pdict[key] = val.repeat(nloops, axis=0)
+        if "params" in parallel.keys():
+            self._pdim = "params"
+        elif "hru_state" in parallel.keys() or "basin_state" in parallel.keys():
+            self._pdim = "state"
+        elif "nc_index" in parallel.keys():
+            self._pdim = "nbasins"
+        else:
+            self._pdim = "pdim"
 
         # Use rvc file to set model state, if any
         rvc = kwds.pop("rvc", None)
@@ -392,7 +345,7 @@ class Raven:
         # Loop over parallel parameters - sets self.rvi.run_index
         procs = []
         for self.psim in range(nloops):
-            for key, val in pdict.items():
+            for key, val in parallel.items():
                 if val[self.psim] is not None:
                     if key == "hru_state":
                         self.config.rvc.set_hru_state(val[self.psim])
@@ -415,10 +368,14 @@ class Raven:
 
         return procs
 
-    def __call__(self, ts, overwrite=False, **kwds):
+    def __call__(self, ts, overwrite=False, parallel={}, **kwds):
+        """
+        parallel : {}
+          Parameters that should be distributed across parallel simulations.
+        """
         self.setup(overwrite)
 
-        procs = self.run(ts, overwrite, **kwds)
+        procs = self.run(ts, overwrite, parallel=parallel, **kwds)
 
         for proc in procs:
             # When Raven errors right away (for instance if it's missing an RV file)
