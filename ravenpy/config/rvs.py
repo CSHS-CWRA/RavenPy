@@ -1,6 +1,7 @@
 import collections
 import datetime as dt
 from abc import ABC, abstractmethod
+from copy import deepcopy
 from dataclasses import replace
 from enum import Enum
 from pathlib import Path
@@ -757,7 +758,7 @@ class RVT(RV):
                 data_cmds = []
                 for var, cmd in self._var_cmds.items():
                     if cmd and not isinstance(cmd, ObservationDataCommand):
-                        cmd = cast(DataCommand, cmd)
+                        cmd = deepcopy(cast(DataCommand, cmd))
                         cmd.index = idx + 1  # Python index to Raven index
                         data_cmds.append(cmd)
 

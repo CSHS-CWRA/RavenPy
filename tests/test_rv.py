@@ -190,3 +190,4 @@ class TestRVT:
         rvt.configure_from_nc_data([get_local_testdata("famine/famine_input.nc")])
         out = rvt.to_rv()
         assert len(re.findall(":Gauge", out)) == 3
+        assert set(re.findall(r":StationIdx\s*(\d)", out)) == {"1", "2", "3"}
