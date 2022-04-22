@@ -113,3 +113,4 @@ def test_calib_simple():
 
     model.config.ost.max_iterations = 10
     model(ts=[TS], overwrite=True)
+    assert model.calibrated_params

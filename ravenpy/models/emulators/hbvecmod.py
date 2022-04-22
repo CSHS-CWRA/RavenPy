@@ -110,7 +110,7 @@ class HBVECMOD(Raven):
         #                                  X8=[0.0,7.0];   default = 4.0
         :GlobalParameter ADIABATIC_LAPSE   {X08}
         #                                  X9=[0.04,0.07]; default = 0.04
-        :Globalparameter SNOW_SWI          {X09}
+        :GlobalParameter SNOW_SWI          {X09}
 
         # The PRECIP_LAPSE is the parameter for the simple linear precipitation lapse rate [mm/d/km], as used in the
         # OROCORR_SIMPLELAPSE orographic correction algorithm
@@ -536,24 +536,6 @@ class HBVECMOD_OST(Ostrich, HBVECMOD):
         #########
         # R V C #
         #########
-
-        rvc_tmpl = """
-        :BasinInitialConditions
-         :Attributes, ID,              Q
-         :Units,      none,         m3/s
-         #                  HBV_PARA_???
-                      1,             1.0
-        :EndBasinInitialConditions
-
-        #---------------------------------------------------------
-        # Initial Lower groundwater storage - for each HRU
-
-        :InitialConditions SOIL[2]
-             # HBV_PARA_???
-             0.50657
-        :EndInitialConditions
-        """
-        self.config.rvc.set_tmpl(rvc_tmpl)
 
         ####################
         # R V H (OST TMPL) #
