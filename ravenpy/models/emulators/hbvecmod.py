@@ -465,7 +465,7 @@ class HBVECMOD(Raven):
 
 class HBVECMOD_OST(Ostrich, HBVECMOD):
     def __init__(self, *args, **kwds):
-        kwds["identifier"] = kwds.get("identifier", "hbvec-ost")
+        kwds["identifier"] = kwds.get("identifier", "hbvecmod-ost")
         super().__init__(*args, **kwds)
         P = HBVECMOD.Params
 
