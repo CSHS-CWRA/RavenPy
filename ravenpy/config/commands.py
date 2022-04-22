@@ -29,6 +29,8 @@ from .symbolic import RavenExp, parse_symbolic
 INDENT = " " * 4
 VALUE_PADDING = 10
 
+Sym = Union[Variable, float]
+
 
 class Config:
     arbitrary_types_allowed = True
@@ -60,7 +62,7 @@ class LinearTransform(RavenCommand):
     scale: Optional[RavenExp] = 1
     offset: Optional[RavenExp] = 0
 
-    _fmt = ":LinearTransform {scale:.15f} {offset:.15f}\n"
+    _fmt = ":LinearTransform {:.15f} {:.15f}\n"
 
     def to_rv(self, **kwds):
         if (self.scale != 1) or (self.offset != 0):

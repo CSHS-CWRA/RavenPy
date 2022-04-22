@@ -3,8 +3,17 @@ from pathlib import Path
 from typing import cast
 
 from pydantic.dataclasses import dataclass
+from pymbolic.primitives import Variable
 
-from ravenpy.config.commands import HRU, LU, BasinIndexCommand, HRUState, Sub
+from ravenpy.config.commands import (
+    HRU,
+    LU,
+    BasinIndexCommand,
+    Config,
+    HRUState,
+    Sub,
+    Sym,
+)
 from ravenpy.config.rvs import RVI
 from ravenpy.models.base import Ostrich, Raven
 
@@ -23,14 +32,14 @@ class GR4JCN(Raven):
     doi: 10.1016/j.jhydrol.2014.04.058.
     """
 
-    @dataclass
+    @dataclass(config=Config)
     class Params:
-        GR4J_X1: float
-        GR4J_X2: float
-        GR4J_X3: float
-        GR4J_X4: float
-        CEMANEIGE_X1: float
-        CEMANEIGE_X2: float
+        GR4J_X1: Sym = Variable("GR4J_X1")
+        GR4J_X2: Sym = Variable("GR4J_X2")
+        GR4J_X3: Sym = Variable("GR4J_X3")
+        GR4J_X4: Sym = Variable("GR4J_X4")
+        CEMANEIGE_X1: Sym = Variable("CEMANEIGE_X1")
+        CEMANEIGE_X2: Sym = Variable("CEMANEIGE_X2")
 
     @dataclass
     class LandHRU(HRU):

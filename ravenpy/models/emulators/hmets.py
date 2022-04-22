@@ -3,8 +3,17 @@ from pathlib import Path
 from typing import Dict, cast
 
 from pydantic.dataclasses import dataclass
+from pymbolic.primitives import Variable
 
-from ravenpy.config.commands import HRU, LU, BasinIndexCommand, HRUState, Sub
+from ravenpy.config.commands import (
+    HRU,
+    LU,
+    BasinIndexCommand,
+    Config,
+    HRUState,
+    Sub,
+    Sym,
+)
 from ravenpy.config.rvs import RVI
 from ravenpy.models.base import Ostrich, Raven
 
@@ -19,29 +28,29 @@ class HMETS(Raven):
     flow forecasting and climate change impacts. Int. J. Eng. Educ., 33, 1307–1316.
     """
 
-    @dataclass
+    @dataclass(config=Config)
     class Params:
-        GAMMA_SHAPE: float
-        GAMMA_SCALE: float
-        GAMMA_SHAPE2: float
-        GAMMA_SCALE2: float
-        MIN_MELT_FACTOR: float
-        MAX_MELT_FACTOR: float
-        DD_MELT_TEMP: float
-        DD_AGGRADATION: float
-        SNOW_SWI_MIN: float
-        SNOW_SWI_MAX: float
-        SWI_REDUCT_COEFF: float
-        DD_REFREEZE_TEMP: float
-        REFREEZE_FACTOR: float
-        REFREEZE_EXP: float
-        PET_CORRECTION: float
-        HMETS_RUNOFF_COEFF: float
-        PERC_COEFF: float
-        BASEFLOW_COEFF_1: float
-        BASEFLOW_COEFF_2: float
-        TOPSOIL: float
-        PHREATIC: float
+        GAMMA_SHAPE: Sym = Variable("GAMMA_SHAPE")
+        GAMMA_SCALE: Sym = Variable("GAMMA_SCALE")
+        GAMMA_SHAPE2: Sym = Variable("GAMMA_SHAPE2")
+        GAMMA_SCALE2: Sym = Variable("GAMMA_SCALE2")
+        MIN_MELT_FACTOR: Sym = Variable("MIN_MELT_FACTOR")
+        MAX_MELT_FACTOR: Sym = Variable("MAX_MELT_FACTOR")
+        DD_MELT_TEMP: Sym = Variable("DD_MELT_TEMP")
+        DD_AGGRADATION: Sym = Variable("DD_AGGRADATION")
+        SNOW_SWI_MIN: Sym = Variable("SNOW_SWI_MIN")
+        SNOW_SWI_MAX: Sym = Variable("SNOW_SWI_MAX")
+        SWI_REDUCT_COEFF: Sym = Variable("SWI_REDUCT_COEFF")
+        DD_REFREEZE_TEMP: Sym = Variable("DD_REFREEZE_TEMP")
+        REFREEZE_FACTOR: Sym = Variable("REFREEZE_FACTOR")
+        REFREEZE_EXP: Sym = Variable("REFREEZE_EXP")
+        PET_CORRECTION: Sym = Variable("PET_CORRECTION")
+        HMETS_RUNOFF_COEFF: Sym = Variable("HMETS_RUNOFF_COEFF")
+        PERC_COEFF: Sym = Variable("PERC_COEFF")
+        BASEFLOW_COEFF_1: Sym = Variable("BASEFLOW_COEFF_1")
+        BASEFLOW_COEFF_2: Sym = Variable("BASEFLOW_COEFF_2")
+        TOPSOIL: Sym = Variable("TOPSOIL")
+        PHREATIC: Sym = Variable("PHREATIC")
 
     @dataclass
     class ForestHRU(HRU):

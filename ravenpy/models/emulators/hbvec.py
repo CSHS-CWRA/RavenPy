@@ -20,14 +20,13 @@ from ravenpy.config.commands import (
     SoilClassesCommand,
     SoilParameterListCommand,
     Sub,
+    Sym,
     VegetationClassesCommand,
     VegetationParameterListCommand,
 )
 from ravenpy.models.base import Ostrich, Raven
 
 from .gr4jcn import GR4JCN
-
-Sym = Union[Variable, float]
 
 
 class HBVEC(Raven):

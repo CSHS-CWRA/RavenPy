@@ -1,10 +1,20 @@
 from collections import defaultdict
+from dataclasses import asdict, field, make_dataclass
 from pathlib import Path
 from typing import cast
 
 from pydantic.dataclasses import dataclass
+from pymbolic.primitives import Variable
 
-from ravenpy.config.commands import HRU, LU, BasinIndexCommand, HRUState, Sub
+from ravenpy.config.commands import (
+    HRU,
+    LU,
+    BasinIndexCommand,
+    Config,
+    HRUState,
+    Sub,
+    Sym,
+)
 from ravenpy.config.rvs import RVI
 from ravenpy.models.base import Ostrich, Raven
 
@@ -24,18 +34,16 @@ class MOHYSE(Raven):
     Hydrology, 2(4), pp.289-317.
     """
 
-    @dataclass
-    class Params:
-        par_x01: float
-        par_x02: float
-        par_x03: float
-        par_x04: float
-        par_x05: float
-        par_x06: float
-        par_x07: float
-        par_x08: float
-        par_x09: float
-        par_x10: float
+    Params = dataclass(
+        make_dataclass(
+            "Params",
+            [
+                (f"par_x{i:02}", Sym, field(default=Variable(f"par_x{i:02}")))
+                for i in range(1, 11)
+            ],
+        ),
+        config=Config,
+    )
 
     def __init__(self, *args, **kwds):
         kwds["identifier"] = kwds.get("identifier", "mohyse")
