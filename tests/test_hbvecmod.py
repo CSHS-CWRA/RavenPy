@@ -3,6 +3,7 @@ from ravenpy.models import get_average_annual_runoff
 from ravenpy.models.emulators.hbvecmod import HBVECMOD, HBVECMOD_OST
 
 TS = "/home/david/src/raven-testdata/famine/famine_input.nc"
+# TS = "/home/david/Downloads/famine_input.nc"
 area = 100
 
 default = [

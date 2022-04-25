@@ -848,7 +848,7 @@ class RVT(RV):
                     and self._station_id.shape
                     and len(self._station_id) > idx
                 ):
-                    name = self._station_id[idx]
+                    name = str(self._station_id.values[idx])
                 else:
                     name = f"default_{idx + 1}"
 
