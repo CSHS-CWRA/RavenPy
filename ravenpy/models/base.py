@@ -477,9 +477,13 @@ class Raven:
 
             fns.sort()
             self.ind_outputs[key] = fns
-            self.outputs[key] = self._merge_output(fns, pattern.replace("*", "_ALL_"))
+            if not self.config.rvi.suppress_output:
+                self.outputs[key] = self._merge_output(
+                    fns, pattern.replace("*", "_ALL_")
+                )
 
-        self.outputs["rv_config"] = self._merge_output(self._rv_paths, "rv.zip")
+        if not self.config.rvi.suppress_output:
+            self.outputs["rv_config"] = self._merge_output(self._rv_paths, "rv.zip")
 
     def _merge_output(self, files, name):
         """Merge multiple output files into one if possible, otherwise return a list of files."""
