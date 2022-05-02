@@ -380,7 +380,7 @@ class HBVECMOD(Raven):
         """
         self.config.rvi.set_tmpl(rvi_tmpl)
 
-        self.config.rvi.routing = "ROUTE_MUSKINGUM"
+        self.config.rvi.routing = "ROUTE_DIFFUSIVE_WAVE"
         self.config.rvi.catchment_route = "ROUTE_DUMP"
         self.config.rvi.evaporation = "PET_HARGREAVES_1985"
         self.config.rvi.ow_evaporation = "PET_HARGREAVES_1985"
