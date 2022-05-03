@@ -4,7 +4,7 @@ import time
 import spotpy
 
 from ravenpy.models import GR4JCN
-from ravenpy.utilities.calibration import spotpy_setup
+from ravenpy.utilities.calibration import SpotpySetup
 from ravenpy.utilities.testdata import get_local_testdata
 
 
@@ -32,11 +32,11 @@ class TestGR4JCN_Spotpy:
         model.config.rvi.run_name = "test"
         model.config.rvi.suppress_output = True
 
-        spot_setup = spotpy_setup(model=model, ts=TS, obj_func=None)
+        spot_setup = SpotpySetup(model=model, ts=TS, obj_func=None)
         sampler = spotpy.algorithms.dds(
             spot_setup, dbname="RAVEN_model_run", dbformat="ram", save_sim=False
         )
-        rep = 1200
+        rep = 100
 
         tic = time.time()
         sampler.sample(rep, trials=1)

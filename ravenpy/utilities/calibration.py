@@ -9,46 +9,54 @@ import numpy as np
 from spotpy.parameter import Uniform, generate
 
 
-class spotpy_setup:
+class SpotpySetup:
     def __init__(self, model, ts, obj_func=None):
+        """
+
+        Parameters
+        ----------
+        model: Raven emulator subclass instance
+          Raven emulator.
+        ts: list
+          Forcing files.
+        obj_func: func
+          Objective function.
+        """
+        self.model = model
+        self.ts = ts
+
         # Just a way to keep this example flexible and applicable to various examples
         self.obj_func = obj_func
 
-        # self.params=[Uniform('X1',low=1, high=10),
-        #             Uniform('X2',low=1, high=10),
-        #             Uniform('X3',low=1, high=10),
-        #             Uniform('X4',low=1, high=10),
-        #             Uniform('X5',low=1, high=10),
-        #             Uniform('X6',low=1, high=10)
-        #             ]
+        # Initialize parameters
         self.params = []
         for i in range(0, len(model.low)):
             self.params.append(Uniform(str(i), low=model.low[i], high=model.high[i]))
-        self.model = model
-        self.ts = ts
-        return
 
     def evaluation(self):
+        """In theory this method should return the trues value. Since Raven computes the objective function,
+        we simply return a placeholder."""
         return 1
 
     def parameters(self):
+        """Return a random parameter combination."""
         return generate(self.params)
 
-    def simulation(self, vector):
-        x = np.array(vector)
-        self.x = x
+    def simulation(self, x):
+        """Run the model, but return a placeholder value."""
+
+        # Update parameters
+        self.model.config.update("params", np.array(x))
+
+        # Run the model
+        self.model(self.ts)
         return 1
 
-    def model(self):
-        return self
+    def objectivefunction(self, evaluation, simulation, params=None):
+        """Return the objective function.
 
-    def objectivefunction(self, evaluation, simulation):
-        model = self.model
-
-        # TODO: Add warm-up period!
-        model.config.update("params", self.x)
-        model(self.ts)
-        d = model.diagnostics
-        objfun = d["DIAG_NASH_SUTCLIFFE"][0]
-
-        return objfun
+        Note that we short-circuit the evaluation and simulation entries, since the objective function has already
+        been computed by Raven.
+        """
+        d = self.model.diagnostics
+        return d["DIAG_NASH_SUTCLIFFE"][0]
