@@ -23,6 +23,10 @@ class SpotpySetup:
           Objective function.
         """
         self.model = model
+
+        # Make sure no output is written to disk
+        self.model.config.rvi.suppress_output = True
+
         self.ts = ts
 
         # Just a way to keep this example flexible and applicable to various examples

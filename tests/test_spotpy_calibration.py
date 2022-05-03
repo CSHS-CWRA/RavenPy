@@ -30,7 +30,6 @@ class TestGR4JCN_Spotpy:
         model.config.rvi.start_date = dt.datetime(2000, 1, 1)
         model.config.rvi.end_date = dt.datetime(2002, 1, 1)
         model.config.rvi.run_name = "test"
-        model.config.rvi.suppress_output = True
 
         spot_setup = SpotpySetup(model=model, ts=TS, obj_func=None)
         sampler = spotpy.algorithms.dds(
