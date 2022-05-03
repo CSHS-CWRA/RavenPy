@@ -289,14 +289,20 @@ class HBVECMOD(Raven):
                     ),
                     PL(
                         "CONIFEROUS_FOREST",
-                        vals=[3 * P.X23, P.X22 + 3 * P.X23, P.X24, 2 * P.X25, P.X26],
+                        vals=[
+                            3 * P.X23,
+                            P.X22 + 3 * P.X23,
+                            5 * P.X24,
+                            2 * P.X25,
+                            P.X26,
+                        ],
                     ),
                     PL(
                         "DECIDUOUS_FOREST",
                         vals=[
                             3 * P.X23,
                             P.X22 + 3 * P.X23,
-                            0.5 * P.X24,
+                            5 * P.X24,
                             2 * P.X25,
                             P.X26,
                         ],
