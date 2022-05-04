@@ -55,7 +55,7 @@ jobs:
     - name: Test with tox
       run: tox -e ${{ matrix.tox-env }}
       env:
-        LD_PRELOAD: /lib/x86_64-linux-gnu/libstdc++.so.6:"$LD_PRELOAD"
+        LD_PRELOAD: /lib/x86_64-linux-gnu/libstdc++.so.6  # :"$LD_PRELOAD"
         GDAL_VERSION: "$(gdal-config --version)"
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         COVERALLS_FLAG_NAME: run-${{ matrix.tox-env }}
@@ -73,8 +73,10 @@ jobs:
           update-conda: true
       - name: Conda version
         run: conda --version
+      - name: Install mamba
+        run: conda install -c conda-forge mamba
       - name: Create RavenPy environment
-        run: conda env create -f environment.yml
+        run: mamba env create -f environment.yml
       - name: Install and test RavenPy
         run: |
           source activate ravenpy-env
@@ -84,7 +86,9 @@ jobs:
         env:
           RAVENPY_TESTDATA_PATH: ${{ github.workspace }}/raven-testdata
       - name: report coverage
-        run: coveralls --service=github
+        run: |
+          source activate ravenpy-env
+          coveralls --service=github
         env:
           COVERALLS_FLAG_NAME: run-conda
           COVERALLS_PARALLEL: true
