@@ -82,7 +82,7 @@ jobs:
           git clone https://github.com/Ouranosinc/raven-testdata $GITHUB_WORKSPACE/raven-testdata
           pytest --cov ravenpy
         env:
-          RAVENPY_TESTDATA_PATH: ${{ GITHUB_WORKSPACE }}/raven-testdata
+          RAVENPY_TESTDATA_PATH: ${{ github.workspace }}/raven-testdata
       - name: report coverage
         run: coveralls --service=github
         env:
