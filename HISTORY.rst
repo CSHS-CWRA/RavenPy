@@ -6,6 +6,7 @@ History
 -----
 
 * Add ``generate-hrus-from-routing-product`` script.
+* Fixed issues with coverage reporting via tox and GitHub Actions
 
 0.7.8
 -----
