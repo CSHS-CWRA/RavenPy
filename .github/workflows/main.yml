@@ -53,10 +53,9 @@ jobs:
     - name: Install tox
       run: pip install tox
     - name: Test with tox
-      run: tox -e ${{ matrix.tox-env }}
+      run: env GDAL_VERSION="$(gdal-config --version)" tox -e ${{ matrix.tox-env }}
       env:
         LD_PRELOAD: /lib/x86_64-linux-gnu/libstdc++.so.6  # :"$LD_PRELOAD"
-        GDAL_VERSION: "$(gdal-config --version)"
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         COVERALLS_FLAG_NAME: run-${{ matrix.tox-env }}
         COVERALLS_PARALLEL: true
@@ -90,6 +89,7 @@ jobs:
           source activate ravenpy-env
           coveralls --service=github
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COVERALLS_FLAG_NAME: run-conda
           COVERALLS_PARALLEL: true
 
