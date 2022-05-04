@@ -55,7 +55,7 @@ jobs:
     - name: Test with tox
       run: tox -e ${{ matrix.tox-env }}
       env:
-        LD_PRELOAD: /lib/x86_64-linux-gnu/libstdc++.so.6:$LD_PRELOAD
+        LD_PRELOAD: /lib/x86_64-linux-gnu/libstdc++.so.6:"$LD_PRELOAD"
         GDAL_VERSION: "$(gdal-config --version)"
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         COVERALLS_FLAG_NAME: run-${{ matrix.tox-env }}
@@ -82,7 +82,7 @@ jobs:
           git clone https://github.com/Ouranosinc/raven-testdata $GITHUB_WORKSPACE/raven-testdata
           pytest --cov ravenpy
         env:
-          RAVENPY_TESTDATA_PATH: $GITHUB_WORKSPACE/raven-testdata
+          RAVENPY_TESTDATA_PATH: ${{ GITHUB_WORKSPACE }}/raven-testdata
       - name: report coverage
         run: coveralls --service=github
         env:
