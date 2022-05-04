@@ -53,14 +53,13 @@ jobs:
     - name: Install tox
       run: pip install tox
     - name: Test with tox
-      run: |
-        export LD_PRELOAD=/lib/x86_64-linux-gnu/libstdc++.so.6:$LD_PRELOAD
-        env GDAL_VERSION="$(gdal-config --version)" tox -e ${{ matrix.tox-env }}
-    - name: report coverage
-      uses: AndreMiras/coveralls-python-action@develop
-      with:
-        flag-name: run-${{ matrix.tox-env }}
-        parallel: true
+      run: tox -e ${{ matrix.tox-env }}
+      env:
+        LD_PRELOAD: /lib/x86_64-linux-gnu/libstdc++.so.6:$LD_PRELOAD
+        GDAL_VERSION: "$(gdal-config --version)"
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        COVERALLS_FLAG_NAME: run-${{ matrix.tox-env }}
+        COVERALLS_PARALLEL: true
 
   conda:
     name: Conda
@@ -81,18 +80,23 @@ jobs:
           source activate ravenpy-env
           pip install -e ".[dev]"
           git clone https://github.com/Ouranosinc/raven-testdata $GITHUB_WORKSPACE/raven-testdata
-          env RAVENPY_TESTDATA_PATH=$GITHUB_WORKSPACE/raven-testdata pytest --cov ravenpy
+          pytest --cov ravenpy
+        env:
+          RAVENPY_TESTDATA_PATH: $GITHUB_WORKSPACE/raven-testdata
       - name: report coverage
-        uses: AndreMiras/coveralls-python-action@develop
-        with:
-          flag-name: run-conda
-          parallel: true
+        run: coveralls --service=github
+        env:
+          COVERALLS_FLAG_NAME: run-conda
+          COVERALLS_PARALLEL: true
 
   finish:
     needs: [pip, conda]
     runs-on: ubuntu-latest
+    container: python:3-slim
     steps:
     - name: Coveralls Finished
-      uses: AndreMiras/coveralls-python-action@develop
-      with:
-        parallel-finished: true
+      run: |
+        pip install --upgrade coveralls
+        coveralls --service=github --finish
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
