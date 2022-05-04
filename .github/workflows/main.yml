@@ -52,7 +52,7 @@ jobs:
         sudo apt-get install libgdal-dev
     - name: Install tox
       run: pip install tox
-    - name: Test with tox
+    - name: Test with tox and report coverage
       run: env GDAL_VERSION="$(gdal-config --version)" tox -e ${{ matrix.tox-env }}
       env:
         LD_PRELOAD: /lib/x86_64-linux-gnu/libstdc++.so.6  # :"$LD_PRELOAD"
@@ -84,7 +84,7 @@ jobs:
           pytest --cov ravenpy
         env:
           RAVENPY_TESTDATA_PATH: ${{ github.workspace }}/raven-testdata
-      - name: report coverage
+      - name: Report coverage
         run: |
           source activate ravenpy-env
           coveralls --service=github
