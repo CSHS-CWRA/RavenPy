@@ -510,7 +510,8 @@ class Raven:
         outfn = outfn.with_suffix(".zip")
 
         # Remove any existing file, otherwise content will be appended to it.
-        outfn.unlink(missing_ok=True)
+        if outfn.exists():
+            outfn.unlink()
 
         # Find the lower file parts level at which there are differences among files.
         i = get_diff_level(files)
