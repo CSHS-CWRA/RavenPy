@@ -13,6 +13,8 @@ Breaking changes:
   * Multiple `nc_index` values generate multiple *gauges*, instead of being parallelized.
 
 * Add ``generate-hrus-from-routing-product`` script.
+* Do not write RV zip file and merge outputs when `suppress_output` is True. Zipping rv files during multiple calibration runs leads to a non-linear performance slow-down.
+* Fixed issues with coverage reporting via tox and GitHub Actions
 
 
 
