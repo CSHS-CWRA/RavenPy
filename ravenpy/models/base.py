@@ -509,6 +509,10 @@ class Raven:
         # Let's zip the files that could not be merged.
         outfn = outfn.with_suffix(".zip")
 
+        # Remove any existing file, otherwise content will be appended to it.
+        if outfn.exists():
+            outfn.unlink()
+
         # Find the lower file parts level at which there are differences among files.
         i = get_diff_level(files)
 
