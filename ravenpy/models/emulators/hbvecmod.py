@@ -99,6 +99,14 @@ class HBVECMOD(Raven):
         #########
 
         rvp_tmpl = """
+        # These parameters appear in tied parameters only, so we print them here for debugging.
+        # x01: {X01}
+        # x02: {X02}
+        # x11: {X11}
+        # x13: {X13}
+        # x14: {X14}
+        # x23: {X23}
+
         #------------------------------------------------------------------------
         # Global parameters
         #

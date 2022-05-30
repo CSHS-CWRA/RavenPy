@@ -945,13 +945,30 @@ class LandUseParameterListCommand(ParameterList):
 
 @dataclass(config=Config)
 class TiedParams(RavenCommand):
+    """
+    <name> <np> <pname 1 > <pname 2 >...<pname np> <type> <data>
+
+    name: The name of the tied parameter, parameter names must be unique.
+    np: The number of non-tied parameters used in the calculation of the tied parameter value. (1 or 2)
+    pname: The list of non-tied parameter names that are used in the computation of the tied-parameter.
+    type: linear
+    data: If <type> = ”linear” and <np> = "1" : The functional relationship is linear and has the form:
+            X_tied = c0 + c1 X
+          where, X_tied is the tied-parameter value, c0 and c1 are coefficients and X is the non-tied parameter value.
+          <data> should be replaced with the following syntax: <c1> <c0>
+          If <type> = ”linear” and <np> = "2" : The functional relationship has the form:
+             X_tied = c3 X1 X2 + c2 X2 + c1 X1 + c0
+          where, X_tied is the tied-parameter value, c0 , c1 , c2 , and c3 are coefficients, and X1 and X2 are the
+          non-tied parameter values. <data> should be replaced with the following syntax: <c3> <c2> <c1> <c0>
+    """
+
     @dataclass(config=Config)
     class Record(RavenCommand):
         name: str
         expr: Expression
 
         def to_rv(self):
-            # Collect coefficients. Will raise if non-linear expression is given.
+            # Collect coefficients. Will raise error if non-linear expression is given.
             coefs = CoefficientCollector()(self.expr)
 
             if 1 not in coefs:
@@ -961,7 +978,8 @@ class TiedParams(RavenCommand):
             params = [k for (k, v) in coefs.items() if isinstance(k, Variable)]
             np = len(params)
 
-            data = [coefs[c] for c in params + [1]]
+            # The coefficients are in reverse order.
+            data = [coefs[c] for c in params[::-1] + [1]]
             if np == 2:
                 data.insert(0, 0)
 
