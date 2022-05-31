@@ -52,15 +52,13 @@ jobs:
         sudo apt-get install libgdal-dev
     - name: Install tox
       run: pip install tox
-    - name: Test with tox
-      run: |
-        export LD_PRELOAD=/lib/x86_64-linux-gnu/libstdc++.so.6:$LD_PRELOAD
-        env GDAL_VERSION="$(gdal-config --version)" tox -e ${{ matrix.tox-env }}
-    - name: report coverage
-      uses: AndreMiras/coveralls-python-action@develop
-      with:
-        flag-name: run-${{ matrix.tox-env }}
-        parallel: true
+    - name: Test with tox and report coverage
+      run: env GDAL_VERSION="$(gdal-config --version)" tox -e ${{ matrix.tox-env }}
+      env:
+        LD_PRELOAD: /lib/x86_64-linux-gnu/libstdc++.so.6  # :"$LD_PRELOAD"
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        COVERALLS_FLAG_NAME: run-${{ matrix.tox-env }}
+        COVERALLS_PARALLEL: true
 
   conda:
     name: Conda
@@ -74,25 +72,35 @@ jobs:
           update-conda: true
       - name: Conda version
         run: conda --version
+      - name: Install mamba
+        run: conda install -c conda-forge mamba
       - name: Create RavenPy environment
-        run: conda env create -f environment.yml
+        run: mamba env create -f environment.yml
       - name: Install and test RavenPy
         run: |
           source activate ravenpy-env
           pip install -e ".[dev]"
           git clone https://github.com/Ouranosinc/raven-testdata $GITHUB_WORKSPACE/raven-testdata
-          env RAVENPY_TESTDATA_PATH=$GITHUB_WORKSPACE/raven-testdata pytest --cov ravenpy
-      - name: report coverage
-        uses: AndreMiras/coveralls-python-action@develop
-        with:
-          flag-name: run-conda
-          parallel: true
+          pytest --cov ravenpy
+        env:
+          RAVENPY_TESTDATA_PATH: ${{ github.workspace }}/raven-testdata
+      - name: Report coverage
+        run: |
+          source activate ravenpy-env
+          coveralls --service=github
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COVERALLS_FLAG_NAME: run-conda
+          COVERALLS_PARALLEL: true
 
   finish:
     needs: [pip, conda]
     runs-on: ubuntu-latest
+    container: python:3-slim
     steps:
     - name: Coveralls Finished
-      uses: AndreMiras/coveralls-python-action@develop
-      with:
-        parallel-finished: true
+      run: |
+        pip install --upgrade coveralls
+        coveralls --service=github --finish
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
