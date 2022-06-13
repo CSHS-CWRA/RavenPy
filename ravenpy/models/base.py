@@ -434,9 +434,13 @@ class Raven:
 
             fns.sort()
             self.ind_outputs[key] = fns
-            self.outputs[key] = self._merge_output(fns, pattern.replace("*", "_ALL_"))
+            if not self.config.rvi.suppress_output:
+                self.outputs[key] = self._merge_output(
+                    fns, pattern.replace("*", "_ALL_")
+                )
 
-        self.outputs["rv_config"] = self._merge_output(self._rv_paths, "rv.zip")
+        if not self.config.rvi.suppress_output:
+            self.outputs["rv_config"] = self._merge_output(self._rv_paths, "rv.zip")
 
     def _merge_output(self, files, name):
         """Merge multiple output files into one if possible, otherwise return a list of files."""
@@ -461,6 +465,10 @@ class Raven:
 
         # Let's zip the files that could not be merged.
         outfn = outfn.with_suffix(".zip")
+
+        # Remove any existing file, otherwise content will be appended to it.
+        if outfn.exists():
+            outfn.unlink()
 
         # Find the lower file parts level at which there are differences among files.
         i = get_diff_level(files)
