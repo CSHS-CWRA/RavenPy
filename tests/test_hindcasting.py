@@ -51,7 +51,6 @@ class TestHindcasting:
         # And run the model with the forecast data.
         model(
             ts=ts20,
-            nc_index=range(nm),
             start_date=dt.datetime(2018, 6, 1),
             end_date=dt.datetime(2018, 6, 10),
             hrus=hrus,
@@ -64,6 +63,7 @@ class TestHindcasting:
                 "deaccumulate": True,
             },
             tas={"time_shift": -0.25},
+            parallel=dict(nc_index=range(nm)),
         )
 
         # The model now has the forecast data generated and it has 10 days of forecasts.

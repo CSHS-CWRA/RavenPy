@@ -50,13 +50,13 @@ class TestECCCForecast:
 
         model(
             ts=(ts20,),
-            nc_index=range(nm),
             duration=9,
             params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
             hrus=(hru,),
             overwrite=True,
             pr={"time_shift": -0.25, "deaccumulate": True},
             tas={"time_shift": -0.25},
+            parallel=dict(nc_index=range(nm)),
         )
 
         # The model now has the forecast data generated and it has 10 days of forecasts.
