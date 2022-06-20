@@ -182,4 +182,12 @@ class TestRVT:
         assert ":NumberHRUs 51" in res
         assert ":NumberGridCells 100" in res
         # FIXME: This test is not superb.
-        assert len(res.split("\n")) == 226
+        assert len(res.split("\n")) == 224
+
+    def test_gauges(self):
+        rvt = RVT(config=None)
+        rvt.nc_index = [0, 1, 2]
+        rvt.configure_from_nc_data([get_local_testdata("famine/famine_input.nc")])
+        out = rvt.to_rv()
+        assert len(re.findall(":Gauge", out)) == 3
+        assert set(re.findall(r":StationIdx\s*(\d)", out)) == {"1", "2", "3"}
