@@ -1,6 +1,7 @@
 import collections
 import datetime as dt
 from abc import ABC, abstractmethod
+from copy import deepcopy
 from dataclasses import replace
 from enum import Enum
 from pathlib import Path
@@ -652,6 +653,7 @@ class RVT(RV):
         self._nc_latitude: Optional[xr.DataArray] = None
         self._nc_longitude: Optional[xr.DataArray] = None
         self._nc_elevation: Optional[xr.DataArray] = None
+        self._station_id: Optional[xr.DataArray] = None
         self._number_grid_cells = 0
 
     def _add_nc_variable(self, **kwargs):
@@ -675,8 +677,10 @@ class RVT(RV):
         elif len(kwargs["dim_names_nc"]) == 2:
             if std_name == "water_volume_transport_in_river_channel" or is_obs_var:
                 cmd = ObservationDataCommand(**kwargs)
-            else:
+            elif self.grid_weights is not None:
                 cmd = StationForcingCommand(**kwargs)
+            else:
+                cmd = DataCommand(**kwargs)
         else:
             cmd = GriddedForcingCommand(**kwargs)
 
@@ -707,6 +711,9 @@ class RVT(RV):
                 except KeyError:
                     # Will try to compute values later from first HRU (in self.to_rv)
                     pass
+
+                if "station_id" in ds:
+                    self._station_id = ds["station_id"]
 
                 # Check if any alternate variable name is in the file.
                 for std_name in RVT.NC_VARS:
@@ -746,49 +753,65 @@ class RVT(RV):
 
         use_gauge = any(type(cmd) is DataCommand for cmd in self._var_cmds.values())
         if use_gauge:
-            data_cmds = []
-            for var, cmd in self._var_cmds.items():
-                if cmd and not isinstance(cmd, ObservationDataCommand):
-                    cmd = cast(DataCommand, cmd)
-                    data_cmds.append(cmd)
+            gauges = []
+            for idx in np.atleast_1d(self.nc_index):
+                data_cmds = []
+                for var, cmd in self._var_cmds.items():
+                    if cmd and not isinstance(cmd, ObservationDataCommand):
+                        cmd = deepcopy(cast(DataCommand, cmd))
+                        cmd.index = idx + 1  # Python index to Raven index
+                        data_cmds.append(cmd)
 
-            if (
-                self._nc_latitude
-                and self._nc_latitude.shape
-                and len(self._nc_latitude) > self.nc_index
-            ):
-                lat = self._nc_latitude.values[self.nc_index]
-            else:
-                lat = self._config.rvh.hrus[0].latitude
+                if (
+                    self._nc_latitude is not None
+                    and self._nc_latitude.shape
+                    and len(self._nc_latitude) > idx
+                ):
+                    lat = self._nc_latitude.values[idx]
+                else:
+                    lat = self._config.rvh.hrus[0].latitude
 
-            if (
-                self._nc_longitude
-                and self._nc_longitude.shape
-                and len(self._nc_longitude) > self.nc_index
-            ):
-                lon = self._nc_longitude.values[self.nc_index]
-            else:
-                lon = self._config.rvh.hrus[0].longitude
+                if (
+                    self._nc_longitude is not None
+                    and self._nc_longitude.shape
+                    and len(self._nc_longitude) > idx
+                ):
+                    lon = self._nc_longitude.values[idx]
+                else:
+                    lon = self._config.rvh.hrus[0].longitude
 
-            if (
-                self._nc_elevation
-                and self._nc_elevation
-                and len(self._nc_elevation) > self.nc_index
-            ):
-                elev = self._nc_elevation.values[self.nc_index]
-            else:
-                elev = self._config.rvh.hrus[0].elevation
+                if (
+                    self._nc_elevation is not None
+                    and self._nc_elevation.shape
+                    and len(self._nc_elevation) > idx
+                ):
+                    elev = self._nc_elevation.values[idx]
+                else:
+                    elev = self._config.rvh.hrus[0].elevation
 
-            d["gauge"] = GaugeCommand(
-                latitude=lat,
-                longitude=lon,
-                elevation=elev,
-                rain_correction=self.rain_correction,
-                snow_correction=self.snow_correction,
-                monthly_ave_evaporation=self.monthly_ave_evaporation,
-                monthly_ave_temperature=self.monthly_ave_temperature,
-                data_cmds=tuple(data_cmds),
-            )  # type: ignore
+                if (
+                    self._station_id is not None
+                    and self._station_id.shape
+                    and len(self._station_id) > idx
+                ):
+                    name = self._station_id[idx]
+                else:
+                    name = f"default_{idx + 1}"
+
+                gauges.append(
+                    GaugeCommand(
+                        name=name,
+                        latitude=lat,
+                        longitude=lon,
+                        elevation=elev,
+                        rain_correction=self.rain_correction,
+                        snow_correction=self.snow_correction,
+                        monthly_ave_evaporation=self.monthly_ave_evaporation,
+                        monthly_ave_temperature=self.monthly_ave_temperature,
+                        data_cmds=tuple(data_cmds),
+                    ),
+                )  # type: ignore
+            d["gauge"] = "\n".join([str(g) for g in gauges])
         else:
             # Construct default grid weights applying equally to all HRUs
             data = [(hru.hru_id, self.nc_index, 1.0) for hru in self._config.rvh.hrus]
@@ -811,7 +834,7 @@ class RVT(RV):
         # QUESTION: is it possible to have (and if yes should we support) more than 1
         # observation variable? For now we don't.
         for cmd in self._var_cmds.values():
-            if isinstance(cmd, ObservationDataCommand):
+            if isinstance(cmd, ObservationDataCommand) and self._config is not None:
                 # Search for the gauged SB, not sure what should happen when there are
                 # more than one (should it be even supported?)
                 for sb in self._config.rvh.subbasins:

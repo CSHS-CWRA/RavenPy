@@ -33,7 +33,7 @@ class LinearTransform(RavenCommand):
     scale: Optional[float] = 1
     offset: Optional[float] = 0
 
-    template = ":LinearTransform {scale:.15f} {offset:.15f}"
+    template = ":LinearTransform {scale:.15f} {offset:.15f}\n"
 
     def to_rv(self):
         if (self.scale != 1) or (self.offset != 0):
@@ -284,8 +284,8 @@ class BaseDataCommand(RavenCommand):
         d = asdict(self)
         d["dimensions"] = self.dimensions
         d["linear_transform"] = self.linear_transform
-        d["deaccumulate"] = ":Deaccumulate" if self.deaccumulate else ""
-        d["time_shift"] = f":TimeShift {self.time_shift}" if self.time_shift else ""
+        d["deaccumulate"] = ":Deaccumulate\n" if self.deaccumulate else ""
+        d["time_shift"] = f":TimeShift {self.time_shift}\n" if self.time_shift else ""
         return d
 
 
@@ -303,9 +303,7 @@ class DataCommand(BaseDataCommand):
             :VarNameNC       {var_name_nc}
             :DimNamesNC      {dimensions}
             :StationIdx      {index}
-            {time_shift}
-            {linear_transform}
-            {deaccumulate}
+            {time_shift}{linear_transform}{deaccumulate}
         :EndReadFromNetCDF
     :EndData
     """
@@ -317,6 +315,7 @@ class DataCommand(BaseDataCommand):
 
 @dataclass
 class GaugeCommand(RavenCommand):
+    name: str = "default"
     latitude: float = 0
     longitude: float = 0
     elevation: float = 0
@@ -331,14 +330,11 @@ class GaugeCommand(RavenCommand):
     data_cmds: Optional[Tuple[DataCommand, ...]] = ()
 
     template = """
-    :Gauge
+    :Gauge {name}
         :Latitude {latitude}
         :Longitude {longitude}
         :Elevation {elevation}
-        {rain_correction}
-        {snow_correction}
-        {monthly_ave_evaporation}
-        {monthly_ave_temperature}
+        {rain_correction}{snow_correction}{monthly_ave_evaporation}{monthly_ave_temperature}
         {data_cmds}
     :EndGauge
     """
@@ -346,19 +342,19 @@ class GaugeCommand(RavenCommand):
     def to_rv(self):
         d = asdict(self)
         d["rain_correction"] = (
-            f":RainCorrection {self.rain_correction}" if self.rain_correction else ""
+            f":RainCorrection {self.rain_correction}\n" if self.rain_correction else ""
         )
         d["snow_correction"] = (
-            f":SnowCorrection {self.snow_correction}" if self.snow_correction else ""
+            f":SnowCorrection {self.snow_correction}\n" if self.snow_correction else ""
         )
         if self.monthly_ave_evaporation:
             evap_data = " ".join(map(str, self.monthly_ave_evaporation))
-            d["monthly_ave_evaporation"] = f":MonthlyAveEvaporation {evap_data}"
+            d["monthly_ave_evaporation"] = f":MonthlyAveEvaporation {evap_data}\n"
         else:
             d["monthly_ave_evaporation"] = ""
         if self.monthly_ave_temperature:
             temp_data = " ".join(map(str, self.monthly_ave_temperature))
-            d["monthly_ave_temperature"] = f":MonthlyAveTemperature {temp_data}"
+            d["monthly_ave_temperature"] = f":MonthlyAveTemperature {temp_data}\n"
         else:
             d["monthly_ave_temperature"] = ""
         d["data_cmds"] = "\n\n".join(map(str, self.data_cmds))  # type: ignore
@@ -376,9 +372,7 @@ class ObservationDataCommand(DataCommand):
             :VarNameNC       {var_name_nc}
             :DimNamesNC      {dimensions}
             :StationIdx      {index}
-            {time_shift}
-            {linear_transform}
-            {deaccumulate}
+            {time_shift}{linear_transform}{deaccumulate}
         :EndReadFromNetCDF
     :EndObservationData
     """
@@ -445,9 +439,7 @@ class GriddedForcingCommand(BaseDataCommand):
         :FileNameNC {file_name_nc}
         :VarNameNC {var_name_nc}
         :DimNamesNC {dimensions}
-        {time_shift}
-        {linear_transform}
-        {deaccumulate}
+        {time_shift}{linear_transform}{deaccumulate}
     {grid_weights}
     :EndGriddedForcing
     """
@@ -471,9 +463,7 @@ class StationForcingCommand(BaseDataCommand):
         :FileNameNC {file_name_nc}
         :VarNameNC {var_name_nc}
         :DimNamesNC {dimensions}
-        {time_shift}
-        {linear_transform}
-        {deaccumulate}
+        {time_shift}{linear_transform}{deaccumulate}
     {grid_weights}
     :EndStationForcing
     """
