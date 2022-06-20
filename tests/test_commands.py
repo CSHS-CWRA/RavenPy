@@ -25,7 +25,10 @@ def test_linear_transform():
     assert LinearTransform(1, 0).to_rv() == ""
     scale = var("scale")
     lt = LinearTransform(scale, 10)
-    assert lt.to_rv(scale=2) == ":LinearTransform 2.000000000000000 10.000000000000000"
+    assert (
+        lt.to_rv(scale=2).strip()
+        == ":LinearTransform 2.000000000000000 10.000000000000000"
+    )
 
 
 def test_soil_classes():
@@ -105,7 +108,7 @@ def test_soil_parameter_list():
         """
     :SoilParameterList
         :Parameters     ,          POROSITY,    FIELD_CAPACITY
-        :Units          ,
+        :Units          ,              none,              none
         [DEFAULT]       ,               1.0,               0.0
         FAST_RES        ,          _DEFAULT,          _DEFAULT
     :EndSoilParameterList
@@ -123,7 +126,7 @@ def test_vegetation_parameter_list():
         """
     :VegetationParameterList
         :Parameters     ,      MAX_CAPACITY, MAX_SNOW_CAPACITY,    RAIN_ICEPT_PCT,    SNOW_ICEPT_PCT
-        :Units          ,
+        :Units          ,              none,              none,              none,              none
         VEG_ALL         ,           10000.0,           10000.0,              0.88,              0.88
     :EndVegetationParameterList
     """
@@ -139,7 +142,7 @@ def test_land_use_parameter_list():
         """
     :LandUseParameterList
         :Parameters     ,       MELT_FACTOR,   MIN_MELT_FACTOR
-        :Units          ,
+        :Units          ,              none,              none
         [DEFAULT]       ,               1.0,               2.2
     :EndLandUseParameterList
     """
@@ -162,7 +165,7 @@ def test_tied_params():
         """
         BeginTiedParams
           ex_1 1 X1 linear 0.2 0 free
-          ex_2 2 X1 X2 linear 0 2 3 10 free
+          ex_2 2 X1 X2 linear 0 3 2 10 free
           ex_3 1 X2 linear 1 50 free
         EndTiedParams
         """
