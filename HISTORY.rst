@@ -2,13 +2,20 @@
 History
 =======
 
-0.7.X
+
+
+
+0.8.0
 -----
+
+Breaking changes:
+  * Parallel parameters must be provided explicitly using the `parallel` argument when calling emulators.
 
 * Add ``generate-hrus-from-routing-product`` script.
 * Do not write RV zip file and merge outputs when `suppress_output` is True. Zipping rv files during multiple calibration runs leads to a non-linear performance slow-down.
 * Fixed issues with coverage reporting via tox and GitHub Actions
 * Do not write RV zip file and merge outputs when `suppress_output` is True. Zipping rv files during multiple calibration runs leads to a non-linear performance slow-down.
+
 
 0.7.8
 -----
