@@ -433,7 +433,7 @@ class HBVEC_OST(Ostrich, HBVEC):
         ####################
         # R V T (OST TMPL) #
         ####################
-        self.config.rvt.is_ostrich = True
+        self.config.rvt.is_ostrich_tmpl = True
 
         #########
         # O S T #

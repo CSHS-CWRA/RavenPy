@@ -1260,7 +1260,7 @@ class TestHBVEC:
 
 class TestHBVEC_OST:
     def test_simple(self):
-        model = HBVEC_OST(workdir="/tmp/hbvec_sym")
+        model = HBVEC_OST()
 
         model.configure(
             get_local_testdata("ostrich-gr4j-cemaneige/OstRandomNumbers.txt")
