@@ -1,9 +1,9 @@
 from ravenpy.extractors.routing_product import RoutingProductShapefileExtractor
 from ravenpy.models import get_average_annual_runoff
 from ravenpy.models.emulators.hbvecmod import HBVECMOD, HBVECMOD_OST
+from ravenpy.utilities.testdata import get_local_testdata
 
-TS = "/home/david/src/raven-testdata/famine/famine_input.nc"
-# TS = "/home/david/Downloads/famine_input.nc"
+TS = get_local_testdata("famine/famine_input.nc")
 area = 100
 
 default = [
@@ -37,7 +37,7 @@ default = [
 ]
 
 extractor = RoutingProductShapefileExtractor(
-    "/home/david/src/raven-testdata/famine/hru_Famine_final.zip",
+    get_local_testdata("famine/hru_Famine_final.zip"),
     routing_product_version="2.1",
 )
 
@@ -73,7 +73,7 @@ bnds = [
 
 
 def test_simple():
-    model = HBVECMOD(workdir="/tmp/hbvecmod")
+    model = HBVECMOD()
     model.config.rvp.params = HBVECMOD.Params(*default)
     model.config.rvp.avg_annual_runoff = get_average_annual_runoff(
         TS, area * 1e6, obs_var="qobs"
@@ -93,7 +93,7 @@ def test_simple():
 
 
 def test_calib_simple():
-    model = HBVECMOD_OST(workdir="/tmp/test_hbv_mod_ost")
+    model = HBVECMOD_OST()
     low, high = zip(*bnds)
     model.config.ost.lowerBounds = HBVECMOD.Params(*low)
     model.config.ost.upperBounds = HBVECMOD.Params(*high)
