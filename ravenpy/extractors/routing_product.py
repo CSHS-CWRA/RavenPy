@@ -118,7 +118,7 @@ class RoutingProductShapefileExtractor:
                 reservoir_cmds.append(self._extract_reservoir(row))
                 is_lake = True
             elif row[lake_field] > 0:
-                pass  # not sure about this condition!
+                continue  # not sure about this condition!
             else:
                 land_sb_ids.append(subbasin_id)
 
