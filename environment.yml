@@ -35,6 +35,7 @@ dependencies:
   - setuptools
   - shapely
   - statsmodels
+  - typing_extensions
   - xarray >=0.18
   - xclim >=0.26.1
   - xskillscore

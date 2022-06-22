@@ -37,6 +37,7 @@ requirements = [
     "requests",
     "scipy",
     "statsmodels",
+    "typing_extensions",
     "xarray>=0.18",
     "cf-xarray",
     "xclim>=0.26.1",
