@@ -69,7 +69,7 @@ def test_land_use_classe():
         """
     :LandUseClasses
         :Attributes     ,IMPERMEABLE_FRAC, FOREST_COVERAGE
-        :Units          ,            frac,            frac
+        :Units          ,           fract,           fract
         LU_ALL          ,             0.0,             1.0
     :EndLandUseClasses
     """
