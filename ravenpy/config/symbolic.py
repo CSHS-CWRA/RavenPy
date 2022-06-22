@@ -1,4 +1,4 @@
-from contextvars import ContextVar, copy_context
+from contextvars import ContextVar
 from typing import Union
 
 import pymbolic
@@ -10,8 +10,6 @@ from pymbolic.primitives import Expression, Variable
 # Context variable to store Ostrich TiedParams expressions
 symex = ContextVar("symex", default=dict())
 symex.set(dict())
-symctx = copy_context()
-
 
 # Type hint for symbolic expressions
 RavenExp = Union[Variable, Expression, float, None]

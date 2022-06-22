@@ -28,7 +28,7 @@ import xarray as xr
 from numpy.distutils.misc_util import is_sequence
 
 from ravenpy.config.rvs import RVC, Config
-from ravenpy.config.symbolic import symctx, symex
+from ravenpy.config.symbolic import symex
 
 RAVEN_EXEC_PATH = os.getenv("RAVENPY_RAVEN_BINARY_PATH") or shutil.which("raven")
 OSTRICH_EXEC_PATH = os.getenv("RAVENPY_OSTRICH_BINARY_PATH") or shutil.which("ostrich")
@@ -720,9 +720,12 @@ class Ostrich(Raven):
         # Each time the function `parse_symbolic` is called (for instance in `to_rv), it stores symbolic expressions in
         # symex, for example `0.5 * X10`. If the OST template contains `{tied_params}`, the `TiedParams`
         # command will be used to convert the symbolic expressions into ostrich tied parameters (linear only).
-        ctx = symctx.copy()
+        from contextvars import copy_context
+
+        symex.set(dict())
+        ctx = copy_context()
         ctx.run(super()._dump_rv)
-        self.config.ost.tied_params = symex.get()
+        self.config.ost.tied_params = ctx[symex]
 
         # ostIn.txt
         fn = self.exec_path / "ostIn.txt"
