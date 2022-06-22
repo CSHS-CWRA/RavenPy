@@ -863,7 +863,7 @@ class LandUseClassesCommand(RavenCommand):
     template = """
     :LandUseClasses
         :Attributes     ,IMPERMEABLE_FRAC, FOREST_COVERAGE
-        :Units          ,            frac,            frac
+        :Units          ,           fract,           fract
         {land_use_class_records}
     :EndLandUseClasses
     """
