@@ -9,7 +9,6 @@ from typing import (
     Any,
     ClassVar,
     Dict,
-    Literal,
     Mapping,
     Optional,
     Sequence,

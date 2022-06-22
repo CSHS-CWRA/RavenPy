@@ -1,7 +1,5 @@
-from typing import Literal
-
 # Allowed soil parameters
-SoilParameters = Literal[
+SoilParameters = [
     "SAND_CON",
     "CLAY_CON",
     "SILT_CON",
@@ -49,7 +47,7 @@ SoilParameters = Literal[
     "GR4J_X3",
 ]
 
-LandUseParameters = Literal[
+LandUseParameters = [
     "FOREST_COVERAGE",
     "IMPERMEABLE_FRAC",
     "ROUGHNESS",
@@ -96,7 +94,7 @@ LandUseParameters = Literal[
     "UBC_ICEPT_FACTOR",
 ]
 
-VegetationParameters = Literal[
+VegetationParameters = [
     "MAX_HEIGHT",
     "MAX_LEAF_COND",
     "MAX_LAI",
