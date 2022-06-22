@@ -629,11 +629,12 @@ class RVP(RV):
         }
 
         d.update(self._extra_attributes)
-        d.update(
-            asdict(self.params)
-            if self.params is not None
-            else parse_symbolic(asdict(self._config.model.Params()))
-        )
+
+        if self.params:
+            d.update(asdict(self.params))
+        # If using the Raven generic class, there is no `Params`
+        elif self._config and hasattr(self._config.model, "Params"):
+            d.update(parse_symbolic(asdict(self._config.model.Params())))
 
         return super().to_rv(
             dedent(self.tmpl.lstrip("\n")).format(**d),
