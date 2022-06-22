@@ -33,6 +33,7 @@ requirements = [
     "numpy",
     "pandas",
     "pydantic",
+    "pymbolic",
     "requests",
     "scipy",
     "statsmodels",
