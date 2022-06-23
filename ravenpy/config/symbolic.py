@@ -9,8 +9,12 @@ from pymbolic.primitives import Expression, Variable
 # Type hint for symbolic expressions
 RavenExp = Union[Variable, Expression, float, None]
 
-# Global registry to store Ostrich TiedParams expressions
-TIED_PARAMS_REGISTRY = {}
+# Global registry to store Ostrich TiedParams expressions:
+#   * If None, it means that we are running in non-Ostrich mode, where
+#     an unknown symbolic value should raise an error
+#   * When running Ostrich, this registry is first set to an empty dict,
+#     which signals that the unknown symbolic values should be kept in it
+TIED_PARAMS_REGISTRY = None
 
 
 class TiedParamsMapper(pymbolic.mapper.stringifier.StringifyMapper):
@@ -53,6 +57,13 @@ def parse_symbolic(value, **kwds):
         except pymbolic.mapper.evaluator.UnknownVariableError:
             # Convert to string, an identifier for expressions, and the variable name for variables.
             if isinstance(value, Expression) and not isinstance(value, Variable):
+
+                # If this registry is not defined, it means that we are
+                # running in a non-Ostrich context, where an unknown symbolic
+                # value should be an error
+                if TIED_PARAMS_REGISTRY is None:
+                    raise ValueError(f"{value} is not defined")
+
                 key = "par_" + TiedParamsMapper()(value).lower()
                 TIED_PARAMS_REGISTRY[key] = value
                 return key
