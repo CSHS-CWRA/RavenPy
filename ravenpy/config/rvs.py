@@ -15,6 +15,7 @@ import xarray as xr
 from numpy.distutils.misc_util import is_sequence
 
 from ravenpy import __version__
+from ravenpy.config import symbolic
 from ravenpy.config.commands import (
     HRU,
     BaseDataCommand,

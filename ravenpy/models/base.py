@@ -27,8 +27,8 @@ import numpy as np
 import xarray as xr
 from numpy.distutils.misc_util import is_sequence
 
+from ravenpy.config import symbolic
 from ravenpy.config.rvs import RVC, Config
-from ravenpy.config.symbolic import TIED_PARAMS_REGISTRY
 
 RAVEN_EXEC_PATH = os.getenv("RAVENPY_RAVEN_BINARY_PATH") or shutil.which("raven")
 OSTRICH_EXEC_PATH = os.getenv("RAVENPY_OSTRICH_BINARY_PATH") or shutil.which("ostrich")
@@ -721,10 +721,13 @@ class Ostrich(Raven):
         # `symbolic.TIED_PARAMS_REGISTRY` (for example `0.5 * X10`). If the OST template contains `{tied_params}`, the `TiedParams`
         # command will be used to convert the symbolic expressions into ostrich tied parameters (linear only).
 
-        # Reset the registry
-        TIED_PARAMS_REGISTRY = {}  # noqa: F811
+        # Reset the tied params registry before running the parent _dump_rv
+        symbolic.TIED_PARAMS_REGISTRY = {}  # noqa: F811
+
         super()._dump_rv()
-        self.config.ost.tied_params = TIED_PARAMS_REGISTRY
+
+        # Use the tied params that have been gathered
+        self.config.ost.tied_params = symbolic.TIED_PARAMS_REGISTRY
 
         # ostIn.txt
         fn = self.exec_path / "ostIn.txt"
