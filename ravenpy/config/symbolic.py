@@ -63,10 +63,12 @@ def parse_symbolic(value, **kwds):
                 # value should be an error
                 if TIED_PARAMS_REGISTRY is None:
                     raise ValueError(f"{value} is not defined")
-
-                key = "par_" + TiedParamsMapper()(value).lower()
-                TIED_PARAMS_REGISTRY[key] = value
-                return key
+                else:
+                    # We are running Ostrich, with which we want to collect
+                    # tied params in the registry
+                    key = "par_" + TiedParamsMapper()(value).lower()
+                    TIED_PARAMS_REGISTRY[key] = value
+                    return key
 
             # Convert to expression string
             return StringifyMapper()(value)
