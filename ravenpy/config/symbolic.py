@@ -1,4 +1,3 @@
-from contextvars import ContextVar
 from typing import Union
 
 import pymbolic
@@ -7,12 +6,11 @@ from pymbolic.mapper.evaluator import EvaluationMapper as EM
 from pymbolic.mapper.stringifier import StringifyMapper
 from pymbolic.primitives import Expression, Variable
 
-# Context variable to store Ostrich TiedParams expressions
-symex = ContextVar("symex", default=dict())
-symex.set(dict())
-
 # Type hint for symbolic expressions
 RavenExp = Union[Variable, Expression, float, None]
+
+# Global registry to store Ostrich TiedParams expressions
+TIED_PARAMS_REGISTRY = {}
 
 
 class TiedParamsMapper(pymbolic.mapper.stringifier.StringifyMapper):
@@ -56,9 +54,7 @@ def parse_symbolic(value, **kwds):
             # Convert to string, an identifier for expressions, and the variable name for variables.
             if isinstance(value, Expression) and not isinstance(value, Variable):
                 key = "par_" + TiedParamsMapper()(value).lower()
-                s = symex.get()
-                s[key] = value
-                symex.set(s)
+                TIED_PARAMS_REGISTRY[key] = value
                 return key
 
             # Convert to expression string
