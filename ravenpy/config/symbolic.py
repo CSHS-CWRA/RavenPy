@@ -9,7 +9,15 @@ from pymbolic.primitives import Expression, Variable
 # Type hint for symbolic expressions
 RavenExp = Union[Variable, Expression, float, None]
 
-# Global registry to store Ostrich TiedParams expressions
+# Global registry to store Ostrich TiedParams expressions. The use of a global variable
+# is far from ideal, but it's the easiest way to communicate information between `parse_symbolic`,
+# which happens very deep in the RV rendering logic, and its higher-level calling context.
+# Note that in order to be modified from another module, the registry has to be used this way:
+#
+# from ravenpy.config import symbolic
+# symbolic.TIED_PARAMS_REGISTRY[k] = v
+#
+# Doing it with `from ravenpy.config.symbolic import TIED_PARAMS_REGISTRY` would NOT work.
 TIED_PARAMS_REGISTRY = {}
 
 
