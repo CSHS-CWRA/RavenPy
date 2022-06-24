@@ -721,17 +721,13 @@ class Ostrich(Raven):
         # `symbolic.TIED_PARAMS_REGISTRY` (for example `0.5 * X10`). If the OST template contains `{tied_params}`, the `TiedParams`
         # command will be used to convert the symbolic expressions into ostrich tied parameters (linear only).
 
-        # Set the registry to {} (possibly from None) before running the parent _dump_rv, to signal that we want
-        # to collect the tied params for Ostrich (which also resets it, in the event that a previous Ostrich run occured)
+        # Reset the tied params registry before running the parent _dump_rv
         symbolic.TIED_PARAMS_REGISTRY = {}
 
         super()._dump_rv()
 
         # Use the tied params that have been gathered
         self.config.ost.tied_params = symbolic.TIED_PARAMS_REGISTRY
-
-        # Put it back to None, in the event that a non-Ostrich run follows
-        symbolic.TIED_PARAMS_REGISTRY = None
 
         # ostIn.txt
         fn = self.exec_path / "ostIn.txt"
