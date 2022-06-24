@@ -840,8 +840,9 @@ class VegetationClassesCommand(RavenCommand):
         :EndVegetationClasses
         """
 
+        veg_classes = [rec.to_rv(**kwds) for rec in self.vegetation_classes]
         return dedent(template).format(
-            vegetation_class_records="\n    ".join(map(str, self.vegetation_classes))
+            vegetation_class_records="\n    ".join(veg_classes)
         )
 
 
