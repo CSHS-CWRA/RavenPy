@@ -38,7 +38,7 @@ TS = get_local_testdata(
 )
 
 # Link to THREDDS Data Server netCDF testdata
-TDS = "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/fileServer/birdhouse/disk2/testdata/raven"
+TDS = "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/birdhouse/disk2/testdata/raven"
 
 
 @pytest.fixture
