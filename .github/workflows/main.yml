@@ -18,8 +18,8 @@ jobs:
         uses: styfle/cancel-workflow-action@0.9.1
         with:
           access_token: ${{ github.token }}
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         with:
           python-version: 3.7
       - name: Install tox
@@ -66,8 +66,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Setup conda
-        uses:  conda-incubator/setup-miniconda@v2
+      - name: Setup miniconda with mamba
+        uses: conda-incubator/setup-miniconda@v2.1.1
         with:
           python-version: "3.9"
           mamba-version: "*"
@@ -75,8 +75,9 @@ jobs:
           channel-priority: true
           activate-environment: ravenpy-env
           environment-file: environment.yml
-      - name: Conda version
-        run: conda --version
+      - name: Conda and mamba versions
+        run: |
+            mamba --version
       - name: Install and test RavenPy
         shell: bash -l {0}
         run: |
