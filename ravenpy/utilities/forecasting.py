@@ -219,7 +219,7 @@ def get_CASPAR_dataset(climate_model, date):
 
     if climate_model == "GEPS":
         d = dt.datetime.strftime(date, "%Y%m%d")
-        file_url = f"https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/birdhouse/caspar/daily/GEPS_{d}.nc"
+        file_url = f"https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/birdhouse/disk2/caspar/daily/GEPS_{d}.nc"
         ds = xr.open_dataset(file_url)
         # Here we also extract the times at 6-hour intervals as Raven must have
         # constant timesteps and GEPS goes to 6 hours
@@ -279,7 +279,7 @@ def get_recent_ECCC_forecast(region_coll, climate_model="GEPS"):
 
     Returns
     -------
-    forecast : xararray.Dataset
+    forecast : xarray.Dataset
       The forecast dataset.
 
     """
