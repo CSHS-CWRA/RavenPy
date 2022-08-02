@@ -29,7 +29,7 @@ requirements = [
     "dask",
     "haversine",
     "matplotlib",
-    "netCDF4",
+    "netCDF4<1.6.0",
     "numpy",
     "pandas",
     "pydantic",
