@@ -9,7 +9,6 @@ class is the base class adapting `Raven` to work with the Ostrich calibration to
 import collections
 import csv
 import datetime as dt
-import operator
 import os
 import re
 import shutil
@@ -278,7 +277,7 @@ class Raven:
         ts : path or sequence
           Sequence of input file paths. Symbolic links to those files will be created in the model directory.
         overwrite : bool
-          Whether or not to overwrite existing model and output files.
+          Whether to overwrite existing model and output files.
         parallel : {}
           Parameters that should be distributed across parallel simulations.
         **kwds : dict
