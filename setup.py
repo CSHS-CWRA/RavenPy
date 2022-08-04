@@ -29,7 +29,7 @@ requirements = [
     "dask",
     "haversine",
     "matplotlib",
-    "netCDF4<1.6.0",  # See: https://github.com/CSHS-CWRA/RavenPy/pull/190
+    "netCDF4",
     "numpy<1.23.0",  # See: https://github.com/CSHS-CWRA/RavenPy/pull/190
     "pandas",
     "pydantic",
