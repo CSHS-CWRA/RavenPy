@@ -164,7 +164,7 @@ def aggregate_forcings_to_hrus(
         # print(min_lat, max_lat)
         # print(idx_input)
 
-        input_var_bb = input_var[idx_input]
+        input_var_bb = input_var[tuple(idx_input)]
 
         # list of HRU IDs
         hrus = np.unique(weights_data_lon_lat_ids[:, 0])  # type: ignore
@@ -231,7 +231,9 @@ def aggregate_forcings_to_hrus(
                 # )
 
                 # this makes sure to handle NODATA cells properly
-                agg_var[:, ihru] += input_var_bb[idx_input].data * weights_nodata[iii]
+                agg_var[:, ihru] += (
+                    input_var_bb[tuple(idx_input)].data * weights_nodata[iii]
+                )
 
             # if all grid cells have weight 0.0 (i.e., all invalid) set value to NODATA
             idx_t_all_cells_nodata = np.where(
