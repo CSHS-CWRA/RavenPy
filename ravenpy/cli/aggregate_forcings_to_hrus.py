@@ -201,7 +201,6 @@ def aggregate_forcings_to_hrus(
                 idx_input[idx_lon_dim] = int(weights_data_lon_lat_ids[ii, 1]) - min_lon  # type: ignore
                 idx_input[idx_lat_dim] = int(weights_data_lon_lat_ids[ii, 2]) - min_lat  # type: ignore
 
-                # FIXME: numpy==1.23 -> `input_var_bb[idx_input]` raises "IndexError: only integers, slices (`:`), ellipsis (`...`), numpy.newaxis (`None`) and integer or boolean arrays are valid indices"
                 weights_nodata[iii] = np.where(
                     input_var_bb[tuple(idx_input)].mask, 0.0, weights_nodata[iii]
                 )
