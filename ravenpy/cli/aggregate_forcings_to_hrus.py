@@ -203,7 +203,7 @@ def aggregate_forcings_to_hrus(
 
                 # FIXME: numpy==1.23 -> `input_var_bb[idx_input]` raises "IndexError: only integers, slices (`:`), ellipsis (`...`), numpy.newaxis (`None`) and integer or boolean arrays are valid indices"
                 weights_nodata[iii] = np.where(
-                    input_var_bb[idx_input].mask, 0.0, weights_nodata[iii]
+                    input_var_bb[tuple(idx_input)].mask, 0.0, weights_nodata[iii]
                 )
 
             # rescale
