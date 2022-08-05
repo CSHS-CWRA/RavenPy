@@ -202,7 +202,7 @@ def aggregate_forcings_to_hrus(
                 idx_input[idx_lat_dim] = int(weights_data_lon_lat_ids[ii, 2]) - min_lat  # type: ignore
 
                 weights_nodata[iii] = np.where(
-                    input_var_bb[idx_input].mask, 0.0, weights_nodata[iii]
+                    input_var_bb[tuple(idx_input)].mask, 0.0, weights_nodata[iii]
                 )
 
             # rescale
