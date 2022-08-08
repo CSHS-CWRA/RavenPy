@@ -19,9 +19,8 @@ dependencies:
   - hvplot
   - lxml
   - matplotlib
-#  NetCDF4 and Numpy pinned temporarily. See: https://github.com/CSHS-CWRA/RavenPy/pull/190
-  - netCDF4 <1.6.0
-  - numpy <1.23.0
+  - netCDF4
+  - numpy
   - owslib >=0.24.1
   - pandas
   - pip
