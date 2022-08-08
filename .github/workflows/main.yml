@@ -30,7 +30,7 @@ jobs:
   pip:
     name: Pip with Python${{ matrix.python-version }}
     needs: black
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         include:
@@ -38,7 +38,7 @@ jobs:
             python-version: 3.7
           - tox-env: py38
             python-version: 3.8
-          - tox-env: py39
+          - tox-env: py39-numpy
             python-version: 3.9
     steps:
     - uses: actions/checkout@v3
