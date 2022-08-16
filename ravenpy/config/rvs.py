@@ -342,6 +342,7 @@ class RVI(RV):
         self._suppress_output = False
 
     def configure_from_nc_data(self, fns):
+
         with xr.open_mfdataset(fns, combine="by_coords") as ds:
             start, end = ds.indexes["time"][0], ds.indexes["time"][-1]
             cal = ds.time.encoding.get("calendar", "standard")
@@ -682,7 +683,10 @@ class RVT(RV):
             else:
                 cmd = DataCommand(**kwargs)
         else:
-            cmd = GriddedForcingCommand(**kwargs)
+            if std_name == "water_volume_transport_in_river_channel" or is_obs_var:
+                cmd = ObservationDataCommand(**kwargs)
+            else:
+                cmd = GriddedForcingCommand(**kwargs)
 
         spec = self._var_specs[std_name]
         self._var_cmds[std_name] = replace(cmd, **spec)
@@ -707,13 +711,21 @@ class RVT(RV):
                 try:
                     self._nc_latitude = ds.cf["latitude"]
                     self._nc_longitude = ds.cf["longitude"]
-                    self._nc_elevation = ds.cf["vertical"]
+                    latitude_var_name_nc = self._nc_latitude.name
+                    longitude_var_name_nc = self._nc_longitude.name
                 except KeyError:
                     # Will try to compute values later from first HRU (in self.to_rv)
-                    pass
+                    latitude_var_name_nc = ""
+                    longitude_var_name_nc = ""
 
                 if "station_id" in ds:
                     self._station_id = ds["station_id"]
+
+                if "elevation" in ds:
+                    self._nc_elevation = ds["elevation"]
+                    elevation_var_name_nc = "elevation"
+                else:
+                    elevation_var_name_nc = ""
 
                 # Check if any alternate variable name is in the file.
                 for std_name in RVT.NC_VARS:
@@ -726,6 +738,9 @@ class RVT(RV):
                             file_name_nc=fn,
                             data_type=RVT.NC_VARS[std_name]["raven"],
                             var_name_nc=var_name,
+                            latitude_var_name_nc=latitude_var_name_nc,
+                            longitude_var_name_nc=longitude_var_name_nc,
+                            elevation_var_name_nc=elevation_var_name_nc,
                             dim_names_nc=nc_var.dims,
                             units=nc_var.attrs.get("units"),
                         )

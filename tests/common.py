@@ -97,19 +97,28 @@ def _convert_3d(fn):
     >>> fn3 = "./testdata/raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_3d.nc"
     >>> _convert_3d(fn).to_netcdf(fn3, 'w')
     """
-    lon = [-123.3659, -120]
-    lat = [54.4848, 56]
-    ds = xr.open_dataset(fn).rename({"nstations": "lat"})
+    elevation = [[843.0]]
+    ds = xr.open_dataset(fn, decode_times=False)
 
     out = xr.Dataset(
-        coords={"lon": (["lon"], lon), "lat": (["lat"], lat), "time": ds.time}
+        coords={
+            "lon": ds.lon.expand_dims("lon").squeeze("nstations"),
+            "lat": ds.lat.expand_dims("lat").squeeze("nstations"),
+            "time": ds.time,
+        }
     )
+
     for v in ds.data_vars:
-        if v not in ["lon", "lat"]:
-            data = np.zeros((len(out.time), len(out.lon), len(out.lat)))
-            data[:, 1, 0] = ds.data_vars[v].data[:]
-            out[v] = xr.DataArray(
-                data=data, dims=("time", "lon", "lat"), attrs=ds.data_vars[v].attrs
-            )
+        if v not in ["lon", "lat", "time"]:
+            out[v] = ds[v]
+            out[v] = out[v].expand_dims(
+                ["lon", "lat"]
+            )  # Needs to be in other step to keep attributes
+
+    out["elevation"] = xr.DataArray(
+        data=elevation,
+        dims=["lon", "lat"],
+        attrs={"units": "m", "standard_name": "altitude"},
+    )
 
     return out

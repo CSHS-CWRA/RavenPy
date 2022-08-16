@@ -262,6 +262,9 @@ class BaseDataCommand(RavenCommand):
     scale: float = 1
     offset: float = 0
     deaccumulate: Optional[bool] = False
+    latitude_var_name_nc: str = ""
+    longitude_var_name_nc: str = ""
+    elevation_var_name_nc: str = ""
 
     @property
     def dimensions(self):
@@ -443,6 +446,9 @@ class GriddedForcingCommand(BaseDataCommand):
     {grid_weights}
     :EndGriddedForcing
     """
+    # :LatitudeVarNameNC {latitude_var_name_nc}
+    # :LongitudeVarNameNC {longitude_var_name_nc}
+    # :ElevationVarNameNC {elevation_var_name_nc}
 
     def to_rv(self):
         d = self.asdict()
@@ -467,6 +473,9 @@ class StationForcingCommand(BaseDataCommand):
     {grid_weights}
     :EndStationForcing
     """
+    # :LatitudeVarNameNC {latitude_var_name_nc}
+    # :LongitudeVarNameNC {longitude_var_name_nc}
+    # :ElevationVarNameNC {elevation_var_name_nc}
 
     def to_rv(self):
         d = self.asdict()

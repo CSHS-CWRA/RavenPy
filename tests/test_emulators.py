@@ -31,7 +31,7 @@ from ravenpy.models import (
 )
 from ravenpy.utilities.testdata import get_local_testdata
 
-from .common import _convert_2d
+from .common import _convert_2d, _convert_3d
 
 TS = get_local_testdata(
     "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
@@ -46,6 +46,16 @@ def input2d(tmpdir):
     """Convert 1D input to 2D output by copying all the time series along a new region dimension."""
     ds = _convert_2d(TS)
     fn_out = os.path.join(tmpdir, "input2d.nc")
+    ds.to_netcdf(fn_out)
+    return Path(fn_out)
+
+
+@pytest.fixture
+def input3d(tmpdir):
+    """Convert 1D input to 2D output by copying all the time series along a new region dimension."""
+    ds = _convert_3d(TS)
+    ds = ds.drop_vars("qobs")
+    fn_out = os.path.join(tmpdir, "input3d.nc")
     ds.to_netcdf(fn_out)
     return Path(fn_out)
 
@@ -376,6 +386,36 @@ class TestGR4JCN:
         #   outlet of subbasin 2
         d = model.diagnostics
         np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.0141168, 4)
+
+    def test_redirect_to_file(self, input3d):
+        model = GR4JCN()
+        model.config.rvi.start_date = dt.datetime(2000, 1, 1)
+        model.config.rvi.end_date = dt.datetime(2002, 1, 1)
+        model.config.rvi.run_name = "test"
+
+        model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
+
+        model.config.rvp.params = model.Params(
+            0.529, -3.396, 407.29, 1.072, 16.9, 0.947
+        )
+
+        total_area_in_m2 = model.config.rvh.hrus[0].area * 1000 * 1000
+        model.config.rvp.avg_annual_runoff = get_average_annual_runoff(
+            TS, total_area_in_m2
+        )
+
+        np.testing.assert_almost_equal(
+            model.config.rvp.avg_annual_runoff, 208.4805694844741
+        )
+
+        gw = GridWeightsCommand()
+        # TODO: Write gw to temp file
+        # TODO: rtf = RedirectToFile(<temp file>)
+        # TODO: model.config.rvt.grid_weights = rtf
+        model.config.rvt.grid_weights = gw
+        model(input3d)
+        # Should be 13.25446 to be identical to 1D case
+        np.testing.assert_almost_equal(model.q_sim.isel(time=-1).data, 12.51634, 5)
 
     def test_config_update(self):
         model = GR4JCN()
