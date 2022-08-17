@@ -388,7 +388,7 @@ class TestGR4JCN:
         d = model.diagnostics
         np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.0141168, 4)
 
-    def test_redirect_to_file(self, tmpdir, input3d):
+    def test_redirect_to_file(self, tmpdir, input2d):
         model = GR4JCN()
         model.config.rvi.start_date = dt.datetime(2000, 1, 1)
         model.config.rvi.end_date = dt.datetime(2002, 1, 1)
@@ -416,7 +416,7 @@ class TestGR4JCN:
         rtf = RedirectToFileCommand(gw_path)
         model.config.rvt.grid_weights = rtf
 
-        model(input3d)
+        model(input2d)
 
         # Should be 13.25446 to be identical to 1D case
         np.testing.assert_almost_equal(model.q_sim.isel(time=-1).data, 12.51634, 5)

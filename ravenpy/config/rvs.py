@@ -842,9 +842,6 @@ class RVT(RV):
                     cmd = cast(Union[GriddedForcingCommand, StationForcingCommand], cmd)
                     if len(cmd.grid_weights.data) == 1:
                         cmd.grid_weights = gw
-                    # Only this use case is supported for the moment
-                    if isinstance(cmd.grid_weights, RedirectToFileCommand):
-                        assert isinstance(cmd, GriddedForcingCommand)
                     cmds.append(cmd)
             d["forcing_list"] = "\n".join(map(str, cmds))
 
