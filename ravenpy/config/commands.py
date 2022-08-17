@@ -291,6 +291,9 @@ class BaseDataCommand(RavenCommand):
     scale: float = 1
     offset: float = 0
     deaccumulate: Optional[bool] = False
+    latitude_var_name_nc: str = ""
+    longitude_var_name_nc: str = ""
+    elevation_var_name_nc: str = ""
 
     @property
     def dimensions(self):
@@ -456,11 +459,33 @@ class GridWeightsCommand(RavenCommand):
 
 
 @dataclass
+class RedirectToFileCommand(RavenCommand):
+    """RedirectToFile command (RVT).
+
+    For the moment, this command can only be used in the context of a `GriddedForcingCommand`
+    or a `StationForcingCommand`, as a `grid_weights` field replacement when inlining is not
+    desired.
+    """
+
+    path: Path
+
+    template = "{indent}:RedirectToFile {path}"
+
+    def to_rv(self, indent_level=0):
+        indent = INDENT * indent_level
+        d = asdict(self)
+        d["indent"] = indent
+        return self.template.format(**d)
+
+
+@dataclass
 class GriddedForcingCommand(BaseDataCommand):
     """GriddedForcing command (RVT)."""
 
     dim_names_nc: Tuple[str, str, str] = ("x", "y", "t")
-    grid_weights: GridWeightsCommand = GridWeightsCommand()
+    grid_weights: Union[
+        GridWeightsCommand, RedirectToFileCommand
+    ] = GridWeightsCommand()
 
     template = """
     :GriddedForcing {name}
@@ -472,6 +497,9 @@ class GriddedForcingCommand(BaseDataCommand):
     {grid_weights}
     :EndGriddedForcing
     """
+    # :LatitudeVarNameNC {latitude_var_name_nc}
+    # :LongitudeVarNameNC {longitude_var_name_nc}
+    # :ElevationVarNameNC {elevation_var_name_nc}
 
     def to_rv(self):
         d = self.asdict()
@@ -484,7 +512,9 @@ class StationForcingCommand(BaseDataCommand):
     """StationForcing command (RVT)."""
 
     dim_names_nc: Tuple[str, str] = ("station", "time")
-    grid_weights: GridWeightsCommand = GridWeightsCommand()
+    grid_weights: Union[
+        GridWeightsCommand, RedirectToFileCommand
+    ] = GridWeightsCommand()
 
     template = """
     :StationForcing {name} {units}
@@ -496,6 +526,9 @@ class StationForcingCommand(BaseDataCommand):
     {grid_weights}
     :EndStationForcing
     """
+    # :LatitudeVarNameNC {latitude_var_name_nc}
+    # :LongitudeVarNameNC {longitude_var_name_nc}
+    # :ElevationVarNameNC {elevation_var_name_nc}
 
     def to_rv(self):
         d = self.asdict()
