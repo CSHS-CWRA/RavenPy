@@ -433,8 +433,9 @@ class GridWeightsCommand(RavenCommand):
 class RedirectToFileCommand(RavenCommand):
     """RedirectToFile command (RVT).
 
-    For the moment, this command can only be used in the context of a `GriddedForcingCommand`,
-    as a `grid_weights` field replacement when inlining is not desired.
+    For the moment, this command can only be used in the context of a `GriddedForcingCommand`
+    or a `StationForcingCommand`, as a `grid_weights` field replacement when inlining is not
+    desired.
     """
 
     path: Path
@@ -482,7 +483,9 @@ class StationForcingCommand(BaseDataCommand):
     """StationForcing command (RVT)."""
 
     dim_names_nc: Tuple[str, str] = ("station", "time")
-    grid_weights: GridWeightsCommand = GridWeightsCommand()
+    grid_weights: Union[
+        GridWeightsCommand, RedirectToFileCommand
+    ] = GridWeightsCommand()
 
     template = """
     :StationForcing {name} {units}
