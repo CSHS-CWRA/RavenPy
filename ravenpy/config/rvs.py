@@ -719,14 +719,18 @@ class RVT(RV):
                     latitude_var_name_nc = ""
                     longitude_var_name_nc = ""
 
+                try:
+                    self._nc_elevation = ds.cf["vertical"]
+                    elevation_var_name_nc = self._nc_elevation.name
+                except KeyError:
+                    if "elevation" in ds:
+                        self._nc_elevation = ds["elevation"]
+                        elevation_var_name_nc = "elevation"
+                    else:
+                        elevation_var_name_nc = ""
+
                 if "station_id" in ds:
                     self._station_id = ds["station_id"]
-
-                if "elevation" in ds:
-                    self._nc_elevation = ds["elevation"]
-                    elevation_var_name_nc = "elevation"
-                else:
-                    elevation_var_name_nc = ""
 
                 # Check if any alternate variable name is in the file.
                 for std_name in RVT.NC_VARS:
