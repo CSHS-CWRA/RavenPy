@@ -700,14 +700,10 @@ class RVT(RV):
         # Specifies whether the variables must be configured using file NC data
         self._auto_nc_configure = True
 
-<<<<<<< HEAD
         self.nc_index = self.station_idx = 0  # For meteo forcing files
         self.hydro_idx = 0  # For streamflow observation file
-        self.grid_weights = None
-=======
-        self.nc_index = 0
         self.grid_weights: Union[GridWeightsCommand, RedirectToFileCommand, None] = None
->>>>>>> origin/redirecttofile
+
         self.rain_correction = None
         self.snow_correction = None
         self.monthly_ave_evaporation = None
