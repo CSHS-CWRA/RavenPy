@@ -430,11 +430,32 @@ class GridWeightsCommand(RavenCommand):
 
 
 @dataclass
+class RedirectToFileCommand(RavenCommand):
+    """RedirectToFile command (RVT).
+
+    For the moment, this command can only be used in the context of a `GriddedForcingCommand`,
+    as a `grid_weights` field replacement when inlining is not desired.
+    """
+
+    path: Path
+
+    template = "{indent}:RedirectToFile {path}"
+
+    def to_rv(self, indent_level=0):
+        indent = INDENT * indent_level
+        d = asdict(self)
+        d["indent"] = indent
+        return self.template.format(**d)
+
+
+@dataclass
 class GriddedForcingCommand(BaseDataCommand):
     """GriddedForcing command (RVT)."""
 
     dim_names_nc: Tuple[str, str, str] = ("x", "y", "t")
-    grid_weights: GridWeightsCommand = GridWeightsCommand()
+    grid_weights: Union[
+        GridWeightsCommand, RedirectToFileCommand
+    ] = GridWeightsCommand()
 
     template = """
     :GriddedForcing {name}

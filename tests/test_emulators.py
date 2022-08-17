@@ -12,6 +12,7 @@ from ravenpy.config.commands import (  # GriddedForcingCommand,; LandUseClassesC
     EvaluationPeriod,
     GridWeightsCommand,
     HRUStateVariableTableCommand,
+    RedirectToFileCommand,
     SBGroupPropertyMultiplierCommand,
     Sub,
 )
@@ -387,7 +388,7 @@ class TestGR4JCN:
         d = model.diagnostics
         np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.0141168, 4)
 
-    def test_redirect_to_file(self, input3d):
+    def test_redirect_to_file(self, tmpdir, input3d):
         model = GR4JCN()
         model.config.rvi.start_date = dt.datetime(2000, 1, 1)
         model.config.rvi.end_date = dt.datetime(2002, 1, 1)
@@ -409,11 +410,14 @@ class TestGR4JCN:
         )
 
         gw = GridWeightsCommand()
-        # TODO: Write gw to temp file
-        # TODO: rtf = RedirectToFile(<temp file>)
-        # TODO: model.config.rvt.grid_weights = rtf
-        model.config.rvt.grid_weights = gw
+        gw_path = tmpdir / Path("grid_weights.rvt")
+        gw_path.write_text(gw.to_rv() + "\n", "utf8")
+
+        rtf = RedirectToFileCommand(gw_path)
+        model.config.rvt.grid_weights = rtf
+
         model(input3d)
+
         # Should be 13.25446 to be identical to 1D case
         np.testing.assert_almost_equal(model.q_sim.isel(time=-1).data, 12.51634, 5)
 

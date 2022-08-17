@@ -30,6 +30,7 @@ from ravenpy.config.commands import (
     HRUStateVariableTableCommand,
     LandUseClassesCommand,
     ObservationDataCommand,
+    RedirectToFileCommand,
     ReservoirCommand,
     SBGroupPropertyMultiplierCommand,
     SoilClassesCommand,
@@ -645,7 +646,7 @@ class RVT(RV):
         self._auto_nc_configure = True
 
         self.nc_index = 0
-        self.grid_weights = None
+        self.grid_weights: Union[GridWeightsCommand, RedirectToFileCommand, None] = None
         self.rain_correction = None
         self.snow_correction = None
         self.monthly_ave_evaporation = None
@@ -838,11 +839,12 @@ class RVT(RV):
             cmds = []
             for var, cmd in self._var_cmds.items():
                 if cmd and not isinstance(cmd, ObservationDataCommand):
-                    # TODO: implement a RedirectToFile mechanism to avoid inlining the grid weights
-                    # multiple times as we do here
                     cmd = cast(Union[GriddedForcingCommand, StationForcingCommand], cmd)
                     if len(cmd.grid_weights.data) == 1:
                         cmd.grid_weights = gw
+                    # Only this use case is supported for the moment
+                    if isinstance(cmd.grid_weights, RedirectToFileCommand):
+                        assert isinstance(cmd, GriddedForcingCommand)
                     cmds.append(cmd)
             d["forcing_list"] = "\n".join(map(str, cmds))
 
