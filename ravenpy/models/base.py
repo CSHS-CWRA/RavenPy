@@ -26,6 +26,7 @@ import numpy as np
 import xarray as xr
 from numpy.distutils.misc_util import is_sequence
 
+from ravenpy.config.commands import RedirectToFileCommand
 from ravenpy.config.rvs import RVC, Config
 
 RAVEN_EXEC_PATH = os.getenv("RAVENPY_RAVEN_BINARY_PATH") or shutil.which("raven")
@@ -261,6 +262,12 @@ class Raven:
         for fn in ts:
             if not (self.model_path / Path(fn).name).exists():
                 os.symlink(os.path.realpath(fn), str(self.model_path / Path(fn).name))
+
+        # Special case where a RedirectToFile command is used for the grid weights, which
+        # needs to be symlinked also
+        if isinstance(self.config.rvt.grid_weights, RedirectToFileCommand):
+            fn = self.config.rvt.grid_weights.path
+            os.symlink(os.path.realpath(fn), str(self.model_path / Path(fn).name))
 
         # Create symbolic link to Raven executable
         if not self.raven_cmd.exists():

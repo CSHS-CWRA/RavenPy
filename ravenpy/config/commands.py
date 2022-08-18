@@ -446,6 +446,9 @@ class RedirectToFileCommand(RavenCommand):
         indent = INDENT * indent_level
         d = asdict(self)
         d["indent"] = indent
+        # We can use the name of the file (as opposed to the full path)
+        # because we have a symlink to it in the execution folder
+        d["path"] = d["path"].name
         return self.template.format(**d)
 
 
