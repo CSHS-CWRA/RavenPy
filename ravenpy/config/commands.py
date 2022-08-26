@@ -289,6 +289,10 @@ class BaseDataCommand(RavenCommand):
         d["linear_transform"] = self.linear_transform
         d["deaccumulate"] = ":Deaccumulate\n" if self.deaccumulate else ""
         d["time_shift"] = f":TimeShift {self.time_shift}\n" if self.time_shift else ""
+        if isinstance(d["file_name_nc"], Path):
+            # We can use the name of the file (as opposed to the full path)
+            # because we have a symlink to it in the execution folder
+            d["file_name_nc"] = d["file_name_nc"].name
         return d
 
 

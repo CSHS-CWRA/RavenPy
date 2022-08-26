@@ -740,9 +740,7 @@ class RVT(RV):
                         nc_var = ds[var_name]
                         self._add_nc_variable(
                             name=std_name,
-                            # We can use the name of the file (as opposed to the full path)
-                            # because we have a symlink to it in the execution folder
-                            file_name_nc=fn.name,
+                            file_name_nc=Path(fn),
                             data_type=RVT.NC_VARS[std_name]["raven"],
                             var_name_nc=var_name,
                             latitude_var_name_nc=latitude_var_name_nc,
