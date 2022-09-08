@@ -703,7 +703,9 @@ class RVT(RV):
         self.nc_index = self.station_idx = 0  # For meteo forcing files
 
         self.hydro_idx: Tuple = (0,)  # Streamflow observation file station index
-        self.gauged_sb_ids: Tuple = (None,)  # Corresponding sub-basin ID. If (None,), will try to guess.
+        self.gauged_sb_ids: Tuple = (
+            None,
+        )  # Corresponding sub-basin ID. If (None,), will try to guess.
 
         self.grid_weights: Union[GridWeightsCommand, RedirectToFileCommand, None] = None
 
@@ -927,7 +929,9 @@ class RVT(RV):
                         )
 
                 if len(self.gauged_sb_ids) != len(self.hydro_idx):
-                    raise ValueError("`gauged_sb_ids` and `hydro_idx` must have the same number of entries.")
+                    raise ValueError(
+                        "`gauged_sb_ids` and `hydro_idx` must have the same number of entries."
+                    )
 
                 for idx, sb_id in zip(self.hydro_idx, self.gauged_sb_ids):
                     cmd = deepcopy(cast(ObservationDataCommand, cmd))
