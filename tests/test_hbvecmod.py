@@ -88,7 +88,7 @@ def test_simple():
         sb.gauged = sb.subbasin_id == 160
 
     model.config.rvt.nc_index = [0, 1, 2]
-    model.config.rvt.hydro_idx = 1
+    model.config.rvt.hydro_idx = (1,)
     model(ts=[TS], overwrite=True)
 
 
@@ -110,7 +110,7 @@ def test_calib_simple():
         sb.gauged = sb.subbasin_id == 160
 
     model.config.rvt.nc_index = [0, 1, 2]
-    model.config.rvt.hydro_idx = 1
+    model.config.rvt.hydro_idx = (1,)
 
     model.config.ost.max_iterations = 10
     model(ts=[TS], overwrite=True)

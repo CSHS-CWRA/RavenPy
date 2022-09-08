@@ -701,7 +701,10 @@ class RVT(RV):
         self._auto_nc_configure = True
 
         self.nc_index = self.station_idx = 0  # For meteo forcing files
-        self.hydro_idx = 0  # For streamflow observation file
+
+        self.hydro_idx: Tuple = (0,)  # Streamflow observation file station index
+        self.gauged_sb_ids: Tuple = (None,)  # Corresponding sub-basin ID. If (None,), will try to guess.
+
         self.grid_weights: Union[GridWeightsCommand, RedirectToFileCommand, None] = None
 
         self.rain_correction = None
@@ -909,25 +912,30 @@ class RVT(RV):
                     cmds.append(cmd)
             d["forcing_list"] = "\n".join(map(str, cmds))
 
-        # QUESTION: is it possible to have (and if yes should we support) more than 1
-        # observation variable? For now we don't.
         for cmd in self._var_cmds.values():
+            observed_data = []
             if isinstance(cmd, ObservationDataCommand) and self._config is not None:
-                # Search for the gauged SB, not sure what should happen when there are
-                # more than one (should it be even supported?)
 
-                for sb in self._config.rvh.subbasins:
-                    if sb.gauged:
-                        cmd.subbasin_id = sb.subbasin_id
-                        break
-                else:
-                    raise Exception(
-                        "Could not find an outlet subbasin for observation data"
-                    )
-                # Set the :StationxIdx (which starts at 1)
-                cmd.index = self.hydro_idx + 1
-                d["observed_data"] = cmd  # type: ignore
-                break
+                if self.gauged_sb_ids == (None,):
+                    for sb in self._config.rvh.subbasins:
+                        if sb.gauged:
+                            self.gauged_sb_ids = (sb.subbasin_id,)
+                            break
+                    else:
+                        raise Exception(
+                            "Could not find an outlet subbasin for observation data"
+                        )
+
+                if len(self.gauged_sb_ids) != len(self.hydro_idx):
+                    raise ValueError("`gauged_sb_ids` and `hydro_idx` must have the same number of entries.")
+
+                for idx, sb_id in zip(self.hydro_idx, self.gauged_sb_ids):
+                    cmd = deepcopy(cast(ObservationDataCommand, cmd))
+                    cmd.index = idx + 1  # Python index to Raven index
+                    cmd.subbasin_id = sb_id
+                    observed_data.append(cmd)
+
+                d["observed_data"] = "\n".join(map(str, observed_data))  # type: ignore
 
         return super().to_rv(dedent(self.tmpl.lstrip("\n")).format(**d), "RVT")
 
