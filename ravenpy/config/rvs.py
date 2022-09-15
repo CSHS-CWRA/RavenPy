@@ -250,7 +250,7 @@ class RVI(RV):
     # come after `:SoilModel`
     _post_tmpl = """
     :EvaluationMetrics     {evaluation_metrics}
-    {evaluation_periods}
+    :EvaluationPeriod      {evaluation_periods}
     :WriteNetcdfFormat     yes
     #:WriteForcingFunctions
     :SilentMode

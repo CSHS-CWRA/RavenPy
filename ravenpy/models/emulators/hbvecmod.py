@@ -196,6 +196,16 @@ class HBVECMOD(Raven):
                 ["TOPSOIL", "FAST_RES", "SLOW_RES"],
                 [P.X03, P.X04, P.X05],
             ),
+            SOIL(
+                "loam",
+                ["TOPSOIL", "FAST_RES", "SLOW_RES"],
+                [P.X03, P.X04, P.X05],
+            ),
+            SOIL(
+                "sandy_loam",
+                ["TOPSOIL", "FAST_RES", "SLOW_RES"],
+                [P.X03, P.X04, P.X05],
+            ),
             SOIL("LAKE", [], []),
         ]
 
@@ -423,6 +433,8 @@ class HBVECMOD(Raven):
                 if isinstance(hru, HBVECMOD.LandHRU) or hru.soil_profile in [
                     "SAND",
                     "LOAMY_SAND",
+                    "LOAM",
+                    "SANDY_LOAM",
                 ]:
                     self.config.rvc.hru_states[hru.hru_id] = HRUState(index=hru.hru_id)
                 elif isinstance(hru, HBVECMOD.LakeHRU) or hru.soil_profile in ["LAKE"]:
