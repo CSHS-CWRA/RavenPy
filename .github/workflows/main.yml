@@ -52,8 +52,10 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install libgdal-dev
-    - name: Install tox
-      run: pip install tox
+    - name: Install tox and setuptools
+      run: |
+        pip install tox
+        pip install --upgrade setuptools
     - name: Test with tox and report coverage
       run: env GDAL_VERSION="$(gdal-config --version)" tox -e ${{ matrix.tox-env }}
       env:
