@@ -64,7 +64,7 @@ def _convert_2d(fn):
     -------
     >>> fn = "./testdata/raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
     >>> fn2 = "./testdata/raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_2d.nc"
-    >>> _convert_2d(fn).to_netcdf(fn2, 'w')
+    >>> _convert_2d(fn).to_netcdf(fn2, "w")
     """
 
     features = {
@@ -95,7 +95,7 @@ def _convert_3d(fn):
     -------
     >>> fn = "./testdata/raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
     >>> fn3 = "./testdata/raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_3d.nc"
-    >>> _convert_3d(fn).to_netcdf(fn3, 'w')
+    >>> _convert_3d(fn).to_netcdf(fn3, "w")
     """
     lon = [-123.3659, -120]
     lat = [54.4848, 56]
