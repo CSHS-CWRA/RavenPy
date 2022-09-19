@@ -34,16 +34,15 @@ import ravenpy  # noqa
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
     "sphinx.ext.autodoc",
-    'sphinx.ext.autosectionlabel'
+    "sphinx.ext.autosectionlabel",
     "sphinx.ext.autosummary",
-
     "sphinx.ext.napoleon",
-'sphinx.ext.todo'
-"sphinx.ext.viewcode",
+    "sphinx.ext.todo",
+    "sphinx.ext.viewcode",
     "nbsphinx",
     "sphinx_click",
-    'sphinx_codeautolink',
-'sphinx_copybutton',
+    "sphinx_codeautolink",
+    "sphinx_copybutton",
 ]
 
 autosectionlabel_prefix_document = True
