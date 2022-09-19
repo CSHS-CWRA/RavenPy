@@ -14,8 +14,8 @@ In a situation where Raven configuration files (`.rv*` files) exist already, Rav
     from ravenpy.models import Raven
 
     model = ravenpy.models.Raven(workdir="/tmp/testrun")
-    model.configure(["rvfile1.rv", "rvfile2.rv", "rvfile3.rv", ...])
-    model(["forcingfile1", "forcingfile2", "forcingfile3", ...])
+    model.configure(["conf.rvi", "conf.rvt", "conf.rvh", "conf.rvc", "conf.rvp"])
+    model(["tas.nc", "pr.nc"])
 
 
 The `configure` method copies the configuration files to a directory, creates a symbolic link to the Raven executable in the same directory and runs it. The simulated hydrograph can then be accessed using the `q_sim` attribute, for example:
@@ -36,7 +36,7 @@ and then pass `start_date` and `end_date` as arguments to the `model` call:
     import datetime as dt
 
     model = ravenpy.models.Raven()
-    model.configure(["rvfile1.rv", "rvfile2.rv", "rvfile3.rv", ...])
+    model.configure(["conf.rvi", "conf.rvt", "conf.rvh", "conf.rvc", "conf.rvp"])
     model(start_date=dt.datetime(2020, 1, 1), end_date=dt.datetime(2020, 2, 1))
 
 This templating mechanism has been put in place for all four emulated models offered by RavenPy.
@@ -59,7 +59,7 @@ For each one of these, `.rv` files are provided that reproduce almost perfectly 
 
     model = GR4JCN()
     model(
-        ts=["forcingfile1", "forcingfile2", "forcingfile3", ...],
+        ts=["meteo.nc"],
         params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
         start_date=dt.datetime(2000, 1, 1),
         end_date=dt.datetime(2002, 1, 1),
