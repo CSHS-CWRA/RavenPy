@@ -64,7 +64,7 @@ else:
             ["gdal-config", "--version"], capture_output=True
         ).stdout.decode("utf-8")
         gis_requirements.append(f"gdal=={gdal_version}")
-    except subprocess.CalledProcessError:
+    except (subprocess.CalledProcessError, FileNotFoundError):
         pass
 
 dev_requirements = gis_requirements.copy()
