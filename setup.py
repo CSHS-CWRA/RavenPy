@@ -66,7 +66,7 @@ else:
             ["gdal-config", "--version"], capture_output=True
         ).stdout.decode("utf-8")
         gis_requirements.append(f"gdal=={gdal_version}")
-    except subprocess.CalledProcessError:
+    except (subprocess.CalledProcessError, FileNotFoundError):
         pass
 
 dev_requirements = gis_requirements.copy()
@@ -211,14 +211,13 @@ def create_external_deps_install_class(command_cls):
 setup(
     author="David Huard",
     author_email="huard.david@ouranos.ca",
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
         "Natural Language :: English",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
     ],

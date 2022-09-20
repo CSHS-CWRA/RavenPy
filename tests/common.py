@@ -64,7 +64,7 @@ def _convert_2d(fn):
     -------
     >>> fn = "./testdata/raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
     >>> fn2 = "./testdata/raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_2d.nc"
-    >>> _convert_2d(fn).to_netcdf(fn2, 'w')
+    >>> _convert_2d(fn).to_netcdf(fn2, "w")
     """
 
     features = {
@@ -95,7 +95,7 @@ def _convert_3d(fn):
     -------
     >>> fn = "./testdata/raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
     >>> fn3 = "./testdata/raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_3d.nc"
-    >>> _convert_3d(fn).to_netcdf(fn3, 'w')
+    >>> _convert_3d(fn).to_netcdf(fn3, "w")
     """
     elevation = [[843.0]]
     ds = xr.open_dataset(fn, decode_times=False)
