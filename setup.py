@@ -29,7 +29,7 @@ requirements = [
     "dask",
     "haversine",
     "matplotlib",
-    "netCDF4",  # Pin needed due to issue with wheel (see: https://github.com/Unidata/netcdf4-python/issues/1192)
+    "netCDF4",
     "numpy",
     "pandas",
     "pydantic",
