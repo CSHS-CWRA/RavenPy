@@ -21,7 +21,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
-          python-version: 3.7
+          python-version: "3.8"
       - name: Install tox and setuptools
         run: |
           pip install tox
@@ -36,12 +36,12 @@ jobs:
     strategy:
       matrix:
         include:
-          - tox-env: py37
-            python-version: 3.7
           - tox-env: py38
-            python-version: 3.8
+            python-version: "3.8"
           - tox-env: py39-numpy
-            python-version: 3.9
+            python-version: "3.9"
+          - tox-env: py310
+            python-version: "3.10"
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
