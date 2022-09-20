@@ -1,4 +1,7 @@
 sphinx
+sphinx-click
+sphinx-codeautolink
+sphinx-copybutton
 sphinx-rtd-theme
 nbsphinx
 pandoc

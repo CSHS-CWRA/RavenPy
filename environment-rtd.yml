@@ -3,12 +3,12 @@ channels:
 - conda-forge
 - defaults
 dependencies:
+  - python >=3.8
   - click
   - matplotlib
 #  - netCDF4
 #  - xarray
   - wheel
-  - dataclasses  # Needed for Python 3.6
   - sphinx
   - nbsphinx
   - pandoc
@@ -19,4 +19,6 @@ dependencies:
   - sphinx-click
   - sphinx_rtd_theme
   - sphinx-autoapi
+  - sphinx-codeautolink
+  - sphinx-copybutton
   - sphinxcontrib-napoleon

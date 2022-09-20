@@ -296,7 +296,7 @@ class Raven:
         Examples
         --------
         >>> r = Raven()
-        >>> r.configure(rvi='path to template', rvp='...'}
+        >>> r.configure(rvi="path/to/template", rvp="...")
         >>> r.run(ts, start_date=dt.datetime(2000, 1, 1), area=1000, X1=67)
 
         """
@@ -636,7 +636,7 @@ class Ostrich(Raven):
 
     Examples
     --------
-    >>> r = Ostrich('/tmp/testdir')
+    >>> r = Ostrich("/tmp/testdir")
     >>> r.configure()
     """
 
