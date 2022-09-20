@@ -11,17 +11,18 @@ In a situation where Raven configuration files (`.rv*` files) exist already, Rav
 
 .. code-block:: python
 
-   from ravenpy.models import Raven
-   model = ravenpy.models.Raven(workdir="/tmp/testrun")
-   model.configure([<list of .rv* files>])
-   model([<list of forcing files>])
+    from ravenpy.models import Raven
+
+    model = ravenpy.models.Raven(workdir="/tmp/testrun")
+    model.configure(["conf.rvi", "conf.rvt", "conf.rvh", "conf.rvc", "conf.rvp"])
+    model(["tas.nc", "pr.nc"])
 
 
 The `configure` method copies the configuration files to a directory, creates a symbolic link to the Raven executable in the same directory and runs it. The simulated hydrograph can then be accessed using the `q_sim` attribute, for example:
 
 .. code-block:: python
 
-   model.q_sim.plot()
+    model.q_sim.plot()
 
 The real value of RavenPy is however in its templating capability. Formatting tags inserted in configuration files can be replaced by Python objects injected at run time. So for example, instead of specifying the start and end dates of a simulation in the configuration file, we can write a configuration file with::
 
@@ -32,10 +33,11 @@ and then pass `start_date` and `end_date` as arguments to the `model` call:
 
 .. code-block:: python
 
-  import datetime as dt
-  model = ravenpy.models.Raven()
-  model.configure([<list of .rv* file templates>])
-  model(start_date=dt.datetime(2020, 1, 1), end_date=dt.datetime(2020, 2, 1))
+    import datetime as dt
+
+    model = ravenpy.models.Raven()
+    model.configure(["conf.rvi", "conf.rvt", "conf.rvh", "conf.rvc", "conf.rvp"])
+    model(start_date=dt.datetime(2020, 1, 1), end_date=dt.datetime(2020, 2, 1))
 
 This templating mechanism has been put in place for all four emulated models offered by RavenPy.
 
@@ -53,24 +55,26 @@ For each one of these, `.rv` files are provided that reproduce almost perfectly 
 
 .. code-block:: python
 
-   from ravenpy.models import GR4JCN
-   model = GR4JCN()
-   model(ts=<list of input forcing files>,
-         params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
-         start_date=dt.datetime(2000, 1, 1),
-         end_date=dt.datetime(2002, 1, 1),
-         area=4250.6,
-         elevation=843.0,
-         latitude=54.4848,
-         longitude=-123.3659
-         )
-   model.q_sim.plot()
+    from ravenpy.models import GR4JCN
+
+    model = GR4JCN()
+    model(
+        ts=["meteo.nc"],
+        params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
+        start_date=dt.datetime(2000, 1, 1),
+        end_date=dt.datetime(2002, 1, 1),
+        area=4250.6,
+        elevation=843.0,
+        latitude=54.4848,
+        longitude=-123.3659,
+    )
+    model.q_sim.plot()
 
 The model configuration can be found as a zip archive in:
 
 .. code-block:: python
 
-   model.outputs["rv_config"]
+    model.outputs["rv_config"]
 
 
 Setting initial conditions
@@ -79,10 +83,11 @@ Each emulated model defines default initial conditions for its state variables (
 
 .. code-block:: python
 
-   from ravenpy.models import GR4JCN
-   from ravenpy.models.state import HRUStateVariables
-   model = GR4JCN()
-   model(ts=ts, hru_state=HRUStateVariables(soil0=100), **kwargs)
+    from ravenpy.models import GR4JCN
+    from ravenpy.models.state import HRUStateVariables
+
+    model = GR4JCN()
+    model(ts=ts, hru_state=HRUStateVariables(soil0=100), **kwargs)
 
 
 Resuming from a previous run
@@ -91,16 +96,21 @@ Once a first simulation has completed, it's possible to initialize a second simu
 
 .. code-block:: python
 
-   model = GR4JCN()
-   rvc = open(<path to solution.rvc>)
-   model.resume(rvc)
-   model(ts=ts, **kwargs)
+    model = GR4JCN()
+    rvc = open("/path/to/solution.rvc")
+    model.resume(rvc)
+    model(ts=ts, **kwargs)
 
 or if a model instance already exists, simply by calling the `resume` method on it:
 
 .. code-block:: python
 
-   model = GR4JCN()
-   model(ts=ts, start_date=dt.datetime(2000, 1, 1), end_date=dt.datetime(2002, 2, 1), **kwargs)
-   model.resume()
-   model(ts=ts, start_date=dt.datetime(2000, 2, 1), end_date=dt.datetime(2002, 3, 1))
+    model = GR4JCN()
+    model(
+        ts=ts,
+        start_date=dt.datetime(2000, 1, 1),
+        end_date=dt.datetime(2002, 2, 1),
+        **kwargs
+    )
+    model.resume()
+    model(ts=ts, start_date=dt.datetime(2000, 2, 1), end_date=dt.datetime(2002, 3, 1))

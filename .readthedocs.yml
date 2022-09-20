@@ -6,5 +6,17 @@ sphinx:
   # disabled but this also means those errors will fail silently, choose wisely.
   fail_on_warning: true
 
+build:
+  os: ubuntu-22.04
+  tools:
+    python: "mambaforge-4.10"
+
 conda:
   environment: environment-rtd.yml
+
+python:
+  install:
+    - method: pip
+      path: .
+      extra_requirements:
+        - dev

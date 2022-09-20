@@ -52,7 +52,7 @@ def mk_test_calc(x: np.array, alpha: float = 0.05) -> Tuple[str, float, float, f
     Examples
     --------
     >>> x = np.random.rand(100)
-    >>> trend, h, p, z = mk_test(x,0.05)
+    >>> trend, h, p, z = mk_test(x, 0.05)
     """
     n = len(x)
 
