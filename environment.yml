@@ -35,6 +35,7 @@ dependencies:
   - scipy
   - setuptools
   - shapely
+  - spotpy
   - statsmodels
   - typing_extensions
   - xarray >=0.18
