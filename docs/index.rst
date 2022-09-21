@@ -1,7 +1,6 @@
 Welcome to RavenPy's documentation!
 ===================================
 
-
 RavenPy is a Python wrapper for Raven_, accompanied by utility functions that facilitate model configuration, calibration, and evaluation.
 
 Raven_ is an hydrological modeling framework that lets hydrologists build hydrological models by combining different hydrological processes together. It can also be used to emulate a variety of existing lumped and distributed models. Model structure, parameters, initial conditions and forcing files are configured in text files, which Raven parses to build and run hydrological simulations. A detailed description about modeling capability of Raven_ can be found in the `docs`_.
@@ -40,8 +39,6 @@ The code is currently undergoing a number of changes to support semi-distributed
    modules
 
 
-Credits
-=======
 RavenPy's development has been funded by CANARIE_ and Ouranos_ and would be not be possible without the help of Juliane Mai and James Craig.
 
 Indices and tables

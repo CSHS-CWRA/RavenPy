@@ -41,10 +41,10 @@ Install
 
 Please see the detailed `installation docs`_.
 
-Credits
--------
+Acknowledgements
+----------------
 
-RavenPy's development has been funded by CANARIE_.
+RavenPy's development has been funded by CANARIE_ and Ouranos_ and would be not be possible without the help of Juliane Mai and James Craig.
 
 This package was created with Cookiecutter_ and the `Ouranosinc/cookiecutter-pypackage`_ project template.
 
@@ -53,3 +53,4 @@ This package was created with Cookiecutter_ and the `Ouranosinc/cookiecutter-pyp
 .. _Cookiecutter: https://github.com/audreyfeldroy/cookiecutter-pypackage
 .. _`Ouranosinc/cookiecutter-pypackage`: https://github.com/Ouranosinc/cookiecutter-pypackage
 .. _`CANARIE`: https://www.canarie.ca
+.. _`Ouranos`: http://ouranos.ca
