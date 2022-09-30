@@ -12,7 +12,7 @@ build:
     python: "mambaforge-4.10"
   jobs:
     pre_build:
-      - sphinx-apidoc -o docs/ --private --module-first ravepy
+      - sphinx-apidoc -o docs/ --private --module-first ravenpy
 
 conda:
   environment: environment-rtd.yml
