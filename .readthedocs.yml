@@ -10,6 +10,9 @@ build:
   os: ubuntu-22.04
   tools:
     python: "mambaforge-4.10"
+  jobs:
+    pre_build:
+      - sphinx-apidoc -o docs/apidoc --private --module-first ravenpy
 
 conda:
   environment: environment-rtd.yml

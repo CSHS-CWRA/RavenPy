@@ -15,6 +15,7 @@ recursive-include docs *.rst conf.py Makefile make.bat *.jpg *.png *.gif *.ipynb
 
 recursive-exclude docs/notebooks/.ipynb_checkpoints *
 recursive-exclude docs/_build *
+recursive-exclude docs/apidoc *.rst
 
 graft ravenpy/models
 graft ravenpy/data

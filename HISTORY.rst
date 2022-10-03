@@ -9,6 +9,7 @@ Breaking changes:
   * Parallel parameters must be provided explicitly using the `parallel` argument when calling emulators.
   * Multiple `nc_index` values generate multiple *gauges*, instead of being parallelized.
   * Python3.7 is no longer supported.
+  * Documentation now uses sphinx-apidoc at build-time to generate API pages.
 
 * Add ``generate-hrus-from-routing-product`` script.
 * Do not write RV zip file and merge outputs when `suppress_output` is True. Zipping rv files during multiple calibration runs leads to a non-linear performance slow-down.
