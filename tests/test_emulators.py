@@ -9,6 +9,7 @@ import pytest
 
 from ravenpy.config.commands import (  # GriddedForcingCommand,; LandUseClassesCommand,; ObservationDataCommand,; SoilClassesCommand,; SoilProfilesCommand,; VegetationClassesCommand,
     ChannelProfileCommand,
+    CustomOutput,
     EvaluationPeriod,
     GridWeightsCommand,
     HRUStateVariableTableCommand,
@@ -108,6 +109,9 @@ class TestGR4JCN:
         model.config.rvi.start_date = dt.datetime(2000, 1, 1)
         model.config.rvi.end_date = dt.datetime(2002, 1, 1)
         model.config.rvi.run_name = "test"
+        model.config.rvi.custom_output = CustomOutput(
+            "YEARLY", "AVERAGE", "PRECIP", "ENTIRE_WATERSHED"
+        )
 
         model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
 
@@ -181,6 +185,11 @@ class TestGR4JCN:
         # Check attributes
         # ------------
         assert model.hydrograph.attrs["model_id"] == "gr4jcn"
+
+        assert (
+            model.output_path / f"{model.config.rvi.run_name}-"
+            f"{model.psim}_PRECIP_Yearly_Average_ByWatershed.nc"
+        ).exists()
 
     def test_routing(self):
         """We need at least 2 subbasins to activate routing."""

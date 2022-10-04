@@ -56,6 +56,38 @@ class EvaluationPeriod(RavenCommand):
 
 
 @dataclass
+class CustomOutput(RavenCommand):
+    """
+    Create custom output file to track a single variable, parameter or forcing function over time at a number of
+    basins, HRUs, or across the watershed.
+
+    Parameters
+    ----------
+    time_per : {'DAILY', 'MONTHLY', 'YEARLY', 'WATER_YEARLY', 'CONTINUOUS'}
+      Time period.
+    stat : {'AVERAGE', 'MAXIMUM', 'MINIMUM', 'RANGE', 'MEDIAN', 'QUARTILES', 'HISTOGRAM [min] [max] [# bins]'
+      Statistic reported for each time inverval.
+    variable: str
+      Variable or parameter name. Consult the Raven documentation for the list of allowed names.
+    space_agg : {'BY_BASIN', 'BY_HRU', 'BY_HRU_GROUP', 'BY_SB_GROUP', 'ENTIRE_WATERSHED'}
+      Spatial evaluation domain.
+    filename : str
+      Output file name. Defaults to something approximately like `<run name>_<variable>_<time_per>_<stat>_<space_agg>.nc
+    """
+
+    time_per: str
+    stat: str
+    variable: str
+    space_agg: str
+    filename: str = ""
+
+    template = ":CustomOutput {time_per} {stat} {variable} {space_agg} {filename}"
+
+    def to_rv(self):
+        return self.template.format(**asdict(self))
+
+
+@dataclass
 class SubBasinsCommand(RavenCommand):
     """SubBasins command (RVH)."""
 
