@@ -84,6 +84,19 @@ class EvaluationPeriod(RavenCommand):
 
 
 @dataclass
+class CustomOutput(RavenCommand):
+    """"""
+    time_per: str
+    stat: str
+    variable: str
+    space_agg: str
+    filename: str = ""
+
+    template = ":CustomOutput {time_per} {stat} {variable} {space_agg} {filename}"
+    def to_rv(self):
+        return self.template.format(**asdict(self))
+
+@dataclass
 class SubBasinsCommand(RavenCommand):
     """SubBasins command (RVH)."""
 

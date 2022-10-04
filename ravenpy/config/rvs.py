@@ -256,6 +256,7 @@ class RVI(RV):
     :SilentMode
     :PavicsMode
     {suppress_output}
+    {custom_output}
 
     :NetCDFAttribute title Simulated river discharge
     :NetCDFAttribute history Created on {now} by Raven
@@ -359,6 +360,7 @@ class RVI(RV):
         ]
         self._evaluation_periods = []
         self._suppress_output = False
+        self._custom_output = []
 
     def configure_from_nc_data(self, fns):
 
@@ -453,6 +455,16 @@ class RVI(RV):
         if not isinstance(values, (list, set, tuple)):
             values = [values]
         self._evaluation_periods = values
+
+    @property
+    def custom_output(self):
+        return "\n".join([str(o) for o in self._custom_output])
+
+    @custom_output.setter
+    def custom_output(self, values):
+        if not isinstance(values, (list, set, tuple)):
+            values = [values]
+        self._custom_output = values
 
     def _update_duration(self):
         if self.end_date is not None and self.start_date is not None:
