@@ -252,7 +252,7 @@ class RVI(RV):
     :EvaluationMetrics     {evaluation_metrics}
     {evaluation_periods}
     :WriteNetcdfFormat     yes
-    #:WriteForcingFunctions
+    :WriteForcingFunctions
     :SilentMode
     :PavicsMode
     {suppress_output}
