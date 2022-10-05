@@ -14,9 +14,10 @@ recursive-exclude * *.py[co]
 recursive-include benchmark *.ipynb *.txt
 recursive-include docs *.rst conf.py Makefile make.bat *.jpg *.png *.gif *.ipynb
 
-recursive-exclude docs/notebooks/.ipynb_checkpoints *
-recursive-exclude docs/_build *
 recursive-exclude benchmark/.ipynb_checkpoints *
+recursive-exclude docs/_build *
+recursive-exclude docs/apidoc *.rst
+recursive-exclude docs/notebooks/.ipynb_checkpoints *
 
 graft ravenpy/models
 graft ravenpy/data

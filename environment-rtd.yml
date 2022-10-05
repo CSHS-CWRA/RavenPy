@@ -5,20 +5,20 @@ channels:
 dependencies:
   - python >=3.8
   - click
-  - matplotlib
-#  - netCDF4
-#  - xarray
-  - wheel
-  - sphinx
-  - nbsphinx
-  - pandoc
-  - ipython
   - ipykernel
+  - ipython
   - jupyter_client
+  - matplotlib
+  - nbsphinx
+#  - netCDF4
+  - pandoc
   - pydantic
-  - sphinx-click
-  - sphinx_rtd_theme
+  - sphinx
   - sphinx-autoapi
+  - sphinx-click
   - sphinx-codeautolink
   - sphinx-copybutton
+  - sphinx_rtd_theme
   - sphinxcontrib-napoleon
+  - wheel
+#  - xarray
