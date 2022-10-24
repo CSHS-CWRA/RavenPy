@@ -43,3 +43,24 @@ def param(model):
             "long_name": f"{model} model parameter name",
         },
     )
+
+
+def units_transform(source, target):
+    """Return linear transform parameters to convert one unit to another.
+
+    If the target unit is given by `y = ax + b`, where `x` is the value of the source unit, then this function
+    returns a, b.
+
+    Parameters
+    ----------
+    source : str
+        Source unit string, pint-recognized.
+    target : str
+        Target unit string, pint-recognized.
+    """
+    import pint
+
+    b = pint.Quantity(0, source).to(target)
+    a = pint.Quantity(1, source).to(target) - b
+
+    return a.magnitude, b.magnitude

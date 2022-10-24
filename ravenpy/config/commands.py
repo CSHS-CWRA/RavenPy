@@ -6,9 +6,15 @@ from dataclasses import asdict, field
 from enum import Enum
 from pathlib import Path
 from textwrap import dedent
-from typing import Any, Dict, Optional, Tuple, Union, no_type_check
+from typing import Any, Dict, Optional, Tuple, Type, TypeVar, Union, no_type_check
 
+import xarray as xr
+import xclim.core.calendar
 from pydantic.dataclasses import dataclass
+
+from . import defaults
+
+T = TypeVar("T", bound="Parent")
 
 INDENT = " " * 4
 VALUE_PADDING = 10
@@ -39,6 +45,22 @@ class LinearTransform(RavenCommand):
         if (self.scale != 1) or (self.offset != 0):
             return self.template.format(**asdict(self))
         return ""
+
+    @classmethod
+    def from_dataarray(cls: Type[T], da: xr.DataArray, target: str) -> T:
+        """Create linear transform meant to convert the units from DataArray into Raven units.
+
+        Parameters
+        ----------
+        da : xr.DataArray
+          Data with `units` attribute.
+        target : str
+          Raven compatible target units.
+        """
+        from raven.utilities import coords
+
+        lt = coords.units_transform(da.attrs["units"], target)
+        return cls(**lt)
 
 
 @dataclass
@@ -259,9 +281,52 @@ class BaseDataCommand(RavenCommand):
     var_name_nc: str = ""
     dim_names_nc: Tuple[str, ...] = ("time",)
     time_shift: Optional[float] = None  # in days
-    scale: float = 1
-    offset: float = 0
+    scale: float = None
+    offset: float = None
     deaccumulate: Optional[bool] = False
+
+    def infer_scale_and_offset(self):
+        """Return scale and offset parameters from data.
+
+        Infer scale and offset parameters describing the linear transformation from the units in file to Raven
+        compliant units.
+        """
+        import pint
+        from xclim.core.units import units
+
+        from ravenpy.utilities.coords import units_transform
+
+        # Read units attribute from netCDF file -- assuming CF-Compliance.
+        with xr.open_dataset(self.file_name_nc) as ds:
+            da = ds[self.var_name_nc]
+            source = da.attrs["units"]
+
+        # Get default units for data type.
+        target = defaults.units[self.data_type]
+
+        # Linear transform parameters
+        try:
+            scale, offset = units_transform(source, target)
+        except pint.errors.DimensionalityError:
+            if self.data_type in ["PRECIP", "PRECIP_DAILY_AVE", "RAINFALL", "SNOWFALL"]:
+                # Source units are in total precipitation instead of rate. We need to infer the accumulation time
+                # in order to find the transform.
+                freq = xr.infer_freq(da.time)
+                if freq is None:
+                    raise ValueError(f"Cannot infer time frequency of input data {da}")
+                multi, base, start_anchor, _ = xclim.core.calendar.parse_offset(freq)
+                if base in ["M", "Q", "A"]:
+                    raise ValueError(f"Irregular time frequency for input data {da}")
+                source = (
+                    units(source) / multi / units(xclim.core.units.FREQ_UNITS[base])
+                )
+                scale, offset = units_transform(source, target)
+
+        # Set attributes
+        self.scale = scale
+        self.offset = offset
+
+        return scale, offset
 
     @property
     def dimensions(self):
@@ -278,6 +343,9 @@ class BaseDataCommand(RavenCommand):
 
     @property
     def linear_transform(self):
+        if self.scale is None and self.offset is None:
+            self.infer_scale_and_offset()
+
         return LinearTransform(scale=self.scale, offset=self.offset)
 
     def asdict(self):
