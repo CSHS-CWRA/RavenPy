@@ -190,9 +190,9 @@ class RVH(RV):
 
     {lake_subbasin_property_multiplier}
 
-    {reservoirs}
-    """
 
+    """
+    #{reservoirs}
     def __init__(self, config):
         super().__init__(config)
         self.hrus: Tuple[HRU, ...] = ()
