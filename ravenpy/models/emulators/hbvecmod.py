@@ -94,6 +94,14 @@ class HBVECMOD(Raven):
 
         self.config.update(hrus=(HBVECMOD.LandHRU(),))
 
+
+        #########
+        # R V C #
+        #########
+        rvc_tmpl = """
+        """
+        self.config.rvc.set_tmpl(rvc_tmpl)
+
         #########
         # R V P #
         #########
@@ -379,8 +387,8 @@ class HBVECMOD(Raven):
         #
         :Alias       FAST_RESERVOIR SOIL[1]
         :Alias       SLOW_RESERVOIR SOIL[2]
-        :LakeStorage SLOW_RESERVOIR
-
+        :LakeStorage LAKE_STORAGE
+         #SLOW_RESERVOIR
         #------------------------------------------------------------------------
         # Hydrologic process order for HBV-EC Mod Emulation
         #
