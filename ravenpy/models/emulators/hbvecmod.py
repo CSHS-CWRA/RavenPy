@@ -94,7 +94,6 @@ class HBVECMOD(Raven):
 
         self.config.update(hrus=(HBVECMOD.LandHRU(),))
 
-
         #########
         # R V C #
         #########

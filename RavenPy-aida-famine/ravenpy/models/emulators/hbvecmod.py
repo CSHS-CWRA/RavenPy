@@ -435,7 +435,6 @@ class HBVECMOD(Raven):
                     "LOAMY_SAND",
                     "LOAM",
                     "SANDY_LOAM",
-
                 ]:
                     self.config.rvc.hru_states[hru.hru_id] = HRUState(index=hru.hru_id)
                 elif isinstance(hru, HBVECMOD.LakeHRU) or hru.soil_profile in ["LAKE"]:
