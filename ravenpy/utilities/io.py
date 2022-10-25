@@ -38,16 +38,12 @@ def is_within_directory(directory, target):
 
 
 # Function addressing exploit CVE-2007-4559
-def safe_extract(
-    tar, path=".", members=None, *, numeric_owner=False
-):
+def safe_extract(tar, path=".", members=None, *, numeric_owner=False):
 
     for member in tar.getmembers():
         member_path = os.path.join(path, member.name)
         if not is_within_directory(path, member_path):
-            raise Exception(
-                "Attempted Path Traversal in Tar File"
-            )
+            raise Exception("Attempted Path Traversal in Tar File")
 
     tar.extractall(path, members, numeric_owner=numeric_owner)
 
@@ -119,7 +115,9 @@ def generic_extract_archive(
                     files.append(Path(output_dir.join(arch)))
                 elif file.endswith(".tar"):
                     with tarfile.open(arch, mode="r") as tar:
-                        safe_extract(tar, path=output_dir)  # Function addressing exploit CVE-2007-4559
+                        safe_extract(
+                            tar, path=output_dir
+                        )  # Function addressing exploit CVE-2007-4559
                         files.extend(
                             [str(Path(output_dir).joinpath(f)) for f in tar.getnames()]
                         )
