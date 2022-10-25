@@ -697,6 +697,7 @@ class RVT(RV):
         self._auto_nc_configure = False
 
     def configure_from_nc_data(self, fns):
+        from ravenpy.utilities.coords import infer_scale_and_offset
 
         assert self._auto_nc_configure is True
 
@@ -721,14 +722,22 @@ class RVT(RV):
                         if var_name not in ds.data_vars:
                             continue
                         nc_var = ds[var_name]
-                        self._add_nc_variable(
+                        data_type = RVT.NC_VARS[std_name]["raven"]
+                        specs = dict(
                             name=std_name,
                             file_name_nc=fn,
-                            data_type=RVT.NC_VARS[std_name]["raven"],
+                            data_type=data_type,
                             var_name_nc=var_name,
                             dim_names_nc=nc_var.dims,
                             units=nc_var.attrs.get("units"),
                         )
+                        # Infer scale and offset parameters for unit conversion.
+                        if specs["units"] is not None:
+                            specs["scale"], specs["offset"] = infer_scale_and_offset(
+                                nc_var, data_type
+                            )
+
+                        self._add_nc_variable(**specs)
                         self._number_grid_cells = int(nc_var.size / len(ds["time"]))
                         break
 

@@ -742,9 +742,6 @@ class TestGR4JCN:
             nc_index=5600,
             run_name="Test_run",
             rain_snow_fraction="RAINSNOW_DINGMAN",
-            tasmax={"offset": -273.15},
-            tasmin={"offset": -273.15},
-            pr={"scale": 86400.0},
             hrus=[
                 model.LandHRU(
                     area=3650.47, latitude=49.51, longitude=-95.72, elevation=330.59
@@ -753,6 +750,13 @@ class TestGR4JCN:
             params=model.Params(108.02, 2.8693, 25.352, 1.3696, 1.2483, 0.30679),
         )
         model(ts=CANOPEX_DAP, **config)
+
+        # Check unit transformation parameters are correctly inferred
+        pr = model.config.rvt._var_cmds["pr"]
+        assert pr.infer_scale_and_offset() == (86400.0, 0.0)
+
+        tasmax = model.config.rvt._var_cmds["tasmax"]
+        assert tasmax.infer_scale_and_offset() == (1, -273.15)
 
 
 class TestGR4JCN_OST:
