@@ -245,10 +245,9 @@ class RVI(RV):
     :EvaluationMetrics     {evaluation_metrics}
     {evaluation_periods}
     :WriteNetcdfFormat     yes
-    #:WriteForcingFunctions
     :SilentMode
     :PavicsMode
-    {suppress_output}
+    {suppress_output}{write_forcing_functions}
 
     :NetCDFAttribute title Simulated river discharge
     :NetCDFAttribute history Created on {now} by Raven
@@ -340,6 +339,7 @@ class RVI(RV):
         ]
         self._evaluation_periods = []
         self._suppress_output = False
+        self._write_forcing_functions = False
 
     def configure_from_nc_data(self, fns):
         with xr.open_mfdataset(fns, combine="by_coords") as ds:
@@ -444,7 +444,7 @@ class RVI(RV):
 
     @property
     def suppress_output(self):
-        tag = ":SuppressOutput\n:DontWriteWatershedStorage"
+        tag = ":SuppressOutput\n:DontWriteWatershedStorage\n"
         return tag if self._suppress_output else ""
 
     @suppress_output.setter
@@ -452,6 +452,17 @@ class RVI(RV):
         if not isinstance(value, bool):
             raise ValueError
         self._suppress_output = value
+
+    @property
+    def write_forcing_functions(self):
+        tag = ":WriteForcingFunctions\n"
+        return tag if self._write_forcing_functions else ""
+
+    @write_forcing_functions.setter
+    def write_forcing_functions(self, value):
+        if not isinstance(value, bool):
+            raise ValueError
+        self._write_forcing_functions = value
 
     @property
     def routing(self):
