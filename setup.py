@@ -32,6 +32,7 @@ requirements = [
     "netCDF4",
     "numpy",
     "pandas",
+    "pint<0.20",
     "pydantic",
     "requests",
     "scipy",
