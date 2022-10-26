@@ -7,8 +7,8 @@ from ravenpy.utilities import gis_import_error_message
 
 try:
     import geopandas
-    from osgeo import __version__ as osgeo_version  # noqa
-    from osgeo import ogr, osr  # noqa
+    from osgeo import __version__ as osgeo_version
+    from osgeo import ogr, osr
     from shapely import wkt
 except (ImportError, ModuleNotFoundError) as e:
     msg = gis_import_error_message.format(Path(__file__).stem)
