@@ -23,6 +23,7 @@ dependencies:
   - numpy
   - owslib >=0.24.1
   - pandas
+  - pint <0.20
   - pip
   - pre-commit
   - pydantic

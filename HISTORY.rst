@@ -2,6 +2,12 @@
 History
 =======
 
+0.8.1
+-----
+
+* Undo change related to `suppress_output`, as it breaks multiple tests in raven. New `Raven._execute` method runs models but does not parse results.
+
+
 0.8.0
 -----
 
