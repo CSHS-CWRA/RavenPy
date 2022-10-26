@@ -4,9 +4,9 @@ History
 
 0.9.0 (unreleased)
 -----
-- Add support for RedirectToFile commmand for grid weights.
-
-
+- Add support for the command `:RedirectToFile`. Tested for grid weights only.
+- Add support for the command `:WriteForcingFunctions`.
+- Patch directory traversal vulnerability (`CVE-2007-4559 <(https://github.com/advisories/GHSA-gw9q-c7gh-j9vm>`_).
 
 0.8.1 (2022-10-26)
 ------------------
