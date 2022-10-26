@@ -2,8 +2,14 @@
 History
 =======
 
-0.8.1
+0.9.0 (unreleased)
 -----
+- Add support for the command `:RedirectToFile`. Tested for grid weights only.
+- Add support for the command `:WriteForcingFunctions`.
+- Patch directory traversal vulnerability (`CVE-2007-4559 <(https://github.com/advisories/GHSA-gw9q-c7gh-j9vm>`_).
+
+0.8.1 (2022-10-26)
+------------------
 
 * Undo change related to `suppress_output`, as it breaks multiple tests in raven. New `Raven._execute` method runs models but does not parse results.
 
@@ -20,6 +26,7 @@ Breaking changes:
 * Add ``generate-hrus-from-routing-product`` script.
 * Do not write RV zip file and merge outputs when `suppress_output` is True. Zipping rv files during multiple calibration runs leads to a non-linear performance slow-down.
 * Fixed issues with coverage reporting via tox and GitHub Actions
+* Add partial support for `:RedirectToFile` command, tested with GridWeights only.
 
 0.7.8
 -----
