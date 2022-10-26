@@ -5,7 +5,7 @@ RavenPy
 .. image:: https://img.shields.io/pypi/v/ravenpy.svg
     :target: https://pypi.python.org/pypi/ravenpy
 
-.. image:: https://anaconda.org/conda-forge/ravenpy/badges/installer/conda.svg
+.. image:: https://anaconda.org/conda-forge/ravenpy/badges/version.svg
     :target: https://conda.anaconda.org/conda-forge
 
 .. image:: https://github.com/CSHS-CWRA/RavenPy/actions/workflows/main.yml/badge.svg

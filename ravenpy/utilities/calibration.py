@@ -38,7 +38,7 @@ class SpotpySetup:
             self.params.append(Uniform(str(i), low=model.low[i], high=model.high[i]))
 
     def evaluation(self):
-        """In theory this method should return the trues value. Since Raven computes the objective function,
+        """In theory this method should return the true value. Since Raven computes the objective function,
         we simply return a placeholder."""
         return 1
 
@@ -53,7 +53,7 @@ class SpotpySetup:
         self.model.config.update("params", np.array(x))
 
         # Run the model
-        self.model(self.ts)
+        self.model._execute(self.ts)
         return 1
 
     def objectivefunction(self, evaluation, simulation, params=None):
