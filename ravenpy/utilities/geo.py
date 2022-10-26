@@ -60,7 +60,7 @@ def geom_transform(
     try:
         from functools import partial
 
-        from pyproj import Transformer  # noqa
+        from pyproj import Transformer
 
         if isinstance(source_crs, int or str):
             source = CRS.from_epsg(source_crs)
@@ -103,11 +103,11 @@ def generic_raster_clip(
     geometry : Union[Polygon, MultiPolygon, List[Union[Polygon, MultiPolygon]]
       Geometry defining the region to crop.
     touches : bool
-      Whether or not to include cells that intersect the geometry. Default: True.
+      Whether to include cells that intersect the geometry or not. Default: True.
     fill_with_nodata: bool
-      Whether or not to keep pixel values for regions outside of shape or set as nodata. Default: True.
+      Whether to keep pixel values for regions outside of shape or set as nodata or not. Default: True.
     padded: bool
-      Whether or not to add a half-pixel buffer to shape before masking
+      Whether to add a half-pixel buffer to shape before masking or not. Default: True.
     raster_compression : str
       Level of data compression. Default: 'lzw'.
 
