@@ -198,6 +198,7 @@ class TestGR4JCN:
         model.config.rvi.end_date = dt.datetime(2002, 1, 1)
         model.config.rvi.run_name = "test_gr4jcn_routing"
         model.config.rvi.routing = "ROUTE_DIFFUSIVE_WAVE"
+        model.config.rvi.write_forcing_functions = True
 
         #########
         # R V H #
@@ -387,6 +388,8 @@ class TestGR4JCN:
         #   outlet of subbasin 2
         d = model.diagnostics
         np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.0141168, 4)
+
+        assert len(list(model.output_path.glob("*ForcingFunctions.nc"))) == 1
 
     def test_redirect_to_file(self, tmpdir, input2d):
         model = GR4JCN()

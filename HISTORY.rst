@@ -4,8 +4,8 @@ History
 
 0.9.0 (unreleased)
 -----
-- Add support for RedirectToFile commmand for grid weights.
-
+- Add support for the command `:RedirectToFile`. Tested for grid weights only.
+- Add support for the command `:WriteForcingFunctions`.
 
 
 0.8.1 (2022-10-26)
