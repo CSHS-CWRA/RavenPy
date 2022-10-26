@@ -32,6 +32,7 @@ requirements = [
     "netCDF4",
     "numpy",
     "pandas",
+    "pint<0.20",
     "pydantic",
     "requests",
     "scipy",
@@ -247,7 +248,7 @@ setup(
         gis=gis_requirements,
     ),
     url="https://github.com/CSHS-CWRA/ravenpy",
-    version="0.8.0",
+    version="0.8.1",
     zip_safe=False,
     cmdclass={
         "install": create_external_deps_install_class(install),

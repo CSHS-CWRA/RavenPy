@@ -93,6 +93,19 @@ class RV(ABC):
 
     @abstractmethod
     def to_rv(self, s: str, rv_type: str) -> str:
+        """Add header to templated RV file.
+
+        Parameters
+        ----------
+        s : str
+          Templated content.
+        rv_type : str
+          RV extension.
+
+        Returns
+        -------
+        RV template with header.
+        """
         if not self._config:
             # In the case where the RV file has been created outside the context of a
             # Config object, don't include the header
