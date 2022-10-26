@@ -800,10 +800,10 @@ class TestGR4JCN:
 
         # Check unit transformation parameters are correctly inferred
         pr = model.config.rvt._var_cmds["pr"]
-        assert pr.infer_scale_and_offset() == (86400.0, 0.0)
+        assert pr.scale, pr.offset == (86400.0, 0.0)
 
         tasmax = model.config.rvt._var_cmds["tasmax"]
-        assert tasmax.infer_scale_and_offset() == (1, -273.15)
+        assert tasmax.scale, tasmax.offset == (1, -273.15)
 
 
 class TestGR4JCN_OST:

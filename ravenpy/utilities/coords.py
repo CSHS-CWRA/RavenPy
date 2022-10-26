@@ -87,8 +87,8 @@ def infer_scale_and_offset(da: xr.DataArray, data_type: str) -> (float, float):
             multi, base, start_anchor, _ = parse_offset(freq)
             if base in ["M", "Q", "A"]:
                 raise ValueError(f"Irregular time frequency for input data {da}")
-            source = source / multi / units(FREQ_UNITS[base])
-            scale, offset = units_transform(source, target)
+            real_source = source / multi / units(FREQ_UNITS[base])
+            scale, offset = units_transform(real_source, target)
 
     return scale, offset
 
@@ -108,7 +108,7 @@ def units_transform(source, target):
     """
     from xclim.core.units import convert_units_to, units
 
-    b = convert_units_to(units.Quantity(0, source), target)
-    a = convert_units_to(units.Quantity(1, source), target) - b
+    b = convert_units_to(0 * source, target)
+    a = convert_units_to(1 * source, target) - b
 
-    return a, b
+    return round(a, 9), round(b, 9)
