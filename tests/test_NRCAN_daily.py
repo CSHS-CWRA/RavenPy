@@ -47,7 +47,4 @@ class TestRavenNRCAN:
             latitude=54.4848,
             longitude=-123.3659,
             rain_snow_fraction="RAINSNOW_DINGMAN",
-            tasmax={"scale": 1.0, "offset": -273.15},
-            tasmin={"scale": 1.0, "offset": -273.15},
-            pr={"scale": 86400, "offset": 0.0},
         )

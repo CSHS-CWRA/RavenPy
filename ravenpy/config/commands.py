@@ -261,6 +261,9 @@ class BaseDataCommand(RavenCommand):
     scale: float = 1
     offset: float = 0
     deaccumulate: Optional[bool] = False
+    latitude_var_name_nc: str = ""
+    longitude_var_name_nc: str = ""
+    elevation_var_name_nc: str = ""
 
     @property
     def dimensions(self):
@@ -285,6 +288,10 @@ class BaseDataCommand(RavenCommand):
         d["linear_transform"] = self.linear_transform
         d["deaccumulate"] = ":Deaccumulate\n" if self.deaccumulate else ""
         d["time_shift"] = f":TimeShift {self.time_shift}\n" if self.time_shift else ""
+        if isinstance(d["file_name_nc"], Path):
+            # We can use the name of the file (as opposed to the full path)
+            # because we have a symlink to it in the execution folder
+            d["file_name_nc"] = d["file_name_nc"].name
         return d
 
 
@@ -426,11 +433,36 @@ class GridWeightsCommand(RavenCommand):
 
 
 @dataclass
+class RedirectToFileCommand(RavenCommand):
+    """RedirectToFile command (RVT).
+
+    For the moment, this command can only be used in the context of a `GriddedForcingCommand`
+    or a `StationForcingCommand`, as a `grid_weights` field replacement when inlining is not
+    desired.
+    """
+
+    path: Path
+
+    template = "{indent}:RedirectToFile {path}"
+
+    def to_rv(self, indent_level=0):
+        indent = INDENT * indent_level
+        d = asdict(self)
+        d["indent"] = indent
+        # We can use the name of the file (as opposed to the full path)
+        # because we have a symlink to it in the execution folder
+        d["path"] = d["path"].name
+        return self.template.format(**d)
+
+
+@dataclass
 class GriddedForcingCommand(BaseDataCommand):
     """GriddedForcing command (RVT)."""
 
     dim_names_nc: Tuple[str, str, str] = ("x", "y", "t")
-    grid_weights: GridWeightsCommand = GridWeightsCommand()
+    grid_weights: Union[
+        GridWeightsCommand, RedirectToFileCommand
+    ] = GridWeightsCommand()
 
     template = """
     :GriddedForcing {name}
@@ -442,6 +474,9 @@ class GriddedForcingCommand(BaseDataCommand):
     {grid_weights}
     :EndGriddedForcing
     """
+    # :LatitudeVarNameNC {latitude_var_name_nc}
+    # :LongitudeVarNameNC {longitude_var_name_nc}
+    # :ElevationVarNameNC {elevation_var_name_nc}
 
     def to_rv(self):
         d = self.asdict()
@@ -454,7 +489,9 @@ class StationForcingCommand(BaseDataCommand):
     """StationForcing command (RVT)."""
 
     dim_names_nc: Tuple[str, str] = ("station", "time")
-    grid_weights: GridWeightsCommand = GridWeightsCommand()
+    grid_weights: Union[
+        GridWeightsCommand, RedirectToFileCommand
+    ] = GridWeightsCommand()
 
     template = """
     :StationForcing {name} {units}
@@ -466,6 +503,9 @@ class StationForcingCommand(BaseDataCommand):
     {grid_weights}
     :EndStationForcing
     """
+    # :LatitudeVarNameNC {latitude_var_name_nc}
+    # :LongitudeVarNameNC {longitude_var_name_nc}
+    # :ElevationVarNameNC {elevation_var_name_nc}
 
     def to_rv(self):
         d = self.asdict()

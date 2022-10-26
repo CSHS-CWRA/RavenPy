@@ -2,6 +2,7 @@
 Tools for reading and writing geospatial data formats.
 """
 import logging
+import os
 import tarfile
 import tempfile
 import warnings
@@ -23,6 +24,28 @@ except (ImportError, ModuleNotFoundError) as e:
 
 LOGGER = logging.getLogger("RavenPy")
 WGS84 = 4326
+
+
+# Function addressing exploit CVE-2007-4559
+def is_within_directory(directory, target):
+
+    abs_directory = os.path.abspath(directory)
+    abs_target = os.path.abspath(target)
+
+    prefix = os.path.commonprefix([abs_directory, abs_target])
+
+    return prefix == abs_directory
+
+
+# Function addressing exploit CVE-2007-4559
+def safe_extract(tar, path=".", members=None, *, numeric_owner=False):
+
+    for member in tar.getmembers():
+        member_path = os.path.join(path, member.name)
+        if not is_within_directory(path, member_path):
+            raise Exception("Attempted Path Traversal in Tar File")
+
+    tar.extractall(path, members, numeric_owner=numeric_owner)
 
 
 def address_append(address: Union[str, Path]) -> str:
@@ -92,7 +115,9 @@ def generic_extract_archive(
                     files.append(Path(output_dir.join(arch)))
                 elif file.endswith(".tar"):
                     with tarfile.open(arch, mode="r") as tar:
-                        tar.extractall(path=output_dir)
+                        safe_extract(
+                            tar, path=output_dir
+                        )  # Function addressing exploit CVE-2007-4559
                         files.extend(
                             [str(Path(output_dir).joinpath(f)) for f in tar.getnames()]
                         )

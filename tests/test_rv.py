@@ -78,7 +78,7 @@ class TestRVI:
     def test_supress_output(self):
         rvi = RVI(None)
         rvi.suppress_output = True
-        assert rvi.suppress_output == ":SuppressOutput\n:DontWriteWatershedStorage"
+        assert rvi.suppress_output == ":SuppressOutput\n:DontWriteWatershedStorage\n"
 
         rvi = RVI(None)
         rvi.suppress_output = False

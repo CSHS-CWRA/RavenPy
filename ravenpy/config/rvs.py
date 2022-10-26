@@ -30,6 +30,7 @@ from ravenpy.config.commands import (
     HRUStateVariableTableCommand,
     LandUseClassesCommand,
     ObservationDataCommand,
+    RedirectToFileCommand,
     ReservoirCommand,
     SBGroupPropertyMultiplierCommand,
     SoilClassesCommand,
@@ -92,6 +93,19 @@ class RV(ABC):
 
     @abstractmethod
     def to_rv(self, s: str, rv_type: str) -> str:
+        """Add header to templated RV file.
+
+        Parameters
+        ----------
+        s : str
+          Templated content.
+        rv_type : str
+          RV extension.
+
+        Returns
+        -------
+        RV template with header.
+        """
         if not self._config:
             # In the case where the RV file has been created outside the context of a
             # Config object, don't include the header
@@ -245,10 +259,9 @@ class RVI(RV):
     :EvaluationMetrics     {evaluation_metrics}
     {evaluation_periods}
     :WriteNetcdfFormat     yes
-    #:WriteForcingFunctions
     :SilentMode
     :PavicsMode
-    {suppress_output}
+    {suppress_output}{write_forcing_functions}
 
     :NetCDFAttribute title Simulated river discharge
     :NetCDFAttribute history Created on {now} by Raven
@@ -340,8 +353,10 @@ class RVI(RV):
         ]
         self._evaluation_periods = []
         self._suppress_output = False
+        self._write_forcing_functions = False
 
     def configure_from_nc_data(self, fns):
+
         with xr.open_mfdataset(fns, combine="by_coords") as ds:
             start, end = ds.indexes["time"][0], ds.indexes["time"][-1]
             cal = ds.time.encoding.get("calendar", "standard")
@@ -444,7 +459,7 @@ class RVI(RV):
 
     @property
     def suppress_output(self):
-        tag = ":SuppressOutput\n:DontWriteWatershedStorage"
+        tag = ":SuppressOutput\n:DontWriteWatershedStorage\n"
         return tag if self._suppress_output else ""
 
     @suppress_output.setter
@@ -452,6 +467,17 @@ class RVI(RV):
         if not isinstance(value, bool):
             raise ValueError
         self._suppress_output = value
+
+    @property
+    def write_forcing_functions(self):
+        tag = ":WriteForcingFunctions\n"
+        return tag if self._write_forcing_functions else ""
+
+    @write_forcing_functions.setter
+    def write_forcing_functions(self, value):
+        if not isinstance(value, bool):
+            raise ValueError
+        self._write_forcing_functions = value
 
     @property
     def routing(self):
@@ -644,7 +670,7 @@ class RVT(RV):
         self._auto_nc_configure = True
 
         self.nc_index = 0
-        self.grid_weights = None
+        self.grid_weights: Union[GridWeightsCommand, RedirectToFileCommand, None] = None
         self.rain_correction = None
         self.snow_correction = None
         self.monthly_ave_evaporation = None
@@ -682,7 +708,10 @@ class RVT(RV):
             else:
                 cmd = DataCommand(**kwargs)
         else:
-            cmd = GriddedForcingCommand(**kwargs)
+            if std_name == "water_volume_transport_in_river_channel" or is_obs_var:
+                cmd = ObservationDataCommand(**kwargs)
+            else:
+                cmd = GriddedForcingCommand(**kwargs)
 
         spec = self._var_specs[std_name]
         self._var_cmds[std_name] = replace(cmd, **spec)
@@ -708,10 +737,22 @@ class RVT(RV):
                 try:
                     self._nc_latitude = ds.cf["latitude"]
                     self._nc_longitude = ds.cf["longitude"]
-                    self._nc_elevation = ds.cf["vertical"]
+                    latitude_var_name_nc = self._nc_latitude.name
+                    longitude_var_name_nc = self._nc_longitude.name
                 except KeyError:
                     # Will try to compute values later from first HRU (in self.to_rv)
-                    pass
+                    latitude_var_name_nc = ""
+                    longitude_var_name_nc = ""
+
+                try:
+                    self._nc_elevation = ds.cf["vertical"]
+                    elevation_var_name_nc = self._nc_elevation.name
+                except KeyError:
+                    if "elevation" in ds:
+                        self._nc_elevation = ds["elevation"]
+                        elevation_var_name_nc = "elevation"
+                    else:
+                        elevation_var_name_nc = ""
 
                 if "station_id" in ds:
                     self._station_id = ds["station_id"]
@@ -725,9 +766,12 @@ class RVT(RV):
                         data_type = RVT.NC_VARS[std_name]["raven"]
                         specs = dict(
                             name=std_name,
-                            file_name_nc=fn,
+                            file_name_nc=Path(fn),
                             data_type=data_type,
                             var_name_nc=var_name,
+                            latitude_var_name_nc=latitude_var_name_nc,
+                            longitude_var_name_nc=longitude_var_name_nc,
+                            elevation_var_name_nc=elevation_var_name_nc,
                             dim_names_nc=nc_var.dims,
                             units=nc_var.attrs.get("units"),
                         )
@@ -832,8 +876,6 @@ class RVT(RV):
             cmds = []
             for var, cmd in self._var_cmds.items():
                 if cmd and not isinstance(cmd, ObservationDataCommand):
-                    # TODO: implement a RedirectToFile mechanism to avoid inlining the grid weights
-                    # multiple times as we do here
                     cmd = cast(Union[GriddedForcingCommand, StationForcingCommand], cmd)
                     if len(cmd.grid_weights.data) == 1:
                         cmd.grid_weights = gw
