@@ -9,7 +9,7 @@ on:
 jobs:
   black:
     name: Code linting
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Cancel previous runs
         uses: styfle/cancel-workflow-action@0.11.0
@@ -64,7 +64,7 @@ jobs:
   conda:
     name: Conda
     needs: black
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
       - name: Setup miniconda with mamba
@@ -99,7 +99,7 @@ jobs:
     needs:
       - pip
       - conda
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     container: python:3-slim
     steps:
     - name: Coveralls Finished
