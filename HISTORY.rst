@@ -2,8 +2,14 @@
 History
 =======
 
-0.8.1
+0.9.0 (unreleased)
 -----
+- Add support for RedirectToFile commmand for grid weights.
+
+
+
+0.8.1 (2022-10-26)
+------------------
 
 * Undo change related to `suppress_output`, as it breaks multiple tests in raven. New `Raven._execute` method runs models but does not parse results.
 
