@@ -66,6 +66,11 @@ repos:
     rev: "0.48"
     hooks:
       - id: check-manifest
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 0.18.4
+    hooks:
+      - id: check-github-workflows
+      - id: check-readthedocs
   - repo: meta
     hooks:
       - id: check-hooks-apply
