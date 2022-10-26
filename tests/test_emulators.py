@@ -6,6 +6,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+import xarray as xr
 
 from ravenpy.config.commands import (  # GriddedForcingCommand,; LandUseClassesCommand,; ObservationDataCommand,; SoilClassesCommand,; SoilProfilesCommand,; VegetationClassesCommand,
     ChannelProfileCommand,
@@ -39,7 +40,7 @@ TS = get_local_testdata(
 )
 
 # Link to THREDDS Data Server netCDF testdata
-TDS = "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/birdhouse/disk2/testdata/raven"
+TDS = "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/birdhouse/testdata/raven"
 
 
 @pytest.fixture
@@ -782,6 +783,7 @@ class TestGR4JCN:
             "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/birdhouse/ets"
             "/Watersheds_5797_cfcompliant.nc"
         )
+
         model = GR4JCN()
         config = dict(
             start_date=dt.datetime(2010, 6, 1),

@@ -733,6 +733,8 @@ class RVT(RV):
         self._var_cmds = {k: None for k in RVT.NC_VARS.keys()}
 
         for fn in fns:
+            if isinstance(fn, str) and not fn.startswith("http"):
+                fn = Path(fn)
             with xr.open_dataset(fn) as ds:
                 try:
                     self._nc_latitude = ds.cf["latitude"]
@@ -766,7 +768,7 @@ class RVT(RV):
                         data_type = RVT.NC_VARS[std_name]["raven"]
                         specs = dict(
                             name=std_name,
-                            file_name_nc=Path(fn),
+                            file_name_nc=fn,
                             data_type=data_type,
                             var_name_nc=var_name,
                             latitude_var_name_nc=latitude_var_name_nc,
