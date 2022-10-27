@@ -843,6 +843,15 @@ class Ostrich(Raven):
 
     @property
     def obj_func(self):
+        """Value of objective function reached by calibration.
+
+        Note that the Ostrich optimizer seeks to minimise the objective function. To optimize diagnostic
+        metrics such as the Nash-Sutcliffe Efficiency, it needs to be multiplied by -1.
+
+        See Also
+        --------
+        See the `diagnostics` method to obtain the diagnostic metrics values.
+        """
         return np.loadtxt(self.outputs["params_seq"], skiprows=1)[-1, 1]
 
     @property
