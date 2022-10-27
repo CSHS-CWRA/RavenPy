@@ -6,6 +6,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+import xarray as xr
 
 from ravenpy.config.commands import (  # GriddedForcingCommand,; LandUseClassesCommand,; ObservationDataCommand,; SoilClassesCommand,; SoilProfilesCommand,; VegetationClassesCommand,
     ChannelProfileCommand,
@@ -40,7 +41,7 @@ TS = get_local_testdata(
 )
 
 # Link to THREDDS Data Server netCDF testdata
-TDS = "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/birdhouse/disk2/testdata/raven"
+TDS = "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/birdhouse/testdata/raven"
 
 
 @pytest.fixture
@@ -791,6 +792,7 @@ class TestGR4JCN:
             "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/birdhouse/ets"
             "/Watersheds_5797_cfcompliant.nc"
         )
+
         model = GR4JCN()
         config = dict(
             start_date=dt.datetime(2010, 6, 1),
@@ -798,9 +800,6 @@ class TestGR4JCN:
             nc_index=5600,
             run_name="Test_run",
             rain_snow_fraction="RAINSNOW_DINGMAN",
-            tasmax={"offset": -273.15},
-            tasmin={"offset": -273.15},
-            pr={"scale": 86400.0},
             hrus=[
                 model.LandHRU(
                     area=3650.47, latitude=49.51, longitude=-95.72, elevation=330.59
@@ -809,6 +808,13 @@ class TestGR4JCN:
             params=model.Params(108.02, 2.8693, 25.352, 1.3696, 1.2483, 0.30679),
         )
         model(ts=CANOPEX_DAP, **config)
+
+        # Check unit transformation parameters are correctly inferred
+        pr = model.config.rvt._var_cmds["pr"]
+        assert pr.scale, pr.offset == (86400.0, 0.0)
+
+        tasmax = model.config.rvt._var_cmds["tasmax"]
+        assert tasmax.scale, tasmax.offset == (1, -273.15)
 
 
 class TestGR4JCN_OST:

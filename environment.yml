@@ -38,6 +38,6 @@ dependencies:
   - spotpy
   - statsmodels
   - xarray >=0.18
-  - xclim >=0.26.1
+  - xclim >=0.31
   - xskillscore
   - wheel

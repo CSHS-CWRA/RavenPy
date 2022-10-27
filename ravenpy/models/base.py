@@ -258,10 +258,13 @@ class Raven:
 
         self._dump_rv()
 
-        # Create symbolic link to input files
+        # Create symbolic link to input files that are not DAP links
         for fn in ts:
-            if not (self.model_path / Path(fn).name).exists():
-                os.symlink(os.path.realpath(fn), str(self.model_path / Path(fn).name))
+            if isinstance(fn, Path) or not fn.startswith("http"):
+                if not (self.model_path / Path(fn).name).exists():
+                    os.symlink(
+                        os.path.realpath(fn), str(self.model_path / Path(fn).name)
+                    )
 
         # Special case where a RedirectToFile command is used for the grid weights, which
         # needs to be symlinked also
@@ -359,7 +362,7 @@ class Raven:
                     else:
                         self.config.update(key, val[self.psim])
 
-            cmd = self.setup_model_run(tuple(map(Path, ts)))
+            cmd = self.setup_model_run(ts)
 
             procs.append(
                 subprocess.Popen(
