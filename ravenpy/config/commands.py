@@ -3,10 +3,9 @@ import itertools
 import re
 from abc import ABC, abstractmethod
 from dataclasses import asdict, field
-from enum import Enum
 from pathlib import Path
 from textwrap import dedent
-from typing import Any, Dict, Optional, Tuple, Union, no_type_check
+from typing import Dict, Optional, Tuple, Union, no_type_check
 
 from pydantic.dataclasses import dataclass
 

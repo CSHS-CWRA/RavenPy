@@ -57,8 +57,6 @@ class TestHindcasting:
             params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
             overwrite=True,
             pr={
-                "scale": 1.0,
-                "offset": 0.0,
                 "time_shift": -0.25,
                 "deaccumulate": True,
             },
