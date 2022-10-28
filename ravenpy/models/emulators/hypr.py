@@ -266,7 +266,9 @@ class HYPR(Raven):
         # R V C #
         #########
 
-        self.config.rvc.hru_states[1] = HRUState(soil0=10, soil1=10, depression=20)
+        self.config.rvc.hru_states[1] = HRUState(
+            data={"SOIL[0]": 10, "SOIL[1]": 10, "DEPRESSION": 20}
+        )
 
     def derived_parameters(self):
         params = cast(HYPR.Params, self.config.rvp.params)

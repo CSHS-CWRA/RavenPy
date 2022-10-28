@@ -204,7 +204,9 @@ class HMETS(Raven):
         if not self.config.rvc.hru_states:
             soil0 = params.TOPSOIL * 0.5
             soil1 = params.PHREATIC * 0.5
-            self.config.rvc.hru_states[1] = HRUState(soil0=soil0, soil1=soil1)
+            self.config.rvc.hru_states[1] = HRUState(
+                data={"SOIL[0]": soil0, "SOIL[1]": soil1}
+            )
 
 
 class HMETS_OST(Ostrich, HMETS):

@@ -565,7 +565,9 @@ class TestGR4JCN:
 
         np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.117315, 4)
 
-        model.config.rvc.hru_states[1] = HRUStateVariableTableCommand.Record(soil0=0)
+        model.config.rvc.hru_states[1] = HRUStateVariableTableCommand.Record(
+            index=1, data={"SOIL[0]": 0}
+        )
 
         # Set initial conditions explicitly
         model(
@@ -701,9 +703,7 @@ class TestGR4JCN:
         s_1 = float(model.storage["Soil Water[1]"].isel(time=-1).values)
 
         # hru_state = replace(model.rvc.hru_state, soil0=s_0, soil1=s_1)
-        model.config.rvc.hru_states[1] = replace(
-            model.config.rvc.hru_states[1], soil0=s_0, soil1=s_1
-        )
+        model.config.rvc.hru_states[1].data.update({"SOIL[0]": s_0, "SOIL[1]": s_1})
 
         model(
             TS,
