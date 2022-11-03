@@ -114,15 +114,14 @@ class TestFileInfoFuncs:
         geojson = get_file(geojson_file, cache_dir=threadsafe_data_dir)
         raster = get_file(raster_file, cache_dir=threadsafe_data_dir)
 
-        self.checks.boundary_check([geojson, raster], max_y=80)
+        self.checks.boundary_check(raster, max_y=85.5)
         assert len(recwarn) == 0
 
         with pytest.warns(UserWarning):
-            self.checks.boundary_check([geojson, raster], max_y=15)
-        assert len(recwarn) != 0
+            self.checks.boundary_check(geojson, raster, max_y=15)
 
         with pytest.raises(FileNotFoundError):
-            self.checks.boundary_check([self.non_existing_file])
+            self.checks.boundary_check(self.non_existing_file)
 
     @pytest.mark.skip(reason="Not presently testable")
     def test_multipolygon_check(self):
