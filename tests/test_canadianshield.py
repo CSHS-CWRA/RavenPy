@@ -1,18 +1,11 @@
 import datetime as dt
-import tempfile
 
 import numpy as np
 import pytest
 
 from ravenpy.config import ConfigError
-from ravenpy.models import CANADIANSHIELD, CANADIANSHIELD_OST, HRU, LU
-from ravenpy.utilities.testdata import get_local_testdata
-
-from .common import _convert_2d
-
-TS = get_local_testdata(
-    "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
-)
+from ravenpy.models import CANADIANSHIELD, CANADIANSHIELD_OST, LU
+from ravenpy.utilities.testdata import get_file
 
 lu = LU("FOREST", impermeable_frac=0.0, forest_coverage=0.02345)
 
@@ -23,7 +16,13 @@ hru_default_values = dict(
 
 
 class TestCANADIANSHIELD:
-    def test_simple(self):
+    salmon_river = (
+        "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
+    )
+
+    def test_simple(self, threadsafe_data_dir):
+        TS = get_file(self.salmon_river, cache_dir=threadsafe_data_dir)
+
         model = CANADIANSHIELD()
         model.config.rvh.hrus = (
             CANADIANSHIELD.HRU_ORGANIC(**hru_default_values),
@@ -79,7 +78,9 @@ class TestCANADIANSHIELD:
 
         np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], 0.39602, 4)
 
-    def test_bad_config(self):
+    def test_bad_config(self, threadsafe_data_dir):
+        TS = get_file(self.salmon_river, cache_dir=threadsafe_data_dir)
+
         model = CANADIANSHIELD()
         params = (
             4.72304300e-01,  # par_x01
@@ -147,7 +148,13 @@ class TestCANADIANSHIELD:
 
 
 class TestCANADIANSHIELD_OST:
-    def test_simple(self):
+    salmon_river = (
+        "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
+    )
+
+    def test_simple(self, threadsafe_data_dir):
+        TS = get_file(self.salmon_river, cache_dir=threadsafe_data_dir)
+
         model = CANADIANSHIELD_OST()
         model.config.rvh.hrus = (
             CANADIANSHIELD.HRU_ORGANIC(**hru_default_values),
@@ -262,9 +269,7 @@ class TestCANADIANSHIELD_OST:
             1.000,  # par_x34
         )
 
-        model.configure(
-            get_local_testdata("ostrich-gr4j-cemaneige/OstRandomNumbers.txt")
-        )
+        model.configure(get_file("ostrich-gr4j-cemaneige/OstRandomNumbers.txt"))
 
         model(
             TS,

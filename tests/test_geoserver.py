@@ -3,7 +3,7 @@ import tempfile
 import numpy as np
 import pytest
 
-from ravenpy.utilities.testdata import get_local_testdata
+from ravenpy.utilities.testdata import get_file
 
 pytestmark = pytest.mark.online
 
@@ -172,9 +172,9 @@ class TestWCS:
     geo = pytest.importorskip("ravenpy.utilities.geo")
     rasterio = pytest.importorskip("rasterio")
 
-    vector_file = get_local_testdata("polygons/Saskatoon.geojson")
+    saskatoon = "polygons/Saskatoon.geojson"
 
-    def test_get_raster_wcs(self, tmp_path):
+    def test_get_raster_wcs(self, tmp_path, threadsafe_data_dir):
         # TODO: This CRS needs to be redefined using modern pyproj-compatible strings.
         nalcms_crs = "+proj=laea +lat_0=45 +lon_0=-100 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs=True"
 
@@ -182,7 +182,9 @@ class TestWCS:
             prefix="reprojected_", suffix=".json", dir=tmp_path
         ) as projected:
             self.geo.generic_vector_reproject(
-                self.vector_file, projected.name, target_crs=nalcms_crs
+                get_file(self.saskatoon, cache_dir=threadsafe_data_dir),
+                projected.name,
+                target_crs=nalcms_crs,
             )
             bbox = self.io.get_bbox(projected.name)
 

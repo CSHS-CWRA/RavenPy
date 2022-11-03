@@ -1,9 +1,11 @@
 import datetime as dt
 
 from ravenpy.models import HMETS
-from ravenpy.utilities.testdata import get_local_testdata
+from ravenpy.utilities.testdata import get_file
 
 SALMON_coords = (-123.3659, 54.4848)  # (lon, lat)
+
+era5 = "era5/tas_pr_20180101-20180108.nc"
 
 
 params = (
@@ -32,8 +34,8 @@ params = (
 
 
 class TestRavenERA5:
-    def test_simple(self):
-        ts = get_local_testdata("era5/tas_pr_20180101-20180108.nc")
+    def test_simple(self, threadsafe_data_dir):
+        ts = get_file(era5, cache_dir=threadsafe_data_dir)
         model = HMETS()
         model(
             ts=ts,

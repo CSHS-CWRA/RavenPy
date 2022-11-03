@@ -1,5 +1,7 @@
+import pytest
+
 from ravenpy.utilities import ravenio
-from ravenpy.utilities.testdata import get_local_testdata
+from ravenpy.utilities.testdata import get_file, query_folder
 
 # from ravenpy.models import raven_templates
 
@@ -61,8 +63,10 @@ class TestReadDiagnostics:
 
 
 class TestParseConfiguration:
-    def test_simple(self):
-        rvi = get_local_testdata("raven-hmets/*.rvi")
+    @pytest.mark.xfail(reason="Query folder is API rate limited")
+    def test_simple(self, threadsafe_data_dir):
+        rvi_files = query_folder("raven-hmets", r"\.rvi")
+        rvi = get_file(rvi_files, cache_dir=threadsafe_data_dir)
 
         out = ravenio.parse_configuration(rvi)
         assert out["Duration"] == "2081"

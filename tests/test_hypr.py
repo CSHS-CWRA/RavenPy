@@ -1,16 +1,12 @@
 import datetime as dt
-import tempfile
 
 import numpy as np
 
-from ravenpy.models import HRU, HYPR, HYPR_OST, LU
-from ravenpy.utilities.testdata import get_local_testdata
+from ravenpy.models import HYPR, HYPR_OST, LU
+from ravenpy.utilities.testdata import get_file
 
-from .common import _convert_2d
+salmon_river = "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
 
-TS = get_local_testdata(
-    "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
-)
 
 hru = HYPR.HRU(
     area=4250.6, elevation=843.0, latitude=54.4848, longitude=-123.3659, slope=0.01234
@@ -20,7 +16,9 @@ lu = LU("FOREST", impermeable_frac=0.0, forest_coverage=0.02345)
 
 
 class TestHYPR:
-    def test_simple(self):
+    def test_simple(self, threadsafe_data_dir):
+        ts = get_file(salmon_river, cache_dir=threadsafe_data_dir)
+
         model = HYPR()
         params = (
             -1.856410e-01,  # par_x01
@@ -47,7 +45,7 @@ class TestHYPR:
         )
 
         model(
-            TS,
+            ts,
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2002, 1, 1),
             hrus=(hru,),
@@ -62,7 +60,7 @@ class TestHYPR:
 
 
 class TestHYPR_OST:
-    def test_simple(self):
+    def test_simple(self, threadsafe_data_dir):
         model = HYPR_OST()
         params = (
             -1.856410e-01,  # par_x01
@@ -135,11 +133,16 @@ class TestHYPR_OST:
         )
 
         model.configure(
-            get_local_testdata("ostrich-gr4j-cemaneige/OstRandomNumbers.txt")
+            get_file(
+                "ostrich-gr4j-cemaneige/OstRandomNumbers.txt",
+                cache_dir=threadsafe_data_dir,
+            )
         )
 
+        ts = get_file(salmon_river, cache_dir=threadsafe_data_dir)
+
         model(
-            TS,
+            ts,
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2002, 1, 1),
             hrus=(hru,),
@@ -197,7 +200,7 @@ class TestHYPR_OST:
 
         hypr = HYPR()
         hypr(
-            TS,
+            ts,
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2002, 1, 1),
             hrus=(hru,),

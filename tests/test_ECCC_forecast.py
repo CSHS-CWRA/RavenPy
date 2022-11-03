@@ -1,7 +1,7 @@
 import datetime as dt
 
 from ravenpy.models import GR4JCN
-from ravenpy.utilities.testdata import get_local_testdata
+from ravenpy.utilities.testdata import get_file
 
 """
 Test to perform a hindcast using auto-queried ECCC data aggregated on THREDDS.
@@ -15,14 +15,15 @@ hru = GR4JCN.LandHRU(
 
 
 class TestECCCForecast:
-    def test_forecasting_GEPS(self):
+    geps = "eccc_forecasts/geps_watershed.nc"
+    salmon_river = "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
+
+    def test_forecasting_GEPS(self, threadsafe_data_dir):
 
         # Prepare a RAVEN model run using historical data, GR4JCN in this case.
         # This is a dummy run to get initial states. In a real forecast situation,
         # this run would end on the day before the forecast, but process is the same.
-        ts = get_local_testdata(
-            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
-        )
+        ts = get_file(self.salmon_river, cache_dir=threadsafe_data_dir)
         model = GR4JCN()
         model(
             ts,
@@ -36,7 +37,7 @@ class TestECCCForecast:
         rvc = model.outputs["solution"]
 
         # Collect test forecast data for location and climate model (20 members)
-        ts20 = get_local_testdata("eccc_forecasts/geps_watershed.nc")
+        ts20 = get_file(self.geps, cache_dir=threadsafe_data_dir)
         nm = 20
 
         # It is necessary to clean the model state because the input variables of the previous
@@ -59,7 +60,7 @@ class TestECCCForecast:
             parallel=dict(nc_index=range(nm)),
         )
 
-        # The model now has the forecast data generated and it has 10 days of forecasts.
+        # The model now has the forecast data generated and has 10 days of forecasts.
         assert len(model.q_sim.values) == 10
 
         # Also see if GEPS has 20 members produced.

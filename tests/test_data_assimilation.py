@@ -2,9 +2,7 @@ import datetime as dt
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pytest
 import xarray as xr
-import xskillscore as xss
 
 from ravenpy.models import GR4JCN
 from ravenpy.utilities.data_assimilation import (
@@ -13,34 +11,37 @@ from ravenpy.utilities.data_assimilation import (
     perturbation,
     sequential_assimilation,
 )
-from ravenpy.utilities.testdata import get_local_testdata
+from ravenpy.utilities.testdata import get_file, open_dataset
 
 
-def test_perturbation():
-    ts = get_local_testdata(
-        "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
-    )
-    ds = xr.open_dataset(ts)
+class TestPerturbation:
+    def test_perturbation(self):
+        salmon_river = (
+            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
+        )
 
-    tmax = ds.tmax.isel(time=slice(0, 10))
-    p_tmax = perturbation(tmax, "norm", 0.01, members=50)
-    np.testing.assert_allclose(p_tmax.mean("members"), tmax, rtol=0.1)
+        ds = open_dataset(salmon_river)
 
-    rain = ds.rain.isel(time=slice(30, 60))
-    p_rain = perturbation(rain, "gamma", 0.01, members=50)
-    np.testing.assert_allclose(p_rain.mean("members"), rain, rtol=0.1)
+        tmax = ds.tmax.isel(time=slice(0, 10))
+        p_tmax = perturbation(tmax, "norm", 0.01, members=50)
+        np.testing.assert_allclose(p_tmax.mean("members"), tmax, rtol=0.1)
 
-    assert p_tmax.attrs == ds.tmax.attrs
-    assert p_rain.attrs == ds.rain.attrs
+        rain = ds.rain.isel(time=slice(30, 60))
+        p_rain = perturbation(rain, "gamma", 0.01, members=50)
+        np.testing.assert_allclose(p_rain.mean("members"), rain, rtol=0.1)
+
+        assert p_tmax.attrs == ds.tmax.attrs
+        assert p_rain.attrs == ds.rain.attrs
 
 
 class TestAssimilationGR4JCN:
-    def test_simple(self):
-
-        # get timeseries
-        ts = get_local_testdata(
+    def test_simple(self, threadsafe_data_dir):
+        salmon_river = (
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
         )
+
+        # get timeseries
+        ts = get_file(salmon_river, cache_dir=threadsafe_data_dir)
 
         # set number of members. Using 7 here to make it easier to find and debug.
         n_members = 7

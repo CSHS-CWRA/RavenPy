@@ -13,11 +13,11 @@ from ravenpy.extractors.routing_product import (
     RoutingProductShapefileExtractor,
 )
 from ravenpy.models import Raven, get_average_annual_runoff
-from ravenpy.utilities.testdata import get_local_testdata
+from ravenpy.utilities.testdata import get_file
 
 
 class TestRouting:
-    def test_lievre_tutorial(self):
+    def test_lievre_tutorial(self, threadsafe_data_dir):
         """
         This test reproduces the Lievre tutorial setup:
 
@@ -29,19 +29,19 @@ class TestRouting:
         # Input files #
         ###############
 
-        routing_product_shp_path = get_local_testdata(
-            "raven-routing-sample/finalcat_hru_info.zip"
+        routing_product_shp_path = get_file(
+            "raven-routing-sample/finalcat_hru_info.zip", cache_dir=threadsafe_data_dir
         )
 
-        vic_streaminputs_nc_path = get_local_testdata(
-            "raven-routing-sample/VIC_streaminputs.nc"
+        vic_streaminputs_nc_path = get_file(
+            "raven-routing-sample/VIC_streaminputs.nc", cache_dir=threadsafe_data_dir
         )
-        vic_temperatures_nc_path = get_local_testdata(
-            "raven-routing-sample/VIC_temperatures.nc"
+        vic_temperatures_nc_path = get_file(
+            "raven-routing-sample/VIC_temperatures.nc", cache_dir=threadsafe_data_dir
         )
 
-        observation_data_nc_path = get_local_testdata(
-            "raven-routing-sample/WSC02LE024.nc"
+        observation_data_nc_path = get_file(
+            "raven-routing-sample/WSC02LE024.nc", cache_dir=threadsafe_data_dir
         )
 
         #########
@@ -245,7 +245,7 @@ class TestRouting:
         ]:
             assert model.hydrograph.q_sim[d].item() == pytest.approx(q_sim)
 
-    def test_lievre_tutorial_v21(self):
+    def test_lievre_tutorial_v21(self, threadsafe_data_dir):
         """
         This test reproduces the Lievre tutorial setup (with the Routing Product V2.1):
 
@@ -257,19 +257,19 @@ class TestRouting:
         # Input files #
         ###############
 
-        routing_product_shp_path = get_local_testdata(
-            "raven-routing-sample/lievre_hrus_v21.zip"
+        routing_product_shp_path = get_file(
+            "raven-routing-sample/lievre_hrus_v21.zip", cache_dir=threadsafe_data_dir
         )
 
-        vic_streaminputs_nc_path = get_local_testdata(
-            "raven-routing-sample/VIC_streaminputs.nc"
+        vic_streaminputs_nc_path = get_file(
+            "raven-routing-sample/VIC_streaminputs.nc", cache_dir=threadsafe_data_dir
         )
-        vic_temperatures_nc_path = get_local_testdata(
-            "raven-routing-sample/VIC_temperatures.nc"
+        vic_temperatures_nc_path = get_file(
+            "raven-routing-sample/VIC_temperatures.nc", cache_dir=threadsafe_data_dir
         )
 
-        observation_data_nc_path = get_local_testdata(
-            "raven-routing-sample/WSC02LE024.nc"
+        observation_data_nc_path = get_file(
+            "raven-routing-sample/WSC02LE024.nc", cache_dir=threadsafe_data_dir
         )
 
         #########

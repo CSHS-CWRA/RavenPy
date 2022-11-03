@@ -4,15 +4,16 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from ravenpy.utilities.testdata import get_local_testdata
+from ravenpy.utilities.testdata import get_file
+
+zipped_geojson_file = "polygons/mars.zip"
+geojson_file = "polygons/mars.geojson"
+raster_file = "nasa/Mars_MGS_MOLA_DEM_georeferenced_region_compressed.tiff"
 
 
 class TestOperations:
     analysis = pytest.importorskip("ravenpy.utilities.analysis")
     io = pytest.importorskip("ravenpy.utilities.io")
-
-    zipped_file = get_local_testdata("polygons/mars.zip")
-    non_zipped_file = get_local_testdata("polygons/mars.geojson")
 
     def test_circular_mean_aspect(self):
         northern_angles = np.array([330, 30, 15, 345])
@@ -29,36 +30,43 @@ class TestOperations:
             self.analysis.circular_mean_aspect(southwest_angles), 191.88055987
         )
 
-    def test_address_append(self):
+    def test_address_append(self, threadsafe_data_dir):
         non_existing_tarred_file = "polygons.tar"
 
-        assert "zip://" in self.io.address_append(self.zipped_file)
-        assert "tar://" in self.io.address_append(non_existing_tarred_file)
-        assert not self.io.address_append(self.non_zipped_file).startswith(
-            ("zip://", "tar://")
+        assert "zip://" in self.io.address_append(
+            get_file(zipped_geojson_file, cache_dir=threadsafe_data_dir)
         )
+        assert "tar://" in self.io.address_append(non_existing_tarred_file)
+        assert not self.io.address_append(
+            get_file(geojson_file, cache_dir=threadsafe_data_dir)
+        ).startswith(("zip://", "tar://"))
 
-    def test_archive_sniffer(self, tmp_path):
-        probable_shp = self.io.archive_sniffer(self.zipped_file)
+    def test_archive_sniffer(self, tmp_path, threadsafe_data_dir):
+        probable_shp = self.io.archive_sniffer(
+            get_file(zipped_geojson_file, cache_dir=threadsafe_data_dir)
+        )
         assert Path(probable_shp[0]).name == "mars.shp"
 
-        probable_shp = self.io.archive_sniffer(self.zipped_file, working_dir=tmp_path)
+        probable_shp = self.io.archive_sniffer(
+            get_file(zipped_geojson_file, cache_dir=threadsafe_data_dir),
+            working_dir=tmp_path,
+        )
         assert Path(probable_shp[0]).name == "mars.shp"
 
-    def test_archive_extract(self, tmp_path):
-        assert self.zipped_file.exists()
+    def test_archive_extract(self, tmp_path, threadsafe_data_dir):
+        zipped_file = get_file(zipped_geojson_file, cache_dir=threadsafe_data_dir)
+
+        assert zipped_file.exists()
 
         files = list()
         with tempfile.TemporaryDirectory(dir=tmp_path) as tdir:
-            files.extend(
-                self.io.generic_extract_archive(self.zipped_file, output_dir=tdir)
-            )
+            files.extend(self.io.generic_extract_archive(zipped_file, output_dir=tdir))
             assert len(files) == 5
             for f in files:
                 assert Path(f).exists()
         assert not np.any([Path(f).exists() for f in files])
 
-        files = self.io.generic_extract_archive(self.zipped_file)
+        files = self.io.generic_extract_archive(zipped_file)
         assert np.all([Path(f).exists() for f in files])
 
 
@@ -66,25 +74,31 @@ class TestFileInfoFuncs:
     checks = pytest.importorskip("ravenpy.utilities.checks")
     io = pytest.importorskip("ravenpy.utilities.io")
 
-    zipped_file = get_local_testdata("polygons/mars.zip")
-    geojson_file = get_local_testdata("polygons/mars.geojson")
-    raster_file = get_local_testdata(
-        "nasa/Mars_MGS_MOLA_DEM_georeferenced_region_compressed.tiff"
-    )
-
     non_existing_file = "unreal.zip"
 
-    def test_raster_datatype_sniffer(self):
-        datatype = self.io.raster_datatype_sniffer(self.raster_file)
+    def test_raster_datatype_sniffer(self, threadsafe_data_dir):
+        datatype = self.io.raster_datatype_sniffer(
+            get_file(raster_file, cache_dir=threadsafe_data_dir)
+        )
         assert datatype.lower() == "uint8"
 
-    def test_crs_sniffer(self):
-        assert self.io.crs_sniffer(self.zipped_file) == 4326
-        assert set(self.io.crs_sniffer(self.geojson_file, self.raster_file)) == {4326}
+    def test_crs_sniffer(self, threadsafe_data_dir):
+        assert (
+            self.io.crs_sniffer(
+                get_file(zipped_geojson_file, cache_dir=threadsafe_data_dir)
+            )
+            == 4326
+        )
+        assert set(
+            self.io.crs_sniffer(
+                get_file(geojson_file, cache_dir=threadsafe_data_dir),
+                get_file(raster_file, cache_dir=threadsafe_data_dir),
+            )
+        ) == {4326}
 
     def test_single_file_check(self):
         one = [Path(__file__).parent / "__init__.py"]
-        zero = list()
+        zero = []
         three = [1, Path().root, 2.333]
 
         assert self.checks.single_file_check(one) == one[0]
@@ -95,14 +109,17 @@ class TestFileInfoFuncs:
         with pytest.raises(NotImplementedError):
             self.checks.single_file_check(three)
 
-    def test_boundary_check(self):
+    def test_boundary_check(self, recwarn, threadsafe_data_dir):
         # NOTE: does not presently accept zipped files.
+        geojson = get_file(geojson_file, cache_dir=threadsafe_data_dir)
+        raster = get_file(raster_file, cache_dir=threadsafe_data_dir)
 
-        with pytest.warns(None):
-            self.checks.boundary_check([self.geojson_file, self.raster_file], max_y=80)
+        self.checks.boundary_check([geojson, raster], max_y=80)
+        assert len(recwarn) == 0
 
         with pytest.warns(UserWarning):
-            self.checks.boundary_check([self.geojson_file, self.raster_file], max_y=15)
+            self.checks.boundary_check([geojson, raster], max_y=15)
+        assert len(recwarn) != 0
 
         with pytest.raises(FileNotFoundError):
             self.checks.boundary_check([self.non_existing_file])
@@ -117,13 +134,10 @@ class TestGdalOgrFunctions:
     fiona = pytest.importorskip("fiona")
     sgeo = pytest.importorskip("shapely.geometry")
 
-    geojson_file = get_local_testdata("polygons/mars.geojson")
-    raster_file = get_local_testdata(
-        "nasa/Mars_MGS_MOLA_DEM_georeferenced_region_compressed.tiff"
-    )
-
-    def test_gdal_aspect_not_projected(self, tmp_path):
-        aspect_grid = self.analysis.gdal_aspect_analysis(self.raster_file)
+    def test_gdal_aspect_not_projected(self, tmp_path, threadsafe_data_dir):
+        aspect_grid = self.analysis.gdal_aspect_analysis(
+            get_file(raster_file, cache_dir=threadsafe_data_dir)
+        )
         np.testing.assert_almost_equal(
             self.analysis.circular_mean_aspect(aspect_grid), 10.9119033
         )
@@ -133,7 +147,8 @@ class TestGdalOgrFunctions:
             prefix="aspect_", suffix=".tiff", delete=False, dir=tmp_path
         ).name
         aspect_grid = self.analysis.gdal_aspect_analysis(
-            self.raster_file, set_output=aspect_tempfile
+            get_file(raster_file, cache_dir=threadsafe_data_dir),
+            set_output=aspect_tempfile,
         )
         np.testing.assert_almost_equal(
             self.analysis.circular_mean_aspect(aspect_grid), 10.9119033
@@ -141,8 +156,10 @@ class TestGdalOgrFunctions:
         assert Path(aspect_tempfile).stat().st_size > 0
 
     # Slope values are high due to data values using Geographic CRS
-    def test_gdal_slope_not_projected(self, tmp_path):
-        slope_grid = self.analysis.gdal_slope_analysis(self.raster_file)
+    def test_gdal_slope_not_projected(self, tmp_path, threadsafe_data_dir):
+        slope_grid = self.analysis.gdal_slope_analysis(
+            get_file(raster_file, cache_dir=threadsafe_data_dir)
+        )
         np.testing.assert_almost_equal(slope_grid.min(), 0.0)
         np.testing.assert_almost_equal(slope_grid.mean(), 64.4365427)
         np.testing.assert_almost_equal(slope_grid.max(), 89.71747, 5)
@@ -151,30 +168,39 @@ class TestGdalOgrFunctions:
             prefix="slope_", suffix=".tiff", delete=False, dir=tmp_path
         ).name
         slope_grid = self.analysis.gdal_slope_analysis(
-            self.raster_file, set_output=slope_tempfile
+            get_file(raster_file, cache_dir=threadsafe_data_dir),
+            set_output=slope_tempfile,
         )
         np.testing.assert_almost_equal(slope_grid.mean(), 64.4365427)
         assert Path(slope_tempfile).stat().st_size > 0
 
     # Slope values are high due to data values using Geographic CRS
-    def test_dem_properties(self):
-        dem_properties = self.analysis.dem_prop(self.raster_file)
+    def test_dem_properties(self, threadsafe_data_dir):
+        dem_properties = self.analysis.dem_prop(
+            get_file(raster_file, cache_dir=threadsafe_data_dir)
+        )
         np.testing.assert_almost_equal(dem_properties["aspect"], 10.911, 3)
         np.testing.assert_almost_equal(dem_properties["elevation"], 79.0341, 4)
         np.testing.assert_almost_equal(dem_properties["slope"], 64.43654, 5)
 
-        with self.fiona.open(self.geojson_file) as gj:
+        with self.fiona.open(
+            get_file(geojson_file, cache_dir=threadsafe_data_dir)
+        ) as gj:
             feature = next(iter(gj))
             geom = self.sgeo.shape(feature["geometry"])
 
-        region_dem_properties = self.analysis.dem_prop(self.raster_file, geom=geom)
+        region_dem_properties = self.analysis.dem_prop(
+            get_file(raster_file, cache_dir=threadsafe_data_dir), geom=geom
+        )
         np.testing.assert_almost_equal(region_dem_properties["aspect"], 280.681, 3)
         np.testing.assert_almost_equal(region_dem_properties["elevation"], 145.8899, 4)
         np.testing.assert_almost_equal(region_dem_properties["slope"], 61.26508, 5)
 
     # Slope values are high due to data values using Geographic CRS
-    def test_geom_properties(self):
-        with self.fiona.open(self.geojson_file) as gj:
+    def test_geom_properties(self, threadsafe_data_dir):
+        with self.fiona.open(
+            get_file(geojson_file, cache_dir=threadsafe_data_dir)
+        ) as gj:
             iterable = iter(gj)
             feature_1 = next(iterable)
             feature_2 = next(iterable)
@@ -206,18 +232,15 @@ class TestGenericGeoOperations:
     rasterio = pytest.importorskip("rasterio")
     sgeo = pytest.importorskip("shapely.geometry")
 
-    geojson_file = get_local_testdata("polygons/mars.geojson")
-    raster_file = get_local_testdata(
-        "nasa/Mars_MGS_MOLA_DEM_georeferenced_region_compressed.tiff"
-    )
-
-    def test_vector_reprojection(self, tmp_path):
+    def test_vector_reprojection(self, tmp_path, threadsafe_data_dir):
         # TODO: It would be awesome if this returned a temporary filepath if no file given.
         reproj_file = tempfile.NamedTemporaryFile(
             prefix="reproj_", suffix=".geojson", delete=False, dir=tmp_path
         ).name
         self.geo.generic_vector_reproject(
-            self.geojson_file, projected=reproj_file, target_crs="EPSG:3348"
+            get_file(geojson_file, cache_dir=threadsafe_data_dir),
+            projected=reproj_file,
+            target_crs="EPSG:3348",
         )
 
         with self.fiona.open(reproj_file) as gj:
@@ -233,14 +256,16 @@ class TestGenericGeoOperations:
         np.testing.assert_almost_equal(geom_properties["perimeter"], 9194343.1759303)
         np.testing.assert_almost_equal(geom_properties["gravelius"], 1.0212589)
 
-    def test_raster_warp(self, tmp_path):
+    def test_raster_warp(self, tmp_path, threadsafe_data_dir):
         # TODO: It would be awesome if this returned a temporary filepath if no file given.
         # TODO: either use `output` or `reprojected/warped` for these functions.
         reproj_file = tempfile.NamedTemporaryFile(
             prefix="reproj_", suffix=".tiff", delete=False, dir=tmp_path
         ).name
         self.geo.generic_raster_warp(
-            self.raster_file, output=reproj_file, target_crs="EPSG:3348"
+            get_file(raster_file, cache_dir=threadsafe_data_dir),
+            output=reproj_file,
+            target_crs="EPSG:3348",
         )
 
         # EPSG:3348 is a very general transformation; Some tolerance should be allowed.
@@ -256,12 +281,14 @@ class TestGenericGeoOperations:
             assert data.max() == 255
             np.testing.assert_almost_equal(data.mean(), 60.729, 3)
 
-    def test_warped_raster_slope(self, tmp_path):
+    def test_warped_raster_slope(self, tmp_path, threadsafe_data_dir):
         reproj_file = tempfile.NamedTemporaryFile(
             prefix="reproj_", suffix=".tiff", delete=False, dir=tmp_path
         ).name
         self.geo.generic_raster_warp(
-            self.raster_file, output=reproj_file, target_crs="EPSG:3348"
+            get_file(raster_file, cache_dir=threadsafe_data_dir),
+            output=reproj_file,
+            target_crs="EPSG:3348",
         )
         slope_grid = self.analysis.gdal_slope_analysis(reproj_file)
 
@@ -269,12 +296,14 @@ class TestGenericGeoOperations:
         np.testing.assert_almost_equal(slope_grid.mean(), 0.0034991)
         np.testing.assert_almost_equal(slope_grid.max(), 0.3523546)
 
-    def test_warped_raster_aspect(self, tmp_path):
+    def test_warped_raster_aspect(self, tmp_path, threadsafe_data_dir):
         reproj_file = tempfile.NamedTemporaryFile(
             prefix="reproj_", suffix=".tiff", delete=False, dir=tmp_path
         ).name
         self.geo.generic_raster_warp(
-            self.raster_file, output=reproj_file, target_crs="EPSG:3348"
+            get_file(raster_file, cache_dir=threadsafe_data_dir),
+            output=reproj_file,
+            target_crs="EPSG:3348",
         )
         aspect_grid = self.analysis.gdal_aspect_analysis(reproj_file)
 
@@ -282,15 +311,21 @@ class TestGenericGeoOperations:
             self.analysis.circular_mean_aspect(aspect_grid), 7.780, decimal=3
         )
 
-    def test_raster_clip(self, tmp_path):
-        with self.fiona.open(self.geojson_file) as gj:
+    def test_raster_clip(self, tmp_path, threadsafe_data_dir):
+        with self.fiona.open(
+            get_file(geojson_file, cache_dir=threadsafe_data_dir)
+        ) as gj:
             feature = next(iter(gj))
             geom = self.sgeo.shape(feature["geometry"])
 
         clipped_file = tempfile.NamedTemporaryFile(
             prefix="reproj_", suffix=".tiff", delete=False, dir=tmp_path
         ).name
-        self.geo.generic_raster_clip(self.raster_file, clipped_file, geometry=geom)
+        self.geo.generic_raster_clip(
+            get_file(raster_file, cache_dir=threadsafe_data_dir),
+            clipped_file,
+            geometry=geom,
+        )
 
         with self.rasterio.open(clipped_file) as gt:
             assert gt.crs.to_epsg() == 4326
@@ -300,8 +335,10 @@ class TestGenericGeoOperations:
             assert data.max() == 255
             np.testing.assert_almost_equal(data.mean(), 102.8222965)
 
-    def test_shapely_pyproj_transform(self):
-        with self.fiona.open(self.geojson_file) as gj:
+    def test_shapely_pyproj_transform(self, threadsafe_data_dir):
+        with self.fiona.open(
+            get_file(geojson_file, cache_dir=threadsafe_data_dir)
+        ) as gj:
             feature = next(iter(gj))
             geom = self.sgeo.shape(feature["geometry"])
 
@@ -320,25 +357,29 @@ class TestGIS:
     io = pytest.importorskip("ravenpy.utilities.io")
     sgeo = pytest.importorskip("shapely.geometry")
 
-    vector_file = get_local_testdata("polygons/mars.geojson")
+    def test_get_bbox_single(self, threadsafe_data_dir):
+        vector = get_file(geojson_file, cache_dir=threadsafe_data_dir)
 
-    def test_get_bbox_single(self):
-        w, s, n, e = self.io.get_bbox(self.vector_file, all_features=False)
+        w, s, n, e = self.io.get_bbox(vector, all_features=False)
         np.testing.assert_almost_equal(w, -139.8514262)
         np.testing.assert_almost_equal(s, 8.3754794)
         np.testing.assert_almost_equal(n, -117.4753973)
         np.testing.assert_almost_equal(e, 29.6327068)
 
-    def test_get_bbox_all(self):
-        w, s, n, e = self.io.get_bbox(self.vector_file)
+    def test_get_bbox_all(self, threadsafe_data_dir):
+        vector = get_file(geojson_file, cache_dir=threadsafe_data_dir)
+
+        w, s, n, e = self.io.get_bbox(vector)
         np.testing.assert_almost_equal(w, -139.8514262)
         np.testing.assert_almost_equal(s, 8.3754794)
         np.testing.assert_almost_equal(n, -38.7397456)
         np.testing.assert_almost_equal(e, 64.1757015)
 
-    def test_feature_contains(self):
+    def test_feature_contains(self, threadsafe_data_dir):
+        vector = get_file(geojson_file, cache_dir=threadsafe_data_dir)
+
         point = -69.0, 45
-        assert isinstance(self.checks.feature_contains(point, self.vector_file), dict)
+        assert isinstance(self.checks.feature_contains(point, vector), dict)
         assert isinstance(
-            self.checks.feature_contains(self.sgeo.Point(point), self.vector_file), dict
+            self.checks.feature_contains(self.sgeo.Point(point), vector), dict
         )

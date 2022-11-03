@@ -1,23 +1,15 @@
 import datetime as dt
 import re
-from collections import namedtuple
-from pathlib import Path
 
 import pytest
 
-import ravenpy
-from ravenpy.config.commands import (
-    BasinStateVariablesCommand,
-    EvaluationPeriod,
-    GriddedForcingCommand,
-    HRUStateVariableTableCommand,
-)
+from ravenpy.config.commands import EvaluationPeriod, GriddedForcingCommand
 from ravenpy.config.rvs import OST, RVC, RVH, RVI, RVP, RVT, Config
 from ravenpy.extractors import (
     RoutingProductGridWeightExtractor,
     RoutingProductShapefileExtractor,
 )
-from ravenpy.utilities.testdata import get_local_testdata
+from ravenpy.utilities.testdata import get_file
 
 
 class TestRV:
@@ -86,9 +78,11 @@ class TestRVI:
 
 
 class TestRVC:
-    @classmethod
-    def setup_class(self):
-        sol = open(get_local_testdata("gr4j_cemaneige/solution.rvc")).read()
+    @pytest.fixture(autouse=True)
+    def setup(self, threadsafe_data_dir):
+        sol = open(
+            get_file("gr4j_cemaneige/solution.rvc", cache_dir=threadsafe_data_dir)
+        ).read()
         self.rvc = RVC.create_solution(sol)
 
     def test_parse(self):
@@ -106,9 +100,11 @@ class TestRVC:
 
 
 class TestRVH:
-    @classmethod
-    def setup_class(self):
-        shp = get_local_testdata("raven-routing-sample/finalcat_hru_info.zip")
+    @pytest.fixture(autouse=True)
+    def setup(self, threadsafe_data_dir):
+        shp = get_file(
+            "raven-routing-sample/finalcat_hru_info.zip", cache_dir=threadsafe_data_dir
+        )
         extractor = RoutingProductShapefileExtractor(shp)
         config = extractor.extract()
         self.rvh = RVH(None)
@@ -148,9 +144,11 @@ class TestRVH:
 
 
 class TestRVP:
-    @classmethod
-    def setup_class(self):
-        shp = get_local_testdata("raven-routing-sample/finalcat_hru_info.zip")
+    @pytest.fixture(autouse=True)
+    def setup(self, threadsafe_data_dir):
+        shp = get_file(
+            "raven-routing-sample/finalcat_hru_info.zip", cache_dir=threadsafe_data_dir
+        )
         extractor = RoutingProductShapefileExtractor(shp)
         config = extractor.extract()
         self.rvp = RVP(None)
@@ -168,10 +166,14 @@ class TestRVP:
 
 
 class TestRVT:
-    @classmethod
-    def setup_class(self):
-        input_file = get_local_testdata("raven-routing-sample/VIC_streaminputs.nc")
-        routing_file = get_local_testdata("raven-routing-sample/finalcat_hru_info.zip")
+    @pytest.fixture(autouse=True)
+    def setup(self, threadsafe_data_dir):
+        input_file = get_file(
+            "raven-routing-sample/VIC_streaminputs.nc", cache_dir=threadsafe_data_dir
+        )
+        routing_file = get_file(
+            "raven-routing-sample/finalcat_hru_info.zip", cache_dir=threadsafe_data_dir
+        )
         extractor = RoutingProductGridWeightExtractor(input_file, routing_file)
         gws = extractor.extract()
         self.gfc = GriddedForcingCommand(grid_weights=gws)
@@ -184,10 +186,12 @@ class TestRVT:
         # FIXME: This test is not superb.
         assert len(res.split("\n")) == 224
 
-    def test_gauges(self):
+    def test_gauges(self, threadsafe_data_dir):
         rvt = RVT(config=None)
         rvt.nc_index = [0, 1, 2]
-        rvt.configure_from_nc_data([get_local_testdata("famine/famine_input.nc")])
+        rvt.configure_from_nc_data(
+            [get_file("famine/famine_input.nc", cache_dir=threadsafe_data_dir)]
+        )
         out = rvt.to_rv()
         assert len(re.findall(":Gauge", out)) == 3
         assert set(re.findall(r":StationIdx\s*(\d)", out)) == {"1", "2", "3"}

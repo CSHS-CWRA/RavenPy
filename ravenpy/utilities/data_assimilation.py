@@ -7,13 +7,13 @@ import datetime as dt
 import math
 import os
 from copy import deepcopy
-from dataclasses import replace
 from typing import Dict, List, Sequence, Tuple, Union
 
 import numpy as np
 import xarray as xr
 
 from ravenpy.config.commands import HRUState
+from ravenpy.models import Raven
 
 """
 model = Raven model instance, preset with parameters etc.
@@ -109,9 +109,7 @@ def assimilate(
     return [xa, model]
 
 
-def perturbation(
-    da: xr.DataArray, dist: str, std: float, seed: int = None, **kwargs: Dict
-):
+def perturbation(da: xr.DataArray, dist: str, std: float, seed: int = None, **kwargs):
     """Return perturbed time series.
 
     Parameters
@@ -125,7 +123,7 @@ def perturbation(
     seed : int
       Seed for the random number generator. Setting the same seed for different variables will ensure the same
       perturbations are generated.
-    kwargs : dict
+    **kwargs
       Name and size of additional dimensions, apart from time.
 
     """
@@ -272,16 +270,16 @@ def perturb_full_series(
 
 
 def assimilation_initialization(
-    model,
-    ts: str,
+    model: Raven,
+    ts: Union[str, os.PathLike],
     start_date: dt.datetime,
     end_date: dt.datetime,
     area: float,
     elevation: float,
     latitude: float,
     longitude: float,
-    params: List[float],
-    assim_var: List[str],
+    params: Sequence[float],
+    assim_var: Sequence[str],
     n_members: int = 25,
 ):
     """
@@ -294,7 +292,7 @@ def assimilation_initialization(
     ----------
     model : ravenpy.Raven instance
       The model that will be used to perform the simulations and assimilation.
-    ts : str
+    ts : str or os.PathLike
       Path to the forcing data timeseries. For assimilation, this is perturbed data.
     start_date : datetime.datetime
       Start date of the period used to initialize states for assimilation.
@@ -308,9 +306,9 @@ def assimilation_initialization(
       Catchment latitude, in degrees.
     longitude : float
       Catchment longitude, in degrees (negative west).
-    params : List[float]
+    params : Sequence[float]
       The hydrological model parameters used for the assimilation and simulation.
-    assim_var : List[str]
+    assim_var : Sequence[str]
       List of hydrological model internal variables to be modified during assimilation.
     n_members : int
       Number of ensemble members for the Ensemble Kalman Filter. The default value is 25.
@@ -319,7 +317,7 @@ def assimilation_initialization(
     -------
     ravenpy.Raven instance
       The hydrological model with the internal states after the n_members simulations.
-    np.array
+    numpy.array
       Array of state variables used overwrite the current initial states.
     ravenpy.Raven.hru_states instance
       The Raven model states for the hru information (size n_members)

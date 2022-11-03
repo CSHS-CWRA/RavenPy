@@ -2,7 +2,6 @@
 Tools for searching for and acquiring test data.
 """
 import logging
-import os
 import re
 from hashlib import md5
 from pathlib import Path
@@ -19,7 +18,7 @@ _default_cache_dir = Path.home() / ".raven_testing_data"
 
 LOGGER = logging.getLogger("RAVEN")
 
-__all__ = ["get_local_testdata", "get_file", "open_dataset", "query_folder"]
+__all__ = ["get_file", "open_dataset", "query_folder"]
 
 
 def file_md5_checksum(fname):
@@ -29,32 +28,32 @@ def file_md5_checksum(fname):
     return hash_md5.hexdigest()
 
 
-def get_local_testdata(pattern: str) -> Union[Path, List[Path]]:
-    """Gather testdata from a local folder.
-
-    Return files matching `pattern` in the local test data repo
-    located at `RAVENPY_TESTDATA_PATH` (which must be set).
-
-    Parameters
-    ----------
-    pattern: str
-      Glob pattern, which must include the folder.
-
-    Returns
-    -------
-    Union[Path, List[Path]]
-    """
-    testdata_path = os.getenv("RAVENPY_TESTDATA_PATH")
-    if not testdata_path:
-        raise RuntimeError("RAVENPY_TESTDATA_PATH env variable is not set")
-    testdata_path = Path(testdata_path)
-    if not testdata_path.exists():
-        raise RuntimeError(f"{testdata_path} does not exists")
-    paths = [path for path in testdata_path.glob(pattern) if path.suffix != ".md5"]
-    if not paths:
-        raise RuntimeError(f"No data found for {pattern} at {testdata_path}")
-    # Return item directly when singleton, for convenience
-    return paths[0] if len(paths) == 1 else paths
+# def get_local_testdata(pattern: str) -> Union[Path, List[Path]]:
+#     """Gather testdata from a local folder.
+#
+#     Return files matching `pattern` in the local test data repo
+#     located at `RAVENPY_TESTDATA_PATH` (which must be set).
+#
+#     Parameters
+#     ----------
+#     pattern: str
+#       Glob pattern, which must include the folder.
+#
+#     Returns
+#     -------
+#     Union[Path, List[Path]]
+#     """
+#     testdata_path = os.getenv("RAVENPY_TESTDATA_PATH")
+#     if not testdata_path:
+#         raise RuntimeError("RAVENPY_TESTDATA_PATH env variable is not set")
+#     testdata_path = Path(testdata_path)
+#     if not testdata_path.exists():
+#         raise RuntimeError(f"{testdata_path} does not exists")
+#     paths = [path for path in testdata_path.glob(pattern) if path.suffix != ".md5"]
+#     if not paths:
+#         raise RuntimeError(f"No data found for {pattern} at {testdata_path}")
+#     # Return item directly when singleton, for convenience
+#     return paths[0] if len(paths) == 1 else paths
 
 
 def _get(
@@ -180,15 +179,21 @@ def query_folder(
     r = requests.get(url)
     res = r.json()
 
-    md5_files = [f["path"] for f in res["tree"] if f["path"].endswith(".md5")]
-    if folder:
-        folder = "/".join("/".split(folder)) if "/" in folder else folder
-        md5_files = [f for f in md5_files if folder in Path(f).parent.as_posix()]
-    files = [re.sub(".md5$", "", f) for f in md5_files]
+    try:
+        md5_files = [f["path"] for f in res["tree"] if f["path"].endswith(".md5")]
+        if folder:
+            folder = "/".join("/".split(folder)) if "/" in folder else folder
+            md5_files = [f for f in md5_files if folder in Path(f).parent.as_posix()]
+        files = [re.sub(".md5$", "", f) for f in md5_files]
 
-    if pattern:
-        regex = re.compile(pattern)
-        files = [string for string in files if re.search(regex, string)]
+        if pattern:
+            regex = re.compile(pattern)
+            files = [string for string in files if re.search(regex, string)]
+    except KeyError:
+        if {"message", "documentation_url"}.issubset(set(res.keys())):
+            raise ConnectionRefusedError()
+        else:
+            raise
 
     return files
 
