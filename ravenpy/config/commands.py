@@ -33,11 +33,11 @@ class LinearTransform(RavenCommand):
     scale: Optional[float] = 1
     offset: Optional[float] = 0
 
-    template = ":LinearTransform {scale:.15f} {offset:.15f}\n"
+    _template = ":LinearTransform {scale:.15f} {offset:.15f}\n"
 
     def to_rv(self):
         if (self.scale != 1) or (self.offset != 0):
-            return self.template.format(**asdict(self))
+            return self._template.format(**asdict(self))
         return ""
 
 
@@ -49,10 +49,10 @@ class EvaluationPeriod(RavenCommand):
     start: dt.date
     end: dt.date
 
-    template = ":EvaluationPeriod {name} {start} {end}"
+    _template = ":EvaluationPeriod {name} {start} {end}"
 
     def to_rv(self):
-        return self.template.format(**asdict(self))
+        return self._template.format(**asdict(self))
 
 
 @dataclass
@@ -81,10 +81,10 @@ class CustomOutput(RavenCommand):
     space_agg: str
     filename: str = ""
 
-    template = ":CustomOutput {time_per} {stat} {variable} {space_agg} {filename}"
+    _template = ":CustomOutput {time_per} {stat} {variable} {space_agg} {filename}"
 
     def to_rv(self):
-        return self.template.format(**asdict(self))
+        return self._template.format(**asdict(self))
 
 
 @dataclass
@@ -112,7 +112,7 @@ class SubBasinsCommand(RavenCommand):
 
     subbasins: Tuple[Record, ...] = ()
 
-    template = """
+    _template = """
     :SubBasins
         :Attributes   ID NAME DOWNSTREAM_ID PROFILE REACH_LENGTH  GAUGED
         :Units      none none          none    none           km    none
@@ -122,7 +122,7 @@ class SubBasinsCommand(RavenCommand):
 
     def to_rv(self):
         recs = [f"    {sb}" for sb in self.subbasins]
-        return dedent(self.template).format(subbasin_records="\n".join(recs))
+        return dedent(self._template).format(subbasin_records="\n".join(recs))
 
 
 # For convenience
@@ -161,7 +161,7 @@ class HRUsCommand(RavenCommand):
 
     hrus: Tuple[Record, ...] = ()
 
-    template = """
+    _template = """
     :HRUs
         :Attributes      AREA  ELEVATION       LATITUDE      LONGITUDE BASIN_ID       LAND_USE_CLASS           VEG_CLASS      SOIL_PROFILE  AQUIFER_PROFILE TERRAIN_CLASS      SLOPE     ASPECT
         :Units            km2          m            deg            deg     none                  none               none              none             none          none        deg       degN
@@ -171,7 +171,7 @@ class HRUsCommand(RavenCommand):
 
     def to_rv(self):
         recs = [f"    {hru}" for hru in self.hrus]
-        return dedent(self.template).format(hru_records="\n".join(recs))
+        return dedent(self._template).format(hru_records="\n".join(recs))
 
 
 # For convenience
@@ -190,7 +190,7 @@ class ReservoirCommand(RavenCommand):
     max_depth: float = 0
     lake_area: float = 0  # in m^2
 
-    template = """
+    _template = """
     :Reservoir {name}
         :SubBasinID {subbasin_id}
         :HRUID {hru_id}
@@ -204,7 +204,7 @@ class ReservoirCommand(RavenCommand):
 
     def to_rv(self):
         d = asdict(self)
-        return dedent(self.template).format(**d)
+        return dedent(self._template).format(**d)
 
 
 @dataclass
@@ -214,7 +214,7 @@ class SubBasinGroupCommand(RavenCommand):
     name: str = ""
     subbasin_ids: Tuple[int, ...] = ()
 
-    template = """
+    _template = """
     :SubBasinGroup {name}
         {subbasin_ids}
     :EndSubBasinGroup
@@ -229,7 +229,7 @@ class SubBasinGroupCommand(RavenCommand):
             for i in range(0, len(sbids), n_per_line)
         ]
         d["subbasin_ids"] = "\n    ".join([" ".join(sbids) for sbids in sbids_lines])
-        return dedent(self.template).format(**d)
+        return dedent(self._template).format(**d)
 
 
 @dataclass
@@ -239,10 +239,10 @@ class SBGroupPropertyMultiplierCommand(RavenCommand):
     parameter_name: str
     mult: float
 
-    template = ":SBGroupPropertyMultiplier {group_name} {parameter_name} {mult}"
+    _template = ":SBGroupPropertyMultiplier {group_name} {parameter_name} {mult}"
 
     def to_rv(self):
-        return dedent(self.template).format(**asdict(self))
+        return dedent(self._template).format(**asdict(self))
 
 
 @dataclass
@@ -254,7 +254,7 @@ class ChannelProfileCommand(RavenCommand):
     survey_points: Tuple[Tuple[float, float], ...] = ()
     roughness_zones: Tuple[Tuple[float, float], ...] = ()
 
-    template = """
+    _template = """
     :ChannelProfile {name}
         :Bedslope {bed_slope}
         :SurveyPoints
@@ -274,7 +274,7 @@ class ChannelProfileCommand(RavenCommand):
         d["roughness_zones"] = "\n".join(
             f"{INDENT * 2}{z[0]} {z[1]}" for z in d["roughness_zones"]
         )
-        return dedent(self.template).format(**d)
+        return dedent(self._template).format(**d)
 
 
 @dataclass
@@ -335,7 +335,7 @@ class DataCommand(BaseDataCommand):
     site: str = ""
     var: str = ""
 
-    template = """
+    _template = """
     :Data {data_type} {site} {units}
         :ReadFromNetCDF
             :FileNameNC      {file_name_nc}
@@ -349,7 +349,7 @@ class DataCommand(BaseDataCommand):
 
     def to_rv(self):
         d = self.asdict()
-        return dedent(self.template).format(**d)
+        return dedent(self._template).format(**d)
 
 
 @dataclass
@@ -368,7 +368,7 @@ class GaugeCommand(RavenCommand):
 
     data_cmds: Optional[Tuple[DataCommand, ...]] = ()
 
-    template = """
+    _template = """
     :Gauge {name}
         :Latitude {latitude}
         :Longitude {longitude}
@@ -397,14 +397,14 @@ class GaugeCommand(RavenCommand):
         else:
             d["monthly_ave_temperature"] = ""
         d["data_cmds"] = "\n\n".join(map(str, self.data_cmds))  # type: ignore
-        return dedent(self.template).format(**d)
+        return dedent(self._template).format(**d)
 
 
 @dataclass
 class ObservationDataCommand(DataCommand):
     subbasin_id: int = 1
 
-    template = """
+    _template = """
     :ObservationData {data_type} {subbasin_id} {units}
         :ReadFromNetCDF
             :FileNameNC      {file_name_nc}
@@ -432,7 +432,7 @@ class GridWeightsCommand(RavenCommand):
     number_grid_cells: int = 1
     data: Tuple[Tuple[int, int, float], ...] = ((1, 0, 1.0),)
 
-    template = """
+    _template = """
     {indent}:GridWeights
     {indent}    :NumberHRUs {number_hrus}
     {indent}    :NumberGridCells {number_grid_cells}
@@ -462,7 +462,7 @@ class GridWeightsCommand(RavenCommand):
         d = asdict(self)
         d["indent"] = indent
         d["data"] = "\n".join(f"{indent}    {p[0]} {p[1]} {p[2]}" for p in self.data)
-        return dedent(self.template).strip().format(**d)
+        return dedent(self._template).strip().format(**d)
 
 
 @dataclass
@@ -476,7 +476,7 @@ class RedirectToFileCommand(RavenCommand):
 
     path: Path
 
-    template = "{indent}:RedirectToFile {path}"
+    _template = "{indent}:RedirectToFile {path}"
 
     def to_rv(self, indent_level=0):
         indent = INDENT * indent_level
@@ -485,7 +485,7 @@ class RedirectToFileCommand(RavenCommand):
         # We can use the name of the file (as opposed to the full path)
         # because we have a symlink to it in the execution folder
         d["path"] = d["path"].name
-        return self.template.format(**d)
+        return self._template.format(**d)
 
 
 @dataclass
@@ -497,7 +497,7 @@ class GriddedForcingCommand(BaseDataCommand):
         GridWeightsCommand, RedirectToFileCommand
     ] = GridWeightsCommand()
 
-    template = """
+    _template = """
     :GriddedForcing {name}
         :ForcingType {data_type}
         :FileNameNC {file_name_nc}
@@ -514,7 +514,7 @@ class GriddedForcingCommand(BaseDataCommand):
     def to_rv(self):
         d = self.asdict()
         d["grid_weights"] = self.grid_weights.to_rv(indent_level=1)
-        return dedent(self.template).format(**d)
+        return dedent(self._template).format(**d)
 
 
 @dataclass
@@ -526,7 +526,7 @@ class StationForcingCommand(BaseDataCommand):
         GridWeightsCommand, RedirectToFileCommand
     ] = GridWeightsCommand()
 
-    template = """
+    _template = """
     :StationForcing {name} {units}
         :ForcingType {data_type}
         :FileNameNC {file_name_nc}
@@ -543,7 +543,7 @@ class StationForcingCommand(BaseDataCommand):
     def to_rv(self):
         d = self.asdict()
         d["grid_weights"] = self.grid_weights.to_rv(indent_level=1)
-        return dedent(self.template).format(**d)
+        return dedent(self._template).format(**d)
 
 
 @dataclass
@@ -558,7 +558,7 @@ class HRUStateVariableTableCommand(RavenCommand):
         def to_rv(self):
             return ",".join(map(str, (self.index,) + tuple(self.data.values())))
 
-    template = """
+    _template = """
     :HRUStateVariableTable
         :Attributes,{names}
         {values}
@@ -599,7 +599,7 @@ class HRUStateVariableTableCommand(RavenCommand):
             + [s.data.get(n, 0.0) for n in names]
             for s in self.hru_states.values()
         ]
-        return dedent(self.template).format(
+        return dedent(self._template).format(
             names=",".join(names),
             values="\n    ".join([",".join(map(str, v)) for v in values]),
         )
@@ -621,7 +621,7 @@ class BasinIndexCommand(RavenCommand):
     qin: Optional[Tuple[float, ...]] = None
     qlat: Optional[Tuple[float, ...]] = None
 
-    template = """
+    _template = """
     :BasinIndex {index} {name}
         :ChannelStorage {channel_storage}
         :RivuletStorage {rivulet_storage}
@@ -662,7 +662,7 @@ class BasinIndexCommand(RavenCommand):
                 d[k] = f":{q} {v}"
             else:
                 d[k] = ""
-        return dedent(self.template).format(**d)
+        return dedent(self._template).format(**d)
 
 
 @dataclass
@@ -670,7 +670,7 @@ class BasinStateVariablesCommand(RavenCommand):
 
     basin_states: Dict[int, BasinIndexCommand] = field(default_factory=dict)
 
-    template = """
+    _template = """
     :BasinStateVariables
         {basin_states_list}
     :EndBasinStateVariables
@@ -693,7 +693,7 @@ class BasinStateVariablesCommand(RavenCommand):
         return cls(basin_states)
 
     def to_rv(self):
-        return dedent(self.template).format(
+        return dedent(self._template).format(
             basin_states_list="\n".join(map(str, self.basin_states.values()))
         )
 
@@ -709,14 +709,14 @@ class SoilClassesCommand(RavenCommand):
 
     soil_classes: Tuple[Record, ...] = ()
 
-    template = """
+    _template = """
     :SoilClasses
         {soil_class_records}
     :EndSoilClasses
     """
 
     def to_rv(self):
-        return dedent(self.template).format(
+        return dedent(self._template).format(
             soil_class_records="\n".join(map(str, self.soil_classes))
         )
 
@@ -740,14 +740,14 @@ class SoilProfilesCommand(RavenCommand):
 
     soil_profiles: Tuple[Record, ...] = ()
 
-    template = """
+    _template = """
     :SoilProfiles
         {soil_profile_records}
     :EndSoilProfiles
     """
 
     def to_rv(self):
-        return dedent(self.template).format(
+        return dedent(self._template).format(
             soil_profile_records="\n".join(map(str, self.soil_profiles))
         )
 
@@ -766,7 +766,7 @@ class VegetationClassesCommand(RavenCommand):
 
     vegetation_classes: Tuple[Record, ...] = ()
 
-    template = """
+    _template = """
     :VegetationClasses
         :Attributes,                MAX_HT,       MAX_LAI,    MAX_LEAF_COND
         :Units,                       m,            none,       mm_per_s
@@ -775,7 +775,7 @@ class VegetationClassesCommand(RavenCommand):
     """
 
     def to_rv(self):
-        return dedent(self.template).format(
+        return dedent(self._template).format(
             vegetation_class_records="\n".join(map(str, self.vegetation_classes))
         )
 
@@ -793,7 +793,7 @@ class LandUseClassesCommand(RavenCommand):
 
     land_use_classes: Tuple[Record, ...] = ()
 
-    template = """
+    _template = """
     :LandUseClasses
         :Attributes,        IMPERMEABLE_FRAC,         FOREST_COVERAGE
         :Units,                     fract,                    fract
@@ -802,7 +802,7 @@ class LandUseClassesCommand(RavenCommand):
     """
 
     def to_rv(self):
-        return dedent(self.template).format(
+        return dedent(self._template).format(
             land_use_class_records="\n".join(map(str, self.land_use_classes))
         )
 
