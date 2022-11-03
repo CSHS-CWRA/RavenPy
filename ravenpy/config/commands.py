@@ -6,8 +6,9 @@ from dataclasses import asdict, field
 from itertools import chain
 from pathlib import Path
 from textwrap import dedent
-from typing import Dict, Optional, Tuple, Union, no_type_check
+from typing import Dict, Literal, Optional, Tuple, Union, no_type_check
 
+import options
 from pydantic.dataclasses import dataclass
 
 INDENT = " " * 4
@@ -28,6 +29,11 @@ class RavenCommand(ABC):
         return self.to_rv()
 
 
+class RavenOption(RavenCommand):
+    def to_rv(self):
+        pass
+
+
 @dataclass
 class LinearTransform(RavenCommand):
     scale: Optional[float] = 1
@@ -39,6 +45,100 @@ class LinearTransform(RavenCommand):
         if (self.scale != 1) or (self.offset != 0):
             return self._template.format(**asdict(self))
         return ""
+
+
+@dataclass
+class RainSnowTransition:
+    """Specify the range of temperatures over which there will be a rain/snow mix when partitioning total
+    precipitation into rain and snow components.
+
+    Attributes
+    ----------
+    temp : float
+      Midpoint of the temperature range [C].
+    delta : float
+      Range [C].
+    """
+
+    temp: float
+    delta: float
+
+    # _template = ":RainSnowTransition {temp} {float}"
+
+
+@dataclass
+class AirSnowCoeff:
+    """The air/snow heat transfer coefficient as used in the `SNOTEMP_NEWTONS` snow temperature evolution routine.
+
+    Attributes
+    ----------
+    value : float
+      Heat transfer coefficient [1/d].
+    """
+
+    value: float
+
+    _template = ":AirSnowCoeff {value}"
+
+
+@dataclass
+class AvgAnnualSnow:
+    """The average annual snow for the entire watershed used in the CEMANEIGE algorithm.
+
+    Attributes
+    ----------
+    value : float
+      Average annual snow [mm].
+    """
+
+    value: float
+
+    _template = ":AvgAnnualSnow {value}"
+
+
+@dataclass
+class PrecipitationLapseRate:
+    """The simple linear precipitation lapse rate  used in the `OROCORR_SIMPLELAPSE` orographic correction algorithm.
+
+    Attributes
+    ----------
+    rate : float
+      Lapse rate [mm/d/km]
+    """
+
+    rate: float
+
+    _template = ":PrecipitationLapseRate [rate]"
+
+
+@dataclass
+class AdiabaticLapseRate:
+    """Base adiabatic lapse rate.
+
+    Attributes
+    ----------
+    rate : float
+      Base adiabatic lapse rate [C/km]
+    """
+
+    rate: float
+
+    _template = ":AdiabaticLapseRate {rate}"
+
+
+@dataclass
+class PotentialMeltMethod:
+    """Potential snow melt algorithm.
+
+    Attributes
+    ----------
+    option : POTMELT_OPTIONS
+      Potential melt algorithm.
+    """
+
+    option: options.PotentialMelt
+
+    _template = ":PotentialMeltMethod {option}"
 
 
 @dataclass

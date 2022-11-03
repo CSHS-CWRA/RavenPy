@@ -3,7 +3,6 @@ import datetime as dt
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from dataclasses import replace
-from enum import Enum
 from pathlib import Path
 from textwrap import dedent
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
@@ -272,61 +271,6 @@ class RVI(RV):
     :NetCDFAttribute time_coverage_start {start_date}
     :NetCDFAttribute time_coverage_end {end_date}
     """
-
-    class EvaporationOptions(Enum):
-        PET_CONSTANT = "PET_CONSTANT"
-        PET_PENMAN_MONTEITH = "PET_PENMAN_MONTEITH"
-        PET_PENMAN_COMBINATION = "PET_PENMAN_COMBINATION"
-        PET_PRIESTLEY_TAYLOR = "PET_PRIESTLEY_TAYLOR"
-        PET_HARGREAVES = "PET_HARGREAVES"
-        PET_HARGREAVES_1985 = "PET_HARGREAVES_1985"
-        PET_FROMMONTHLY = "PET_FROMMONTHLY"
-        PET_DATA = "PET_DATA"
-        PET_HAMON_1961 = "PET_HAMON_1961"
-        PET_TURC_1961 = "PET_TURC_1961"
-        PET_MAKKINK_1957 = "PET_MAKKINK_1957"
-        PET_MONTHLY_FACTOR = "PET_MONTHLY_FACTOR"
-        PET_MOHYSE = "PET_MOHYSE"
-        PET_OUDIN = "PET_OUDIN"
-
-    class CalendarOptions(Enum):
-        PROLEPTIC_GREGORIAN = "PROLEPTIC_GREGORIAN"
-        JULIAN = "JULIAN"
-        GREGORIAN = "GREGORIAN"
-        STANDARD = "STANDARD"
-        NOLEAP = "NOLEAP"
-        _365_DAY = "365_DAY"
-        ALL_LEAP = "ALL_LEAP"
-        _366_DAY = "366_DAY"
-
-    class EvaluationMetrics(Enum):
-        NASH_SUTCLIFFE = "NASH_SUTCLIFFE"
-        LOG_NASH = "LOG_NASH"
-        RMSE = "RMSE"
-        PCT_BIAS = "PCT_BIAS"
-        ABSERR = "ABSERR"
-        ABSMAX = "ABSMAX"
-        PDIFF = "PDIFF"
-        TMVOL = "TMVOL"
-        RCOEFF = "RCOEFF"
-        NSC = "NSC"
-        KLING_GUPTA = "KLING_GUPTA"
-
-    class RainSnowFractionOptions(Enum):
-        DATA = "RAINSNOW_DATA"
-        DINGMAN = "RAINSNOW_DINGMAN"
-        UBC = "RAINSNOW_UBC"
-        HBV = "RAINSNOW_HBV"
-        HARDER = "RAINSNOW_HARDER"
-        HSPF = "RAINSNOW_HSPF"
-
-    class RoutingOptions(Enum):
-        DIFFUSIVE_WAVE = "ROUTE_DIFFUSIVE_WAVE"
-        HYDROLOGIC = "ROUTE_HYDROLOGIC"
-        NONE = "ROUTE_NONE"
-        STORAGE_COEFF = "ROUTE_STORAGE_COEFF"
-        PLUG_FLOW = "ROUTE_PLUG_FLOW"
-        MUSKINGUM = "MUSKINGUM"
 
     def __init__(self, config):
         super().__init__(config)
