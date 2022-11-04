@@ -50,6 +50,46 @@ SoilParameters = Literal[
     "GR4J_X3",
 ]
 
+StateVariables = Literal[
+    "SURFACE_WATER",
+    "ATMOSPHERE",
+    "ATMOS_PRECIP",
+    "PONDED_WATER",
+    "SOIL",
+    "GROUNDWATER",
+    "CANOPY",
+    "CANOPY_SNOW",
+    "TRUNK",
+    "ROOT",
+    "DEPRESSION",
+    "WETLAND",
+    "LAKE_STORAGE",
+    "SNOW",
+    "SNOW_LIQ",
+    "GLACIER",
+    "GLACIER_ICE",
+    "CONVOLUTION",
+    "CONV_STOR",
+    "SURFACE_WATER_TEMP",
+    "SNOW_TEMP",
+    "COLD_CONTENT",
+    "GLACIER_CC",
+    "SOIL_TEMP",
+    "CANOPY_TEMP",
+    "SNOW_DEPTH",
+    "PERMAFROST_DEPTH",
+    "SNOW_COVER",
+    "SNOW_AGE",
+    "SNOW_ALBEDO",
+    "CROP_HEAT_UNITS",
+    "CUM_INFIL",
+    "CUM_SNOWMELT",
+    "CONSTITUENT",
+    "CONSTITUENT_SRC",
+    "CONSTITUENT_SW",
+    "CONSTITUENT_SINK",
+]
+
 LandUseParameters = Literal[
     "FOREST_COVERAGE",
     "IMPERMEABLE_FRAC",
@@ -126,24 +166,14 @@ VegetationParameters = Literal[
 ]
 
 
-class EvaporationOptions(Enum):
-    PET_CONSTANT = "PET_CONSTANT"
-    PET_PENMAN_MONTEITH = "PET_PENMAN_MONTEITH"
-    PET_PENMAN_COMBINATION = "PET_PENMAN_COMBINATION"
-    PET_PRIESTLEY_TAYLOR = "PET_PRIESTLEY_TAYLOR"
-    PET_HARGREAVES = "PET_HARGREAVES"
-    PET_HARGREAVES_1985 = "PET_HARGREAVES_1985"
-    PET_FROMMONTHLY = "PET_FROMMONTHLY"
-    PET_DATA = "PET_DATA"
-    PET_HAMON_1961 = "PET_HAMON_1961"
-    PET_TURC_1961 = "PET_TURC_1961"
-    PET_MAKKINK_1957 = "PET_MAKKINK_1957"
-    PET_MONTHLY_FACTOR = "PET_MONTHLY_FACTOR"
-    PET_MOHYSE = "PET_MOHYSE"
-    PET_OUDIN = "PET_OUDIN"
+class AirPressureMethod(Enum):
+    BASIC = "AIRPRESS_BASIC"  # Default
+    CONST = "AIRPRESS_CONST"
+    DATA = "AIRPRESS_DATA"
+    UBC = "AIRPRESS_UBC"
 
 
-class CalendarOptions(Enum):
+class Calendar(Enum):
     PROLEPTIC_GREGORIAN = "PROLEPTIC_GREGORIAN"
     JULIAN = "JULIAN"
     GREGORIAN = "GREGORIAN"
@@ -152,6 +182,22 @@ class CalendarOptions(Enum):
     _365_DAY = "365_DAY"
     ALL_LEAP = "ALL_LEAP"
     _366_DAY = "366_DAY"
+
+
+class CatchmentRoute(Enum):
+    """:CatchmentRoute"""
+
+    DUMP = "ROUTE_DUMP"
+    GAMMA = "ROUTE_GAMMA_CONVOLUTION"
+    TRI = "ROUTE_TRI_CONVOLUTION"
+    RESERVOIR = "ROUTE_RESERVOIR_SERIES"
+    EXP = "ROUTE_EXPONENTIAL"
+
+
+class CloudCoverMethod(Enum):
+    NONE = "CLOUDCOV_NONE"  # default
+    DATA = "CLOUDCOV_DATA"  # gauge or gridded time series used
+    UBC = "CLOUDCOV_UBC"
 
 
 class EvaluationMetrics(Enum):
@@ -168,35 +214,50 @@ class EvaluationMetrics(Enum):
     KLING_GUPTA = "KLING_GUPTA"
 
 
-class RainSnowFractionOptions(Enum):
-    DATA = "RAINSNOW_DATA"
-    DINGMAN = "RAINSNOW_DINGMAN"
-    UBC = "RAINSNOW_UBC"
-    HBV = "RAINSNOW_HBV"
-    HARDER = "RAINSNOW_HARDER"
-    HSPF = "RAINSNOW_HSPF"
+class Evaporation(Enum):
+    PET_CONSTANT = "PET_CONSTANT"
+    PET_PENMAN_MONTEITH = "PET_PENMAN_MONTEITH"
+    PET_PENMAN_COMBINATION = "PET_PENMAN_COMBINATION"
+    PET_PRIESTLEY_TAYLOR = "PET_PRIESTLEY_TAYLOR"
+    PET_HARGREAVES = "PET_HARGREAVES"
+    PET_HARGREAVES_1985 = "PET_HARGREAVES_1985"
+    PET_FROMMONTHLY = "PET_FROMMONTHLY"
+    PET_DATA = "PET_DATA"
+    PET_HAMON_1961 = "PET_HAMON_1961"
+    PET_TURC_1961 = "PET_TURC_1961"
+    PET_MAKKINK_1957 = "PET_MAKKINK_1957"
+    PET_MONTHLY_FACTOR = "PET_MONTHLY_FACTOR"
+    PET_MOHYSE = "PET_MOHYSE"
+    PET_OUDIN = "PET_OUDIN"
 
 
-class RoutingOptions(Enum):
-    DIFFUSIVE_WAVE = "ROUTE_DIFFUSIVE_WAVE"
-    HYDROLOGIC = "ROUTE_HYDROLOGIC"
-    NONE = "ROUTE_NONE"
-    STORAGE_COEFF = "ROUTE_STORAGE_COEFF"
-    PLUG_FLOW = "ROUTE_PLUG_FLOW"
-    MUSKINGUM = "MUSKINGUM"
+class LWRadiationMethod(Enum):
+    DATA = "LW_RAD_DATA"
+    DEFAULT = "LW_RAD_DEFAULT"
+    UBCWM = "LW_RAD_UBC"
 
 
-class CatchmentRoute(Enum):
-    """:CatchmentRoute"""
-
-    DUMP = "ROUTE_DUMP"
-    GAMMA = "ROUTE_GAMMA_CONVOLUTION"
-    TRI = "ROUTE_TRI_CONVOLUTION"
-    RESERVOIR = "ROUTE_RESERVOIR_SERIES"
-    EXP = "ROUTE_EXPONENTIAL"
+class MonthlyInterpolationMethod(Enum):
+    UNIFORM = "MONTHINT_UNIFORM"
+    LINEAR_MID = "MONTHINT_LINEAR_MID"
+    LINEAR_FOM = "MONTHINT_LINEAR_FOM"
+    LINEAR_21 = "MONTHINT_LINEAR_21"
 
 
-class PotentialMelt(Enum):
+class OroPETCorrect(Enum):
+    NONE = "OROCORR_NONE"
+    SIMPLELAPSE = "OROCORR_SIMPLELAPSE"
+    HBV = "OROCORR_HBV"
+
+
+class OroPrecipCorrect(Enum):
+    NONE = "OROCORR_NONE"
+    UBC = "OROCORR_UBC"
+    HBV = "OROCORR_HBV"
+    SIMPLELAPSE = "OROCORR_SIMPLELAPSE"
+
+
+class PotentialMeltMethod(Enum):
     """:PotentialMelt algorithms"""
 
     DEGREE_DAY = "POTMELT_DEGREE_DAY"
@@ -207,3 +268,74 @@ class PotentialMelt(Enum):
     HMETS = "POTMELT_HMETS"
     HBV = "POTMELT_HBV"
     UBC = "POTMELT_UBC"
+
+
+class PrecipIceptFract(Enum):
+    """"""
+
+    USER = "PRECIP_ICEPT_USER"  # default
+    LAI = "PRECIP_ICEPT_LAI"
+    EXPLAI = "PRECIP_ICEPT_EXPLAI"
+    NONE = "PRECIP_ICEPT_NONE"
+    HEDSTROM = "PRECIP_ICEPT_HEDSTROM"
+
+
+class RainSnowFraction(Enum):
+    DATA = "RAINSNOW_DATA"
+    DINGMAN = "RAINSNOW_DINGMAN"
+    UBC = "RAINSNOW_UBC"
+    HBV = "RAINSNOW_HBV"
+    HARDER = "RAINSNOW_HARDER"
+    HSPF = "RAINSNOW_HSPF"
+
+
+class RelativeHumidityMethod(Enum):
+    CONSTANT = "RELHUM_CONSTANT"
+    DATA = "RELHUM_DATA"
+    MINDEWPT = "RELHUM_MINDEWPT"
+
+
+class Routing(Enum):
+    DIFFUSIVE_WAVE = "ROUTE_DIFFUSIVE_WAVE"
+    HYDROLOGIC = "ROUTE_HYDROLOGIC"
+    NONE = "ROUTE_NONE"
+    STORAGE_COEFF = "ROUTE_STORAGE_COEFF"
+    PLUG_FLOW = "ROUTE_PLUG_FLOW"
+    MUSKINGUM = "MUSKINGUM"
+
+
+class SoilModel(Enum):
+    ONE_LAYER = "SOIL_ONE_LAYER"
+    TWO_LAYER = "SOIL_TWO_LAYER"
+    MULTILAYER = "SOIL_MULTILAYER"
+
+
+class SubdailyMethod(Enum):
+    NONE = "SUBDAILY_NONE"
+    SIMPLE = "SUBDAILY_SIMPLE"
+    UBC = "SUBDAILY_UBC"
+
+
+class SWCanopyCorrect(Enum):
+    NONE = "SW_CANOPY_CORR_NONE"  # Default
+    STATIC = "SW_CANOPY_CORR_STATIC"
+    DYNAMIC = "SW_CANOPY_CORR_DYNAMIC"
+    UBC = "SW_CANOPY_CORR_UBC"
+
+
+class SWCloudCorrect(Enum):
+    NONE = "SW_CLOUDCOV_CORR_NONE"  # Default
+    DINGMAN = "SW_CLOUDCOV_CORR_DINGMAN"
+    UBC = "SW_CLOUDCOV_CORR_UBC"
+
+
+class SWRadiationMethod(Enum):
+    DATA = "SW_RAD_DATA"
+    DEFAULT = "SW_RAD_DEFAULT"
+    UBCWM = "SW_RAD_UBCWM"
+
+
+class WindspeedMethod(Enum):
+    CONSTANT = "WINDVEL_CONSTANT"
+    DATA = "WINDVEL_DATA"
+    UBC = "WINDVEL_UBC"

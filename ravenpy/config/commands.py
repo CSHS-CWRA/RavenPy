@@ -6,32 +6,194 @@ from dataclasses import asdict, field
 from itertools import chain
 from pathlib import Path
 from textwrap import dedent
-from typing import Dict, Literal, Optional, Tuple, Union, no_type_check
+from typing import Dict, Literal, Optional, Sequence, Tuple, Union, no_type_check
 
-import options
 from pydantic.dataclasses import dataclass
+
+from . import options
+from .base import (
+    RavenCoefficient,
+    RavenCommand,
+    RavenOption,
+    RavenOptionList,
+    RavenSwitch,
+)
 
 INDENT = " " * 4
 VALUE_PADDING = 10
 
 
-class RavenCommand(ABC):
+# --- Boolean switches --- #
+class DirectEvaporation(RavenSwitch):
+    """Rainfall is automatically reduced through evapotranspiration up to the limit of the calculated PET."""
+
+
+class SuppressOutput(RavenSwitch):
+    """Write minimal output to disk when enabled."""
+
+
+class WriteForcingFunctions(RavenSwitch):
+    """Write watershed averaged forcing functions (e.g. rainfall, radiation, PET, etc)."""
+
+
+# --- Coefficients --- #
+
+
+class AirSnowCoeff(RavenCoefficient):
+    """The air/snow heat transfer coefficient as used in the `SNOTEMP_NEWTONS` snow temperature evolution routine.
+
+    Attributes
+    ----------
+    value : float
+      Heat transfer coefficient [1/d].
     """
-    This base class must be used for all Raven commands that are dataclasses
-    which must implement some specialized rendering logic.
+
+
+class AvgAnnualSnow(RavenCoefficient):
+    """The average annual snow for the entire watershed used in the CEMANEIGE algorithm.
+
+    Attributes
+    ----------
+    value : float
+      Average annual snow [mm].
     """
 
-    @abstractmethod
+
+class PrecipitationLapseRate(RavenCoefficient):
+    """The simple linear precipitation lapse rate  used in the `OROCORR_SIMPLELAPSE` orographic correction algorithm.
+
+    Attributes
+    ----------
+    value : float
+      Lapse rate [mm/d/km]
+    """
+
+
+class AdiabaticLapseRate(RavenCoefficient):
+    """Base adiabatic lapse rate.
+
+    Attributes
+    ----------
+    value : float
+      Base adiabatic lapse rate [C/km]
+    """
+
+
+# --- Options --- #
+
+
+@dataclass
+class Calendar(RavenOption):
+    option: options.Calendar
+
+
+@dataclass
+class CatchmentRoute(RavenOption):
+    option: options.CatchmentRoute
+
+
+@dataclass
+class CloudCoverMethod(RavenOption):
+    option: options.CloudCoverMethod
+
+
+@dataclass
+class EvaluationMetrics(RavenOptionList):
+    options: Sequence[options.EvaluationMetrics]
+
+
+@dataclass
+class Evaporation(RavenOption):
+    option: options.Evaporation
+
+
+@dataclass
+class OW_Evaporation(RavenOption):
+    option: options.Evaporation
+
+
+@dataclass
+class MonthlyInterpolationMethod(RavenOption):
+    option: options.MonthlyInterpolationMethod
+
+
+@dataclass
+class PotentialMeltMethod(RavenOption):
+    """Potential snow melt algorithm.
+
+    Attributes
+    ----------
+    option : 'options.PotentialMelt'
+      Potential melt algorithm.
+    """
+
+    option: options.PotentialMeltMethod
+
+
+@dataclass
+class PrecipIceptFract(RavenOption):
+    option: options.PrecipIceptFract
+
+
+@dataclass
+class RainSnowFraction(RavenOption):
+    option: options.RainSnowFraction
+
+
+@dataclass
+class RelativeHumidityMethod(RavenOption):
+    option: options.RelativeHumidityMethod
+
+
+@dataclass
+class Routing(RavenOption):
+    option: options.Routing
+
+
+@dataclass
+class SoilModel(RavenOption):
+    option: options.SoilModel
+    n: int = None
+
     def to_rv(self):
-        pass
-
-    def __str__(self):
-        return self.to_rv()
+        n = self.n if self.n is not None else ""
+        return f":SoilModel           {self.options.value} {n}\n"
 
 
-class RavenOption(RavenCommand):
+@dataclass
+class SubdailyMethod(RavenOption):
+    option: options.SubdailyMethod
+
+
+@dataclass
+class SWCanopyCorrect(RavenOption):
+    option: options.SWCanopyCorrect
+
+
+@dataclass
+class SWCloudCorrect(RavenOption):
+    option: options.SWCloudCorrect
+
+
+@dataclass
+class SWRadiationMethod(RavenOption):
+    option: options.SWRadiationMethod
+
+
+@dataclass
+class WindspeedMethod(RavenOption):
+    option: options.WindspeedMethod
+
+
+# --- Custom commands --- #
+
+
+@dataclass
+class LakeStorage(RavenCommand):
+    option: options.StateVariables
+
     def to_rv(self):
-        pass
+        return f":LakeStorage {self.option}\n"
 
 
 @dataclass
@@ -48,7 +210,7 @@ class LinearTransform(RavenCommand):
 
 
 @dataclass
-class RainSnowTransition:
+class RainSnowTransition(RavenCommand):
     """Specify the range of temperatures over which there will be a rain/snow mix when partitioning total
     precipitation into rain and snow components.
 
@@ -63,82 +225,7 @@ class RainSnowTransition:
     temp: float
     delta: float
 
-    # _template = ":RainSnowTransition {temp} {float}"
-
-
-@dataclass
-class AirSnowCoeff:
-    """The air/snow heat transfer coefficient as used in the `SNOTEMP_NEWTONS` snow temperature evolution routine.
-
-    Attributes
-    ----------
-    value : float
-      Heat transfer coefficient [1/d].
-    """
-
-    value: float
-
-    _template = ":AirSnowCoeff {value}"
-
-
-@dataclass
-class AvgAnnualSnow:
-    """The average annual snow for the entire watershed used in the CEMANEIGE algorithm.
-
-    Attributes
-    ----------
-    value : float
-      Average annual snow [mm].
-    """
-
-    value: float
-
-    _template = ":AvgAnnualSnow {value}"
-
-
-@dataclass
-class PrecipitationLapseRate:
-    """The simple linear precipitation lapse rate  used in the `OROCORR_SIMPLELAPSE` orographic correction algorithm.
-
-    Attributes
-    ----------
-    rate : float
-      Lapse rate [mm/d/km]
-    """
-
-    rate: float
-
-    _template = ":PrecipitationLapseRate [rate]"
-
-
-@dataclass
-class AdiabaticLapseRate:
-    """Base adiabatic lapse rate.
-
-    Attributes
-    ----------
-    rate : float
-      Base adiabatic lapse rate [C/km]
-    """
-
-    rate: float
-
-    _template = ":AdiabaticLapseRate {rate}"
-
-
-@dataclass
-class PotentialMeltMethod:
-    """Potential snow melt algorithm.
-
-    Attributes
-    ----------
-    option : POTMELT_OPTIONS
-      Potential melt algorithm.
-    """
-
-    option: options.PotentialMelt
-
-    _template = ":PotentialMeltMethod {option}"
+    _template = ":RainSnowTransition {temp} {float}"
 
 
 @dataclass
@@ -149,10 +236,9 @@ class EvaluationPeriod(RavenCommand):
     start: dt.date
     end: dt.date
 
-    _template = ":EvaluationPeriod {name} {start} {end}"
-
     def to_rv(self):
-        return self._template.format(**asdict(self))
+        template = ":EvaluationPeriod {name} {start} {end}"
+        return template.format(**asdict(self))
 
 
 @dataclass
@@ -181,10 +267,9 @@ class CustomOutput(RavenCommand):
     space_agg: str
     filename: str = ""
 
-    _template = ":CustomOutput {time_per} {stat} {variable} {space_agg} {filename}"
-
     def to_rv(self):
-        return self._template.format(**asdict(self))
+        template = ":CustomOutput {time_per} {stat} {variable} {space_agg} {filename}"
+        return template.format(**asdict(self))
 
 
 @dataclass
@@ -212,17 +297,16 @@ class SubBasinsCommand(RavenCommand):
 
     subbasins: Tuple[Record, ...] = ()
 
-    _template = """
-    :SubBasins
-        :Attributes   ID NAME DOWNSTREAM_ID PROFILE REACH_LENGTH  GAUGED
-        :Units      none none          none    none           km    none
-    {subbasin_records}
-    :EndSubBasins
-    """
-
     def to_rv(self):
+        template = """
+            :SubBasins
+                :Attributes   ID NAME DOWNSTREAM_ID PROFILE REACH_LENGTH  GAUGED
+                :Units      none none          none    none           km    none
+            {subbasin_records}
+            :EndSubBasins
+        """
         recs = [f"    {sb}" for sb in self.subbasins]
-        return dedent(self._template).format(subbasin_records="\n".join(recs))
+        return dedent(template).format(subbasin_records="\n".join(recs))
 
 
 # For convenience
@@ -261,17 +345,18 @@ class HRUsCommand(RavenCommand):
 
     hrus: Tuple[Record, ...] = ()
 
-    _template = """
-    :HRUs
-        :Attributes      AREA  ELEVATION       LATITUDE      LONGITUDE BASIN_ID       LAND_USE_CLASS           VEG_CLASS      SOIL_PROFILE  AQUIFER_PROFILE TERRAIN_CLASS      SLOPE     ASPECT
-        :Units            km2          m            deg            deg     none                  none               none              none             none          none        deg       degN
-    {hru_records}
-    :EndHRUs
-    """
-
     def to_rv(self):
+        template = """
+            :HRUs
+                :Attributes      AREA  ELEVATION       LATITUDE      LONGITUDE BASIN_ID       LAND_USE_CLASS
+                 VEG_CLASS      SOIL_PROFILE  AQUIFER_PROFILE TERRAIN_CLASS      SLOPE     ASPECT
+                :Units            km2          m            deg            deg     none                  none
+                      none              none             none          none        deg       degN
+            {hru_records}
+            :EndHRUs
+            """
         recs = [f"    {hru}" for hru in self.hrus]
-        return dedent(self._template).format(hru_records="\n".join(recs))
+        return dedent(template).format(hru_records="\n".join(recs))
 
 
 # For convenience
@@ -290,21 +375,20 @@ class ReservoirCommand(RavenCommand):
     max_depth: float = 0
     lake_area: float = 0  # in m^2
 
-    _template = """
-    :Reservoir {name}
-        :SubBasinID {subbasin_id}
-        :HRUID {hru_id}
-        :Type RESROUTE_STANDARD
-        :WeirCoefficient {weir_coefficient}
-        :CrestWidth {crest_width}
-        :MaxDepth {max_depth}
-        :LakeArea {lake_area}
-    :EndReservoir
-    """
-
     def to_rv(self):
+        template = """
+            :Reservoir {name}
+                :SubBasinID {subbasin_id}
+                :HRUID {hru_id}
+                :Type RESROUTE_STANDARD
+                :WeirCoefficient {weir_coefficient}
+                :CrestWidth {crest_width}
+                :MaxDepth {max_depth}
+                :LakeArea {lake_area}
+            :EndReservoir
+            """
         d = asdict(self)
-        return dedent(self._template).format(**d)
+        return dedent(template).format(**d)
 
 
 @dataclass
@@ -314,13 +398,12 @@ class SubBasinGroupCommand(RavenCommand):
     name: str = ""
     subbasin_ids: Tuple[int, ...] = ()
 
-    _template = """
-    :SubBasinGroup {name}
-        {subbasin_ids}
-    :EndSubBasinGroup
-    """
-
     def to_rv(self):
+        template = """
+            :SubBasinGroup {name}
+                {subbasin_ids}
+            :EndSubBasinGroup
+            """
         d = asdict(self)
         n_per_line = 10
         sbids = sorted(self.subbasin_ids)
@@ -329,7 +412,7 @@ class SubBasinGroupCommand(RavenCommand):
             for i in range(0, len(sbids), n_per_line)
         ]
         d["subbasin_ids"] = "\n    ".join([" ".join(sbids) for sbids in sbids_lines])
-        return dedent(self._template).format(**d)
+        return dedent(template).format(**d)
 
 
 @dataclass
@@ -339,10 +422,9 @@ class SBGroupPropertyMultiplierCommand(RavenCommand):
     parameter_name: str
     mult: float
 
-    _template = ":SBGroupPropertyMultiplier {group_name} {parameter_name} {mult}"
-
     def to_rv(self):
-        return dedent(self._template).format(**asdict(self))
+        template = ":SBGroupPropertyMultiplier {group_name} {parameter_name} {mult}"
+        return dedent(template).format(**asdict(self))
 
 
 @dataclass
@@ -354,19 +436,18 @@ class ChannelProfileCommand(RavenCommand):
     survey_points: Tuple[Tuple[float, float], ...] = ()
     roughness_zones: Tuple[Tuple[float, float], ...] = ()
 
-    _template = """
-    :ChannelProfile {name}
-        :Bedslope {bed_slope}
-        :SurveyPoints
-    {survey_points}
-        :EndSurveyPoints
-        :RoughnessZones
-    {roughness_zones}
-        :EndRoughnessZones
-    :EndChannelProfile
-    """
-
     def to_rv(self):
+        template = """
+            :ChannelProfile {name}
+                :Bedslope {bed_slope}
+                :SurveyPoints
+            {survey_points}
+                :EndSurveyPoints
+                :RoughnessZones
+            {roughness_zones}
+                :EndRoughnessZones
+            :EndChannelProfile
+            """
         d = asdict(self)
         d["survey_points"] = "\n".join(
             f"{INDENT * 2}{p[0]} {p[1]}" for p in d["survey_points"]
@@ -374,7 +455,7 @@ class ChannelProfileCommand(RavenCommand):
         d["roughness_zones"] = "\n".join(
             f"{INDENT * 2}{z[0]} {z[1]}" for z in d["roughness_zones"]
         )
-        return dedent(self._template).format(**d)
+        return dedent(template).format(**d)
 
 
 @dataclass
@@ -435,21 +516,20 @@ class DataCommand(BaseDataCommand):
     site: str = ""
     var: str = ""
 
-    _template = """
-    :Data {data_type} {site} {units}
-        :ReadFromNetCDF
-            :FileNameNC      {file_name_nc}
-            :VarNameNC       {var_name_nc}
-            :DimNamesNC      {dimensions}
-            :StationIdx      {index}
-            {time_shift}{linear_transform}{deaccumulate}
-        :EndReadFromNetCDF
-    :EndData
-    """
-
     def to_rv(self):
+        template = """
+            :Data {data_type} {site} {units}
+                :ReadFromNetCDF
+                    :FileNameNC      {file_name_nc}
+                    :VarNameNC       {var_name_nc}
+                    :DimNamesNC      {dimensions}
+                    :StationIdx      {index}
+                    {time_shift}{linear_transform}{deaccumulate}
+                :EndReadFromNetCDF
+            :EndData
+            """
         d = self.asdict()
-        return dedent(self._template).format(**d)
+        return dedent(template).format(**d)
 
 
 @dataclass
@@ -468,17 +548,17 @@ class GaugeCommand(RavenCommand):
 
     data_cmds: Optional[Tuple[DataCommand, ...]] = ()
 
-    _template = """
-    :Gauge {name}
-        :Latitude {latitude}
-        :Longitude {longitude}
-        :Elevation {elevation}
-        {rain_correction}{snow_correction}{monthly_ave_evaporation}{monthly_ave_temperature}
-        {data_cmds}
-    :EndGauge
-    """
-
     def to_rv(self):
+        template = """
+        :Gauge {name}
+            :Latitude {latitude}
+            :Longitude {longitude}
+            :Elevation {elevation}
+            {rain_correction}{snow_correction}{monthly_ave_evaporation}{monthly_ave_temperature}
+            {data_cmds}
+        :EndGauge
+        """
+
         d = asdict(self)
         d["rain_correction"] = (
             f":RainCorrection {self.rain_correction}\n" if self.rain_correction else ""
@@ -497,7 +577,7 @@ class GaugeCommand(RavenCommand):
         else:
             d["monthly_ave_temperature"] = ""
         d["data_cmds"] = "\n\n".join(map(str, self.data_cmds))  # type: ignore
-        return dedent(self._template).format(**d)
+        return dedent(template).format(**d)
 
 
 @dataclass
@@ -532,14 +612,6 @@ class GridWeightsCommand(RavenCommand):
     number_grid_cells: int = 1
     data: Tuple[Tuple[int, int, float], ...] = ((1, 0, 1.0),)
 
-    _template = """
-    {indent}:GridWeights
-    {indent}    :NumberHRUs {number_hrus}
-    {indent}    :NumberGridCells {number_grid_cells}
-    {data}
-    {indent}:EndGridWeights
-    """
-
     @classmethod
     def parse(cls, s):
         pat = r"""
@@ -558,11 +630,18 @@ class GridWeightsCommand(RavenCommand):
         )
 
     def to_rv(self, indent_level=0):
+        template = """
+        {indent}:GridWeights
+        {indent}    :NumberHRUs {number_hrus}
+        {indent}    :NumberGridCells {number_grid_cells}
+        {data}
+        {indent}:EndGridWeights
+        """
         indent = INDENT * indent_level
         d = asdict(self)
         d["indent"] = indent
         d["data"] = "\n".join(f"{indent}    {p[0]} {p[1]} {p[2]}" for p in self.data)
-        return dedent(self._template).strip().format(**d)
+        return dedent(template).strip().format(**d)
 
 
 @dataclass
@@ -576,16 +655,15 @@ class RedirectToFileCommand(RavenCommand):
 
     path: Path
 
-    _template = "{indent}:RedirectToFile {path}"
-
     def to_rv(self, indent_level=0):
+        template = "{indent}:RedirectToFile {path}"
         indent = INDENT * indent_level
         d = asdict(self)
         d["indent"] = indent
         # We can use the name of the file (as opposed to the full path)
         # because we have a symlink to it in the execution folder
         d["path"] = d["path"].name
-        return self._template.format(**d)
+        return template.format(**d)
 
 
 @dataclass
@@ -597,24 +675,24 @@ class GriddedForcingCommand(BaseDataCommand):
         GridWeightsCommand, RedirectToFileCommand
     ] = GridWeightsCommand()
 
-    _template = """
-    :GriddedForcing {name}
-        :ForcingType {data_type}
-        :FileNameNC {file_name_nc}
-        :VarNameNC {var_name_nc}
-        :DimNamesNC {dimensions}
-        {time_shift}{linear_transform}{deaccumulate}
-    {grid_weights}
-    :EndGriddedForcing
-    """
     # :LatitudeVarNameNC {latitude_var_name_nc}
     # :LongitudeVarNameNC {longitude_var_name_nc}
     # :ElevationVarNameNC {elevation_var_name_nc}
 
     def to_rv(self):
+        template = """
+            :GriddedForcing {name}
+                :ForcingType {data_type}
+                :FileNameNC {file_name_nc}
+                :VarNameNC {var_name_nc}
+                :DimNamesNC {dimensions}
+                {time_shift}{linear_transform}{deaccumulate}
+            {grid_weights}
+            :EndGriddedForcing
+            """
         d = self.asdict()
         d["grid_weights"] = self.grid_weights.to_rv(indent_level=1)
-        return dedent(self._template).format(**d)
+        return dedent(template).format(**d)
 
 
 @dataclass
@@ -626,24 +704,24 @@ class StationForcingCommand(BaseDataCommand):
         GridWeightsCommand, RedirectToFileCommand
     ] = GridWeightsCommand()
 
-    _template = """
-    :StationForcing {name} {units}
-        :ForcingType {data_type}
-        :FileNameNC {file_name_nc}
-        :VarNameNC {var_name_nc}
-        :DimNamesNC {dimensions}
-        {time_shift}{linear_transform}{deaccumulate}
-    {grid_weights}
-    :EndStationForcing
-    """
     # :LatitudeVarNameNC {latitude_var_name_nc}
     # :LongitudeVarNameNC {longitude_var_name_nc}
     # :ElevationVarNameNC {elevation_var_name_nc}
 
     def to_rv(self):
+        template = """
+            :StationForcing {name} {units}
+                :ForcingType {data_type}
+                :FileNameNC {file_name_nc}
+                :VarNameNC {var_name_nc}
+                :DimNamesNC {dimensions}
+                {time_shift}{linear_transform}{deaccumulate}
+            {grid_weights}
+            :EndStationForcing
+            """
         d = self.asdict()
         d["grid_weights"] = self.grid_weights.to_rv(indent_level=1)
-        return dedent(self._template).format(**d)
+        return dedent(template).format(**d)
 
 
 @dataclass
@@ -657,13 +735,6 @@ class HRUStateVariableTableCommand(RavenCommand):
 
         def to_rv(self):
             return ",".join(map(str, (self.index,) + tuple(self.data.values())))
-
-    _template = """
-    :HRUStateVariableTable
-        :Attributes,{names}
-        {values}
-    :EndHRUStateVariableTable
-    """
 
     hru_states: Dict[int, Record] = field(default_factory=dict)
 
@@ -689,6 +760,12 @@ class HRUStateVariableTableCommand(RavenCommand):
         return cls(hru_states)
 
     def to_rv(self):
+        template = """
+            :HRUStateVariableTable
+                :Attributes,{names}
+                {values}
+            :EndHRUStateVariableTable
+            """
         names = sorted(
             list(set(chain(*[tuple(s.data.keys()) for s in self.hru_states.values()])))
         )
@@ -699,7 +776,7 @@ class HRUStateVariableTableCommand(RavenCommand):
             + [s.data.get(n, 0.0) for n in names]
             for s in self.hru_states.values()
         ]
-        return dedent(self._template).format(
+        return dedent(template).format(
             names=",".join(names),
             values="\n    ".join([",".join(map(str, v)) for v in values]),
         )
@@ -720,15 +797,6 @@ class BasinIndexCommand(RavenCommand):
     qout: Tuple[float, ...] = (1, 0, 0)
     qin: Optional[Tuple[float, ...]] = None
     qlat: Optional[Tuple[float, ...]] = None
-
-    _template = """
-    :BasinIndex {index} {name}
-        :ChannelStorage {channel_storage}
-        :RivuletStorage {rivulet_storage}
-        {qout}
-        {qin}
-        {qlat}
-        """
 
     @classmethod
     @no_type_check
@@ -754,6 +822,14 @@ class BasinIndexCommand(RavenCommand):
         return cls(**rec_values)
 
     def to_rv(self):
+        template = """
+        :BasinIndex {index} {name}
+            :ChannelStorage {channel_storage}
+            :RivuletStorage {rivulet_storage}
+            {qout}
+            {qin}
+            {qlat}
+            """
         d = asdict(self)
         for k in ["qout", "qin", "qlat"]:
             if d[k]:
@@ -762,19 +838,13 @@ class BasinIndexCommand(RavenCommand):
                 d[k] = f":{q} {v}"
             else:
                 d[k] = ""
-        return dedent(self._template).format(**d)
+        return dedent(template).format(**d)
 
 
 @dataclass
 class BasinStateVariablesCommand(RavenCommand):
 
     basin_states: Dict[int, BasinIndexCommand] = field(default_factory=dict)
-
-    _template = """
-    :BasinStateVariables
-        {basin_states_list}
-    :EndBasinStateVariables
-    """
 
     @classmethod
     @no_type_check
@@ -793,7 +863,13 @@ class BasinStateVariablesCommand(RavenCommand):
         return cls(basin_states)
 
     def to_rv(self):
-        return dedent(self._template).format(
+        template = """
+            :BasinStateVariables
+                {basin_states_list}
+            :EndBasinStateVariables
+            """
+
+        return dedent(template).format(
             basin_states_list="\n".join(map(str, self.basin_states.values()))
         )
 
@@ -809,14 +885,13 @@ class SoilClassesCommand(RavenCommand):
 
     soil_classes: Tuple[Record, ...] = ()
 
-    _template = """
-    :SoilClasses
-        {soil_class_records}
-    :EndSoilClasses
-    """
-
     def to_rv(self):
-        return dedent(self._template).format(
+        template = """
+            :SoilClasses
+                {soil_class_records}
+            :EndSoilClasses
+            """
+        return dedent(template).format(
             soil_class_records="\n".join(map(str, self.soil_classes))
         )
 
@@ -840,14 +915,13 @@ class SoilProfilesCommand(RavenCommand):
 
     soil_profiles: Tuple[Record, ...] = ()
 
-    _template = """
-    :SoilProfiles
-        {soil_profile_records}
-    :EndSoilProfiles
-    """
-
     def to_rv(self):
-        return dedent(self._template).format(
+        template = """
+            :SoilProfiles
+                {soil_profile_records}
+            :EndSoilProfiles
+            """
+        return dedent(template).format(
             soil_profile_records="\n".join(map(str, self.soil_profiles))
         )
 
@@ -866,16 +940,15 @@ class VegetationClassesCommand(RavenCommand):
 
     vegetation_classes: Tuple[Record, ...] = ()
 
-    _template = """
-    :VegetationClasses
-        :Attributes,                MAX_HT,       MAX_LAI,    MAX_LEAF_COND
-        :Units,                       m,            none,       mm_per_s
-        {vegetation_class_records}
-    :EndVegetationClasses
-    """
-
     def to_rv(self):
-        return dedent(self._template).format(
+        template = """
+        :VegetationClasses
+            :Attributes,                MAX_HT,       MAX_LAI,    MAX_LEAF_COND
+            :Units,                       m,            none,       mm_per_s
+            {vegetation_class_records}
+        :EndVegetationClasses
+        """
+        return dedent(template).format(
             vegetation_class_records="\n".join(map(str, self.vegetation_classes))
         )
 
@@ -893,16 +966,15 @@ class LandUseClassesCommand(RavenCommand):
 
     land_use_classes: Tuple[Record, ...] = ()
 
-    _template = """
-    :LandUseClasses
-        :Attributes,        IMPERMEABLE_FRAC,         FOREST_COVERAGE
-        :Units,                     fract,                    fract
-        {land_use_class_records}
-    :EndLandUseClasses
-    """
-
     def to_rv(self):
-        return dedent(self._template).format(
+        template = """
+            :LandUseClasses
+                :Attributes,        IMPERMEABLE_FRAC,         FOREST_COVERAGE
+                :Units,                     fract,                    fract
+                {land_use_class_records}
+            :EndLandUseClasses
+            """
+        return dedent(template).format(
             land_use_class_records="\n".join(map(str, self.land_use_classes))
         )
 

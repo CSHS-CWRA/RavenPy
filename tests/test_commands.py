@@ -1,6 +1,29 @@
 from textwrap import dedent
 
-from ravenpy.config.commands import HRUState, HRUStateVariableTableCommand
+from ravenpy.config.commands import (
+    AdiabaticLapseRate,
+    HRUState,
+    HRUStateVariableTableCommand,
+    PotentialMeltMethod,
+    SuppressOutput,
+)
+from ravenpy.config.options import PotentialMelt
+
+
+def test_adiabatic_lapse_rate_coefficient():
+    alr = AdiabaticLapseRate(0.2)
+    assert alr.to_rv() == ":AdiabaticLapseRate   0.2\n"
+
+
+def test_potential_melt_method_option():
+    expected = ":PotentialMeltMethod  POTMELT_EB\n"
+    assert PotentialMeltMethod("POTMELT_EB").to_rv() == expected
+    assert PotentialMeltMethod(PotentialMelt.EB).to_rv() == expected
+
+
+def test_suppress_output():
+    assert SuppressOutput(True).to_rv() == ":SuppressOutput\n"
+    assert SuppressOutput(False).to_rv() == ""
 
 
 def test_hru_state():
