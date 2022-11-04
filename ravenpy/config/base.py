@@ -29,7 +29,7 @@ class RavenOption(RavenCommand):
 
 @dataclass
 class RavenOptionList(RavenCommand):
-    options: Sequence[Enum, str]
+    options: Union[Sequence[Enum], Sequence[str]]
 
     def to_rv(self):
         options = ", ".join([str(option.value) for option in self.options])
@@ -37,16 +37,23 @@ class RavenOptionList(RavenCommand):
 
 
 @dataclass
-class RavenCoefficient(RavenCommand):
-    value: float
+class RavenValue(RavenCommand):
+    value: str = None
 
     def to_rv(self):
-        return f":{self.__class__.__name__:<20} {self.value}\n"
+        if self.value is not None:
+            return f":{self.__class__.__name__:<20} {self.value}\n"
+        return ""
+
+
+@dataclass
+class RavenCoefficient(RavenValue):
+    value: float = None
 
 
 @dataclass
 class RavenSwitch(RavenCommand):
-    value: bool
+    value: bool = False
 
     def to_rv(self):
         return f":{self.__class__.__name__}\n" if self.value is True else ""

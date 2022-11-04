@@ -1,13 +1,14 @@
 from textwrap import dedent
 
+from ravenpy.config import options
 from ravenpy.config.commands import (
     AdiabaticLapseRate,
     HRUState,
     HRUStateVariableTableCommand,
     PotentialMeltMethod,
+    RunName,
     SuppressOutput,
 )
-from ravenpy.config.options import PotentialMelt
 
 
 def test_adiabatic_lapse_rate_coefficient():
@@ -18,7 +19,11 @@ def test_adiabatic_lapse_rate_coefficient():
 def test_potential_melt_method_option():
     expected = ":PotentialMeltMethod  POTMELT_EB\n"
     assert PotentialMeltMethod("POTMELT_EB").to_rv() == expected
-    assert PotentialMeltMethod(PotentialMelt.EB).to_rv() == expected
+    assert PotentialMeltMethod(options.PotentialMeltMethod.EB).to_rv() == expected
+
+
+def test_run_name():
+    assert RunName("test").to_rv() == ":RunName              test\n"
 
 
 def test_suppress_output():

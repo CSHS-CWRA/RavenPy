@@ -17,6 +17,7 @@ from .base import (
     RavenOption,
     RavenOptionList,
     RavenSwitch,
+    RavenValue,
 )
 
 INDENT = " " * 4
@@ -84,7 +85,7 @@ class AdiabaticLapseRate(RavenCoefficient):
 
 @dataclass
 class Calendar(RavenOption):
-    option: options.Calendar
+    option: options.Calendar = options.Calendar.STANDARD
 
 
 @dataclass
@@ -95,6 +96,22 @@ class CatchmentRoute(RavenOption):
 @dataclass
 class CloudCoverMethod(RavenOption):
     option: options.CloudCoverMethod
+
+
+@dataclass
+class Duration(RavenValue):
+    """Duration of simulation.
+
+    Attributes
+    ----------
+    values : float
+      Simulation duration [d].
+    """
+
+
+@dataclass
+class EndDate(RavenValue):
+    value: dt.datetime = None
 
 
 @dataclass
@@ -137,7 +154,7 @@ class PrecipIceptFract(RavenOption):
 
 @dataclass
 class RainSnowFraction(RavenOption):
-    option: options.RainSnowFraction
+    option: options.RainSnowFraction = options.RainSnowFraction.DATA
 
 
 @dataclass
@@ -147,7 +164,12 @@ class RelativeHumidityMethod(RavenOption):
 
 @dataclass
 class Routing(RavenOption):
-    option: options.Routing
+    option: options.Routing = options.Routing.NONE
+
+
+@dataclass
+class RunName(RavenValue):
+    value: str = "run"
 
 
 @dataclass
@@ -158,6 +180,11 @@ class SoilModel(RavenOption):
     def to_rv(self):
         n = self.n if self.n is not None else ""
         return f":SoilModel           {self.options.value} {n}\n"
+
+
+@dataclass
+class StartDate(RavenValue):
+    value: dt.datetime = None
 
 
 @dataclass
@@ -178,6 +205,11 @@ class SWCloudCorrect(RavenOption):
 @dataclass
 class SWRadiationMethod(RavenOption):
     option: options.SWRadiationMethod
+
+
+@dataclass
+class TimeStep(RavenValue):
+    value: float = 1.0
 
 
 @dataclass
