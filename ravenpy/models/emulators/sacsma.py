@@ -275,7 +275,9 @@ class SACSMA(Raven):
 
         soil0 = params.par_x04 * 1000.0
         soil2 = params.par_x06 * 1000.0
-        self.config.rvc.hru_states[1] = HRUState(soil0=soil0, soil2=soil2)
+        self.config.rvc.hru_states[1] = HRUState(
+            data={"SOIL[0]": soil0, "SOIL[2]": soil2}
+        )
 
         self.config.rvt.rain_correction = params.par_x20
         self.config.rvt.snow_correction = params.par_x21

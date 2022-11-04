@@ -13,6 +13,8 @@ from typing import Dict, List, Sequence, Tuple, Union
 import numpy as np
 import xarray as xr
 
+from ravenpy.config.commands import HRUState
+
 """
 model = Raven model instance, preset with parameters etc.
 xa = the set of state variables. In this case, soil0 and soil1 from GR4JCN. Will eventually need to update for other models, other variables
@@ -77,9 +79,7 @@ def assimilate(
 
     # Extract final states (n_states, n_members)
     f_hru_states, f_basin_states = model.get_final_state()
-    x_matrix = np.array(
-        [[getattr(state, key) for key in keys] for state in f_hru_states]
-    ).T
+    x_matrix = np.array([[state.data[key] for key in keys] for state in f_hru_states]).T
 
     # Sanity check
     if x_matrix.shape != (len(keys), n_members):
@@ -363,7 +363,7 @@ def assimilation_initialization(
     """
     # Extract final model states
     hru_state, basin_state = model.get_final_state()
-    xa = n_members * [getattr(hru_state, key) for key in assim_var]
+    xa = n_members * [hru_state.data[key] for key in assim_var]
     hru_states = n_members * [hru_state]
     basin_states = n_members * [basin_state]
 
@@ -451,9 +451,9 @@ def sequential_assimilation(
         model.config.rvi.start_date = sd
 
         # Get new initial conditions and feed assimilated values
-        hru_states, basin_states = model.get_final_state()
+        hs, basin_states = model.get_final_state()
         hru_states = [
-            replace(hru_states[i], **dict(zip(assim_var, xa[:, i])))
+            HRUState(hs[i].index, data={**hs[i].data, **dict(zip(assim_var, xa[:, i]))})
             for i in range(n_members)
         ]
 

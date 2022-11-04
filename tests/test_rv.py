@@ -78,7 +78,7 @@ class TestRVI:
     def test_supress_output(self):
         rvi = RVI(None)
         rvi.suppress_output = True
-        assert rvi.suppress_output == ":SuppressOutput\n:DontWriteWatershedStorage"
+        assert rvi.suppress_output == ":SuppressOutput\n:DontWriteWatershedStorage\n"
 
         rvi = RVI(None)
         rvi.suppress_output = False
@@ -93,8 +93,8 @@ class TestRVC:
 
     def test_parse(self):
         assert len(self.rvc.hru_states) == 1
-        assert self.rvc.hru_states[1].atmosphere == 821.98274
-        assert self.rvc.hru_states[1].atmos_precip == -1233.16
+        assert self.rvc.hru_states[1].data["ATMOSPHERE"] == 821.98274
+        assert self.rvc.hru_states[1].data["ATMOS_PRECIP"] == -1233.16
 
         assert len(self.rvc.basin_states) == 1
         assert self.rvc.basin_states[1].channel_storage == 0

@@ -50,6 +50,10 @@ RavenPy supports pre-defined Raven-emulated models:
   - HMETS
   - HBV-EC
   - MOHYSE
+  - BLENDED
+  - CANADIANSHIELD
+  - SACSMA
+  - HYPR
 
 For each one of these, `.rv` files are provided that reproduce almost perfectly the behavior of the original models and let hydrologists template typical model options. Running a simulation from an emulated model minimally requires passing a vector of model parameters and mandatory model options, as well as the list of input forcing files. RavenPy will then fill the `.rv` files with user-defined parameters and launch the simulation, for example:
 
@@ -79,15 +83,15 @@ The model configuration can be found as a zip archive in:
 
 Setting initial conditions
 --------------------------
-Each emulated model defines default initial conditions for its state variables (e.g. storage). Initial conditions can be set explicitly by passing the `HRUStateVariables` parameter when calling the model:
+Each emulated model defines default initial conditions for its state variables (e.g. storage). Initial conditions can be set explicitly by passing the `HRUState` parameter when calling the model:
 
 .. code-block:: python
 
     from ravenpy.models import GR4JCN
-    from ravenpy.models.state import HRUStateVariables
+    from ravenpy.config.commands import HRUState
 
     model = GR4JCN()
-    model(ts=ts, hru_state=HRUStateVariables(soil0=100), **kwargs)
+    model(ts=ts, hru_state=HRUState(data={"SOIL[0]": 100}), **kwargs)
 
 
 Resuming from a previous run

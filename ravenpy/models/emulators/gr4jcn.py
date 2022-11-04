@@ -212,7 +212,7 @@ class GR4JCN(Raven):
             for hru in self.config.rvh.hrus:
                 if isinstance(hru, GR4JCN.LandHRU) or hru.hru_type == "land":
                     self.config.rvc.hru_states[hru.hru_id] = HRUState(
-                        index=hru.hru_id, soil0=soil0, soil1=soil1
+                        index=hru.hru_id, data={"SOIL[0]": soil0, "SOIL[1]": soil1}
                     )
                 elif isinstance(hru, GR4JCN.LakeHRU) or hru.hru_type == "lake":
                     self.config.rvc.hru_states[hru.hru_id] = HRUState(index=hru.hru_id)

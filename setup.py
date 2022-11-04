@@ -32,6 +32,7 @@ requirements = [
     "netCDF4",
     "numpy",
     "pandas",
+    "pint<0.20",
     "pydantic",
     "pymbolic",
     "requests",
@@ -79,7 +80,7 @@ dev_requirements.extend(
 class OnlyGetScriptPath(install):
     def run(self):
         # does not call install.run() by design
-        self.distribution.install_scripts = self.install_scripts  # noqa
+        self.distribution.install_scripts = self.install_scripts
 
 
 def get_setuptools_install_scripts_dir():
@@ -105,6 +106,9 @@ def create_external_deps_install_class(command_cls):
         available on the PATH.
         """
 
+        external_deps_path = None
+        with_binaries = False
+
         user_options = command_cls.user_options + [
             # The format is (long option, short option, description).
             (
@@ -118,7 +122,7 @@ def create_external_deps_install_class(command_cls):
             """Set default values for options."""
             # Each user option must be listed here with their default value.
             command_cls.initialize_options(self)
-            self.with_binaries = False  # noqa
+            self.with_binaries = False
 
         def finalize_options(self):
             command_cls.finalize_options(self)
@@ -179,7 +183,7 @@ def create_external_deps_install_class(command_cls):
         def run(self):
 
             if self.with_binaries:
-                self.external_deps_path = Path("./external_deps")  # noqa
+                self.external_deps_path = Path("./external_deps")
                 self.external_deps_path.mkdir(exist_ok=True)
 
                 url = "https://www.civil.uwaterloo.ca/jmai/raven/"
@@ -248,7 +252,7 @@ setup(
         gis=gis_requirements,
     ),
     url="https://github.com/CSHS-CWRA/ravenpy",
-    version="0.8.0",
+    version="0.8.1",
     zip_safe=False,
     cmdclass={
         "install": create_external_deps_install_class(install),

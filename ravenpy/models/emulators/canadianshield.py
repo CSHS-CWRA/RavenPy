@@ -278,10 +278,14 @@ class CANADIANSHIELD(Raven):
         soil1 = params.par_x02 * 1000.0 * 0.5
         soil2 = params.par_x03 * 1000.0 * 0.5
         self.config.rvc.set_hru_state(
-            HRUState(index=1, soil0=soil0, soil1=soil1, soil2=soil2)
+            HRUState(
+                index=1, data={"SOIL[0]": soil0, "SOIL[1]": soil1, "SOIL[2]": soil2}
+            )
         )
         self.config.rvc.set_hru_state(
-            HRUState(index=2, soil0=soil0, soil1=0, soil2=soil2)
+            HRUState(
+                index=2, data={"SOIL[0]": soil0, "SOIL[1]": soil1, "SOIL[2]": soil2}
+            )
         )
 
         self.config.rvt.rain_correction = params.par_x32
@@ -583,11 +587,24 @@ class CANADIANSHIELD_OST(Ostrich, CANADIANSHIELD):
         self.config.rvh.hrus[0].area = "par_area_organic_SB1"  # type: ignore
         self.config.rvh.hrus[1].area = "par_area_bedrock_SB1"  # type: ignore
 
-        self.config.rvc.set_hru_state(HRUState(index=1))
-        self.config.rvc.hru_states[1].soil0 = "par_half_x01"  # type: ignore
-        self.config.rvc.hru_states[1].soil1 = "par_half_x02"  # type: ignore
-        self.config.rvc.hru_states[1].soil2 = "par_half_x03"  # type: ignore
-
-        self.config.rvc.set_hru_state(HRUState(index=2))
+        self.config.rvc.set_hru_state(
+            HRUState(
+                index=1,
+                data={
+                    "SOIL[0]": "par_half_x01",
+                    "SOIL[1]": "par_half_x02",
+                    "SOIL[2]": "par_half_x03",
+                },
+            )
+        )
+        self.config.rvc.set_hru_state(
+            HRUState(
+                index=2,
+                data={
+                    "SOIL[0]": "par_half_x01",
+                    "SOIL[2]": "par_half_x03",
+                },
+            )
+        )
         self.config.rvc.hru_states[2].soil0 = "par_half_x01"  # type: ignore
         self.config.rvc.hru_states[2].soil2 = "par_half_x03"  # type: ignore

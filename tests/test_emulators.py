@@ -6,9 +6,11 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+import xarray as xr
 
 from ravenpy.config.commands import (  # GriddedForcingCommand,; LandUseClassesCommand,; ObservationDataCommand,; SoilClassesCommand,; SoilProfilesCommand,; VegetationClassesCommand,
     ChannelProfileCommand,
+    CustomOutput,
     EvaluationPeriod,
     GridWeightsCommand,
     HRUStateVariableTableCommand,
@@ -39,7 +41,7 @@ TS = get_local_testdata(
 )
 
 # Link to THREDDS Data Server netCDF testdata
-TDS = "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/birdhouse/disk2/testdata/raven"
+TDS = "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/birdhouse/testdata/raven"
 
 
 @pytest.fixture
@@ -108,6 +110,9 @@ class TestGR4JCN:
         model.config.rvi.start_date = dt.datetime(2000, 1, 1)
         model.config.rvi.end_date = dt.datetime(2002, 1, 1)
         model.config.rvi.run_name = "test"
+        model.config.rvi.custom_output = CustomOutput(
+            "YEARLY", "AVERAGE", "PRECIP", "ENTIRE_WATERSHED"
+        )
 
         model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
 
@@ -182,6 +187,11 @@ class TestGR4JCN:
         # ------------
         assert model.hydrograph.attrs["model_id"] == "gr4jcn"
 
+        assert (
+            model.output_path / f"{model.config.rvi.run_name}-"
+            f"{model.psim}_PRECIP_Yearly_Average_ByWatershed.nc"
+        ).exists()
+
     def test_routing(self):
         """We need at least 2 subbasins to activate routing."""
         model = GR4JCN()
@@ -198,6 +208,7 @@ class TestGR4JCN:
         model.config.rvi.end_date = dt.datetime(2002, 1, 1)
         model.config.rvi.run_name = "test_gr4jcn_routing"
         model.config.rvi.routing = "ROUTE_DIFFUSIVE_WAVE"
+        model.config.rvi.write_forcing_functions = True
 
         #########
         # R V H #
@@ -388,6 +399,8 @@ class TestGR4JCN:
         d = model.diagnostics
         np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.0141168, 4)
 
+        assert len(list(model.output_path.glob("*ForcingFunctions.nc"))) == 1
+
     def test_redirect_to_file(self, tmpdir, input2d):
         model = GR4JCN()
         model.config.rvi.start_date = dt.datetime(2000, 1, 1)
@@ -552,7 +565,9 @@ class TestGR4JCN:
 
         np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.117315, 4)
 
-        model.config.rvc.hru_states[1] = HRUStateVariableTableCommand.Record(soil0=0)
+        model.config.rvc.hru_states[1] = HRUStateVariableTableCommand.Record(
+            index=1, data={"SOIL[0]": 0}
+        )
 
         # Set initial conditions explicitly
         model(
@@ -688,9 +703,7 @@ class TestGR4JCN:
         s_1 = float(model.storage["Soil Water[1]"].isel(time=-1).values)
 
         # hru_state = replace(model.rvc.hru_state, soil0=s_0, soil1=s_1)
-        model.config.rvc.hru_states[1] = replace(
-            model.config.rvc.hru_states[1], soil0=s_0, soil1=s_1
-        )
+        model.config.rvc.hru_states[1].data.update({"SOIL[0]": s_0, "SOIL[1]": s_1})
 
         model(
             TS,
@@ -779,6 +792,7 @@ class TestGR4JCN:
             "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/birdhouse/ets"
             "/Watersheds_5797_cfcompliant.nc"
         )
+
         model = GR4JCN()
         config = dict(
             start_date=dt.datetime(2010, 6, 1),
@@ -786,9 +800,6 @@ class TestGR4JCN:
             nc_index=5600,
             run_name="Test_run",
             rain_snow_fraction="RAINSNOW_DINGMAN",
-            tasmax={"offset": -273.15},
-            tasmin={"offset": -273.15},
-            pr={"scale": 86400.0},
             hrus=[
                 model.LandHRU(
                     area=3650.47, latitude=49.51, longitude=-95.72, elevation=330.59
@@ -797,6 +808,13 @@ class TestGR4JCN:
             params=model.Params(108.02, 2.8693, 25.352, 1.3696, 1.2483, 0.30679),
         )
         model(ts=CANOPEX_DAP, **config)
+
+        # Check unit transformation parameters are correctly inferred
+        pr = model.config.rvt._var_cmds["pr"]
+        assert pr.scale, pr.offset == (86400.0, 0.0)
+
+        tasmax = model.config.rvt._var_cmds["tasmax"]
+        assert tasmax.scale, tasmax.offset == (1, -273.15)
 
 
 class TestGR4JCN_OST:

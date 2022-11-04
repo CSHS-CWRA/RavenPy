@@ -2,9 +2,29 @@
 History
 =======
 
-0.8.1
------
-* Add partial support for `:RedirectToFile` command, tested with GridWeights only.
+0.9.0 (unreleased)
+------------------
+
+Breaking changes:
+
+* HRUState's signature has changed. Instead of passing variables as
+  keyword arguments (e.g. `soil0=10.`), it now expects a `state`
+  dictionary keyed by variables' Raven name (e.g. `{"SOIL[0]": 10}).
+  This change makes `rvc` files easier to read, and avoids Raven
+  warnings regarding 'initial conditions for state variables not in model'.
+
+New features:
+
+* Automatically infer scale and offset `:LinearTransform` parameters from netCDF file metadata.
+* Add support for the command `:RedirectToFile`. Tested for grid weights only.
+* Add support for the command `:WriteForcingFunctions`.
+* Add support for the command `:CustomOutput`.
+* Patch directory traversal vulnerability (`CVE-2007-4559 <(https://github.com/advisories/GHSA-gw9q-c7gh-j9vm>`_).
+
+0.8.1 (2022-10-26)
+------------------
+
+* Undo change related to `suppress_output`, as it breaks multiple tests in raven. New `Raven._execute` method runs models but does not parse results.
 
 0.8.0
 -----

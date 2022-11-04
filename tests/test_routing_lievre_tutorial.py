@@ -173,6 +173,7 @@ class TestRouting:
             vic_temperatures_nc_path, routing_product_shp_path
         )
 
+        # Note that `set_nc_variables` does not infer scale and offset parameters.
         model.config.rvt.set_nc_variables(
             [
                 dict(
@@ -411,6 +412,7 @@ class TestRouting:
             vic_temperatures_nc_path, routing_product_shp_path
         )
 
+        # Note that `set_nc_variables` does not infer scale and offset parameters.
         model.config.rvt.set_nc_variables(
             [
                 dict(

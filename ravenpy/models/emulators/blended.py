@@ -284,7 +284,7 @@ class BLENDED(Raven):
 
         topsoil_hlf = params.par_x29 * 0.5 * 1000
         phreatic_hlf = params.par_x30 * 0.5 * 1000
-        hru_state = HRUState(soil0=topsoil_hlf, soil1=phreatic_hlf)
+        hru_state = HRUState(data={"SOIL[0]": topsoil_hlf, "SOIL[1]": phreatic_hlf})
         self.config.rvc.set_hru_state(hru_state)
 
         self.config.rvt.rain_correction = params.par_x33

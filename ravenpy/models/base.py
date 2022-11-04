@@ -27,6 +27,7 @@ import xarray as xr
 from numpy.distutils.misc_util import is_sequence
 
 from ravenpy.config import symbolic
+from ravenpy.config.commands import RedirectToFileCommand
 from ravenpy.config.rvs import RVC, Config
 
 RAVEN_EXEC_PATH = os.getenv("RAVENPY_RAVEN_BINARY_PATH") or shutil.which("raven")
@@ -258,10 +259,19 @@ class Raven:
 
         self._dump_rv()
 
-        # Create symbolic link to input files
+        # Create symbolic link to input files that are not DAP links
         for fn in ts:
-            if not (self.model_path / Path(fn).name).exists():
-                os.symlink(os.path.realpath(fn), str(self.model_path / Path(fn).name))
+            if isinstance(fn, Path) or not fn.startswith("http"):
+                if not (self.model_path / Path(fn).name).exists():
+                    os.symlink(
+                        os.path.realpath(fn), str(self.model_path / Path(fn).name)
+                    )
+
+        # Special case where a RedirectToFile command is used for the grid weights, which
+        # needs to be symlinked also
+        if isinstance(self.config.rvt.grid_weights, RedirectToFileCommand):
+            fn = self.config.rvt.grid_weights.path
+            os.symlink(os.path.realpath(fn), str(self.model_path / Path(fn).name))
 
         # Create symbolic link to Raven executable
         if not self.raven_cmd.exists():
@@ -353,7 +363,7 @@ class Raven:
                     else:
                         self.config.update(key, val[self.psim])
 
-            cmd = self.setup_model_run(tuple(map(Path, ts)))
+            cmd = self.setup_model_run(ts)
 
             procs.append(
                 subprocess.Popen(
@@ -367,7 +377,7 @@ class Raven:
 
         return procs
 
-    def __call__(self, ts, overwrite=False, parallel={}, **kwds):
+    def _execute(self, ts, overwrite=False, parallel={}, **kwds):
         """
         parallel : {}
           Parameters that should be distributed across parallel simulations.
@@ -392,6 +402,8 @@ class Raven:
 
         assert messages["SIMULATION COMPLETE"]
 
+    def __call__(self, ts, overwrite=False, parallel={}, **kwds):
+        self._execute(ts, overwrite=overwrite, parallel=parallel, **kwds)
         self.parse_results()
 
     def resume(self, solution=None):
@@ -415,6 +427,7 @@ class Raven:
         # name.
         path = path or self.exec_path
         run_name = run_name or self.config.rvi.run_name or ""
+
         patterns = {
             "hydrograph": f"{run_name}*Hydrographs.nc",
             "storage": f"{run_name}*WatershedStorage.nc",
@@ -431,16 +444,12 @@ class Raven:
                     raise exc
                 else:
                     continue
+                fns = []
 
-            fns.sort()
             self.ind_outputs[key] = fns
-            if not self.config.rvi.suppress_output:
-                self.outputs[key] = self._merge_output(
-                    fns, pattern.replace("*", "_ALL_")
-                )
+            self.outputs[key] = self._merge_output(fns, pattern.replace("*", "_ALL_"))
 
-        if not self.config.rvi.suppress_output:
-            self.outputs["rv_config"] = self._merge_output(self._rv_paths, "rv.zip")
+        self.outputs["rv_config"] = self._merge_output(self._rv_paths, "rv.zip")
 
     def _merge_output(self, files, name):
         """Merge multiple output files into one if possible, otherwise return a list of files."""
@@ -522,7 +531,9 @@ class Raven:
             if not self.config.rvi.suppress_output:
                 raise UserWarning(f"No output files for {pattern} in {path}.")
 
-        return [f.absolute() for f in files]
+        fns = [f.absolute() for f in files]
+        fns.sort()
+        return fns
 
     @property
     def q_sim(self):
@@ -597,9 +608,14 @@ class Raven:
         """Return a nested dictionary of performance metrics keyed by diagnostic name and period. The default period
         is called "ALL".
         """
+        run_name = self.config.rvi.run_name or ""
+        pattern = f"{run_name}*Diagnostics.csv"
+
         diag = []
         out = collections.defaultdict(list)
-        for fn in self.ind_outputs["diagnostics"]:
+        fns = self._get_output(pattern, path=self.exec_path)
+
+        for fn in fns:
             with open(fn) as f:
                 reader = csv.reader(f.readlines())
                 header = next(reader)
@@ -841,6 +857,15 @@ class Ostrich(Raven):
 
     @property
     def obj_func(self):
+        """Value of objective function reached by calibration.
+
+        Note that the Ostrich optimizer seeks to minimise the objective function. To optimize diagnostic
+        metrics such as the Nash-Sutcliffe Efficiency, it needs to be multiplied by -1.
+
+        See Also
+        --------
+        See the `diagnostics` method to obtain the diagnostic metrics values.
+        """
         return np.loadtxt(self.outputs["params_seq"], skiprows=1)[-1, 1]
 
     @property

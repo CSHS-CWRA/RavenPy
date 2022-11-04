@@ -99,6 +99,19 @@ class RV(ABC):
 
     @abstractmethod
     def to_rv(self, s: str, rv_type: str) -> str:
+        """Add header to templated RV file.
+
+        Parameters
+        ----------
+        s : str
+          Templated content.
+        rv_type : str
+          RV extension.
+
+        Returns
+        -------
+        RV template with header.
+        """
         if not self._config:
             # In the case where the RV file has been created outside the context of a
             # Config object, don't include the header
@@ -252,10 +265,9 @@ class RVI(RV):
     :EvaluationMetrics     {evaluation_metrics}
     {evaluation_periods}
     :WriteNetcdfFormat     yes
-    #:WriteForcingFunctions
     :SilentMode
     :PavicsMode
-    {suppress_output}
+    {suppress_output}{write_forcing_functions}{custom_output}
 
     :NetCDFAttribute title Simulated river discharge
     :NetCDFAttribute history Created on {now} by Raven
@@ -359,6 +371,8 @@ class RVI(RV):
         ]
         self._evaluation_periods = []
         self._suppress_output = False
+        self._write_forcing_functions = False
+        self._custom_output = []
 
     def configure_from_nc_data(self, fns):
 
@@ -454,6 +468,16 @@ class RVI(RV):
             values = [values]
         self._evaluation_periods = values
 
+    @property
+    def custom_output(self):
+        return "\n".join([str(o) for o in self._custom_output])
+
+    @custom_output.setter
+    def custom_output(self, values):
+        if not isinstance(values, (list, set, tuple)):
+            values = [values]
+        self._custom_output = values
+
     def _update_duration(self):
         if self.end_date is not None and self.start_date is not None:
             self._duration = (self.end_date - self.start_date).days
@@ -464,7 +488,7 @@ class RVI(RV):
 
     @property
     def suppress_output(self):
-        tag = ":SuppressOutput\n:DontWriteWatershedStorage"
+        tag = ":SuppressOutput\n:DontWriteWatershedStorage\n"
         return tag if self._suppress_output else ""
 
     @suppress_output.setter
@@ -472,6 +496,17 @@ class RVI(RV):
         if not isinstance(value, bool):
             raise ValueError
         self._suppress_output = value
+
+    @property
+    def write_forcing_functions(self):
+        tag = ":WriteForcingFunctions\n"
+        return tag if self._write_forcing_functions else ""
+
+    @write_forcing_functions.setter
+    def write_forcing_functions(self, value):
+        if not isinstance(value, bool):
+            raise ValueError
+        self._write_forcing_functions = value
 
     @property
     def routing(self):
@@ -764,12 +799,15 @@ class RVT(RV):
         self._auto_nc_configure = False
 
     def configure_from_nc_data(self, fns):
+        from ravenpy.utilities.coords import infer_scale_and_offset
 
         assert self._auto_nc_configure is True
 
         self._var_cmds = {k: None for k in RVT.NC_VARS.keys()}
 
         for fn in fns:
+            if isinstance(fn, str) and not fn.startswith("http"):
+                fn = Path(fn)
             with xr.open_dataset(fn) as ds:
                 try:
                     self._nc_latitude = ds.cf["latitude"]
@@ -800,10 +838,11 @@ class RVT(RV):
                         if var_name not in ds.data_vars:
                             continue
                         nc_var = ds[var_name]
-                        self._add_nc_variable(
+                        data_type = RVT.NC_VARS[std_name]["raven"]
+                        specs = dict(
                             name=std_name,
                             file_name_nc=fn,
-                            data_type=RVT.NC_VARS[std_name]["raven"],
+                            data_type=data_type,
                             var_name_nc=var_name,
                             latitude_var_name_nc=latitude_var_name_nc,
                             longitude_var_name_nc=longitude_var_name_nc,
@@ -811,6 +850,13 @@ class RVT(RV):
                             dim_names_nc=nc_var.dims,
                             units=nc_var.attrs.get("units"),
                         )
+                        # Infer scale and offset parameters for unit conversion.
+                        if specs["units"] is not None:
+                            specs["scale"], specs["offset"] = infer_scale_and_offset(
+                                nc_var, data_type
+                            )
+
+                        self._add_nc_variable(**specs)
                         self._number_grid_cells = int(nc_var.size / len(ds["time"]))
                         break
 

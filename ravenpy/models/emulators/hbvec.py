@@ -330,7 +330,7 @@ class HBVEC(Raven):
         # Default initial conditions if none are given
         if not self.config.rvc.hru_states:
             soil2 = 0.50657
-            self.config.rvc.hru_states[1] = HRUState(soil2=soil2)
+            self.config.rvc.hru_states[1] = HRUState(data={"SOIL[2]": soil2})
 
         if not self.config.rvc.basin_states:
             self.config.rvc.basin_states[1] = BasinIndexCommand()

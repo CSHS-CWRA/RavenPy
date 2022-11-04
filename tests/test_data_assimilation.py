@@ -67,7 +67,7 @@ class TestAssimilationGR4JCN:
             raise ValueError("Assimilation requires perturbing the flow variable.")
 
         # Assimilation variables (from HRUStateVariable)
-        assim_var = ("soil0", "soil1")
+        assim_var = ("SOIL[0]", "SOIL[1]")
 
         # Assimilation period (days between each assimilation step)
         assim_step_days = 3
