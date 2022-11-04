@@ -8,14 +8,13 @@ from pathlib import Path
 from textwrap import dedent
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
-import cf_xarray
 import cftime
 import numpy as np
 import xarray as xr
 from numpy.distutils.misc_util import is_sequence
 
 from ravenpy import __version__
-from ravenpy.config import symbolic
+from ravenpy.config import options, symbolic
 from ravenpy.config.commands import (
     HRU,
     BaseDataCommand,
@@ -278,72 +277,13 @@ class RVI(RV):
     :NetCDFAttribute time_coverage_start {start_date}
     :NetCDFAttribute time_coverage_end {end_date}
     """
-
-    class EvaporationOptions(Enum):
-        PET_CONSTANT = "PET_CONSTANT"
-        PET_PENMAN_MONTEITH = "PET_PENMAN_MONTEITH"
-        PET_PENMAN_COMBINATION = "PET_PENMAN_COMBINATION"
-        PET_PRIESTLEY_TAYLOR = "PET_PRIESTLEY_TAYLOR"
-        PET_HARGREAVES = "PET_HARGREAVES"
-        PET_HARGREAVES_1985 = "PET_HARGREAVES_1985"
-        PET_FROMMONTHLY = "PET_FROMMONTHLY"
-        PET_DATA = "PET_DATA"
-        PET_HAMON_1961 = "PET_HAMON_1961"
-        PET_TURC_1961 = "PET_TURC_1961"
-        PET_MAKKINK_1957 = "PET_MAKKINK_1957"
-        PET_MONTHLY_FACTOR = "PET_MONTHLY_FACTOR"
-        PET_MOHYSE = "PET_MOHYSE"
-        PET_OUDIN = "PET_OUDIN"
-
-    class CalendarOptions(Enum):
-        PROLEPTIC_GREGORIAN = "PROLEPTIC_GREGORIAN"
-        JULIAN = "JULIAN"
-        GREGORIAN = "GREGORIAN"
-        STANDARD = "STANDARD"
-        NOLEAP = "NOLEAP"
-        _365_DAY = "365_DAY"
-        ALL_LEAP = "ALL_LEAP"
-        _366_DAY = "366_DAY"
-
-    class EvaluationMetrics(Enum):
-        NASH_SUTCLIFFE = "NASH_SUTCLIFFE"
-        LOG_NASH = "LOG_NASH"
-        RMSE = "RMSE"
-        PCT_BIAS = "PCT_BIAS"
-        ABSERR = "ABSERR"
-        ABSMAX = "ABSMAX"
-        PDIFF = "PDIFF"
-        TMVOL = "TMVOL"
-        RCOEFF = "RCOEFF"
-        NSC = "NSC"
-        KLING_GUPTA = "KLING_GUPTA"
-
-    class RainSnowFractionOptions(Enum):
-        DATA = "RAINSNOW_DATA"
-        DINGMAN = "RAINSNOW_DINGMAN"
-        UBC = "RAINSNOW_UBC"
-        HBV = "RAINSNOW_HBV"
-        HARDER = "RAINSNOW_HARDER"
-        HSPF = "RAINSNOW_HSPF"
-
-    class RoutingOptions(Enum):
-        """:Routing"""
-
-        DIFFUSIVE_WAVE = "ROUTE_DIFFUSIVE_WAVE"
-        HYDROLOGIC = "ROUTE_HYDROLOGIC"
-        NONE = "ROUTE_NONE"
-        STORAGE_COEFF = "ROUTE_STORAGE_COEFF"
-        PLUG_FLOW = "ROUTE_PLUG_FLOW"
-        MUSKINGUM = "ROUTE_MUSKINGUM"
-
-    class CatchmentRoute(Enum):
-        """:CatchmentRoute"""
-
-        DUMP = "ROUTE_DUMP"
-        GAMMA = "ROUTE_GAMMA_CONVOLUTION"
-        TRI = "ROUTE_TRI_CONVOLUTION"
-        RESERVOIR = "ROUTE_RESERVOIR_SERIES"
-        EXP = "ROUTE_EXPONENTIAL"
+    # For backward compatibility
+    EvaporationOptions = options.Evaporation
+    CalendarOptions = options.Calendar
+    EvaluationMetrics = options.EvaluationMetrics
+    RainSnowFractionOptions = options.RainSnowFraction
+    RoutingOptions = options.Routing
+    #
 
     def __init__(self, config):
         super().__init__(config)
@@ -356,18 +296,19 @@ class RVI(RV):
         # These correspond to properties whose setters will pass their value through
         # an Enum cast (triggering a ValueError at runtime for unknown values) and
         # getters will be used when rendering the template in the `to_rv` method
-        self._calendar = RVI.CalendarOptions.STANDARD
-        self._routing = RVI.RoutingOptions.NONE
-        self._catchment_route = RVI.CatchmentRoute.DUMP
+        self._catchment_route = options.CatchmentRoute.DUMP
+        self._calendar = options.Calendar.STANDARD
+        self._routing = options.Routing.NONE
+
         self._start_date = None
         self._end_date = None
-        self._rain_snow_fraction = RVI.RainSnowFractionOptions.DATA
+        self._rain_snow_fraction = options.RainSnowFraction.DATA
         self._evaporation = None
         self._ow_evaporation = None
         self._duration = 1
         self._evaluation_metrics = [
-            RVI.EvaluationMetrics.NASH_SUTCLIFFE,
-            RVI.EvaluationMetrics.RMSE,
+            options.EvaluationMetrics.NASH_SUTCLIFFE,
+            options.EvaluationMetrics.RMSE,
         ]
         self._evaluation_periods = []
         self._suppress_output = False
@@ -386,7 +327,7 @@ class RVI(RV):
         if self.end_date in [None, dt.datetime(1, 1, 1)]:
             self.end_date = end
 
-        self.calendar = RVI.CalendarOptions(cal.upper())
+        self.calendar = options.Calendar(cal.upper())
 
     @property
     def raven_version(self):
@@ -454,7 +395,7 @@ class RVI(RV):
         ms = []
         for v in values:
             v = v.upper() if isinstance(v, str) else v.value
-            ms.append(RVI.EvaluationMetrics(v))
+            ms.append(options.EvaluationMetrics(v))
         self._evaluation_metrics = ms
 
     @property
@@ -515,7 +456,7 @@ class RVI(RV):
     @routing.setter
     def routing(self, value):
         v = value.upper() if isinstance(value, str) else value.value
-        self._routing = RVI.RoutingOptions(v)
+        self._routing = options.Routing(v)
 
     @property
     def catchment_route(self):
@@ -524,7 +465,7 @@ class RVI(RV):
     @catchment_route.setter
     def catchment_route(self, value):
         v = value.upper() if isinstance(value, str) else value.value
-        self._catchment_route = RVI.CatchmentRoute(v)
+        self._catchment_route = options.CatchmentRoute(v)
 
     @property
     def rain_snow_fraction(self):
@@ -534,7 +475,7 @@ class RVI(RV):
     @rain_snow_fraction.setter
     def rain_snow_fraction(self, value):
         v = value.upper() if isinstance(value, str) else value.value
-        self._rain_snow_fraction = RVI.RainSnowFractionOptions(v)
+        self._rain_snow_fraction = options.RainSnowFraction(v)
 
     @property
     def evaporation(self):
@@ -544,7 +485,7 @@ class RVI(RV):
     @evaporation.setter
     def evaporation(self, value):
         v = value.upper() if isinstance(value, str) else value.value
-        self._evaporation = RVI.EvaporationOptions(v)
+        self._evaporation = options.Evaporation(v)
 
     @property
     def ow_evaporation(self):
@@ -554,7 +495,7 @@ class RVI(RV):
     @ow_evaporation.setter
     def ow_evaporation(self, value):
         v = value.upper() if isinstance(value, str) else value.value
-        self._ow_evaporation = RVI.EvaporationOptions(v)
+        self._ow_evaporation = options.Evaporation(v)
 
     @property
     def calendar(self):
@@ -564,7 +505,7 @@ class RVI(RV):
     @calendar.setter
     def calendar(self, value):
         v = value.upper() if isinstance(value, str) else value.value
-        self._calendar = RVI.CalendarOptions(v)
+        self._calendar = options.Calendar(v)
 
     def _dt2cf(self, date):
         """Convert datetime to cftime datetime."""

@@ -1,11 +1,10 @@
-from collections import defaultdict
-from dataclasses import asdict, field, make_dataclass
-from pathlib import Path
+from dataclasses import field, make_dataclass
 from typing import cast
 
 from pydantic.dataclasses import dataclass
 from pymbolic.primitives import Variable
 
+from ravenpy.config import options
 from ravenpy.config.commands import (
     HRU,
     LU,
@@ -15,7 +14,6 @@ from ravenpy.config.commands import (
     Sub,
     Sym,
 )
-from ravenpy.config.rvs import RVI
 from ravenpy.models.base import Ostrich, Raven
 
 from .gr4jcn import GR4JCN
@@ -206,7 +204,7 @@ class MOHYSE(Raven):
         # R V I #
         #########
 
-        self.config.rvi.rain_snow_fraction = RVI.RainSnowFractionOptions.DATA
+        self.config.rvi.rain_snow_fraction = options.RainSnowFraction.DATA
         self.config.rvi.evaporation = "PET_MOHYSE"
 
     def derived_parameters(self):

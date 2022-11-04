@@ -8,6 +8,7 @@ import numpy as np
 import pytest
 import xarray as xr
 
+from ravenpy.config import options
 from ravenpy.config.commands import (  # GriddedForcingCommand,; LandUseClassesCommand,; ObservationDataCommand,; SoilClassesCommand,; SoilProfilesCommand,; VegetationClassesCommand,
     ChannelProfileCommand,
     CustomOutput,
@@ -91,7 +92,7 @@ salmon_land_hru_2 = dict(
 
 class TestGR4JCN:
     def test_error(self):
-        model = GR4JCN()
+        model = GR4JCN(workdir="/tmp/tst")
 
         model.config.rvp.params = model.Params(
             0.529, -3.396, 407.29, 1.072, 16.9, 0.947
@@ -175,7 +176,7 @@ class TestGR4JCN:
         # Check parser
         # ------------
 
-        assert model.config.rvi.calendar == RVI.CalendarOptions.GREGORIAN.value
+        assert model.config.rvi.calendar == options.Calendar.GREGORIAN.value
 
         # ------------
         # Check saved HRU states saved in RVC

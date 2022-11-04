@@ -4,19 +4,24 @@ from textwrap import dedent
 import pytest
 from pymbolic import var
 
+from ravenpy.config import options
 from ravenpy.config.commands import (
     LU,
     PL,
     SOIL,
-    VEG,
+    AdiabaticLapseRate,
+    EvaluationMetrics,
     HRUState,
     HRUStateVariableTableCommand,
     LandUseClassesCommand,
     LandUseParameterListCommand,
     LinearTransform,
+    PotentialMeltMethod,
+    RunName,
     SoilClassesCommand,
     SoilParameterListCommand,
     SoilProfilesCommand,
+    SuppressOutput,
     TiedParams,
     VegetationClassesCommand,
     VegetationParameterListCommand,
@@ -174,9 +179,34 @@ def test_tied_params():
     )
 
 
+def test_adiabatic_lapse_rate_coefficient():
+    alr = AdiabaticLapseRate(0.2)
+    assert alr.to_rv() == ":AdiabaticLapseRate   0.2\n"
+
+
+def test_potential_melt_method_option():
+    expected = ":PotentialMeltMethod  POTMELT_EB\n"
+    assert PotentialMeltMethod("POTMELT_EB").to_rv() == expected
+    assert PotentialMeltMethod(options.PotentialMeltMethod.EB).to_rv() == expected
+
+
+def test_run_name():
+    assert RunName("test").to_rv() == ":RunName              test\n"
+
+
+def test_suppress_output():
+    assert SuppressOutput(True).to_rv() == ":SuppressOutput\n"
+    assert SuppressOutput(False).to_rv() == ""
+
+
 def test_hru_state():
     s = HRUState(index=1, data={"SOIL[0]": 1, "SOIL[1]": 2.0})
     assert s.to_rv() == "1,1.0,2.0"
+
+
+def test_evaluation_metrics():
+    em = EvaluationMetrics(["RMSE", "NASH_SUTCLIFFE"])
+    assert em.to_rv() == ":EvaluationMetrics    RMSE, NASH_SUTCLIFFE\n"
 
 
 class TestHRUStateVariableTableCommand:

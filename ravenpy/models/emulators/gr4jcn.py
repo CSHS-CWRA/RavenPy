@@ -1,10 +1,10 @@
 from collections import defaultdict
-from pathlib import Path
 from typing import cast
 
 from pydantic.dataclasses import dataclass
 from pymbolic.primitives import Variable
 
+from ravenpy.config import options
 from ravenpy.config.commands import (
     HRU,
     LU,
@@ -14,7 +14,6 @@ from ravenpy.config.commands import (
     Sub,
     Sym,
 )
-from ravenpy.config.rvs import RVI
 from ravenpy.models.base import Ostrich, Raven
 
 
@@ -188,7 +187,7 @@ class GR4JCN(Raven):
         """
         self.config.rvi.set_tmpl(rvi_tmpl)
 
-        self.config.rvi.rain_snow_fraction = RVI.RainSnowFractionOptions.DINGMAN
+        self.config.rvi.rain_snow_fraction = options.RainSnowFraction.DINGMAN
         self.config.rvi.evaporation = "PET_OUDIN"
 
     def derived_parameters(self):
