@@ -2,10 +2,12 @@
 Tools for searching for and acquiring test data.
 """
 import logging
+import os
 import re
 import warnings
 from hashlib import md5
 from pathlib import Path
+from shutil import copy
 from typing import List, Optional, Sequence, Union
 from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin
@@ -19,7 +21,12 @@ _default_cache_dir = Path.home() / ".raven_testing_data"
 
 LOGGER = logging.getLogger("RAVEN")
 
-__all__ = ["get_file", "open_dataset", "query_folder"]
+__all__ = [
+    "get_local_testdata",
+    "open_dataset",
+    "query_folder",
+    "get_file",
+]
 
 
 def file_md5_checksum(fname):
@@ -29,32 +36,59 @@ def file_md5_checksum(fname):
     return hash_md5.hexdigest()
 
 
-# def get_local_testdata(pattern: str) -> Union[Path, List[Path]]:
-#     """Gather testdata from a local folder.
-#
-#     Return files matching `pattern` in the local test data repo
-#     located at `RAVENPY_TESTDATA_PATH` (which must be set).
-#
-#     Parameters
-#     ----------
-#     pattern: str
-#       Glob pattern, which must include the folder.
-#
-#     Returns
-#     -------
-#     Union[Path, List[Path]]
-#     """
-#     testdata_path = os.getenv("RAVENPY_TESTDATA_PATH")
-#     if not testdata_path:
-#         raise RuntimeError("RAVENPY_TESTDATA_PATH env variable is not set")
-#     testdata_path = Path(testdata_path)
-#     if not testdata_path.exists():
-#         raise RuntimeError(f"{testdata_path} does not exists")
-#     paths = [path for path in testdata_path.glob(pattern) if path.suffix != ".md5"]
-#     if not paths:
-#         raise RuntimeError(f"No data found for {pattern} at {testdata_path}")
-#     # Return item directly when singleton, for convenience
-#     return paths[0] if len(paths) == 1 else paths
+def get_local_testdata(
+    patterns: Union[str, Sequence[str]],
+    temp_folder: Union[str, os.PathLike],
+    branch: str = "master",
+    _local_cache: Union[str, os.PathLike] = _default_cache_dir,
+) -> Union[Path, List[Path]]:
+    """Copy specific testdata from a default cache to a temporary folder.
+
+    Return files matching `pattern` in the default cache dir and move to a local temp folder.
+
+    Parameters
+    ----------
+    patterns : str or Sequence of str
+        Glob patterns, which must include the folder.
+    temp_folder : str or os.PathLike
+        Target folder to copy files and filetree to.
+    branch : str, optional
+        For GitHub-hosted files, the branch to download from.
+    _local_cache : str or os.PathLike
+        Local cache of testing data.
+
+    Returns
+    -------
+    Union[Path, List[Path]]
+    """
+    temp_paths = []
+
+    if isinstance(patterns, str):
+        patterns = [patterns]
+
+    for pattern in patterns:
+        potential_path = Path(temp_folder).joinpath(branch).joinpath(pattern)
+        if potential_path.exists():
+            return Path(temp_folder).joinpath(pattern)
+
+        testdata_path = Path(_local_cache)
+        if not testdata_path.exists():
+            raise RuntimeError(f"{testdata_path} does not exists")
+        paths = [path for path in testdata_path.joinpath(branch).glob(pattern)]
+        if not paths:
+            raise FileNotFoundError(f"No data found for {pattern} at {testdata_path}.")
+
+        main_folder = Path(temp_folder).joinpath(branch).joinpath(Path(pattern).parent)
+        main_folder.mkdir(exist_ok=True)
+
+        for file in paths:
+            temp_file = main_folder.joinpath(file.name)
+            if not temp_file.exists():
+                copy(file, main_folder)
+            temp_paths.append(temp_file)
+
+    # Return item directly when singleton, for convenience
+    return temp_paths[0] if len(temp_paths) == 1 else temp_paths
 
 
 def _get(
@@ -216,7 +250,7 @@ def query_folder(
             files = [string for string in files if re.search(regex, string)]
     except KeyError:
         if {"message", "documentation_url"}.issubset(set(res.keys())):
-            raise ConnectionRefusedError()
+            raise ConnectionRefusedError(res["message"])
         else:
             raise
 
