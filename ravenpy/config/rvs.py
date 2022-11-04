@@ -272,6 +272,13 @@ class RVI(RV):
     :NetCDFAttribute time_coverage_start {start_date}
     :NetCDFAttribute time_coverage_end {end_date}
     """
+    # For backward compatibility
+    EvaporationOptions = options.Evaporation
+    CalendarOptions = options.Calendar
+    EvaluationMetrics = options.EvaluationMetrics
+    RainSnowFractionOptions = options.RainSnowFraction
+    RoutingOptions = options.Routing
+    #
 
     def __init__(self, config):
         super().__init__(config)
