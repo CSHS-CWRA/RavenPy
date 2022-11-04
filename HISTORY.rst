@@ -20,7 +20,7 @@ New features:
 * Add support for the command `:RedirectToFile`. Tested for grid weights only.
 * Add support for the command `:WriteForcingFunctions`.
 * Add support for the command `:CustomOutput`.
-* Multiple other new RavenCommand objects added, but not integrated in the configuration.
+* Multiple other new RavenCommand objects added, but not integrated in the configuration, including `:SoilParameterList`, `:VegetationParameterList` and `:LandUseParameterList`.
 * Patch directory traversal vulnerability (`CVE-2007-4559 <(https://github.com/advisories/GHSA-gw9q-c7gh-j9vm>`_).
 
 

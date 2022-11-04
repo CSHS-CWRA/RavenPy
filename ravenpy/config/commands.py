@@ -5,8 +5,9 @@ from dataclasses import asdict, field
 from itertools import chain
 from pathlib import Path
 from textwrap import dedent
-from typing import Dict, Optional, Sequence, Tuple, Union, no_type_check
+from typing import ClassVar, Dict, Optional, Sequence, Tuple, Union, no_type_check
 
+from pydantic import validator
 from pydantic.dataclasses import dataclass
 
 from . import options
@@ -370,10 +371,6 @@ class SubBasinsCommand(RavenCommand):
         return dedent(template).format(subbasin_records="\n".join(recs))
 
 
-# For convenience
-Sub = SubBasinsCommand.Record
-
-
 @dataclass
 class HRUsCommand(RavenCommand):
     """HRUs command (RVH)."""
@@ -416,10 +413,6 @@ class HRUsCommand(RavenCommand):
             """
         recs = [f"    {hru}" for hru in self.hrus]
         return dedent(template).format(hru_records="\n".join(recs))
-
-
-# For convenience
-HRU = HRUsCommand.Record
 
 
 @dataclass
@@ -844,10 +837,6 @@ class HRUStateVariableTableCommand(RavenCommand):
         )
 
 
-# For convenience
-HRUState = HRUStateVariableTableCommand.Record
-
-
 @dataclass
 class BasinIndexCommand(RavenCommand):
     """Initial conditions for a flow segment."""
@@ -954,7 +943,7 @@ class SoilClassesCommand(RavenCommand):
             :EndSoilClasses
             """
         return dedent(template).format(
-            soil_class_records="\n".join(map(str, self.soil_classes))
+            soil_class_records="\n    ".join(map(str, self.soil_classes))
         )
 
 
@@ -969,11 +958,11 @@ class SoilProfilesCommand(RavenCommand):
         def to_rv(self):
             # From the Raven manual: {profile_name,#horizons,{soil_class_name,thick.}x{#horizons}}x[NP]
             n_horizons = len(self.soil_class_names)
-            horizon_data = itertools.chain(
-                *zip(self.soil_class_names, self.thicknesses)
+            horizon_data = list(
+                itertools.chain(*zip(self.soil_class_names, self.thicknesses))
             )
-            horizon_data_str = ", ".join(map(str, horizon_data))
-            return f"{self.profile_name}, {n_horizons}, {horizon_data_str}"
+            fmt = "{:<16},{:>4}," + ",".join(n_horizons * ["{:>12},{:>6}"])
+            return fmt.format(self.profile_name, n_horizons, *horizon_data)
 
     soil_profiles: Tuple[Record, ...] = ()
 
@@ -998,15 +987,16 @@ class VegetationClassesCommand(RavenCommand):
         max_leaf_cond: float = 0
 
         def to_rv(self):
-            return " ".join(map(str, asdict(self).values()))
+            template = "{name:<16},{max_ht:>14},{max_lai:>14},{max_leaf_cond:>14}"
+            return template.format(**asdict(self))
 
     vegetation_classes: Tuple[Record, ...] = ()
 
     def to_rv(self):
         template = """
         :VegetationClasses
-            :Attributes,                MAX_HT,       MAX_LAI,    MAX_LEAF_COND
-            :Units,                       m,            none,       mm_per_s
+            :Attributes     ,        MAX_HT,       MAX_LAI, MAX_LEAF_COND
+            :Units          ,             m,          none,      mm_per_s
             {vegetation_class_records}
         :EndVegetationClasses
         """
@@ -1024,15 +1014,16 @@ class LandUseClassesCommand(RavenCommand):
         forest_coverage: float = 0
 
         def to_rv(self):
-            return " ".join(map(str, asdict(self).values()))
+            template = "{name:<16},{impermeable_frac:>16},{forest_coverage:>16}"
+            return template.format(**asdict(self))
 
     land_use_classes: Tuple[Record, ...] = ()
 
     def to_rv(self):
         template = """
             :LandUseClasses
-                :Attributes,        IMPERMEABLE_FRAC,         FOREST_COVERAGE
-                :Units,                     fract,                    fract
+                :Attributes     ,IMPERMEABLE_FRAC, FOREST_COVERAGE
+                :Units          ,           fract,           fract
                 {land_use_class_records}
             :EndLandUseClasses
             """
@@ -1041,5 +1032,76 @@ class LandUseClassesCommand(RavenCommand):
         )
 
 
-# For convenience
+@dataclass
+class ParameterList(RavenCommand):
+    @dataclass
+    class Record(RavenCommand):
+        name: str = ""
+        vals: Sequence[Union[float, None]] = ()
+
+        @validator("vals", pre=True)
+        def no_none_in_default(cls, v, values):
+            """Make sure that no values are None for the [DEFAULT] record."""
+            if values["name"] == "[DEFAULT]" and None in v:
+                raise ValueError("Default record can not contain None.")
+            return v
+
+        def to_rv(self, **kwds):
+            fmt = "{name:<16}" + len(self.vals) * ",{:>18}"
+            evals = []
+            for v in self.vals:
+                ev = "_DEFAULT" if v is None else v
+                evals.append(ev)
+
+            return fmt.format(name=self.name, *evals)
+
+    names: Sequence[str] = ()  # Subclass this with the right type.
+    records: Sequence[Record] = ()
+
+    _cmd: ClassVar[str]
+
+    def to_rv(self, **kwds):
+        template = """
+        :{cmd}
+            :Parameters     {parameter_names}
+            :Units          {units}
+            {records}
+        :End{cmd}
+        """
+
+        fmt = ",{:>18}" * len(self.names)
+        units = ",              none" * len(self.names)
+        return dedent(template).format(
+            cmd=self._cmd,
+            parameter_names=fmt.format(*self.names),
+            units=units,
+            records="\n    ".join([r.to_rv(**kwds) for r in self.records]),
+        )
+
+
+@dataclass
+class SoilParameterListCommand(ParameterList):
+    names: Sequence[options.SoilParameters] = ()
+    _cmd = "SoilParameterList"
+
+
+@dataclass
+class VegetationParameterListCommand(ParameterList):
+    names: Sequence[options.VegetationParameters] = ()
+    _cmd = "VegetationParameterList"
+
+
+@dataclass
+class LandUseParameterListCommand(ParameterList):
+    names: Sequence[options.LandUseParameters] = ()
+    _cmd = "LandUseParameterList"
+
+
+# Aliases for convenience
+HRU = HRUsCommand.Record
+HRUState = HRUStateVariableTableCommand.Record
 LU = LandUseClassesCommand.Record
+Sub = SubBasinsCommand.Record
+SOIL = SoilProfilesCommand.Record
+VEG = VegetationClassesCommand.Record
+PL = ParameterList.Record
