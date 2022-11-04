@@ -3,6 +3,7 @@ from textwrap import dedent
 from ravenpy.config import options
 from ravenpy.config.commands import (
     AdiabaticLapseRate,
+    EvaluationMetrics,
     HRUState,
     HRUStateVariableTableCommand,
     PotentialMeltMethod,
@@ -34,6 +35,11 @@ def test_suppress_output():
 def test_hru_state():
     s = HRUState(index=1, data={"SOIL[0]": 1, "SOIL[1]": 2.0})
     assert s.to_rv() == "1,1.0,2.0"
+
+
+def test_evaluation_metrics():
+    em = EvaluationMetrics(["RMSE", "NASH_SUTCLIFFE"])
+    assert em.to_rv() == ":EvaluationMetrics    RMSE, NASH_SUTCLIFFE\n"
 
 
 class TestHRUStateVariableTableCommand:

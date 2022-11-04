@@ -1,12 +1,11 @@
 import datetime as dt
 import itertools
 import re
-from abc import ABC, abstractmethod
 from dataclasses import asdict, field
 from itertools import chain
 from pathlib import Path
 from textwrap import dedent
-from typing import Dict, Literal, Optional, Sequence, Tuple, Union, no_type_check
+from typing import Dict, Optional, Sequence, Tuple, Union, no_type_check
 
 from pydantic.dataclasses import dataclass
 
@@ -125,6 +124,11 @@ class Evaporation(RavenOption):
 
 
 @dataclass
+class LakeStorage(RavenValue):
+    value: options.StateVariables
+
+
+@dataclass
 class OW_Evaporation(RavenOption):
     option: options.Evaporation
 
@@ -221,23 +225,14 @@ class WindspeedMethod(RavenOption):
 
 
 @dataclass
-class LakeStorage(RavenCommand):
-    option: options.StateVariables
-
-    def to_rv(self):
-        return f":LakeStorage {self.option}\n"
-
-
-@dataclass
 class LinearTransform(RavenCommand):
     scale: Optional[float] = 1
     offset: Optional[float] = 0
 
-    _template = ":LinearTransform {scale:.15f} {offset:.15f}\n"
-
     def to_rv(self):
+        template = ":LinearTransform {scale:.15f} {offset:.15f}\n"
         if (self.scale != 1) or (self.offset != 0):
-            return self._template.format(**asdict(self))
+            return template.format(**asdict(self))
         return ""
 
 
@@ -257,7 +252,9 @@ class RainSnowTransition(RavenCommand):
     temp: float
     delta: float
 
-    _template = ":RainSnowTransition {temp} {float}"
+    def to_rv(self):
+        template = ":RainSnowTransition {temp} {float}"
+        return template.format(**asdict(self))
 
 
 @dataclass
@@ -380,10 +377,8 @@ class HRUsCommand(RavenCommand):
     def to_rv(self):
         template = """
             :HRUs
-                :Attributes      AREA  ELEVATION       LATITUDE      LONGITUDE BASIN_ID       LAND_USE_CLASS
-                 VEG_CLASS      SOIL_PROFILE  AQUIFER_PROFILE TERRAIN_CLASS      SLOPE     ASPECT
-                :Units            km2          m            deg            deg     none                  none
-                      none              none             none          none        deg       degN
+                :Attributes      AREA  ELEVATION       LATITUDE      LONGITUDE BASIN_ID       LAND_USE_CLASS            VEG_CLASS      SOIL_PROFILE  AQUIFER_PROFILE TERRAIN_CLASS      SLOPE     ASPECT
+                :Units            km2          m            deg            deg     none                  none                none              none             none          none        deg       degN
             {hru_records}
             :EndHRUs
             """
@@ -616,17 +611,20 @@ class GaugeCommand(RavenCommand):
 class ObservationDataCommand(DataCommand):
     subbasin_id: int = 1
 
-    _template = """
-    :ObservationData {data_type} {subbasin_id} {units}
-        :ReadFromNetCDF
-            :FileNameNC      {file_name_nc}
-            :VarNameNC       {var_name_nc}
-            :DimNamesNC      {dimensions}
-            :StationIdx      {index}
-            {time_shift}{linear_transform}{deaccumulate}
-        :EndReadFromNetCDF
-    :EndObservationData
-    """
+    def to_rv(self):
+        template = """
+        :ObservationData {data_type} {subbasin_id} {units}
+            :ReadFromNetCDF
+                :FileNameNC      {file_name_nc}
+                :VarNameNC       {var_name_nc}
+                :DimNamesNC      {dimensions}
+                :StationIdx      {index}
+                {time_shift}{linear_transform}{deaccumulate}
+            :EndReadFromNetCDF
+        :EndObservationData
+        """
+        d = self.asdict()
+        return dedent(template).format(**d)
 
 
 @dataclass

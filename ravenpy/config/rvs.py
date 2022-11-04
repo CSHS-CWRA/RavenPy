@@ -14,6 +14,7 @@ import xarray as xr
 from numpy.distutils.misc_util import is_sequence
 
 from ravenpy import __version__
+from ravenpy.config import options
 from ravenpy.config.commands import (
     HRU,
     BaseDataCommand,
@@ -283,17 +284,17 @@ class RVI(RV):
         # These correspond to properties whose setters will pass their value through
         # an Enum cast (triggering a ValueError at runtime for unknown values) and
         # getters will be used when rendering the template in the `to_rv` method
-        self._calendar = RVI.CalendarOptions.STANDARD
-        self._routing = RVI.RoutingOptions.NONE
+        self._calendar = options.Calendar.STANDARD
+        self._routing = options.Routing.NONE
         self._start_date = None
         self._end_date = None
-        self._rain_snow_fraction = RVI.RainSnowFractionOptions.DATA
+        self._rain_snow_fraction = options.RainSnowFraction.DATA
         self._evaporation = None
         self._ow_evaporation = None
         self._duration = 1
         self._evaluation_metrics = [
-            RVI.EvaluationMetrics.NASH_SUTCLIFFE,
-            RVI.EvaluationMetrics.RMSE,
+            options.EvaluationMetrics.NASH_SUTCLIFFE,
+            options.EvaluationMetrics.RMSE,
         ]
         self._evaluation_periods = []
         self._suppress_output = False
@@ -312,7 +313,7 @@ class RVI(RV):
         if self.end_date in [None, dt.datetime(1, 1, 1)]:
             self.end_date = end
 
-        self.calendar = RVI.CalendarOptions(cal.upper())
+        self.calendar = options.Calendar(cal.upper())
 
     @property
     def raven_version(self):
@@ -380,7 +381,7 @@ class RVI(RV):
         ms = []
         for v in values:
             v = v.upper() if isinstance(v, str) else v.value
-            ms.append(RVI.EvaluationMetrics(v))
+            ms.append(options.EvaluationMetrics(v))
         self._evaluation_metrics = ms
 
     @property
@@ -441,7 +442,7 @@ class RVI(RV):
     @routing.setter
     def routing(self, value):
         v = value.upper() if isinstance(value, str) else value.value
-        self._routing = RVI.RoutingOptions(v)
+        self._routing = options.Routing(v)
 
     @property
     def rain_snow_fraction(self):
@@ -451,7 +452,7 @@ class RVI(RV):
     @rain_snow_fraction.setter
     def rain_snow_fraction(self, value):
         v = value.upper() if isinstance(value, str) else value.value
-        self._rain_snow_fraction = RVI.RainSnowFractionOptions(v)
+        self._rain_snow_fraction = options.RainSnowFraction(v)
 
     @property
     def evaporation(self):
@@ -461,7 +462,7 @@ class RVI(RV):
     @evaporation.setter
     def evaporation(self, value):
         v = value.upper() if isinstance(value, str) else value.value
-        self._evaporation = RVI.EvaporationOptions(v)
+        self._evaporation = options.Evaporation(v)
 
     @property
     def ow_evaporation(self):
@@ -471,7 +472,7 @@ class RVI(RV):
     @ow_evaporation.setter
     def ow_evaporation(self, value):
         v = value.upper() if isinstance(value, str) else value.value
-        self._ow_evaporation = RVI.EvaporationOptions(v)
+        self._ow_evaporation = options.Evaporation(v)
 
     @property
     def calendar(self):
@@ -481,7 +482,7 @@ class RVI(RV):
     @calendar.setter
     def calendar(self, value):
         v = value.upper() if isinstance(value, str) else value.value
-        self._calendar = RVI.CalendarOptions(v)
+        self._calendar = options.Calendar(v)
 
     def _dt2cf(self, date):
         """Convert datetime to cftime datetime."""
