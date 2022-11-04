@@ -24,8 +24,36 @@ VALUE_PADDING = 10
 
 
 # --- Boolean switches --- #
+class DebugMode(RavenSwitch):
+    """"""
+
+
+class DeltaresFEWSMode(RavenSwitch):
+    """"""
+
+
 class DirectEvaporation(RavenSwitch):
     """Rainfall is automatically reduced through evapotranspiration up to the limit of the calculated PET."""
+
+
+class DontWriteWatershedStorage(RavenSwitch):
+    """Do not write watershed storage variables to disk."""
+
+
+class NetCDFAttribute(RavenSwitch):
+    """"""
+
+
+class NoisyMode(RavenSwitch):
+    """"""
+
+
+class PavicsMode(RavenSwitch):
+    """"""
+
+
+class SilentMode(RavenSwitch):
+    """"""
 
 
 class SuppressOutput(RavenSwitch):
@@ -34,6 +62,10 @@ class SuppressOutput(RavenSwitch):
 
 class WriteForcingFunctions(RavenSwitch):
     """Write watershed averaged forcing functions (e.g. rainfall, radiation, PET, etc)."""
+
+
+class WriteSubbasinFile(RavenSwitch):
+    """"""
 
 
 # --- Coefficients --- #
