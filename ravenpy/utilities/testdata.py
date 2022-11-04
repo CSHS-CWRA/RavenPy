@@ -3,10 +3,11 @@ Tools for searching for and acquiring test data.
 """
 import logging
 import re
+import warnings
 from hashlib import md5
 from pathlib import Path
 from typing import List, Optional, Sequence, Union
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin
 from urllib.request import urlretrieve
 
@@ -65,8 +66,30 @@ def _get(
 ) -> Path:
     cache_dir = cache_dir.absolute()
     local_file = cache_dir / branch / fullname
-    md5name = fullname.with_suffix(f"{suffix}.md5")
-    md5file = cache_dir / branch / md5name
+    md5_name = fullname.with_suffix(f"{suffix}.md5")
+    md5_file = cache_dir / branch / md5_name
+
+    if not github_url.lower().startswith("http"):
+        raise ValueError(f"GitHub URL not safe: '{github_url}'.")
+
+    if local_file.is_file():
+        local_md5 = file_md5_checksum(local_file)
+        try:
+            url = "/".join((github_url, "raw", branch, md5_name.as_posix()))
+            LOGGER.info(f"Attempting to fetch remote file md5: {md5_name.as_posix()}")
+            urlretrieve(url, md5_file)  # nosec
+            with open(md5_file) as f:
+                remote_md5 = f.read()
+            if local_md5.strip() != remote_md5.strip():
+                local_file.unlink()
+                msg = (
+                    f"MD5 checksum for {local_file.as_posix()} does not match upstream md5. "
+                    "Attempting new download."
+                )
+                warnings.warn(msg)
+        except (HTTPError, URLError):
+            msg = f"{md5_name.as_posix()} not accessible online. Unable to determine validity with upstream repo."
+            warnings.warn(msg)
 
     if not local_file.is_file():
         # This will always leave this directory on disk.
@@ -74,29 +97,31 @@ def _get(
         local_file.parent.mkdir(parents=True, exist_ok=True)
 
         url = "/".join((github_url, "raw", branch, fullname.as_posix()))
-        LOGGER.info("Fetching remote file: %s" % fullname.as_posix())
-        urlretrieve(url, local_file)
+        LOGGER.info(f"Fetching remote file: {fullname.as_posix()}")
+        urlretrieve(url, local_file)  # nosec
         try:
-            url = "/".join((github_url, "raw", branch, md5name.as_posix()))
-            LOGGER.info("Fetching remote file md5: %s" % md5name.as_posix())
-            urlretrieve(url, md5file)
+            url = "/".join((github_url, "raw", branch, md5_name.as_posix()))
+            LOGGER.info(f"Fetching remote file md5: {md5_name.as_posix()}")
+            urlretrieve(url, md5_file)  # nosec
         except HTTPError as e:
-            msg = f"{md5name.as_posix()} not found. Aborting file retrieval."
+            msg = f"{md5_name.as_posix()} not found. Aborting file retrieval."
             local_file.unlink()
             raise FileNotFoundError(msg) from e
 
-        localmd5 = file_md5_checksum(local_file)
+        local_md5 = file_md5_checksum(local_file)
         try:
-            with open(md5file) as f:
-                remotemd5 = f.read()
-            if localmd5 != remotemd5:
+            with open(md5_file) as f:
+                remote_md5 = f.read()
+            if local_md5.strip() != remote_md5.strip():
                 local_file.unlink()
-                msg = """
-                    MD5 checksum does not match, try downloading dataset again.
-                    """
+                msg = (
+                    f"{local_file.as_posix()} and md5 checksum do not match. "
+                    "There may be an issue with the upstream origin data."
+                )
                 raise OSError(msg)
         except OSError as e:
             LOGGER.error(e)
+
     return local_file
 
 
