@@ -13,12 +13,15 @@ Breaking changes:
   This change makes `rvc` files easier to read, and avoids Raven
   warnings regarding 'initial conditions for state variables not in model'.
 
+
 New features:
 
 * Automatically infer scale and offset `:LinearTransform` parameters from netCDF file metadata.
 * Add support for the command `:RedirectToFile`. Tested for grid weights only.
 * Add support for the command `:WriteForcingFunctions`.
 * Add support for the command `:CustomOutput`.
+* Multiple other new RavenCommand objects added, but not integrated in the configuration, including `:SoilParameterList`, `:VegetationParameterList` and `:LandUseParameterList`.
+* Multichoice options (e.g. calendars) moved from RV classes to `config.options`, but aliases created for backward compatibility.
 * Patch directory traversal vulnerability (`CVE-2007-4559 <(https://github.com/advisories/GHSA-gw9q-c7gh-j9vm>`_).
 
 

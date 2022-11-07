@@ -4,8 +4,8 @@ from typing import cast
 
 from pydantic.dataclasses import dataclass
 
+from ravenpy.config import options
 from ravenpy.config.commands import HRU, LU, BasinIndexCommand, HRUState, Sub
-from ravenpy.config.rvs import RVI
 from ravenpy.models.base import Ostrich, Raven
 
 from .gr4jcn import GR4JCN
@@ -100,7 +100,7 @@ class BLENDED(Raven):
                 LU("FOREST", impermeable_frac=0.0, forest_coverage=0.02345),
             ),
             evaporation="PET_OUDIN",
-            rain_snow_fraction=RVI.RainSnowFractionOptions.HBV,
+            rain_snow_fraction=options.RainSnowFraction.HBV,
         )
 
         #########
