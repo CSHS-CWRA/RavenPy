@@ -5,7 +5,7 @@ from typing import cast
 import xarray as xr
 from pydantic.dataclasses import dataclass
 
-from ravenpy.config import ConfigError
+from ravenpy.config import ConfigError, options
 from ravenpy.config.commands import (
     HRU,
     LU,
@@ -14,7 +14,6 @@ from ravenpy.config.commands import (
     HRUState,
     Sub,
 )
-from ravenpy.config.rvs import RVH, RVI
 from ravenpy.models.base import Ostrich, Raven
 
 
@@ -257,10 +256,10 @@ class CANADIANSHIELD(Raven):
 
         self.config.rvi.set_tmpl(rvi_tmpl)
 
-        self.config.rvi.routing = RVI.RoutingOptions.NONE
-        self.config.rvi.rain_snow_fraction = RVI.RainSnowFractionOptions.DINGMAN
-        self.config.rvi.evaporation = RVI.EvaporationOptions.PET_HARGREAVES_1985
-        self.config.rvi.ow_evaporation = RVI.EvaporationOptions.PET_HARGREAVES_1985
+        self.config.rvi.routing = options.Routing.NONE
+        self.config.rvi.rain_snow_fraction = options.RainSnowFraction.DINGMAN
+        self.config.rvi.evaporation = options.Evaporation.PET_HARGREAVES_1985
+        self.config.rvi.ow_evaporation = options.Evaporation.PET_HARGREAVES_1985
 
     def derived_parameters(self):
         params = cast(CANADIANSHIELD.Params, self.config.rvp.params)

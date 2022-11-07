@@ -4,8 +4,8 @@ from typing import Dict, cast
 
 from pydantic.dataclasses import dataclass
 
+from ravenpy.config import options
 from ravenpy.config.commands import HRU, LU, BasinIndexCommand, HRUState, Sub
-from ravenpy.config.rvs import RVI
 from ravenpy.models.base import Ostrich, Raven
 
 
@@ -189,7 +189,7 @@ class HMETS(Raven):
         self.config.rvi.set_tmpl(rvi_tmpl)
 
         self.config.rvi.evaporation = "PET_OUDIN"
-        self.config.rvi.rain_snow_fraction = RVI.RainSnowFractionOptions.DATA
+        self.config.rvi.rain_snow_fraction = options.RainSnowFraction.DATA
 
     def derived_parameters(self):
         params = cast(HMETS.Params, self.config.rvp.params)
