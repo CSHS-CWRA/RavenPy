@@ -24,6 +24,7 @@ with open("HISTORY.rst") as history_file:
     history = history_file.read()
 
 requirements = [
+    "cf-xarray",
     "click",
     "climpred>=2.1",
     "dask",
@@ -32,17 +33,16 @@ requirements = [
     "netCDF4",
     "numpy",
     "pandas",
-    "pint<0.20",
+    "pint>=0.20",
     "pydantic",
     "pymbolic",
     "requests",
     "scipy",
-    "statsmodels",
     "spotpy",
-    "xarray>=0.18",
-    "cf-xarray",
-    "xclim>=0.26.1",
+    "statsmodels",
     "wheel",
+    "xarray",
+    "xclim>=0.39.0",
     "xskillscore",
 ]
 
@@ -219,17 +219,22 @@ setup(
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
+        "Intended Audience :: Education",
+        "Intended Audience :: Science/Research",
         "License :: OSI Approved :: MIT License",
         "Natural Language :: English",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python",
+        "Topic :: Scientific/Engineering :: Atmospheric Science",
+        "Topic :: Scientific/Engineering :: GIS",
+        "Topic :: Scientific/Engineering :: Hydrology",
     ],
     description="A Python wrapper to setup and run the hydrologic modelling framework Raven.",
     entry_points={
-        "console_scripts": [
-            "ravenpy=ravenpy.cli:main",
-        ],
+        "console_scripts": ["ravenpy=ravenpy.cli:main"],
     },
     install_requires=requirements,
     license="MIT license",
