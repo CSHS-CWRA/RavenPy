@@ -7,6 +7,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+from ravenpy.config import options
 from ravenpy.config.commands import (  # GriddedForcingCommand,; LandUseClassesCommand,; ObservationDataCommand,; SoilClassesCommand,; SoilProfilesCommand,; VegetationClassesCommand,
     ChannelProfileCommand,
     CustomOutput,
@@ -94,10 +95,10 @@ salmon_river_2d = (
 
 
 class TestGR4JCN:
-    def test_error(self, threadsafe_data_dir):
+    def test_error(self, threadsafe_data_dir, tmp_path):
         ts = get_file(salmon_river, cache_dir=threadsafe_data_dir)
-
-        model = GR4JCN()
+        
+        model = GR4JCN(workdir=tmp_path)
 
         model.config.rvp.params = model.Params(
             0.529, -3.396, 407.29, 1.072, 16.9, 0.947
@@ -182,7 +183,7 @@ class TestGR4JCN:
         # Check parser
         # ------------
 
-        assert model.config.rvi.calendar == RVI.CalendarOptions.GREGORIAN.value
+        assert model.config.rvi.calendar == options.Calendar.GREGORIAN.value
 
         # ------------
         # Check saved HRU states saved in RVC
