@@ -11,7 +11,7 @@ from ravenpy.utilities.data_assimilation import (
     perturbation,
     sequential_assimilation,
 )
-from ravenpy.utilities.testdata import get_file, open_dataset
+from ravenpy.utilities.testdata import open_dataset
 
 
 class TestPerturbation:
@@ -35,13 +35,13 @@ class TestPerturbation:
 
 
 class TestAssimilationGR4JCN:
-    def test_simple(self, threadsafe_data_dir):
+    def test_simple(self, get_file):
         salmon_river = (
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
         )
 
         # get timeseries
-        ts = get_file(salmon_river, cache_dir=threadsafe_data_dir)
+        ts = get_file(salmon_river)
 
         # set number of members. Using 7 here to make it easier to find and debug.
         n_members = 7

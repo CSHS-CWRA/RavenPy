@@ -39,8 +39,7 @@ def file_md5_checksum(fname):
 def get_local_testdata(
     patterns: Union[str, Sequence[str]],
     temp_folder: Union[str, os.PathLike],
-    # fixme: this needs to be changed back once PR is merged.
-    branch: str = "add_full_model_name",
+    branch: str = "master",
     _local_cache: Union[str, os.PathLike] = _default_cache_dir,
 ) -> Union[Path, List[Path]]:
     """Copy specific testdata from a default cache to a temporary folder.
@@ -172,10 +171,9 @@ def _get(
 
 # idea copied from xclim that borrowed it from xarray that was borrowed from Seaborn
 def get_file(
-    name: Union[str, Sequence[str]],
+    name: Union[str, os.PathLike, Sequence[Union[str, os.PathLike]]],
     github_url: str = "https://github.com/Ouranosinc/raven-testdata",
-    # fixme: this needs to be changed back once PR is merged.
-    branch: str = "add_full_model_name",
+    branch: str = "master",
     cache_dir: Path = _default_cache_dir,
 ) -> Union[Path, List[Path]]:
     """
@@ -184,7 +182,7 @@ def get_file(
 
     Parameters
     ----------
-    name : Union[str, Sequence[str]]
+    name : Union[str, os.PathLike, Sequence[Union[str, os.PathLike]]]
         Name of the file or list/tuple of names of files containing the dataset(s) including suffixes.
     github_url : str
         URL to Github repository where the data is stored.
@@ -197,7 +195,7 @@ def get_file(
     -------
     Union[Path, List[Path]]
     """
-    if isinstance(name, str):
+    if isinstance(name, (str, Path)):
         name = [name]
 
     files = list()
@@ -223,8 +221,7 @@ def query_folder(
     folder: Optional[str] = None,
     pattern: Optional[str] = None,
     github_url: str = "https://github.com/Ouranosinc/raven-testdata",
-    # fixme: this needs to be changed back once PR is merged.
-    branch: str = "add_full_model_name",
+    branch: str = "master",
 ) -> List[str]:
     """
     Lists the files available for retrieval from a remote git repository with get_file.

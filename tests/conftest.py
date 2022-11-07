@@ -1,17 +1,21 @@
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 import pytest
 import xarray as xr
 from filelock import FileLock
 from xclim.indicators.land import fit, stats
 
-from ravenpy.utilities.testdata import _default_cache_dir, get_file, get_local_testdata
+from ravenpy.utilities.testdata import _default_cache_dir
+from ravenpy.utilities.testdata import get_file as _get_file
+from ravenpy.utilities.testdata import get_local_testdata as _get_local_testdata
+
+MAIN_TESTDATA_BRANCH = "add_full_model_name"
 
 
 def populate_testing_data(
     temp_folder: Optional[Path] = None,
-    branch: str = "master",
+    branch: str = MAIN_TESTDATA_BRANCH,
     _local_cache: Path = _default_cache_dir,
 ):
     if _local_cache.joinpath(".data_written").exists():
@@ -37,6 +41,8 @@ def populate_testing_data(
         "ostrich-{model}/raven-{model}-salmon.rvp.tpl",
         "ostrich-{model}/raven-{model}-salmon.rvt",
         "ostrich-{model}/raven-{model}-salmon.rvt.tpl",
+        "raven-{model}/Salmon-River-Near-Prince-George_Qobs_daily.rvt",
+        "raven-{model}/Salmon-River-Near-Prince-George_meteo_daily.rvt",
         "raven-{model}/raven-{model}-salmon.rvc",
         "raven-{model}/raven-{model}-salmon.rvh",
         "raven-{model}/raven-{model}-salmon.rvi",
@@ -49,23 +55,29 @@ def populate_testing_data(
 
     data_entries.extend(
         [
-            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
-            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_2d.nc",
-            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_3d.nc",
-            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
-            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_2d.nc",
-            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_3d.nc",
-            "raven-hmets/Salmon-River-Near-Prince-George_meteo_daily.rvt",
-            "raven-hmets/Salmon-River-Near-Prince-George_Qobs_daily.rvt"
-            "raven-mohyse/Salmon-River-Near-Prince-George_Qobs_daily.rvt",
-            "raven-mohyse/Salmon-River-Near-Prince-George_meteo_daily.rvt",
-            "raven-hbv-ec/Salmon-River-Near-Prince-George_meteo_daily.rvt",
-            "raven-hbv-ec/Salmon-River-Near-Prince-George_Qobs_daily.rvt",
-            "gr4j_cemaneige/solution.rvc",
-            "ostrich-gr4j-cemaneige/OstRandomNumbers.txt",
-            "cmip5/nasa_nex-gddp-1.0_day_inmcm4_historical%2Brcp85_nex-gddp_2070-2071_subset.nc",
+            "caspar_eccc_hindcasts/geps_watershed.nc"
             "cmip5/nasa_nex-gddp-1.0_day_inmcm4_historical%2Brcp45_nex-gddp_1971-1972_subset.nc",
+            "cmip5/nasa_nex-gddp-1.0_day_inmcm4_historical%2Brcp85_nex-gddp_2070-2071_subset.nc",
+            "famine/famine_input.nc",
+            "gr4j_cemaneige/solution.rvc",
+            "hydro_simulations/raven-gr4j-cemaneige-sim_hmets-0_Hydrographs.nc"
+            "nasa/Mars_MGS_MOLA_DEM_georeferenced_region_compressed.tiff",
             "nrcan/NRCAN_1971-1972_subset.nc",
+            "nrcan/NRCAN_2006-2007_subset.nc",
+            "ostrich-gr4j-cemaneige/OstRandomNumbers.txt",
+            "polygons/mars.geojson",
+            "polygons/mars.zip",
+            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_2d.nc",
+            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_3d.nc",
+            "raven-routing-sample/OTT_sub.zip",
+            "raven-routing-sample/VIC_streaminputs.nc",
+            "raven-routing-sample/VIC_temperatures.nc",
+            "raven-routing-sample/VIC_test_nodata.nc",
+            "raven-routing-sample/VIC_test_nodata_weights.rvt",
+            "raven-routing-sample/WSC02LE024.nc",
+            "raven-routing-sample/era5-test-dataset-crop.nc",
+            "raven-routing-sample/finalcat_hru_info.zip",
+            "raven-routing-sample/lievre_hrus_v21.zip",
             "watershed_vector/LSJ_LL.zip",
         ]
     )
@@ -74,14 +86,14 @@ def populate_testing_data(
     for filepattern in data_entries:
         if temp_folder is None:
             try:
-                data[filepattern] = get_file(
+                data[filepattern] = _get_file(
                     filepattern, branch=branch, cache_dir=_local_cache
                 )
             except FileNotFoundError:
                 continue
         elif temp_folder:
             try:
-                data[filepattern] = get_local_testdata(
+                data[filepattern] = _get_local_testdata(
                     filepattern,
                     temp_folder=temp_folder,
                     branch=branch,
@@ -103,6 +115,19 @@ def threadsafe_data_dir(tmp_path_factory) -> Path:
     return Path(tmp_path_factory.getbasetemp().joinpath("data"))
 
 
+@pytest.fixture(scope="session")
+def get_file(threadsafe_data_dir):
+    def _get_session_scoped_file(file: Union[str, Path]):
+        return _get_file(file, cache_dir=threadsafe_data_dir, branch=MAIN_TESTDATA_BRANCH)
+    return _get_session_scoped_file
+
+
+@pytest.fixture(scope="session")
+def get_local_testdata(threadsafe_data_dir):
+    def _get_session_scoped_local_testdata(file: Union[str, Path]):
+        return _get_local_testdata(file, temp_folder=threadsafe_data_dir, branch=MAIN_TESTDATA_BRANCH, _local_cache=_default_cache_dir)
+    return _get_session_scoped_local_testdata
+
 @pytest.fixture(scope="session", autouse=True)
 def gather_session_data(threadsafe_data_dir, worker_id):
     """Gather testing data on pytest run.
@@ -117,11 +142,11 @@ def gather_session_data(threadsafe_data_dir, worker_id):
         test_data_being_written = FileLock(_default_cache_dir.joinpath(".lock"))
         with test_data_being_written.acquire() as fl:
             if fl.is_locked:
-                populate_testing_data(branch="add_full_model_name")
+                populate_testing_data(branch=MAIN_TESTDATA_BRANCH)
                 fl.release()
             fl.acquire()
             populate_testing_data(
-                temp_folder=threadsafe_data_dir, branch="add_full_model_name"
+                temp_folder=threadsafe_data_dir, branch=MAIN_TESTDATA_BRANCH
             )
 
 
@@ -143,9 +168,10 @@ def cleanup(request):
 @pytest.fixture(scope="session")
 def q_sim_1(threadsafe_data_dir):
     """A file storing a Raven streamflow simulation over one basin."""
-    return get_file(
+    return _get_file(
         "hydro_simulations/raven-gr4j-cemaneige-sim_hmets-0_Hydrographs.nc",
         cache_dir=threadsafe_data_dir,
+        branch=MAIN_TESTDATA_BRANCH
     )
 
 

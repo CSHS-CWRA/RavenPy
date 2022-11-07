@@ -1,7 +1,6 @@
 import datetime as dt
 
 from ravenpy.models import GR4JCN
-from ravenpy.utilities.testdata import get_file
 
 """
 Test to perform a hindcast using auto-queried ECCC data aggregated on THREDDS.
@@ -18,12 +17,12 @@ class TestECCCForecast:
     geps = "eccc_forecasts/geps_watershed.nc"
     salmon_river = "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
 
-    def test_forecasting_GEPS(self, threadsafe_data_dir):
+    def test_forecasting_GEPS(self, get_file):
 
         # Prepare a RAVEN model run using historical data, GR4JCN in this case.
         # This is a dummy run to get initial states. In a real forecast situation,
         # this run would end on the day before the forecast, but process is the same.
-        ts = get_file(self.salmon_river, cache_dir=threadsafe_data_dir)
+        ts = get_file(self.salmon_river)
         model = GR4JCN()
         model(
             ts,
@@ -37,7 +36,7 @@ class TestECCCForecast:
         rvc = model.outputs["solution"]
 
         # Collect test forecast data for location and climate model (20 members)
-        ts20 = get_file(self.geps, cache_dir=threadsafe_data_dir)
+        ts20 = get_file(self.geps)
         nm = 20
 
         # It is necessary to clean the model state because the input variables of the previous

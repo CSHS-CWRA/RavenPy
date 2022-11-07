@@ -5,7 +5,7 @@ from ravenpy.utilities.testdata import get_file
 
 
 class TestRavenNRCAN:
-    def test_simple(self, threadsafe_data_dir):
+    def test_simple(self, get_file):
 
         params = (
             9.5019,
@@ -31,7 +31,7 @@ class TestRavenNRCAN:
             916.1947,
         )
 
-        ts = get_file("nrcan/NRCAN_2006-2007_subset.nc", cache_dir=threadsafe_data_dir)
+        ts = get_file("nrcan/NRCAN_2006-2007_subset.nc")
         start_date = dt.datetime(2006, 1, 1)
         end_date = dt.datetime(2007, 12, 31)
 

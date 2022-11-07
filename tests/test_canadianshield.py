@@ -5,7 +5,6 @@ import pytest
 
 from ravenpy.config import ConfigError
 from ravenpy.models import CANADIANSHIELD, CANADIANSHIELD_OST, LU
-from ravenpy.utilities.testdata import get_file
 
 lu = LU("FOREST", impermeable_frac=0.0, forest_coverage=0.02345)
 
@@ -20,8 +19,8 @@ class TestCANADIANSHIELD:
         "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
     )
 
-    def test_simple(self, threadsafe_data_dir):
-        TS = get_file(self.salmon_river, cache_dir=threadsafe_data_dir)
+    def test_simple(self, get_file):
+        ts = get_file(self.salmon_river)
 
         model = CANADIANSHIELD()
         model.config.rvh.hrus = (
@@ -66,7 +65,7 @@ class TestCANADIANSHIELD:
         )
 
         model(
-            TS,
+            ts,
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2002, 1, 1),
             land_use_classes=(lu,),
@@ -78,8 +77,8 @@ class TestCANADIANSHIELD:
 
         np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], 0.39602, 4)
 
-    def test_bad_config(self, threadsafe_data_dir):
-        TS = get_file(self.salmon_river, cache_dir=threadsafe_data_dir)
+    def test_bad_config(self, get_file):
+        ts = get_file(self.salmon_river)
 
         model = CANADIANSHIELD()
         params = (
@@ -123,7 +122,7 @@ class TestCANADIANSHIELD:
         with pytest.raises(ConfigError) as _:
             model.config.rvh.hrus = (CANADIANSHIELD.HRU_ORGANIC(**hru_default_values),)
             model(
-                TS,
+                ts,
                 start_date=dt.datetime(2000, 1, 1),
                 end_date=dt.datetime(2002, 1, 1),
                 land_use_classes=(lu,),
@@ -138,7 +137,7 @@ class TestCANADIANSHIELD:
                 CANADIANSHIELD.HRU_BEDROCK(area=200),
             )
             model(
-                TS,
+                ts,
                 start_date=dt.datetime(2000, 1, 1),
                 end_date=dt.datetime(2002, 1, 1),
                 land_use_classes=(lu,),
@@ -152,8 +151,8 @@ class TestCANADIANSHIELD_OST:
         "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
     )
 
-    def test_simple(self, threadsafe_data_dir):
-        TS = get_file(self.salmon_river, cache_dir=threadsafe_data_dir)
+    def test_simple(self, get_file):
+        ts = get_file(self.salmon_river)
 
         model = CANADIANSHIELD_OST()
         model.config.rvh.hrus = (
@@ -272,7 +271,7 @@ class TestCANADIANSHIELD_OST:
         model.configure(get_file("ostrich-gr4j-cemaneige/OstRandomNumbers.txt"))
 
         model(
-            TS,
+            ts,
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2002, 1, 1),
             land_use_classes=(lu,),
@@ -346,7 +345,7 @@ class TestCANADIANSHIELD_OST:
             CANADIANSHIELD.HRU_BEDROCK(**hru_default_values),
         )
         canadianshield(
-            TS,
+            ts,
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2002, 1, 1),
             land_use_classes=(lu,),

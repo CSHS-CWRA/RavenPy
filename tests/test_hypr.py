@@ -16,8 +16,8 @@ lu = LU("FOREST", impermeable_frac=0.0, forest_coverage=0.02345)
 
 
 class TestHYPR:
-    def test_simple(self, threadsafe_data_dir):
-        ts = get_file(salmon_river, cache_dir=threadsafe_data_dir)
+    def test_simple(self, get_file):
+        ts = get_file(salmon_river)
 
         model = HYPR()
         params = (

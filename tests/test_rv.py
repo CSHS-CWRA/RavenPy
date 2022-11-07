@@ -9,7 +9,6 @@ from ravenpy.extractors import (
     RoutingProductGridWeightExtractor,
     RoutingProductShapefileExtractor,
 )
-from ravenpy.utilities.testdata import get_file
 
 
 class TestRV:
@@ -79,9 +78,9 @@ class TestRVI:
 
 class TestRVC:
     @pytest.fixture(autouse=True)
-    def setup(self, threadsafe_data_dir):
+    def setup(self, get_file):
         sol = open(
-            get_file("gr4j_cemaneige/solution.rvc", cache_dir=threadsafe_data_dir)
+            get_file("gr4j_cemaneige/solution.rvc")
         ).read()
         self.rvc = RVC.create_solution(sol)
 
@@ -101,9 +100,9 @@ class TestRVC:
 
 class TestRVH:
     @pytest.fixture(autouse=True)
-    def setup(self, threadsafe_data_dir):
+    def setup(self, get_file    ):
         shp = get_file(
-            "raven-routing-sample/finalcat_hru_info.zip", cache_dir=threadsafe_data_dir
+            "raven-routing-sample/finalcat_hru_info.zip"
         )
         extractor = RoutingProductShapefileExtractor(shp)
         config = extractor.extract()
@@ -145,9 +144,9 @@ class TestRVH:
 
 class TestRVP:
     @pytest.fixture(autouse=True)
-    def setup(self, threadsafe_data_dir):
+    def setup(self, get_file):
         shp = get_file(
-            "raven-routing-sample/finalcat_hru_info.zip", cache_dir=threadsafe_data_dir
+            "raven-routing-sample/finalcat_hru_info.zip"
         )
         extractor = RoutingProductShapefileExtractor(shp)
         config = extractor.extract()
@@ -167,12 +166,12 @@ class TestRVP:
 
 class TestRVT:
     @pytest.fixture(autouse=True)
-    def setup(self, threadsafe_data_dir):
+    def setup(self, get_file):
         input_file = get_file(
-            "raven-routing-sample/VIC_streaminputs.nc", cache_dir=threadsafe_data_dir
+            "raven-routing-sample/VIC_streaminputs.nc"
         )
         routing_file = get_file(
-            "raven-routing-sample/finalcat_hru_info.zip", cache_dir=threadsafe_data_dir
+            "raven-routing-sample/finalcat_hru_info.zip"
         )
         extractor = RoutingProductGridWeightExtractor(input_file, routing_file)
         gws = extractor.extract()
@@ -186,11 +185,11 @@ class TestRVT:
         # FIXME: This test is not superb.
         assert len(res.split("\n")) == 224
 
-    def test_gauges(self, threadsafe_data_dir):
+    def test_gauges(self, get_file):
         rvt = RVT(config=None)
         rvt.nc_index = [0, 1, 2]
         rvt.configure_from_nc_data(
-            [get_file("famine/famine_input.nc", cache_dir=threadsafe_data_dir)]
+            [get_file("famine/famine_input.nc")]
         )
         out = rvt.to_rv()
         assert len(re.findall(":Gauge", out)) == 3

@@ -13,11 +13,10 @@ from ravenpy.utilities.forecasting import (
     make_climpred_hindcast_object,
     make_ESP_hindcast_dataset,
 )
-from ravenpy.utilities.testdata import get_file
 
 
 class TestClimpredHindcastVerification:
-    def test_simple(self, threadsafe_data_dir):
+    def test_simple(self, get_file):
 
         # We don't want climpred logging in the test output
         logger = logging.getLogger()
@@ -30,9 +29,8 @@ class TestClimpredHindcastVerification:
         forecast_duration = 3
         ts = get_file(
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
-            cache_dir=threadsafe_data_dir,
         )
-        rvc = get_file("gr4j_cemaneige/solution.rvc", cache_dir=threadsafe_data_dir)
+        rvc = get_file("gr4j_cemaneige/solution.rvc")
 
         # Make the hindcasts for each initialization date. Here we will extract
         # ESP forecasts for a given calendar date for the years in "included_years"

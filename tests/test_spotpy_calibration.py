@@ -5,17 +5,16 @@ import spotpy
 
 from ravenpy.models import GR4JCN
 from ravenpy.utilities.calibration import SpotpySetup
-from ravenpy.utilities.testdata import get_file
 
 salmon_river = "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
 
 
 class TestGR4JCNSpotpy:
-    def test_simple(self, threadsafe_data_dir):
+    def test_simple(self, get_file):
 
         model = GR4JCN()
 
-        ts = get_file(salmon_river, cache_dir=threadsafe_data_dir)
+        ts = get_file(salmon_river)
 
         salmon_land_hru_1 = dict(
             area=4250.6, elevation=843.0, latitude=54.4848, longitude=-123.3659

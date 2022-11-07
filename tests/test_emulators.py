@@ -32,7 +32,6 @@ from ravenpy.models import (
     RavenError,
     get_average_annual_runoff,
 )
-from ravenpy.utilities.testdata import get_file
 
 from .common import _convert_2d, _convert_3d
 
@@ -41,9 +40,9 @@ TDS = "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/birdhouse/test
 
 
 @pytest.fixture
-def input2d(tmpdir, threadsafe_data_dir):
+def input2d(tmpdir, get_file):
     """Convert 1D input to 2D output by copying all the time series along a new region dimension."""
-    ts = get_file(salmon_river, cache_dir=threadsafe_data_dir)
+    ts = get_file(salmon_river)
 
     ds = _convert_2d(ts)
     fn_out = os.path.join(tmpdir, "input2d.nc")
@@ -52,9 +51,9 @@ def input2d(tmpdir, threadsafe_data_dir):
 
 
 @pytest.fixture
-def input3d(tmpdir, threadsafe_data_dir):
+def input3d(tmpdir, get_file):
     """Convert 1D input to 2D output by copying all the time series along a new region dimension."""
-    ts = get_file(salmon_river, cache_dir=threadsafe_data_dir)
+    ts = get_file(salmon_river)
 
     ds = _convert_3d(ts)
     ds = ds.drop_vars("qobs")
@@ -95,8 +94,8 @@ salmon_river_2d = (
 
 
 class TestGR4JCN:
-    def test_error(self, threadsafe_data_dir, tmp_path):
-        ts = get_file(salmon_river, cache_dir=threadsafe_data_dir)
+    def test_error(self, tmp_path, get_file):
+        ts = get_file(salmon_river)
 
         model = GR4JCN(workdir=tmp_path)
 
@@ -111,8 +110,8 @@ class TestGR4JCN:
             exc.value
         )
 
-    def test_simple(self, threadsafe_data_dir):
-        ts = get_file(salmon_river, cache_dir=threadsafe_data_dir)
+    def test_simple(self, get_file):
+        ts = get_file(salmon_river)
 
         model = GR4JCN()
         model.config.rvi.start_date = dt.datetime(2000, 1, 1)
@@ -200,11 +199,11 @@ class TestGR4JCN:
             f"{model.psim}_PRECIP_Yearly_Average_ByWatershed.nc"
         ).exists()
 
-    def test_routing(self, threadsafe_data_dir):
+    def test_routing(self, get_file):
         """We need at least 2 subbasins to activate routing."""
         model = GR4JCN()
 
-        ts_2d = get_file(salmon_river_2d, cache_dir=threadsafe_data_dir)
+        ts_2d = get_file(salmon_river_2d)
 
         #########
         # R V I #
@@ -407,8 +406,8 @@ class TestGR4JCN:
 
         assert len(list(model.output_path.glob("*ForcingFunctions.nc"))) == 1
 
-    def test_redirect_to_file(self, tmpdir, input2d, threadsafe_data_dir):
-        ts = get_file(salmon_river, cache_dir=threadsafe_data_dir)
+    def test_redirect_to_file(self, tmpdir, input2d, get_file):
+        ts = get_file(salmon_river)
 
         model = GR4JCN()
         model.config.rvi.start_date = dt.datetime(2000, 1, 1)
@@ -474,8 +473,8 @@ class TestGR4JCN:
         model.config.update("params", (0.529, -3.396, 407.29, 1.072, 16.9, 0.947))
         assert model.config.rvp.params.GR4J_X1 == 0.529
 
-    def test_run(self, threadsafe_data_dir):
-        ts = get_file(salmon_river, cache_dir=threadsafe_data_dir)
+    def test_run(self, get_file):
+        ts = get_file(salmon_river)
 
         model = GR4JCN()
 
@@ -496,8 +495,8 @@ class TestGR4JCN:
 
         np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.117301, 4)
 
-    def test_evaluation(self, threadsafe_data_dir):
-        ts = get_file(salmon_river, cache_dir=threadsafe_data_dir)
+    def test_evaluation(self, get_file):
+        ts = get_file(salmon_river)
 
         model = GR4JCN()
 
@@ -524,8 +523,8 @@ class TestGR4JCN:
         assert "DIAG_KLING_GUPTA" in d
         assert len(d["DIAG_RMSE"]) == 3  # ALL, period1, period2
 
-    def test_run_new_hrus_param(self, threadsafe_data_dir):
-        ts = get_file(salmon_river, cache_dir=threadsafe_data_dir)
+    def test_run_new_hrus_param(self, get_file):
+        ts = get_file(salmon_river)
 
         model = GR4JCN()
 
@@ -542,8 +541,8 @@ class TestGR4JCN:
         np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.117301, 4)
 
     # @pytest.mark.skip
-    def test_overwrite(self, threadsafe_data_dir):
-        ts = get_file(salmon_river, cache_dir=threadsafe_data_dir)
+    def test_overwrite(self, get_file):
+        ts = get_file(salmon_river)
 
         model = GR4JCN()
 
@@ -594,8 +593,8 @@ class TestGR4JCN:
         )
         assert model.q_sim.isel(time=1).values[0] < qsim2.isel(time=1).values[0]
 
-    def test_resume(self, threadsafe_data_dir):
-        ts = get_file(salmon_river, cache_dir=threadsafe_data_dir)
+    def test_resume(self, get_file):
+        ts = get_file(salmon_river)
 
         model_ab = GR4JCN()
         model_ab.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
@@ -665,10 +664,10 @@ class TestGR4JCN:
         # cumulative sums of precipitation over the run ?
         # assert model_b.solution == model_ab.solution # This does not work. Atmosphere attributes are off.
 
-    def test_resume_earlier(self, threadsafe_data_dir):
+    def test_resume_earlier(self, get_file):
         """Check that we can resume a run with the start date set at another date than the time stamp in the
         solution."""
-        ts = get_file(salmon_river, cache_dir=threadsafe_data_dir)
+        ts = get_file(salmon_river)
 
         params = (0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
         # Reference run
@@ -706,8 +705,8 @@ class TestGR4JCN:
         s_b = model.storage["Soil Water[0]"].isel(time=-1)
         assert s_a != s_b
 
-    def test_update_soil_water(self, threadsafe_data_dir):
-        ts = get_file(salmon_river, cache_dir=threadsafe_data_dir)
+    def test_update_soil_water(self, get_file):
+        ts = get_file(salmon_river)
 
         params = (0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
         # Reference run
@@ -746,8 +745,8 @@ class TestGR4JCN:
         model = GR4JCN()
         assert model.raven_version == "3.0.4"
 
-    def test_parallel_params(self, threadsafe_data_dir):
-        ts = get_file(salmon_river, cache_dir=threadsafe_data_dir)
+    def test_parallel_params(self, get_file):
+        ts = get_file(salmon_river)
 
         model = GR4JCN()
         model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
@@ -842,8 +841,8 @@ class TestGR4JCN:
 
 
 class TestGR4JCN_OST:
-    def test_simple(self, threadsafe_data_dir):
-        ts = get_file(salmon_river, cache_dir=threadsafe_data_dir)
+    def test_simple(self, get_file):
+        ts = get_file(salmon_river)
 
         model = GR4JCN_OST()
         model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
@@ -855,7 +854,7 @@ class TestGR4JCN_OST:
         model.configure(
             get_file(
                 "ostrich-gr4j-cemaneige/OstRandomNumbers.txt",
-                cache_dir=threadsafe_data_dir,
+
             )
         )
 
@@ -921,8 +920,8 @@ class TestGR4JCN_OST:
 
 
 class TestHMETS:
-    def test_simple(self, threadsafe_data_dir):
-        ts = get_file(salmon_river, cache_dir=threadsafe_data_dir)
+    def test_simple(self, get_file):
+        ts = get_file(salmon_river)
 
         model = HMETS()
         params = (
@@ -967,15 +966,14 @@ class TestHMETS:
 
 
 class TestHMETS_OST:
-    def test_simple(self, threadsafe_data_dir):
-        ts = get_file(salmon_river, cache_dir=threadsafe_data_dir)
+    def test_simple(self, get_file):
+        ts = get_file(salmon_river)
 
         model = HMETS_OST()
 
         model.configure(
             get_file(
                 "ostrich-gr4j-cemaneige/OstRandomNumbers.txt",
-                cache_dir=threadsafe_data_dir,
             )
         )
 
@@ -1134,8 +1132,8 @@ class TestHMETS_OST:
 
 
 class TestMOHYSE:
-    def test_simple(self, threadsafe_data_dir):
-        ts = get_file(salmon_river, cache_dir=threadsafe_data_dir)
+    def test_simple(self, get_file):
+        ts = get_file(salmon_river)
 
         model = MOHYSE()
         params = (
@@ -1168,15 +1166,15 @@ class TestMOHYSE:
 
 
 class TestMOHYSE_OST:
-    def test_simple(self, threadsafe_data_dir):
-        ts = get_file(salmon_river, cache_dir=threadsafe_data_dir)
+    def test_simple(self, get_file):
+        ts = get_file(salmon_river)
 
         model = MOHYSE_OST()
 
         model.configure(
             get_file(
                 "ostrich-gr4j-cemaneige/OstRandomNumbers.txt",
-                cache_dir=threadsafe_data_dir,
+
             )
         )
 
@@ -1273,8 +1271,8 @@ class TestMOHYSE_OST:
 
 
 class TestHBVEC:
-    def test_simple(self, threadsafe_data_dir):
-        ts = get_file(salmon_river, cache_dir=threadsafe_data_dir)
+    def test_simple(self, get_file):
+        ts = get_file(salmon_river)
 
         model = HBVEC()
         params = (
@@ -1316,8 +1314,8 @@ class TestHBVEC:
         d = model.diagnostics
         np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], 0.0186633, 4)
 
-    def test_evap(self, threadsafe_data_dir):
-        ts = get_file(salmon_river, cache_dir=threadsafe_data_dir)
+    def test_evap(self, get_file):
+        ts = get_file(salmon_river)
 
         model = HBVEC()
         params = (
@@ -1360,15 +1358,15 @@ class TestHBVEC:
 
 
 class TestHBVEC_OST:
-    def test_simple(self, threadsafe_data_dir):
-        ts = get_file(salmon_river, cache_dir=threadsafe_data_dir)
+    def test_simple(self, get_file):
+        ts = get_file(salmon_river)
 
         model = HBVEC_OST()
 
         model.configure(
             get_file(
                 "ostrich-gr4j-cemaneige/OstRandomNumbers.txt",
-                cache_dir=threadsafe_data_dir,
+
             )
         )
 

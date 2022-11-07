@@ -6,13 +6,13 @@ import pytest
 
 from ravenpy.models import Ostrich, Raven, RavenError
 from ravenpy.models.base import get_diff_level
-from ravenpy.utilities.testdata import get_file, get_local_testdata, query_folder
+
 
 has_singularity = False  # ravenpy.raven_simg.exists()
 
 
 class TestRaven:
-    def test_identifier(self, threadsafe_data_dir):
+    def test_identifier(self, get_file):
         model = Raven()
         assert model.identifier == "raven-generic"
 
@@ -21,7 +21,6 @@ class TestRaven:
 
         rvt = get_file(
             "raven-gr4j-cemaneige/raven-gr4j-cemaneige-salmon.rvt",
-            cache_dir=threadsafe_data_dir,
         )
         model = Raven()
         model.configure(rvt)
@@ -29,21 +28,17 @@ class TestRaven:
 
         rvp_tpl = get_file(
             "ostrich-gr4j-cemaneige/raven-gr4j-cemaneige-salmon.rvp.tpl",
-            cache_dir=threadsafe_data_dir,
         )
         model = Raven()
         model.configure(rvp_tpl)
         assert model.identifier == Path(rvp_tpl.stem).stem
 
-    @pytest.mark.xfail(reason="Query folder is API rate limited")
-    def test_raven_error(self, threadsafe_data_dir):
+    def test_raven_error(self, get_file, get_local_testdata):
         rvs = get_local_testdata(
             r"raven-gr4j-cemaneige/raven-gr4j-cemaneige-salmon.rv*",
-            temp_folder=threadsafe_data_dir,
         )
-        ts = get_local_testdata(
+        ts = get_file(
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
-            temp_folder=threadsafe_data_dir,
         )
 
         model = Raven()
@@ -65,16 +60,12 @@ class TestRaven:
 
         assert model.config.rvi.raven_version == model.raven_version
 
-    @pytest.mark.xfail(reason="Query folder is API rate limited")
-    def test_gr4j(self, threadsafe_data_dir):
-        rv_files = query_folder(
-            "raven-gr4j-cemaneige", r"raven-gr4j-cemaneige-salmon.rv\w"
+    def test_gr4j(self, get_file, get_local_testdata):
+        rvs = get_local_testdata(
+            "raven-gr4j-cemaneige/raven-gr4j-cemaneige-salmon.rv?"
         )
-        rvs = get_file(rv_files, cache_dir=threadsafe_data_dir)
-
         ts = get_file(
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
-            cache_dir=threadsafe_data_dir,
         )
 
         model = Raven()
@@ -84,15 +75,11 @@ class TestRaven:
         z = zipfile.ZipFile(model.outputs["rv_config"])
         assert len(z.filelist) == 5
 
-    @pytest.mark.xfail(reason="Query folder is API rate limited")
-    def test_mohyse(self, threadsafe_data_dir):
-        rv_files = query_folder("raven-mohyse", r"raven-mohyse-salmon.rv\w")
-        rvs = get_file(rv_files, cache_dir=threadsafe_data_dir)
-
-        ts_files = query_folder(
-            "raven-mohyse", r"Salmon-River-Near-Prince-George_\w+.rvt"
+    def test_mohyse(self, get_local_testdata):
+        rvs = get_local_testdata("raven-mohyse/raven-mohyse-salmon.rv?")
+        ts = get_local_testdata(
+            "raven-mohyse/Salmon-River-Near-Prince-George_*.rvt"
         )
-        ts = get_file(ts_files, cache_dir=threadsafe_data_dir)
 
         model = Raven()
         model.configure(rvs)
@@ -101,15 +88,11 @@ class TestRaven:
         z = zipfile.ZipFile(model.outputs["rv_config"])
         assert len(z.filelist) == 5
 
-    @pytest.mark.xfail(reason="Query folder is API rate limited")
-    def test_hmets(self, threadsafe_data_dir):
-        rv_files = query_folder("raven-hmets", r"raven-hmets-salmon.rv\w")
-        rvs = get_file(rv_files, cache_dir=threadsafe_data_dir)
-
-        ts_files = query_folder(
-            "raven-hmets", r"Salmon-River-Near-Prince-George_\w+.rvt"
+    def test_hmets(self, get_local_testdata):
+        rvs = get_local_testdata("raven-hmets/raven-hmets-salmon.rv?")
+        ts = get_local_testdata(
+            "raven-hmets/Salmon-River-Near-Prince-George_*.rvt"
         )
-        ts = get_file(ts_files, cache_dir=threadsafe_data_dir)
 
         model = Raven()
         model.configure(rvs)
@@ -118,15 +101,11 @@ class TestRaven:
         z = zipfile.ZipFile(model.outputs["rv_config"])
         assert len(z.filelist) == 5
 
-    @pytest.mark.xfail(reason="Query folder is API rate limited")
-    def test_hbvec(self, threadsafe_data_dir):
-        rv_files = query_folder("raven-hbv-ec", r"raven-hbv-ec-salmon.rv\w")
-        rvs = get_file(rv_files, cache_dir=threadsafe_data_dir)
-
-        ts_files = query_folder(
-            "raven-hbv-ec", r"Salmon-River-Near-Prince-George_\w+.rvt"
+    def test_hbvec(self, get_local_testdata):
+        rvs = get_local_testdata("raven-hbv-ec/raven-hbv-ec-salmon.rv?")
+        ts = get_local_testdata(
+            "raven-hbv-ec/Salmon-River-Near-Prince-George_*.rvt"
         )
-        ts = get_file(ts_files, cache_dir=threadsafe_data_dir)
 
         model = Raven()
         model.configure(rvs)
@@ -135,18 +114,14 @@ class TestRaven:
         z = zipfile.ZipFile(model.outputs["rv_config"])
         assert len(z.filelist) == 5
 
-    @pytest.mark.xfail(reason="Query folder is API rate limited")
     @pytest.mark.skipif(not has_singularity, reason="Singularity is not available.")
-    def test_singularity(self, threadsafe_data_dir):
-        rv_files = query_folder(
-            "raven-gr4j-cemaneige", "raven-gr4j-cemaneige-salmon.rv*"
+    def test_singularity(self, get_local_testdata):
+        rvs = get_local_testdata(
+            "raven-gr4j-cemaneige/raven-gr4j-cemaneige-salmon.rv?"
         )
-        rvs = get_file(rv_files, cache_dir=threadsafe_data_dir)
-
-        ts_files = query_folder(
-            "raven-gr4j-cemaneige", "Salmon-River-Near-Prince-George_*.rvt"
+        ts = get_local_testdata(
+            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_*.rvt"
         )
-        ts = get_file(ts_files, cache_dir=threadsafe_data_dir)
 
         model = Raven()
         model.singularity = True
@@ -159,16 +134,11 @@ class TestOstrich:
         model = Ostrich()
         assert model.identifier == "ostrich-generic"
 
-    @pytest.mark.xfail(reason="Query folder is API rate limited")
-    def test_gr4j_with_no_tags(self, threadsafe_data_dir):
+    def test_gr4j_with_no_tags(self, get_file, get_local_testdata):
         ts = get_file(
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
         )
-
-        ost_files = query_folder("ostrich-gr4j-cemaneige", r".rv\w")
-        ost_files.extend(query_folder("ostrich-gr4j-cemaneige", r"\.t\w{2}"))
-
-        ost = get_file(ost_files, cache_dir=threadsafe_data_dir)
+        ost = get_local_testdata(["ostrich-gr4j-cemaneige/*.rv?", "ostrich-gr4j-cemaneige/*.t??"])
 
         model = Ostrich()
         model.configure(ost)
@@ -214,16 +184,12 @@ class TestOstrich:
         z = zipfile.ZipFile(model.outputs["rv_config"])
         assert len(z.filelist) == 7
 
-    @pytest.mark.xfail(reason="Query folder is API rate limited")
-    def test_mohyse_with_no_tags(self, threadsafe_data_dir):
+    def test_mohyse_with_no_tags(self, get_file, get_local_testdata):
         ts = get_file(
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
-            cache_dir=threadsafe_data_dir,
         )
 
-        ost_files = query_folder("ostrich-mohyse", r".rv\w")
-        ost_files.extend(query_folder("ostrich-mohyse", r"\.t\w{2}"))
-        ost = get_file(ost_files, cache_dir=threadsafe_data_dir)
+        ost = get_local_testdata(["ostrich-mohyse/*.rv?", "ostrich-mohyse/*.t??"])
 
         model = Ostrich()
         model.configure(ost)
@@ -281,16 +247,12 @@ class TestOstrich:
         z = zipfile.ZipFile(model.outputs["rv_config"])
         assert len(z.filelist) == 7
 
-    @pytest.mark.xfail(reason="Query folder is API rate limited")
-    def test_hmets_with_no_tags(self, threadsafe_data_dir):
+    def test_hmets_with_no_tags(self, get_file, get_local_testdata):
         ts = get_file(
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
-            cache_dir=threadsafe_data_dir,
         )
 
-        ost_files = query_folder("ostrich-hmets", r".rv\w")
-        ost_files.extend(query_folder("ostrich-hmets", r"\.t\w{2}"))
-        ost = get_file(ost_files, cache_dir=threadsafe_data_dir)
+        ost = get_local_testdata(["ostrich-hmets/*.rv?", "ostrich-hmets/*.t??"])
 
         model = Ostrich()
         model.configure(ost)
@@ -368,16 +330,12 @@ class TestOstrich:
         z = zipfile.ZipFile(model.outputs["rv_config"])
         assert len(z.filelist) == 7
 
-    @pytest.mark.xfail(reason="Query folder is API rate limited")
-    def test_hbvec_with_no_tags(self, threadsafe_data_dir):
+    def test_hbvec_with_no_tags(self, get_file, get_local_testdata):
         ts = get_file(
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
-            cache_dir=threadsafe_data_dir,
         )
 
-        ost_files = query_folder("ostrich-hbv-ec", r".rv\w")
-        ost_files.extend(query_folder("ostrich-hbv-ec", r"\.t\w{2}"))
-        ost = get_file(ost_files, cache_dir=threadsafe_data_dir)
+        ost = get_local_testdata(["ostrich-hbv-ec/*.rv?", "ostrich-hbv-ec/*.t??"])
 
         model = Ostrich()
         model.configure(ost)

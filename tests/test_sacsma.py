@@ -4,7 +4,6 @@ import numpy as np
 
 from ravenpy.config.commands import LU
 from ravenpy.models import SACSMA, SACSMA_OST
-from ravenpy.utilities.testdata import get_file
 
 salmon_river = "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
 
@@ -16,8 +15,8 @@ lu = LU("FOREST", impermeable_frac=0.0, forest_coverage=0.02345)
 
 
 class TestSACSMA:
-    def test_simple(self, threadsafe_data_dir):
-        ts = get_file(salmon_river, cache_dir=threadsafe_data_dir)
+    def test_simple(self,get_file):
+        ts = get_file(salmon_river)
 
         model = SACSMA()
         params = SACSMA.Params(
@@ -60,7 +59,7 @@ class TestSACSMA:
 
 
 class TestSACSMA_OST:
-    def test_simple(self, threadsafe_data_dir):
+    def test_simple(self, get_file):
         model = SACSMA_OST()
         params = SACSMA.Params(
             0.0100000,  # feed 10**par_x01; ; not par_x1=???
@@ -135,11 +134,10 @@ class TestSACSMA_OST:
         model.configure(
             get_file(
                 "ostrich-gr4j-cemaneige/OstRandomNumbers.txt",
-                cache_dir=threadsafe_data_dir,
             )
         )
 
-        ts = get_file(salmon_river, cache_dir=threadsafe_data_dir)
+        ts = get_file(salmon_river)
 
         model(
             ts,

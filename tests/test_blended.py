@@ -4,7 +4,6 @@ import numpy as np
 
 from ravenpy.config.commands import LU
 from ravenpy.models import BLENDED, BLENDED_OST
-from ravenpy.utilities.testdata import get_file
 
 salmon_river = "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
 
@@ -17,8 +16,8 @@ lu = LU("FOREST", impermeable_frac=0.0, forest_coverage=0.02345)
 
 
 class TestBLENDED:
-    def test_simple(self, threadsafe_data_dir):
-        ts = get_file(salmon_river, cache_dir=threadsafe_data_dir)
+    def test_simple(self, get_file):
+        ts = get_file(salmon_river)
 
         model = BLENDED()
         params = (
@@ -83,7 +82,7 @@ class TestBLENDED:
 
 
 class TestBLENDED_OST:
-    def test_simple(self, threadsafe_data_dir):
+    def test_simple(self, get_file):
         model = BLENDED_OST()
         params = (
             2.930702e-02,  # par_x01
@@ -224,11 +223,10 @@ class TestBLENDED_OST:
         model.configure(
             get_file(
                 "ostrich-gr4j-cemaneige/OstRandomNumbers.txt",
-                cache_dir=threadsafe_data_dir,
             )
         )
 
-        ts = get_file(salmon_river, cache_dir=threadsafe_data_dir)
+        ts = get_file(salmon_river)
 
         model(
             ts,

@@ -5,14 +5,12 @@ import pandas as pd
 
 from ravenpy.models import GR4JCN
 from ravenpy.utilities import regionalization as reg
-from ravenpy.utilities.testdata import get_file
 
 
 class TestRegionalization:
-    def test_full_example(self, threadsafe_data_dir):
+    def test_full_example(self, get_file):
         ts = get_file(
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
-            cache_dir=threadsafe_data_dir,
         )
         model = "GR4JCN"
         nash, params = reg.read_gauged_params(model)

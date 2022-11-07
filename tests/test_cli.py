@@ -5,23 +5,22 @@ from click.testing import CliRunner
 
 from ravenpy.cli import aggregate_forcings_to_hrus, generate_grid_weights
 from ravenpy.config.commands import GridWeightsCommand
-from ravenpy.utilities.testdata import get_file
 
 
 class TestGenerateGridWeights:
     def test_generate_grid_weights_with_nc_input_and_2d_coords(
-        self, tmp_path, threadsafe_data_dir
+        self, tmp_path, get_file
     ):
         runner = CliRunner()
         output_path = tmp_path / "bla.rvt"
         params = [
             get_file(
                 "raven-routing-sample/VIC_streaminputs.nc",
-                cache_dir=threadsafe_data_dir,
+
             ),
             get_file(
                 "raven-routing-sample/finalcat_hru_info.zip",
-                cache_dir=threadsafe_data_dir,
+
             ),
             "-o",
             output_path,
@@ -44,7 +43,7 @@ class TestGenerateGridWeights:
         assert abs(weight - 0.2610203097218425) < 1e-04
 
     def test_generate_grid_weights_with_multiple_subids(
-        self, tmp_path, threadsafe_data_dir
+        self, tmp_path, get_file
     ):
         # currently exactly same output as "test_generate_grid_weights_with_nc_input_and_2d_coords"
         # needs a "routing-file-path" with multiple gauges
@@ -53,11 +52,11 @@ class TestGenerateGridWeights:
         params = [
             get_file(
                 "raven-routing-sample/VIC_streaminputs.nc",
-                cache_dir=threadsafe_data_dir,
+
             ),
             get_file(
                 "raven-routing-sample/finalcat_hru_info.zip",
-                cache_dir=threadsafe_data_dir,
+
             ),
             "-s",
             "7202",
@@ -84,18 +83,16 @@ class TestGenerateGridWeights:
         assert abs(weight - 0.2610203097218425) < 1e-04
 
     def test_generate_grid_weights_with_nc_input_and_1d_coords(
-        self, tmp_path, threadsafe_data_dir
+        self, tmp_path, get_file
     ):
         runner = CliRunner()
         output_path = tmp_path / "bla.rvt"
         params = [
             get_file(
                 "raven-routing-sample/era5-test-dataset-crop.nc",
-                cache_dir=threadsafe_data_dir,
             ),
             get_file(
                 "raven-routing-sample/finalcat_hru_info.zip",
-                cache_dir=threadsafe_data_dir,
             ),
             "--var-names",
             "longitude",
@@ -120,14 +117,13 @@ class TestGenerateGridWeights:
         weight = float(re.search("4 3731 (.+)", output).group(1))
         assert abs(weight - 0.0034512752779023515) < 1e-04
 
-    def test_generate_grid_weights_with_shp_input(self, tmp_path, threadsafe_data_dir):
+    def test_generate_grid_weights_with_shp_input(self, tmp_path, get_file):
         runner = CliRunner()
         output_path = tmp_path / "bla.rvt"
         params = [
-            get_file("raven-routing-sample/OTT_sub.zip", cache_dir=threadsafe_data_dir),
+            get_file("raven-routing-sample/OTT_sub.zip"),
             get_file(
-                "raven-routing-sample/finalcat_hru_info.zip",
-                cache_dir=threadsafe_data_dir,
+                "raven-routing-sample/finalcat_hru_info.zip"
             ),
             "-o",
             output_path,
@@ -150,15 +146,14 @@ class TestGenerateGridWeights:
         assert abs(weight - 0.5761414847779369) < 1e-04
 
     def test_generate_grid_weights_with_weight_rescaling(
-        self, tmp_path, threadsafe_data_dir
+        self, tmp_path, get_file
     ):
         runner = CliRunner()
         output_path = tmp_path / "bla.rvt"
         params = [
-            get_file("raven-routing-sample/OTT_sub.zip", cache_dir=threadsafe_data_dir),
+            get_file("raven-routing-sample/OTT_sub.zip"),
             get_file(
                 "raven-routing-sample/finalcat_hru_info.zip",
-                cache_dir=threadsafe_data_dir,
             ),
             "--area-error-threshold",
             "0.42",
@@ -184,18 +179,16 @@ class TestGenerateGridWeights:
 
 
 class TestAggregateForcingsToHRUs:
-    def test_aggregate_forcings_to_hrus(self, tmp_path, threadsafe_data_dir):
+    def test_aggregate_forcings_to_hrus(self, tmp_path, get_file):
         runner = CliRunner()
         output_nc_file_path = tmp_path / "aggreg.nc"
         output_weight_file_path = tmp_path / "weight_aggreg.rvt"
         params = [
             get_file(
                 "raven-routing-sample/VIC_streaminputs.nc",
-                cache_dir=threadsafe_data_dir,
             ),
             get_file(
                 "raven-routing-sample/VIC_streaminputs_weights.rvt",
-                cache_dir=threadsafe_data_dir,
             ),
             "-v",
             "Streaminputs",
@@ -241,19 +234,17 @@ class TestAggregateForcingsToHRUs:
         assert abs(val[16071, 50] - 0.516639) < 1e-04
 
     def test_aggregate_forcings_to_hrus_with_nodata(
-        self, tmp_path, threadsafe_data_dir
+        self, tmp_path, get_file
     ):
         runner = CliRunner()
         output_nc_file_path = tmp_path / "aggreg.nc"
         output_weight_file_path = tmp_path / "weight_aggreg.rvt"
         params = [
             get_file(
-                "raven-routing-sample/VIC_test_nodata.nc", cache_dir=threadsafe_data_dir
+                "raven-routing-sample/VIC_test_nodata.nc"
             ),
             get_file(
-                "raven-routing-sample/VIC_test_nodata_weights.rvt",
-                cache_dir=threadsafe_data_dir,
-            ),
+                "raven-routing-sample/VIC_test_nodata_weights.rvt"            ),
             "-v",
             "et",
             "--dim-names",
