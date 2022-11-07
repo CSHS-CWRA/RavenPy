@@ -10,7 +10,6 @@ from ravenpy.utilities.testdata import (
     _default_cache_dir,
     get_file,
     get_local_testdata,
-    query_folder,
 )
 
 
@@ -108,31 +107,31 @@ def threadsafe_data_dir(tmp_path_factory) -> Path:
 
 @pytest.fixture(scope="session", autouse=True)
 def gather_session_data(threadsafe_data_dir, worker_id):
-
-    test_data_being_written = FileLock(_default_cache_dir.joinpath(".lock"))
-
-    with test_data_being_written.acquire() as fl:
-        if worker_id == "master":
-            return populate_testing_data(branch="add_full_model_name")
-        elif fl.is_locked:
-            populate_testing_data(branch="add_full_model_name")
-            fl.release()
-        fl.acquire()
-        populate_testing_data(
-            temp_folder=threadsafe_data_dir, branch="add_full_model_name"
-        )
+    if worker_id == "master":
+        return populate_testing_data(branch="add_full_model_name")
+    else:
+        _default_cache_dir.mkdir(exist_ok=True)
+        test_data_being_written = FileLock(_default_cache_dir.joinpath(".lock"))
+        with test_data_being_written.acquire() as fl:
+            if fl.is_locked:
+                populate_testing_data(branch="add_full_model_name")
+                fl.release()
+            fl.acquire()
+            populate_testing_data(
+                temp_folder=threadsafe_data_dir, branch="add_full_model_name"
+            )
 
 
 @pytest.fixture(scope="session", autouse=True)
 def cleanup(request):
     """Cleanup a testing file once we are finished."""
 
-    def remove_data_downloaded_flag():
+    def remove_data_written_flag():
         flag = _default_cache_dir.joinpath(".data_written")
         if flag.exists():
             flag.unlink()
 
-    request.addfinalizer(remove_data_downloaded_flag)
+    request.addfinalizer(remove_data_written_flag)
 
 
 @pytest.fixture(scope="session")
