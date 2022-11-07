@@ -19,14 +19,14 @@ class TestRaven:
         assert model.identifier == "toto"
 
         rvt = get_file(
-            "raven-gr4j-cemaneige/raven-gr4j-cemaneige-salmon.rvt",
+            "raven-gr4j-cemaneige/raven-gr4j-salmon.rvt",
         )
         model = Raven()
         model.configure(rvt)
         assert model.identifier == rvt.stem
 
         rvp_tpl = get_file(
-            "ostrich-gr4j-cemaneige/raven-gr4j-cemaneige-salmon.rvp.tpl",
+            "ostrich-gr4j-cemaneige/raven-gr4j-salmon.rvp.tpl",
         )
         model = Raven()
         model.configure(rvp_tpl)
@@ -34,7 +34,7 @@ class TestRaven:
 
     def test_raven_error(self, get_file, get_local_testdata):
         rvs = get_local_testdata(
-            r"raven-gr4j-cemaneige/raven-gr4j-cemaneige-salmon.rv?",
+            r"raven-gr4j-cemaneige/raven-gr4j-salmon.rv?",
         )
         ts = get_file(
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
@@ -60,7 +60,7 @@ class TestRaven:
         assert model.config.rvi.raven_version == model.raven_version
 
     def test_gr4j(self, get_file, get_local_testdata):
-        rvs = get_local_testdata("raven-gr4j-cemaneige/raven-gr4j-cemaneige-salmon.rv?")
+        rvs = get_local_testdata("raven-gr4j-cemaneige/raven-gr4j-salmon.rv?")
         ts = get_file(
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
         )
@@ -95,7 +95,7 @@ class TestRaven:
         assert len(z.filelist) == 5
 
     def test_hbvec(self, get_local_testdata):
-        rvs = get_local_testdata("raven-hbv-ec/raven-hbv-ec-salmon.rv?")
+        rvs = get_local_testdata("raven-hbv-ec/raven-hbv-salmon.rv?")
         ts = get_local_testdata("raven-hbv-ec/Salmon-River-Near-Prince-George_*.rvt")
 
         model = Raven()
@@ -107,7 +107,7 @@ class TestRaven:
 
     @pytest.mark.skipif(not has_singularity, reason="Singularity is not available.")
     def test_singularity(self, get_local_testdata):
-        rvs = get_local_testdata("raven-gr4j-cemaneige/raven-gr4j-cemaneige-salmon.rv?")
+        rvs = get_local_testdata("raven-gr4j-cemaneige/raven-gr4j-salmon.rv?")
         ts = get_local_testdata(
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
         )

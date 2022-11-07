@@ -10,7 +10,7 @@ from ravenpy.utilities.testdata import _default_cache_dir
 from ravenpy.utilities.testdata import get_file as _get_file
 from ravenpy.utilities.testdata import get_local_testdata as _get_local_testdata
 
-MAIN_TESTDATA_BRANCH = "add_full_model_name"
+MAIN_TESTDATA_BRANCH = "master"
 
 
 def populate_testing_data(
@@ -31,27 +31,27 @@ def populate_testing_data(
 
     data_entries = list()
     entries = [
-        "ostrich-{model}/raven-{model}-salmon.rvc",
-        "ostrich-{model}/raven-{model}-salmon.rvc.tpl",
-        "ostrich-{model}/raven-{model}-salmon.rvh",
-        "ostrich-{model}/raven-{model}-salmon.rvh.tpl",
-        "ostrich-{model}/raven-{model}-salmon.rvi",
-        "ostrich-{model}/raven-{model}-salmon.rvi.tpl",
-        "ostrich-{model}/raven-{model}-salmon.rvp",
-        "ostrich-{model}/raven-{model}-salmon.rvp.tpl",
-        "ostrich-{model}/raven-{model}-salmon.rvt",
-        "ostrich-{model}/raven-{model}-salmon.rvt.tpl",
+        "ostrich-{model}/raven-{model0}-salmon.rvc",
+        "ostrich-{model}/raven-{model0}-salmon.rvc.tpl",
+        "ostrich-{model}/raven-{model0}-salmon.rvh",
+        "ostrich-{model}/raven-{model0}-salmon.rvh.tpl",
+        "ostrich-{model}/raven-{model0}-salmon.rvi",
+        "ostrich-{model}/raven-{model0}-salmon.rvi.tpl",
+        "ostrich-{model}/raven-{model0}-salmon.rvp",
+        "ostrich-{model}/raven-{model0}-salmon.rvp.tpl",
+        "ostrich-{model}/raven-{model0}-salmon.rvt",
+        "ostrich-{model}/raven-{model0}-salmon.rvt.tpl",
         "raven-{model}/Salmon-River-Near-Prince-George_Qobs_daily.rvt",
         "raven-{model}/Salmon-River-Near-Prince-George_meteo_daily.rvt",
-        "raven-{model}/raven-{model}-salmon.rvc",
-        "raven-{model}/raven-{model}-salmon.rvh",
-        "raven-{model}/raven-{model}-salmon.rvi",
-        "raven-{model}/raven-{model}-salmon.rvp",
-        "raven-{model}/raven-{model}-salmon.rvt",
+        "raven-{model}/raven-{model0}-salmon.rvc",
+        "raven-{model}/raven-{model0}-salmon.rvh",
+        "raven-{model}/raven-{model0}-salmon.rvi",
+        "raven-{model}/raven-{model0}-salmon.rvp",
+        "raven-{model}/raven-{model0}-salmon.rvt",
     ]
     for model in models:
         for entry in entries:
-            data_entries.append(entry.format(model=model))
+            data_entries.append(entry.format(model=model, model0=model.split("-")[0]))
 
     data_entries.extend(
         [
@@ -203,3 +203,7 @@ def params(ts_stats, tmp_path):
     fn = tmp_path / "fit.nc"
     p.to_netcdf(fn)
     return fn
+
+
+if __name__ == "__main__":
+    populate_testing_data(branch=MAIN_TESTDATA_BRANCH)
