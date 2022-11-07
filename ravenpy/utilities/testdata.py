@@ -39,6 +39,7 @@ def file_md5_checksum(fname):
 def get_local_testdata(
     patterns: Union[str, Sequence[str]],
     temp_folder: Union[str, os.PathLike],
+    # fixme: this needs to be changed back once PR is merged.
     branch: str = "add_full_model_name",
     _local_cache: Union[str, os.PathLike] = _default_cache_dir,
 ) -> Union[Path, List[Path]]:
@@ -173,7 +174,8 @@ def _get(
 def get_file(
     name: Union[str, Sequence[str]],
     github_url: str = "https://github.com/Ouranosinc/raven-testdata",
-    branch: str = "master",
+    # fixme: this needs to be changed back once PR is merged.
+    branch: str = "add_full_model_name",
     cache_dir: Path = _default_cache_dir,
 ) -> Union[Path, List[Path]]:
     """
@@ -221,7 +223,8 @@ def query_folder(
     folder: Optional[str] = None,
     pattern: Optional[str] = None,
     github_url: str = "https://github.com/Ouranosinc/raven-testdata",
-    branch: str = "master",
+    # fixme: this needs to be changed back once PR is merged.
+    branch: str = "add_full_model_name",
 ) -> List[str]:
     """
     Lists the files available for retrieval from a remote git repository with get_file.

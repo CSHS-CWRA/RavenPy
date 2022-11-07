@@ -15,6 +15,7 @@ def populate_testing_data(
     _local_cache: Path = _default_cache_dir,
 ):
     if _local_cache.joinpath(".data_written").exists():
+        # This flag prevents multiple calls from re-attempting to download testing data in the same pytest run
         return
 
     models = [
@@ -90,6 +91,7 @@ def populate_testing_data(
                 continue
 
     if temp_folder is None:
+        # This flag prevents multiple calls from re-attempting to download testing data in the same pytest run
         _local_cache.joinpath(".data_written").touch()
 
     return
@@ -97,12 +99,17 @@ def populate_testing_data(
 
 @pytest.fixture(scope="session")
 def threadsafe_data_dir(tmp_path_factory) -> Path:
-    """Constructor for worker-session temporary data folders"""
+    """Constructor for worker-session temporary data folders."""
     return Path(tmp_path_factory.getbasetemp().joinpath("data"))
 
 
 @pytest.fixture(scope="session", autouse=True)
 def gather_session_data(threadsafe_data_dir, worker_id):
+    """Gather testing data on pytest run.
+
+    When running pytest with multiple workers, one worker will copy data remotely to _default_cache_dir while
+    other workers wait using lockfile. Once the lock is released, all workers will copy data to their local
+    threadsafe_data_dir."""
     if worker_id == "master":
         return populate_testing_data(branch="add_full_model_name")
     else:
@@ -120,7 +127,10 @@ def gather_session_data(threadsafe_data_dir, worker_id):
 
 @pytest.fixture(scope="session", autouse=True)
 def cleanup(request):
-    """Cleanup a testing file once we are finished."""
+    """Cleanup a testing file once we are finished.
+
+    This flag prevents remote data from being downloaded multiple times in the same pytest run.
+    """
 
     def remove_data_written_flag():
         flag = _default_cache_dir.joinpath(".data_written")
