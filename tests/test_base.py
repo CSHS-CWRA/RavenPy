@@ -34,7 +34,7 @@ class TestRaven:
 
     def test_raven_error(self, get_file, get_local_testdata):
         rvs = get_local_testdata(
-            r"raven-gr4j-cemaneige/raven-gr4j-cemaneige-salmon.rv*",
+            r"raven-gr4j-cemaneige/raven-gr4j-cemaneige-salmon.rv?",
         )
         ts = get_file(
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
@@ -109,7 +109,7 @@ class TestRaven:
     def test_singularity(self, get_local_testdata):
         rvs = get_local_testdata("raven-gr4j-cemaneige/raven-gr4j-cemaneige-salmon.rv?")
         ts = get_local_testdata(
-            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_*.rvt"
+            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
         )
 
         model = Raven()

@@ -71,7 +71,8 @@ def get_local_testdata(
             path for path in Path(temp_folder).joinpath(branch).glob(pattern)
         ]
         if potential_paths:
-            return potential_paths[0] if len(potential_paths) == 1 else potential_paths
+            temp_paths.extend(potential_paths)
+            continue
 
         testdata_path = Path(_local_cache)
         if not testdata_path.exists():
