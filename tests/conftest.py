@@ -15,8 +15,13 @@ from ravenpy.utilities.testdata import (
 
 
 def populate_testing_data(
-    temp_folder: Optional[Path] = None, _local_cache: Path = _default_cache_dir
+    temp_folder: Optional[Path] = None,
+    branch: str = "master",
+    _local_cache: Path = _default_cache_dir,
 ):
+    if _local_cache.joinpath(".data_written").exists():
+        return
+
     models = [
         "gr4j-cemaneige",
         "hbv-ec",
@@ -24,62 +29,75 @@ def populate_testing_data(
         "mohyse",
     ]
 
-    data_entries = dict()
-    query_entries = dict()
-    query_entries["ostrich-{model}-rv"] = {"ostrich-{model}": (r".rv\w", r"\.t\w{2}")}
-    query_entries["raven-{model}-rv"] = {"raven-{model}": (r"\.rv\w",)}
-    query_entries["raven-{model}-salmon_river"] = {
-        "raven-{model}": (r"Salmon-River-Near-Prince-George_\w+.rvt",)
-    }
-    for model in models:
-        for entry, query in query_entries.items():
-            queried = []
-            for folder, patterns in query.items():
-                queried.extend(
-                    [
-                        query_folder(folder.format(model=model), pattern)
-                        for pattern in patterns
-                    ]
-                )
-            data_entries[entry.format(model=model)] = queried
-
-    data_entries_simple = [
-        "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
-        "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_2d.nc",
-        "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_3d.nc",
-        "raven-gr4j-cemaneige/raven-gr4j-salmon.rvt",
-        "gr4j_cemaneige/solution.rvc",
-        "ostrich-gr4j-cemaneige/raven-gr4j-salmon.rvp.tpl",
-        "ostrich-gr4j-cemaneige/OstRandomNumbers.txt",
-        "cmip5/nasa_nex-gddp-1.0_day_inmcm4_historical+rcp85_nex-gddp_2070-2071_subset.nc",
-        "cmip5/nasa_nex-gddp-1.0_day_inmcm4_historical+rcp45_nex-gddp_1971-1972_subset.nc",
-        "nrcan/NRCAN_1971-1972_subset.nc",
-        "watershed_vector/LSJ_LL.zip",
+    data_entries = list()
+    entries = [
+        "ostrich-{model}/raven-{model}-salmon.rvc",
+        "ostrich-{model}/raven-{model}-salmon.rvc.tpl",
+        "ostrich-{model}/raven-{model}-salmon.rvh",
+        "ostrich-{model}/raven-{model}-salmon.rvh.tpl",
+        "ostrich-{model}/raven-{model}-salmon.rvi",
+        "ostrich-{model}/raven-{model}-salmon.rvi.tpl",
+        "ostrich-{model}/raven-{model}-salmon.rvp",
+        "ostrich-{model}/raven-{model}-salmon.rvp.tpl",
+        "ostrich-{model}/raven-{model}-salmon.rvt",
+        "ostrich-{model}/raven-{model}-salmon.rvt.tpl",
+        "raven-{model}/raven-{model}-salmon.rvc",
+        "raven-{model}/raven-{model}-salmon.rvh",
+        "raven-{model}/raven-{model}-salmon.rvi",
+        "raven-{model}/raven-{model}-salmon.rvp",
+        "raven-{model}/raven-{model}-salmon.rvt",
     ]
+    for model in models:
+        for entry in entries:
+            data_entries.append(entry.format(model=model))
+
+    data_entries.extend(
+        [
+            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
+            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_2d.nc",
+            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_3d.nc",
+            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
+            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_2d.nc",
+            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_3d.nc",
+            "raven-hmets/Salmon-River-Near-Prince-George_meteo_daily.rvt",
+            "raven-hmets/Salmon-River-Near-Prince-George_Qobs_daily.rvt"
+            "raven-mohyse/Salmon-River-Near-Prince-George_Qobs_daily.rvt",
+            "raven-mohyse/Salmon-River-Near-Prince-George_meteo_daily.rvt",
+            "raven-hbv-ec/Salmon-River-Near-Prince-George_meteo_daily.rvt",
+            "raven-hbv-ec/Salmon-River-Near-Prince-George_Qobs_daily.rvt",
+            "gr4j_cemaneige/solution.rvc",
+            "ostrich-gr4j-cemaneige/OstRandomNumbers.txt",
+            "cmip5/nasa_nex-gddp-1.0_day_inmcm4_historical%2Brcp85_nex-gddp_2070-2071_subset.nc",
+            "cmip5/nasa_nex-gddp-1.0_day_inmcm4_historical%2Brcp45_nex-gddp_1971-1972_subset.nc",
+            "nrcan/NRCAN_1971-1972_subset.nc",
+            "watershed_vector/LSJ_LL.zip",
+        ]
+    )
 
     data = dict()
-    for filepattern in data_entries_simple:
+    for filepattern in data_entries:
         if temp_folder is None:
-            data[filepattern] = get_file(filepattern, cache_dir=_local_cache)
-        else:
-            data[filepattern] = get_local_testdata(
-                filepattern, temp_folder=temp_folder, _local_cache=_local_cache
-            )
-
-    for name, filepattern in data_entries.items():
-        if temp_folder is None:
-            data[name] = [
-                get_file(f, cache_dir=_default_cache_dir) for f in filepattern
-            ]
-        else:
-            data[name] = [
-                get_local_testdata(
-                    f, temp_folder=temp_folder, _local_cache=_local_cache
+            try:
+                data[filepattern] = get_file(
+                    filepattern, branch=branch, cache_dir=_local_cache
                 )
-                for f in filepattern
-            ]
+            except FileNotFoundError:
+                continue
+        elif temp_folder:
+            try:
+                data[filepattern] = get_local_testdata(
+                    filepattern,
+                    temp_folder=temp_folder,
+                    branch=branch,
+                    _local_cache=_local_cache,
+                )
+            except FileNotFoundError:
+                continue
 
-    return data
+    if temp_folder is None:
+        _local_cache.joinpath(".data_written").touch()
+
+    return
 
 
 @pytest.fixture(scope="session")
@@ -88,16 +106,33 @@ def threadsafe_data_dir(tmp_path_factory) -> Path:
     return Path(tmp_path_factory.getbasetemp().joinpath("data"))
 
 
-@pytest.fixture(scope="session")
-def session_data(threadsafe_data_dir, worker_id):
+@pytest.fixture(scope="session", autouse=True)
+def gather_session_data(threadsafe_data_dir, worker_id):
 
     test_data_being_written = FileLock(_default_cache_dir.joinpath(".lock"))
 
-    with test_data_being_written as fl:
-        if worker_id in ["master", "gw0"]:
-            return populate_testing_data()
+    with test_data_being_written.acquire() as fl:
+        if worker_id == "master":
+            return populate_testing_data(branch="add_full_model_name")
+        elif fl.is_locked:
+            populate_testing_data(branch="add_full_model_name")
+            fl.release()
         fl.acquire()
-        return populate_testing_data(temp_folder=threadsafe_data_dir)
+        populate_testing_data(
+            temp_folder=threadsafe_data_dir, branch="add_full_model_name"
+        )
+
+
+@pytest.fixture(scope="session", autouse=True)
+def cleanup(request):
+    """Cleanup a testing file once we are finished."""
+
+    def remove_data_downloaded_flag():
+        flag = _default_cache_dir.joinpath(".data_written")
+        if flag.exists():
+            flag.unlink()
+
+    request.addfinalizer(remove_data_downloaded_flag)
 
 
 @pytest.fixture(scope="session")

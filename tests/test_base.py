@@ -6,7 +6,7 @@ import pytest
 
 from ravenpy.models import Ostrich, Raven, RavenError
 from ravenpy.models.base import get_diff_level
-from ravenpy.utilities.testdata import get_file, query_folder
+from ravenpy.utilities.testdata import get_file, get_local_testdata, query_folder
 
 has_singularity = False  # ravenpy.raven_simg.exists()
 
@@ -20,14 +20,15 @@ class TestRaven:
         assert model.identifier == "toto"
 
         rvt = get_file(
-            "raven-gr4j-cemaneige/raven-gr4j-salmon.rvt", cache_dir=threadsafe_data_dir
+            "raven-gr4j-cemaneige/raven-gr4j-cemaneige-salmon.rvt",
+            cache_dir=threadsafe_data_dir,
         )
         model = Raven()
         model.configure(rvt)
         assert model.identifier == rvt.stem
 
         rvp_tpl = get_file(
-            "ostrich-gr4j-cemaneige/raven-gr4j-salmon.rvp.tpl",
+            "ostrich-gr4j-cemaneige/raven-gr4j-cemaneige-salmon.rvp.tpl",
             cache_dir=threadsafe_data_dir,
         )
         model = Raven()
@@ -36,12 +37,13 @@ class TestRaven:
 
     @pytest.mark.xfail(reason="Query folder is API rate limited")
     def test_raven_error(self, threadsafe_data_dir):
-        rv_files = query_folder("raven-gr4j-cemaneige", "raven-gr4j-salmon.rv*")
-        rvs = get_file(rv_files, cache_dir=threadsafe_data_dir)
-
-        ts = get_file(
+        rvs = get_local_testdata(
+            r"raven-gr4j-cemaneige/raven-gr4j-cemaneige-salmon.rv*",
+            temp_folder=threadsafe_data_dir,
+        )
+        ts = get_local_testdata(
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
-            cache_dir=threadsafe_data_dir,
+            temp_folder=threadsafe_data_dir,
         )
 
         model = Raven()
@@ -65,7 +67,9 @@ class TestRaven:
 
     @pytest.mark.xfail(reason="Query folder is API rate limited")
     def test_gr4j(self, threadsafe_data_dir):
-        rv_files = query_folder("raven-gr4j-cemaneige", r"raven-gr4j-salmon.rv\w")
+        rv_files = query_folder(
+            "raven-gr4j-cemaneige", r"raven-gr4j-cemaneige-salmon.rv\w"
+        )
         rvs = get_file(rv_files, cache_dir=threadsafe_data_dir)
 
         ts = get_file(
@@ -134,7 +138,9 @@ class TestRaven:
     @pytest.mark.xfail(reason="Query folder is API rate limited")
     @pytest.mark.skipif(not has_singularity, reason="Singularity is not available.")
     def test_singularity(self, threadsafe_data_dir):
-        rv_files = query_folder("raven-gr4j-cemaneige", "raven-gr4j-salmon.rv*")
+        rv_files = query_folder(
+            "raven-gr4j-cemaneige", "raven-gr4j-cemaneige-salmon.rv*"
+        )
         rvs = get_file(rv_files, cache_dir=threadsafe_data_dir)
 
         ts_files = query_folder(

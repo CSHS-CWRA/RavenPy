@@ -39,7 +39,7 @@ def file_md5_checksum(fname):
 def get_local_testdata(
     patterns: Union[str, Sequence[str]],
     temp_folder: Union[str, os.PathLike],
-    branch: str = "master",
+    branch: str = "add_full_model_name",
     _local_cache: Union[str, os.PathLike] = _default_cache_dir,
 ) -> Union[Path, List[Path]]:
     """Copy specific testdata from a default cache to a temporary folder.
@@ -67,19 +67,23 @@ def get_local_testdata(
         patterns = [patterns]
 
     for pattern in patterns:
-        potential_path = Path(temp_folder).joinpath(branch).joinpath(pattern)
-        if potential_path.exists():
-            return Path(temp_folder).joinpath(pattern)
+        potential_paths = [
+            path for path in Path(temp_folder).joinpath(branch).glob(pattern)
+        ]
+        if potential_paths:
+            return potential_paths[0] if len(potential_paths) == 1 else potential_paths
 
         testdata_path = Path(_local_cache)
         if not testdata_path.exists():
             raise RuntimeError(f"{testdata_path} does not exists")
         paths = [path for path in testdata_path.joinpath(branch).glob(pattern)]
         if not paths:
-            raise FileNotFoundError(f"No data found for {pattern} at {testdata_path}.")
+            raise FileNotFoundError(
+                f"No data found for {pattern} at {testdata_path}/{branch}."
+            )
 
         main_folder = Path(temp_folder).joinpath(branch).joinpath(Path(pattern).parent)
-        main_folder.mkdir(exist_ok=True)
+        main_folder.mkdir(exist_ok=True, parents=True)
 
         for file in paths:
             temp_file = main_folder.joinpath(file.name)
@@ -132,10 +136,16 @@ def _get(
 
         url = "/".join((github_url, "raw", branch, fullname.as_posix()))
         LOGGER.info(f"Fetching remote file: {fullname.as_posix()}")
-        urlretrieve(url, local_file)  # nosec
         try:
-            url = "/".join((github_url, "raw", branch, md5_name.as_posix()))
-            LOGGER.info(f"Fetching remote file md5: {md5_name.as_posix()}")
+            urlretrieve(url, local_file)  # nosec
+        except HTTPError as e:
+            msg = f"{local_file.name} not found. Aborting file retrieval."
+            local_file.unlink()
+            raise FileNotFoundError(msg) from e
+
+        url = "/".join((github_url, "raw", branch, md5_name.as_posix()))
+        LOGGER.info(f"Fetching remote file md5: {md5_name.as_posix()}")
+        try:
             urlretrieve(url, md5_file)  # nosec
         except HTTPError as e:
             msg = f"{md5_name.as_posix()} not found. Aborting file retrieval."
