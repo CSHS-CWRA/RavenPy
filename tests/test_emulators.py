@@ -97,7 +97,7 @@ salmon_river_2d = (
 class TestGR4JCN:
     def test_error(self, threadsafe_data_dir, tmp_path):
         ts = get_file(salmon_river, cache_dir=threadsafe_data_dir)
-        
+
         model = GR4JCN(workdir=tmp_path)
 
         model.config.rvp.params = model.Params(
