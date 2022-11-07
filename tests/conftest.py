@@ -6,11 +6,7 @@ import xarray as xr
 from filelock import FileLock
 from xclim.indicators.land import fit, stats
 
-from ravenpy.utilities.testdata import (
-    _default_cache_dir,
-    get_file,
-    get_local_testdata,
-)
+from ravenpy.utilities.testdata import _default_cache_dir, get_file, get_local_testdata
 
 
 def populate_testing_data(
