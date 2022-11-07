@@ -79,9 +79,7 @@ class TestRVI:
 class TestRVC:
     @pytest.fixture(autouse=True)
     def setup(self, get_file):
-        sol = open(
-            get_file("gr4j_cemaneige/solution.rvc")
-        ).read()
+        sol = open(get_file("gr4j_cemaneige/solution.rvc")).read()
         self.rvc = RVC.create_solution(sol)
 
     def test_parse(self):
@@ -100,10 +98,8 @@ class TestRVC:
 
 class TestRVH:
     @pytest.fixture(autouse=True)
-    def setup(self, get_file    ):
-        shp = get_file(
-            "raven-routing-sample/finalcat_hru_info.zip"
-        )
+    def setup(self, get_file):
+        shp = get_file("raven-routing-sample/finalcat_hru_info.zip")
         extractor = RoutingProductShapefileExtractor(shp)
         config = extractor.extract()
         self.rvh = RVH(None)
@@ -145,9 +141,7 @@ class TestRVH:
 class TestRVP:
     @pytest.fixture(autouse=True)
     def setup(self, get_file):
-        shp = get_file(
-            "raven-routing-sample/finalcat_hru_info.zip"
-        )
+        shp = get_file("raven-routing-sample/finalcat_hru_info.zip")
         extractor = RoutingProductShapefileExtractor(shp)
         config = extractor.extract()
         self.rvp = RVP(None)
@@ -167,12 +161,8 @@ class TestRVP:
 class TestRVT:
     @pytest.fixture(autouse=True)
     def setup(self, get_file):
-        input_file = get_file(
-            "raven-routing-sample/VIC_streaminputs.nc"
-        )
-        routing_file = get_file(
-            "raven-routing-sample/finalcat_hru_info.zip"
-        )
+        input_file = get_file("raven-routing-sample/VIC_streaminputs.nc")
+        routing_file = get_file("raven-routing-sample/finalcat_hru_info.zip")
         extractor = RoutingProductGridWeightExtractor(input_file, routing_file)
         gws = extractor.extract()
         self.gfc = GriddedForcingCommand(grid_weights=gws)
@@ -188,9 +178,7 @@ class TestRVT:
     def test_gauges(self, get_file):
         rvt = RVT(config=None)
         rvt.nc_index = [0, 1, 2]
-        rvt.configure_from_nc_data(
-            [get_file("famine/famine_input.nc")]
-        )
+        rvt.configure_from_nc_data([get_file("famine/famine_input.nc")])
         out = rvt.to_rv()
         assert len(re.findall(":Gauge", out)) == 3
         assert set(re.findall(r":StationIdx\s*(\d)", out)) == {"1", "2", "3"}

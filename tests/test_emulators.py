@@ -854,7 +854,6 @@ class TestGR4JCN_OST:
         model.configure(
             get_file(
                 "ostrich-gr4j-cemaneige/OstRandomNumbers.txt",
-
             )
         )
 
@@ -1174,7 +1173,6 @@ class TestMOHYSE_OST:
         model.configure(
             get_file(
                 "ostrich-gr4j-cemaneige/OstRandomNumbers.txt",
-
             )
         )
 
@@ -1366,7 +1364,6 @@ class TestHBVEC_OST:
         model.configure(
             get_file(
                 "ostrich-gr4j-cemaneige/OstRandomNumbers.txt",
-
             )
         )
 

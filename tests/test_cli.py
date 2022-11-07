@@ -16,11 +16,9 @@ class TestGenerateGridWeights:
         params = [
             get_file(
                 "raven-routing-sample/VIC_streaminputs.nc",
-
             ),
             get_file(
                 "raven-routing-sample/finalcat_hru_info.zip",
-
             ),
             "-o",
             output_path,
@@ -42,9 +40,7 @@ class TestGenerateGridWeights:
         weight = float(re.search("1 52 (.+)", output).group(1))
         assert abs(weight - 0.2610203097218425) < 1e-04
 
-    def test_generate_grid_weights_with_multiple_subids(
-        self, tmp_path, get_file
-    ):
+    def test_generate_grid_weights_with_multiple_subids(self, tmp_path, get_file):
         # currently exactly same output as "test_generate_grid_weights_with_nc_input_and_2d_coords"
         # needs a "routing-file-path" with multiple gauges
         runner = CliRunner()
@@ -52,11 +48,9 @@ class TestGenerateGridWeights:
         params = [
             get_file(
                 "raven-routing-sample/VIC_streaminputs.nc",
-
             ),
             get_file(
                 "raven-routing-sample/finalcat_hru_info.zip",
-
             ),
             "-s",
             "7202",
@@ -122,9 +116,7 @@ class TestGenerateGridWeights:
         output_path = tmp_path / "bla.rvt"
         params = [
             get_file("raven-routing-sample/OTT_sub.zip"),
-            get_file(
-                "raven-routing-sample/finalcat_hru_info.zip"
-            ),
+            get_file("raven-routing-sample/finalcat_hru_info.zip"),
             "-o",
             output_path,
         ]
@@ -145,9 +137,7 @@ class TestGenerateGridWeights:
         weight = float(re.search("13 238 (.+)", output).group(1))
         assert abs(weight - 0.5761414847779369) < 1e-04
 
-    def test_generate_grid_weights_with_weight_rescaling(
-        self, tmp_path, get_file
-    ):
+    def test_generate_grid_weights_with_weight_rescaling(self, tmp_path, get_file):
         runner = CliRunner()
         output_path = tmp_path / "bla.rvt"
         params = [
@@ -233,18 +223,13 @@ class TestAggregateForcingsToHRUs:
         assert abs(val[0, 50] - 0.010276) < 1e-04
         assert abs(val[16071, 50] - 0.516639) < 1e-04
 
-    def test_aggregate_forcings_to_hrus_with_nodata(
-        self, tmp_path, get_file
-    ):
+    def test_aggregate_forcings_to_hrus_with_nodata(self, tmp_path, get_file):
         runner = CliRunner()
         output_nc_file_path = tmp_path / "aggreg.nc"
         output_weight_file_path = tmp_path / "weight_aggreg.rvt"
         params = [
-            get_file(
-                "raven-routing-sample/VIC_test_nodata.nc"
-            ),
-            get_file(
-                "raven-routing-sample/VIC_test_nodata_weights.rvt"            ),
+            get_file("raven-routing-sample/VIC_test_nodata.nc"),
+            get_file("raven-routing-sample/VIC_test_nodata_weights.rvt"),
             "-v",
             "et",
             "--dim-names",

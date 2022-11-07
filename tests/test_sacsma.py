@@ -15,7 +15,7 @@ lu = LU("FOREST", impermeable_frac=0.0, forest_coverage=0.02345)
 
 
 class TestSACSMA:
-    def test_simple(self,get_file):
+    def test_simple(self, get_file):
         ts = get_file(salmon_river)
 
         model = SACSMA()

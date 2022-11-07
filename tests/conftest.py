@@ -118,15 +118,25 @@ def threadsafe_data_dir(tmp_path_factory) -> Path:
 @pytest.fixture(scope="session")
 def get_file(threadsafe_data_dir):
     def _get_session_scoped_file(file: Union[str, Path]):
-        return _get_file(file, cache_dir=threadsafe_data_dir, branch=MAIN_TESTDATA_BRANCH)
+        return _get_file(
+            file, cache_dir=threadsafe_data_dir, branch=MAIN_TESTDATA_BRANCH
+        )
+
     return _get_session_scoped_file
 
 
 @pytest.fixture(scope="session")
 def get_local_testdata(threadsafe_data_dir):
     def _get_session_scoped_local_testdata(file: Union[str, Path]):
-        return _get_local_testdata(file, temp_folder=threadsafe_data_dir, branch=MAIN_TESTDATA_BRANCH, _local_cache=_default_cache_dir)
+        return _get_local_testdata(
+            file,
+            temp_folder=threadsafe_data_dir,
+            branch=MAIN_TESTDATA_BRANCH,
+            _local_cache=_default_cache_dir,
+        )
+
     return _get_session_scoped_local_testdata
+
 
 @pytest.fixture(scope="session", autouse=True)
 def gather_session_data(threadsafe_data_dir, worker_id):
@@ -171,7 +181,7 @@ def q_sim_1(threadsafe_data_dir):
     return _get_file(
         "hydro_simulations/raven-gr4j-cemaneige-sim_hmets-0_Hydrographs.nc",
         cache_dir=threadsafe_data_dir,
-        branch=MAIN_TESTDATA_BRANCH
+        branch=MAIN_TESTDATA_BRANCH,
     )
 
 

@@ -1,7 +1,6 @@
 import datetime as dt
 
 from ravenpy.models import HMETS
-from ravenpy.utilities.testdata import get_file
 
 
 class TestRavenNRCAN:

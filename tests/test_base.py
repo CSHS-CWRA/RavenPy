@@ -7,7 +7,6 @@ import pytest
 from ravenpy.models import Ostrich, Raven, RavenError
 from ravenpy.models.base import get_diff_level
 
-
 has_singularity = False  # ravenpy.raven_simg.exists()
 
 
@@ -61,9 +60,7 @@ class TestRaven:
         assert model.config.rvi.raven_version == model.raven_version
 
     def test_gr4j(self, get_file, get_local_testdata):
-        rvs = get_local_testdata(
-            "raven-gr4j-cemaneige/raven-gr4j-cemaneige-salmon.rv?"
-        )
+        rvs = get_local_testdata("raven-gr4j-cemaneige/raven-gr4j-cemaneige-salmon.rv?")
         ts = get_file(
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
         )
@@ -77,9 +74,7 @@ class TestRaven:
 
     def test_mohyse(self, get_local_testdata):
         rvs = get_local_testdata("raven-mohyse/raven-mohyse-salmon.rv?")
-        ts = get_local_testdata(
-            "raven-mohyse/Salmon-River-Near-Prince-George_*.rvt"
-        )
+        ts = get_local_testdata("raven-mohyse/Salmon-River-Near-Prince-George_*.rvt")
 
         model = Raven()
         model.configure(rvs)
@@ -90,9 +85,7 @@ class TestRaven:
 
     def test_hmets(self, get_local_testdata):
         rvs = get_local_testdata("raven-hmets/raven-hmets-salmon.rv?")
-        ts = get_local_testdata(
-            "raven-hmets/Salmon-River-Near-Prince-George_*.rvt"
-        )
+        ts = get_local_testdata("raven-hmets/Salmon-River-Near-Prince-George_*.rvt")
 
         model = Raven()
         model.configure(rvs)
@@ -103,9 +96,7 @@ class TestRaven:
 
     def test_hbvec(self, get_local_testdata):
         rvs = get_local_testdata("raven-hbv-ec/raven-hbv-ec-salmon.rv?")
-        ts = get_local_testdata(
-            "raven-hbv-ec/Salmon-River-Near-Prince-George_*.rvt"
-        )
+        ts = get_local_testdata("raven-hbv-ec/Salmon-River-Near-Prince-George_*.rvt")
 
         model = Raven()
         model.configure(rvs)
@@ -116,9 +107,7 @@ class TestRaven:
 
     @pytest.mark.skipif(not has_singularity, reason="Singularity is not available.")
     def test_singularity(self, get_local_testdata):
-        rvs = get_local_testdata(
-            "raven-gr4j-cemaneige/raven-gr4j-cemaneige-salmon.rv?"
-        )
+        rvs = get_local_testdata("raven-gr4j-cemaneige/raven-gr4j-cemaneige-salmon.rv?")
         ts = get_local_testdata(
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_*.rvt"
         )
@@ -138,7 +127,9 @@ class TestOstrich:
         ts = get_file(
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
         )
-        ost = get_local_testdata(["ostrich-gr4j-cemaneige/*.rv?", "ostrich-gr4j-cemaneige/*.t??"])
+        ost = get_local_testdata(
+            ["ostrich-gr4j-cemaneige/*.rv?", "ostrich-gr4j-cemaneige/*.t??"]
+        )
 
         model = Ostrich()
         model.configure(ost)

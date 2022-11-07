@@ -4,7 +4,6 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-
 zipped_geojson_file = "polygons/mars.zip"
 geojson_file = "polygons/mars.geojson"
 raster_file = "nasa/Mars_MGS_MOLA_DEM_georeferenced_region_compressed.tiff"
@@ -32,18 +31,14 @@ class TestOperations:
     def test_address_append(self, get_file):
         non_existing_tarred_file = "polygons.tar"
 
-        assert "zip://" in self.io.address_append(
-            get_file(zipped_geojson_file)
-        )
+        assert "zip://" in self.io.address_append(get_file(zipped_geojson_file))
         assert "tar://" in self.io.address_append(non_existing_tarred_file)
-        assert not self.io.address_append(
-            get_file(geojson_file)
-        ).startswith(("zip://", "tar://"))
+        assert not self.io.address_append(get_file(geojson_file)).startswith(
+            ("zip://", "tar://")
+        )
 
     def test_archive_sniffer(self, tmp_path, get_file):
-        probable_shp = self.io.archive_sniffer(
-            get_file(zipped_geojson_file)
-        )
+        probable_shp = self.io.archive_sniffer(get_file(zipped_geojson_file))
         assert Path(probable_shp[0]).name == "mars.shp"
 
         probable_shp = self.io.archive_sniffer(
@@ -76,18 +71,11 @@ class TestFileInfoFuncs:
     non_existing_file = "unreal.zip"
 
     def test_raster_datatype_sniffer(self, get_file):
-        datatype = self.io.raster_datatype_sniffer(
-            get_file(raster_file)
-        )
+        datatype = self.io.raster_datatype_sniffer(get_file(raster_file))
         assert datatype.lower() == "uint8"
 
     def test_crs_sniffer(self, get_file):
-        assert (
-            self.io.crs_sniffer(
-                get_file(zipped_geojson_file)
-            )
-            == 4326
-        )
+        assert self.io.crs_sniffer(get_file(zipped_geojson_file)) == 4326
         assert set(
             self.io.crs_sniffer(
                 get_file(geojson_file),
@@ -133,9 +121,7 @@ class TestGdalOgrFunctions:
     sgeo = pytest.importorskip("shapely.geometry")
 
     def test_gdal_aspect_not_projected(self, tmp_path, get_file):
-        aspect_grid = self.analysis.gdal_aspect_analysis(
-            get_file(raster_file)
-        )
+        aspect_grid = self.analysis.gdal_aspect_analysis(get_file(raster_file))
         np.testing.assert_almost_equal(
             self.analysis.circular_mean_aspect(aspect_grid), 10.9119033
         )
@@ -155,9 +141,7 @@ class TestGdalOgrFunctions:
 
     # Slope values are high due to data values using Geographic CRS
     def test_gdal_slope_not_projected(self, tmp_path, get_file):
-        slope_grid = self.analysis.gdal_slope_analysis(
-            get_file(raster_file)
-        )
+        slope_grid = self.analysis.gdal_slope_analysis(get_file(raster_file))
         np.testing.assert_almost_equal(slope_grid.min(), 0.0)
         np.testing.assert_almost_equal(slope_grid.mean(), 64.4365427)
         np.testing.assert_almost_equal(slope_grid.max(), 89.71747, 5)
@@ -174,31 +158,23 @@ class TestGdalOgrFunctions:
 
     # Slope values are high due to data values using Geographic CRS
     def test_dem_properties(self, get_file):
-        dem_properties = self.analysis.dem_prop(
-            get_file(raster_file)
-        )
+        dem_properties = self.analysis.dem_prop(get_file(raster_file))
         np.testing.assert_almost_equal(dem_properties["aspect"], 10.911, 3)
         np.testing.assert_almost_equal(dem_properties["elevation"], 79.0341, 4)
         np.testing.assert_almost_equal(dem_properties["slope"], 64.43654, 5)
 
-        with self.fiona.open(
-            get_file(geojson_file)
-        ) as gj:
+        with self.fiona.open(get_file(geojson_file)) as gj:
             feature = next(iter(gj))
             geom = self.sgeo.shape(feature["geometry"])
 
-        region_dem_properties = self.analysis.dem_prop(
-            get_file(raster_file), geom=geom
-        )
+        region_dem_properties = self.analysis.dem_prop(get_file(raster_file), geom=geom)
         np.testing.assert_almost_equal(region_dem_properties["aspect"], 280.681, 3)
         np.testing.assert_almost_equal(region_dem_properties["elevation"], 145.8899, 4)
         np.testing.assert_almost_equal(region_dem_properties["slope"], 61.26508, 5)
 
     # Slope values are high due to data values using Geographic CRS
     def test_geom_properties(self, get_file):
-        with self.fiona.open(
-            get_file(geojson_file)
-        ) as gj:
+        with self.fiona.open(get_file(geojson_file)) as gj:
             iterable = iter(gj)
             feature_1 = next(iterable)
             feature_2 = next(iterable)
@@ -310,9 +286,7 @@ class TestGenericGeoOperations:
         )
 
     def test_raster_clip(self, tmp_path, get_file):
-        with self.fiona.open(
-            get_file(geojson_file)
-        ) as gj:
+        with self.fiona.open(get_file(geojson_file)) as gj:
             feature = next(iter(gj))
             geom = self.sgeo.shape(feature["geometry"])
 
@@ -334,9 +308,7 @@ class TestGenericGeoOperations:
             np.testing.assert_almost_equal(data.mean(), 102.8222965)
 
     def test_shapely_pyproj_transform(self, get_file):
-        with self.fiona.open(
-            get_file(geojson_file)
-        ) as gj:
+        with self.fiona.open(get_file(geojson_file)) as gj:
             feature = next(iter(gj))
             geom = self.sgeo.shape(feature["geometry"])
 

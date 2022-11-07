@@ -32,16 +32,10 @@ class TestRouting:
             "raven-routing-sample/finalcat_hru_info.zip"
         )
 
-        vic_streaminputs_nc_path = get_file(
-            "raven-routing-sample/VIC_streaminputs.nc"
-        )
-        vic_temperatures_nc_path = get_file(
-            "raven-routing-sample/VIC_temperatures.nc"
-        )
+        vic_streaminputs_nc_path = get_file("raven-routing-sample/VIC_streaminputs.nc")
+        vic_temperatures_nc_path = get_file("raven-routing-sample/VIC_temperatures.nc")
 
-        observation_data_nc_path = get_file(
-            "raven-routing-sample/WSC02LE024.nc"
-        )
+        observation_data_nc_path = get_file("raven-routing-sample/WSC02LE024.nc")
 
         #########
         # Model #
@@ -256,20 +250,12 @@ class TestRouting:
         # Input files #
         ###############
 
-        routing_product_shp_path = get_file(
-            "raven-routing-sample/lievre_hrus_v21.zip"
-        )
+        routing_product_shp_path = get_file("raven-routing-sample/lievre_hrus_v21.zip")
 
-        vic_streaminputs_nc_path = get_file(
-            "raven-routing-sample/VIC_streaminputs.nc"
-        )
-        vic_temperatures_nc_path = get_file(
-            "raven-routing-sample/VIC_temperatures.nc"
-        )
+        vic_streaminputs_nc_path = get_file("raven-routing-sample/VIC_streaminputs.nc")
+        vic_temperatures_nc_path = get_file("raven-routing-sample/VIC_temperatures.nc")
 
-        observation_data_nc_path = get_file(
-            "raven-routing-sample/WSC02LE024.nc"
-        )
+        observation_data_nc_path = get_file("raven-routing-sample/WSC02LE024.nc")
 
         #########
         # Model #

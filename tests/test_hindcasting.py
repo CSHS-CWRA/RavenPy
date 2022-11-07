@@ -36,9 +36,7 @@ class TestHindcasting:
         # Extract the final states that will be used as the next initial states
         rvc = model.outputs["solution"]
 
-        ts20 = get_file(
-            "caspar_eccc_hindcasts/geps_watershed.nc"
-        )
+        ts20 = get_file("caspar_eccc_hindcasts/geps_watershed.nc")
         nm = 20
 
         # It is necessary to clean the model state because the input variables of the previous

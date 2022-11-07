@@ -2,7 +2,6 @@ import pytest
 
 from ravenpy.utilities import ravenio
 
-
 # from ravenpy.models import raven_templates
 
 """
