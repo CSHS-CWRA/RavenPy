@@ -1,3 +1,4 @@
+import shutil
 from pathlib import Path
 from typing import Optional, Union
 
@@ -146,18 +147,14 @@ def gather_session_data(threadsafe_data_dir, worker_id):
     other workers wait using lockfile. Once the lock is released, all workers will copy data to their local
     threadsafe_data_dir."""
     if worker_id == "master":
-        return populate_testing_data(branch="add_full_model_name")
+        populate_testing_data(branch=MAIN_TESTDATA_BRANCH)
     else:
         _default_cache_dir.mkdir(exist_ok=True)
         test_data_being_written = FileLock(_default_cache_dir.joinpath(".lock"))
-        with test_data_being_written.acquire() as fl:
-            if fl.is_locked:
-                populate_testing_data(branch=MAIN_TESTDATA_BRANCH)
-                fl.release()
-            fl.acquire()
-            populate_testing_data(
-                temp_folder=threadsafe_data_dir, branch=MAIN_TESTDATA_BRANCH
-            )
+        with test_data_being_written as fl:
+            populate_testing_data(branch=MAIN_TESTDATA_BRANCH)
+        fl.acquire()
+        shutil.copytree(_default_cache_dir, threadsafe_data_dir)
 
 
 @pytest.fixture(scope="session", autouse=True)
