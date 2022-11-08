@@ -632,7 +632,7 @@ class RVT(RV):
         # Specifies whether the variables must be configured using file NC data
         self._auto_nc_configure = True
 
-        self.nc_index = self.station_idx = 0  # For meteo forcing files
+        self.nc_index = self.meteo_idx = 0  # For meteo forcing files
 
         self.hydro_idx: Tuple = (0,)  # Streamflow observation file station index
         self.gauged_sb_ids: Tuple = (
@@ -760,6 +760,9 @@ class RVT(RV):
         if key in self._var_specs:
             self._var_specs[key].update(value)
             return True
+        # For backward compatibility
+        if key == "nc_index":
+            key = "meteo_idx"
         return super().update(key, value)
 
     def to_rv(self):
@@ -778,7 +781,7 @@ class RVT(RV):
         use_gauge = any(type(cmd) is DataCommand for cmd in self._var_cmds.values())
         if use_gauge:
             gauges = []
-            for idx in np.atleast_1d(self.nc_index):
+            for idx in np.atleast_1d(self.meteo_idx):
                 data_cmds = []
                 for var, cmd in self._var_cmds.items():
                     if cmd and not isinstance(cmd, ObservationDataCommand):
@@ -838,9 +841,7 @@ class RVT(RV):
             d["gauge"] = "\n".join([str(g) for g in gauges])
         else:
             # Construct default grid weights applying equally to all HRUs
-            data = [
-                (hru.hru_id, self.station_idx, 1.0) for hru in self._config.rvh.hrus
-            ]
+            data = [(hru.hru_id, self.meteo_idx, 1.0) for hru in self._config.rvh.hrus]
             gw = self.grid_weights or GridWeightsCommand(
                 number_hrus=len(data),
                 number_grid_cells=self._number_grid_cells,

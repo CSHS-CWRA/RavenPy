@@ -73,7 +73,7 @@ def assimilate(
     model(
         ts,
         parallel=dict(
-            hru_state=hru_states, basin_state=basin_states, nc_index=range(n_members)
+            hru_state=hru_states, basin_state=basin_states, meteo_idx=range(n_members)
         ),
     )
 

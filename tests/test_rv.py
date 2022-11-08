@@ -186,7 +186,7 @@ class TestRVT:
 
     def test_gauges(self):
         rvt = RVT(config=None)
-        rvt.nc_index = [0, 1, 2]
+        rvt.meteo_idx = [0, 1, 2]
         rvt.configure_from_nc_data([get_local_testdata("famine/famine_input.nc")])
         out = rvt.to_rv()
         assert len(re.findall(":Gauge", out)) == 3
