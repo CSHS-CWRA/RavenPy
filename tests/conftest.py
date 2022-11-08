@@ -106,10 +106,6 @@ def populate_testing_data(
             except FileNotFoundError:
                 continue
 
-    if temp_folder is None:
-        # This flag prevents multiple calls from re-attempting to download testing data in the same pytest run
-        _local_cache.joinpath(".data_written").touch()
-
     return
 
 
@@ -157,6 +153,8 @@ def gather_session_data(threadsafe_data_dir, worker_id):
             _default_cache_dir.mkdir(exist_ok=True)
             test_data_being_written = FileLock(_default_cache_dir.joinpath(".lock"))
             with test_data_being_written as fl:
+                # This flag prevents multiple calls from re-attempting to download testing data in the same pytest run
+                _default_cache_dir.joinpath(".data_written").touch()
                 populate_testing_data(branch=MAIN_TESTDATA_BRANCH)
             fl.acquire()
         shutil.copytree(_default_cache_dir, threadsafe_data_dir)
