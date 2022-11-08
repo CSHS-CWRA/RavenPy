@@ -1,3 +1,4 @@
+import os
 import shutil
 from pathlib import Path
 from typing import Optional, Union
@@ -11,7 +12,8 @@ from ravenpy.utilities.testdata import _default_cache_dir
 from ravenpy.utilities.testdata import get_file as _get_file
 from ravenpy.utilities.testdata import get_local_testdata as _get_local_testdata
 
-MAIN_TESTDATA_BRANCH = "master"
+MAIN_TESTDATA_BRANCH = os.getenv("MAIN_TESTDATA_BRANCH", "master")
+SKIP_TEST_DATA = os.getenv("SKIP_TEST_DATA", False)
 
 
 def populate_testing_data(
@@ -148,13 +150,15 @@ def gather_session_data(threadsafe_data_dir, worker_id):
     other workers wait using lockfile. Once the lock is released, all workers will copy data to their local
     threadsafe_data_dir."""
     if worker_id == "master":
-        populate_testing_data(branch=MAIN_TESTDATA_BRANCH)
-    else:
-        _default_cache_dir.mkdir(exist_ok=True)
-        test_data_being_written = FileLock(_default_cache_dir.joinpath(".lock"))
-        with test_data_being_written as fl:
+        if not SKIP_TEST_DATA:
             populate_testing_data(branch=MAIN_TESTDATA_BRANCH)
-        fl.acquire()
+    else:
+        if not SKIP_TEST_DATA:
+            _default_cache_dir.mkdir(exist_ok=True)
+            test_data_being_written = FileLock(_default_cache_dir.joinpath(".lock"))
+            with test_data_being_written as fl:
+                populate_testing_data(branch=MAIN_TESTDATA_BRANCH)
+            fl.acquire()
         shutil.copytree(_default_cache_dir, threadsafe_data_dir)
 
 
