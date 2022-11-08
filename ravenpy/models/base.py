@@ -329,7 +329,7 @@ class Raven:
             self._pdim = "params"
         elif "hru_state" in parallel.keys() or "basin_state" in parallel.keys():
             self._pdim = "state"
-        elif "nc_index" in parallel.keys():
+        elif "meteo_idx" in parallel.keys() or "nc_index" in parallel.keys():
             self._pdim = "nbasins"
         else:
             self._pdim = "pdim"
