@@ -632,7 +632,13 @@ class RVT(RV):
         # Specifies whether the variables must be configured using file NC data
         self._auto_nc_configure = True
 
-        self.nc_index = 0
+        self.nc_index = self.meteo_idx = 0  # For meteo forcing files
+
+        self.hydro_idx: Tuple = (0,)  # Streamflow observation file station index
+        self.gauged_sb_ids: Tuple = (
+            None,
+        )  # Corresponding sub-basin ID. If (None,), will try to guess.
+
         self.grid_weights: Union[GridWeightsCommand, RedirectToFileCommand, None] = None
         self.rain_correction = None
         self.snow_correction = None
@@ -754,6 +760,9 @@ class RVT(RV):
         if key in self._var_specs:
             self._var_specs[key].update(value)
             return True
+        # For backward compatibility
+        if key == "nc_index":
+            key = "meteo_idx"
         return super().update(key, value)
 
     def to_rv(self):
@@ -772,7 +781,7 @@ class RVT(RV):
         use_gauge = any(type(cmd) is DataCommand for cmd in self._var_cmds.values())
         if use_gauge:
             gauges = []
-            for idx in np.atleast_1d(self.nc_index):
+            for idx in np.atleast_1d(self.meteo_idx):
                 data_cmds = []
                 for var, cmd in self._var_cmds.items():
                     if cmd and not isinstance(cmd, ObservationDataCommand):
@@ -812,7 +821,7 @@ class RVT(RV):
                     and self._station_id.shape
                     and len(self._station_id) > idx
                 ):
-                    name = self._station_id[idx]
+                    name = str(self._station_id.values[idx])
                 else:
                     name = f"default_{idx + 1}"
 
@@ -832,7 +841,7 @@ class RVT(RV):
             d["gauge"] = "\n".join([str(g) for g in gauges])
         else:
             # Construct default grid weights applying equally to all HRUs
-            data = [(hru.hru_id, self.nc_index, 1.0) for hru in self._config.rvh.hrus]
+            data = [(hru.hru_id, self.meteo_idx, 1.0) for hru in self._config.rvh.hrus]
             gw = self.grid_weights or GridWeightsCommand(
                 number_hrus=len(data),
                 number_grid_cells=self._number_grid_cells,
@@ -847,24 +856,32 @@ class RVT(RV):
                     cmds.append(cmd)
             d["forcing_list"] = "\n".join(map(str, cmds))
 
-        # QUESTION: is it possible to have (and if yes should we support) more than 1
-        # observation variable? For now we don't.
         for cmd in self._var_cmds.values():
+            observed_data = []
             if isinstance(cmd, ObservationDataCommand) and self._config is not None:
-                # Search for the gauged SB, not sure what should happen when there are
-                # more than one (should it be even supported?)
-                for sb in self._config.rvh.subbasins:
-                    if sb.gauged:
-                        cmd.subbasin_id = sb.subbasin_id
-                        break
-                else:
-                    raise Exception(
-                        "Could not find an outlet subbasin for observation data"
+                if self.gauged_sb_ids == (None,):
+                    # Search for single gauged sub-basin
+                    for sb in self._config.rvh.subbasins:
+                        if sb.gauged:
+                            self.gauged_sb_ids = (sb.subbasin_id,)
+                            break
+                    else:
+                        raise Exception(
+                            "Could not find an outlet subbasin for observation data"
+                        )
+
+                if len(self.gauged_sb_ids) != len(self.hydro_idx):
+                    raise ValueError(
+                        "`gauged_sb_ids` and `hydro_idx` must have the same number of entries."
                     )
-                # Set the :StationxIdx (which starts at 1)
-                cmd.index = self.nc_index + 1
-                d["observed_data"] = cmd  # type: ignore
-                break
+
+                for idx, sb_id in zip(self.hydro_idx, self.gauged_sb_ids):
+                    cmd = deepcopy(cast(ObservationDataCommand, cmd))
+                    cmd.index = idx + 1  # Python index to Raven index
+                    cmd.subbasin_id = sb_id
+                    observed_data.append(cmd)
+
+                d["observed_data"] = "\n".join(map(str, observed_data))  # type: ignore
 
         return super().to_rv(dedent(self.tmpl.lstrip("\n")).format(**d), "RVT")
 
