@@ -770,6 +770,22 @@ class TestGR4JCN:
         z = zipfile.ZipFile(model.outputs["rv_config"])
         assert len(z.filelist) == 10
 
+    def test_multiple_gauge_stations(self):
+        ts = get_local_testdata("famine/famine_input.nc")
+
+        model = GR4JCN()
+        model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
+        model.config.rvi.start_date = dt.datetime(2000, 1, 1)
+        model.config.rvi.end_date = dt.datetime(2002, 1, 1)
+        model.config.update(params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947))
+        model.config.rvt.nc_index = [0, 1, 2]
+        model.config.rvt.hydro_idx = (1,)
+        model(
+            ts=[
+                ts,
+            ]
+        )
+
     @pytest.mark.online
     def test_dap(self):
         """Test Raven with DAP link instead of local netCDF file."""
