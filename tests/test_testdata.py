@@ -13,7 +13,7 @@ class TestRemoteFileAccess:
     branch = "master"
 
     def test_get_file_default_cache(self):
-        file = get_file(name="ostrich-hbv-ec/raven-hbv-salmon.rvi", branch=self.branch)
+        file = get_file(name="ostrich-hbvec/raven-hbvec-salmon.rvi", branch=self.branch)
 
         assert Path(_default_cache_dir).exists()
         assert file.is_file()

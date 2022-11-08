@@ -13,7 +13,7 @@ from ravenpy.utilities.testdata import get_file as _get_file
 from ravenpy.utilities.testdata import get_local_testdata as _get_local_testdata
 
 MAIN_TESTDATA_BRANCH = os.getenv("MAIN_TESTDATA_BRANCH", "master")
-SKIP_TEST_DATA = os.getenv("SKIP_TEST_DATA", False)
+SKIP_TEST_DATA = os.getenv("SKIP_TEST_DATA")
 
 
 def populate_testing_data(
@@ -27,7 +27,7 @@ def populate_testing_data(
 
     models = [
         "gr4j-cemaneige",
-        "hbv-ec",
+        "hbvec",
         "hmets",
         "mohyse",
     ]

@@ -95,8 +95,8 @@ class TestRaven:
         assert len(z.filelist) == 5
 
     def test_hbvec(self, get_local_testdata):
-        rvs = get_local_testdata("raven-hbv-ec/raven-hbv-salmon.rv?")
-        ts = get_local_testdata("raven-hbv-ec/Salmon-River-Near-Prince-George_*.rvt")
+        rvs = get_local_testdata("raven-hbvec/raven-hbvec-salmon.rv?")
+        ts = get_local_testdata("raven-hbvec/Salmon-River-Near-Prince-George_*.rvt")
 
         model = Raven()
         model.configure(rvs)
@@ -326,7 +326,7 @@ class TestOstrich:
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
         )
 
-        ost = get_local_testdata(["ostrich-hbv-ec/*.rv?", "ostrich-hbv-ec/*.t??"])
+        ost = get_local_testdata(["ostrich-hbvec/*.rv?", "ostrich-hbvec/*.t??"])
 
         model = Ostrich()
         model.configure(ost)
