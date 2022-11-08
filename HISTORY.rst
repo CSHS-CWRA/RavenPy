@@ -12,7 +12,9 @@ Breaking changes:
   dictionary keyed by variables' Raven name (e.g. `{"SOIL[0]": 10}).
   This change makes `rvc` files easier to read, and avoids Raven
   warnings regarding 'initial conditions for state variables not in model'.
-* `nc_index` renamed to `meteo_idx` to enable the specification of distinct indices for observed streamflow using `hydro_idx`.
+* `nc_index` renamed to `meteo_idx` to enable the specification of distinct
+  indices for observed streamflow using `hydro_idx`. `nc_index` remains
+  supported for backward compatibility.
 
 New features:
 
