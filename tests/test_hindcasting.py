@@ -61,7 +61,7 @@ class TestHindcasting:
                 "deaccumulate": True,
             },
             tas={"time_shift": -0.25},
-            parallel=dict(nc_index=range(nm)),
+            parallel=dict(meteo_idx=range(nm)),
         )
 
         # The model now has the forecast data generated and it has 10 days of forecasts.

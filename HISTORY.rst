@@ -12,11 +12,15 @@ Breaking changes:
   dictionary keyed by variables' Raven name (e.g. `{"SOIL[0]": 10}).
   This change makes `rvc` files easier to read, and avoids Raven
   warnings regarding 'initial conditions for state variables not in model'.
-
+* `nc_index` renamed to `meteo_idx` to enable the specification of distinct
+  indices for observed streamflow using `hydro_idx`. `nc_index` remains
+  supported for backward compatibility.
 
 New features:
 
-* Automatically infer scale and offset `:LinearTransform` parameters from netCDF file metadata.
+* Add support for hydrometric gauge data distinct from meteorological input data. Configuration parameter `hydro_idx` identifies the gauge station index, while `meteo_idx` (previously `nc_index`) stands for the meteo station index.
+* Add support for multiple gauge observations. If a list of `hydro_idx` is provided, it must be accompanied with a list of corresponding subbasin identifiers (`gauged_sb_ids`) of the same length.
+* Automatically infer scale and offset `:LinearTransform` parameters from netCDF file metadata, so that input data units are automatically converted to Raven-compliant units whenever possible.
 * Add support for the command `:RedirectToFile`. Tested for grid weights only.
 * Add support for the command `:WriteForcingFunctions`.
 * Add support for the command `:CustomOutput`.
