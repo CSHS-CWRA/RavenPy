@@ -32,6 +32,8 @@ def populate_testing_data(
 
     data_entries = list()
     entries = [
+        "ostrich-{model}/OstRandomNumbers.txt",
+        "ostrich-{model}/ostIn.txt",
         "ostrich-{model}/raven-{model0}-salmon.rvc",
         "ostrich-{model}/raven-{model0}-salmon.rvc.tpl",
         "ostrich-{model}/raven-{model0}-salmon.rvh",
@@ -65,7 +67,6 @@ def populate_testing_data(
             "nasa/Mars_MGS_MOLA_DEM_georeferenced_region_compressed.tiff",
             "nrcan/NRCAN_1971-1972_subset.nc",
             "nrcan/NRCAN_2006-2007_subset.nc",
-            "ostrich-gr4j-cemaneige/OstRandomNumbers.txt",
             "polygons/mars.geojson",
             "polygons/mars.zip",
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_2d.nc",
