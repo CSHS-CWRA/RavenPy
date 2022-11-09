@@ -1,11 +1,11 @@
 """
 Tools for searching for and acquiring test data.
 """
+import hashlib
 import logging
 import os
 import re
 import warnings
-from hashlib import md5
 from pathlib import Path
 from shutil import copy
 from typing import List, Optional, Sequence, Union
@@ -30,7 +30,7 @@ __all__ = [
 
 
 def file_md5_checksum(fname):
-    hash_md5 = md5()
+    hash_md5 = hashlib.md5()
     with open(fname, "rb") as f:
         hash_md5.update(f.read())
     return hash_md5.hexdigest()
