@@ -10,6 +10,7 @@ Breaking changes
 * HRUState's signature has changed. Instead of passing variables as keyword arguments (e.g. `soil0=10.`), it now expects a `state` dictionary keyed by variables' Raven name (e.g. `{"SOIL[0]": 10}). This change makes `rvc` files easier to read, and avoids Raven warnings regarding 'initial conditions for state variables not in model'.
 * `nc_index` renamed to `meteo_idx` to enable the specification of distinct indices for observed streamflow using `hydro_idx`. `nc_index` remains supported for backward compatibility.
 * The distributed python testing library, `pytest-xdist` is now a testing and development requirement.
+* `xarray` has been pinned below "2022.11.0" due to incompatibility with `climpred=="2.2.0"`.
 
 New features
 ^^^^^^^^^^^^
@@ -29,7 +30,6 @@ New features
   - In order to skip the data collection step: `export SKIP_TEST_DATA=true`
   - In order to target a specific branch of `Ouranosinc/raven-testdata` for data retrieval: `export MAIN_TESTDATA_BRANCH="my_branch"`
   - In order to fetch testing data using the user-set raven-testdata branch, pytest fixtures for `get_file` and `get_local_testdata` are now available for convenience
-
 
 0.8.1 (2022-10-26)
 ------------------
