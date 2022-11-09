@@ -19,7 +19,7 @@ dependencies:
   - hvplot
   - lxml
   - matplotlib
-  - netCDF4
+  - netCDF4 <1.6
   - numpy
   - owslib >=0.24.1
   - pandas
