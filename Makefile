@@ -48,6 +48,7 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr .pytest_cache
 
 lint/black: ## check style with black
+	flake8 ravenpy
 	black --check ravenpy tests
 
 lint: lint/black ## check style
