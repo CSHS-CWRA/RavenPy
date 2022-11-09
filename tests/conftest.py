@@ -154,8 +154,8 @@ def gather_session_data(threadsafe_data_dir, worker_id):
             test_data_being_written = FileLock(_default_cache_dir.joinpath(".lock"))
             with test_data_being_written as fl:
                 # This flag prevents multiple calls from re-attempting to download testing data in the same pytest run
-                _default_cache_dir.joinpath(".data_written").touch()
                 populate_testing_data(branch=MAIN_TESTDATA_BRANCH)
+                _default_cache_dir.joinpath(".data_written").touch()
             fl.acquire()
         shutil.copytree(_default_cache_dir, threadsafe_data_dir)
 
