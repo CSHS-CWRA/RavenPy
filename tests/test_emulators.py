@@ -792,8 +792,8 @@ class TestGR4JCN:
         z = zipfile.ZipFile(model.outputs["rv_config"])
         assert len(z.filelist) == 10
 
-    def test_multiple_gauge_stations(self):
-        ts = get_local_testdata("famine/famine_input.nc")
+    def test_multiple_gauge_stations(self, get_file):
+        ts = get_file("famine/famine_input.nc")
 
         model = GR4JCN()
         model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
