@@ -40,7 +40,7 @@ requirements = [
     "spotpy",
     "statsmodels",
     "wheel",
-    "xarray",
+    "xarray<2022.11.0",
     "xclim>=0.39.0",
     "xskillscore",
 ]

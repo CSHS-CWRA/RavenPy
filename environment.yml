@@ -37,7 +37,7 @@ dependencies:
   - shapely
   - spotpy
   - statsmodels
-  - xarray
+  - xarray <2022.11.0
   - xclim >=0.39
   - xskillscore
   - wheel
