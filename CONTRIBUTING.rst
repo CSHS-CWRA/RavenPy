@@ -68,7 +68,7 @@ Ready to contribute? Here's how to set up `ravenpy` for local development.
 
     $ mkvirtualenv ravenpy
     $ cd ravenpy/
-    $ pip install -e .
+    $ pip install -e ".[dev]"
 
 4. To ensure a consistent style, please install the pre-commit hooks to your repo::
 
@@ -90,7 +90,7 @@ Ready to contribute? Here's how to set up `ravenpy` for local development.
 
     $ flake8 ravenpy tests
     $ black --check ravenpy tests
-    $ python setup.py test or pytest
+    $ python setup.py test  # or `pytest`
     $ tox
 
    To get flake8, black, and tox, just pip install them into your virtualenv.
