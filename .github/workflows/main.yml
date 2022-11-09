@@ -90,7 +90,6 @@ jobs:
       - name: Test RavenPy
         shell: bash -l {0}
         run: |
-          pip install -e ".[dev]"
           pytest --cov ravenpy
       - name: Report coverage
         shell: bash -l {0}
