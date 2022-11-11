@@ -7,11 +7,13 @@ from pydantic import Field
 from ravenpy.new_config.base import RV, Command, RecordCommand
 from ravenpy.new_config.commands import (
     HRU,
+    PL,
     ChannelProfile,
     CustomOutput,
     Data,
     EvaluationPeriod,
     HRUsCommand,
+    LandUseParameterList,
     LinearTransform,
     RainSnowTransition,
     ReadFromNetCDF,
@@ -164,4 +166,22 @@ def no_test_data():
         data: Sequence[Data] = Field(None, alias="Data")
 
     t = TestRV(Data=(Data(),))
+    t.to_rv()
+
+
+def test_land_use_parameter_list():
+    class TestRV(RV):
+        land_use_parameter_list: LandUseParameterList = Field(
+            None, alias="LandUseParameterList"
+        )
+
+    t = TestRV(
+        LandUseParameterList=LandUseParameterList(
+            names=["MELT_FACTOR", "AET_COEFF", "FOREST_SPARSENESS", "DD_MELT_TEMP"],
+            records=[
+                PL(name="DEFAULT", vals=[1, 2, 3, 4]),
+                PL(name="PATATE", vals=[10, 2, 3, 4]),
+            ],
+        ),
+    )
     t.to_rv()
