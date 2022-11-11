@@ -4,7 +4,7 @@ import re
 from dataclasses import asdict, field
 from itertools import chain
 from pathlib import Path
-from textwrap import dedent
+from textwrap import dedent, indent
 from typing import (
     ClassVar,
     Dict,
@@ -25,6 +25,21 @@ from .base import Command, ParameterList, ParameterListCommand, RecordCommand
 
 INDENT = " " * 4
 VALUE_PADDING = 10
+
+
+# Validators
+def reorder_time(cls, v):
+    """Return dimensions with time as the last dimension."""
+    dims = list(v)
+    for time_dim in ("t", "time"):
+        if time_dim in dims:
+            dims.remove(time_dim)
+            dims.append(time_dim)
+            break
+    else:
+        raise ValidationError("No time dimension found in dim_names_nc tuple.")
+
+    return tuple(dims)
 
 
 class SoilModel(Command):
@@ -146,11 +161,11 @@ class SubBasins(RecordCommand):
     """SubBasins command (RVH)."""
 
     record = SubBasin
-    template = """
+    _template = """
         :SubBasins
           :Attributes   ID NAME DOWNSTREAM_ID PROFILE REACH_LENGTH  GAUGED
           :Units      none none          none    none           km    none
-          {records}
+        {_commands}
         :EndSubBasins
     """
 
@@ -189,7 +204,7 @@ class HRUsCommand(RecordCommand):
         :HRUs
           :Attributes      AREA  ELEVATION       LATITUDE      LONGITUDE BASIN_ID       LAND_USE_CLASS            VEG_CLASS      SOIL_PROFILE  AQUIFER_PROFILE TERRAIN_CLASS      SLOPE     ASPECT
           :Units            km2          m            deg            deg     none                  none                none              none             none          none        deg       degN
-          {records}
+        {_commands}
         :EndHRUs
         """
 
@@ -243,7 +258,6 @@ class SubBasinGroup(Command):
         return dedent(template).format(**d)
 
 
-@dataclass
 class SBGroupPropertyMultiplierCommand(Command):
 
     group_name: str
@@ -285,187 +299,34 @@ class ChannelProfile(Command):
         return dedent(template).format(**d)
 
 
-class ReadFromNetCDF(Command):
-
-    file_name_nc: Union[HttpUrl, Path] = Field(..., alias="FileNameNC")
-    var_name_nc: str = Field(..., alias="VarNameNC")
-    dim_names_nc: Sequence[str] = Field(..., alias="DimNamesNC")
-    station_idx: int = Field(1, alias="StationIdx")
-    time_shift: int = Field(None, alias="TimeShift")
-    scale: float = 1
-    offset: float = 0
-    linear_transform: LinearTransform = Field(None, alias="LinearTransform")
-    deaccumulate: bool = Field(None, alias="Deaccumulate")
-
-    def __init__(self, **data):
-        super().__init__(**data)
-        if self.linear_transform is None:
-            self.linear_transform = LinearTransform(
-                scale=self.scale, offset=self.offset
-            )
-
-    @validator("dim_names_nc")
-    def reorder_time(cls, v):
-        """Return dimensions with time as the last dimension."""
-        dims = list(v)
-        for time_dim in ("t", "time"):
-            if time_dim in dims:
-                dims.remove(time_dim)
-                dims.append(time_dim)
-                break
-        else:
-            raise ValidationError("No time dimension found in dim_names_nc tuple.")
-
-        return tuple(dims)
-
-
-# class BaseData(Command):
-#     """Do not use directly. Subclass."""
-#
-#     name: str = ""
-#     units: str = ""
-#     data_type: str = ""
-#     # Can be a url or a path; note that the order "str, Path" is important here because
-#     # otherwise pydantic would try to coerce a string into a Path, which is a problem for a url
-#     # because it messes with slashes; so a Path will be one only when explicitly specified
-#     file_name_nc: Union[HttpUrl, Path] = ""
-#     var_name_nc: str = ""
-#     dim_names_nc: Tuple[str, ...] = ("time",)
-#     time_shift: RavenValue = Field(None, alias="TimeShift") # in days
-#     scale: float = 1
-#     offset: float = 0
-#     deaccumulate: RavenBool = Field(None, alias="Deaccumulate")
-#     latitude_var_name_nc: str = ""
-#     longitude_var_name_nc: str = ""
-#     elevation_var_name_nc: str = ""
-#
-#     @property
-#     def dimensions(self):
-#         """Return dimensions with time as the last dimension."""
-#         dims = list(self.dim_names_nc)
-#         for time_dim in ("t", "time"):
-#             if time_dim in dims:
-#                 dims.remove(time_dim)
-#                 dims.append(time_dim)
-#                 break
-#         else:
-#             raise Exception("No time dimension found in dim_names_nc tuple")
-#         return " ".join(dims)
-#
-#     def asdict(self):
-#         d = self.dict()
-#         d["dimensions"] = self.dimensions
-#         d["linear_transform"] = LinearTransform(scale=self.scale, offset=self.offset).to_rv()
-#         d["deaccumulate"] = self.deaccumulate.to_rv("Deaccumulate")
-#         d["time_shift"] = self.time_shift.to_rv("TimeShift")
-#         if isinstance(d["file_name_nc"], Path):
-#             # We can use the name of the file (as opposed to the full path)
-#             # because we have a symlink to it in the execution folder
-#             d["file_name_nc"] = d["file_name_nc"].name
-#         return d
-
-
-class Data(Command):
-    data_type: str = ""
-    site: str = ""
-    units: str = ""
-    read_from_netcdf: ReadFromNetCDF = Field(..., alias="ReadFromNetCDF")
-
-    def to_rv(self):
-        template = """
-            :Data {data_type} {site} {units}
-                :ReadFromNetCDF
-                    :FileNameNC      {file_name_nc}
-                    :VarNameNC       {var_name_nc}
-                    :DimNamesNC      {dimensions}
-                    :StationIdx      {index}
-                    {time_shift}{linear_transform}{deaccumulate}
-                :EndReadFromNetCDF
-            :EndData
-            """
-        d = self.asdict()
-        return dedent(template).format(**d)
-
-
-class Gauge(Command):
-    name: str = "default"
-    latitude: float = 0
-    longitude: float = 0
-    elevation: float = 0
-
-    # Accept strings to embed parameter names into Ostrich templates
-    rain_correction: float = Field(None, alias="RainCorrection")
-    snow_correction: float = Field(None, alias="SnowCorrection")
-
-    monthly_ave_evaporation: Tuple[float, ...] = ()
-    monthly_ave_temperature: Tuple[float, ...] = ()
-
-    data_cmds: Tuple[Data, ...] = ()
-
-    def to_rv(self):
-        template = """
-        :Gauge {name}
-          :Latitude {latitude}
-          :Longitude {longitude}
-          :Elevation {elevation}
-          {rain_correction}{snow_correction}{monthly_ave_evaporation}{monthly_ave_temperature}
-          {data_cmds}
-        :EndGauge
-        """
-
-        d = self.dict()
-        d["rain_correction"] = (
-            f":RainCorrection {self.rain_correction}\n" if self.rain_correction else ""
-        )
-        d["snow_correction"] = (
-            f":SnowCorrection {self.snow_correction}\n" if self.snow_correction else ""
-        )
-        if self.monthly_ave_evaporation:
-            evap_data = " ".join(map(str, self.monthly_ave_evaporation))
-            d["monthly_ave_evaporation"] = f":MonthlyAveEvaporation {evap_data}\n"
-        else:
-            d["monthly_ave_evaporation"] = ""
-        if self.monthly_ave_temperature:
-            temp_data = " ".join(map(str, self.monthly_ave_temperature))
-            d["monthly_ave_temperature"] = f":MonthlyAveTemperature {temp_data}\n"
-        else:
-            d["monthly_ave_temperature"] = ""
-        d["data_cmds"] = "\n\n".join(map(str, self.data_cmds))  # type: ignore
-        return dedent(template).format(**d)
-
-
-class ObservationDataCommand(Data):
-    subbasin_id: int = 1
-
-    def to_rv(self):
-        template = """
-        :ObservationData {data_type} {subbasin_id} {units}
-            :ReadFromNetCDF
-                :FileNameNC      {file_name_nc}
-                :VarNameNC       {var_name_nc}
-                :DimNamesNC      {dimensions}
-                :StationIdx      {index}
-                {time_shift}{linear_transform}{deaccumulate}
-            :EndReadFromNetCDF
-        :EndObservationData
-        """
-        d = self.asdict()
-        return dedent(template).format(**d)
-
-
-class GridWeightsCommand(Command):
+class GridWeights(Command):
     """GridWeights command.
 
-    Important note: this command can be embedded in both a `GriddedForcingCommand`
-    or a `StationForcingCommand`.
+    Important note: this command can be embedded in both a `GriddedForcing`
+    or a `StationForcing`.
 
     The default is to have a single cell that covers an entire single HRU, with a
     weight of 1.
     """
 
-    number_hrus: int = 1
-    number_grid_cells: int = 1
+    number_hrus: int = Field(1, alias="NumberHRUs")
+    number_grid_cells: int = Field(1, alias="NumberGridCells")
     data: Tuple[Tuple[int, int, float], ...] = ((1, 0, 1.0),)
+
+    data_str: str = None  # Will be created in the __init__
+
+    _template = """
+            :GridWeights
+            {_commands}
+            {data_str}
+            :EndGridWeights
+            """
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        self.data_str = indent(
+            "\n".join(f"{p[0]} {p[1]} {p[2]}" for p in self.data), "  "
+        )
 
     @classmethod
     def parse(cls, s):
@@ -484,22 +345,8 @@ class GridWeightsCommand(Command):
             number_hrus=int(n_hrus), number_grid_cells=int(n_grid_cells), data=data
         )
 
-    def to_rv(self, indent_level=0):
-        template = """
-        {indent}:GridWeights
-        {indent}    :NumberHRUs {number_hrus}
-        {indent}    :NumberGridCells {number_grid_cells}
-        {data}
-        {indent}:EndGridWeights
-        """
-        indent = INDENT * indent_level
-        d = asdict(self)
-        d["indent"] = indent
-        d["data"] = "\n".join(f"{indent}    {p[0]} {p[1]} {p[2]}" for p in self.data)
-        return dedent(template).strip().format(**d)
 
-
-class RedirectToFileCommand(Command):
+class RedirectToFile(Command):
     """RedirectToFile command (RVT).
 
     For the moment, this command can only be used in the context of a `GriddedForcingCommand`
@@ -509,71 +356,109 @@ class RedirectToFileCommand(Command):
 
     path: Path
 
-    def to_rv(self, indent_level=0):
-        template = "{indent}:RedirectToFile {path}"
-        indent = INDENT * indent_level
-        d = asdict(self)
-        d["indent"] = indent
-        # We can use the name of the file (as opposed to the full path)
-        # because we have a symlink to it in the execution folder
-        d["path"] = d["path"].name
-        return template.format(**d)
+    _template = ":{_cmd} {path}"
+
+    @validator("path")
+    def check_exists(cls, v):
+        if not v.exists():
+            raise ValidationError(f"File not found {v}")
+        return v
 
 
-class GriddedForcingCommand(BaseData):
+class ReadFromNetCDF(Command):
+    # TODO: When encoding Path, return only path.name
+    file_name_nc: Union[HttpUrl, Path] = Field(..., alias="FileNameNC")
+    var_name_nc: str = Field(..., alias="VarNameNC")
+    dim_names_nc: Sequence[str] = Field(..., alias="DimNamesNC")
+    latitude_var_name_nc: str = Field(None, alias="LatitudeVarNameNC")
+    longitude_var_name_nc: str = Field(None, alias="LonitudeVarNameNC")
+    elevation_var_name_nc: str = Field(None, alias="ElevationVarNameNC")
+
+    station_idx: int = Field(1, alias="StationIdx")
+    time_shift: int = Field(None, alias="TimeShift")
+    scale: float = 1
+    offset: float = 0
+    linear_transform: LinearTransform = Field(None, alias="LinearTransform")
+    deaccumulate: bool = Field(None, alias="Deaccumulate")
+
+    _reorder_time = validator("dim_names_nc", allow_reuse=True)(reorder_time)
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        if self.linear_transform is None:
+            self.linear_transform = LinearTransform(
+                scale=self.scale, offset=self.offset
+            )
+
+
+class GriddedForcing(ReadFromNetCDF):
     """GriddedForcing command (RVT)."""
 
-    dim_names_nc: Tuple[str, str, str] = ("x", "y", "t")
-    grid_weights: Union[
-        GridWeightsCommand, RedirectToFileCommand
-    ] = GridWeightsCommand()
+    name: str = ""
+    forcing_type: str = Field(None, alias="ForcingType")
+    grid_weights: Union[GridWeights, RedirectToFile] = Field(
+        GridWeights(), alias="GridWeights"
+    )
 
-    # :LatitudeVarNameNC {latitude_var_name_nc}
-    # :LongitudeVarNameNC {longitude_var_name_nc}
-    # :ElevationVarNameNC {elevation_var_name_nc}
-
-    def to_rv(self):
-        template = """
-            :GriddedForcing {name}
-                :ForcingType {data_type}
-                :FileNameNC {file_name_nc}
-                :VarNameNC {var_name_nc}
-                :DimNamesNC {dimensions}
-                {time_shift}{linear_transform}{deaccumulate}
-            {grid_weights}
-            :EndGriddedForcing
-            """
-        d = self.asdict()
-        d["grid_weights"] = self.grid_weights.to_rv(indent_level=1)
-        return dedent(template).format(**d)
+    _template = """
+    :{_cmd} {name}
+    {_commands}
+    :End{_cmd}
+    """
 
 
-class StationForcingCommand(BaseData):
+class StationForcing(GriddedForcing):
     """StationForcing command (RVT)."""
 
-    dim_names_nc: Tuple[str, str] = ("station", "time")
-    grid_weights: Union[
-        GridWeightsCommand, RedirectToFileCommand
-    ] = GridWeightsCommand()
 
-    # :LatitudeVarNameNC {latitude_var_name_nc}
-    # :LongitudeVarNameNC {longitude_var_name_nc}
-    # :ElevationVarNameNC {elevation_var_name_nc}
+class Data(Command):
+    data_type: str = ""
+    units: str = ""
+    read_from_netcdf: ReadFromNetCDF = Field(..., alias="ReadFromNetCDF")
 
-    def to_rv(self):
-        template = """
-            :StationForcing {name} {units}
-                :ForcingType {data_type}
-                :FileNameNC {file_name_nc}
-                :VarNameNC {var_name_nc}
-                :DimNamesNC {dimensions}
-                {time_shift}{linear_transform}{deaccumulate}
-            {grid_weights}
-            :EndStationForcing
-            """
-        d = self.asdict()
-        d["grid_weights"] = self.grid_weights.to_rv(indent_level=1)
-        return dedent(template).format(**d)
+    _template: str = """
+                :{_cmd} {data_type} {units}
+                {_commands}
+                :End{_cmd}
+                """
+
+
+class Gauge(Command):
+    name: str = "default"
+    latitude: float = Field(0, alias="Latitude")
+    longitude: float = Field(0, alias="Lonitude")
+    elevation: float = Field(0, alias="Elevation")
+
+    # Accept strings to embed parameter names into Ostrich templates
+    rain_correction: float = Field(None, alias="RainCorrection")
+    snow_correction: float = Field(None, alias="SnowCorrection")
+
+    monthly_ave_evaporation: Tuple[float] = Field(None, alias="MonthlyAveEvaporation")
+    monthly_ave_temperature: Tuple[float] = Field(None, alias="MonthlyAveTemperature")
+
+    data: Sequence[Data] = Field(None, alias="Data")
+
+    _template = """
+        :Gauge {name}
+        {_commands}
+        :EndGauge
+        """
+
+    @validator("monthly_ave_evaporation", "monthly_ave_temperature")
+    def confirm_monthly(cls, v):
+        if len(v) != 12:
+            raise ValidationError("One value per month needed.")
+        return v
+
+
+class ObservationData(Data):
+    uid: int = 1  # Basin ID or HRU ID
+
+    _template = """
+        :ObservationData {data_type} {uid} {units}
+        {_commands}
+        :EndObservationData
+        """
 
 
 # class HRUStateVariableTableCommand(Command):
@@ -738,9 +623,9 @@ class VegetationClassesCommand(RecordCommand):
     record = VegetationClasses
     template = """
     :VegetationClasses
-        :Attributes     ,        MAX_HT,       MAX_LAI, MAX_LEAF_COND
-        :Units          ,             m,          none,      mm_per_s
-        {records}
+      :Attributes     ,        MAX_HT,       MAX_LAI, MAX_LEAF_COND
+      :Units          ,             m,          none,      mm_per_s
+    {_commands}
     :EndVegetationClasses
     """
 
@@ -760,11 +645,11 @@ class LandUseClass(Command):
 
 class LandUseClassesCommand(RecordCommand):
     record = LandUseClass
-    template = """
+    _template = """
         :LandUseClasses
-            :Attributes     ,IMPERMEABLE_FRAC, FOREST_COVERAGE
-            :Units          ,           fract,           fract
-            {records}
+          :Attributes     ,IMPERMEABLE_FRAC, FOREST_COVERAGE
+          :Units          ,           fract,           fract
+        {_commands}
         :EndLandUseClasses
         """
 

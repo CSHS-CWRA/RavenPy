@@ -1,4 +1,5 @@
 import datetime as dt
+from pathlib import Path
 from textwrap import dedent
 from typing import Sequence
 
@@ -12,14 +13,20 @@ from ravenpy.new_config.commands import (
     CustomOutput,
     Data,
     EvaluationPeriod,
+    Gauge,
+    GriddedForcing,
+    GridWeights,
     HRUsCommand,
     LandUseParameterList,
     LinearTransform,
+    ObservationData,
     RainSnowTransition,
     ReadFromNetCDF,
+    RedirectToFile,
     Reservoir,
     SoilProfile,
     SoilProfiles,
+    StationForcing,
     SubBasin,
     SubBasinGroup,
     SubBasins,
@@ -31,7 +38,7 @@ def test_linear_transform():
         lt: LinearTransform = Field(None, alias="LinearTransform")
 
     t = TestRV(LinearTransform={"scale": 2, "offset": 5})
-    assert t.to_rv() == ":LinearTransform 2.000000000000000 5.000000000000000\n"
+    assert t.commands() == ":LinearTransform 2.000000000000000 5.000000000000000\n"
 
 
 def test_rain_snow_transition():
@@ -39,7 +46,7 @@ def test_rain_snow_transition():
         rst: RainSnowTransition = Field(None, alias="RainSnowTransition")
 
     t = TestRV(RainSnowTransition={"temp": 2, "delta": 5})
-    assert t.to_rv() == ":RainSnowTransition 2.0 5.0\n"
+    assert t.commands() == ":RainSnowTransition 2.0 5.0\n"
 
 
 def test_evaluation_period():
@@ -54,7 +61,7 @@ def test_evaluation_period():
         }
     )
 
-    assert t.to_rv() == ":EvaluationPeriod WET 2001-01-01 2002-01-01"
+    assert t.commands() == ":EvaluationPeriod WET 2001-01-01 2002-01-01"
 
 
 def test_custom_output():
@@ -70,7 +77,7 @@ def test_custom_output():
         }
     )
 
-    assert t.to_rv() == ":CustomOutput DAILY AVERAGE RAIN BY_HRU \n"
+    assert t.commands() == ":CustomOutput DAILY AVERAGE RAIN BY_HRU \n"
 
 
 def test_soil_profiles():
@@ -84,10 +91,10 @@ def test_soil_profiles():
             ),
         )
     )
-    assert dedent(t.to_rv()) == dedent(
+    assert dedent(t.commands()) == dedent(
         """
         :SoilProfiles
-            DEFAULT         ,   2,        FAST,  10.0,        SLOW, 100.0
+          DEFAULT         ,   2,        FAST,  10.0,        SLOW, 100.0
         :EndSoilProfiles
         """
     )
@@ -110,7 +117,7 @@ def test_subbasins():
           1          sub_001    -1         None       ZERO-      1
         :EndSubBasins
         """
-    for (a, e) in zip(t.to_rv().splitlines(), expected.splitlines()):
+    for (a, e) in zip(t.commands().splitlines(), expected.splitlines()):
         assert a.strip() == e.strip()
 
 
@@ -123,7 +130,7 @@ def test_hrus():
             HRU(),
         ]
     )
-    t.to_rv()
+    t.commands()
 
 
 def test_reservoir():
@@ -131,7 +138,7 @@ def test_reservoir():
         r: Sequence[Reservoir] = Field(None, alias="Reservoir")
 
     t = TestRV(Reservoir=[Reservoir()])
-    assert t.to_rv().strip().startswith(":Reservoir")
+    assert t.commands().strip().startswith(":Reservoir")
 
 
 def test_subbasin_group():
@@ -139,7 +146,7 @@ def test_subbasin_group():
         group: SubBasinGroup = Field(None, alias="SubBasinGroup")
 
     t = TestRV(SubBasinGroup=SubBasinGroup(name="Group", sb_ids=[1, 2, 3]))
-    assert dedent(t.to_rv()) == dedent(
+    assert dedent(t.commands()) == dedent(
         """
         :SubBasinGroup Group
           1, 2, 3
@@ -153,20 +160,77 @@ def test_channel_profile():
         cp: Sequence[ChannelProfile] = Field(None, alias="ChannelProfile")
 
     t = TestRV(ChannelProfile=[ChannelProfile()])
-    t.to_rv()
+    t.commands()
 
 
 def test_read_from_netcdf():
     nc = ReadFromNetCDF(FileNameNC="test.nc", VarNameNC="pr", DimNamesNC=("time",))
-    print(nc.to_rv())
+    print(nc.commands())
 
 
-def no_test_data():
+def test_data():
     class TestRV(RV):
         data: Sequence[Data] = Field(None, alias="Data")
 
-    t = TestRV(Data=(Data(),))
+    nc = ReadFromNetCDF(FileNameNC="test.nc", VarNameNC="pr", DimNamesNC=("time",))
+    t = TestRV(
+        Data=[
+            Data(ReadFromNetCDF=nc),
+        ]
+    )
     t.to_rv()
+
+
+def test_observation_data():
+    class TestRV(RV):
+        data: Sequence[ObservationData] = Field(None, alias="ObservationData")
+
+    nc = ReadFromNetCDF(FileNameNC="test.nc", VarNameNC="pr", DimNamesNC=("time",))
+    t = TestRV(
+        ObservationData=[
+            ObservationData(uid=12, ReadFromNetCDF=nc),
+        ]
+    )
+    t.to_rv()
+
+
+def test_gauge():
+    class TestRV(RV):
+        gauge: Gauge = Field(None, alias="Gauge")
+
+    nc = ReadFromNetCDF(FileNameNC="test.nc", VarNameNC="pr", DimNamesNC=("time",))
+    t = TestRV(
+        Gauge=Gauge(name="my_gauge", Latitude=56, Data=[Data(ReadFromNetCDF=nc)])
+    )
+    t.to_rv()
+
+
+def test_grid_weights():
+    class TestRV(RV):
+        gw: GridWeights = Field(None, alias="GW")
+
+    t = TestRV(
+        GW=GridWeights(
+            NumberHRUs=3,
+            NumberGridCells=1,
+            data=((1, 0, 1.0), (2, 0, 1.0), (3, 0, 1.0)),
+        )
+    )
+    print(t.to_rv())
+
+
+def test_redirect_to_file(tmpdir):
+    gw = GridWeights()
+    gw_path = tmpdir / Path("grid_weights.rvt")
+    gw_path.write_text(gw.to_rv() + "\n", "utf8")
+    rtf = RedirectToFile(path=gw_path)
+    rtf.to_rv()
+
+
+def test_gridded_forcing():
+    nc = ReadFromNetCDF(FileNameNC="test.nc", VarNameNC="pr", DimNamesNC=("time",))
+    gf = GriddedForcing(ReadFromNetCDF=nc)
+    print(gf.to_rv())
 
 
 def test_land_use_parameter_list():

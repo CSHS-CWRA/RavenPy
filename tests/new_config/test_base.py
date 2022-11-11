@@ -15,7 +15,7 @@ class TestRV:
             so_true: bool = Field(None, alias="SuppressOutput")
             so_false: bool = Field(None, alias="ThisIsFalse")
 
-        assert Test(SuppressOutput=True).content() == ":SuppressOutput\n"
+        assert Test(SuppressOutput=True).commands() == ":SuppressOutput\n"
         assert dedent(Test(SuppressOutput=True).to_rv()) == dedent(
             """
             :Test
@@ -29,9 +29,9 @@ class TestRV:
             avg: float = Field(None, alias="AvgAnnualSnow")
             start_date: dt.datetime = Field(None, alias="StartDate")
 
-        assert Test(AvgAnnualSnow=45.4).content() == ":AvgAnnualSnow        45.4\n"
+        assert Test(AvgAnnualSnow=45.4).commands() == ":AvgAnnualSnow        45.4\n"
         assert (
-            Test(StartDate=dt.datetime(2000, 1, 1)).content()
+            Test(StartDate=dt.datetime(2000, 1, 1)).commands()
             == ":StartDate            2000-01-01 00:00:00\n"
         )
 
@@ -41,7 +41,7 @@ class TestRV:
 
         t = Test(GlobalParameters={"AvgAnnualSnow": 34, "PrecipitationLapseRate": 12.0})
         assert (
-            t.content()
+            t.commands()
             == ":GlobalParameters AvgAnnualSnow 34\n:GlobalParameters PrecipitationLapseRate 12.0"
         )
 
@@ -53,8 +53,8 @@ class TestRV:
         class Test(RV):
             opt: Opt = Field(None, alias="Option")
 
-        assert Test(Option="A").content() == ":Option               A\n"
-        assert Test(Option=Opt.a).content() == ":Option               A\n"
+        assert Test(Option="A").commands() == ":Option               A\n"
+        assert Test(Option=Opt.a).commands() == ":Option               A\n"
 
     def test_option_list(self):
         class Opt(Enum):
@@ -64,7 +64,7 @@ class TestRV:
         class Test(RV):
             opts: Sequence[Opt] = Field(None, alias="Options")
 
-        assert Test(Options=["A", "B"]).content() == ":Options              A, B\n"
+        assert Test(Options=["A", "B"]).commands() == ":Options              A, B\n"
 
         with pytest.raises(ValidationError):
             assert Test(Options=["C", "D"])
@@ -76,4 +76,7 @@ def test_command():
         b: bool = Field(None, alias="Bool")
 
     t = Test(Alias="spam", Bool=True)
-    assert t.encode() == {"Alias": ":Alias                spam\n", "Bool": ":Bool\n"}
+    assert t.command_json() == {
+        "Alias": ":Alias                spam\n",
+        "Bool": ":Bool\n",
+    }

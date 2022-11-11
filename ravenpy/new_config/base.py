@@ -1,6 +1,6 @@
 import datetime as dt
 from enum import Enum
-from textwrap import dedent
+from textwrap import dedent, indent
 from typing import Any, ClassVar, Dict, List, Literal, Sequence, Tuple, TypeVar, Union
 
 import pytest
@@ -42,32 +42,38 @@ class Command(BaseModel):
     Base class for Raven commands.
     """
 
+    _template: str = """
+            :{_cmd}
+            {_commands}
+            :End{_cmd}
+            """
+
     def __str__(self):
         return self.to_rv()
 
-    def fields(self):
+    def command_objs(self):
+        """Return attributes that are Raven commands."""
         d = {}
         for key, field in self.__fields__.items():
             if field.has_alias and self.__dict__[key] is not None:
                 d[field.alias] = self.__dict__[key]
         return d
 
-    def encode(self):
-        return encoder(self.fields())
+    def command_json(self):
+        """Return dictionary of Raven commands."""
+        return encoder(self.command_objs())
 
-    def content(self):
-        return "".join(self.encode().values())
+    def commands(self):
+        """String of Raven commands."""
+        return "".join(self.command_json().values())
 
     def to_rv(self):
-        template = """
-                :{cmd}
-                  {records}
-                :End{cmd}
-                """
-        return dedent(template).format(
-            records="\n  ".join(self.encode().values()).strip(),
-            cmd=self.__class__.__name__,
-        )
+        """Return Raven configuration string."""
+        d = self.dict()
+        d.update(self.command_json())
+        d["_cmd"] = self.__class__.__name__
+        d["_commands"] = indent(self.commands().strip(), "  ")
+        return dedent(self._template).format(**d)
 
     class Config:
         extra = Extra.forbid
@@ -75,10 +81,10 @@ class Command(BaseModel):
 
 class RecordCommand(tuple):
     record: TypeVar
-    template: str = """
-        :{cmd}
-            {records}
-        :End{cmd}
+    _template: str = """
+        :{_cmd}
+        {_commands}
+        :End{_cmd}
         """
 
     class Config:
@@ -96,9 +102,11 @@ class RecordCommand(tuple):
         return cls(values)
 
     def to_rv(self):
-        return dedent(self.template).format(
-            records="\n  ".join(map(str, self)), cmd=self.__class__.__name__
-        )
+        d = {
+            "_cmd": self.__class__.__name__,
+            "_commands": indent("\n".join(map(str, self)), "  "),
+        }
+        return dedent(self._template).format(**d)
 
 
 class ParameterList(Command):
@@ -138,21 +146,23 @@ class ParameterListCommand(Command):
 
     def to_rv(self):
         template: str = """
-            :{cmd}
-                :Parameters    {name_list}
-                :Units         {unit_list}
-                {records}
-            :End{cmd}
+            :{_cmd}
+              :Parameters     {name_list}
+              :Units          {unit_list}
+            {_commands}
+            :End{_cmd}
         """
 
         fmt = ",{:>18}" * len(self.names)
-        units = ",              none" * len(self.names)
+        units = [
+            "none",
+        ] * len(self.names)
 
         return dedent(template).format(
-            cmd=self.__class__.__name__,
+            _cmd=self.__class__.__name__,
             name_list=fmt.format(*self.names),
-            unit_list=units,
-            records="\n".join([rec.to_rv() for rec in self.records]),
+            unit_list=fmt.format(*units),
+            _commands=indent("\n".join([rec.to_rv() for rec in self.records]), "  "),
         )
 
 
