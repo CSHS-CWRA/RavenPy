@@ -31,6 +31,7 @@ SoilParameters = Literal[
     "VIC_EVAP_GAMMA",
     "MAX_PERC_RATE",
     "PERC_N",
+    "PERC_COEFF",
     "SAC_PERC_ALPHA",
     "SAC_PERC_EXPON",
     "HBV_BETA",
@@ -48,6 +49,7 @@ SoilParameters = Literal[
     "UBC_INFIL_SOIL_DEF",
     "GR4J_X2",
     "GR4J_X3",
+    "PET_CORRECTION"  # Not in Raven Docs Table A.3
 ]
 
 StateVariables = Literal[
