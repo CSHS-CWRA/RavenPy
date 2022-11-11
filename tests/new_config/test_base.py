@@ -1,13 +1,15 @@
+import datetime as dt
+from enum import Enum
+from textwrap import dedent
+from typing import Dict, Sequence
+
 import pytest
 from pydantic import Field, ValidationError
-from typing import Sequence, Dict
-from enum import Enum
-import datetime as dt
-from textwrap import dedent
+
 from ravenpy.new_config.base import RV, Command
 
 
-class TestRV():
+class TestRV:
     def test_bool(self):
         class Test(RV):
             so_true: bool = Field(None, alias="SuppressOutput")
@@ -19,7 +21,8 @@ class TestRV():
             :Test
               :SuppressOutput
             :EndTest
-            """)
+            """
+        )
 
     def test_value(self):
         class Test(RV):
@@ -27,14 +30,20 @@ class TestRV():
             start_date: dt.datetime = Field(None, alias="StartDate")
 
         assert Test(AvgAnnualSnow=45.4).content() == ":AvgAnnualSnow        45.4\n"
-        assert Test(StartDate=dt.datetime(2000, 1, 1)).content() == ":StartDate            2000-01-01 00:00:00\n"
+        assert (
+            Test(StartDate=dt.datetime(2000, 1, 1)).content()
+            == ":StartDate            2000-01-01 00:00:00\n"
+        )
 
     def test_dict(self):
         class Test(RV):
             gp: Dict = Field(None, alias="GlobalParameters")
 
-        t = Test(GlobalParameters={"AvgAnnualSnow": 34, "PrecipitationLapseRate": 12.})
-        assert t.content() == ":GlobalParameters AvgAnnualSnow 34\n:GlobalParameters PrecipitationLapseRate 12.0"
+        t = Test(GlobalParameters={"AvgAnnualSnow": 34, "PrecipitationLapseRate": 12.0})
+        assert (
+            t.content()
+            == ":GlobalParameters AvgAnnualSnow 34\n:GlobalParameters PrecipitationLapseRate 12.0"
+        )
 
     def test_option(self):
         class Opt(Enum):
@@ -67,7 +76,4 @@ def test_command():
         b: bool = Field(None, alias="Bool")
 
     t = Test(Alias="spam", Bool=True)
-    assert t.encode() == {"Alias": ":Alias                spam\n",
-                                     "Bool": ":Bool\n"}
-
-
+    assert t.encode() == {"Alias": ":Alias                spam\n", "Bool": ":Bool\n"}

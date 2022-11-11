@@ -1,9 +1,10 @@
-import pytest
-from pydantic import BaseModel, Field, Extra, validator, ValidationError
-from typing import Sequence, Union, TypeVar, Dict, ClassVar, Literal, Any, List, Tuple
-from enum import Enum
 import datetime as dt
+from enum import Enum
 from textwrap import dedent
+from typing import Any, ClassVar, Dict, List, Literal, Sequence, Tuple, TypeVar, Union
+
+import pytest
+from pydantic import BaseModel, Extra, Field, ValidationError, validator
 
 
 def encoder(v):
@@ -40,6 +41,7 @@ class Command(BaseModel):
     """
     Base class for Raven commands.
     """
+
     def __str__(self):
         return self.to_rv()
 
@@ -64,12 +66,11 @@ class Command(BaseModel):
                 """
         return dedent(template).format(
             records="\n  ".join(self.encode().values()).strip(),
-            cmd=self.__class__.__name__)
+            cmd=self.__class__.__name__,
+        )
 
     class Config:
         extra = Extra.forbid
-
-
 
 
 class RecordCommand(tuple):
@@ -95,7 +96,9 @@ class RecordCommand(tuple):
         return cls(values)
 
     def to_rv(self):
-        return dedent(self.template).format(records="\n  ".join(map(str, self)), cmd=self.__class__.__name__)
+        return dedent(self.template).format(
+            records="\n  ".join(map(str, self)), cmd=self.__class__.__name__
+        )
 
 
 class ParameterList(Command):
@@ -128,7 +131,9 @@ class ParameterListCommand(Command):
         n = len(values["names"])
         for v in val:
             if len(v.vals) != n:
-                raise ValidationError("Number of values should match number of parameters.")
+                raise ValidationError(
+                    "Number of values should match number of parameters."
+                )
         return val
 
     def to_rv(self):
@@ -156,4 +161,3 @@ class RV(Command):
 
 
 # ---
-

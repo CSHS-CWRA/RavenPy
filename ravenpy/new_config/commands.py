@@ -5,18 +5,23 @@ from dataclasses import asdict, field
 from itertools import chain
 from pathlib import Path
 from textwrap import dedent
-from typing import ClassVar, Dict, Optional, Sequence, Tuple, Union, no_type_check, Literal
+from typing import (
+    ClassVar,
+    Dict,
+    Literal,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+    no_type_check,
+)
 
-from pydantic import validator, BaseModel, HttpUrl, Field, PrivateAttr, ValidationError
+from pydantic import BaseModel, Field, HttpUrl, PrivateAttr, ValidationError, validator
 from pydantic.dataclasses import dataclass
 
 from ravenpy.config import options
-from .base import (
-    Command,
-    RecordCommand,
-    ParameterListCommand,
-    ParameterList,
-)
+
+from .base import Command, ParameterList, ParameterListCommand, RecordCommand
 
 INDENT = " " * 4
 VALUE_PADDING = 10
@@ -69,7 +74,6 @@ class EvaluationPeriod(Command):
         return f":EvaluationPeriod {self.name} {self.start} {self.end}"
 
 
-
 class CustomOutput(Command):
     """
     Create custom output file to track a single variable, parameter or forcing function over time at a number of
@@ -89,15 +93,18 @@ class CustomOutput(Command):
       Output file name. Defaults to something approximately like `<run name>_<variable>_<time_per>_<stat>_<space_agg>.nc
     """
 
-    time_per: Literal['DAILY', 'MONTHLY', 'YEARLY', 'WATER_YEARLY', 'CONTINUOUS']
-    stat: Literal['AVERAGE', 'MAXIMUM', 'MINIMUM', 'RANGE', 'MEDIAN', 'QUARTILES']
+    time_per: Literal["DAILY", "MONTHLY", "YEARLY", "WATER_YEARLY", "CONTINUOUS"]
+    stat: Literal["AVERAGE", "MAXIMUM", "MINIMUM", "RANGE", "MEDIAN", "QUARTILES"]
     variable: str
-    space_agg: Literal['BY_BASIN', 'BY_HRU', 'BY_HRU_GROUP', 'BY_SB_GROUP', 'ENTIRE_WATERSHED']
+    space_agg: Literal[
+        "BY_BASIN", "BY_HRU", "BY_HRU_GROUP", "BY_SB_GROUP", "ENTIRE_WATERSHED"
+    ]
     filename: str = ""
 
     def to_rv(self):
         template = ":CustomOutput {time_per} {stat} {variable} {space_agg} {filename}\n"
         return template.format(**self.dict())
+
 
 class SoilProfile(Command):
     name: str
@@ -107,9 +114,7 @@ class SoilProfile(Command):
     def to_rv(self):
         # From the Raven manual: {profile_name,#horizons,{soil_class_name,thick.}x{#horizons}}x[NP]
         n_horizons = len(self.soil_classes)
-        horizon_data = list(
-            itertools.chain(*zip(self.soil_classes, self.thicknesses))
-        )
+        horizon_data = list(itertools.chain(*zip(self.soil_classes, self.thicknesses)))
         fmt = "{:<16},{:>4}," + ",".join(n_horizons * ["{:>12},{:>6}"])
         return fmt.format(self.name, n_horizons, *horizon_data)
 
@@ -295,7 +300,9 @@ class ReadFromNetCDF(Command):
     def __init__(self, **data):
         super().__init__(**data)
         if self.linear_transform is None:
-            self.linear_transform = LinearTransform(scale=self.scale, offset=self.offset)
+            self.linear_transform = LinearTransform(
+                scale=self.scale, offset=self.offset
+            )
 
     @validator("dim_names_nc")
     def reorder_time(cls, v):
@@ -711,11 +718,9 @@ class StationForcingCommand(BaseData):
 #         )
 #
 
+
 class SoilClasses(RecordCommand):
     record: str
-
-
-
 
 
 class VegetationClasses(Command):
@@ -826,7 +831,7 @@ class LandUseParameterList(ParameterListCommand):
 
 # Aliases for convenience
 # HRU = HRUsCommand.Record
-#HRUState = HRUStateVariableTableCommand.Record
+# HRUState = HRUStateVariableTableCommand.Record
 LU = LandUseClass
 SB = SubBasin
 SP = SoilProfile

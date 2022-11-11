@@ -1,6 +1,8 @@
-from ravenpy.new_config.rvs import RVP, RVI, RVP, RVC, RVH
-import ravenpy.new_config.commands as rc
 import datetime as dt
+
+import ravenpy.new_config.commands as rc
+from ravenpy.new_config.rvs import RVC, RVH, RVI, RVP
+
 
 class P:
     X01: float = 0
@@ -62,8 +64,3 @@ rvi = RVI(
     DirectEvaporation=True,
     RainSnowFraction="RAINSNOW_DATA",
 )
-
-
-
-
-
