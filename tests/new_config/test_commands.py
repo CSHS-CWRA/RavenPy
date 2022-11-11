@@ -3,12 +3,15 @@ from pathlib import Path
 from textwrap import dedent
 from typing import Sequence
 
+import pytest
 from pydantic import Field
 
 from ravenpy.new_config.base import RV, Command, RecordCommand
 from ravenpy.new_config.commands import (
     HRU,
     PL,
+    BasinIndex,
+    BasinStateVariables,
     ChannelProfile,
     CustomOutput,
     Data,
@@ -17,6 +20,8 @@ from ravenpy.new_config.commands import (
     GriddedForcing,
     GridWeights,
     HRUsCommand,
+    HRUState,
+    HRUStateVariableTable,
     LandUseParameterList,
     LinearTransform,
     ObservationData,
@@ -24,6 +29,7 @@ from ravenpy.new_config.commands import (
     ReadFromNetCDF,
     RedirectToFile,
     Reservoir,
+    SoilClasses,
     SoilProfile,
     SoilProfiles,
     StationForcing,
@@ -119,6 +125,23 @@ def test_subbasins():
         """
     for (a, e) in zip(t.commands().splitlines(), expected.splitlines()):
         assert a.strip() == e.strip()
+
+
+def test_soil_classes():
+    class TestRV(RV):
+        sc: SoilClasses = Field(None, alias="SoilClasses")
+
+    t = TestRV(SoilClasses=["TOPSOIL", "FAST_RES", "SLOW_RES"])
+
+    assert dedent(t.commands()) == dedent(
+        """
+    :SoilClasses
+      TOPSOIL
+      FAST_RES
+      SLOW_RES
+    :EndSoilClasses
+    """
+    )
 
 
 def test_hrus():
@@ -228,9 +251,66 @@ def test_redirect_to_file(tmpdir):
 
 
 def test_gridded_forcing():
-    nc = ReadFromNetCDF(FileNameNC="test.nc", VarNameNC="pr", DimNamesNC=("time",))
-    gf = GriddedForcing(ReadFromNetCDF=nc)
+    nc = dict(FileNameNC="test.nc", VarNameNC="pr", DimNamesNC=("time",))
+    gf = GriddedForcing(**nc)
     print(gf.to_rv())
+
+
+def test_station_forcings():
+    nc = dict(FileNameNC="test.nc", VarNameNC="pr", DimNamesNC=("time",))
+    sf = StationForcing(ForcingType="PRECIP", **nc)
+    print(sf.to_rv())
+
+
+def test_hru_state():
+    s = HRUState(index=1, data={"SOIL[0]": 1, "SOIL[1]": 2.0})
+    assert s.to_rv() == "1,1.0,2.0"
+
+
+def test_hru_state_variable_table():
+    class TestRV(RV):
+        hru: HRUStateVariableTable = Field(None, alias="HRUStateVariableTable")
+
+    s1 = HRUState(index=1, data={"SOIL[0]": 0.1, "SOIL[1]": 1.0})
+
+    t = TestRV(
+        HRUStateVariableTable=[
+            s1,
+        ]
+    )
+    rv = t.commands()
+    assert dedent(rv) == dedent(
+        """
+            :HRUStateVariableTable
+              :Attributes,SOIL[0],SOIL[1]
+              :Units
+              1,0.1,1.0
+            :EndHRUStateVariableTable
+            """
+    )
+
+    s2 = HRUStateVariableTable.parse(rv)
+    assert s2.to_rv() == rv
+
+
+@pytest.mark.xfail
+def test_hru_state_variable_table_non_uniform():
+    class TestRV(RV):
+        hru: HRUStateVariableTable = Field(None, alias="HRUStateVariableTable")
+
+    s1 = HRUState(index=1, data={"SOIL[0]": 0.1, "SOIL[1]": 1.0})
+    s2 = HRUState(index=2, data={"SOIL[3]": 3, "SOIL[2]": 2.0})
+
+    t = TestRV(HRUStateVariableTable=[s1, s2])
+    assert dedent(t.commands()) == dedent(
+        """
+            :HRUStateVariableTable
+              :Attributes,SOIL[0],SOIL[1],SOIL[2],SOIL[3]
+              1,0.1,1.0,0.0,0.0
+              2,0.0,0.0,2.0,3.0
+            :EndHRUStateVariableTable
+            """
+    )
 
 
 def test_land_use_parameter_list():
@@ -249,3 +329,23 @@ def test_land_use_parameter_list():
         ),
     )
     t.to_rv()
+
+
+def test_basin_index():
+    bi = BasinIndex()
+    rv = bi.to_rv()
+
+    bi2 = BasinIndex.parse(rv)
+    assert bi2.to_rv() == rv
+
+
+def test_basin_state_variables():
+    bs = BasinStateVariables.parse_obj(
+        [
+            BasinIndex(),
+        ]
+    )
+    rv = bs.to_rv()
+
+    bs2 = BasinStateVariables.parse(rv)
+    assert bs2.to_rv() == rv

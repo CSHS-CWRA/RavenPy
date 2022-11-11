@@ -19,17 +19,20 @@ class P:
 
 rvp = RVP(
     SoilClasses=("TOPSOIL", "GWSOIL"),
-    LandUseClasses=(rc.LandUseClass("LU_ALL", 0, 1),),
-    VegetationClasses=(rc.VegetationClasses("VEG_ALL", 0, 0, 0),),
+    LandUseClasses=(
+        rc.LandUseClass(name="LU_ALL", impermeable_frac=0, forest_coverage=1),
+    ),
+    VegetationClasses=(rc.VegetationClasses(name="VEG_ALL"),),
     SoilProfiles=(
-        rc.SoilProfiles("LAKE"),
-        rc.SoilProfiles("ROCK"),
-        rc.SoilProfiles("DEFAULT_P", ("TOPSOIL", "GWSOIL"), (P.X05, 10.0)),
+        rc.SoilProfile(name="LAKE"),
+        rc.SoilProfile(name="ROCK"),
+        rc.SoilProfile(
+            name="DEFAULT_P",
+            soil_classes=("TOPSOIL", "GWSOIL"),
+            thicknesses=(P.X05, 10.0),
+        ),
     ),
-    GlobalParameters=(
-        rc.GlobalParameter("TOC_MULTIPLIER", 1.0),
-        rc.GlobalParameter("MOHYSE_PET_COEFFICIENT", P.X01),
-    ),
+    GlobalParameter={"TOC_MULTIPLIER": 1.0, "MOHYSE_PET_COEFFICIENT": P.X01},
     SoilParameterList=rc.SoilParameterList(
         names=[
             "POROSITY",

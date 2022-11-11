@@ -1,12 +1,12 @@
 import datetime as dt
 from enum import Enum
 from textwrap import dedent
-from typing import Dict, Sequence
+from typing import Dict, List, Sequence
 
 import pytest
-from pydantic import Field, ValidationError
+from pydantic import BaseModel, Field, ValidationError
 
-from ravenpy.new_config.base import RV, Command
+from ravenpy.new_config.base import RV, Command, Record
 
 
 class TestRV:
@@ -68,6 +68,18 @@ class TestRV:
 
         with pytest.raises(ValidationError):
             assert Test(Options=["C", "D"])
+
+
+def test_record():
+    class MyRecord(Record):
+        __root__: List[float]
+
+    class TestRV(RV):
+        a: MyRecord = Field(None, alias="MyRecord")
+
+    t = TestRV(MyRecord=[1, 2, 3])
+
+    print(t.to_rv())
 
 
 def test_command():

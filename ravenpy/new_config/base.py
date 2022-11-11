@@ -27,7 +27,7 @@ def encoder(v):
                 seq = ", ".join([o.value for o in obj])
                 out = f":{cmd:<20} {seq}\n"
             else:
-                seq = ", ".join(obj)
+                seq = ", ".join(map(str, obj))
                 out = f":{cmd:<20} {seq}\n"
         else:
             out = f":{cmd:<20} {obj}\n"
@@ -55,8 +55,9 @@ class Command(BaseModel):
         """Return attributes that are Raven commands."""
         d = {}
         for key, field in self.__fields__.items():
-            if field.has_alias and self.__dict__[key] is not None:
-                d[field.alias] = self.__dict__[key]
+            if field.has_alias or field.alias == "__root__":
+                if self.__dict__[key] is not None:
+                    d[field.alias] = self.__dict__[key]
         return d
 
     def command_json(self):
@@ -77,6 +78,11 @@ class Command(BaseModel):
 
     class Config:
         extra = Extra.forbid
+        arbitrary_types_allowed = True
+
+
+class Record(Command):
+    __root__: List
 
 
 class RecordCommand(tuple):
@@ -86,9 +92,6 @@ class RecordCommand(tuple):
         {_commands}
         :End{_cmd}
         """
-
-    class Config:
-        extra = Extra.forbid
 
     @classmethod
     def __get_validators__(cls):
@@ -101,7 +104,35 @@ class RecordCommand(tuple):
                 raise TypeError
         return cls(values)
 
+    def command_objs(self):
+        """Return attributes that are Raven commands."""
+        d = {}
+        for key, field in self.__dict__.items():
+            if field.has_alias and self.__dict__[key] is not None:
+                d[field.alias] = self.__dict__[key]
+
+        for i, v in enumerate(self):
+            d[i] = v
+
+        return d
+
+    def command_json(self):
+        """Return dictionary of Raven commands."""
+        return encoder(self.command_objs())
+
+    def commands(self):
+        """String of Raven commands."""
+        return "".join(self.command_json().values())
+
     def to_rv(self):
+        """Return Raven configuration string."""
+        d = self.__dict__.copy()
+        d.update(self.command_json())
+        d["_cmd"] = self.__class__.__name__
+        d["_commands"] = indent(self.commands().strip(), "  ")
+        return dedent(self._template).format(**d)
+
+    def to_rv_old(self):
         d = {
             "_cmd": self.__class__.__name__,
             "_commands": indent("\n".join(map(str, self)), "  "),

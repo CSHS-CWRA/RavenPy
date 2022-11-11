@@ -100,15 +100,15 @@ class RVI(RV):
 
 
 class RVT(RV):
-    gauge: Sequence[rc.GaugeCommand] = ()
-    data: Sequence[rc.DataCommand] = ()
-    observation: Sequence[rc.ObservationDataCommand] = ()
+    gauge: Sequence[rc.Gauge] = ()
+    data: Sequence[rc.Data] = ()
+    observation: Sequence[rc.ObservationData] = ()
 
 
 class RVP(RV):
     # params = rc.Params
     soil_classes: rc.SoilClasses = Field(None, alias="SoilClasses")
-    soil_profiles: rc.SoilProfilesCommand = Field(None, alias="SoilProfiles")
+    soil_profiles: rc.SoilProfiles = Field(None, alias="SoilProfiles")
     vegetation_classes: rc.VegetationClassesCommand = Field(
         None, alias="VegetationClasses"
     )
@@ -121,7 +121,7 @@ class RVP(RV):
         None, alias="VegetationParameterList"
     )
 
-    channel_profiles: Sequence[rc.ChannelProfileCommand] = ()
+    channel_profiles: Sequence[rc.ChannelProfile] = ()
 
     # TODO: create list of all available parameters to constrain key
     global_parameter: Dict[str, str] = Field(None, alias="GlobalParameter")
@@ -129,38 +129,20 @@ class RVP(RV):
         None, alias="RainSnowTransition"
     )
 
-    def to_rv(self):
-        objs = (
-            (
-                rc.SoilClassesCommand(self.soil_classes),
-                rc.SoilProfilesCommand(self.soil_profiles),
-                rc.VegetationClassesCommand(self.vegetation_classes),
-                rc.LandUseClassesCommand(self.land_use_classes),
-                self.soil_parameter_list,
-                self.land_use_parameter_list,
-                self.vegetation_parameter_list,
-                self.avg_annual_runoff,
-            )
-            + self.channel_profiles
-            + self.global_parameters
-        )
-
-        return "".join([o.to_rv() for o in objs])
-
 
 class RVC(RV):
-    hru_states: Sequence[rc.HRU] = ()
-    basin_states: Sequence[rc.Sub] = ()
+    hru_states: rc.HRUStateVariableTable = ()
+    basin_states: rc.BasinStateVariables = ()
 
 
 class RVH(RV):
     subbasins: Sequence[rc.SubBasin] = (rc.SubBasin(),)
     hrus: Sequence[rc.HRU] = ()
-    land_subbasin_group: Sequence[rc.SubBasinGroupCommand] = ()
-    lake_subbasin_group: Sequence[rc.SubBasinGroupCommand] = ()
+    land_subbasin_group: Sequence[rc.SubBasinGroup] = ()
+    lake_subbasin_group: Sequence[rc.SubBasinGroup] = ()
     land_subbasin_property_multiplier: rc.SBGroupPropertyMultiplierCommand = None
     lake_subbasin_property_multiplier: rc.SBGroupPropertyMultiplierCommand = None
-    reservoirs: Sequence[rc.ReservoirCommand] = ()
+    reservoirs: Sequence[rc.Reservoir] = ()
 
 
 """

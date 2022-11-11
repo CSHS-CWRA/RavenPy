@@ -8,6 +8,7 @@ from textwrap import dedent, indent
 from typing import (
     ClassVar,
     Dict,
+    List,
     Literal,
     Optional,
     Sequence,
@@ -16,7 +17,15 @@ from typing import (
     no_type_check,
 )
 
-from pydantic import BaseModel, Field, HttpUrl, PrivateAttr, ValidationError, validator
+from pydantic import (
+    BaseModel,
+    Field,
+    HttpUrl,
+    PrivateAttr,
+    ValidationError,
+    root_validator,
+    validator,
+)
 from pydantic.dataclasses import dataclass
 
 from ravenpy.config import options
@@ -134,8 +143,8 @@ class SoilProfile(Command):
         return fmt.format(self.name, n_horizons, *horizon_data)
 
 
-class SoilProfiles(RecordCommand):
-    record = SoilProfile
+class SoilProfiles(Command):
+    __root__: Sequence[SoilProfile]
 
 
 class SubBasin(Command):
@@ -157,10 +166,11 @@ class SubBasin(Command):
         return " ".join(f"{v: <{VALUE_PADDING}}" for v in d.values())
 
 
-class SubBasins(RecordCommand):
+class SubBasins(Command):
     """SubBasins command (RVH)."""
 
-    record = SubBasin
+    __root__: Sequence[SubBasin]
+
     _template = """
         :SubBasins
           :Attributes   ID NAME DOWNSTREAM_ID PROFILE REACH_LENGTH  GAUGED
@@ -196,11 +206,12 @@ class HRU(Command):
         return " ".join(f"{v: <{VALUE_PADDING * 2}}" for v in d.values())
 
 
-class HRUsCommand(RecordCommand):
+class HRUsCommand(Command):
     """HRUs command (RVH)."""
 
-    record = HRU
-    template = """
+    __root__: Sequence[HRU]
+
+    _template = """
         :HRUs
           :Attributes      AREA  ELEVATION       LATITUDE      LONGITUDE BASIN_ID       LAND_USE_CLASS            VEG_CLASS      SOIL_PROFILE  AQUIFER_PROFILE TERRAIN_CLASS      SLOPE     ASPECT
           :Units            km2          m            deg            deg     none                  none                none              none             none          none        deg       degN
@@ -395,7 +406,7 @@ class GriddedForcing(ReadFromNetCDF):
     """GriddedForcing command (RVT)."""
 
     name: str = ""
-    forcing_type: str = Field(None, alias="ForcingType")
+    forcing_type: options.Forcings = Field(None, alias="ForcingType")
     grid_weights: Union[GridWeights, RedirectToFile] = Field(
         GridWeights(), alias="GridWeights"
     )
@@ -461,151 +472,123 @@ class ObservationData(Data):
         """
 
 
-# class HRUStateVariableTableCommand(Command):
-#     """Initial condition for a given HRU."""
-#
-#     class Record(Command):
-#         index: int = 1
-#         data: Dict[str, Union[float, str]] = field(default_factory=dict)
-#
-#         def to_rv(self):
-#             return ",".join(map(str, (self.index,) + tuple(self.data.values())))
-#
-#     hru_states: Dict[int, Record] = field(default_factory=dict)
-#
-#     @classmethod
-#     def parse(cls, sol):
-#         pat = r"""
-#         :HRUStateVariableTable
-#         \s*:Attributes,(.+)
-#         \s*:Units.*?
-#         (.+)
-#         :EndHRUStateVariableTable
-#         """
-#         m = re.search(dedent(pat).strip(), sol, re.DOTALL)
-#         names = m.group(1).strip().split(",")
-#         lines = m.group(2).strip().splitlines()  # type: ignore
-#         lines = [re.split(r",|\s+", line.strip()) for line in lines]
-#         hru_states = {}
-#         for line in lines:
-#             idx, *values = line
-#             idx = int(idx)
-#             values = list(map(float, values))
-#             hru_states[idx] = cls.Record(index=idx, data=dict(zip(names, values)))
-#         return cls(hru_states)
-#
-#     def to_rv(self):
-#         template = """
-#             :HRUStateVariableTable
-#                 :Attributes,{names}
-#                 {values}
-#             :EndHRUStateVariableTable
-#             """
-#         names = sorted(
-#             list(set(chain(*[tuple(s.data.keys()) for s in self.hru_states.values()])))
-#         )
-#         values = [
-#             [
-#                 s.index,
-#             ]
-#             + [s.data.get(n, 0.0) for n in names]
-#             for s in self.hru_states.values()
-#         ]
-#         return dedent(template).format(
-#             names=",".join(names),
-#             values="\n    ".join([",".join(map(str, v)) for v in values]),
-#         )
-#
-#
-# class BasinIndexCommand(Command):
-#     """Initial conditions for a flow segment."""
-#
-#     index: int = 1
-#     name: str = "watershed"
-#     channel_storage: float = 0
-#     rivulet_storage: float = 0
-#     qout: Tuple[float, ...] = (1, 0, 0)
-#     qin: Optional[Tuple[float, ...]] = None
-#     qlat: Optional[Tuple[float, ...]] = None
-#
-#     @classmethod
-#     @no_type_check
-#     def parse(cls, s):
-#         pat = r"""
-#         :BasinIndex (.+?)
-#         (.+)
-#         """
-#         m = re.search(dedent(pat).strip(), s, re.DOTALL)
-#         index_name = re.split(r",|\s+", m.group(1).strip())
-#         rec_values = {"index": index_name[0], "name": index_name[1]}
-#         for line in m.group(2).strip().splitlines():
-#             all_values = filter(None, re.split(r",|\s+", line.strip()))
-#             cmd, *values = all_values
-#             if cmd == ":ChannelStorage":
-#                 assert len(values) == 1
-#                 rec_values["channel_storage"] = float(values[0])
-#             elif cmd == ":RivuletStorage":
-#                 assert len(values) == 1
-#                 rec_values["rivulet_storage"] = float(values[0])
-#             else:
-#                 rec_values[cmd[1:].lower()] = tuple(values)
-#         return cls(**rec_values)
-#
-#     def to_rv(self):
-#         template = """
-#         :BasinIndex {index} {name}
-#             :ChannelStorage {channel_storage}
-#             :RivuletStorage {rivulet_storage}
-#             {qout}
-#             {qin}
-#             {qlat}
-#             """
-#         d = asdict(self)
-#         for k in ["qout", "qin", "qlat"]:
-#             if d[k]:
-#                 v = " ".join(map(str, d[k]))
-#                 q = k.capitalize()
-#                 d[k] = f":{q} {v}"
-#             else:
-#                 d[k] = ""
-#         return dedent(template).format(**d)
-#
-#
-# class BasinStateVariablesCommand(Command):
-#
-#     basin_states: Dict[int, BasinIndexCommand] = field(default_factory=dict)
-#
-#     @classmethod
-#     @no_type_check
-#     def parse(cls, sol):
-#         pat = r"""
-#         :BasinStateVariables
-#         (.+)
-#         :EndBasinStateVariables
-#         """
-#         m = re.search(dedent(pat).strip(), sol, re.DOTALL)
-#         bi_strings = filter(None, m.group(1).strip().split(":BasinIndex"))
-#         basin_states = {}
-#         for bi_string in bi_strings:
-#             bi = BasinIndexCommand.parse(f":BasinIndex {bi_string}")
-#             basin_states[bi.index] = bi
-#         return cls(basin_states)
-#
-#     def to_rv(self):
-#         template = """
-#             :BasinStateVariables
-#                 {basin_states_list}
-#             :EndBasinStateVariables
-#             """
-#
-#         return dedent(template).format(
-#             basin_states_list="\n".join(map(str, self.basin_states.values()))
-#         )
-#
+class HRUState(Command):
+    index: int = 1
+    data: Dict[str, float] = Field(default_factory=dict)
+
+    def to_rv(self):
+        return ",".join(map(str, (self.index,) + tuple(self.data.values())))
+
+    @classmethod
+    def parse(cls, sol, names=None):
+        idx, *values = re.split(r",|\s+", sol.strip())
+        if names is None:
+            names = [f"S{i}" for i in range(len(values))]
+        return cls(index=idx, data=dict(zip(names, values)))
 
 
-class SoilClasses(RecordCommand):
-    record: str
+class HRUStateVariableTable(Command):
+    __root__: List[HRUState]
+
+    _attributes_str: Sequence[str] = PrivateAttr(None)
+
+    _template = """
+                 :HRUStateVariableTable
+                   :Attributes,{_attributes_str}
+                   :Units
+                 {_commands}
+                 :EndHRUStateVariableTable
+                 """
+
+    @root_validator
+    def check_attributes_are_uniform(cls, values):
+        attrs = [tuple(s.data.keys()) for s in values["__root__"]]
+        if len(set(attrs)) > 1:
+            raise ValidationError("Attributes not all the same.")
+        values["_attributes_str"] = ",".join(attrs[0])
+        return values
+
+    @classmethod
+    def parse(cls, sol):
+        pat = r"""
+        :HRUStateVariableTable
+        \s*:Attributes,(.+)
+        \s*:Units.*?
+        (.+)
+        :EndHRUStateVariableTable
+        """
+        m = re.search(dedent(pat).strip(), sol, re.DOTALL)
+        names = m.group(1).strip().split(",")
+        lines = m.group(2).strip().splitlines()  # type: ignore
+
+        states = [HRUState.parse(line, names) for line in lines]
+        return cls.parse_obj(states)
+
+
+class BasinIndex(Command):
+    """Initial conditions for a flow segment."""
+
+    # TODO: Check that qout and cie can be written with separating commas.
+    index: int = 1
+    name: str = "watershed"
+    channel_storage: float = Field(0.0, alias="ChannelStorage")
+    rivulet_storage: float = Field(0.0, alias="RivuletStorage")
+    qout: Sequence[float] = Field((1.0, 0.0, 0.0), alias="Qout")
+    qlat: Sequence[float] = Field(None, alias="Qlat")
+    qin: Sequence[float] = Field(None, alias="Qin")
+
+    _template = """
+         :BasinIndex {index} {name}
+         {_commands}
+          """
+
+    @classmethod
+    @no_type_check
+    def parse(cls, s):
+        pat = r"""
+        :BasinIndex (.+?)
+        (.+)
+        """
+        m = re.search(dedent(pat).strip(), s, re.DOTALL)
+        index_name = re.split(r",|\s+", m.group(1).strip())
+        rec_values = {"index": index_name[0], "name": index_name[1]}
+        for line in m.group(2).strip().splitlines():
+            all_values = filter(None, re.split(r",|\s+", line.strip()))
+            cmd, *values = all_values
+            if cmd in [":ChannelStorage", ":RivuletStorage"]:
+                assert len(values) == 1
+                rec_values[cmd[1:]] = float(values[0])
+            else:
+                rec_values[cmd[1:]] = tuple(values)
+        return cls(**rec_values)
+
+
+class BasinStateVariables(Command):
+    __root__: Sequence[BasinIndex]
+
+    @classmethod
+    @no_type_check
+    def parse(cls, sol):
+        pat = r"""
+        :BasinStateVariables
+        (.+)
+        :EndBasinStateVariables
+        """
+        m = re.search(dedent(pat).strip(), sol, re.DOTALL)
+        bis = filter(None, m.group(1).strip().split(":BasinIndex"))
+        bs = [BasinIndex.parse(f":BasinIndex {bi}") for bi in bis]
+        return cls.parse_obj(bs)
+
+
+class SoilClass(Command):
+    __root__: str
+
+    def to_rv(self):
+        return f"{self.__root__}\n"
+
+
+class SoilClasses(Command):
+    __root__: Sequence[SoilClass]
 
 
 class VegetationClasses(Command):
@@ -619,9 +602,9 @@ class VegetationClasses(Command):
         return template.format(**asdict(self))
 
 
-class VegetationClassesCommand(RecordCommand):
-    record = VegetationClasses
-    template = """
+class VegetationClassesCommand(Command):
+    __root__: Sequence[VegetationClasses]
+    _template = """
     :VegetationClasses
       :Attributes     ,        MAX_HT,       MAX_LAI, MAX_LEAF_COND
       :Units          ,             m,          none,      mm_per_s
@@ -643,8 +626,8 @@ class LandUseClass(Command):
         return self.to_rv()
 
 
-class LandUseClassesCommand(RecordCommand):
-    record = LandUseClass
+class LandUseClassesCommand(Command):
+    __root__: Sequence[LandUseClass]
     _template = """
         :LandUseClasses
           :Attributes     ,IMPERMEABLE_FRAC, FOREST_COVERAGE
@@ -711,7 +694,6 @@ class VegetationParameterList(ParameterListCommand):
 
 class LandUseParameterList(ParameterListCommand):
     names: Sequence[options.LandUseParameters] = ()
-    records: Sequence[ParameterList] = ()
 
 
 # Aliases for convenience

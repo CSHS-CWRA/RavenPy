@@ -1,6 +1,47 @@
 from enum import Enum
 from typing import Literal
 
+Forcings = Literal[
+    "PRECIP",
+    "PRECIP_DAILY_AVE",
+    "PRECIP_5DAY",
+    "SNOW_FRAC",
+    "SNOWFALL",
+    "RAINFALL",
+    "RECHARGE",
+    "TEMP_AVE",
+    "TEMP_DAILY_AVE",
+    "TEMP_MIN",
+    "TEMP_DAILY_MIN",
+    "TEMP_MAX",
+    "TEMP_DAILY_MAX",
+    "TEMP_MONTH_MAX",
+    "TEMP_MONTH_MIN",
+    "TEMP_MONTH_AVE",
+    "TEMP_AVE_UNC",
+    "TEMP_MAX_UNC",
+    "TEMP_MIN_UNC",
+    "AIR_DENS",
+    "AIR_PRES",
+    "REL_HUMIDITY",
+    "ET_RADIA",
+    "SHORTWAVE",
+    "SW_RADIA",
+    "SW_RADIA_NET",
+    "LW_RADIA_NET",
+    "LW_INCOMING",
+    "CLOUD_COVER",
+    "DAY_LENGTH",
+    "DAY_ANGLE",
+    "WIND_VEL",
+    "PET",
+    "OW_PET",
+    "PET_MONTH_AVE",
+    "POTENTIAL_MELT",
+    "SUBDAILY_CORR",
+    "HYDROGRAPH",
+]
+
 # Allowed soil parameters
 SoilParameters = Literal[
     "SAND_CON",
