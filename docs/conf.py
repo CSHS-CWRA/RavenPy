@@ -35,7 +35,7 @@ import ravenpy  # noqa: E402
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
     "sphinx.ext.autodoc",
-'sphinxcontrib.autodoc_pydantic',
+    "sphinxcontrib.autodoc_pydantic",
     "sphinx.ext.autosectionlabel",
     "sphinx.ext.autosummary",
     "sphinx.ext.napoleon",
