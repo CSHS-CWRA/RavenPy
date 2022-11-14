@@ -85,30 +85,30 @@ class AirSnowCoeff(RavenCoefficient):
 class AvgAnnualSnow(RavenCoefficient):
     """The average annual snow for the entire watershed used in the CEMANEIGE algorithm.
 
-    Attributes
+    Parameters
     ----------
     value : float
-      Average annual snow [mm].
+        Average annual snow [mm].
     """
 
 
 class PrecipitationLapseRate(RavenCoefficient):
     """The simple linear precipitation lapse rate  used in the `OROCORR_SIMPLELAPSE` orographic correction algorithm.
 
-    Attributes
+    Parameters
     ----------
     value : float
-      Lapse rate [mm/d/km]
+        Lapse rate [mm/d/km]
     """
 
 
 class AdiabaticLapseRate(RavenCoefficient):
     """Base adiabatic lapse rate.
 
-    Attributes
+    Parameters
     ----------
     value : float
-      Base adiabatic lapse rate [C/km]
+        Base adiabatic lapse rate [C/km]
     """
 
 
@@ -134,10 +134,10 @@ class CloudCoverMethod(RavenOption):
 class Duration(RavenValue):
     """Duration of simulation.
 
-    Attributes
+    Parameters
     ----------
     values : float
-      Simulation duration [d].
+        Simulation duration [d].
     """
 
 
@@ -305,22 +305,21 @@ class EvaluationPeriod(RavenCommand):
 
 @dataclass
 class CustomOutput(RavenCommand):
-    """
-    Create custom output file to track a single variable, parameter or forcing function over time at a number of
-    basins, HRUs, or across the watershed.
+    """Create custom output file to track a single variable, parameter or forcing function over time at a number of basins, HRUs, or across the watershed.
 
-    Parameters
+    Attributes
     ----------
     time_per : {'DAILY', 'MONTHLY', 'YEARLY', 'WATER_YEARLY', 'CONTINUOUS'}
-      Time period.
-    stat : {'AVERAGE', 'MAXIMUM', 'MINIMUM', 'RANGE', 'MEDIAN', 'QUARTILES', 'HISTOGRAM [min] [max] [# bins]'
-      Statistic reported for each time inverval.
+        Time period.
+    stat : {'AVERAGE', 'MAXIMUM', 'MINIMUM', 'RANGE', 'MEDIAN', 'QUARTILES', 'HISTOGRAM [min] [max] [# bins]'}
+        Statistic reported for each time interval.
     variable: str
-      Variable or parameter name. Consult the Raven documentation for the list of allowed names.
+        Variable or parameter name. Consult the Raven documentation for the list of allowed names.
     space_agg : {'BY_BASIN', 'BY_HRU', 'BY_HRU_GROUP', 'BY_SB_GROUP', 'ENTIRE_WATERSHED'}
-      Spatial evaluation domain.
+        Spatial evaluation domain.
     filename : str
-      Output file name. Defaults to something approximately like `<run name>_<variable>_<time_per>_<stat>_<space_agg>.nc
+        Output file name.
+        Defaults to something approximately like `<run name>_<variable>_<time_per>_<stat>_<space_agg>.nc`
     """
 
     time_per: str
