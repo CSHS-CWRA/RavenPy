@@ -5,19 +5,15 @@ History
 0.9.0 (unreleased)
 ------------------
 
-Breaking changes:
+Breaking changes
+^^^^^^^^^^^^^^^^
+* HRUState's signature has changed. Instead of passing variables as keyword arguments (e.g. `soil0=10.`), it now expects a `state` dictionary keyed by variables' Raven name (e.g. `{"SOIL[0]": 10}). This change makes `rvc` files easier to read, and avoids Raven warnings regarding 'initial conditions for state variables not in model'.
+* `nc_index` renamed to `meteo_idx` to enable the specification of distinct indices for observed streamflow using `hydro_idx`. `nc_index` remains supported for backward compatibility.
+* The distributed python testing library, `pytest-xdist` is now a testing and development requirement.
+* `xarray` has been pinned below "2022.11.0" due to incompatibility with `climpred=="2.2.0"`.
 
-* HRUState's signature has changed. Instead of passing variables as
-  keyword arguments (e.g. `soil0=10.`), it now expects a `state`
-  dictionary keyed by variables' Raven name (e.g. `{"SOIL[0]": 10}).
-  This change makes `rvc` files easier to read, and avoids Raven
-  warnings regarding 'initial conditions for state variables not in model'.
-* `nc_index` renamed to `meteo_idx` to enable the specification of distinct
-  indices for observed streamflow using `hydro_idx`. `nc_index` remains
-  supported for backward compatibility.
-
-New features:
-
+New features
+^^^^^^^^^^^^
 * Add support for hydrometric gauge data distinct from meteorological input data. Configuration parameter `hydro_idx` identifies the gauge station index, while `meteo_idx` (previously `nc_index`) stands for the meteo station index.
 * Add support for multiple gauge observations. If a list of `hydro_idx` is provided, it must be accompanied with a list of corresponding subbasin identifiers (`gauged_sb_ids`) of the same length.
 * Automatically infer scale and offset `:LinearTransform` parameters from netCDF file metadata, so that input data units are automatically converted to Raven-compliant units whenever possible.
@@ -27,8 +23,13 @@ New features:
 * Multiple other new RavenCommand objects added, but not integrated in the configuration, including `:SoilParameterList`, `:VegetationParameterList` and `:LandUseParameterList`.
 * Multichoice options (e.g. calendars) moved from RV classes to `config.options`, but aliases created for backward compatibility.
 * Patch directory traversal vulnerability (`CVE-2007-4559 <(https://github.com/advisories/GHSA-gw9q-c7gh-j9vm>`_).
-
-
+* A local copy of the raven-testdata with environment variable (`RAVENPY_TESTDATA_PATH`) set to that location is now no longer needed in order to run the testing suite. Test data is fetched automatically and now stored at `~/.raven_testing_data`.
+* RavenPy now leverages `pytest-xdist` to distribute tests among Python workers and significantly speed up the testing suite, depending on number of available CPUs. File access within the testing suite has also been completely rewritten for thread safety.
+  - On pytest launch with "`--numprocesses` > 0", testing data will be fetched automatically from `Ouranosinc/raven-testdata` by one worker, blocking others until this step is complete. Spawned pytest workers will then copy the testing data to their respective temporary directories before beginning testing.
+* To aid with development and debugging purposes, two new environment variables and pytest fixtures are now available:
+  - In order to skip the data collection step: `export SKIP_TEST_DATA=true`
+  - In order to target a specific branch of `Ouranosinc/raven-testdata` for data retrieval: `export MAIN_TESTDATA_BRANCH="my_branch"`
+  - In order to fetch testing data using the user-set raven-testdata branch, pytest fixtures for `get_file` and `get_local_testdata` are now available for convenience
 
 0.8.1 (2022-10-26)
 ------------------
@@ -38,11 +39,12 @@ New features:
 0.8.0
 -----
 
-Breaking changes:
-  * Parallel parameters must be provided explicitly using the `parallel` argument when calling emulators.
-  * Multiple `nc_index` values generate multiple *gauges*, instead of being parallelized.
-  * Python3.7 is no longer supported.
-  * Documentation now uses sphinx-apidoc at build-time to generate API pages.
+Breaking changes
+^^^^^^^^^^^^^^^^
+* Parallel parameters must be provided explicitly using the `parallel` argument when calling emulators.
+* Multiple `nc_index` values generate multiple *gauges*, instead of being parallelized.
+* Python3.7 is no longer supported.
+* Documentation now uses sphinx-apidoc at build-time to generate API pages.
 
 * Add ``generate-hrus-from-routing-product`` script.
 * Do not write RV zip file and merge outputs when `suppress_output` is True. Zipping rv files during multiple calibration runs leads to a non-linear performance slow-down.

@@ -1,11 +1,10 @@
 import datetime as dt
 
 from ravenpy.models import HMETS
-from ravenpy.utilities.testdata import get_local_testdata
 
 
 class TestRavenNRCAN:
-    def test_simple(self):
+    def test_simple(self, get_file):
 
         params = (
             9.5019,
@@ -31,7 +30,7 @@ class TestRavenNRCAN:
             916.1947,
         )
 
-        ts = get_local_testdata("nrcan/NRCAN_2006-2007_subset.nc")
+        ts = get_file("nrcan/NRCAN_2006-2007_subset.nc")
         start_date = dt.datetime(2006, 1, 1)
         end_date = dt.datetime(2007, 12, 31)
 

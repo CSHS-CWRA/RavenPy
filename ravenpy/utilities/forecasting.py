@@ -12,7 +12,6 @@ import warnings
 from pathlib import Path
 from typing import List, Tuple
 
-# import climpred
 import numpy as np
 import pandas as pd
 import xarray as xr

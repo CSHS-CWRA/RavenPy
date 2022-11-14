@@ -90,11 +90,7 @@ jobs:
       - name: Test RavenPy
         shell: bash -l {0}
         run: |
-          pip install -e ".[dev]"
-          git clone https://github.com/Ouranosinc/raven-testdata $GITHUB_WORKSPACE/raven-testdata
           pytest --cov ravenpy
-        env:
-          RAVENPY_TESTDATA_PATH: ${{ github.workspace }}/raven-testdata
       - name: Report coverage
         shell: bash -l {0}
         run: coveralls --service=github

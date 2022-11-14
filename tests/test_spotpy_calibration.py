@@ -5,17 +5,16 @@ import spotpy
 
 from ravenpy.models import GR4JCN
 from ravenpy.utilities.calibration import SpotpySetup
-from ravenpy.utilities.testdata import get_local_testdata
+
+salmon_river = "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
 
 
-class TestGR4JCN_Spotpy:
-    def test_simple(self):
+class TestGR4JCNSpotpy:
+    def test_simple(self, get_file):
 
         model = GR4JCN()
 
-        TS = get_local_testdata(
-            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
-        )
+        ts = get_file(salmon_river)
 
         salmon_land_hru_1 = dict(
             area=4250.6, elevation=843.0, latitude=54.4848, longitude=-123.3659
@@ -31,12 +30,13 @@ class TestGR4JCN_Spotpy:
         model.config.rvi.end_date = dt.datetime(2002, 1, 1)
         model.config.rvi.run_name = "test"
 
-        spot_setup = SpotpySetup(model=model, ts=TS, obj_func=None)
+        spot_setup = SpotpySetup(model=model, ts=ts, obj_func=None)
         sampler = spotpy.algorithms.dds(
             spot_setup, dbname="RAVEN_model_run", dbformat="ram", save_sim=False
         )
         rep = 100
 
+        # FIXME: These tests should have assertions. Remove print functions.
         tic = time.time()
         sampler.sample(rep, trials=1)
         toc = time.time()
@@ -51,8 +51,9 @@ class TestGR4JCN_Spotpy:
         # 7500 evals = 20004 seconds
         # 10000 evals = 34990 seconds
 
+        # FIXME: These tests should have assertions. Remove print functions.
         results = sampler.getdata()
         model.config.update("params", spotpy.analyser.get_best_parameterset(results)[0])
-        model(TS)
+        model(ts)
         objfun = model.diagnostics["DIAG_NASH_SUTCLIFFE"][0]
         print(objfun)

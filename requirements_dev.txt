@@ -11,6 +11,7 @@ twine
 Click
 pytest
 pytest-cov
+pytest-xdist
 black
 isort
 pre-commit

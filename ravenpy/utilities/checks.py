@@ -49,16 +49,16 @@ def single_file_check(file_list: List[Union[str, Path]]) -> Any:
 
 
 def boundary_check(
-    *args: Sequence[Union[str, Path]],
+    *args: Union[str, Path],
     max_y: Union[int, float] = 60,
     min_y: Union[int, float] = -60,
 ) -> None:
-    """Verify that boundaries do not exceed specific latitudes for geographic coordinate data. Raise a warning if so.
+    """Verify that boundaries do not exceed specific latitudes for geographic coordinate data. Emit a UserWarning if so.
 
     Parameters
     ----------
-    *args : Sequence[Union[str, Path]]
-      listing of strings or paths to files
+    *args : Union[str, Path]
+      str or Path to file(s)
     max_y : Union[int, float]
       Maximum value allowed for latitude. Default: 60.
     min_y : Union[int, float]
@@ -67,14 +67,13 @@ def boundary_check(
     vectors = (".gml", ".shp", ".geojson", ".gpkg", ".json")
     rasters = (".tif", ".tiff")
 
-    if len(args) == 1 and not isinstance(args[0], str):
-        args = args[0]
-
     for file in args:
+        file = Path(file)
+
         try:
-            if str(file).lower().endswith(vectors):
+            if file.suffix.lower() in vectors:
                 src = fiona.open(file, "r")
-            elif str(file).lower().endswith(rasters):
+            elif file.suffix.lower() in rasters:
                 src = rasterio.open(file, "r")
             else:
                 raise FileNotFoundError()

@@ -1,14 +1,13 @@
 import datetime as dt
 import zipfile
 
-from ravenpy.models import GR4JCN, RavenMultiModel
-from ravenpy.utilities.testdata import get_local_testdata
+from ravenpy.models import RavenMultiModel
 
 
 class TestRavenMultiModel:
-    def test_simple(self):
-        ts = get_local_testdata(
-            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
+    def test_simple(self, get_file):
+        ts = get_file(
+            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
         )
         model = RavenMultiModel(models=["gr4jcn", "hmets"])
         gr4jcn = (0.529, -3.396, 407.29, 1.072, 16.9, 0.947)

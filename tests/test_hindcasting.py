@@ -1,7 +1,6 @@
 import datetime as dt
 
 from ravenpy.models import GR4JCN
-from ravenpy.utilities.testdata import get_local_testdata
 
 """
 Test to perform a hindcast using Caspar data on THREDDS.
@@ -12,13 +11,13 @@ but this is a good proof of concept.
 
 
 class TestHindcasting:
-    def test_hindcasting_GEPS(self):
+    def test_hindcasting_GEPS(self, get_file):
 
         # Prepare a RAVEN model run using historical data, GR4JCN in this case.
         # This is a dummy run to get initial states. In a real forecast situation,
         # this run would end on the day before the forecast, but process is the same.
-        ts = get_local_testdata(
-            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
+        ts = get_file(
+            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
         )
         hrus = (
             GR4JCN.LandHRU(
@@ -37,7 +36,7 @@ class TestHindcasting:
         # Extract the final states that will be used as the next initial states
         rvc = model.outputs["solution"]
 
-        ts20 = get_local_testdata("caspar_eccc_hindcasts/geps_watershed.nc")
+        ts20 = get_file("caspar_eccc_hindcasts/geps_watershed.nc")
         nm = 20
 
         # It is necessary to clean the model state because the input variables of the previous
