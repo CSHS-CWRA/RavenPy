@@ -45,6 +45,11 @@ extensions = [
     "sphinx_copybutton",
 ]
 
+linkcheck_ignore = [
+    r"https://github.com/advisories/GHSA-gw9q-c7gh-j9vm",
+    r"https://doi.org/10.1093/mnras/225.1.155",  # does not allow linkcheck requests (error 403)
+]
+
 autosectionlabel_prefix_document = True
 autosectionlabel_maxdepth = 3
 
