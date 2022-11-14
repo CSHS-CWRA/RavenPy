@@ -83,7 +83,6 @@ autodoc_mock_imports = [
     "holoviews",
     "hvplot",
     "lxml",
-    "numpy",
     "owslib",
     "pandas",
     "pyproj",
