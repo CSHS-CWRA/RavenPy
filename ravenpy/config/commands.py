@@ -85,7 +85,7 @@ class AirSnowCoeff(RavenCoefficient):
 class AvgAnnualSnow(RavenCoefficient):
     """The average annual snow for the entire watershed used in the CEMANEIGE algorithm.
 
-    Parameters
+    Attributes
     ----------
     value : float
         Average annual snow [mm].
@@ -95,7 +95,7 @@ class AvgAnnualSnow(RavenCoefficient):
 class PrecipitationLapseRate(RavenCoefficient):
     """The simple linear precipitation lapse rate  used in the `OROCORR_SIMPLELAPSE` orographic correction algorithm.
 
-    Parameters
+    Attributes
     ----------
     value : float
         Lapse rate [mm/d/km]
@@ -105,7 +105,7 @@ class PrecipitationLapseRate(RavenCoefficient):
 class AdiabaticLapseRate(RavenCoefficient):
     """Base adiabatic lapse rate.
 
-    Parameters
+    Attributes
     ----------
     value : float
         Base adiabatic lapse rate [C/km]
@@ -134,7 +134,7 @@ class CloudCoverMethod(RavenOption):
 class Duration(RavenValue):
     """Duration of simulation.
 
-    Parameters
+    Attributes
     ----------
     values : float
         Simulation duration [d].
@@ -309,14 +309,15 @@ class CustomOutput(RavenCommand):
 
     Attributes
     ----------
-    time_per : {'DAILY', 'MONTHLY', 'YEARLY', 'WATER_YEARLY', 'CONTINUOUS'}
-        Time period.
-    stat : {'AVERAGE', 'MAXIMUM', 'MINIMUM', 'RANGE', 'MEDIAN', 'QUARTILES', 'HISTOGRAM [min] [max] [# bins]'}
+    time_per : str
+        Time period. Allowed keys: {'DAILY', 'MONTHLY', 'YEARLY', 'WATER_YEARLY', 'CONTINUOUS'}
+    stat : str
         Statistic reported for each time interval.
+        Allowed keys: {'AVERAGE', 'MAXIMUM', 'MINIMUM', 'RANGE', 'MEDIAN', 'QUARTILES', 'HISTOGRAM [min] [max] [# bins]'}
     variable: str
         Variable or parameter name. Consult the Raven documentation for the list of allowed names.
-    space_agg : {'BY_BASIN', 'BY_HRU', 'BY_HRU_GROUP', 'BY_SB_GROUP', 'ENTIRE_WATERSHED'}
-        Spatial evaluation domain.
+    space_agg : str
+        Spatial evaluation domain. Allowed keys: {'BY_BASIN', 'BY_HRU', 'BY_HRU_GROUP', 'BY_SB_GROUP', 'ENTIRE_WATERSHED'}
     filename : str
         Output file name.
         Defaults to something approximately like `<run name>_<variable>_<time_per>_<stat>_<space_agg>.nc`
@@ -655,11 +656,8 @@ class ObservationDataCommand(DataCommand):
 class GridWeightsCommand(RavenCommand):
     """GridWeights command.
 
-    Important note: this command can be embedded in both a `GriddedForcingCommand`
-    or a `StationForcingCommand`.
-
-    The default is to have a single cell that covers an entire single HRU, with a
-    weight of 1.
+    Important note: this command can be embedded in both a `GriddedForcingCommand` or a `StationForcingCommand`.
+    The default is to have a single cell that covers an entire single HRU, with a weight of 1.
     """
 
     number_hrus: int = 1
@@ -702,9 +700,8 @@ class GridWeightsCommand(RavenCommand):
 class RedirectToFileCommand(RavenCommand):
     """RedirectToFile command (RVT).
 
-    For the moment, this command can only be used in the context of a `GriddedForcingCommand`
-    or a `StationForcingCommand`, as a `grid_weights` field replacement when inlining is not
-    desired.
+    For the moment, this command can only be used in the context of a `GriddedForcingCommand` or a
+    `StationForcingCommand`, as a `grid_weights` field replacement when inlining is not desired.
     """
 
     path: Path
