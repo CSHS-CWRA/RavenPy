@@ -13,9 +13,9 @@ For example, many function's logic essentially consists in creating the layer na
 We could have a function that returns the layer name, and then other functions expect the layer name.
 """
 import inspect
-import json
 import os
 import warnings
+from io import BytesIO
 from pathlib import Path
 from typing import Iterable, Optional, Sequence, Tuple, Union
 from urllib.parse import urljoin
@@ -75,7 +75,7 @@ def _get_location_wfs(
     ] = None,
     layer: str = None,
     geoserver: str = GEO_URL,
-) -> str:
+) -> BytesIO:
     """Return leveled features from a hosted data set using bounding box coordinates and WFS 1.1.0 protocol.
 
     For geographic rasters, subsetting is based on WGS84 (Long, Lat) boundaries. If not geographic, subsetting based
@@ -94,8 +94,8 @@ def _get_location_wfs(
 
     Returns
     -------
-    str
-        A GeoJSON-encoded vector feature.
+    BytesIO
+        A request object for a vector feature.
 
     """
     wfs = WebFeatureService(url=urljoin(geoserver, "wfs"), version="2.0.0", timeout=30)
@@ -126,8 +126,7 @@ def _get_location_wfs(
         typename=layer, outputFormat="application/json", method="POST", **kwargs
     )
 
-    data = json.loads(resp.read())
-    return data
+    return resp
 
 
 def _get_feature_attributes_wfs(
@@ -656,7 +655,7 @@ def get_hydro_routing_location_wfs(
     lakes: str,
     level: int = 12,
     geoserver: str = GEO_URL,
-) -> str:
+) -> BytesIO:
     """Return features from the hydro routing data set using bounding box coordinates.
 
     For geographic rasters, subsetting is based on WGS84 (Long, Lat) boundaries. If not geographic, subsetting based
@@ -675,8 +674,8 @@ def get_hydro_routing_location_wfs(
 
     Returns
     -------
-    str
-        A GeoJSON-encoded vector feature.
+    BytesIO
+        A request object for a vector feature.
 
     """
     layer = f"public:routing_{lakes}Lakes_{str(level).zfill(2)}"

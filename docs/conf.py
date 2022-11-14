@@ -19,6 +19,7 @@
 #
 import os
 import sys
+from datetime import date
 
 sys.path.insert(0, os.path.abspath(".."))
 
@@ -40,6 +41,8 @@ extensions = [
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
     "nbsphinx",
+    "IPython.sphinxext.ipython_console_highlighting",
+    "autodoc_indicator",
     "sphinx_click",
     "sphinx_codeautolink",
     "sphinx_copybutton",
@@ -51,7 +54,7 @@ linkcheck_ignore = [
 ]
 
 autosectionlabel_prefix_document = True
-autosectionlabel_maxdepth = 3
+autosectionlabel_maxdepth = 2
 
 autosummary_generate = True
 nbsphinx_execute = "auto"
@@ -108,7 +111,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "RavenPy"
-copyright = "2021, David Huard"
+copyright = f"2021-{date.today().year}, David Huard"
 author = "David Huard"
 
 # The version info for the project you're documenting, acts as replacement
