@@ -16,6 +16,7 @@ import inspect
 import json
 import os
 import warnings
+from io import BytesIO
 from pathlib import Path
 from typing import Iterable, Optional, Sequence, Tuple, Union
 from urllib.parse import urljoin
@@ -75,7 +76,7 @@ def _get_location_wfs(
     ] = None,
     layer: str = None,
     geoserver: str = GEO_URL,
-) -> str:
+) -> dict:
     """Return leveled features from a hosted data set using bounding box coordinates and WFS 1.1.0 protocol.
 
     For geographic rasters, subsetting is based on WGS84 (Long, Lat) boundaries. If not geographic, subsetting based
@@ -84,19 +85,18 @@ def _get_location_wfs(
     Parameters
     ----------
     bbox : Optional[Tuple[Union[str, float, int], Union[str, float, int], Union[str, float, int], Union[str, float, int]]]
-      Geographic coordinates of the bounding box (left, down, right, up).
+        Geographic coordinates of the bounding box (left, down, right, up).
     point : Optional[Tuple[Union[str, float, int], Union[str, float, int]]]
-      Geographic coordinates of an intersecting point (lon, lat).
+        Geographic coordinates of an intersecting point (lon, lat).
     layer : str
-      The WFS/WMS layer name requested.
+        The WFS/WMS layer name requested.
     geoserver: str
-      The address of the geoserver housing the layer to be queried. Default: https://pavics.ouranos.ca/geoserver/.
+        The address of the geoserver housing the layer to be queried. Default: https://pavics.ouranos.ca/geoserver/.
 
     Returns
     -------
-    str
-      A GeoJSON-encoded vector feature.
-
+    dict
+        A GeoJSON-derived dictionary of vector features (FeatureCollection).
     """
     wfs = WebFeatureService(url=urljoin(geoserver, "wfs"), version="2.0.0", timeout=30)
 
@@ -142,21 +142,20 @@ def _get_feature_attributes_wfs(
     Parameters
     ----------
     attribute : list
-      Attribute/field names.
+        Attribute/field names.
     layer : str
-      Name of geographic layer queried.
+        Name of geographic layer queried.
     geoserver: str
-      The address of the geoserver housing the layer to be queried. Default: https://pavics.ouranos.ca/geoserver/.
+        The address of the geoserver housing the layer to be queried. Default: https://pavics.ouranos.ca/geoserver/.
 
     Returns
     -------
     str
-      WFS request URL.
+        WFS request URL.
 
     Notes
     -----
     Non-existent attributes will raise a cryptic DriverError from fiona.
-
     """
     params = dict(
         service="WFS",
@@ -181,13 +180,13 @@ def _filter_feature_attributes_wfs(
     Parameters
     ----------
     attribute : str
-      Attribute/field name.
+        Attribute/field name.
     value: Union[str, float, int]
-      Value for attribute queried.
+        Value for attribute queried.
     layer : str
-      Name of geographic layer queried.
+        Name of geographic layer queried.
     geoserver: str
-      The address of the geoserver housing the layer to be queried. Default: https://pavics.ouranos.ca/geoserver/.
+        The address of the geoserver housing the layer to be queried. Default: https://pavics.ouranos.ca/geoserver/.
 
     Returns
     -------
@@ -228,20 +227,20 @@ def _determine_upstream_ids(
     Parameters
     ----------
     fid : str
-      feature ID of the downstream feature of interest.
+        feature ID of the downstream feature of interest.
     df : pd.DataFrame
-      Dataframe comprising the watershed attributes.
-    basin_field: str
-      The field used to determine the id of the basin according to hydro project.
-    downstream_field: str
-      The field identifying the downstream sub-basin for the hydro project.
-    basin_family: str, optional
-      Regional watershed code (For HydroBASINS dataset).
+        Dataframe comprising the watershed attributes.
+    basin_field : str
+        The field used to determine the id of the basin according to hydro project.
+    downstream_field : str
+        The field identifying the downstream sub-basin for the hydro project.
+    basin_family : str, optional
+        Regional watershed code (For HydroBASINS dataset).
 
     Returns
     -------
     pd.DataFrame
-      Basins ids including `fid` and its upstream contributors.
+        Basins ids including `fid` and its upstream contributors.
     """
 
     def upstream_ids(bdf, bid):
@@ -289,19 +288,18 @@ def get_raster_wcs(
     Parameters
     ----------
     coordinates : Sequence[Union[int, float, str]]
-      Geographic coordinates of the bounding box (left, down, right, up)
+        Geographic coordinates of the bounding box (left, down, right, up)
     geographic : bool
-      If True, uses "Long" and "Lat" in WCS call. Otherwise uses "E" and "N".
+        If True, uses "Long" and "Lat" in WCS call. Otherwise, uses "E" and "N".
     layer : str
-      Layer name of raster exposed on GeoServer instance, e.g. 'public:CEC_NALCMS_LandUse_2010'
-    geoserver: str
-      The address of the geoserver housing the layer to be queried. Default: https://pavics.ouranos.ca/geoserver/.
+        Layer name of raster exposed on GeoServer instance, e.g. 'public:CEC_NALCMS_LandUse_2010'
+    geoserver : str
+        The address of the geoserver housing the layer to be queried. Default: https://pavics.ouranos.ca/geoserver/.
 
     Returns
     -------
     bytes
-      A GeoTIFF array.
-
+        A GeoTIFF array.
     """
     (left, down, right, up) = coordinates
 
@@ -344,14 +342,14 @@ def hydrobasins_upstream(feature: dict, domain: str) -> pd.DataFrame:
     Parameters
     ----------
     feature : dict
-      Basin feature attributes, including the fields ["HYBAS_ID", "NEXT_DOWN", "MAIN_BAS"].
-    domain: {"na", "ar"}
-      Domain of the feature, North America or Arctic.
+        Basin feature attributes, including the fields ["HYBAS_ID", "NEXT_DOWN", "MAIN_BAS"].
+    domain : {"na", "ar"}
+        Domain of the feature, North America or Arctic.
 
     Returns
     -------
     pd.Series
-      Basins ids including `fid` and its upstream contributors.
+        Basins ids including `fid` and its upstream contributors.
     """
     basin_field = "HYBAS_ID"
     downstream_field = "NEXT_DOWN"
@@ -383,7 +381,7 @@ def hydrobasins_aggregate(gdf: pd.DataFrame) -> pd.DataFrame:
     Parameters
     ----------
     gdf : pd.DataFrame
-      Watershed attributes indexed by HYBAS_ID
+        Watershed attributes indexed by HYBAS_ID
 
     Returns
     -------
@@ -421,14 +419,14 @@ def select_hybas_domain(
     Parameters
     ----------
     bbox : Optional[Tuple[Union[float, int], Union[float, int], Union[float, int], Union[float, int]]]
-      Geographic coordinates of the bounding box (left, down, right, up).
+        Geographic coordinates of the bounding box (left, down, right, up).
     point : Optional[Tuple[Union[float, int], Union[float, int]]]
-      Geographic coordinates of an intersecting point (lon, lat).
+        Geographic coordinates of an intersecting point (lon, lat).
 
     Returns
     -------
     str
-      The domain that the coordinate falls within. Possible results: "na", "ar".
+        The domain that the coordinate falls within. Possible results: "na", "ar".
     """
     if bbox and point:
         raise NotImplementedError("Provide either 'bbox' or 'point'.")
@@ -459,18 +457,18 @@ def filter_hydrobasins_attributes_wfs(
     Parameters
     ----------
     attribute : str
-      Attribute/field to be queried.
+        Attribute/field to be queried.
     value: Union[str, float, int]
-      Value for attribute queried.
+        Value for attribute queried.
     domain : {"na", "ar"}
-      The domain of the HydroBASINS data.
-    geoserver: str
-      The address of the geoserver housing the layer to be queried. Default: https://pavics.ouranos.ca/geoserver/.
+        The domain of the HydroBASINS data.
+    geoserver : str
+        The address of the geoserver housing the layer to be queried. Default: https://pavics.ouranos.ca/geoserver/.
 
     Returns
     -------
     str
-      URL to the GeoJSON-encoded WFS response.
+        URL to the GeoJSON-encoded WFS response.
 
     """
     lakes = True
@@ -500,16 +498,16 @@ def get_hydrobasins_location_wfs(
     Parameters
     ----------
     coordinates : Tuple[Union[str, float, int], Union[str, float, int]]
-      Geographic coordinates of the bounding box (left, down, right, up).
+        Geographic coordinates of the bounding box (left, down, right, up).
     domain : {"na", "ar"}
-      The domain of the HydroBASINS data.
-    geoserver: str
-      The address of the geoserver housing the layer to be queried. Default: https://pavics.ouranos.ca/geoserver/.
+        The domain of the HydroBASINS data.
+    geoserver : str
+        The address of the geoserver housing the layer to be queried. Default: https://pavics.ouranos.ca/geoserver/.
 
     Returns
     -------
     str
-      A GeoJSON-encoded vector feature.
+        A GeoJSON-encoded vector feature.
 
     """
     lakes = True
@@ -537,18 +535,18 @@ def hydro_routing_upstream(
     Parameters
     ----------
     fid : Union[str, float, int]
-      Basin feature ID code of the downstream feature.
+        Basin feature ID code of the downstream feature.
     level : int
-      Level of granularity requested for the lakes vector (range(7,13)). Default: 12.
+        Level of granularity requested for the lakes vector (range(7,13)). Default: 12.
     lakes : {"1km", "all"}
-      Query the version of dataset with lakes under 1km in width removed ("1km") or return all lakes ("all").
-    geoserver: str
-      The address of the geoserver housing the layer to be queried. Default: https://pavics.ouranos.ca/geoserver/.
+        Query the version of dataset with lakes under 1km in width removed ("1km") or return all lakes ("all").
+    geoserver : str
+        The address of the geoserver housing the layer to be queried. Default: https://pavics.ouranos.ca/geoserver/.
 
     Returns
     -------
     pd.Series
-      Basins ids including `fid` and its upstream contributors.
+        Basins ids including `fid` and its upstream contributors.
     """
     wfs = WebFeatureService(url=urljoin(geoserver, "wfs"), version="2.0.0", timeout=30)
     layer = f"public:routing_{lakes}Lakes_{str(level).zfill(2)}"
@@ -593,18 +591,18 @@ def get_hydro_routing_attributes_wfs(
     Parameters
     ----------
     attribute : list
-      Attributes/fields to be queried.
+        Attributes/fields to be queried.
     level : int
-      Level of granularity requested for the lakes vector (range(7,13)). Default: 12.
+        Level of granularity requested for the lakes vector (range(7,13)). Default: 12.
     lakes : {"1km", "all"}
-      Query the version of dataset with lakes under 1km in width removed ("1km") or return all lakes ("all").
+        Query the version of dataset with lakes under 1km in width removed ("1km") or return all lakes ("all").
     geoserver: str
-      The address of the geoserver housing the layer to be queried. Default: https://pavics.ouranos.ca/geoserver/.
+        The address of the geoserver housing the layer to be queried. Default: https://pavics.ouranos.ca/geoserver/.
 
     Returns
     -------
     str
-      URL to the GeoJSON-encoded WFS response.
+        URL to the GeoJSON-encoded WFS response.
 
     """
     layer = f"public:routing_{lakes}Lakes_{str(level).zfill(2)}"
@@ -658,7 +656,7 @@ def get_hydro_routing_location_wfs(
     lakes: str,
     level: int = 12,
     geoserver: str = GEO_URL,
-) -> str:
+) -> dict:
     """Return features from the hydro routing data set using bounding box coordinates.
 
     For geographic rasters, subsetting is based on WGS84 (Long, Lat) boundaries. If not geographic, subsetting based
@@ -667,18 +665,18 @@ def get_hydro_routing_location_wfs(
     Parameters
     ----------
     coordinates : Tuple[Union[str, float, int], Union[str, float, int]]
-      Geographic coordinates of the bounding box (left, down, right, up).
+        Geographic coordinates of the bounding box (left, down, right, up).
     lakes : {"1km", "all"}
-      Query the version of dataset with lakes under 1km in width removed ("1km") or return all lakes ("all").
+        Query the version of dataset with lakes under 1km in width removed ("1km") or return all lakes ("all").
     level : int
-      Level of granularity requested for the lakes vector (range(7,13)). Default: 12.
+        Level of granularity requested for the lakes vector (range(7,13)). Default: 12.
     geoserver: str
-      The address of the geoserver housing the layer to be queried. Default: https://pavics.ouranos.ca/geoserver/.
+        The address of the geoserver housing the layer to be queried. Default: https://pavics.ouranos.ca/geoserver/.
 
     Returns
     -------
-    str
-      A GML-encoded vector feature.
+    dict
+        A GeoJSON-derived dictionary of vector features (FeatureCollection).
 
     """
     layer = f"public:routing_{lakes}Lakes_{str(level).zfill(2)}"

@@ -2,7 +2,7 @@
 History
 =======
 
-0.9.0 (unreleased)
+0.9.0 (2022-11-14)
 ------------------
 
 Breaking changes
@@ -22,14 +22,14 @@ New features
 * Add support for the command `:CustomOutput`.
 * Multiple other new RavenCommand objects added, but not integrated in the configuration, including `:SoilParameterList`, `:VegetationParameterList` and `:LandUseParameterList`.
 * Multichoice options (e.g. calendars) moved from RV classes to `config.options`, but aliases created for backward compatibility.
-* Patch directory traversal vulnerability (`CVE-2007-4559 <(https://github.com/advisories/GHSA-gw9q-c7gh-j9vm>`_).
+* Patch directory traversal vulnerability (`CVE-2007-4559 <https://github.com/advisories/GHSA-gw9q-c7gh-j9vm>`_).
 * A local copy of the raven-testdata with environment variable (`RAVENPY_TESTDATA_PATH`) set to that location is now no longer needed in order to run the testing suite. Test data is fetched automatically and now stored at `~/.raven_testing_data`.
 * RavenPy now leverages `pytest-xdist` to distribute tests among Python workers and significantly speed up the testing suite, depending on number of available CPUs. File access within the testing suite has also been completely rewritten for thread safety.
-  - On pytest launch with "`--numprocesses` > 0", testing data will be fetched automatically from `Ouranosinc/raven-testdata` by one worker, blocking others until this step is complete. Spawned pytest workers will then copy the testing data to their respective temporary directories before beginning testing.
+    - On pytest launch with "`--numprocesses` > 0", testing data will be fetched automatically from `Ouranosinc/raven-testdata` by one worker, blocking others until this step is complete. Spawned pytest workers will then copy the testing data to their respective temporary directories before beginning testing.
 * To aid with development and debugging purposes, two new environment variables and pytest fixtures are now available:
-  - In order to skip the data collection step: `export SKIP_TEST_DATA=true`
-  - In order to target a specific branch of `Ouranosinc/raven-testdata` for data retrieval: `export MAIN_TESTDATA_BRANCH="my_branch"`
-  - In order to fetch testing data using the user-set raven-testdata branch, pytest fixtures for `get_file` and `get_local_testdata` are now available for convenience
+    - In order to skip the data collection step: `export SKIP_TEST_DATA=true`
+    - In order to target a specific branch of `Ouranosinc/raven-testdata` for data retrieval: `export MAIN_TESTDATA_BRANCH="my_branch"`
+    - In order to fetch testing data using the user-set raven-testdata branch, pytest fixtures for `get_file` and `get_local_testdata` are now available for convenience
 
 0.8.1 (2022-10-26)
 ------------------
