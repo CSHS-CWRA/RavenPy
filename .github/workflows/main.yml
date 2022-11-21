@@ -52,7 +52,7 @@ jobs:
     - name: Install tox and setuptools
       run: |
         pip install tox
-        pip install --upgrade setuptools
+        pip install --upgrade "setuptools<65.6"
     - name: Test with tox and report coverage
       run: env GDAL_VERSION="$(gdal-config --version)" tox -e ${{ matrix.tox-env }}
       env:
