@@ -38,6 +38,7 @@ requirements = [
     "pydantic",
     "requests",
     "scipy",
+    "setuptools>=63.0,<65.6",
     "spotpy",
     "statsmodels",
     "wheel",
