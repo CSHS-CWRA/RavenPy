@@ -10,6 +10,7 @@ import zipfile
 from pathlib import Path
 from urllib.parse import urljoin
 
+# Note: setuptools < 65.6 is needed for some dependencies (see: https://github.com/pypa/setuptools/issues/3693)
 from setuptools import Distribution, find_packages, setup
 from setuptools.command.develop import develop
 from setuptools.command.install import install
