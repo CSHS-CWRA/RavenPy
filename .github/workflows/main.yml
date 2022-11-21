@@ -22,7 +22,7 @@ jobs:
       - name: Install tox and setuptools
         run: |
           pip install tox
-          pip install --upgrade setuptools
+          pip install --upgrade "setuptools<65.6"
       - name: Run linting suite
         run: tox -e black
 
