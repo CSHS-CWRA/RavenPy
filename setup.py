@@ -8,6 +8,7 @@ import subprocess
 import urllib.request
 import zipfile
 from pathlib import Path
+from typing import Optional, Union
 from urllib.parse import urljoin
 
 # Note: setuptools < 65.6 is needed for some dependencies (see: https://github.com/pypa/setuptools/issues/3693)
@@ -15,7 +16,7 @@ from setuptools import Distribution, find_packages, setup
 from setuptools.command.develop import develop
 from setuptools.command.install import install
 
-RAVEN_ZIP_NAME = "Raven-rev318"
+RAVEN_ZIP_NAME = "v3.5/RavenSource_v3.5"
 OSTRICH_GIT_VERSION = "21.03.16"
 
 with open("README.rst") as readme_file:
@@ -128,7 +129,13 @@ def create_external_deps_install_class(command_cls):
             command_cls.finalize_options(self)
 
         def install_binary_dep(
-            self, url, name, rev_name, binary_name, make_target="", src_folder=None
+            self,
+            url,
+            name: str,
+            rev_name: str = "",
+            binary_name: str = "",
+            make_target: str = "",
+            src_folder: Optional[Union[str, os.PathLike]] = None,
         ):
             print(f"Downloading {name} source code..")
             print(
@@ -162,8 +169,8 @@ def create_external_deps_install_class(command_cls):
 
             # Copy binary in a location which should be available on the PATH
             # Note 1: if command_cls==install, self.install_scripts should correspond to <venv>/bin or ~/.local/bin
-            # Note 2: if command_cls==develop, self.install_scripts is None so we are using a trick to get the value
-            #         it would have with the install command
+            # Note 2: if command_cls==develop, self.install_scripts is None, so we are using a trick to get the value
+            #         it would have with the `install` command
             scripts_dir = self.install_scripts or get_setuptools_install_scripts_dir()
             target_bin_path = Path(scripts_dir) / name
 
@@ -183,11 +190,17 @@ def create_external_deps_install_class(command_cls):
         def run(self):
 
             if self.with_binaries:
-                self.external_deps_path = Path("./external_deps")
+                self.external_deps_path = Path().cwd().joinpath("external_deps")
                 self.external_deps_path.mkdir(exist_ok=True)
 
-                url = "https://www.civil.uwaterloo.ca/jmai/raven/"
-                self.install_binary_dep(url, "raven", RAVEN_ZIP_NAME, "Raven.exe")
+                url = "https://www.civil.uwaterloo.ca/raven/files/"
+                self.install_binary_dep(
+                    url,
+                    "raven",
+                    RAVEN_ZIP_NAME,
+                    "Raven.exe",
+                    src_folder=self.external_deps_path,
+                )
 
                 url = "https://github.com/usbr/ostrich/archive/refs/tags/"
                 self.install_binary_dep(
@@ -196,7 +209,7 @@ def create_external_deps_install_class(command_cls):
                     f"v{OSTRICH_GIT_VERSION}",
                     "Ostrich",
                     "GCC",
-                    src_folder=f"ostrich-{OSTRICH_GIT_VERSION}/make",
+                    src_folder=Path(f"ostrich-{OSTRICH_GIT_VERSION}/make"),
                 )
 
             # This works with python setup.py install, but produces this error with pip install:
