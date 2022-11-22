@@ -17,4 +17,4 @@ isort
 pre-commit
 holoviews
 hvplot
-setuptools
+setuptools<65.6
