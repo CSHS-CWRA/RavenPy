@@ -49,7 +49,7 @@ extensions = [
 ]
 
 linkcheck_ignore = [
-    r"https://www.ouranos.ca/",  # bad ssl certificate
+    r"https://www.ouranos.ca",  # bad ssl certificate
 ]
 
 autosectionlabel_prefix_document = True
@@ -90,6 +90,7 @@ autodoc_mock_imports = [
     "rioxarray",
     "scipy",
     "shapely",
+    "spotpy",
     "statsmodels",
     "xarray",
     "xclim",
