@@ -61,7 +61,7 @@ This package was created with Cookiecutter_ and the `Ouranosinc/cookiecutter-pyp
 .. _Cookiecutter: https://github.com/audreyfeldroy/cookiecutter-pypackage
 .. _Raven: http://raven.uwaterloo.ca
 .. _`CANARIE`: https://www.canarie.ca
-.. _`Ouranos`: http://ouranos.ca
+.. _`Ouranos`: http://www.ouranos.ca
 .. _`Ouranosinc/cookiecutter-pypackage`: https://github.com/Ouranosinc/cookiecutter-pypackage
 .. _`docs`: http://raven.uwaterloo.ca/files/v3.0.1/RavenManual_v3.0.1.pdf
 .. _`installation docs`: https://ravenpy.readthedocs.io/en/latest/installation.html
