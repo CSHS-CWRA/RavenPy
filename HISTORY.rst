@@ -2,10 +2,13 @@
 History
 =======
 
-0.10.0 (unreleased)
+0.10.0 (2022-12-21)
 -------------------
 
 * Update Raven executable to 3.5. Due to a bug in RavenC, simulations storing reservoir information to netCDF will fail. We expect this to be resolved in the next release. Note that we only test RavenPy with one Raven version. There is no guarantee it will work with other versions.
+* Relax geo test to avoid failures occurring due to GDAL 3.6.
+* Pin numpy below 1.24 (see https://github.com/numba/numba/issues/8615)
+
 
 0.9.0 (2022-11-16)
 ------------------

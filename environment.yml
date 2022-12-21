@@ -20,7 +20,7 @@ dependencies:
   - lxml
   - matplotlib
   - netCDF4
-  - numpy
+  - numpy < 1.24
   - owslib >=0.24.1
   - pandas
   - pint >=0.20
