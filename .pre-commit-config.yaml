@@ -34,7 +34,7 @@ repos:
         exclude: ^docs/
         args: [ '--target-version=py38' ]
   - repo: https://github.com/PyCQA/isort
-    rev: 5.10.1
+    rev: v5.11.3
     hooks:
       - id: isort
         args: [ '--settings-file=setup.cfg' ]
