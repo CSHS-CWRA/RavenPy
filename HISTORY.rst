@@ -2,6 +2,8 @@
 History
 =======
 
+* Relax geo test to avoid failures occurring due to GDAL 3.6.
+
 0.9.0 (2022-11-16)
 ------------------
 
