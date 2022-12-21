@@ -740,10 +740,10 @@ class TestGR4JCN:
 
     def test_version(self):
         model = Raven()
-        assert model.raven_version == "3.0.4"
+        assert model.raven_version == "3.5"
 
         model = GR4JCN()
-        assert model.raven_version == "3.0.4"
+        assert model.raven_version == "3.5"
 
     def test_parallel_params(self, get_file):
         ts = get_file(salmon_river)

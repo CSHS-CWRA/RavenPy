@@ -399,9 +399,9 @@ class RoutingProductGridWeightExtractor:
             return row
 
         # Remove duplicate HRU_IDs while making sure that we keed relevant DowSubId and Obs_NM values
-        self._routing_data = self._routing_data.groupby(self._routing_id_field).apply(
-            keep_only_valid_downsubid_and_obs_nm
-        )
+        self._routing_data = self._routing_data.groupby(
+            self._routing_id_field, group_keys=False
+        ).apply(keep_only_valid_downsubid_and_obs_nm)
 
         # Make sure those are ints
         self._routing_data.SubId = self._routing_data.SubId.astype(int)
