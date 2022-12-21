@@ -2,6 +2,11 @@
 History
 =======
 
+0.10.0 (unreleased)
+-------------------
+
+* Update Raven executable to 3.5. Due to a bug in RavenC, simulations storing reservoir information to netCDF will fail. We expect this to be resolved in the next release. Note that we only test RavenPy with one Raven version. There is no guarantee it will work with other versions.
+
 0.9.0 (2022-11-16)
 ------------------
 
