@@ -35,17 +35,21 @@ import ravenpy  # noqa: E402
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
     "sphinx.ext.autodoc",
-    "sphinxcontrib.autodoc_pydantic",
     "sphinx.ext.autosectionlabel",
     "sphinx.ext.autosummary",
     "sphinx.ext.napoleon",
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
-    "nbsphinx",
     "IPython.sphinxext.ipython_console_highlighting",
+    "nbsphinx",
     "sphinx_click",
     "sphinx_codeautolink",
     "sphinx_copybutton",
+    "sphinxcontrib.autodoc_pydantic",
+]
+
+linkcheck_ignore = [
+    r"https://www.ouranos.ca",  # bad ssl certificate
 ]
 
 autosectionlabel_prefix_document = True
@@ -86,6 +90,7 @@ autodoc_mock_imports = [
     "rioxarray",
     "scipy",
     "shapely",
+    "spotpy",
     "statsmodels",
     "xarray",
     "xclim",
