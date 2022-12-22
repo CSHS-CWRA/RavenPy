@@ -1,17 +1,12 @@
 import datetime as dt
-import tempfile
 
 import numpy as np
 
 from ravenpy.config.commands import LU
 from ravenpy.models import BLENDED, BLENDED_OST
-from ravenpy.utilities.testdata import get_local_testdata
 
-from .common import _convert_2d
+salmon_river = "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
 
-TS = get_local_testdata(
-    "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
-)
 
 hru = BLENDED.ForestHRU(
     area=4250.6, elevation=843.0, latitude=54.4848, longitude=-123.3659, slope=0.01234
@@ -21,7 +16,9 @@ lu = LU("FOREST", impermeable_frac=0.0, forest_coverage=0.02345)
 
 
 class TestBLENDED:
-    def test_simple(self):
+    def test_simple(self, get_file):
+        ts = get_file(salmon_river)
+
         model = BLENDED()
         params = (
             2.930702e-02,  # par_x01
@@ -70,7 +67,7 @@ class TestBLENDED:
         )
 
         model(
-            TS,
+            ts,
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2002, 1, 1),
             hrus=(hru,),
@@ -85,7 +82,7 @@ class TestBLENDED:
 
 
 class TestBLENDED_OST:
-    def test_simple(self):
+    def test_simple(self, get_file):
         model = BLENDED_OST()
         params = (
             2.930702e-02,  # par_x01
@@ -224,11 +221,15 @@ class TestBLENDED_OST:
         )
 
         model.configure(
-            get_local_testdata("ostrich-gr4j-cemaneige/OstRandomNumbers.txt")
+            get_file(
+                "ostrich-gr4j-cemaneige/OstRandomNumbers.txt",
+            )
         )
 
+        ts = get_file(salmon_river)
+
         model(
-            TS,
+            ts,
             start_date=dt.datetime(1954, 1, 1),
             duration=208,
             hrus=(hru,),
@@ -309,7 +310,7 @@ class TestBLENDED_OST:
 
         blended = BLENDED()
         blended(
-            TS,
+            ts,
             start_date=dt.datetime(1954, 1, 1),
             duration=208,
             hrus=(hru,),

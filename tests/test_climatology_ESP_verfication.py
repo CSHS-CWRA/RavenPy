@@ -13,11 +13,10 @@ from ravenpy.utilities.forecasting import (
     make_climpred_hindcast_object,
     make_ESP_hindcast_dataset,
 )
-from ravenpy.utilities.testdata import get_local_testdata
 
 
 class TestClimpredHindcastVerification:
-    def test_simple(self):
+    def test_simple(self, get_file):
 
         # We don't want climpred logging in the test output
         logger = logging.getLogger()
@@ -28,17 +27,17 @@ class TestClimpredHindcastVerification:
         params = (0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
 
         forecast_duration = 3
-        ts = get_local_testdata(
-            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
+        ts = get_file(
+            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
         )
-        rvc = get_local_testdata("gr4j_cemaneige/solution.rvc")
+        rvc = get_file("gr4j_cemaneige/solution.rvc")
 
         # Make the hindcasts for each initialization date. Here we will extract
         # ESP forecasts for a given calendar date for the years in "included_years"
         # as hindcast dates. Each ESP hindcast uses all available data in the ts dataset,
         # so in this case we will have 56/57 members for each hindcast initialization
         # depending on the date that we start on. The "hindcasts" dataset contains
-        # all of the flow data from the ESP hindcasts for the initialization dates.
+        # all the flow data from the ESP hindcasts for the initialization dates.
         # The "qobs" dataset contains all qobs in the timeseries: Climpred will
         # sort it all out during its processing. Note that the format of these datasets
         # is tailor-made to be used in climpred, and thus has specific dimension names.

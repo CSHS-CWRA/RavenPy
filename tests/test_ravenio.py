@@ -1,5 +1,6 @@
+import pytest
+
 from ravenpy.utilities import ravenio
-from ravenpy.utilities.testdata import get_local_testdata
 
 # from ravenpy.models import raven_templates
 
@@ -61,8 +62,9 @@ class TestReadDiagnostics:
 
 
 class TestParseConfiguration:
-    def test_simple(self):
-        rvi = get_local_testdata("raven-hmets/*.rvi")
+    def test_simple(self, tmpdir, get_file, get_local_testdata):
+        rvi_files = get_local_testdata("raven-hmets/*.rvi")
+        rvi = get_file(rvi_files)
 
         out = ravenio.parse_configuration(rvi)
         assert out["Duration"] == "2081"

@@ -1,6 +1,8 @@
 import datetime as dt
 import itertools
 import re
+from abc import ABC, abstractmethod
+from collections import defaultdict
 from dataclasses import asdict, field
 from itertools import chain
 from pathlib import Path
@@ -73,43 +75,31 @@ class WriteSubbasinFile(RavenSwitch):
 
 
 class AirSnowCoeff(RavenCoefficient):
-    """The air/snow heat transfer coefficient as used in the `SNOTEMP_NEWTONS` snow temperature evolution routine.
+    """The air/snow heat transfer coefficient as used in the `SNOTEMP_NEWTONS` snow temperature evolution routine."""
 
-    Attributes
-    ----------
-    value : float
-      Heat transfer coefficient [1/d].
-    """
+    value: float
+    """Heat transfer coefficient [1/d]."""
 
 
 class AvgAnnualSnow(RavenCoefficient):
-    """The average annual snow for the entire watershed used in the CEMANEIGE algorithm.
+    """The average annual snow for the entire watershed used in the CEMANEIGE algorithm."""
 
-    Attributes
-    ----------
-    value : float
-      Average annual snow [mm].
-    """
+    value: float
+    """Average annual snow [mm]."""
 
 
 class PrecipitationLapseRate(RavenCoefficient):
-    """The simple linear precipitation lapse rate  used in the `OROCORR_SIMPLELAPSE` orographic correction algorithm.
+    """The simple linear precipitation lapse rate  used in the `OROCORR_SIMPLELAPSE` orographic correction algorithm."""
 
-    Attributes
-    ----------
-    value : float
-      Lapse rate [mm/d/km]
-    """
+    value: float
+    """Lapse rate [mm/d/km]"""
 
 
 class AdiabaticLapseRate(RavenCoefficient):
-    """Base adiabatic lapse rate.
+    """Base adiabatic lapse rate."""
 
-    Attributes
-    ----------
-    value : float
-      Base adiabatic lapse rate [C/km]
-    """
+    value: float
+    """Base adiabatic lapse rate [C/km]"""
 
 
 # --- Options --- #
@@ -137,7 +127,7 @@ class Duration(RavenValue):
     Attributes
     ----------
     values : float
-      Simulation duration [d].
+        Simulation duration [d].
     """
 
 
@@ -173,15 +163,10 @@ class MonthlyInterpolationMethod(RavenOption):
 
 @dataclass
 class PotentialMeltMethod(RavenOption):
-    """Potential snow melt algorithm.
-
-    Attributes
-    ----------
-    option : 'options.PotentialMelt'
-      Potential melt algorithm.
-    """
+    """Potential snow melt algorithm."""
 
     option: options.PotentialMeltMethod
+    """Potential melt algorithm."""
 
 
 @dataclass
@@ -271,19 +256,12 @@ class LinearTransform(RavenCommand):
 
 @dataclass
 class RainSnowTransition(RavenCommand):
-    """Specify the range of temperatures over which there will be a rain/snow mix when partitioning total
-    precipitation into rain and snow components.
-
-    Attributes
-    ----------
-    temp : float
-      Midpoint of the temperature range [C].
-    delta : float
-      Range [C].
-    """
+    """Specify the range of temperatures over which there will be a rain/snow mix when partitioning total precipitation into rain and snow components."""
 
     temp: float
+    """Midpoint of the temperature range [C]."""
     delta: float
+    """Range [C]."""
 
     def to_rv(self):
         template = ":RainSnowTransition {temp} {float}"
@@ -305,29 +283,27 @@ class EvaluationPeriod(RavenCommand):
 
 @dataclass
 class CustomOutput(RavenCommand):
-    """
-    Create custom output file to track a single variable, parameter or forcing function over time at a number of
-    basins, HRUs, or across the watershed.
-
-    Parameters
-    ----------
-    time_per : {'DAILY', 'MONTHLY', 'YEARLY', 'WATER_YEARLY', 'CONTINUOUS'}
-      Time period.
-    stat : {'AVERAGE', 'MAXIMUM', 'MINIMUM', 'RANGE', 'MEDIAN', 'QUARTILES', 'HISTOGRAM [min] [max] [# bins]'
-      Statistic reported for each time inverval.
-    variable: str
-      Variable or parameter name. Consult the Raven documentation for the list of allowed names.
-    space_agg : {'BY_BASIN', 'BY_HRU', 'BY_HRU_GROUP', 'BY_SB_GROUP', 'ENTIRE_WATERSHED'}
-      Spatial evaluation domain.
-    filename : str
-      Output file name. Defaults to something approximately like `<run name>_<variable>_<time_per>_<stat>_<space_agg>.nc
-    """
+    """Create custom output file to track a single variable, parameter or forcing function over time at a number of basins, HRUs, or across the watershed."""
 
     time_per: str
+    """Time period. Allowed keys: {'DAILY', 'MONTHLY', 'YEARLY', 'WATER_YEARLY', 'CONTINUOUS'}"""
     stat: str
+    """
+    Statistic reported for each time interval.
+    Allowed keys: {'AVERAGE', 'MAXIMUM', 'MINIMUM', 'RANGE', 'MEDIAN', 'QUARTILES', 'HISTOGRAM [min] [max] [# bins]'}
+    """
     variable: str
+    """Variable or parameter name. Consult the Raven documentation for the list of allowed names."""
     space_agg: str
+    """
+    Spatial evaluation domain.
+    Allowed keys: {'BY_BASIN', 'BY_HRU', 'BY_HRU_GROUP', 'BY_SB_GROUP', 'ENTIRE_WATERSHED'}
+    """
     filename: str = ""
+    """
+    Output file name.
+    Defaults to something approximately like `<run name>_<variable>_<time_per>_<stat>_<space_agg>.nc`
+    """
 
     def to_rv(self):
         template = ":CustomOutput {time_per} {stat} {variable} {space_agg} {filename}"
@@ -469,6 +445,7 @@ class SubBasinGroupCommand(RavenCommand):
 
 @dataclass
 class SBGroupPropertyMultiplierCommand(RavenCommand):
+    """"""
 
     group_name: str
     parameter_name: str
@@ -517,7 +494,7 @@ class BaseDataCommand(RavenCommand):
     name: Optional[str] = ""
     units: Optional[str] = ""
     data_type: str = ""
-    # Can be a url or a path; note that the order "str, Path" is important here because
+    # Can be an url or a path; note that the order "str, Path" is important here because
     # otherwise pydantic would try to coerce a string into a Path, which is a problem for a url
     # because it messes with slashes; so a Path will be one only when explicitly specified
     file_name_nc: Union[str, Path] = ""  # can be a URL
@@ -656,11 +633,8 @@ class ObservationDataCommand(DataCommand):
 class GridWeightsCommand(RavenCommand):
     """GridWeights command.
 
-    Important note: this command can be embedded in both a `GriddedForcingCommand`
-    or a `StationForcingCommand`.
-
-    The default is to have a single cell that covers an entire single HRU, with a
-    weight of 1.
+    Important note: this command can be embedded in both a `GriddedForcingCommand` or a `StationForcingCommand`.
+    The default is to have a single cell that covers an entire single HRU, with a weight of 1.
     """
 
     number_hrus: int = 1
@@ -703,9 +677,8 @@ class GridWeightsCommand(RavenCommand):
 class RedirectToFileCommand(RavenCommand):
     """RedirectToFile command (RVT).
 
-    For the moment, this command can only be used in the context of a `GriddedForcingCommand`
-    or a `StationForcingCommand`, as a `grid_weights` field replacement when inlining is not
-    desired.
+    For the moment, this command can only be used in the context of a `GriddedForcingCommand` or a
+    `StationForcingCommand`, as a `grid_weights` field replacement when inlining is not desired.
     """
 
     path: Path
@@ -795,23 +768,23 @@ class HRUStateVariableTableCommand(RavenCommand):
 
     @classmethod
     def parse(cls, sol):
-        pat = r"""
-        :HRUStateVariableTable
-        \s*:Attributes,(.+)
-        \s*:Units.*?
-        (.+)
-        :EndHRUStateVariableTable
-        """
-        m = re.search(dedent(pat).strip(), sol, re.DOTALL)
-        names = m.group(1).strip().split(",")
-        lines = m.group(2).strip().splitlines()  # type: ignore
-        lines = [re.split(r",|\s+", line.strip()) for line in lines]
+        pat = re.compile(
+            r"^:HRUStateVariableTable$\s*:Attributes,(?P<atts>.+)$\s*:Units,.*$\s*(?:(?P<vars>.+)$)+\s*:EndHRUStateVariableTable",
+            re.MULTILINE,
+        )
+
+        matches = pat.findall(sol)
+        d = defaultdict(dict)
+        for m in matches:
+            atts = [a.strip() for a in m[0].strip(",").split(",")]
+            vals = [re.split(r",|\s+", line.strip(",")) for line in m[1:]]
+            for val in vals:
+                idx, *values = val
+                d[idx].update(dict(zip(atts, values)))
+
         hru_states = {}
-        for line in lines:
-            idx, *values = line
-            idx = int(idx)
-            values = list(map(float, values))
-            hru_states[idx] = cls.Record(index=idx, data=dict(zip(names, values)))
+        for idx, values in d.items():
+            hru_states[idx] = cls.Record(index=idx, data=values)
         return cls(hru_states)
 
     def to_rv(self):

@@ -19,6 +19,7 @@
 #
 import os
 import sys
+from datetime import date
 
 sys.path.insert(0, os.path.abspath(".."))
 
@@ -39,14 +40,20 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
+    "IPython.sphinxext.ipython_console_highlighting",
     "nbsphinx",
     "sphinx_click",
     "sphinx_codeautolink",
     "sphinx_copybutton",
+    "sphinxcontrib.autodoc_pydantic",
+]
+
+linkcheck_ignore = [
+    r"https://www.ouranos.ca",  # bad ssl certificate
 ]
 
 autosectionlabel_prefix_document = True
-autosectionlabel_maxdepth = 3
+autosectionlabel_maxdepth = 2
 
 autosummary_generate = True
 nbsphinx_execute = "auto"
@@ -54,9 +61,9 @@ nbsphinx_execute = "auto"
 # To ensure that underlined fields (e.g. `_field`) are shown in the docs.
 autodoc_default_options = {
     "members": True,
-    "undoc-members": True,
     "private-members": False,
     "special-members": False,
+    "undoc-members": True,
 }
 
 # To avoid having to install these and burst memory limit on ReadTheDocs.
@@ -83,6 +90,7 @@ autodoc_mock_imports = [
     "rioxarray",
     "scipy",
     "shapely",
+    "spotpy",
     "statsmodels",
     "xarray",
     "xclim",
@@ -102,7 +110,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "RavenPy"
-copyright = "2021, David Huard"
+copyright = f"2021-{date.today().year}, David Huard"
 author = "David Huard"
 
 # The version info for the project you're documenting, acts as replacement

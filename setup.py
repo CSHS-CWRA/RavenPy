@@ -8,13 +8,15 @@ import subprocess
 import urllib.request
 import zipfile
 from pathlib import Path
+from typing import Optional, Union
 from urllib.parse import urljoin
 
+# Note: setuptools < 65.6 is needed for some dependencies (see: https://github.com/pypa/setuptools/issues/3693)
 from setuptools import Distribution, find_packages, setup
 from setuptools.command.develop import develop
 from setuptools.command.install import install
 
-RAVEN_ZIP_NAME = "Raven-rev318"
+RAVEN_VERSION = "3.5"
 OSTRICH_GIT_VERSION = "21.03.16"
 
 with open("README.rst") as readme_file:
@@ -40,7 +42,7 @@ requirements = [
     "spotpy",
     "statsmodels",
     "wheel",
-    "xarray",
+    "xarray<2022.11.0",  # Pinned due to incompatibility with climpred @ 2.2.0
     "xclim>=0.39.0",
     "xskillscore",
 ]
@@ -127,33 +129,47 @@ def create_external_deps_install_class(command_cls):
             command_cls.finalize_options(self)
 
         def install_binary_dep(
-            self, url, name, rev_name, binary_name, make_target="", src_folder=None
+            self,
+            url,
+            name: str,
+            version: str,
+            rev_name: Optional[str] = None,
+            binary_name: str = "",
+            make_target: str = "",
+            src_folder: Optional[Union[str, os.PathLike]] = None,
         ):
             print(f"Downloading {name} source code..")
-            print(
-                f"{urljoin(url, rev_name)}.zip", self.external_deps_path / f"{name}.zip"
-            )
+            if rev_name:
+                file_path = f"v{(Path(version) / rev_name).as_posix()}"
+            else:
+                file_path = f"v{version}"
 
+            print(
+                f"{urljoin(url, file_path)}.zip",
+                self.external_deps_path / f"{name}.zip",
+            )
             urllib.request.urlretrieve(
-                f"{urljoin(url, rev_name)}.zip", self.external_deps_path / f"{name}.zip"
+                f"{urljoin(url, file_path)}.zip",
+                self.external_deps_path / f"{name}.zip",
             )
 
             print(f"Extracting {name} source code..")
+            if rev_name:
+                out_folder = self.external_deps_path.joinpath(rev_name)
+            else:
+                out_folder = self.external_deps_path
             with zipfile.ZipFile(
                 self.external_deps_path / f"{name}.zip", "r"
             ) as zip_ref:
-                zip_ref.extractall(self.external_deps_path)
+                zip_ref.extractall(out_folder)
 
             print(f"Compiling {name}..")
-
-            folder = src_folder if src_folder else rev_name
-
+            src_folder = src_folder if src_folder else rev_name
             try:
-                print(self.external_deps_path / folder)
-
+                print(self.external_deps_path / src_folder)
                 subprocess.check_call(
                     f"make {make_target}",
-                    cwd=self.external_deps_path / folder,
+                    cwd=self.external_deps_path / src_folder,
                     shell=True,
                 )
             except subprocess.CalledProcessError as e:
@@ -161,41 +177,44 @@ def create_external_deps_install_class(command_cls):
 
             # Copy binary in a location which should be available on the PATH
             # Note 1: if command_cls==install, self.install_scripts should correspond to <venv>/bin or ~/.local/bin
-            # Note 2: if command_cls==develop, self.install_scripts is None so we are using a trick to get the value
-            #         it would have with the install command
+            # Note 2: if command_cls==develop, self.install_scripts is None, so we are using a trick to get the value
+            #         it would have with the `install` command
             scripts_dir = self.install_scripts or get_setuptools_install_scripts_dir()
             target_bin_path = Path(scripts_dir) / name
 
             print(
-                f"Copying binary from "
-                f"{self.external_deps_path.joinpath(src_folder if src_folder else rev_name).joinpath(binary_name)}"
+                f"Copying binary from: "
+                f"{self.external_deps_path.joinpath(src_folder).joinpath(binary_name)}\n"
+                f"To: {target_bin_path}"
             )
-            print(f"To {target_bin_path}")
-
             shutil.copy(
-                self.external_deps_path.joinpath(
-                    src_folder if src_folder else rev_name
-                ).joinpath(binary_name),
+                self.external_deps_path.joinpath(src_folder).joinpath(binary_name),
                 target_bin_path,
             )
 
         def run(self):
 
             if self.with_binaries:
-                self.external_deps_path = Path("./external_deps")
+                self.external_deps_path = Path().cwd().joinpath("external_deps")
                 self.external_deps_path.mkdir(exist_ok=True)
 
-                url = "https://www.civil.uwaterloo.ca/jmai/raven/"
-                self.install_binary_dep(url, "raven", RAVEN_ZIP_NAME, "Raven.exe")
+                url = "https://www.civil.uwaterloo.ca/raven/files/"
+                self.install_binary_dep(
+                    url,
+                    "raven",
+                    version=RAVEN_VERSION,
+                    rev_name=f"RavenSource_v{RAVEN_VERSION}",
+                    binary_name="Raven.exe",
+                )
 
                 url = "https://github.com/usbr/ostrich/archive/refs/tags/"
                 self.install_binary_dep(
                     url,
                     "ostrich",
-                    f"v{OSTRICH_GIT_VERSION}",
-                    "Ostrich",
-                    "GCC",
-                    src_folder=f"ostrich-{OSTRICH_GIT_VERSION}/make",
+                    version=OSTRICH_GIT_VERSION,
+                    binary_name="Ostrich",
+                    make_target="GCC",
+                    src_folder=Path(f"ostrich-{OSTRICH_GIT_VERSION}/make"),
                 )
 
             # This works with python setup.py install, but produces this error with pip install:
@@ -256,7 +275,7 @@ setup(
         gis=gis_requirements,
     ),
     url="https://github.com/CSHS-CWRA/ravenpy",
-    version="0.8.1",
+    version="0.10.0",
     zip_safe=False,
     cmdclass={
         "install": create_external_deps_install_class(install),

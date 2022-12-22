@@ -10,3 +10,4 @@ ipykernel
 jupyter_client
 sphinx-click
 numpydoc
+autodoc_pydantic

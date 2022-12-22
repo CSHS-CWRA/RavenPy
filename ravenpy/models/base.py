@@ -228,6 +228,8 @@ class Raven:
         output/
 
         """
+        self._rv_paths = []
+
         if overwrite:
             if self.model_path.exists():
                 shutil.rmtree(str(self.exec_path))
@@ -484,8 +486,8 @@ class Raven:
         # Try to create a zip file
         with zipfile.ZipFile(outfn, "w") as f:
             for fn in files:
-                len(fn.parts)
-                f.write(fn, arcname=fn.relative_to(Path(*fn.parts[:i])))
+                arcname = fn.relative_to(Path(*fn.parts[:i]))
+                f.write(fn, arcname=arcname)
 
         return outfn
 

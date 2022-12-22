@@ -11,9 +11,10 @@ twine
 Click
 pytest
 pytest-cov
+pytest-xdist
 black
 isort
 pre-commit
 holoviews
 hvplot
-setuptools
+setuptools<65.6

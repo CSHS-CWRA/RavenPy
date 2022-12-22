@@ -3,12 +3,8 @@ from pathlib import Path
 import pytest
 import xarray
 
-from ravenpy.utilities.testdata import (
-    _default_cache_dir,
-    get_file,
-    open_dataset,
-    query_folder,
-)
+from ravenpy.utilities.testdata import _default_cache_dir  # noqa: F822
+from ravenpy.utilities.testdata import get_file, open_dataset, query_folder
 
 
 class TestRemoteFileAccess:
@@ -16,8 +12,8 @@ class TestRemoteFileAccess:
     git_url = "https://github.com/Ouranosinc/raven-testdata"
     branch = "master"
 
-    def test_get_file(self):
-        file = get_file(name="ostrich-hbv-ec/raven-hbv-salmon.rvi", branch=self.branch)
+    def test_get_file_default_cache(self):
+        file = get_file(name="ostrich-hbvec/raven-hbvec-salmon.rvi", branch=self.branch)
 
         assert Path(_default_cache_dir).exists()
         assert file.is_file()
@@ -42,7 +38,7 @@ class TestRemoteFileAccess:
         )
         assert isinstance(ds, xarray.Dataset)
 
-    def test_open_dataset_no_cache(self):
+    def test_open_dataset_false_cache(self):
         ds = open_dataset(
             name="raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_3d.nc",
             branch=self.branch,
@@ -73,18 +69,12 @@ class TestQueryFolder:
     git_url = "https://github.com/Ouranosinc/raven-testdata"
     branch = "master"
 
-    # def test_get_files_with_testdata_folder(self):
-    #     rvs = get_file(TESTDATA["raven-gr4j-cemaneige-nc-rv"], branch="master")
-    #     assert len(rvs) == 5
-
-    # def test_query_folder(self):
-    #     all_files = query_folder()
-    #     assert len(all_files) == 129
-
+    @pytest.mark.xfail(reason="Query folder is API rate limited")
     def test_query_specific_folder(self):
         folder = query_folder(folder="raven-gr4j-cemaneige", branch=self.branch)
         assert len(folder) == 8
 
+    @pytest.mark.xfail(reason="Query folder is API rate limited")
     def test_query_folder_patterns(self):
         mohyse = query_folder(
             folder="/regionalisation_data/tests/", pattern="MOHYSE", branch=self.branch
@@ -94,6 +84,7 @@ class TestQueryFolder:
             Path("regionalisation_data", "tests", "MOHYSE_parameters.csv")
         )
 
+    @pytest.mark.xfail(reason="Query folder is API rate limited")
     def test_query_folder_patterns_excessive_slashes(self):
         mohyse = query_folder(
             folder="///regionalisation_data/////tests///",

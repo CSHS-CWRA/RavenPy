@@ -19,14 +19,15 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install libgdal-dev
+      - name: Set GDAL version
+        run: |
+          echo "GDAL_VERSION=$(gdal-config --version)"  >> $GITHUB_ENV
       - name: Install packaging libraries
         run: pip install wheel
       - name: Build a binary wheel and a source tarball
         run: |
           export LD_PRELOAD=/lib/x86_64-linux-gnu/libstdc++.so.6:$LD_PRELOAD
           python setup.py sdist bdist_wheel
-        env:
-          GDAL_VERSION: ${{ gdal-config --version }}
       - name: Publish distribution 📦 to Test PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:

@@ -1,12 +1,11 @@
 import datetime as dt
 import os
 import zipfile
-from dataclasses import astuple, replace
+from dataclasses import astuple
 from pathlib import Path
 
 import numpy as np
 import pytest
-import xarray as xr
 
 from ravenpy.config import options
 from ravenpy.config.commands import (  # GriddedForcingCommand,; LandUseClassesCommand,; ObservationDataCommand,; SoilClassesCommand,; SoilProfilesCommand,; VegetationClassesCommand,
@@ -33,31 +32,30 @@ from ravenpy.models import (
     RavenError,
     get_average_annual_runoff,
 )
-from ravenpy.utilities.testdata import get_local_testdata
 
 from .common import _convert_2d, _convert_3d
-
-TS = get_local_testdata(
-    "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
-)
 
 # Link to THREDDS Data Server netCDF testdata
 TDS = "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/birdhouse/testdata/raven"
 
 
 @pytest.fixture
-def input2d(tmpdir):
+def input2d(tmpdir, get_file):
     """Convert 1D input to 2D output by copying all the time series along a new region dimension."""
-    ds = _convert_2d(TS)
+    ts = get_file(salmon_river)
+
+    ds = _convert_2d(ts)
     fn_out = os.path.join(tmpdir, "input2d.nc")
     ds.to_netcdf(fn_out)
     return Path(fn_out)
 
 
 @pytest.fixture
-def input3d(tmpdir):
+def input3d(tmpdir, get_file):
     """Convert 1D input to 2D output by copying all the time series along a new region dimension."""
-    ds = _convert_3d(TS)
+    ts = get_file(salmon_river)
+
+    ds = _convert_3d(ts)
     ds = ds.drop_vars("qobs")
     fn_out = os.path.join(tmpdir, "input3d.nc")
     ds.to_netcdf(fn_out)
@@ -89,25 +87,33 @@ salmon_land_hru_2 = dict(
     area=2000.0, elevation=835.0, latitude=54.123, longitude=-123.4234
 )
 
+salmon_river = "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
+salmon_river_2d = (
+    "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_2d.nc"
+)
+
 
 class TestGR4JCN:
-    def test_error(self):
-        model = GR4JCN(workdir="/tmp/tst")
+    def test_error(self, tmp_path, get_file):
+        ts = get_file(salmon_river)
+
+        model = GR4JCN(workdir=tmp_path)
 
         model.config.rvp.params = model.Params(
             0.529, -3.396, 407.29, 1.072, 16.9, 0.947
         )
 
         with pytest.raises(RavenError) as exc:
-            model(TS)
+            model(ts)
 
         assert "CHydroUnit constructor:: HRU 1 has a negative or zero area" in str(
             exc.value
         )
 
-    def test_simple(self):
+    def test_simple(self, get_file):
+        ts = get_file(salmon_river)
+
         model = GR4JCN()
-        print(model.workdir)
         model.config.rvi.start_date = dt.datetime(2000, 1, 1)
         model.config.rvi.end_date = dt.datetime(2002, 1, 1)
         model.config.rvi.run_name = "test"
@@ -123,7 +129,7 @@ class TestGR4JCN:
 
         total_area_in_m2 = model.config.rvh.hrus[0].area * 1000 * 1000
         model.config.rvp.avg_annual_runoff = get_average_annual_runoff(
-            TS, total_area_in_m2
+            ts, total_area_in_m2
         )
 
         np.testing.assert_almost_equal(
@@ -132,7 +138,7 @@ class TestGR4JCN:
 
         assert model.config.rvi.suppress_output == ""
 
-        model(TS)
+        model(ts)
 
         # ------------
         # Check quality (diagnostic) of simulated streamflow values
@@ -193,13 +199,11 @@ class TestGR4JCN:
             f"{model.psim}_PRECIP_Yearly_Average_ByWatershed.nc"
         ).exists()
 
-    def test_routing(self):
+    def test_routing(self, get_file):
         """We need at least 2 subbasins to activate routing."""
         model = GR4JCN()
 
-        ts_2d = get_local_testdata(
-            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_2d.nc"
-        )
+        ts_2d = get_file(salmon_river_2d)
 
         #########
         # R V I #
@@ -402,7 +406,9 @@ class TestGR4JCN:
 
         assert len(list(model.output_path.glob("*ForcingFunctions.nc"))) == 1
 
-    def test_redirect_to_file(self, tmpdir, input2d):
+    def test_redirect_to_file(self, tmpdir, input2d, get_file):
+        ts = get_file(salmon_river)
+
         model = GR4JCN()
         model.config.rvi.start_date = dt.datetime(2000, 1, 1)
         model.config.rvi.end_date = dt.datetime(2002, 1, 1)
@@ -416,7 +422,7 @@ class TestGR4JCN:
 
         total_area_in_m2 = model.config.rvh.hrus[0].area * 1000 * 1000
         model.config.rvp.avg_annual_runoff = get_average_annual_runoff(
-            TS, total_area_in_m2
+            ts, total_area_in_m2
         )
 
         np.testing.assert_almost_equal(
@@ -467,13 +473,15 @@ class TestGR4JCN:
         model.config.update("params", (0.529, -3.396, 407.29, 1.072, 16.9, 0.947))
         assert model.config.rvp.params.GR4J_X1 == 0.529
 
-    def test_run(self):
+    def test_run(self, get_file):
+        ts = get_file(salmon_river)
+
         model = GR4JCN()
 
         model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
 
         model(
-            TS,
+            ts,
             area=4250.6,
             elevation=843.0,
             latitude=54.4848,
@@ -487,13 +495,15 @@ class TestGR4JCN:
 
         np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.117301, 4)
 
-    def test_evaluation(self):
+    def test_evaluation(self, get_file):
+        ts = get_file(salmon_river)
+
         model = GR4JCN()
 
         model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
 
         model(
-            TS,
+            ts,
             area=4250.6,
             elevation=843.0,
             latitude=54.4848,
@@ -513,11 +523,13 @@ class TestGR4JCN:
         assert "DIAG_KLING_GUPTA" in d
         assert len(d["DIAG_RMSE"]) == 3  # ALL, period1, period2
 
-    def test_run_new_hrus_param(self):
+    def test_run_new_hrus_param(self, get_file):
+        ts = get_file(salmon_river)
+
         model = GR4JCN()
 
         model(
-            TS,
+            ts,
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2002, 1, 1),
             params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
@@ -529,13 +541,15 @@ class TestGR4JCN:
         np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.117301, 4)
 
     # @pytest.mark.skip
-    def test_overwrite(self):
+    def test_overwrite(self, get_file):
+        ts = get_file(salmon_river)
+
         model = GR4JCN()
 
         model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
 
         model(
-            TS,
+            ts,
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2002, 1, 1),
             params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
@@ -549,7 +563,7 @@ class TestGR4JCN:
         # Please remove when fixed!
         model.hydrograph.close()  # Needed with xarray 0.16.1
 
-        model(TS, params=(0.5289, -3.397, 407.3, 1.071, 16.89, 0.948), overwrite=True)
+        model(ts, params=(0.5289, -3.397, 407.3, 1.071, 16.89, 0.948), overwrite=True)
 
         qsim2 = model.q_sim.copy(deep=True)
         m2 = qsim2.mean()
@@ -572,14 +586,16 @@ class TestGR4JCN:
 
         # Set initial conditions explicitly
         model(
-            TS,
+            ts,
             end_date=dt.datetime(2001, 2, 1),
             # hru_state=HRUStateVariableTableCommand.Record(soil0=0),
             overwrite=True,
         )
         assert model.q_sim.isel(time=1).values[0] < qsim2.isel(time=1).values[0]
 
-    def test_resume(self):
+    def test_resume(self, get_file):
+        ts = get_file(salmon_river)
+
         model_ab = GR4JCN()
         model_ab.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
         kwargs = dict(
@@ -587,7 +603,7 @@ class TestGR4JCN:
         )
         # Reference run
         model_ab(
-            TS,
+            ts,
             run_name="run_ab",
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2001, 1, 1),
@@ -598,7 +614,7 @@ class TestGR4JCN:
 
         model_a.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
         model_a(
-            TS,
+            ts,
             run_name="run_a",
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2000, 7, 1),
@@ -612,7 +628,7 @@ class TestGR4JCN:
         model_a.resume()
 
         model_a(
-            TS,
+            ts,
             run_name="run_2",
             start_date=dt.datetime(2000, 7, 1),
             end_date=dt.datetime(2001, 1, 1),
@@ -631,7 +647,7 @@ class TestGR4JCN:
             rvc
         )  # <--------- And this is how you feed it to a brand new model.
         model_b(
-            TS,
+            ts,
             run_name="run_2",
             start_date=dt.datetime(2000, 7, 1),
             end_date=dt.datetime(2001, 1, 1),
@@ -648,15 +664,17 @@ class TestGR4JCN:
         # cumulative sums of precipitation over the run ?
         # assert model_b.solution == model_ab.solution # This does not work. Atmosphere attributes are off.
 
-    def test_resume_earlier(self):
+    def test_resume_earlier(self, get_file):
         """Check that we can resume a run with the start date set at another date than the time stamp in the
         solution."""
+        ts = get_file(salmon_river)
+
         params = (0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
         # Reference run
         model = GR4JCN()
         model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
         model(
-            TS,
+            ts,
             run_name="run_a",
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2000, 2, 1),
@@ -677,7 +695,7 @@ class TestGR4JCN:
         model.config.rvc.parse_solution(rvc.read_text())
 
         model(
-            TS,
+            ts,
             run_name="run_b",
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2000, 2, 1),
@@ -687,13 +705,15 @@ class TestGR4JCN:
         s_b = model.storage["Soil Water[0]"].isel(time=-1)
         assert s_a != s_b
 
-    def test_update_soil_water(self):
+    def test_update_soil_water(self, get_file):
+        ts = get_file(salmon_river)
+
         params = (0.529, -3.396, 407.29, 1.072, 16.9, 0.947)
         # Reference run
         model = GR4JCN()
         model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
         model(
-            TS,
+            ts,
             run_name="run_a",
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2000, 2, 1),
@@ -707,7 +727,7 @@ class TestGR4JCN:
         model.config.rvc.hru_states[1].data.update({"SOIL[0]": s_0, "SOIL[1]": s_1})
 
         model(
-            TS,
+            ts,
             run_name="run_b",
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2000, 2, 1),
@@ -720,17 +740,19 @@ class TestGR4JCN:
 
     def test_version(self):
         model = Raven()
-        assert model.raven_version == "3.0.4"
+        assert model.raven_version == "3.5"
 
         model = GR4JCN()
-        assert model.raven_version == "3.0.4"
+        assert model.raven_version == "3.5"
 
-    def test_parallel_params(self):
+    def test_parallel_params(self, get_file):
+        ts = get_file(salmon_river)
+
         model = GR4JCN()
         model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
 
         model(
-            TS,
+            ts,
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2002, 1, 1),
             suppress_output=False,
@@ -770,8 +792,8 @@ class TestGR4JCN:
         z = zipfile.ZipFile(model.outputs["rv_config"])
         assert len(z.filelist) == 10
 
-    def test_multiple_gauge_stations(self):
-        ts = get_local_testdata("famine/famine_input.nc")
+    def test_multiple_gauge_stations(self, get_file):
+        ts = get_file("famine/famine_input.nc")
 
         model = GR4JCN()
         model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
@@ -835,7 +857,9 @@ class TestGR4JCN:
 
 
 class TestGR4JCN_OST:
-    def test_simple(self):
+    def test_simple(self, get_file):
+        ts = get_file(salmon_river)
+
         model = GR4JCN_OST()
         model.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
 
@@ -844,11 +868,13 @@ class TestGR4JCN_OST:
         high = (2.5, 10.0, 700.0, 7.0, 30.0, 1.0)
 
         model.configure(
-            get_local_testdata("ostrich-gr4j-cemaneige/OstRandomNumbers.txt")
+            get_file(
+                "ostrich-gr4j-cemaneige/OstRandomNumbers.txt",
+            )
         )
 
         model(
-            TS,
+            ts,
             start_date=dt.datetime(1954, 1, 1),
             duration=208,
             lowerBounds=low,
@@ -897,7 +923,7 @@ class TestGR4JCN_OST:
         gr4j.config.rvh.hrus = (GR4JCN.LandHRU(**salmon_land_hru_1),)
 
         gr4j(
-            TS,
+            ts,
             start_date=dt.datetime(1954, 1, 1),
             duration=208,
             params=model.calibrated_params,
@@ -909,7 +935,9 @@ class TestGR4JCN_OST:
 
 
 class TestHMETS:
-    def test_simple(self):
+    def test_simple(self, get_file):
+        ts = get_file(salmon_river)
+
         model = HMETS()
         params = (
             9.5019,
@@ -936,7 +964,7 @@ class TestHMETS:
         )
 
         model(
-            TS,
+            ts,
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2002, 1, 1),
             area=4250.6,
@@ -953,11 +981,15 @@ class TestHMETS:
 
 
 class TestHMETS_OST:
-    def test_simple(self):
+    def test_simple(self, get_file):
+        ts = get_file(salmon_river)
+
         model = HMETS_OST()
 
         model.configure(
-            get_local_testdata("ostrich-gr4j-cemaneige/OstRandomNumbers.txt")
+            get_file(
+                "ostrich-gr4j-cemaneige/OstRandomNumbers.txt",
+            )
         )
 
         # Parameter bounds
@@ -1009,7 +1041,7 @@ class TestHMETS_OST:
         )
 
         model(
-            TS,
+            ts,
             start_date=dt.datetime(1954, 1, 1),
             duration=208,
             area=4250.6,
@@ -1099,7 +1131,7 @@ class TestHMETS_OST:
         #                                err_msg='calibrated NSE is not matching expected value')
         hmets = HMETS()
         hmets(
-            TS,
+            ts,
             start_date=dt.datetime(1954, 1, 1),
             duration=208,
             area=4250.6,
@@ -1115,7 +1147,9 @@ class TestHMETS_OST:
 
 
 class TestMOHYSE:
-    def test_simple(self):
+    def test_simple(self, get_file):
+        ts = get_file(salmon_river)
+
         model = MOHYSE()
         params = (
             1.0,
@@ -1131,7 +1165,7 @@ class TestMOHYSE:
         )
 
         model(
-            TS,
+            ts,
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2002, 1, 1),
             area=4250.6,
@@ -1147,11 +1181,15 @@ class TestMOHYSE:
 
 
 class TestMOHYSE_OST:
-    def test_simple(self):
+    def test_simple(self, get_file):
+        ts = get_file(salmon_river)
+
         model = MOHYSE_OST()
 
         model.configure(
-            get_local_testdata("ostrich-gr4j-cemaneige/OstRandomNumbers.txt")
+            get_file(
+                "ostrich-gr4j-cemaneige/OstRandomNumbers.txt",
+            )
         )
 
         # Parameter bounds
@@ -1159,7 +1197,7 @@ class TestMOHYSE_OST:
         high_p = (20.0, 1.0, 20.0, 5.0, 0.5, 1.0, 1.0, 1.0, 15.0, 15.0)
 
         model(
-            TS,
+            ts,
             start_date=dt.datetime(1954, 1, 1),
             duration=208,
             area=4250.6,
@@ -1231,7 +1269,7 @@ class TestMOHYSE_OST:
         #                                err_msg='calibrated NSE is not matching expected value')
         mohyse = MOHYSE()
         mohyse(
-            TS,
+            ts,
             start_date=dt.datetime(1954, 1, 1),
             duration=208,
             area=4250.6,
@@ -1247,7 +1285,9 @@ class TestMOHYSE_OST:
 
 
 class TestHBVEC:
-    def test_simple(self):
+    def test_simple(self, get_file):
+        ts = get_file(salmon_river)
+
         model = HBVEC()
         params = (
             0.05984519,
@@ -1274,7 +1314,7 @@ class TestHBVEC:
         )
 
         model(
-            TS,
+            ts,
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2002, 1, 1),
             area=4250.6,
@@ -1288,7 +1328,9 @@ class TestHBVEC:
         d = model.diagnostics
         np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], 0.0186633, 4)
 
-    def test_evap(self):
+    def test_evap(self, get_file):
+        ts = get_file(salmon_river)
+
         model = HBVEC()
         params = (
             0.05984519,
@@ -1315,7 +1357,7 @@ class TestHBVEC:
         )
 
         model(
-            TS,
+            ts,
             start_date=dt.datetime(2000, 1, 1),
             end_date=dt.datetime(2002, 1, 1),
             area=4250.6,
@@ -1330,11 +1372,15 @@ class TestHBVEC:
 
 
 class TestHBVEC_OST:
-    def test_simple(self):
+    def test_simple(self, get_file):
+        ts = get_file(salmon_river)
+
         model = HBVEC_OST()
 
         model.configure(
-            get_local_testdata("ostrich-gr4j-cemaneige/OstRandomNumbers.txt")
+            get_file(
+                "ostrich-gr4j-cemaneige/OstRandomNumbers.txt",
+            )
         )
 
         # Parameter bounds
@@ -1386,7 +1432,7 @@ class TestHBVEC_OST:
         )
 
         model(
-            TS,
+            ts,
             start_date=dt.datetime(1954, 1, 1),
             duration=208,
             area=4250.6,
@@ -1462,7 +1508,7 @@ class TestHBVEC_OST:
         #                                err_msg='calibrated NSE is not matching expected value')
         hbvec = HBVEC()
         hbvec(
-            TS,
+            ts,
             start_date=dt.datetime(1954, 1, 1),
             duration=208,
             area=4250.6,

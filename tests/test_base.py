@@ -4,36 +4,40 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-import ravenpy
 from ravenpy.models import Ostrich, Raven, RavenError
 from ravenpy.models.base import get_diff_level
-from ravenpy.utilities.testdata import get_local_testdata
 
 has_singularity = False  # ravenpy.raven_simg.exists()
 
 
 class TestRaven:
-    def test_identifier(self):
+    def test_identifier(self, get_file):
         model = Raven()
         assert model.identifier == "raven-generic"
 
         model = Raven(identifier="toto")
         assert model.identifier == "toto"
 
-        rvt = get_local_testdata("raven-gr4j-cemaneige/raven-gr4j-salmon.rvt")
+        rvt = get_file(
+            "raven-gr4j-cemaneige/raven-gr4j-salmon.rvt",
+        )
         model = Raven()
         model.configure(rvt)
         assert model.identifier == rvt.stem
 
-        rvp_tpl = get_local_testdata("ostrich-gr4j-cemaneige/raven-gr4j-salmon.rvp.tpl")
+        rvp_tpl = get_file(
+            "ostrich-gr4j-cemaneige/raven-gr4j-salmon.rvp.tpl",
+        )
         model = Raven()
         model.configure(rvp_tpl)
         assert model.identifier == Path(rvp_tpl.stem).stem
 
-    def test_raven_error(self):
-        rvs = get_local_testdata("raven-gr4j-cemaneige/raven-gr4j-salmon.rv?")
-        ts = get_local_testdata(
-            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
+    def test_raven_error(self, get_file, get_local_testdata):
+        rvs = get_local_testdata(
+            r"raven-gr4j-cemaneige/raven-gr4j-salmon.rv?",
+        )
+        ts = get_file(
+            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
         )
 
         model = Raven()
@@ -55,10 +59,10 @@ class TestRaven:
 
         assert model.config.rvi.raven_version == model.raven_version
 
-    def test_gr4j(self):
+    def test_gr4j(self, get_file, get_local_testdata):
         rvs = get_local_testdata("raven-gr4j-cemaneige/raven-gr4j-salmon.rv?")
-        ts = get_local_testdata(
-            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
+        ts = get_file(
+            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
         )
 
         model = Raven()
@@ -68,7 +72,7 @@ class TestRaven:
         z = zipfile.ZipFile(model.outputs["rv_config"])
         assert len(z.filelist) == 5
 
-    def test_mohyse(self):
+    def test_mohyse(self, get_local_testdata):
         rvs = get_local_testdata("raven-mohyse/raven-mohyse-salmon.rv?")
         ts = get_local_testdata("raven-mohyse/Salmon-River-Near-Prince-George_*.rvt")
 
@@ -79,7 +83,7 @@ class TestRaven:
         z = zipfile.ZipFile(model.outputs["rv_config"])
         assert len(z.filelist) == 5
 
-    def test_hmets(self):
+    def test_hmets(self, get_local_testdata):
         rvs = get_local_testdata("raven-hmets/raven-hmets-salmon.rv?")
         ts = get_local_testdata("raven-hmets/Salmon-River-Near-Prince-George_*.rvt")
 
@@ -90,9 +94,9 @@ class TestRaven:
         z = zipfile.ZipFile(model.outputs["rv_config"])
         assert len(z.filelist) == 5
 
-    def test_hbvec(self):
-        rvs = get_local_testdata("raven-hbv-ec/raven-hbv-ec-salmon.rv?")
-        ts = get_local_testdata("raven-hbv-ec/Salmon-River-Near-Prince-George_*.rvt")
+    def test_hbvec(self, get_local_testdata):
+        rvs = get_local_testdata("raven-hbvec/raven-hbvec-salmon.rv?")
+        ts = get_local_testdata("raven-hbvec/Salmon-River-Near-Prince-George_*.rvt")
 
         model = Raven()
         model.configure(rvs)
@@ -102,7 +106,7 @@ class TestRaven:
         assert len(z.filelist) == 5
 
     @pytest.mark.skipif(not has_singularity, reason="Singularity is not available.")
-    def test_singularity(self):
+    def test_singularity(self, get_local_testdata):
         rvs = get_local_testdata("raven-gr4j-cemaneige/raven-gr4j-salmon.rv?")
         ts = get_local_testdata(
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
@@ -119,12 +123,13 @@ class TestOstrich:
         model = Ostrich()
         assert model.identifier == "ostrich-generic"
 
-    def test_gr4j_with_no_tags(self):
-        ts = get_local_testdata(
+    def test_gr4j_with_no_tags(self, get_file, get_local_testdata):
+        ts = get_file(
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
         )
-        ost = get_local_testdata("ostrich-gr4j-cemaneige/*.rv?")
-        ost += get_local_testdata("ostrich-gr4j-cemaneige/*.t??")
+        ost = get_local_testdata(
+            ["ostrich-gr4j-cemaneige/*.rv?", "ostrich-gr4j-cemaneige/*.t??"]
+        )
 
         model = Ostrich()
         model.configure(ost)
@@ -170,12 +175,12 @@ class TestOstrich:
         z = zipfile.ZipFile(model.outputs["rv_config"])
         assert len(z.filelist) == 7
 
-    def test_mohyse_with_no_tags(self):
-        ts = get_local_testdata(
-            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
+    def test_mohyse_with_no_tags(self, get_file, get_local_testdata):
+        ts = get_file(
+            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
         )
-        ost = get_local_testdata("ostrich-mohyse/*.rv?")
-        ost += get_local_testdata("ostrich-mohyse/*.t??")
+
+        ost = get_local_testdata(["ostrich-mohyse/*.rv?", "ostrich-mohyse/*.t??"])
 
         model = Ostrich()
         model.configure(ost)
@@ -233,12 +238,12 @@ class TestOstrich:
         z = zipfile.ZipFile(model.outputs["rv_config"])
         assert len(z.filelist) == 7
 
-    def test_hmets_with_no_tags(self):
-        ts = get_local_testdata(
-            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
+    def test_hmets_with_no_tags(self, get_file, get_local_testdata):
+        ts = get_file(
+            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
         )
-        ost = get_local_testdata("ostrich-hmets/*.rv?")
-        ost += get_local_testdata("ostrich-hmets/*.t??")
+
+        ost = get_local_testdata(["ostrich-hmets/*.rv?", "ostrich-hmets/*.t??"])
 
         model = Ostrich()
         model.configure(ost)
@@ -316,12 +321,12 @@ class TestOstrich:
         z = zipfile.ZipFile(model.outputs["rv_config"])
         assert len(z.filelist) == 7
 
-    def test_hbvec_with_no_tags(self):
-        ts = get_local_testdata(
-            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
+    def test_hbvec_with_no_tags(self, get_file, get_local_testdata):
+        ts = get_file(
+            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
         )
-        ost = get_local_testdata("ostrich-hbv-ec/*.rv?")
-        ost += get_local_testdata("ostrich-hbv-ec/*.t??")
+
+        ost = get_local_testdata(["ostrich-hbvec/*.rv?", "ostrich-hbvec/*.t??"])
 
         model = Ostrich()
         model.configure(ost)

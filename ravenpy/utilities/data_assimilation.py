@@ -7,13 +7,13 @@ import datetime as dt
 import math
 import os
 from copy import deepcopy
-from dataclasses import replace
 from typing import Dict, List, Sequence, Tuple, Union
 
 import numpy as np
 import xarray as xr
 
 from ravenpy.config.commands import HRUState
+from ravenpy.models import Raven
 
 """
 model = Raven model instance, preset with parameters etc.
@@ -43,21 +43,21 @@ def assimilate(
     Parameters
     ----------
     model : raven.Model
-      Raven model instance configured to run.
-    ts : str, Path
-      Perturbed time series.
+        Raven model instance configured to run.
+    ts : str or Path
+        Perturbed time series.
     keys : tuple
-      Name of hru_state attributes to be assimilated, for example ("soil0", "soil1").
+        Name of hru_state attributes to be assimilated, for example ("soil0", "soil1").
     basin_states : sequence
-      Model initial conditions, BasinStateVariables instances.
+        Model initial conditions, BasinStateVariables instances.
     hru_states : sequence
-      Model initial conditions, HRUStateVariables instances.
+        Model initial conditions, HRUStateVariables instances.
     q_obs : xarray.Dataset
-      The actual observed streamflow over the entire period.
+        The actual observed streamflow over the entire period.
     ts : str, Path, list
-      Input netCDF file names.
+        Input netCDF file names.
     days : datetime.datetime
-      Dates ...
+        Dates ...
     """
     qkey = "water_volume_transport_in_river_channel"
 
@@ -109,9 +109,7 @@ def assimilate(
     return [xa, model]
 
 
-def perturbation(
-    da: xr.DataArray, dist: str, std: float, seed: int = None, **kwargs: Dict
-):
+def perturbation(da: xr.DataArray, dist: str, std: float, seed: int = None, **kwargs):
     """Return perturbed time series.
 
     Parameters
@@ -125,7 +123,7 @@ def perturbation(
     seed : int
       Seed for the random number generator. Setting the same seed for different variables will ensure the same
       perturbations are generated.
-    kwargs : dict
+    **kwargs
       Name and size of additional dimensions, apart from time.
 
     """
@@ -222,30 +220,30 @@ def perturb_full_series(
     dists: Tuple,
     n_members: int = 25,
 ):
-    """
-    Create an ensemble of randomly perturbed input timeseries for the given model.
+    """Create an ensemble of randomly perturbed input timeseries for the given model.
+
     Each input variable is modified by 'n_members' time series of random values
     drawn from a given distribution and parameters.
 
     Parameters
     ----------
     model : ravenpy.Raven instance
-      The model that will be used to perform the simulations and assimilation
+        The model that will be used to perform the simulations and assimilation
     std : dict
-      Standard deviation of the perturbation noise for each input variable, keyed by variable standard name.
+        Standard deviation of the perturbation noise for each input variable, keyed by variable standard name.
     start_date : datetime.datetime
-      Start date of the assimilation run.
+        Start date of the assimilation run.
     end_date : datetime.datetime
-      End date of the assimilation run.
+        End date of the assimilation run.
     dists : tuple
-      Pairs of variable:distribution to identify the type of distribution each variable follows.
+        Pairs of variable:distribution to identify the type of distribution each variable follows.
     n_members : int
-      Number of members to use in the Ensemble Kalman Filter.
+        Number of members to use in the Ensemble Kalman Filter.
 
     Returns
     -------
     xarray.Dataset
-      Dataset containing all perturbed hydrometeorological timeseries for the entire period.
+        Dataset containing all perturbed hydrometeorological timeseries for the entire period.
     """
 
     # Use the same random seed for both tasmin and tasmax
@@ -272,16 +270,16 @@ def perturb_full_series(
 
 
 def assimilation_initialization(
-    model,
-    ts: str,
+    model: Raven,
+    ts: Union[str, os.PathLike],
     start_date: dt.datetime,
     end_date: dt.datetime,
     area: float,
     elevation: float,
     latitude: float,
     longitude: float,
-    params: List[float],
-    assim_var: List[str],
+    params: Sequence[float],
+    assim_var: Sequence[str],
     n_members: int = 25,
 ):
     """
@@ -293,38 +291,38 @@ def assimilation_initialization(
     Parameters
     ----------
     model : ravenpy.Raven instance
-      The model that will be used to perform the simulations and assimilation.
-    ts : str
-      Path to the forcing data timeseries. For assimilation, this is perturbed data.
+        The model that will be used to perform the simulations and assimilation.
+    ts : str or os.PathLike
+        Path to the forcing data timeseries. For assimilation, this is perturbed data.
     start_date : datetime.datetime
-      Start date of the period used to initialize states for assimilation.
+        Start date of the period used to initialize states for assimilation.
     end_date : datetime.datetime
-      Date at which we will generate states for the upcoming assimilation.
+        Date at which we will generate states for the upcoming assimilation.
     area : float
-      Catchment area, in square kilometers (km^2)
+        Catchment area, in square kilometers (km^2)
     elevation : float
-      Catchment elevation, in meters (m).
+        Catchment elevation, in meters (m).
     latitude : float
-      Catchment latitude, in degrees.
+        Catchment latitude, in degrees.
     longitude : float
-      Catchment longitude, in degrees (negative west).
-    params : List[float]
-      The hydrological model parameters used for the assimilation and simulation.
-    assim_var : List[str]
-      List of hydrological model internal variables to be modified during assimilation.
+        Catchment longitude, in degrees (negative west).
+    params : Sequence[float]
+        The hydrological model parameters used for the assimilation and simulation.
+    assim_var : Sequence[str]
+        List of hydrological model internal variables to be modified during assimilation.
     n_members : int
-      Number of ensemble members for the Ensemble Kalman Filter. The default value is 25.
+        Number of ensemble members for the Ensemble Kalman Filter. The default value is 25.
 
     Returns
     -------
     ravenpy.Raven instance
-      The hydrological model with the internal states after the n_members simulations.
-    np.array
-      Array of state variables used overwrite the current initial states.
+        The hydrological model with the internal states after the n_members simulations.
+    numpy.array
+        Array of state variables used overwrite the current initial states.
     ravenpy.Raven.hru_states instance
-      The Raven model states for the hru information (size n_members)
+        The Raven model states for the hru information (size n_members)
     ravenpy.Raven.basin_states instance
-      The Raven model states for the basin information (size n_members).
+        The Raven model states for the basin information (size n_members).
     """
     # Set model options
     model(
@@ -382,36 +380,35 @@ def sequential_assimilation(
     n_members=25,
     assim_step_days=7,
 ):
-    """
-    This function performs data assimilation at regular intervals over a long
-    period, as defined by start_date and end_date. Intervals are equal to
-    assim_step_days and assimilation is performed every assim_step_days until
-    the end of the period. The function returns the complete assimilated
-    streamflow for each of the n_members desired in the Ensemble Kalman Filter.
+    """Perform data assimilation at regular intervals over a long period, as defined by start_date and end_date.
+
+    Intervals are equal to assim_step_days and assimilation is performed every assim_step_days until
+    the end of the period. The function returns the complete assimilated streamflow for each of the n_members desired
+    in the Ensemble Kalman Filter.
 
     Parameters
     ----------
     model : ravenpy.Raven instance
-      The hydrological model with the internal states after the n_members simulations.
+        The hydrological model with the internal states after the n_members simulations.
     hru_states : ravenpy.Raven.hru_states instance
-      The Raven model states containing the initial ensemble hru information (size n_members)
+        The Raven model states containing the initial ensemble hru information (size n_members)
     basin_states : ravenpy.Raven.basin_states instance
-      The Raven model states containing the initial ensemble basin information (size n_members).
+        The Raven model states containing the initial ensemble basin information (size n_members).
     p_fn : string
-      Path to the perturbed forcing data netcdf file.
+        Path to the perturbed forcing data netcdf file.
     q_obs : xarray.Dataset
-      The actual observed streamflow over the entire period.
+        The actual observed streamflow over the entire period.
     assim_var : tuple of strings
-      List of hydrological model internal variables to be modified during assimilation.
+        List of hydrological model internal variables to be modified during assimilation.
     start_date : datetime.datetime
-      Start date of the sequence over which we want to perform regular data assimilation.
+        Start date of the sequence over which we want to perform regular data assimilation.
     end_date : datetime.datetime
-      Date of the end of the sequence over which we want to perform regular data assimilation.
+        Date of the end of the sequence over which we want to perform regular data assimilation.
     n_members : integer, optional
-      Number of ensemble members for the Ensemble Kalman Filter. The default is 25.
+        Number of ensemble members for the Ensemble Kalman Filter. The default is 25.
     assim_step_days : integer, optional
-      Number of days between each data assimilation step. Days in between are simply simulated without assimilation.
-      The default value is 7.
+        Number of days between each data assimilation step. Days in between are simply simulated without assimilation.
+        The default value is 7.
 
     Returns
     -------

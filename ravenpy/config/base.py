@@ -6,10 +6,7 @@ from pydantic.dataclasses import dataclass
 
 
 class RavenCommand(ABC):
-    """
-    This base class must be used for all Raven commands that are dataclasses
-    which must implement some specialized rendering logic.
-    """
+    """Base class used for all Raven commands that are dataclasses which must implement some specialized rendering logic."""
 
     @abstractmethod
     def to_rv(self):
