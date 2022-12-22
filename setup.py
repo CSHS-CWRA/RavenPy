@@ -259,6 +259,7 @@ setup(
     long_description=readme + "\n\n" + history,
     long_description_content_type="text/x-rst",
     include_package_data=True,
+    package_data={"ravenpy": ["*.csv", "*.zip"]},
     keywords="ravenpy",
     name="ravenpy",
     packages=find_packages(

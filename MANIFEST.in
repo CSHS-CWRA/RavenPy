@@ -7,7 +7,7 @@ include requirements_dev.txt
 include requirements_docs.txt
 include requirements_gis.txt
 
-recursive-include ravenpy *
+recursive-include ravenpy *.py *.zip *.csv *.rst
 recursive-include tests *
 recursive-include benchmark *.ipynb *.txt
 recursive-include docs *.rst conf.py Makefile make.bat *.jpg *.png *.gif *.ipynb
