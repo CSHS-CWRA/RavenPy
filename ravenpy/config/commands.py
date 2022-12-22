@@ -16,6 +16,7 @@ from . import options
 from .base import (
     RavenCoefficient,
     RavenCommand,
+    RavenMapping,
     RavenOption,
     RavenOptionList,
     RavenSwitch,
@@ -43,7 +44,7 @@ class DontWriteWatershedStorage(RavenSwitch):
     """Do not write watershed storage variables to disk."""
 
 
-class NetCDFAttribute(RavenSwitch):
+class WriteNetcdfFormat(RavenSwitch):
     """"""
 
 
@@ -71,6 +72,21 @@ class WriteSubbasinFile(RavenSwitch):
     """"""
 
 
+# --- Mappings --- #
+@dataclass
+class Alias(RavenMapping):
+    """"""
+
+
+@dataclass
+class GlobalParameter(RavenMapping):
+    """"""
+
+
+class NetCDFAttribute(RavenMapping):
+    """"""
+
+
 # --- Coefficients --- #
 
 
@@ -79,6 +95,13 @@ class AirSnowCoeff(RavenCoefficient):
 
     value: float
     """Heat transfer coefficient [1/d]."""
+
+
+class AvgAnnualRunoff(RavenCoefficient):
+    """The average annual runoff for the entire watershed."""
+
+    value: float
+    """Average annual runoff [mm/yr]."""
 
 
 class AvgAnnualSnow(RavenCoefficient):
@@ -896,6 +919,18 @@ class BasinStateVariablesCommand(RavenCommand):
         return dedent(template).format(
             basin_states_list="\n".join(map(str, self.basin_states.values()))
         )
+
+
+class SoilClasses(RavenCommand):
+    names: Tuple[str]
+
+    def to_rv(self):
+        template = """
+            :SoilClasses
+                {values}
+            :EndSoilClasses
+            """
+        return dedent(template).format(values="\n    ".join(self.names))
 
 
 @dataclass

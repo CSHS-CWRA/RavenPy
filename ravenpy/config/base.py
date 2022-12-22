@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Sequence, Union
+from typing import Any, OrderedDict, Sequence, Union
 
 from pydantic.dataclasses import dataclass
 
@@ -57,18 +57,10 @@ class RavenSwitch(RavenCommand):
 
 
 @dataclass
-class Alias(RavenCommand):
-    alias: str
-    value: str
+class RavenMapping(RavenCommand):
+    value: OrderedDict[str, Any]
 
     def to_rv(self):
-        return f":Alias {self.alias} {self.value}\n"
-
-
-@dataclass
-class GlobalParameter(RavenCommand):
-    name: str
-    value: Union[float, str]
-
-    def to_rv(self):
-        return f":GlobalParameter {self.name} {self.value}"
+        return "\n".join(
+            [f":{self.__class__.__name__} {k} {v}" for (k, v) in self.value]
+        )

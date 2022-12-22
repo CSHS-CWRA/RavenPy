@@ -1,16 +1,54 @@
 from collections import defaultdict
+from dataclasses import asdict, fields
+from importlib import reload
 from pathlib import Path
 from typing import cast
 
 from pydantic.dataclasses import dataclass
 
+import ravenpy.config.rv
 from ravenpy.config import options
 from ravenpy.config.commands import HRU, LU, BasinIndexCommand, HRUState, Sub
 from ravenpy.config.rvs import RVI
+
+reload(ravenpy.config.rv)
+from ravenpy.config.rv import Config
 from ravenpy.models.base import Ostrich, Raven
 
 
-class GR4JCN(Raven):
+@dataclass
+class GR4JCN(Config):
+    """"""
+
+    @dataclass
+    class Params:
+        GR4J_X1: float
+        GR4J_X2: float
+        GR4J_X3: float
+        GR4J_X4: float
+        CEMANEIGE_X1: float
+        CEMANEIGE_X2: float
+
+    @dataclass
+    class LandHRU(HRU):
+        land_use_class: str = "LU_ALL"
+        veg_class: str = "VEG_ALL"
+        soil_profile: str = "DEFAULT_P"
+        aquifer_profile: str = "[NONE]"
+        terrain_class: str = "[NONE]"
+        hru_type: str = "land"
+
+    @dataclass
+    class LakeHRU(HRU):
+        land_use_class: str = "LU_WATER"
+        veg_class: str = "VEG_WATER"
+        soil_profile: str = "LAKE"
+        aquifer_profile: str = "[NONE]"
+        terrain_class: str = "[NONE]"
+        hru_type: str = "lake"
+
+
+class GR4JCNOld(Raven):
     """GR4J + Cemaneige global hydrological model
 
     References
