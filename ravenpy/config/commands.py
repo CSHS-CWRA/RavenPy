@@ -7,13 +7,15 @@ from dataclasses import asdict, field
 from itertools import chain
 from pathlib import Path
 from textwrap import dedent
-from typing import ClassVar, Dict, Optional, Sequence, Tuple, Union, no_type_check
+from typing import ClassVar, Dict, List, Optional, Sequence, Tuple, Union, no_type_check
 
 from pydantic import validator
 from pydantic.dataclasses import dataclass
+from pymbolic.primitives import Variable
 
 from . import options
 from .base import (
+    Expression,
     RavenCoefficient,
     RavenCommand,
     RavenMapping,
@@ -21,6 +23,8 @@ from .base import (
     RavenOptionList,
     RavenSwitch,
     RavenValue,
+    Sym,
+    SymConfig,
 )
 
 INDENT = " " * 4
@@ -93,35 +97,35 @@ class NetCDFAttribute(RavenMapping):
 class AirSnowCoeff(RavenCoefficient):
     """The air/snow heat transfer coefficient as used in the `SNOTEMP_NEWTONS` snow temperature evolution routine."""
 
-    value: float
+    value: Sym = None
     """Heat transfer coefficient [1/d]."""
 
 
 class AvgAnnualRunoff(RavenCoefficient):
     """The average annual runoff for the entire watershed."""
 
-    value: float
+    value: Sym = None
     """Average annual runoff [mm/yr]."""
 
 
 class AvgAnnualSnow(RavenCoefficient):
     """The average annual snow for the entire watershed used in the CEMANEIGE algorithm."""
 
-    value: float
+    value: Sym = None
     """Average annual snow [mm]."""
 
 
 class PrecipitationLapseRate(RavenCoefficient):
     """The simple linear precipitation lapse rate  used in the `OROCORR_SIMPLELAPSE` orographic correction algorithm."""
 
-    value: float
+    value: Sym = None
     """Lapse rate [mm/d/km]"""
 
 
 class AdiabaticLapseRate(RavenCoefficient):
     """Base adiabatic lapse rate."""
 
-    value: float
+    value: Sym = None
     """Base adiabatic lapse rate [C/km]"""
 
 
@@ -287,7 +291,7 @@ class RainSnowTransition(RavenCommand):
     """Range [C]."""
 
     def to_rv(self):
-        template = ":RainSnowTransition {temp} {float}"
+        template = ":RainSnowTransition {temp} {delta}\n"
         return template.format(**asdict(self))
 
 
@@ -300,7 +304,7 @@ class EvaluationPeriod(RavenCommand):
     end: dt.date
 
     def to_rv(self):
-        template = ":EvaluationPeriod {name} {start} {end}"
+        template = ":EvaluationPeriod {name} {start} {end}\n"
         return template.format(**asdict(self))
 
 
@@ -921,8 +925,9 @@ class BasinStateVariablesCommand(RavenCommand):
         )
 
 
+@dataclass
 class SoilClasses(RavenCommand):
-    names: Tuple[str]
+    names: List[str]
 
     def to_rv(self):
         template = """
@@ -953,6 +958,63 @@ class SoilClassesCommand(RavenCommand):
         return dedent(template).format(
             soil_class_records="\n    ".join(map(str, self.soil_classes))
         )
+
+
+@dataclass
+class SoilProfiles(RavenCommand):
+    @dataclass(config=SymConfig)
+    class Record(RavenCommand):
+        profile_name: str = ""
+        soil_class_names: Tuple[str, ...] = ()
+        thicknesses: List[Sym] = ()
+
+        def to_rv(self):
+            # From the Raven manual: {profile_name,#horizons,{soil_class_name,thick.}x{#horizons}}x[NP]
+            n_horizons = len(self.soil_class_names)
+            horizon_data = list(
+                itertools.chain(*zip(self.soil_class_names, self.thicknesses))
+            )
+            fmt = "{:<16},{:>4}," + ",".join(n_horizons * ["{:>12},{:>6}"])
+            return fmt.format(self.profile_name, n_horizons, *horizon_data)
+
+    __root__: List[Record] = ()
+
+    class Config:
+        arbitrary_types_allowed = True
+
+    def to_rv(self):
+        template = """
+            :SoilProfiles
+                {records}
+            :EndSoilProfiles
+            """
+        return dedent(template).format(records="\n    ".join(map(str, self.__root__)))
+
+
+@dataclass
+class VegetationClasses(RavenCommand):
+    @dataclass
+    class Record(RavenCommand):
+        name: str = ""
+        max_ht: float = 0
+        max_lai: float = 0
+        max_leaf_cond: float = 0
+
+        def to_rv(self):
+            template = "{name:<16},{max_ht:>14},{max_lai:>14},{max_leaf_cond:>14}"
+            return template.format(**asdict(self))
+
+    __root__: Tuple[Record, ...] = ()
+
+    def to_rv(self):
+        template = """
+        :VegetationClasses
+            :Attributes     ,        MAX_HT,       MAX_LAI, MAX_LEAF_COND
+            :Units          ,             m,          none,      mm_per_s
+            {records}
+        :EndVegetationClasses
+        """
+        return dedent(template).format(records="\n    ".join(map(str, self.__root__)))
 
 
 @dataclass
@@ -1042,10 +1104,10 @@ class LandUseClassesCommand(RavenCommand):
 
 @dataclass
 class ParameterList(RavenCommand):
-    @dataclass
+    @dataclass(config=SymConfig)
     class Record(RavenCommand):
         name: str = ""
-        vals: Sequence[Union[float, None]] = ()
+        vals: Sequence[Sym] = ()
 
         @validator("vals", pre=True)
         def no_none_in_default(cls, v, values):

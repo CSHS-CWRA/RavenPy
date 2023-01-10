@@ -1,8 +1,17 @@
 from abc import ABC, abstractmethod
+from dataclasses import asdict
 from enum import Enum
 from typing import Any, OrderedDict, Sequence, Union
 
 from pydantic.dataclasses import dataclass
+from pymbolic.mapper.evaluator import EvaluationMapper as EM
+from pymbolic.primitives import Expression, Variable
+
+Sym = Union[Variable, Expression, float, None]
+
+
+class SymConfig:
+    arbitrary_types_allowed = True
 
 
 class RavenCommand(ABC):
@@ -43,9 +52,9 @@ class RavenValue(RavenCommand):
         return ""
 
 
-@dataclass
+@dataclass(config=SymConfig)
 class RavenCoefficient(RavenValue):
-    value: float = None
+    value: Sym = None
 
 
 @dataclass
@@ -64,3 +73,34 @@ class RavenMapping(RavenCommand):
         return "\n".join(
             [f":{self.__class__.__name__} {k} {v}" for (k, v) in self.value]
         )
+
+
+@dataclass(config=SymConfig)
+class Params:
+    """Model parameters.
+
+    Define type as `Sym` to support symbolic expressions.
+    """
+
+    def to_rv(self):
+        return ""
+
+
+def parse_symbolic(value, **kwds):
+    """Inject values of symbolic variables into object and return object."""
+
+    if isinstance(value, dict):
+        return {k: parse_symbolic(v, **kwds) for k, v in value.items()}
+
+    elif isinstance(value, (list, tuple)):
+        return [parse_symbolic(v, **kwds) for v in value]
+
+    elif isinstance(value, RavenCommand):
+        return value.__class__(**parse_symbolic(asdict(value), **kwds))
+
+    elif isinstance(value, (Variable, Expression)):
+        # Inject numerical values numerical value
+        return EM(context=kwds)(value)
+
+    else:
+        return value

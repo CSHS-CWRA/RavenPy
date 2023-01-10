@@ -1,10 +1,11 @@
 from dataclasses import asdict, fields
 from enum import Enum
+from typing import Any
 
 from pydantic.dataclasses import dataclass
 
 from . import options
-from .base import RavenCommand
+from .base import RavenCommand, parse_symbolic
 from .commands import *
 
 """
@@ -78,10 +79,10 @@ class RVI(RV):
 
 @dataclass
 class RVP(RV):
-    params: Enum = None
-    soil_classes: SoilClasses = SoilClassesCommand()
-    soil_profiles: SoilProfilesCommand = SoilProfilesCommand()
-    vegetation_classes: VegetationClassesCommand = VegetationClassesCommand()
+    params: Any = None
+    soil_classes: SoilClasses = None
+    soil_profiles: SoilProfiles = SoilProfiles()
+    vegetation_classes: VegetationClasses = VegetationClasses()
     land_use_classes: LandUseClassesCommand = LandUseClassesCommand()
     channel_profiles: ChannelProfileCommand = ChannelProfileCommand()
     soil_parameter_list: SoilParameterListCommand = SoilParameterListCommand()
@@ -90,7 +91,7 @@ class RVP(RV):
     air_snow_coeff: AirSnowCoeff = None
     avg_annual_snow: AvgAnnualSnow = None
     precipitation_lapse_rate: PrecipitationLapseRate = None
-    adiabatic_lapse_rate: AdiabaticLapseRate
+    adiabatic_lapse_rate: AdiabaticLapseRate = None
 
 
 @dataclass
@@ -100,10 +101,18 @@ class RVT(RV):
     observed_data: Tuple[ObservationDataCommand] = None
 
 
-class Config(RVP, RVI, RVC, RVH, RVT):
+@dataclass
+class Config(RVI, RVC, RVH, RVT, RVP):
+    @validator("*", pre=True)
+    def assign_symbolic(cls, v, values, config, field):
+        print(field.name)
+        if field.name != "params":
+            return parse_symbolic(v, **asdict(values["params"]))
+        return v
+
     def to_rv(self, rv: str):
         """Return RV configuration text."""
-        rvs = {b.__name__: b for b in self.__class__.__bases__}
+        rvs = {b.__name__: b for b in Config.__bases__}
         cls = rvs[rv.upper()]
 
         p = {f.name: self.__dict__[f.name] for f in fields(cls)}
@@ -111,16 +120,6 @@ class Config(RVP, RVI, RVC, RVH, RVT):
         return rv.to_rv()
 
 
-class GR4JCN:
-    air_snow_coeff: AirSnowCoeff = None  # 1 - CEMANEIGE_X2
-    avg_annual_snow: AvgAnnualSnow = None  # CEMANEIGE_X1
-    rain_snow_transition: RainSnowTransition = RainSnowTransition(0, 1.0)
-    precipitation_lapse_rate: PrecipitationLapseRate = PrecipitationLapseRate(0.0004)
-    adiabatic_lapse_rate: AdiabaticLapseRate = AdiabaticLapseRate(0.0065)
-    soil_classes: SoilClasses(
-        names=("SOIL_PROD", "SOIL_ROUT", "SOIL_TEMP", "SOIL_GW", "AQUIFER")
-    )
-    soil_parameter_list: SoilParameterListCommand = SoilParameterListCommand(
-        names=("[DEFAULT]",),
-        records=[PL(name="[DEFAULT]", vals=(1, p.GR4J_X3, p.GR4J_X2))],
-    )
+@dataclass
+class TestConfig(Config):
+    calendar: Calendar = Calendar("JULIAN")

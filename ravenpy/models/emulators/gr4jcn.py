@@ -1,6 +1,5 @@
 from collections import defaultdict
 from dataclasses import asdict, fields
-from importlib import reload
 from pathlib import Path
 from typing import cast
 
@@ -8,26 +7,85 @@ from pydantic.dataclasses import dataclass
 
 import ravenpy.config.rv
 from ravenpy.config import options
-from ravenpy.config.commands import HRU, LU, BasinIndexCommand, HRUState, Sub
-from ravenpy.config.rvs import RVI
-
-reload(ravenpy.config.rv)
+from ravenpy.config.base import Params, RavenCommand, Sym, SymConfig, Variable
+from ravenpy.config.commands import (
+    HRU,
+    LU,
+    PL,
+    AdiabaticLapseRate,
+    AirSnowCoeff,
+    AvgAnnualSnow,
+    BasinIndexCommand,
+    HRUState,
+    PrecipitationLapseRate,
+    RainSnowTransition,
+    SoilClasses,
+    SoilParameterListCommand,
+    SoilProfiles,
+    Sub,
+    VegetationClasses,
+)
 from ravenpy.config.rv import Config
+from ravenpy.config.rvs import RVI
 from ravenpy.models.base import Ostrich, Raven
 
 
-@dataclass
-class GR4JCN(Config):
-    """"""
+@dataclass(config=SymConfig)
+class P(Params):
+    GR4J_X1: Sym = Variable("GR4J_X1")
+    GR4J_X2: Sym = Variable("GR4J_X2")
+    GR4J_X3: Sym = Variable("GR4J_X3")
+    GR4J_X4: Sym = Variable("GR4J_X4")
+    CEMANEIGE_X1: Sym = Variable("CEMANEIGE_X1")
+    CEMANEIGE_X2: Sym = Variable("CEMANEIGE_X2")
 
-    @dataclass
-    class Params:
-        GR4J_X1: float
-        GR4J_X2: float
-        GR4J_X3: float
-        GR4J_X4: float
-        CEMANEIGE_X1: float
-        CEMANEIGE_X2: float
+
+@dataclass
+class GR4JCN(ravenpy.config.rv.Config):
+
+    params: Params = Params()
+    air_snow_coeff: AirSnowCoeff = AirSnowCoeff(1 - P.CEMANEIGE_X2)
+    avg_annual_snow: AvgAnnualSnow = AvgAnnualSnow(P.CEMANEIGE_X1)
+    rain_snow_transition: RainSnowTransition = RainSnowTransition(0, 1.0)
+    precipitation_lapse_rate: PrecipitationLapseRate = PrecipitationLapseRate(0.0004)
+    adiabatic_lapse_rate: AdiabaticLapseRate = AdiabaticLapseRate(0.0065)
+    soil_classes: SoilClasses = SoilClasses(
+        names=("SOIL_PROD", "SOIL_ROUT", "SOIL_TEMP", "SOIL_GW", "AQUIFER")
+    )
+    soil_parameter_list: SoilParameterListCommand = SoilParameterListCommand(
+        names=("POROSITY", "GR4J_X3", "GR4J_X2"),
+        records=[PL(name="[DEFAULT]", vals=(1, P.GR4J_X3, P.GR4J_X2))],
+    )
+    soil_profiles: SoilProfiles = SoilProfiles(
+        [
+            {
+                "profile_name": "DEFAULT_P",
+                "soil_class_names": ["SOIL_PROD", "SOIL_ROUT", "SOIL_TEMP", "SOIL_GW"],
+                "thicknesses": [P.GR4J_X1, 0.3, 1, 1],
+            },
+            {"profile_name": "LAKE"},
+        ]
+    )
+
+    vegetation_classes: VegetationClasses = VegetationClasses(
+        [{"name": "VEG_ALL"}, {"name": "VEG_WATER"}]
+    )
+
+    """
+    # --Land Use Classes------------------------------------------
+        :LandUseClasses
+          :Attributes, IMPERM, FOREST_COV
+          :Units     ,   frac,       frac
+               LU_ALL,    0.0,        0.0
+               LU_WATER,  0.0,        0.0
+        :EndLandUseClasses
+
+        :LandUseParameterList
+         :Parameters, GR4J_X4, MELT_FACTOR
+         :Units     ,       d,      mm/d/C
+           [DEFAULT],    {params.GR4J_X4},        7.73
+        :EndLandUseParameterList
+        """
 
     @dataclass
     class LandHRU(HRU):
@@ -159,6 +217,7 @@ class GR4JCNOld(Raven):
                LU_ALL,    0.0,        0.0
                LU_WATER,  0.0,        0.0
         :EndLandUseClasses
+
         :LandUseParameterList
          :Parameters, GR4J_X4, MELT_FACTOR
          :Units     ,       d,      mm/d/C
