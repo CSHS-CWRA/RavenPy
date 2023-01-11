@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from dataclasses import asdict
+from dataclasses import asdict, fields
 from enum import Enum
 from typing import Any, OrderedDict, Sequence, Union
 
@@ -70,8 +70,11 @@ class RavenMapping(RavenCommand):
     value: OrderedDict[str, Any]
 
     def to_rv(self):
-        return "\n".join(
-            [f":{self.__class__.__name__} {k} {v}" for (k, v) in self.value]
+        return (
+            "\n".join(
+                [f":{self.__class__.__name__} {k} {v}" for (k, v) in self.value.items()]
+            )
+            + "\n"
         )
 
 
@@ -96,7 +99,9 @@ def parse_symbolic(value, **kwds):
         return [parse_symbolic(v, **kwds) for v in value]
 
     elif isinstance(value, RavenCommand):
-        return value.__class__(**parse_symbolic(asdict(value), **kwds))
+        # Cannot use asdict here as it recurses down nested classes
+        attrs = {f.name: value.__dict__[f.name] for f in fields(value)}
+        return value.__class__(**parse_symbolic(attrs, **kwds))
 
     elif isinstance(value, (Variable, Expression)):
         # Inject numerical values numerical value

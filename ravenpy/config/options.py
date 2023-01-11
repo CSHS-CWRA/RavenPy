@@ -300,6 +300,14 @@ class OroPrecipCorrect(Enum):
     SIMPLELAPSE = "OROCORR_SIMPLELAPSE"
 
 
+class OroTempCorrect(Enum):
+    NONE = "OROCORR_NONE"
+    HBV = "OROCORR_HBV"
+    UBC = "OROCORR_UBC"
+    UBC2 = "OROCORR_UBC_2"
+    SIMPLE = "OROCORR_SIMPLELAPSE"
+
+
 class PotentialMeltMethod(Enum):
     """:PotentialMelt algorithms"""
 
@@ -311,6 +319,10 @@ class PotentialMeltMethod(Enum):
     HMETS = "POTMELT_HMETS"
     HBV = "POTMELT_HBV"
     UBC = "POTMELT_UBC"
+
+
+class Precipitation(Enum):
+    DEFAULT = "PRECIP_RAVEN"
 
 
 class PrecipIceptFract(Enum):

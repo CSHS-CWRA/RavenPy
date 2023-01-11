@@ -75,17 +75,26 @@ class RVI(RV):
     routing: Routing = Routing("ROUTE_NONE")
     evaporation: Evaporation = None
     ow_evaporation: OW_Evaporation = None
+    catchment_route: CatchmentRoute = None
+    potential_melt: PotentialMeltMethod = None
+    oro_temp_correct: OroTempCorrect = OroTempCorrect("OROCORR_SIMPLELAPSE")
+    oro_precip_correct: OroPrecipCorrect = OroPrecipCorrect("OROCORR_SIMPLELAPSE")
+    alias: Alias = None
+    soil_model: SoilModel = None
+    lake_storage: LakeStorage = None
+    hydrologic_processes: HydrologicProcesses = ()
 
 
 @dataclass
 class RVP(RV):
-    params: Any = None
+    params: Any
     soil_classes: SoilClasses = None
     soil_profiles: SoilProfiles = SoilProfiles()
     vegetation_classes: VegetationClasses = VegetationClasses()
-    land_use_classes: LandUseClassesCommand = LandUseClassesCommand()
-    channel_profiles: ChannelProfileCommand = ChannelProfileCommand()
+    land_use_classes: LandUseClasses = LandUseClasses()
+    channel_profiles: ChannelProfiles = ChannelProfiles()
     soil_parameter_list: SoilParameterListCommand = SoilParameterListCommand()
+    land_use_parameter_list: LandUseParameterListCommand = LandUseParameterListCommand()
     avg_annual_runoff: AvgAnnualRunoff = None
     rain_snow_transition: RainSnowTransition = None
     air_snow_coeff: AirSnowCoeff = None
@@ -105,7 +114,6 @@ class RVT(RV):
 class Config(RVI, RVC, RVH, RVT, RVP):
     @validator("*", pre=True)
     def assign_symbolic(cls, v, values, config, field):
-        print(field.name)
         if field.name != "params":
             return parse_symbolic(v, **asdict(values["params"]))
         return v

@@ -7,7 +7,18 @@ from dataclasses import asdict, field
 from itertools import chain
 from pathlib import Path
 from textwrap import dedent
-from typing import ClassVar, Dict, List, Optional, Sequence, Tuple, Union, no_type_check
+from typing import (
+    Any,
+    ClassVar,
+    Dict,
+    List,
+    Literal,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+    no_type_check,
+)
 
 from pydantic import validator
 from pydantic.dataclasses import dataclass
@@ -189,6 +200,16 @@ class MonthlyInterpolationMethod(RavenOption):
 
 
 @dataclass
+class OroTempCorrect(RavenOption):
+    option: options.OroTempCorrect
+
+
+@dataclass
+class OroPrecipCorrect(RavenOption):
+    option: options.OroPrecipCorrect
+
+
+@dataclass
 class PotentialMeltMethod(RavenOption):
     """Potential snow melt algorithm."""
 
@@ -228,7 +249,7 @@ class SoilModel(RavenOption):
 
     def to_rv(self):
         n = self.n if self.n is not None else ""
-        return f":SoilModel           {self.options.value} {n}\n"
+        return f":SoilModel           {self.option.value} {n}\n"
 
 
 @dataclass
@@ -335,6 +356,245 @@ class CustomOutput(RavenCommand):
     def to_rv(self):
         template = ":CustomOutput {time_per} {stat} {variable} {space_agg} {filename}"
         return template.format(**asdict(self))
+
+
+@dataclass
+class Process(RavenCommand):
+    algo: str = "RAVEN_DEFAULT"
+    source: list = ()
+    to: list = ()
+
+    def to_rv(self):
+        s = " ".join(self.source)
+        t = ("To" + " ".join(self.to)) if self.to else " "
+        return f":{self.__class__.__name__} {s} {t}"
+
+
+# --- Processes --- #
+@dataclass
+class Precipitation(Process):
+    """Precipitation"""
+
+    algo: Literal["PRECIP_RAVEN"]
+
+
+class CanopyEvap(Process):
+    algo: Literal["CANEVP_RUTTER", "CANEVP_MAXIMUM"]
+
+
+@dataclass
+class SoilEvaporation(Process):
+    """"""
+
+    algo: Literal[
+        "SOIL_EVAP_VIC",
+        "SOIL_EVAP_HBV",
+        "SOIL_EVAL_CHU",
+        "SOILEVAP_GR4J",
+        "SOIL_EVAP_TOPMODEL",
+        "SOIL_EVAP_SEQUEN",
+        "SOIL_EVAP_ROOTFRAC",
+        "SOIL_EVAP_GOWSWER",
+    ]
+
+
+class LakeEvaporation(Process):
+    algo: Literal["LAKE_EVAP_BASIC"]
+
+
+class OpenWaterEvaporation(Process):
+    algo: Literal["OPEN_WATER_EVAP"]
+
+
+@dataclass
+class Infiltration(Process):
+    """"""
+
+    algo: Literal[
+        "INF_RATIONAL",
+        "INF_SCS",
+        "INF_ALL_INFILTRATES",
+        "INF_GR4J",
+        "INF_GREEN_AMPT",
+        "INF_GA_SIMPLE",
+        "INF_UPSCALED_GREEN_AMPT",
+        "INF_HBV",
+        "INF_UBC",
+        "INF_VIC",
+        "INF_VIC_ARNO",
+        "INF_PRMS",
+    ]
+
+
+@dataclass
+class Percolation(Process):
+    """"""
+
+    algo: Literal[
+        "PERC_GAWSER",
+        "PERC_LINEAR",
+        "PERC_POWER_LAW",
+        "PERC_PRMS",
+        "PERC_SACRAMENTO",
+        "PERC_CONSTANT",
+        "PERC_GR4J",
+        "PERC_GR4JEXCH",
+        "PERC_GR4JEXCH2",
+    ]
+
+
+class CapilaryRise(Process):
+    algo: Literal["CRISE_HBV"]
+
+
+@dataclass
+class BaseFlow(Process):
+    """"""
+
+    algo: Literal[
+        "BASE_LINEAR",
+        "BASE_POWER_LAW",
+        "BASE_CONSTANT",
+        "BASE_VIC",
+        "BASE_THRESH_POWER",
+        "BASE_GR4J",
+        "BASE_TOPMODEL",
+    ]
+
+
+@dataclass
+class Interflow(Process):
+    algo: Literal["PRMS"]
+
+
+@dataclass
+class Seepage(Process):
+    algo: Literal["SEEP_LINEAR"]
+
+
+@dataclass
+class DepressionOverflow(Process):
+    algo: Literal["DFLOW_THRESHPOW", "DFLOW_LINEAR"]
+
+
+@dataclass
+class LakeRelease(Process):
+    algo: Literal["LAKEREL_LINEAR"]
+
+
+@dataclass
+class Abstraction(Process):
+    algo: Literal["ABST_PERCENTAGE", "ABST_FILL", "ABST_SCS"]
+
+
+@dataclass
+class SnowMelt(Process):
+    algo: Literal["MELT_POTMELT"]
+
+
+@dataclass
+class SnowRefreeze(Process):
+    algo: Literal["FREEZE_DEGREE_DAY"]
+
+
+@dataclass
+class SnowBalance(Process):
+    algo: Literal[
+        "SNOWBAL_SIMPLE_MELT",
+        "SNOWBAL_COLD_CONTENT",
+        "SNOWBAL_HBV",
+        "SNOWBAL_TWO_LAYER",
+        "SNOWBAL_CEMA_NEIGE",
+        "SNOWBAL_GAWSER",
+        "SNOWBAL_UBC",
+    ]
+
+
+@dataclass
+class Sublimation(Process):
+    algo: Literal[
+        "SUBLIM_SVERDRUP",
+        "SUBLIM_KUZMIN",
+        "SUBLIM_CENTRAL_SIERRA",
+        "SUBLIM_PSBM",
+        "SUBLIM_WILLIAMS",
+    ]
+
+
+@dataclass
+class SnowAlbedoEvolve(Process):
+    algo: Literal["SNOALB_UBC"]
+
+
+@dataclass
+class SnowTempEvolve(Process):
+    algo: Literal["SNOTEMP_NEWTONS"]
+
+
+@dataclass
+class CanopyDrip(Process):
+    algo: Literal["CANDRIP_RUTTER", "CANDRIP_SLOWDRAIN"]
+
+
+@dataclass
+class CropHeatUnitEvolve(Process):
+    algo: Literal["CHU_ONTARIO"]
+
+
+@dataclass
+class GlacierMelt(Process):
+    algo: Literal["GMELT_SIMPLE_MELT", "GMELT_HBV", "GMELT_UBC"]
+
+
+@dataclass
+class GlacierRelease(Process):
+    algo: Literal["GRELEASE_LINEAR", "GRELEASE_HBV_EC"]
+
+
+@dataclass
+class Flush(Process):
+    """"""
+
+    algo: Literal["RAVEN_DEFAULT"]
+
+
+@dataclass
+class Overflow(Process):
+    algo: Literal["OVERFLOW_RAVEN"]
+
+
+@dataclass
+class Split(Process):
+    """"""
+
+
+@dataclass
+class Convolve(Process):
+    """"""
+
+    algo: Literal["CONVOL_GR4J_1", "CONVOL_GR4J_2"]
+
+
+@dataclass
+class LateralFlush(Process):
+    """Lateral flush"""
+
+
+# --- End processes --- #
+
+
+@dataclass
+class HydrologicProcesses(RavenCommand):
+    __root__: List[Any]
+
+    def to_rv(self):
+        template = """
+        :HydrologicalProcesses
+          {processes}
+        :EndHydrologicalProcesses
+        """
+        processes = "\n  ".join([str(p) for p in self.__root__])
+        return dedent(template).format(processes=processes)
 
 
 @dataclass
@@ -481,6 +741,44 @@ class SBGroupPropertyMultiplierCommand(RavenCommand):
     def to_rv(self):
         template = ":SBGroupPropertyMultiplier {group_name} {parameter_name} {mult}"
         return dedent(template).format(**asdict(self))
+
+
+@dataclass
+class ChannelProfiles(RavenCommand):
+    """ChannelProfile command (RVP)."""
+
+    @dataclass
+    class Record(RavenCommand):
+        name: str = "chn_XXX"
+        bed_slope: float = 0
+        survey_points: Tuple[Tuple[float, float], ...] = ()
+        roughness_zones: Tuple[Tuple[float, float], ...] = ()
+
+        def to_rv(self):
+            template = """
+                :ChannelProfile {name}
+                    :Bedslope {bed_slope}
+                    :SurveyPoints
+                {survey_points}
+                    :EndSurveyPoints
+                    :RoughnessZones
+                {roughness_zones}
+                    :EndRoughnessZones
+                :EndChannelProfile
+                """
+            d = asdict(self)
+            d["survey_points"] = "\n".join(
+                f"{INDENT * 2}{p[0]} {p[1]}" for p in d["survey_points"]
+            )
+            d["roughness_zones"] = "\n".join(
+                f"{INDENT * 2}{z[0]} {z[1]}" for z in d["roughness_zones"]
+            )
+            return dedent(template).format(**d)
+
+    __root__: List[Record] = ()
+
+    def to_rv(self):
+        return "\n".join([str(cp) for cp in self.__root__])
 
 
 @dataclass
@@ -1015,6 +1313,31 @@ class VegetationClasses(RavenCommand):
         :EndVegetationClasses
         """
         return dedent(template).format(records="\n    ".join(map(str, self.__root__)))
+
+
+@dataclass
+class LandUseClasses(RavenCommand):
+    @dataclass
+    class Record(RavenCommand):
+        name: str = ""
+        impermeable_frac: float = 0
+        forest_coverage: float = 0
+
+        def to_rv(self):
+            template = "{name:<16},{impermeable_frac:>16},{forest_coverage:>16}"
+            return template.format(**asdict(self))
+
+    __root__: List[Record] = ()
+
+    def to_rv(self):
+        template = """
+            :LandUseClasses
+              :Attributes     ,IMPERMEABLE_FRAC, FOREST_COVERAGE
+              :Units          ,           fract,           fract
+              {records}
+            :EndLandUseClasses
+            """
+        return dedent(template).format(records="\n  ".join(map(str, self.__root__)))
 
 
 @dataclass

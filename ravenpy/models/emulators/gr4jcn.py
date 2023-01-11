@@ -14,14 +14,34 @@ from ravenpy.config.commands import (
     PL,
     AdiabaticLapseRate,
     AirSnowCoeff,
+    Alias,
     AvgAnnualSnow,
+    BaseFlow,
     BasinIndexCommand,
+    CatchmentRoute,
+    Convolve,
+    Evaporation,
+    Flush,
     HRUState,
+    HydrologicProcesses,
+    Infiltration,
+    LandUseClasses,
+    LandUseParameterListCommand,
+    OpenWaterEvaporation,
+    OroTempCorrect,
+    Percolation,
+    PotentialMeltMethod,
+    Precipitation,
     PrecipitationLapseRate,
     RainSnowTransition,
+    SnowBalance,
+    SnowTempEvolve,
     SoilClasses,
+    SoilEvaporation,
+    SoilModel,
     SoilParameterListCommand,
     SoilProfiles,
+    Split,
     Sub,
     VegetationClasses,
 )
@@ -43,7 +63,41 @@ class P(Params):
 @dataclass
 class GR4JCN(ravenpy.config.rv.Config):
 
-    params: Params = Params()
+    params: P = P()
+    soil_model: SoilModel = SoilModel(option="SOIL_MULTILAYER", n=4)
+    catchment_route: CatchmentRoute = CatchmentRoute("ROUTE_DUMP")
+    potential_melt: PotentialMeltMethod = PotentialMeltMethod("POTMELT_DEGREE_DAY")
+    alias: Alias = Alias(
+        {
+            "PRODUCT_STORE": "SOIL[0]",
+            "ROUTING_STORE": "SOIL[1]",
+            "TEMP_STORE": "SOIL[2]",
+            "GW_STORE": "SOIL[3]",
+        }
+    )
+    hydrologic_processes: HydrologicProcesses = HydrologicProcesses(
+        [
+            Precipitation("PRECIP_RAVEN", ["ATMOS_PRECIP", "MULTIPLE"]),
+            SnowTempEvolve("SNOTEMP_NEWTONS", ["SNOW_TEMP"]),
+            SnowBalance("SNOWBAL_CEMA_NEIGE", ["SNOW", "PONDED_WATER"]),
+            OpenWaterEvaporation("OPEN_WATER_EVAP", ["PONDED_WATER", "ATMOSPHERE"]),
+            Infiltration("INF_GR4J", ["PONDED_WATER", "MULTIPLE"]),
+            SoilEvaporation("SOILEVAP_GR4J", ["PRODUCT_STORE", "ATMOSPHERE"]),
+            Percolation("PERC_GR4J", ["PRODUCT_STORE", "TEMP_STORE"]),
+            Flush("RAVEN_DEFAULT", ["RAVEN_DEFAULT", "SURFACE_WATER", "TEMP_STORE"]),
+            Split(
+                "RAVEN_DEFAULT",
+                ["TEMP_STORE", "CONVOLUTION[0]", "CONVOLUTION[1]", "0.9"],
+            ),
+            Convolve("CONVOL_GR4J_1", ["CONVOLUTION[0]", "ROUTING_STORE"]),
+            Convolve("CONVOL_GR4J_2", ["CONVOLUTION[1]", "TEMP_STORE"]),
+            Percolation("PERC_GR4JEXCH", ["ROUTING_STORE", "GW_STORE"]),
+            Percolation("PERC_GR4JEXCH2", ["TEMP_STORE", "GW_STORE"]),
+            Flush("RAVEN_DEFAULT", ["TEMP_STORE", "SURFACE_WATER"]),
+            BaseFlow("BASE_GR4J", ["ROUTING_STORE", "SURFACE_WATER"]),
+        ]
+    )
+
     air_snow_coeff: AirSnowCoeff = AirSnowCoeff(1 - P.CEMANEIGE_X2)
     avg_annual_snow: AvgAnnualSnow = AvgAnnualSnow(P.CEMANEIGE_X1)
     rain_snow_transition: RainSnowTransition = RainSnowTransition(0, 1.0)
@@ -71,21 +125,14 @@ class GR4JCN(ravenpy.config.rv.Config):
         [{"name": "VEG_ALL"}, {"name": "VEG_WATER"}]
     )
 
-    """
-    # --Land Use Classes------------------------------------------
-        :LandUseClasses
-          :Attributes, IMPERM, FOREST_COV
-          :Units     ,   frac,       frac
-               LU_ALL,    0.0,        0.0
-               LU_WATER,  0.0,        0.0
-        :EndLandUseClasses
+    land_use_classes: LandUseClasses = LandUseClasses(
+        [{"name": "LU_ALL"}, {"name": "LU_WATER"}]
+    )
 
-        :LandUseParameterList
-         :Parameters, GR4J_X4, MELT_FACTOR
-         :Units     ,       d,      mm/d/C
-           [DEFAULT],    {params.GR4J_X4},        7.73
-        :EndLandUseParameterList
-        """
+    land_use_parameter_list: LandUseParameterListCommand = LandUseParameterListCommand(
+        names=("GR4J_X4", "MELT_FACTOR"),
+        records=[PL(name="[DEFAULT]", vals=(P.GR4J_X4, 7.73))],
+    )
 
     @dataclass
     class LandHRU(HRU):
