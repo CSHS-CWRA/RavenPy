@@ -93,7 +93,7 @@ def infer_scale_and_offset(da: xr.DataArray, data_type: str) -> (float, float):
     return scale, offset
 
 
-def units_transform(source, target):
+def units_transform(source, target, context="hydro"):
     """Return linear transform parameters to convert one unit to another.
 
     If the target unit is given by `y = ax + b`, where `x` is the value of the source unit, then this function
@@ -105,10 +105,12 @@ def units_transform(source, target):
         Source unit string, pint-recognized.
     target : str
         Target unit string, pint-recognized.
+    context : str, optional
+        Context of unit conversion. Default: "hydro".
     """
     from xclim.core.units import convert_units_to, units
 
-    b = convert_units_to(0 * source, target)
-    a = convert_units_to(1 * source, target) - b
+    b = convert_units_to(0 * source, target, context)
+    a = convert_units_to(1 * source, target, context) - b
 
     return round(a, 9), round(b, 9)
