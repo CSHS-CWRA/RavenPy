@@ -43,7 +43,7 @@ requirements = [
     "statsmodels",
     "wheel",
     "xarray<2022.11.0",  # Pinned due to incompatibility with climpred @ 2.2.0
-    "xclim>=0.39.0",
+    "xclim>=0.40.0",
     "xskillscore",
 ]
 
