@@ -18,7 +18,7 @@ repos:
         args: [ '--allow-multiple-documents' ]
       - id: debug-statements
   - repo: https://github.com/pre-commit/pygrep-hooks
-    rev: v1.9.0
+    rev: v1.10.0
     hooks:
       - id: python-check-blanket-noqa
       - id: rst-inline-touching-normal
@@ -48,7 +48,7 @@ repos:
       - id: nbqa-isort
         args: [ "--settings-file=setup.cfg" ]
   - repo: https://github.com/pycqa/pydocstyle
-    rev: 6.2.3
+    rev: 6.3.0
     hooks:
       - id: pydocstyle
         args: [ '--convention=numpy', '--match="(?!test_).*\.py"' ]
@@ -58,7 +58,7 @@ repos:
       - id: blackdoc
         additional_dependencies: [ 'black==22.10.0' ]
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.28.0
+    rev: v1.29.0
     hooks:
       - id: yamllint
         args: [ '--config-file', '.yamllint.yaml' ]
