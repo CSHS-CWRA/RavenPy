@@ -12,7 +12,7 @@ dependencies:
   - climpred >=2.1.0
   - dask
   - fiona
-  - gdal >=3.0
+  - gdal >=3.1
   - geopandas >=0.9
   - haversine
   - holoviews
@@ -33,7 +33,7 @@ dependencies:
   - rioxarray
   - scikit-learn ==0.24.2
   - scipy
-  - setuptools
+  - setuptools <=65.6
   - shapely
   - spotpy
   - statsmodels
