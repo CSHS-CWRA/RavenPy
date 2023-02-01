@@ -1,10 +1,10 @@
-name: ravenpy-env
+name: ravenpy
 channels:
-- conda-forge
-- defaults
+  - conda-forge
+  - defaults
 dependencies:
   - raven-hydro ==3.5
-  - ostrich ==21.03.16
+  - ostrich ==21.03.16  # Not available on Windows
   - python >=3.8
   - affine
   - cf_xarray
