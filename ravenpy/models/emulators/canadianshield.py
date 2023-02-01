@@ -292,7 +292,6 @@ class CANADIANSHIELD(Raven):
 
 
 class CANADIANSHIELD_OST(Ostrich, CANADIANSHIELD):
-
     ostrich_to_raven_param_conversion = {
         "par_sum_x05_x06": "par_x06",
         "par_sum_x16_x17": "par_x17",
@@ -572,7 +571,6 @@ class CANADIANSHIELD_OST(Ostrich, CANADIANSHIELD):
         self.config.ost.set_tmpl(ost_tmpl)
 
     def derived_parameters(self):
-
         self.config.ost.set_extra_attributes(area=self.config.rvh.hrus[0].area)
 
         # Here we are abusing the pydantic.dataclass type checking

@@ -210,7 +210,6 @@ class HMETS(Raven):
 
 
 class HMETS_OST(Ostrich, HMETS):
-
     ostrich_to_raven_param_conversion = {
         "par_x01": "GAMMA_SHAPE",
         "par_x02": "GAMMA_SCALE",
