@@ -273,7 +273,6 @@ class HBVEC(Raven):
 
     # TODO: Support index specification and unit changes.
     def _monthly_average(self):
-
         if (
             self.config.rvi.evaporation == "PET_FROMMONTHLY"
             or self.config.rvi.ow_evaporation == "PET_FROMMONTHLY"

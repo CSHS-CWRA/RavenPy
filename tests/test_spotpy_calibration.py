@@ -11,7 +11,6 @@ salmon_river = "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily
 
 class TestGR4JCNSpotpy:
     def test_simple(self, get_file):
-
         model = GR4JCN()
 
         ts = get_file(salmon_river)

@@ -32,6 +32,7 @@ LOGGER = logging.getLogger("PYWPS")
 
 # TODO: Complete docstrings
 
+
 # This function gets model states after running the model (i.e. states at the end of the run).
 def get_raven_states(model, workdir=None, **kwds):
     """Get the RAVEN states file (.rvc file) after a model run.
@@ -169,7 +170,6 @@ def perform_climatology_esp(
 
     # We will iterate this for all forecast years
     for years in avail_years:
-
         # Replace the forecast period start and end dates with the climatological ESP dates for the
         # current member (year)
         forecast_date = forecast_date.replace(year=years)
@@ -452,7 +452,6 @@ def make_ESP_hindcast_dataset(
 
     # Repeat the process for all hindcast years required. Could be parallelized by a pro!
     for i in included_years[1:]:
-
         qsims_tmp = perform_climatology_esp(
             model_name, forecast_date.replace(year=i), forecast_duration, **kwargs
         )

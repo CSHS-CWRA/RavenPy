@@ -193,7 +193,6 @@ def create_external_deps_install_class(command_cls):
             )
 
         def run(self):
-
             if self.with_binaries:
                 self.external_deps_path = Path().cwd().joinpath("external_deps")
                 self.external_deps_path.mkdir(exist_ok=True)

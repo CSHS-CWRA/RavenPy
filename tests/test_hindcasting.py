@@ -12,7 +12,6 @@ but this is a good proof of concept.
 
 class TestHindcasting:
     def test_hindcasting_GEPS(self, get_file):
-
         # Prepare a RAVEN model run using historical data, GR4JCN in this case.
         # This is a dummy run to get initial states. In a real forecast situation,
         # this run would end on the day before the forecast, but process is the same.

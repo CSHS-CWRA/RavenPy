@@ -7,7 +7,6 @@ from ravenpy.utilities.testdata import open_dataset
 
 class TestBiasCorrect:
     def test_bias_correction(self, threadsafe_data_dir):
-
         ds_fut_sub = open_dataset(
             "cmip5/nasa_nex-gddp-1.0_day_inmcm4_historical+rcp85_nex-gddp_2070-2071_subset.nc",
             cache_dir=threadsafe_data_dir,
