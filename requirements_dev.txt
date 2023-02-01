@@ -12,7 +12,7 @@ Click
 pytest
 pytest-cov
 pytest-xdist
-black
+black>=23.1.0
 isort
 pre-commit
 holoviews
