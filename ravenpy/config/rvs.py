@@ -44,7 +44,6 @@ from ravenpy.config.commands import (
 
 
 class RV(ABC):
-
     # This header will be prepended to all RV files when they are rendered
     tmpl_header = """
     ###########################################################################################################
@@ -134,7 +133,6 @@ class RV(ABC):
 
 
 class RVC(RV):
-
     tmpl = """
     {hru_states}
 
@@ -183,7 +181,6 @@ class RVC(RV):
 
 
 class RVH(RV):
-
     tmpl = """
     {subbasins}
 
@@ -240,7 +237,6 @@ class RVH(RV):
 
 
 class RVI(RV):
-
     _pre_tmpl = """
     :Calendar              {calendar}
     :RunName               {run_name}-{run_index}
@@ -309,7 +305,6 @@ class RVI(RV):
         self._custom_output = []
 
     def configure_from_nc_data(self, fns):
-
         with xr.open_mfdataset(fns, combine="by_coords") as ds:
             start, end = ds.indexes["time"][0], ds.indexes["time"][-1]
             cal = ds.time.encoding.get("calendar", "standard")
@@ -382,7 +377,6 @@ class RVI(RV):
 
     @evaluation_metrics.setter
     def evaluation_metrics(self, values):
-
         if not is_sequence(values):
             values = [values]
         ms = []
@@ -496,7 +490,6 @@ class RVI(RV):
         return cftime._cftime.DATE_TYPES[self.calendar.lower()](*date.timetuple()[:6])
 
     def to_rv(self):
-
         # Attributes (not starting with "_")
         a = list(filter(lambda x: not x.startswith("_"), self.__dict__))
 
@@ -530,7 +523,6 @@ class RVI(RV):
 
 
 class RVP(RV):
-
     # This is expected to be defined by the emulators.
     tmpl = """
     """
@@ -583,7 +575,6 @@ class RVP(RV):
 
 
 class RVT(RV):
-
     tmpl = """
     {gauge}
 
@@ -892,7 +883,6 @@ class RVT(RV):
 
 
 class OST(RV):
-
     tmpl = """
     """
 

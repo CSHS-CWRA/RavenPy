@@ -5,7 +5,6 @@ from ravenpy.models import HMETS
 
 class TestRavenNRCAN:
     def test_simple(self, get_file):
-
         params = (
             9.5019,
             0.2774,

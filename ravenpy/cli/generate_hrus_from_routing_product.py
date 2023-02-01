@@ -81,7 +81,6 @@ def generate_hrus_from_routing_product(input_file, output):
     """
 
     def assign_hru_attributes(i_sub, i_hru, hru_id, is_lake_HRU):
-
         # fist copy subbasin attribute to hru table
         for sub_col in subbasin_info.columns:
             if sub_col == "geometry":
@@ -157,7 +156,6 @@ def generate_hrus_from_routing_product(input_file, output):
     i_hru = 0
 
     for i_sub in range(len(subbasin_info)):
-
         sub_id = subbasin_info["SubId"].values[i_sub]
 
         if subbasin_info["Lake_Cat"].values[i_sub] > 0:

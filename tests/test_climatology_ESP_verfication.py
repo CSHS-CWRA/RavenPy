@@ -17,7 +17,6 @@ from ravenpy.utilities.forecasting import (
 
 class TestClimpredHindcastVerification:
     def test_simple(self, get_file):
-
         # We don't want climpred logging in the test output
         logger = logging.getLogger()
         logger.setLevel(logging.WARNING)

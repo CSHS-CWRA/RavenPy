@@ -284,7 +284,6 @@ class SACSMA(Raven):
 
 
 class SACSMA_OST(Ostrich, SACSMA):
-
     ostrich_to_raven_param_conversion = {
         "pow_x01": "par_x01",
         "pow_x02": "par_x02",

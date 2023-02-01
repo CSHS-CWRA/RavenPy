@@ -621,7 +621,7 @@ class Raven:
                 reader = csv.reader(f.readlines())
                 header = next(reader)
                 for row in reader:
-                    for (key, val) in zip(header, row):
+                    for key, val in zip(header, row):
                         if "DIAG" in key:
                             val = float(val)  # type: ignore
                         out[key].append(val)

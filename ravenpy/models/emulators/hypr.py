@@ -279,7 +279,6 @@ class HYPR(Raven):
 
     # TODO: Support index specification and unit changes.
     def _monthly_average(self):
-
         if (
             self.config.rvi.evaporation == "PET_FROMMONTHLY"
             or self.config.rvi.ow_evaporation == "PET_FROMMONTHLY"
@@ -314,7 +313,6 @@ class HYPR(Raven):
 
 
 class HYPR_OST(Ostrich, HYPR):
-
     # Since the `par_x05` and `par_x06` values that Ostrich have found are the base-10 logarithms of the
     # corresponding Raven values, we perform the transformation here, so that Raven receives 10^par_x05
     # and 10^par_x06 for its own `Params.par_x05` and `Params.par_x06`, respectively.
