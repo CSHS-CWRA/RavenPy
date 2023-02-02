@@ -5,35 +5,48 @@ Installation
 Full Installation (Anaconda)
 ----------------------------
 
-For many reasons, we recommend using a `Conda environment
-<https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_
-to work with the full RavenPy installation. This implementation is able to manage
-the harder to install GIS dependencies, like `GDAL`. Begin by creating an environment:
+For many reasons, we recommend using a `Conda environment <https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_
+to work with the full RavenPy installation. This implementation is able to manage the harder-to-install GIS dependencies,like `GDAL`.
+Begin by creating an environment:
 
 .. code-block:: console
 
-   $ conda create -c conda-forge --name ravenpy-env
+   $ conda create -c conda-forge --name ravenpy
 
 The newly created environment must then be activated:
 
 .. code-block:: console
 
-   $ conda activate ravenpy-env
+   $ conda activate ravenpy
 
 RavenPy can then be installed directly via its `conda-forge` package by running:
 
 .. code-block:: console
 
-   (ravenpy-env) $ conda install -c conda-forge ravenpy
+   (ravenpy) $ conda install -c conda-forge ravenpy
 
-This approach also installs both the `Raven <http://raven.uwaterloo.ca>`_ and `OSTRICH
-<http://www.civil.uwaterloo.ca/envmodelling/Ostrich.html>`_ binaries directly to your environment `PATH`,
-as well as installs all the necessary libraries supporting GIS functionalities.
+This approach installs both the `Raven <http://raven.uwaterloo.ca>`_ binary directly to your environment `PATH`,
+as well as installs all the necessary Python and C libraries supporting GIS functionalities.
+
+.. warning::
+
+   `OSTRICH <http://www.civil.uwaterloo.ca/envmodelling/Ostrich.html>`_ is another dependency needed for some key functions
+   in RavenPy but is not currently available for Windows conda users. We suggest performing either a manual installation of OSTRICH
+   or compiling it from source code: https://github.com/usbr/ostrich
+
+For Unix/Linux users, OSTRICH can be installed from conda by running:
+
+.. code-block:: console
+
+   (ravenpy) $ conda install -c conda-forge ostrich
 
 Custom Installation (Python/Pip)
 --------------------------------
 
-If you wish to install RavenPy and its C-libraries manually, compiling the `Raven` and `Ostrich binarioes for your system,
+.. warning::
+   The following instructions will only work on POSIX-like systems (Unix/Linux; not supported on Windows).
+
+If you wish to install RavenPy and its C-libraries manually, compiling the `Raven` and `Ostrich binaries for your system,
 you can install the entire system directly, placing them in the `bin` folder of your environment.
 In order to perform this from Ubuntu/Debian:
 
@@ -47,6 +60,11 @@ Then, from your python environment, run:
 
    $ pip install ravenpy[gis]
    $ pip install ravenpy[gis] --verbose --install-option="--with-binaries"
+
+.. warning::
+
+  It is imperative that the Python dependencies are pre-installed before running the `--with-binaries`
+  option; This install step will fail otherwise.
 
 If desired, the core functions of `RavenPy` can be installed without its GIS functionalities as well.
 This implementation of RavenPy is much lighter on dependencies and can be installed easily with `pip`,
@@ -74,9 +92,9 @@ If for any reason you prefer to install without the binaries, from a fresh pytho
 
    (ravenpy-env) $ pip install ravenpy[gis]
 
-But then you will be in charge of providing either ``raven`` and ``ostrich`` binaries on your PATH,
-or values for ``RAVENPY_RAVEN_BINARY_PATH`` and ``RAVENPY_OSTRICH_BINARY_PATH`` environment
-variables (both as absolute paths) at runtime.
+But then you will be in charge of providing either ``raven`` and ``ostrich`` binaries on your PATH, or setting values for
+``RAVENPY_RAVEN_BINARY_PATH`` and ``RAVENPY_OSTRICH_BINARY_PATH`` environment variables (both as absolute paths) in the
+terminal/command prompt/shell used at runtime.
 
 .. note::
 
@@ -100,22 +118,23 @@ by doing:
 
    $ cd /path/to/ravenpy
    $ conda env create -f environment.yml
-   $ conda activate ravenpy-env
+   $ conda activate ravenpy
 
 You can then install RavenPy with:
 
 .. code-block:: console
 
    # for the python dependencies
-   (ravenpy-env) $ pip install --editable ".[dev]"
-   # for the Raven and OSTRICH binaries
-   (ravenpy-env) $ pip install --editable "." --install-option="--with-binaries"
+   (ravenpy) $ pip install --editable ".[dev]"
 
-Then clone the Raven Test Data repo somewhere on your disk:
+.. warning::
+
+   The following command will only work on POSIX-like systems (Unix/Linux; not supported on Windows).
 
 .. code-block:: console
 
-   (ravenpy-env) $ git clone git@github.com:Ouranosinc/raven-testdata.git
+   # for the Raven and OSTRICH binaries
+   (ravenpy) $ pip install --editable "." --install-option="--with-binaries"
 
 Install the pre-commit hook (to make sure that any code you contribute is properly formatted):
 
@@ -127,13 +146,4 @@ If everything was properly installed the test suite should run successfully:
 
 .. code-block:: console
 
-   (ravenpy-env) $ export RAVENPY_TESTDATA_PATH=/path/to/raven-testdata
    (ravenpy-env) $ pytest tests
-
-Or set the conda environment variable permanently:
-
-.. code-block:: console
-
-   (ravenpy-env) $ conda env config vars set RAVENPY_TESTDATA_PATH=/path/to/raven-testdata
-
-then deactivate and reactivate the environment.
