@@ -16,7 +16,7 @@ from setuptools import Distribution, find_packages, setup
 from setuptools.command.develop import develop
 from setuptools.command.install import install
 
-RAVEN_VERSION = "3.5"
+RAVEN_VERSION = "3.6"
 OSTRICH_GIT_VERSION = "21.03.16"
 
 with open("README.rst") as readme_file:
@@ -137,6 +137,7 @@ def create_external_deps_install_class(command_cls):
             binary_name: str = "",
             make_target: str = "",
             src_folder: Optional[Union[str, os.PathLike]] = None,
+            remove_line: Optional[str] = None,
         ):
             print(f"Downloading {name} source code..")
             if rev_name:
@@ -165,11 +166,24 @@ def create_external_deps_install_class(command_cls):
 
             print(f"Compiling {name}..")
             src_folder = src_folder if src_folder else rev_name
+            c_filepath = self.external_deps_path / src_folder
             try:
-                print(self.external_deps_path / src_folder)
+                print(c_filepath)
+
+                # Hacky patch fix until we can safely remove all this logic
+                if remove_line:
+                    print("Patching Makefile..")
+                    with open(c_filepath.joinpath("Makefile"), "r+") as f:
+                        d = f.readlines()
+                        f.seek(0)
+                        for i in d:
+                            if remove_line not in i:
+                                f.write(i)
+                        f.truncate()
+
                 subprocess.check_call(
                     f"make {make_target}",
-                    cwd=self.external_deps_path / src_folder,
+                    cwd=c_filepath,
                     shell=True,
                 )
             except subprocess.CalledProcessError as e:
@@ -204,6 +218,7 @@ def create_external_deps_install_class(command_cls):
                     version=RAVEN_VERSION,
                     rev_name=f"RavenSource_v{RAVEN_VERSION}",
                     binary_name="Raven.exe",
+                    remove_line="CXXFLAGS += -c++11",
                 )
 
                 url = "https://github.com/usbr/ostrich/archive/refs/tags/"
