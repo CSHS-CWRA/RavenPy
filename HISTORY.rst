@@ -2,6 +2,16 @@
 History
 =======
 
+0.11.0 (2023-02-20)
+-------------------
+
+* Update RavenC executable to v3.6.
+* Update xclim library to v0.40.0.
+* Update fiona library to v1.9.
+* Address some failures that can be caused when attempting to run CLI commands without the proper GIS dependencies installed.
+* Addressed warnings raised in conda-forge compilation due to badly-configured MANIFEST.in.
+* Update installation documentation to reflect most recent changes.
+
 0.10.0 (2022-12-21)
 -------------------
 
