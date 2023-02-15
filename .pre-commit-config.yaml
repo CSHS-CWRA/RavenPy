@@ -22,6 +22,7 @@ repos:
     rev: v0.22.3
     hooks:
       - id: toml-sort-fix
+        args: [ '--in-place' ]
   - repo: https://github.com/pre-commit/pygrep-hooks
     rev: v1.10.0
     hooks:

@@ -6,102 +6,101 @@ build-backend = "scikit_build_core.build"
 name = "ravenpy"
 version = "0.12.0"
 authors = [
-    { name = "David Huard", email = "huard.david@ouranos.ca" },
-
+  {name = "David Huard", email = "huard.david@ouranos.ca"}
 ]
 maintainers = [
-    { name = "Trevor James Smith", email = "smith.trevorj@ouranos.ca" },
+  {name = "Trevor James Smith", email = "smith.trevorj@ouranos.ca"}
 ]
-description="A Python wrapper to setup and run the hydrologic modelling framework Raven."
+description = "A Python wrapper to setup and run the hydrologic modelling framework Raven."
 readme = "README.rst"
 requires-python = ">=3.8"
 classifiers = [
-    "Development Status :: 4 - Beta",
-    "Intended Audience :: Developers",
-    "Intended Audience :: Education",
-    "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: MIT License",
-    "Natural Language :: English",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python",
-    "Topic :: Scientific/Engineering :: Atmospheric Science",
-    "Topic :: Scientific/Engineering :: GIS",
-    "Topic :: Scientific/Engineering :: Hydrology",
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Education",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Natural Language :: English",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python",
+  "Topic :: Scientific/Engineering :: Atmospheric Science",
+  "Topic :: Scientific/Engineering :: GIS",
+  "Topic :: Scientific/Engineering :: Hydrology"
 ]
 keywords = ["ravenpy", "raven", "hydrologic", "model", "gis"]
+# xarray pinned due to incompatibility with climpred @ 2.2.0
 dependencies = [
-    "cf-xarray",
-    "click",
-    "climpred>=2.1",
-    "dask",
-    "haversine",
-    "matplotlib",
-    "netCDF4",
-    "numpy",
-    "pandas",
-    "pint>=0.20",
-    "pydantic",
-    "requests",
-    "scipy",
-    "spotpy",
-    "statsmodels",
-    "wheel",
-    # xarray pinned due to incompatibility with climpred @ 2.2.0
-    "xarray<2022.11.0",
-    "xclim>=0.40.0",
-    "xskillscore",
+  "cf-xarray",
+  "click",
+  "climpred>=2.1",
+  "dask",
+  "haversine",
+  "matplotlib",
+  "netCDF4",
+  "numpy",
+  "pandas",
+  "pint>=0.20",
+  "pydantic",
+  "requests",
+  "scipy",
+  "spotpy",
+  "statsmodels",
+  "wheel",
+  "xarray<2022.11.0",
+  "xclim>=0.40.0",
+  "xskillscore"
 ]
 
 [project.optional-dependencies]
 dev = [
-    "Click",
-    "black >=23.1.0",
-    "bump2version",
-    "coverage",
-    "coveralls",
-    "flake8",
-    "holoviews",
-    "hvplot",
-    "isort",
-    "pip",
-    "pre-commit",
-    "pytest",
-    "pytest-cov",
-    "pytest-xdist",
-    "sphinx",
-    "tox",
-    "watchdog",
-    "wheel",
+  "Click",
+  "black >=23.1.0",
+  "bump2version",
+  "coverage",
+  "coveralls",
+  "flake8",
+  "holoviews",
+  "hvplot",
+  "isort",
+  "pip",
+  "pre-commit",
+  "pytest",
+  "pytest-cov",
+  "pytest-xdist >=3.2",
+  "sphinx",
+  "tox",
+  "watchdog",
+  "wheel"
 ]
 docs = [
-    "autodoc_pydantic",
-    "ipykernel",
-    "ipython",
-    "jupyter_client",
-    "nbsphinx",
-    "numpydoc",
-    "pandoc",
-    "sphinx",
-    "sphinx-click",
-    "sphinx-click",
-    "sphinx-codeautolink",
-    "sphinx-copybutton",
-    "sphinx-rtd-theme >=1.0",
+  "autodoc_pydantic",
+  "ipykernel",
+  "ipython",
+  "jupyter_client",
+  "nbsphinx",
+  "numpydoc",
+  "pandoc",
+  "sphinx",
+  "sphinx-click",
+  "sphinx-click",
+  "sphinx-codeautolink",
+  "sphinx-copybutton",
+  "sphinx-rtd-theme >=1.0"
 ]
 gis = [
-    "affine",
-    "fiona >=1.9",
-    "gdal",
-    "geopandas >=0.9.0",
-    "lxml",
-    "owslib >=0.24.1",
-    "pyproj >=3.0.0",
-    "rasterio",
-    "rioxarray",
-    "shapely",
+  "affine",
+  "fiona >=1.9",
+  "gdal",
+  "geopandas >=0.9.0",
+  "lxml",
+  "owslib >=0.24.1",
+  "pyproj >=3.0.0",
+  "rasterio",
+  "rioxarray",
+  "shapely"
 ]
 
 [project.scripts]
@@ -118,49 +117,22 @@ ravenpy = "ravenpy.cli:main"
 
 [tool.black]
 target-version = [
-  "py38", "py39", "py310"
+  "py38",
+  "py39",
+  "py310"
 ]
-
-[tool.isort]
-known_first_party = ["ravenpy"]
-profile = "black"
-
-[tool.pylint.format]
-max-line-length = "88"
 
 [tool.coverage.run]
 relative_files = true
 omit = ["tests/*.py"]
 
-[tool.scikit-build]
-build-dir = "external_deps"
-cmake.minimum-version = "3.20"
-cmake.build-type = "Release"
-cmake.args = [
-    "-DCMAKE_CXX_FLAGS='-Dnetcdf -Wno-deprecated'",
-]
-cmake.verbose = true
-wheel.packages = ["ravenpy"]
-
-[tool.scikit-build.cmake.define]
-BUILD_HELPERS = "build_helpers"
-RAVEN_URL = "https://www.civil.uwaterloo.ca/raven/files/v3.6/RavenSource_v3.6.zip"
-RAVEN_SHA256 = "a962f3377425868d9cc535b6858e0457f5307636f99466ee37ab66ecfbcaf35c"
-
-[tool.pytest.ini_options]
-addopts = [
-	"--color=yes",
-	"--verbose",
-	"--numprocesses=auto",
-	"--maxprocesses=8"
-]
-python_files = ["test_*.py"]
-norecursedirs = ["src", ".git", "bin"]
-filterwarnings = ["ignore::UserWarning"]
+[tool.isort]
+known_first_party = ["ravenpy"]
+profile = "black"
 
 [tool.mypy]
 plugins = [
-    "pydantic.mypy"
+  "pydantic.mypy"
 ]
 follow_imports = "silent"
 warn_redundant_casts = true
@@ -169,7 +141,6 @@ disallow_any_generics = true
 check_untyped_defs = true
 no_implicit_reexport = false
 ignore_missing_imports = true
-
 # for strict mypy: (this is the tricky one :-))
 disallow_untyped_defs = false
 
@@ -178,3 +149,37 @@ init_forbid_extra = true
 init_typed = true
 warn_required_dynamic_aliases = true
 warn_untyped_fields = true
+
+[tool.pylint.format]
+max-line-length = "88"
+
+[tool.pytest.ini_options]
+addopts = [
+  "--color=yes",
+  "--verbose",
+  "--numprocesses=auto",
+  "--maxprocesses=8",
+  "--dist=worksteal"
+]
+python_files = ["test_*.py"]
+norecursedirs = ["src", ".git", "bin"]
+filterwarnings = ["ignore::UserWarning"]
+
+[tool.scikit-build]
+build-dir = "external_deps"
+
+[tool.scikit-build.cmake]
+minimum-version = "3.20"
+build-type = "Release"
+args = [
+  "-DCMAKE_CXX_FLAGS='-Dnetcdf -Wno-deprecated'"
+]
+verbose = true
+
+[tool.scikit-build.cmake.define]
+BUILD_HELPERS = "build_helpers"
+RAVEN_URL = "https://www.civil.uwaterloo.ca/raven/files/v3.6/RavenSource_v3.6.zip"
+RAVEN_SHA256 = "a962f3377425868d9cc535b6858e0457f5307636f99466ee37ab66ecfbcaf35c"
+
+[tool.scikit-build.wheel]
+packages = ["ravenpy"]

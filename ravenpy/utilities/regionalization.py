@@ -56,14 +56,11 @@ def regionalize(
 
     Returns
     -------
-    (qsim, ensemble)
-    qsim : DataArray (time, )
-      Multi-donor averaged predicted streamflow.
+    qsim : DataArray, (time, )
+        Multi-donor averaged predicted streamflow.
     ensemble : Dataset
-      q_sim : DataArray  (realization, time)
-        Ensemble of members based on number of donors.
-      parameter : DataArray (realization, param)
-        Parameters used to run the model.
+        q_sim, DataArray  (realization, time) - Ensemble of members based on number of donors.
+        parameter, DataArray (realization, param) - Parameters used to run the model.
     """
     # TODO: Include list of available properties in docstring.
     # TODO: Add error checking for source, target stuff wrt method chosen.

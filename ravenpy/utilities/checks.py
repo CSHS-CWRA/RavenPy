@@ -57,7 +57,7 @@ def boundary_check(
 
     Parameters
     ----------
-    *args : Union[str, Path]
+    args : Union[str, Path]
       str or Path to file(s)
     max_y : Union[int, float]
       Maximum value allowed for latitude. Default: 60.

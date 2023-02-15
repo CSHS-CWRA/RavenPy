@@ -286,13 +286,13 @@ class Raven:
         Parameters
         ----------
         ts : path or sequence
-          Sequence of input file paths. Symbolic links to those files will be created in the model directory.
+            Sequence of input file paths. Symbolic links to those files will be created in the model directory.
         overwrite : bool
-          Whether to overwrite existing model and output files.
+            Whether to overwrite existing model and output files.
         parallel : {}
-          Parameters that should be distributed across parallel simulations.
-        **kwds : dict
-          Raven parameters used to fill configuration file templates.
+            Parameters that should be distributed across parallel simulations.
+        **kwds
+            Raven parameters used to fill configuration file templates.
 
         Create a work directory with a model/ and output/ subdirectories, write the configuration files in model/ and
         launch the Raven executable. If the configuration files are templates, values can be formatted by passing

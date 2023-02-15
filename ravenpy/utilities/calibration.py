@@ -11,16 +11,16 @@ from spotpy.parameter import Uniform, generate
 
 class SpotpySetup:
     def __init__(self, model, ts, obj_func=None):
-        """
+        """Setup SpotPy.
 
         Parameters
         ----------
-        model: Raven emulator subclass instance
-          Raven emulator.
-        ts: list
-          Forcing files.
-        obj_func: func
-          Objective function.
+        model : Raven emulator subclass instance
+            Raven emulator.
+        ts : list
+            Forcing files.
+        obj_func : func
+            Objective function.
         """
         self.model = model
 
