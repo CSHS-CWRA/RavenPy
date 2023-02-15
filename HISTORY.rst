@@ -19,7 +19,6 @@ History
 * Relax geo test to avoid failures occurring due to GDAL 3.6.
 * Pin numpy below 1.24 (see https://github.com/numba/numba/issues/8615)
 
-
 0.9.0 (2022-11-16)
 ------------------
 
