@@ -1,8 +1,16 @@
 from pathlib import Path
 
 import click
-import geopandas as gpd
 import numpy as np
+
+from ravenpy.utilities import gis_import_error_message
+
+try:
+    import geopandas as gpd
+except (ImportError, ModuleNotFoundError) as e:
+    msg = gis_import_error_message.format(Path(__file__).stem)
+    raise ImportError(msg) from e
+
 
 COLUMN_NAMES_CONSTANT_HRU = [
     "SubId",
