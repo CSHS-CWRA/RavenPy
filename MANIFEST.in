@@ -3,9 +3,6 @@ include CONTRIBUTING.rst
 include HISTORY.rst
 include LICENSE
 include README.rst
-include requirements_dev.txt
-include requirements_docs.txt
-include requirements_gis.txt
 
 recursive-include ravenpy *.py *.zip *.csv *.rst
 recursive-include tests *
@@ -30,5 +27,4 @@ exclude .yamllint.yaml
 exclude Makefile
 exclude environment.yml
 exclude environment-rtd.yml
-exclude mypy.ini
 exclude tox.ini

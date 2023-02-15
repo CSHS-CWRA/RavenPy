@@ -51,30 +51,30 @@ test_requirements = [
     "pytest>=3",
 ]
 
-docs_requirements = [
-    dependency for dependency in open("requirements_docs.txt").readlines()
-]
-
-gis_requirements = [
-    dependency for dependency in open("requirements_gis.txt").readlines()
-]
-# Special GDAL handling
-on_conda = os.getenv("CONDA_BUILD")
-if on_conda == "1":
-    gis_requirements.append("gdal")
-else:
-    try:
-        gdal_version = subprocess.run(
-            ["gdal-config", "--version"], capture_output=True
-        ).stdout.decode("utf-8")
-        gis_requirements.append(f"gdal=={gdal_version}")
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        pass
-
-dev_requirements = gis_requirements.copy()
-dev_requirements.extend(
-    [dependency for dependency in open("requirements_dev.txt").readlines()]
-)
+# docs_requirements = [
+#     dependency for dependency in open("requirements_docs.txt").readlines()
+# ]
+#
+# gis_requirements = [
+#     dependency for dependency in open("requirements_gis.txt").readlines()
+# ]
+# # Special GDAL handling
+# on_conda = os.getenv("CONDA_BUILD")
+# if on_conda == "1":
+#     gis_requirements.append("gdal")
+# else:
+#     try:
+#         gdal_version = subprocess.run(
+#             ["gdal-config", "--version"], capture_output=True
+#         ).stdout.decode("utf-8")
+#         gis_requirements.append(f"gdal=={gdal_version}")
+#     except (subprocess.CalledProcessError, FileNotFoundError):
+#         pass
+#
+# dev_requirements = gis_requirements.copy()
+# dev_requirements.extend(
+#     [dependency for dependency in open("requirements_dev.txt").readlines()]
+# )
 
 
 # Idea taken from: https://stackoverflow.com/a/25176606/787842
@@ -285,9 +285,9 @@ setup(
     test_suite="tests",
     tests_require=test_requirements,
     extras_require=dict(
-        dev=dev_requirements,
-        docs=docs_requirements,
-        gis=gis_requirements,
+        # dev=dev_requirements,
+        # docs=docs_requirements,
+        # gis=gis_requirements,
     ),
     url="https://github.com/CSHS-CWRA/ravenpy",
     version="0.11.0",
