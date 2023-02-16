@@ -134,7 +134,7 @@ jobs:
       - name: DYLD_INSERT_LIBRARIES NetCDF source files
         if: ${{ matrix.os == 'macos-latest' }}
         run: |
-          echo "DYLD_INSERT_LIBRARIES=$(find /home/runner/micromamba-root/envs/ravenpy -name 'libnetcdf.*dylib')" >> $GITHUB_ENV
+          echo "DYLD_INSERT_LIBRARIES=$(find /Users/runner/micromamba-root/envs/ravenpy -name 'libnetcdf.*dylib')" >> $GITHUB_ENV
           echo ${{ env.DYLD_INSERT_LIBRARIES }}
 
       - name: Install RavenPy
