@@ -171,7 +171,7 @@ build-dir = "external_deps"
 minimum-version = "3.20"
 build-type = "Release"
 args = [
-  "-DCMAKE_CXX_FLAGS='-Dnetcdf -Wno-deprecated'"
+  "-DCMAKE_CXX_FLAGS='-Dnetcdf'"
 ]
 verbose = true
 

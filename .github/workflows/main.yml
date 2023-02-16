@@ -66,8 +66,7 @@ jobs:
     - name: Install GDAL (macOS)
       if: ${{ matrix.os == 'macos-latest' }}
       run: |
-        brew update
-        brew install gdal
+        brew list gdal &>/dev/null || brew install gdal
     - name: Install tox and setuptools
       run: |
         pip install tox
