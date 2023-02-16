@@ -30,9 +30,9 @@ jobs:
           tox -e black
 
   pip:
-    name: Pip with Python${{ matrix.python-version }}
+    name: Pip with Python${{ matrix.python-version }} on ${{ matrix.os }}
     needs: black
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     defaults:
       run:
         shell: bash -l {0}
@@ -41,20 +41,32 @@ jobs:
         include:
           - tox-env: py38
             python-version: "3.8"
+            os: ubuntu-latest
           - tox-env: py39
             python-version: "3.9"
+            os: ubuntu-latest
           - tox-env: py310
             python-version: "3.10"
+            os: macos-latest
+          - tox-env: py310
+            python-version: "3.10"
+            os: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install GDAL
+    - name: Install GDAL (Ubuntu)
+      if: ${{ matrix.os }} == 'ubuntu-latest'
       run: |
         sudo apt-get update
         sudo apt-get install libgdal-dev
+    - name: Install GDAL (macOS)
+      if: ${{ matrix.os }} == 'macos-latest'
+      run: |
+        brew update
+        brew install gdal
     - name: Install tox and setuptools
       run: |
         pip install tox
@@ -62,7 +74,7 @@ jobs:
       run: |
         env GDAL_VERSION="$(gdal-config --version)" tox -e ${{ matrix.tox-env }}
       env:
-        LD_PRELOAD: /lib/x86_64-linux-gnu/libstdc++.so.6  # :"$LD_PRELOAD"
+#        LD_PRELOAD: /lib/x86_64-linux-gnu/libstdc++.so.6  # :"$LD_PRELOAD"
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         COVERALLS_FLAG_NAME: run-${{ matrix.tox-env }}
         COVERALLS_PARALLEL: true
