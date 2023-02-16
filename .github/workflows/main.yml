@@ -90,7 +90,10 @@ jobs:
 
       - name: Where the heck is NetCDF?
         run: |
-          export LIBNETCDF4="$(find /home/runner/micromamba-root/envs/ravenpy -name libnetcdf.so)"
+          echo "LIBNETCDF4=$(find /home/runner/micromamba-root/envs/ravenpy -name libnetcdf.so)" >> $GITHUB_ENV
+      - name: Did we really find it?
+        run: |
+          echo ${{ env.LIBNETCDF4 }}
 
       - name: Install RavenPy
         run: |
@@ -111,7 +114,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COVERALLS_FLAG_NAME: run-conda
           COVERALLS_PARALLEL: true
-          LD_PRELOAD: LIBNETCDF4
+          LD_PRELOAD: ${{ env.LIBNETCDF4 }}
 
   finish:
     needs:
