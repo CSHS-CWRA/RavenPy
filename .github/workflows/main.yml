@@ -84,14 +84,13 @@ jobs:
           extra-specs: |
             mamba
             python=3.9
-      - name: Conda and Mamba versions
+      - name: Mamba and Conda versions
         run: |
-          conda --version
           mamba --version
 
       - name: Where the heck is NetCDF?
         run: |
-          find / -name libnetcdf.so.19
+          export LIBNETCDF4="$(find /home/runner/micromamba-root/envs/ravenpy -name libnetcdf.so)"
 
       - name: Install RavenPy
         run: |
@@ -112,6 +111,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COVERALLS_FLAG_NAME: run-conda
           COVERALLS_PARALLEL: true
+          LD_PRELOAD: LIBNETCDF4
 
   finish:
     needs:
