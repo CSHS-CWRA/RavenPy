@@ -63,18 +63,30 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -q libgdal-dev
+        echo "GDAL_VERSION=$(gdal-config --version)" >> $GITHUB_ENV
+
     - name: Install GDAL (macOS)
       if: ${{ matrix.os == 'macos-latest' }}
+      uses: tecolicom/actions-use-homebrew-tools@v1
+      with:
+        tools: gdal
+    - name: Where the heck is GDAL?
+      if: ${{ matrix.os == 'macos-latest' }}
       run: |
-        brew list gdal &>/dev/null || brew install gdal
+        gdalinfo --version
+        which gdalinfo
+        echo "GDAL_VERSION=$(gdalinfo --version)" >> $GITHUB_ENV
+    - name: Did we really find GDAL?
+      run: |
+        echo ${{ env.GDAL_VERSION }}
+
     - name: Install tox and setuptools
       run: |
         pip install tox
     - name: Test with tox and report coverage
       run: |
-        env GDAL_VERSION="$(gdal-config --version)" tox -e ${{ matrix.tox-env }}
+        tox -e ${{ matrix.tox-env }}
       env:
-#        LD_PRELOAD: /lib/x86_64-linux-gnu/libstdc++.so.6  # :"$LD_PRELOAD"
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         COVERALLS_FLAG_NAME: run-${{ matrix.tox-env }}
         COVERALLS_PARALLEL: true
@@ -113,11 +125,18 @@ jobs:
       - name: Mamba and Conda versions
         run: |
           mamba --version
+
       - name: LD_PRELOAD NetCDF source files
         if: ${{ matrix.os == 'ubuntu-latest' }}
         run: |
           echo "LD_PRELOAD=$(find /home/runner/micromamba-root/envs/ravenpy -name libnetcdf.so)" >> $GITHUB_ENV
           echo ${{ env.LD_PRELOAD }}
+      - name: DYLD_INSERT_LIBRARIES NetCDF source files
+        if: ${{ matrix.os == 'macos-latest' }}
+        run: |
+          echo "DYLD_INSERT_LIBRARIES=$(find /hom/runner/micromamba-root/envs/ravenpy -name 'libnetcdf.*dylib')" >> $GITHUB_ENV
+          echo ${{ env.DYLD_INSERT_LIBRARIES }}
+
       - name: Install RavenPy
         run: |
           pip install ".[dev,gis]"
