@@ -11,7 +11,7 @@ dependencies:
   - jupyter_client
   - matplotlib
   - nbsphinx
-#  - netCDF4  # mocked
+  - netCDF4  # needed to build package
   - pandoc
   - pydantic
   - sphinx
