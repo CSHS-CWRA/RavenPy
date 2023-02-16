@@ -87,14 +87,10 @@ jobs:
       - name: Mamba and Conda versions
         run: |
           mamba --version
-
-      - name: Where the heck is NetCDF?
+      - name: LD_PRELOAD NetCDF source files
         run: |
           echo "LD_PRELOAD=$(find /home/runner/micromamba-root/envs/ravenpy -name libnetcdf.so)" >> $GITHUB_ENV
-      - name: Did we really find it?
-        run: |
           echo ${{ env.LD_PRELOAD }}
-
       - name: Install RavenPy
         run: |
           pip install ".[dev,gis]"
