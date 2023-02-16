@@ -37,6 +37,7 @@ jobs:
       run:
         shell: bash -l {0}
     strategy:
+      fail-fast: false
       matrix:
         include:
           - tox-env: py38
@@ -61,7 +62,7 @@ jobs:
       if: ${{ matrix.os == 'ubuntu-latest' }}
       run: |
         sudo apt-get update
-        sudo apt-get install libgdal-dev
+        sudo apt-get install -q libgdal-dev
     - name: Install GDAL (macOS)
       if: ${{ matrix.os == 'macos-latest' }}
       run: |
@@ -80,14 +81,28 @@ jobs:
         COVERALLS_PARALLEL: true
 
   conda:
-    name: Conda
+    name: Conda with Python${{ matrix.python-version }} on ${{ matrix.os }}
     needs: black
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     defaults:
       run:
         shell: bash -l {0}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - python-version: "3.8"
+            os: windows-latest
+          - python-version: "3.9"
+            os: ubuntu-latest
+          - python-version: "3.10"
+            os: macos-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Sanitize environment.yml (Windows)
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: |
+          sed -i '7d' environment.yml
       - name: Setup Conda (Micromamba) with Python3.9
         uses: mamba-org/provision-with-micromamba@main
         with:
@@ -95,11 +110,12 @@ jobs:
           environment-file: environment.yml
           extra-specs: |
             mamba
-            python=3.9
+            python=${{ matrix.python-version }}
       - name: Mamba and Conda versions
         run: |
           mamba --version
       - name: LD_PRELOAD NetCDF source files
+        if: ${{ matrix.os == 'ubuntu-latest' }}
         run: |
           echo "LD_PRELOAD=$(find /home/runner/micromamba-root/envs/ravenpy -name libnetcdf.so)" >> $GITHUB_ENV
           echo ${{ env.LD_PRELOAD }}
