@@ -83,11 +83,16 @@ jobs:
           environment-file: environment.yml
           extra-specs: |
             mamba
-            python="3.9"
+            python=3.9
       - name: Conda and Mamba versions
         run: |
           conda --version
           mamba --version
+
+      - name: Where the heck is NetCDF?
+        run: |
+          find / -name libnetcdf.so.19
+
       - name: Install RavenPy
         run: |
           pip install ".[dev,gis]"
