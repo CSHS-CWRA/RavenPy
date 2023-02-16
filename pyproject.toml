@@ -156,7 +156,7 @@ max-line-length = "88"
 addopts = [
   "--color=yes",
   "--verbose",
-  "--numprocesses=auto",
+  "--numprocesses=0",
   "--maxprocesses=8",
   "--dist=worksteal"
 ]

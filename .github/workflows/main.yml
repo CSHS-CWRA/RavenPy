@@ -114,7 +114,7 @@ jobs:
         if: ${{ matrix.os == 'windows-latest' }}
         run: |
           sed -i '7d' environment.yml
-      - name: Setup Conda (Micromamba) with Python3.9
+      - name: Setup Conda (Micromamba) with Python${{ matrix.python-version }}
         uses: mamba-org/provision-with-micromamba@main
         with:
           cache-downloads: true
@@ -134,7 +134,7 @@ jobs:
       - name: DYLD_INSERT_LIBRARIES NetCDF source files
         if: ${{ matrix.os == 'macos-latest' }}
         run: |
-          echo "DYLD_INSERT_LIBRARIES=$(find /hom/runner/micromamba-root/envs/ravenpy -name 'libnetcdf.*dylib')" >> $GITHUB_ENV
+          echo "DYLD_INSERT_LIBRARIES=$(find /home/runner/micromamba-root/envs/ravenpy -name 'libnetcdf.*dylib')" >> $GITHUB_ENV
           echo ${{ env.DYLD_INSERT_LIBRARIES }}
 
       - name: Install RavenPy
