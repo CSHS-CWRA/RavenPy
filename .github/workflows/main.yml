@@ -140,7 +140,7 @@ jobs:
 
       - name: Install RavenPy
         run: |
-          python3 -m pip install ".[dev,gis]"
+          python3 -m pip install ".[dev]"
 #      - name: Install RavenPy (macOS)
 #        if: ${{ matrix.os == 'macos-latest' }}
 #        run: |
