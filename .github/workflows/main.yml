@@ -146,7 +146,7 @@ jobs:
 
       - name: Reload Conda environment
         run: |
-          conda deactivate
+          conda init bash
           conda activate ravenpy
 
       - name: Mamba and Conda versions
