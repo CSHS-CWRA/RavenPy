@@ -82,12 +82,12 @@ jobs:
         echo "GDAL_VERSION=$(gdalinfo --version | awk  '{print $2}' | sed s'/.$//')" >> $GITHUB_ENV
         echo "GDAL_HEADERS=/usr/local/include/gdal" >> $GITHUB_ENV
 
-    - name: Install tox and setuptools
+    - name: Install tox
       run: |
-        python3 -m pip install tox
+        python -m pip install tox
     - name: Test with tox and report coverage
       run: |
-        python3 -m tox -e ${{ matrix.tox-env }}
+        python -m tox -e ${{ matrix.tox-env }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         COVERALLS_FLAG_NAME: run-${{ matrix.tox-env }}
@@ -154,7 +154,7 @@ jobs:
 
       - name: Install RavenPy
         run: |
-          python3 -m pip install ".[${{ matrix.recipes }}]"
+          python -m pip install ".[${{ matrix.recipes }}]"
 #          python3 -m pip install gdal==$(conda list | grep gdal | awk {'print $2'} | head -n 1) --use-pep517
 #      - name: Install RavenPy (macOS)
 #        if: ${{ matrix.os == 'macos-latest' }}
@@ -170,10 +170,10 @@ jobs:
           conda list
       - name: Test RavenPy
         run: |
-          python3 -m pytest --cov ravenpy
+          python -m pytest --cov ravenpy
       - name: Report coverage
         run: |
-          python3 -m coveralls
+          python -m coveralls
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COVERALLS_FLAG_NAME: run-conda
