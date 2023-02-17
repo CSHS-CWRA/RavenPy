@@ -108,10 +108,10 @@ jobs:
             os: windows-latest
             recipes: dev,gis
           - python-version: "3.9"
-            os: ubuntu-latest
+            os: macos-latest
             recipes: dev
           - python-version: "3.10"
-            os: macos-latest
+            os: ubuntu-latest
             recipes: dev
     steps:
       - uses: actions/checkout@v3
@@ -124,6 +124,7 @@ jobs:
         uses: mamba-org/provision-with-micromamba@main
         with:
           cache-downloads: true
+          cache-env: true
           environment-file: environment.yml
           extra-specs: |
             mamba
@@ -133,6 +134,8 @@ jobs:
         uses: mamba-org/provision-with-micromamba@main
         with:
           cache-downloads: true
+          cache-env: true
+          channels: conda-forge
           environment-file: false
           environment-name: ravenpy
           extra-specs: |
