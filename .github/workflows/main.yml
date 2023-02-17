@@ -129,10 +129,10 @@ jobs:
           mamba --version
 
       # Might not be necessary
-#      - name: Set LD_PRELOAD for NetCDF source files
-#        if: ${{ matrix.os == 'ubuntu-latest' }}
-#        run: |
-#          echo "LD_PRELOAD=$(find /home/runner/micromamba-root/envs/ravenpy -name libnetcdf.so)" >> $GITHUB_ENV
+      - name: Set LD_PRELOAD for NetCDF source files
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: |
+          echo "LD_PRELOAD=$(find /home/runner/micromamba-root/envs/ravenpy -name libnetcdf.so)" >> $GITHUB_ENV
 
       - name: Install RavenPy (Windows and Linux)
         if: ${{ matrix.os == 'windows-latest' }} || ${{ matrix.os == 'ubuntu-latest' }}
@@ -141,7 +141,7 @@ jobs:
       - name: Install RavenPy (macOS)
         if: ${{ matrix.os == 'macos-latest' }}
         run: |
-          DYLD_INSERT_LIBRARIES="$(find /Users/runner/micromamba-root/envs/ravenpy -name 'libnetcdf.*dylib')" python3 -m pip install ".[dev,gis]"
+          DYLD_INSERT_LIBRARIES="$(find /Users/runner/micromamba-root/envs/ravenpy -name libnetcdf.*dylib)" python3 -m pip install ".[dev,gis]"
 
       - name: Check Raven
         run: |
