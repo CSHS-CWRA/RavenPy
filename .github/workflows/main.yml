@@ -106,16 +106,19 @@ jobs:
         include:
           - python-version: "3.8"
             os: windows-latest
+            recipes: dev,gis
           - python-version: "3.9"
             os: ubuntu-latest
+            recipes: dev
           - python-version: "3.10"
             os: macos-latest
+            recipes: dev
     steps:
       - uses: actions/checkout@v3
-      - name: Sanitize environment.yml (Windows)
-        if: matrix.os == 'windows-latest'
-        run: |
-          sed -i '7d' environment.yml
+#      - name: Sanitize environment.yml (Windows)
+#        if: matrix.os == 'windows-latest'
+#        run: |
+#          sed -i '7d' environment.yml
       - name: Setup Conda (Micromamba) with Python${{ matrix.python-version }}
         uses: mamba-org/provision-with-micromamba@main
         with:
@@ -124,6 +127,17 @@ jobs:
           extra-specs: |
             mamba
             python=${{ matrix.python-version }}
+            - name: Setup Conda (Micromamba) with Python${{ matrix.python-version }}
+      - name: Setup Conda (Micromamba) with Python${{ matrix.python-version }} (Windows)
+        uses: mamba-org/provision-with-micromamba@main
+        with:
+          cache-downloads: true
+          extra-specs: |
+            gdal
+            mamba
+            netCDF4
+            python=${{ matrix.python-version }}
+
       - name: Mamba and Conda versions
         run: |
           mamba --version
@@ -136,11 +150,11 @@ jobs:
       - name: link NetCDF (macOS)
         if: matrix.os == 'macos-latest'
         run: |
-          sudo ln -s $(find /Users/runner/micromamba-root/envs/ravenpy -name libnetcdf.*dylib) /usr/local/lib/libnetcdf.19.dylib
+          sudo ln -s /usr/local/lib/libnetcdf.19.dylib $(find /Users/runner/micromamba-root/envs/ravenpy -name libnetcdf.*dylib)
 
       - name: Install RavenPy
         run: |
-          python3 -m pip install ".[dev]"
+          python3 -m pip install ".[${{ matrix.recipes }}]"
 #      - name: Install RavenPy (macOS)
 #        if: ${{ matrix.os == 'macos-latest' }}
 #        run: |
