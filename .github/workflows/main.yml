@@ -75,17 +75,17 @@ jobs:
       run: |
         gdalinfo --version
         which gdalinfo
-        echo "GDAL_VERSION=$(gdalinfo --version)" >> $GITHUB_ENV
+        echo "GDAL_VERSION=$(gdalinfo --version | awk  '{print $2}' | sed s'/.$//')" >> $GITHUB_ENV
     - name: Did we really find GDAL?
       run: |
         echo ${{ env.GDAL_VERSION }}
 
     - name: Install tox and setuptools
       run: |
-        pip install tox
+        python3 -m pip install tox
     - name: Test with tox and report coverage
       run: |
-        tox -e ${{ matrix.tox-env }}
+        python3 -m tox -e ${{ matrix.tox-env }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         COVERALLS_FLAG_NAME: run-${{ matrix.tox-env }}
@@ -139,7 +139,7 @@ jobs:
 
       - name: Install RavenPy
         run: |
-          pip install ".[dev,gis]"
+          python3 -m pip install ".[dev,gis]"
       - name: Check Raven
         run: |
           raven -v
@@ -148,10 +148,10 @@ jobs:
           conda list
       - name: Test RavenPy
         run: |
-          pytest --cov ravenpy
+          python3 -m pytest --cov ravenpy
       - name: Report coverage
         run: |
-          coveralls
+          python3 -m coveralls
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COVERALLS_FLAG_NAME: run-conda
