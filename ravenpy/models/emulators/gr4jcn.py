@@ -1,12 +1,12 @@
 from collections import defaultdict
-from pathlib import Path
 from typing import cast
 
 from pydantic.dataclasses import dataclass
 
 from ravenpy.config import options
 from ravenpy.config.commands import HRU, LU, BasinIndexCommand, HRUState, Sub
-from ravenpy.config.rvs import RVI
+
+# from ravenpy.config.rvs import RVI
 from ravenpy.models.base import Ostrich, Raven
 
 

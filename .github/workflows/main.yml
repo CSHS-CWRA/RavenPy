@@ -136,7 +136,7 @@ jobs:
       - name: link NetCDF (macOS)
         if: matrix.os == 'macos-latest'
         run: |
-          sudo ln -a $(find /Users/runner/micromamba-root/envs/ravenpy -name libnetcdf.*dylib) /usr/local/lib/libnetcdf.19.dylib
+          sudo ln -s $(find /Users/runner/micromamba-root/envs/ravenpy -name libnetcdf.*dylib) /usr/local/lib/libnetcdf.19.dylib
 
       - name: Install RavenPy
         run: |
