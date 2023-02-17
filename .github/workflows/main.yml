@@ -154,6 +154,7 @@ jobs:
           sudo ln -s $(find /Users/runner/micromamba-root/envs/ravenpy -name libmfhdf.*dylib | head -n 1) /usr/local/lib/libmfhdf.0.dylib
           sudo ln -s $(find /Users/runner/micromamba-root/envs/ravenpy -name libdf.*dylib | head -n 1) /usr/local/lib/libdf.0.dylib
           sudo ln -s $(find /Users/runner/micromamba-root/envs/ravenpy -name libhdf5_hl.*dylib | head -n 1) /usr/local/lib/libhdf5_hl.200.dylib
+          sudo ln -s $(find /Users/runner/micromamba-root/envs/ravenpy -name libhdf5.*dylib | head -n 1) /usr/local/lib/libhdf5.200.dylib
 
       - name: Install RavenPy
         run: |
