@@ -133,6 +133,7 @@ jobs:
         uses: mamba-org/provision-with-micromamba@main
         with:
           cache-downloads: true
+          environment-file: false
           extra-specs: |
             gdal
             mamba
@@ -151,7 +152,7 @@ jobs:
       - name: link NetCDF (macOS)
         if: matrix.os == 'macos-latest'
         run: |
-          sudo ln -s /usr/local/lib/libnetcdf.19.dylib $(find /Users/runner/micromamba-root/envs/ravenpy -name libnetcdf.*dylib)
+          find /Users/runner/micromamba-root/envs/ravenpy -name libnetcdf.*dylib | xargs -0 sudo ln -s /usr/local/lib/libnetcdf.19.dylib {}
 
       - name: Install RavenPy
         run: |
