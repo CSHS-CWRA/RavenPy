@@ -131,16 +131,21 @@ jobs:
         if: ${{ matrix.os == 'ubuntu-latest' }}
         run: |
           echo "LD_PRELOAD=$(find /home/runner/micromamba-root/envs/ravenpy -name libnetcdf.so)" >> $GITHUB_ENV
-          echo ${{ env.LD_PRELOAD }}
       - name: DYLD_INSERT_LIBRARIES NetCDF source files
         if: ${{ matrix.os == 'macos-latest' }}
         run: |
-          echo "DYLD_INSERT_LIBRARIES=$(find /Users/runner/micromamba-root/envs/ravenpy -name 'libnetcdf.*dylib')" >> $GITHUB_ENV
-          echo ${{ env.DYLD_INSERT_LIBRARIES }}
+          echo "LIBNETCDF_LOCATION=$(find /Users/runner/micromamba-root/envs/ravenpy -name 'libnetcdf.*dylib')" >> $GITHUB_ENV
+          echo ${{ env.LIBNETCDF_LOCATION }}
 
-      - name: Install RavenPy
+      - name: Install RavenPy (Windows and Linux)
+        if: ${{ matrix.os == 'ubuntu-latest' }} || ${{ matrix.os == 'ubuntu-latest' }}
         run: |
           python3 -m pip install ".[dev,gis]"
+      - name: Install RavenPy (macOS)
+        if: ${{ matrix.os == 'macos-latest' }}
+        run: |
+          DYLD_INSERT_LIBRARIES=${{ env.LIBNETCDF_LOCATION }} python3 -m pip install ".[dev,gis]"
+
       - name: Check Raven
         run: |
           raven -v
