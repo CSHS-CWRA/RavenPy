@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path
 
 import pytest
@@ -41,6 +42,10 @@ class TestRemoteFileAccess:
         assert isinstance(ds, xarray.Dataset)
 
     @pytest.mark.online
+    @pytest.mark.skipif(
+        sys.platform.startswith("win"),
+        reason="NetCDF does not allow simultaneous read on Windows",
+    )
     def test_open_dataset_false_cache(self):
         ds = open_dataset(
             name="raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_3d.nc",
