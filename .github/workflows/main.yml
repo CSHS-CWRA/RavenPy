@@ -134,6 +134,7 @@ jobs:
         with:
           cache-downloads: true
           environment-file: false
+          environment-name: ravenpy
           extra-specs: |
             gdal
             mamba
@@ -149,18 +150,18 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           echo "LD_PRELOAD=$(find /home/runner/micromamba-root/envs/ravenpy -name libnetcdf.so)" >> $GITHUB_ENV
-      - name: link NetCDF (macOS)
-        if: matrix.os == 'macos-latest'
-        run: |
-          find /Users/runner/micromamba-root/envs/ravenpy -name libnetcdf.*dylib | xargs -0 sudo ln -s /usr/local/lib/libnetcdf.19.dylib {}
+#      - name: link NetCDF (macOS)
+#        if: matrix.os == 'macos-latest'
+#        run: |
+#          find /Users/runner/micromamba-root/envs/ravenpy -name libnetcdf.*dylib | xargs -0 sudo ln -s /usr/local/lib/libnetcdf.19.dylib {}
 
       - name: Install RavenPy
         run: |
           python3 -m pip install ".[${{ matrix.recipes }}]"
-#      - name: Install RavenPy (macOS)
-#        if: ${{ matrix.os == 'macos-latest' }}
-#        run: |
-#          DYLD_INSERT_LIBRARIES="$(find /Users/runner/micromamba-root/envs/ravenpy -name libnetcdf.*dylib)" python3 -m pip install ".[dev,gis]"
+      - name: Install RavenPy (macOS)
+        if: ${{ matrix.os == 'macos-latest' }}
+        run: |
+          DYLD_INSERT_LIBRARIES=$(find /Users/runner/micromamba-root/envs/ravenpy -name libnetcdf.*dylib) python3 -m pip install ".[dev,gis]"
 
       - name: Check Raven (macOS)
         if: matrix.os == 'macos-latest'
