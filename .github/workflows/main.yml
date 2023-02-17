@@ -84,10 +84,10 @@ jobs:
 
     - name: Install tox
       run: |
-        python -m pip install tox
+        python3 -m pip install tox
     - name: Test with tox and report coverage
       run: |
-        python -m tox -e ${{ matrix.tox-env }}
+        python3 -m tox -e ${{ matrix.tox-env }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         COVERALLS_FLAG_NAME: run-${{ matrix.tox-env }}
@@ -145,12 +145,12 @@ jobs:
       - name: Set LD_PRELOAD for NetCDF source files
         if: matrix.os == 'ubuntu-latest'
         run: |
-          echo "LD_PRELOAD=$(find /home/runner/micromamba-root/envs/ravenpy -name libnetcdf.so | head -n 1)" >> $GITHUB_ENV
+          echo "LD_PRELOAD=$(find /home/runner/micromamba-root/envs/ravenpy -name libnetcdf.*so | head -n 1)" >> $GITHUB_ENV
         # Might not be useful
-#      - name: Update Path (macOS)
-#        if: matrix.os == 'macos-latest'
-#        run: |
-#          echo "/Users/runner/micromamba-root/envs/ravenpy/bin" >> $GITHUB_PATH
+      - name: Link NetCDF (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          sudo ln -s $(find /Users/runner/micromamba-root/envs/ravenpy -name libnetcdf.*dylib | head -n 1) /usr/local/lib/libnetcdf.19.dylib
 
       - name: Install RavenPy
         run: |
