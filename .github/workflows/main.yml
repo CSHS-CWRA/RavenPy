@@ -58,12 +58,18 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install GDAL (Ubuntu)
+
+    - name: Install GDAL (Linux)
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+      uses: tecolicom/actions-use-apt-tools@v1
+      with:
+        tools: libgdal-dev
+        cache: yes
+    - name: Set GDAL_VERSION (Linux)
       if: ${{ matrix.os == 'ubuntu-latest' }}
       run: |
-        sudo apt-get update
-        sudo apt-get install -q libgdal-dev
         echo "GDAL_VERSION=$(gdal-config --version)" >> $GITHUB_ENV
+        echo "GDAL_HEADERS=
 
     - name: Install GDAL (macOS)
       if: ${{ matrix.os == 'macos-latest' }}
@@ -71,15 +77,10 @@ jobs:
       with:
         tools: gdal
         cache: yes
-    - name: Where the heck is GDAL?
+    - name: Set GDAL_VERSION (Linux)
       if: ${{ matrix.os == 'macos-latest' }}
       run: |
-        gdalinfo --version
-        which gdalinfo
         echo "GDAL_VERSION=$(gdalinfo --version | awk  '{print $2}' | sed s'/.$//')" >> $GITHUB_ENV
-    - name: Did we really find GDAL?
-      run: |
-        echo ${{ env.GDAL_VERSION }}
 
     - name: Install tox and setuptools
       run: |
@@ -127,15 +128,14 @@ jobs:
         run: |
           mamba --version
 
-      - name: LD_PRELOAD NetCDF source files
+      - name: Set LD_PRELOAD for NetCDF source files
         if: ${{ matrix.os == 'ubuntu-latest' }}
         run: |
           echo "LD_PRELOAD=$(find /home/runner/micromamba-root/envs/ravenpy -name libnetcdf.so)" >> $GITHUB_ENV
-      - name: DYLD_INSERT_LIBRARIES NetCDF source files
+      - name: Set DYLD_INSERT_LIBRARIES NetCDF source files
         if: ${{ matrix.os == 'macos-latest' }}
         run: |
           echo "LIBNETCDF_LOCATION=$(find /Users/runner/micromamba-root/envs/ravenpy -name 'libnetcdf.*dylib')" >> $GITHUB_ENV
-          echo ${{ env.LIBNETCDF_LOCATION }}
 
       - name: Install RavenPy (Windows and Linux)
         if: ${{ matrix.os == 'ubuntu-latest' }} || ${{ matrix.os == 'ubuntu-latest' }}
