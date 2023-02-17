@@ -64,18 +64,17 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install libgdal-dev
-    - name: Set GDAL_VERSION (Linux)
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        echo "GDAL_VERSION=$(gdal-config --version)" >> $GITHUB_ENV
-        echo "GDAL_HEADERS=/usr/include/gdal" >> $GITHUB_ENV
-
     - name: Install GDAL (macOS)
       if: matrix.os == 'macos-latest'
       uses: tecolicom/actions-use-homebrew-tools@v1
       with:
         tools: gdal
         cache: yes
+    - name: Set GDAL_VERSION (Linux)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        echo "GDAL_VERSION=$(gdal-config --version)" >> $GITHUB_ENV
+        echo "GDAL_HEADERS=/usr/include/gdal" >> $GITHUB_ENV
     - name: Set GDAL_VERSION (macOS)
       if: matrix.os == 'macos-latest'
       run: |
@@ -128,7 +127,9 @@ jobs:
           extra-specs: |
             mamba
             python=${{ matrix.python-version }}
-
+      - name: List installed packages
+        run: |
+          conda list
       - name: Reload Conda environment
         run: |
           micromamba activate ravenpy
@@ -137,7 +138,6 @@ jobs:
           python -c "from osgeo import gdal"
           gdalinfo --version
           ncinfo -h
-
       - name: Mamba and Conda versions
         run: |
           mamba --version
@@ -159,19 +159,9 @@ jobs:
       - name: Install RavenPy
         run: |
           python -m pip install ".[${{ matrix.recipes }}]"
-#          python3 -m pip install gdal==$(conda list | grep gdal | awk {'print $2'} | head -n 1) --use-pep517
-#      - name: Install RavenPy (macOS)
-#        if: ${{ matrix.os == 'macos-latest' }}
-#        run: |
-#          DYLD_INSERT_LIBRARIES=$(find /Users/runner/micromamba-root/envs/ravenpy -name libnetcdf.*dylib | head -n 1) python3 -m pip install ".[${{ matrix.recipes }}"
-
       - name: Check Raven
         run: |
           raven -v
-
-      - name: List installed packages
-        run: |
-          conda list
       - name: Test RavenPy
         run: |
           python -m pytest --cov ravenpy
