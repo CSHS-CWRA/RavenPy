@@ -120,6 +120,7 @@ jobs:
 #        run: |
 #          sed -i '7d' environment.yml
       - name: Setup Conda (Micromamba) with Python${{ matrix.python-version }}
+        if:  matrix.os != 'windows-latest'
         uses: mamba-org/provision-with-micromamba@main
         with:
           cache-downloads: true
@@ -128,6 +129,7 @@ jobs:
             mamba
             python=${{ matrix.python-version }}
       - name: Setup Conda (Micromamba) with Python${{ matrix.python-version }} (Windows)
+        if:  matrix.os == 'windows-latest'
         uses: mamba-org/provision-with-micromamba@main
         with:
           cache-downloads: true
