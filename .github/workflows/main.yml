@@ -115,12 +115,12 @@ jobs:
             recipes: dev
     steps:
       - uses: actions/checkout@v3
-#      - name: Sanitize environment.yml (Windows)
-#        if: matrix.os == 'windows-latest'
-#        run: |
-#          sed -i '7d' environment.yml
+      - name: Sanitize environment.yml (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          sed -i '7d' environment.yml
       - name: Setup Conda (Micromamba) with Python${{ matrix.python-version }}
-        if:  matrix.os != 'windows-latest'
+#        if:  matrix.os != 'windows-latest'
         uses: mamba-org/provision-with-micromamba@main
         with:
           cache-downloads: true
@@ -129,20 +129,20 @@ jobs:
           extra-specs: |
             mamba
             python=${{ matrix.python-version }}
-      - name: Setup Conda (Micromamba) with Python${{ matrix.python-version }} (Windows)
-        if:  matrix.os == 'windows-latest'
-        uses: mamba-org/provision-with-micromamba@main
-        with:
-          cache-downloads: true
-          cache-env: true
-          channels: conda-forge
-          environment-file: false
-          environment-name: ravenpy
-          extra-specs: |
-            gdal
-            mamba
-            netCDF4
-            python=${{ matrix.python-version }}
+#      - name: Setup Conda (Micromamba) with Python${{ matrix.python-version }} (Windows)
+#        if:  matrix.os == 'windows-latest'
+#        uses: mamba-org/provision-with-micromamba@main
+#        with:
+#          cache-downloads: true
+#          cache-env: true
+#          channels: conda-forge
+#          environment-file: false
+#          environment-name: ravenpy
+#          extra-specs: |
+#            gdal
+#            mamba
+#            netCDF4
+#            python=${{ matrix.python-version }}
 
       - name: Reload Conda environment
         run: |
@@ -152,20 +152,20 @@ jobs:
         run: |
           mamba --version
 
-      # Might not be necessary
-#      - name: Set LD_PRELOAD for NetCDF source files
-#        if: matrix.os == 'ubuntu-latest'
-#        run: |
-#          echo "LD_PRELOAD=$(find /home/runner/micromamba-root/envs/ravenpy -name libnetcdf.so | head -n 1)" >> $GITHUB_ENV
-#      - name: link NetCDF (macOS)
-#        if: matrix.os == 'macos-latest'
-#        run: |
-#          sudo ln -s /usr/local/lib/libnetcdf.19.dylib $(find /Users/runner/micromamba-root/envs/ravenpy -name libnetcdf.*dylib | head -n 1)
+      - name: Set LD_PRELOAD for NetCDF source files
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          echo "LD_PRELOAD=$(find /home/runner/micromamba-root/envs/ravenpy -name libnetcdf.so | head -n 1)" >> $GITHUB_ENV
+        # Might not be necessary
+      - name: Update Path (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          echo "/Users/runner/micromamba-root/envs/ravenpy/bin" >> $GITHUB_PATH
 
       - name: Install RavenPy
         run: |
-          python3 -m pip install gdal==$(conda list | grep gdal | awk {'print $2'} | head -n 1) --use-pep517
           python3 -m pip install ".[${{ matrix.recipes }}]"
+#          python3 -m pip install gdal==$(conda list | grep gdal | awk {'print $2'} | head -n 1) --use-pep517
 #      - name: Install RavenPy (macOS)
 #        if: ${{ matrix.os == 'macos-latest' }}
 #        run: |
