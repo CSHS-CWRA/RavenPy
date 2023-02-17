@@ -127,7 +127,6 @@ jobs:
           extra-specs: |
             mamba
             python=${{ matrix.python-version }}
-            - name: Setup Conda (Micromamba) with Python${{ matrix.python-version }}
       - name: Setup Conda (Micromamba) with Python${{ matrix.python-version }} (Windows)
         uses: mamba-org/provision-with-micromamba@main
         with:
