@@ -67,7 +67,7 @@ jobs:
     - name: Set GDAL_VERSION (Linux)
       if: matrix.os == 'ubuntu-latest'
       run: |
-        echo "GDAL_VERSION=$(gdalinfo --version | awk  '{print $2}' | sed s'/.$//')" >> $GITHUB_ENV
+        echo "GDAL_VERSION=$(gdal-config --version)" >> $GITHUB_ENV
         echo "GDAL_HEADERS=/usr/include/gdal" >> $GITHUB_ENV
 
     - name: Install GDAL (macOS)
