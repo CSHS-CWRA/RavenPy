@@ -106,13 +106,13 @@ jobs:
         include:
           - python-version: "3.9"
             os: windows-latest
-            recipes: dev
+            recipes: dev,gis
           - python-version: "3.9"
             os: macos-latest
-            recipes: dev
+            recipes: dev,gis
           - python-version: "3.9"
             os: ubuntu-latest
-            recipes: dev
+            recipes: dev,gis
     steps:
       - uses: actions/checkout@v3
       - name: Sanitize environment.yml (Windows)
