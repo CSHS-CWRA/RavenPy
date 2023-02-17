@@ -68,7 +68,7 @@ jobs:
       if: ${{ matrix.os == 'ubuntu-latest' }}
       run: |
         echo "GDAL_VERSION=$(gdal-config --version)" >> $GITHUB_ENV
-        echo "GDAL_HEADERS=/usr/include/gdal >> $GITHUB_ENV
+        echo "GDAL_HEADERS=/usr/include/gdal" >> $GITHUB_ENV
 
     - name: Install GDAL (macOS)
       if: ${{ matrix.os == 'macos-latest' }}
@@ -80,7 +80,7 @@ jobs:
       if: ${{ matrix.os == 'macos-latest' }}
       run: |
         echo "GDAL_VERSION=$(gdalinfo --version | awk  '{print $2}' | sed s'/.$//')" >> $GITHUB_ENV
-        echo "GDAL_HEADERS=/usr/local/include/gdal >> $GITHUB_ENV
+        echo "GDAL_HEADERS=/usr/local/include/gdal" >> $GITHUB_ENV
 
     - name: Install tox and setuptools
       run: |
