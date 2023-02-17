@@ -60,24 +60,24 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Install GDAL (Linux)
-      if: ${{ matrix.os == 'ubuntu-latest' }}
+      if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
         sudo apt-get install libgdal-dev
     - name: Set GDAL_VERSION (Linux)
-      if: ${{ matrix.os == 'ubuntu-latest' }}
+      if: matrix.os == 'ubuntu-latest'
       run: |
         echo "GDAL_VERSION=$(gdal-config --version)" >> $GITHUB_ENV
         echo "GDAL_HEADERS=/usr/include/gdal" >> $GITHUB_ENV
 
     - name: Install GDAL (macOS)
-      if: ${{ matrix.os == 'macos-latest' }}
+      if: matrix.os == 'macos-latest'
       uses: tecolicom/actions-use-homebrew-tools@v1
       with:
         tools: gdal
         cache: yes
     - name: Set GDAL_VERSION (Linux)
-      if: ${{ matrix.os == 'macos-latest' }}
+      if: matrix.os == 'macos-latest'
       run: |
         echo "GDAL_VERSION=$(gdalinfo --version | awk  '{print $2}' | sed s'/.$//')" >> $GITHUB_ENV
         echo "GDAL_HEADERS=/usr/local/include/gdal" >> $GITHUB_ENV
@@ -113,7 +113,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Sanitize environment.yml (Windows)
-        if: ${{ matrix.os == 'windows-latest' }}
+        if: matrix.os == 'windows-latest'
         run: |
           sed -i '7d' environment.yml
       - name: Setup Conda (Micromamba) with Python${{ matrix.python-version }}
@@ -130,9 +130,13 @@ jobs:
 
       # Might not be necessary
       - name: Set LD_PRELOAD for NetCDF source files
-        if: ${{ matrix.os == 'ubuntu-latest' }}
+        if: matrix.os == 'ubuntu-latest'
         run: |
           echo "LD_PRELOAD=$(find /home/runner/micromamba-root/envs/ravenpy -name libnetcdf.so)" >> $GITHUB_ENV
+      - name: link NetCDF (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          sudo ln -a $(find /Users/runner/micromamba-root/envs/ravenpy -name libnetcdf.*dylib) /usr/local/lib/libnetcdf.19.dylib
 
       - name: Install RavenPy
         run: |
@@ -142,10 +146,15 @@ jobs:
 #        run: |
 #          DYLD_INSERT_LIBRARIES="$(find /Users/runner/micromamba-root/envs/ravenpy -name libnetcdf.*dylib)" python3 -m pip install ".[dev,gis]"
 
+      - name: Check Raven (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          DYLD_INSERT_LIBRARIES=$(find /Users/runner/micromamba-root/envs/ravenpy -name libnetcdf.*dylib) raven -v
       - name: Check Raven
+        if: matrix.os != 'macos-latest'
         run: |
           raven -v
-#          DYLD_INSERT_LIBRARIES="$(find /Users/runner/micromamba-root/envs/ravenpy -name libnetcdf.*dylib)" raven -v
+
       - name: List installed packages
         run: |
           conda list
