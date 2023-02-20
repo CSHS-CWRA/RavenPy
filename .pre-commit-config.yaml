@@ -45,7 +45,7 @@ repos:
       - id: isort
         args: [ '--settings-file=pyproject.toml' ]
   - repo: https://github.com/nbQA-dev/nbQA
-    rev: 1.6.1
+    rev: 1.6.3
     hooks:
       - id: nbqa-pyupgrade
         args: [ '--py38-plus' ]
