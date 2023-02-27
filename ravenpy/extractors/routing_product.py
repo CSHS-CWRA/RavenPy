@@ -101,7 +101,6 @@ class RoutingProductShapefileExtractor:
         subbasin_ids = {int(row["SubId"]) for _, row in self._df.iterrows()}
 
         for _, row in self._df.iterrows():
-
             # HRU
             hru_recs.append(self._extract_hru(row))
 
@@ -257,7 +256,6 @@ class RoutingProductShapefileExtractor:
         )
 
     def _extract_hru(self, row) -> HRUsCommand.Record:
-
         aspect = row["HRU_A_mean"]
 
         if self.hru_aspect_convention == "GRASS":
@@ -460,7 +458,6 @@ class RoutingProductGridWeightExtractor:
         grid_weights = []
 
         for _, row in self._routing_data.iterrows():
-
             poly = ogr.CreateGeometryFromWkt(wkt.dumps(row.geometry))
 
             area_basin = poly.Area()
@@ -474,7 +471,6 @@ class RoutingProductGridWeightExtractor:
 
             for ilat in range(self._nlat):
                 for ilon in range(self._nlon):
-
                     # bounding box around grid-cell (for easy check of proximity)
                     enve_gridcell = grid_cell_geom_gpd_wkt[ilat][ilon].GetEnvelope()
 
@@ -528,9 +524,7 @@ class RoutingProductGridWeightExtractor:
         )
 
     def _prepare_input_data(self):
-
         if self._input_is_netcdf:
-
             # Raven numbering is:
             #
             #      [      1      2      3   ...     1*nlon
@@ -576,7 +570,6 @@ class RoutingProductGridWeightExtractor:
             self._nlat = np.shape(lat_var)[0]
 
         else:
-
             # input data is a shapefile
 
             self._input_data = self._input_data.to_crs(
@@ -589,20 +582,16 @@ class RoutingProductGridWeightExtractor:
             self._nlat = self._input_data.geometry.count()  # only for consistency
 
     def _compute_grid_cell_polygons(self):
-
         grid_cell_geom_gpd_wkt: List[List[List[ogr.Geometry]]] = [
             [[] for ilon in range(self._nlon)] for ilat in range(self._nlat)
         ]
 
         if self._input_is_netcdf:
-
             lath = self._lath
             lonh = self._lonh
 
             for ilat in range(self._nlat):
-
                 for ilon in range(self._nlon):
-
                     # -------------------------
                     # EPSG:3035   needs a swap before and after transform ...
                     # -------------------------
@@ -652,9 +641,7 @@ class RoutingProductGridWeightExtractor:
                     grid_cell_geom_gpd_wkt[ilat][ilon] = tmp
 
         else:
-
             for ishape in range(self._nlat):
-
                 idx = np.where(self._input_data[self._netcdf_input_field] == ishape)[0]
                 if len(idx) == 0:
                     # print(
@@ -681,7 +668,6 @@ class RoutingProductGridWeightExtractor:
         return grid_cell_geom_gpd_wkt
 
     def _create_gridcells_from_centers(self, lat, lon):
-
         # create array of edges where (x,y) are always center cells
         nlon = np.shape(lon)[1]
         nlat = np.shape(lat)[0]
@@ -725,7 +711,6 @@ class RoutingProductGridWeightExtractor:
         return [lath, lonh]
 
     def _shape_to_geometry(self, shape_from_jsonfile, epsg=None):
-
         # converts shape read from shapefile to geometry
         # epsg :: integer EPSG code
 
@@ -753,7 +738,6 @@ class RoutingProductGridWeightExtractor:
         return poly_shape
 
     def _check_proximity_of_envelops(self, gridcell_envelop, shape_envelop):
-
         # checks if two envelops are in proximity (intersect)
 
         # minX  --> env[0]
@@ -771,7 +755,6 @@ class RoutingProductGridWeightExtractor:
     def _check_gridcell_in_proximity_of_shape(
         self, gridcell_edges, shape_from_jsonfile
     ):
-
         # checks if a grid cell falls into the bounding box of the shape
         # does not mean it intersects but it is a quick and cheap way to
         # determine cells that might intersect

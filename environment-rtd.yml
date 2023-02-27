@@ -19,7 +19,7 @@ dependencies:
   - sphinx-click
   - sphinx-codeautolink
   - sphinx-copybutton
-  - sphinx_rtd_theme
+  - sphinx_rtd_theme >=1.0
   - sphinxcontrib-napoleon
   - wheel
 #  - xarray  # mocked

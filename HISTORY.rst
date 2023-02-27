@@ -2,13 +2,22 @@
 History
 =======
 
+0.11.0 (2023-02-16)
+-------------------
+
+* Update RavenC executable to v3.6.
+* Update xclim library to v0.40.0.
+* Update fiona library to v1.9.
+* Address some failures that can be caused when attempting to run CLI commands without the proper GIS dependencies installed.
+* Addressed warnings raised in conda-forge compilation due to badly-configured MANIFEST.in.
+* Update installation documentation to reflect most recent changes.
+
 0.10.0 (2022-12-21)
 -------------------
 
 * Update Raven executable to 3.5. Due to a bug in RavenC, simulations storing reservoir information to netCDF will fail. We expect this to be resolved in the next release. Note that we only test RavenPy with one Raven version. There is no guarantee it will work with other versions.
 * Relax geo test to avoid failures occurring due to GDAL 3.6.
 * Pin numpy below 1.24 (see https://github.com/numba/numba/issues/8615)
-
 
 0.9.0 (2022-11-16)
 ------------------

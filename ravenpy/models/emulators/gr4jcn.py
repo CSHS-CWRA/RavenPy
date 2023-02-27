@@ -328,7 +328,6 @@ class GR4JCNOld(Raven):
         self.config.rvi.evaporation = "PET_OUDIN"
 
     def derived_parameters(self):
-
         params = cast(GR4JCN.Params, self.config.rvp.params)
 
         self.config.rvp.set_extra_attributes(
@@ -368,7 +367,6 @@ class GR4JCNOld(Raven):
 
 
 class GR4JCN_OST(Ostrich, GR4JCN):
-
     ostrich_to_raven_param_conversion = {
         "par_x1": "GR4J_X1",
         "par_x2": "GR4J_X2",

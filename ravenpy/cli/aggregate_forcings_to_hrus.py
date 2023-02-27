@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import List, Tuple
 
 import click
 
@@ -116,7 +115,6 @@ def aggregate_forcings_to_hrus(
     # create all variables in output NC (incl. time) and copy over all attributes
     for name, variable in nc_in.variables.items():
         if name in variables_to_aggregate + ("time",):
-
             if name != "time":
                 dims = ["time", "nHRU"]
             else:
@@ -131,7 +129,6 @@ def aggregate_forcings_to_hrus(
                 nc_out[name][:] = nc_in[name][:]
 
     for variable_to_aggregate in variables_to_aggregate:
-
         # read 3D variable
         input_var = nc_in.variables[variable_to_aggregate]
 
@@ -179,7 +176,6 @@ def aggregate_forcings_to_hrus(
         agg_var = np.zeros([ntime, nHRU])
         new_weights = []
         for ihru, hru in enumerate(hrus):
-
             hru = int(hru)
 
             # filter all weights for current HRU
@@ -195,7 +191,6 @@ def aggregate_forcings_to_hrus(
 
             # go through all time steps and zero out weights where grid cell is NODATA
             for iii, ii in enumerate(idx):
-
                 # bring idx for input_var in appropriate order
                 idx_input = [slice(0, ntime, 1), slice(0, ntime, 1), slice(0, ntime, 1)]
                 idx_input[idx_lon_dim] = int(weights_data_lon_lat_ids[ii, 1]) - min_lon  # type: ignore
@@ -218,7 +213,6 @@ def aggregate_forcings_to_hrus(
 
             # derive aggregate
             for iii, ii in enumerate(idx):
-
                 # bring idx for input_var in appropriate order
                 idx_input = [slice(0, ntime, 1), slice(0, ntime, 1), slice(0, ntime, 1)]
                 idx_input[idx_lon_dim] = int(weights_data_lon_lat_ids[ii, 1]) - min_lon  # type: ignore

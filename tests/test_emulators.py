@@ -740,10 +740,10 @@ class TestGR4JCN:
 
     def test_version(self):
         model = Raven()
-        assert model.raven_version == "3.5"
+        assert model.raven_version == "3.6"
 
         model = GR4JCN()
-        assert model.raven_version == "3.5"
+        assert model.raven_version == "3.6"
 
     def test_parallel_params(self, get_file):
         ts = get_file(salmon_river)
@@ -809,6 +809,7 @@ class TestGR4JCN:
         )
 
     @pytest.mark.online
+    @pytest.mark.xfail(raises=OSError, reason="pavics.ouranos.ca is unreachable")
     def test_dap(self):
         """Test Raven with DAP link instead of local netCDF file."""
         model = GR4JCN()
@@ -826,6 +827,7 @@ class TestGR4JCN:
         model(ts, **config)
 
     @pytest.mark.online
+    @pytest.mark.xfail(raises=OSError, reason="pavics.ouranos.ca is unreachable")
     def test_canopex(self):
         CANOPEX_DAP = (
             "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/birdhouse/ets"

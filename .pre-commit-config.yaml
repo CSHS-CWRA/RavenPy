@@ -18,7 +18,7 @@ repos:
         args: [ '--allow-multiple-documents' ]
       - id: debug-statements
   - repo: https://github.com/pre-commit/pygrep-hooks
-    rev: v1.9.0
+    rev: v1.10.0
     hooks:
       - id: python-check-blanket-noqa
       - id: rst-inline-touching-normal
@@ -28,18 +28,18 @@ repos:
       - id: flake8
         args: [ '--config=setup.cfg' ]
   - repo: https://github.com/psf/black
-    rev: 22.12.0
+    rev: 23.1.0
     hooks:
       - id: black
         exclude: ^docs/
         args: [ '--target-version=py38' ]
   - repo: https://github.com/PyCQA/isort
-    rev: v5.11.3
+    rev: 5.12.0
     hooks:
       - id: isort
         args: [ '--settings-file=setup.cfg' ]
   - repo: https://github.com/nbQA-dev/nbQA
-    rev: 1.5.3
+    rev: 1.6.3
     hooks:
       - id: nbqa-pyupgrade
         args: [ "--py38-plus" ]
@@ -48,7 +48,7 @@ repos:
       - id: nbqa-isort
         args: [ "--settings-file=setup.cfg" ]
   - repo: https://github.com/pycqa/pydocstyle
-    rev: 6.1.1
+    rev: 6.3.0
     hooks:
       - id: pydocstyle
         args: [ '--convention=numpy', '--match="(?!test_).*\.py"' ]
@@ -58,7 +58,7 @@ repos:
       - id: blackdoc
         additional_dependencies: [ 'black==22.10.0' ]
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.28.0
+    rev: v1.29.0
     hooks:
       - id: yamllint
         args: [ '--config-file', '.yamllint.yaml' ]
@@ -67,7 +67,7 @@ repos:
     hooks:
       - id: check-manifest
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.19.2
+    rev: 0.21.0
     hooks:
       - id: check-github-workflows
       - id: check-readthedocs

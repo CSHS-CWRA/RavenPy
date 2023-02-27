@@ -292,7 +292,6 @@ class BLENDED(Raven):
 
 
 class BLENDED_OST(Ostrich, BLENDED):
-
     ostrich_to_raven_param_conversion = {
         "sum_x09_x10": "par_x10",
         "sum_x13_x14": "par_x14",

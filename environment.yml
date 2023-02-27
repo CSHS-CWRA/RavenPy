@@ -1,18 +1,18 @@
-name: ravenpy-env
+name: ravenpy
 channels:
-- conda-forge
-- defaults
+  - conda-forge
+  - defaults
 dependencies:
-  - raven-hydro ==3.5
-  - ostrich ==21.03.16
+  - raven-hydro ==3.6
+  - ostrich ==21.03.16  # Not available on Windows
   - python >=3.8
   - affine
   - cf_xarray
   - click
   - climpred >=2.1.0
   - dask
-  - fiona
-  - gdal >=3.0
+  - fiona >=1.9
+  - gdal >=3.1
   - geopandas >=0.9
   - haversine
   - holoviews
@@ -33,11 +33,11 @@ dependencies:
   - rioxarray
   - scikit-learn ==0.24.2
   - scipy
-  - setuptools
+  - setuptools <=65.6
   - shapely
   - spotpy
   - statsmodels
   - xarray <2022.11.0  # Pinned due to incompatibility with climpred @ 2.2.0
-  - xclim >=0.39
+  - xclim >=0.40
   - xskillscore
   - wheel

@@ -430,7 +430,6 @@ def sequential_assimilation(
     assim_dates = math.floor(number_days / assim_step_days) * [assim_step_days]
 
     for i, ndays in enumerate(assim_dates):
-
         dates = [sd + dt.timedelta(days=x) for x in range(ndays)]
         model.config.rvi.end_date = dates[-1]
         model.config.rvi.run_name = f"assim_{i}"

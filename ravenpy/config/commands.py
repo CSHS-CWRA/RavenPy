@@ -1195,7 +1195,6 @@ class BasinIndexCommand(RavenCommand):
 
 @dataclass
 class BasinStateVariablesCommand(RavenCommand):
-
     basin_states: Dict[int, BasinIndexCommand] = field(default_factory=dict)
 
     @classmethod

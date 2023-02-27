@@ -2,7 +2,7 @@ sphinx
 sphinx-click
 sphinx-codeautolink
 sphinx-copybutton
-sphinx-rtd-theme
+sphinx-rtd-theme>=1.0
 nbsphinx
 pandoc
 ipython

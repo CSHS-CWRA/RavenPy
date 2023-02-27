@@ -220,25 +220,25 @@ def generic_vector_reproject(
     if target_crs is None:
         raise ValueError("No target CRS is defined.")
 
-    output = {"type": "FeatureCollection", "features": list()}
-
     if isinstance(vector, Path):
         vector = vector.as_posix()
 
     for i, layer_name in enumerate(fiona.listlayers(vector)):
         with fiona.open(vector, "r", layer=i) as src:
-            with open(projected, "w") as sink:
+            with fiona.open(
+                projected, "w", driver="GeoJSON", schema=src.schema, crs=target_crs
+            ) as sink:
                 for feature in src:
                     # Perform vector reprojection using Shapely on each feature
                     try:
                         geom = shape(feature["geometry"])
                         transformed = geom_transform(geom, source_crs, target_crs)
-                        feature["geometry"] = mapping(transformed)
-                        output["features"].append(feature)
+                        feature["geometry"] = fiona.Geometry().from_dict(
+                            mapping(transformed)
+                        )
+                        sink.write(feature)
                     except Exception as err:
                         LOGGER.exception(
                             f"{err}: Unable to reproject feature {feature}"
                         )
                         raise
-
-                sink.write(f"{json.dumps(output)}")
