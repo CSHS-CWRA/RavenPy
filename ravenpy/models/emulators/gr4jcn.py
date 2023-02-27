@@ -63,7 +63,7 @@ class P(Params):
 @dataclass
 class GR4JCN(ravenpy.config.rv.Config):
 
-    params: P = P()
+    params: P
     soil_model: SoilModel = SoilModel(option="SOIL_MULTILAYER", n=4)
     catchment_route: CatchmentRoute = CatchmentRoute("ROUTE_DUMP")
     potential_melt: PotentialMeltMethod = PotentialMeltMethod("POTMELT_DEGREE_DAY")

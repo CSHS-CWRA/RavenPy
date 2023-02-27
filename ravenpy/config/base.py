@@ -1,13 +1,23 @@
 from abc import ABC, abstractmethod
 from dataclasses import asdict, fields
 from enum import Enum
-from typing import Any, OrderedDict, Sequence, Union
-
+from typing import Any, OrderedDict, Sequence, Union, List
+from pathlib import Path
 from pydantic.dataclasses import dataclass
 from pymbolic.mapper.evaluator import EvaluationMapper as EM
 from pymbolic.primitives import Expression, Variable
-
+from textwrap import dedent, indent
 Sym = Union[Variable, Expression, float, None]
+
+# Mapping between Raven variable names and CF standard variable names
+CF_RAVEN = {"TEMP_MIN": "tasmin",
+            "TEMP_MAX": "tasmax",
+            "TEMP_AVE": "tas",
+            "RAINFALL": "rainfall",
+            "PRECIP": "pr",
+            "SNOWFALL": "prsn",
+            "PET": "evspsbl",
+            "HYDROGRAPH": "water_volume_transport_in_river_channel"}
 
 
 class SymConfig:
@@ -26,6 +36,35 @@ class RavenCommand(ABC):
 
 
 @dataclass
+class Command(RavenCommand):
+    """Generic holder."""
+    def to_rv(self):
+        cmd = self.__class__.__name__
+
+        try:
+            content = "\n  ".join([str(p) for p in self.__root__])
+            attrs = ""
+        except AttributeError:
+            children = []
+            attrs = []
+            for key, val in self.__dict__.items():
+                if val is not None and not key.startswith("_"):
+                    if hasattr(val, "to_rv"):
+                        children.append(val)
+                    else:
+                        attrs.append(val)
+            content = "".join(map(str, children))
+            attrs = " ".join(map(str, attrs))
+
+        template = """
+        :{cmd} {attrs}
+        {content}
+        :End{cmd}
+        """
+        return dedent(template).format(cmd=cmd, attrs=attrs, content=indent(content, "  "))
+
+
+@dataclass
 class RavenOption(RavenCommand):
     option: Union[Enum, str]
 
@@ -35,11 +74,20 @@ class RavenOption(RavenCommand):
 
 @dataclass
 class RavenOptionList(RavenCommand):
-    options: Union[Sequence[Enum], Sequence[str]]
+    options: Union[Sequence[Enum]]
 
     def to_rv(self):
         options = ", ".join([str(option.value) for option in self.options])
         return f":{self.__class__.__name__:<20} {options}\n"
+
+
+@dataclass
+class RavenList(RavenCommand):
+    value: List[Union[str, float, int]]
+
+    def to_rv(self):
+        values = " ".join(map(str, self.value))
+        return f":{self.__class__.__name__:<20} {values}\n"
 
 
 @dataclass
@@ -76,6 +124,10 @@ class RavenMapping(RavenCommand):
             )
             + "\n"
         )
+
+
+
+
 
 
 @dataclass(config=SymConfig)
