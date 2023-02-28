@@ -4,10 +4,10 @@ from pathlib import Path
 from typing import cast
 
 from pydantic.dataclasses import dataclass
-
+from pydantic import Field
 import ravenpy.config.rv
 from ravenpy.config import options
-from ravenpy.config.base import Params, RavenCommand, Sym, SymConfig, Variable
+from ravenpy.new_config.base import Params, RavenCommand, Sym, SymConfig, Variable
 from ravenpy.config.commands import (
     HRU,
     LU,
@@ -60,97 +60,6 @@ class P(Params):
     CEMANEIGE_X2: Sym = Variable("CEMANEIGE_X2")
 
 
-@dataclass
-class GR4JCN(ravenpy.config.rv.Config):
-
-    params: P
-    soil_model: SoilModel = SoilModel(option="SOIL_MULTILAYER", n=4)
-    catchment_route: CatchmentRoute = CatchmentRoute("ROUTE_DUMP")
-    potential_melt: PotentialMeltMethod = PotentialMeltMethod("POTMELT_DEGREE_DAY")
-    alias: Alias = Alias(
-        {
-            "PRODUCT_STORE": "SOIL[0]",
-            "ROUTING_STORE": "SOIL[1]",
-            "TEMP_STORE": "SOIL[2]",
-            "GW_STORE": "SOIL[3]",
-        }
-    )
-    hydrologic_processes: HydrologicProcesses = HydrologicProcesses(
-        [
-            Precipitation("PRECIP_RAVEN", ["ATMOS_PRECIP", "MULTIPLE"]),
-            SnowTempEvolve("SNOTEMP_NEWTONS", ["SNOW_TEMP"]),
-            SnowBalance("SNOWBAL_CEMA_NEIGE", ["SNOW", "PONDED_WATER"]),
-            OpenWaterEvaporation("OPEN_WATER_EVAP", ["PONDED_WATER", "ATMOSPHERE"]),
-            Infiltration("INF_GR4J", ["PONDED_WATER", "MULTIPLE"]),
-            SoilEvaporation("SOILEVAP_GR4J", ["PRODUCT_STORE", "ATMOSPHERE"]),
-            Percolation("PERC_GR4J", ["PRODUCT_STORE", "TEMP_STORE"]),
-            Flush("RAVEN_DEFAULT", ["RAVEN_DEFAULT", "SURFACE_WATER", "TEMP_STORE"]),
-            Split(
-                "RAVEN_DEFAULT",
-                ["TEMP_STORE", "CONVOLUTION[0]", "CONVOLUTION[1]", "0.9"],
-            ),
-            Convolve("CONVOL_GR4J_1", ["CONVOLUTION[0]", "ROUTING_STORE"]),
-            Convolve("CONVOL_GR4J_2", ["CONVOLUTION[1]", "TEMP_STORE"]),
-            Percolation("PERC_GR4JEXCH", ["ROUTING_STORE", "GW_STORE"]),
-            Percolation("PERC_GR4JEXCH2", ["TEMP_STORE", "GW_STORE"]),
-            Flush("RAVEN_DEFAULT", ["TEMP_STORE", "SURFACE_WATER"]),
-            BaseFlow("BASE_GR4J", ["ROUTING_STORE", "SURFACE_WATER"]),
-        ]
-    )
-
-    air_snow_coeff: AirSnowCoeff = AirSnowCoeff(1 - P.CEMANEIGE_X2)
-    avg_annual_snow: AvgAnnualSnow = AvgAnnualSnow(P.CEMANEIGE_X1)
-    rain_snow_transition: RainSnowTransition = RainSnowTransition(0, 1.0)
-    precipitation_lapse_rate: PrecipitationLapseRate = PrecipitationLapseRate(0.0004)
-    adiabatic_lapse_rate: AdiabaticLapseRate = AdiabaticLapseRate(0.0065)
-    soil_classes: SoilClasses = SoilClasses(
-        names=("SOIL_PROD", "SOIL_ROUT", "SOIL_TEMP", "SOIL_GW", "AQUIFER")
-    )
-    soil_parameter_list: SoilParameterListCommand = SoilParameterListCommand(
-        names=("POROSITY", "GR4J_X3", "GR4J_X2"),
-        records=[PL(name="[DEFAULT]", vals=(1, P.GR4J_X3, P.GR4J_X2))],
-    )
-    soil_profiles: SoilProfiles = SoilProfiles(
-        [
-            {
-                "profile_name": "DEFAULT_P",
-                "soil_class_names": ["SOIL_PROD", "SOIL_ROUT", "SOIL_TEMP", "SOIL_GW"],
-                "thicknesses": [P.GR4J_X1, 0.3, 1, 1],
-            },
-            {"profile_name": "LAKE"},
-        ]
-    )
-
-    vegetation_classes: VegetationClasses = VegetationClasses(
-        [{"name": "VEG_ALL"}, {"name": "VEG_WATER"}]
-    )
-
-    land_use_classes: LandUseClasses = LandUseClasses(
-        [{"name": "LU_ALL"}, {"name": "LU_WATER"}]
-    )
-
-    land_use_parameter_list: LandUseParameterListCommand = LandUseParameterListCommand(
-        names=("GR4J_X4", "MELT_FACTOR"),
-        records=[PL(name="[DEFAULT]", vals=(P.GR4J_X4, 7.73))],
-    )
-
-    @dataclass
-    class LandHRU(HRU):
-        land_use_class: str = "LU_ALL"
-        veg_class: str = "VEG_ALL"
-        soil_profile: str = "DEFAULT_P"
-        aquifer_profile: str = "[NONE]"
-        terrain_class: str = "[NONE]"
-        hru_type: str = "land"
-
-    @dataclass
-    class LakeHRU(HRU):
-        land_use_class: str = "LU_WATER"
-        veg_class: str = "VEG_WATER"
-        soil_profile: str = "LAKE"
-        aquifer_profile: str = "[NONE]"
-        terrain_class: str = "[NONE]"
-        hru_type: str = "lake"
 
 
 class GR4JCNOld(Raven):

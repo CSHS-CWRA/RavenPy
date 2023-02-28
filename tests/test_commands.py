@@ -25,6 +25,18 @@ from ravenpy.config.commands import (
     VegetationParameterListCommand,
 )
 
+from ravenpy.new_config.commands import HydrologicProcesses
+from ravenpy.new_config.processes import Precipitation, SnowTempEvolve
+
+
+def test_hydrologic_processes():
+    hp = HydrologicProcesses.parse_obj([
+        Precipitation(algo="PRECIP_RAVEN", source=["ATMOS_PRECIP", "MULTIPLE"]),
+        SnowTempEvolve(algo="SNOTEMP_NEWTONS", source=["SNOW_TEMP"])])
+    out = hp.to_rv()
+    assert out == "\n:HydrologicProcesses\n  :Precipitation ATMOS_PRECIP MULTIPLE  \n  :SnowTempEvolve SNOW_TEMP\n:EndHydrologicProcesses\n"
+
+
 
 def test_adiabatic_lapse_rate_coefficient():
     alr = AdiabaticLapseRate(0.2)

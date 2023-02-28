@@ -2,9 +2,30 @@ import datetime as dt
 from enum import Enum
 from textwrap import dedent, indent
 from typing import Any, ClassVar, Dict, List, Literal, Sequence, Tuple, TypeVar, Union
+from pymbolic.primitives import Expression, Variable
+
+"""
+Notes
+-----
+In pydantic, BaseModel and dataclasses behave slightly differently.
+A dataclass object can be instantiated using positional arguments, while BaseModels cannot.
+This is why Params is defined as a dataclass
+
+"""
+
 
 import pytest
 from pydantic import BaseModel, Extra, Field, ValidationError, validator
+
+class SymConfig:
+    arbitrary_types_allowed = True
+
+
+Sym = Union[Variable, Expression, float, None]
+
+
+class Params():
+    pass
 
 
 def encoder(v):
@@ -201,4 +222,27 @@ class RV(Command):
     """"""
 
 
+def parse_symbolic(value, **kwds):
+    """Inject values of symbolic variables into object and return object."""
+    from pymbolic.mapper.evaluator import EvaluationMapper as EM
+    from pymbolic.primitives import Expression, Variable
+
+    if isinstance(value, dict):
+        return {k: parse_symbolic(v, **kwds) for k, v in value.items()}
+
+    elif isinstance(value, (list, tuple)):
+        return [parse_symbolic(v, **kwds) for v in value]
+
+    elif isinstance(value, Command):
+        # Cannot use asdict here as it recurses down nested classes
+        # attrs = {f.name: value.__dict__[f.name] for f in fields(value)}
+        attrs = value.command_objs()
+        return value.__class__(**parse_symbolic(attrs, **kwds))
+
+    elif isinstance(value, (Variable, Expression)):
+        # Inject numerical values numerical value
+        return EM(context=kwds)(value)
+
+    else:
+        return value
 # ---

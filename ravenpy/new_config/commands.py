@@ -6,6 +6,7 @@ from itertools import chain
 from pathlib import Path
 from textwrap import dedent, indent
 from typing import (
+Any,
     ClassVar,
     Dict,
     List,
@@ -31,6 +32,7 @@ from pydantic.dataclasses import dataclass
 from ravenpy.config import options
 
 from .base import Command, ParameterList, ParameterListCommand, RecordCommand
+from .data import filter_for, nc_specs
 
 INDENT = " " * 4
 VALUE_PADDING = 10
@@ -343,9 +345,9 @@ class GridWeights(Command):
     def parse(cls, s):
         pat = r"""
         :GridWeights
-            :NumberHRUs (\d+)
-            :NumberGridCells (\d+)
-            (.+)
+          :NumberHRUs (\d+)
+          :NumberGridCells (\d+)
+          (.+)
         :EndGridWeights
         """
         m = re.match(dedent(pat).strip(), s, re.DOTALL)
@@ -378,28 +380,28 @@ class RedirectToFile(Command):
 
 class ReadFromNetCDF(Command):
     # TODO: When encoding Path, return only path.name
-    file_name_nc: Union[HttpUrl, Path] = Field(..., alias="FileNameNC")
-    var_name_nc: str = Field(..., alias="VarNameNC")
+    # Order of HttpUrl, Path is important to avoid casting strings to Path.
+    file_name_nc: Union[HttpUrl, Path] = Field(..., alias="FileNameNC", description="NetCDF file name.")
+    var_name_nc: str = Field(..., alias="VarNameNC", description="NetCDF variable name.")
     dim_names_nc: Sequence[str] = Field(..., alias="DimNamesNC")
+    station_idx: int = Field(1, alias="StationIdx", description="NetCDF index along station dimension. Starts at 1.")
+    time_shift: float = Field(None, alias="TimeShift", description="Time stamp shift in days.")
+    linear_transform: LinearTransform = Field(None, alias="LinearTransform")
+    deaccumulate: bool = Field(None, alias="Deaccumulate")
+
     latitude_var_name_nc: str = Field(None, alias="LatitudeVarNameNC")
     longitude_var_name_nc: str = Field(None, alias="LonitudeVarNameNC")
     elevation_var_name_nc: str = Field(None, alias="ElevationVarNameNC")
 
-    station_idx: int = Field(1, alias="StationIdx")
-    time_shift: int = Field(None, alias="TimeShift")
-    scale: float = 1
-    offset: float = 0
-    linear_transform: LinearTransform = Field(None, alias="LinearTransform")
-    deaccumulate: bool = Field(None, alias="Deaccumulate")
-
     _reorder_time = validator("dim_names_nc", allow_reuse=True)(reorder_time)
 
-    def __init__(self, **data):
-        super().__init__(**data)
-        if self.linear_transform is None:
-            self.linear_transform = LinearTransform(
-                scale=self.scale, offset=self.offset
-            )
+    @classmethod
+    def from_nc(cls, fn, data_type, station_idx=1, alt_names=()):
+        """Instantiate class from netCDF dataset."""
+        specs = nc_specs(fn, data_type, station_idx, alt_names)
+        attrs = filter_for(cls, specs)
+        return cls(station_idx=station_idx,
+                   **attrs)
 
 
 class GriddedForcing(ReadFromNetCDF):
@@ -417,13 +419,22 @@ class GriddedForcing(ReadFromNetCDF):
     :End{_cmd}
     """
 
+    @validator("dim_names_nc")
+    def check_3_dims(cls, v):
+        if len(v) != 3:
+            raise ValueError("GriddedForcing netCDF datasets should have three dimensions (lon, lat, time).")
+
 
 class StationForcing(GriddedForcing):
     """StationForcing command (RVT)."""
+    @validator("dim_names_nc")
+    def check_2_dims(cls, v):
+        if len(v) != 2:
+            raise ValueError("StationForcing netCDF datasets should have two dimensions (station, time).")
 
 
 class Data(Command):
-    data_type: str = ""
+    data_type: options.Forcings = ""
     units: str = ""
     read_from_netcdf: ReadFromNetCDF = Field(..., alias="ReadFromNetCDF")
 
@@ -432,7 +443,12 @@ class Data(Command):
                 {_commands}
                 :End{_cmd}
                 """
-
+    @classmethod
+    def from_nc(cls, fn, data_type, station_idx=1, alt_names=()):
+        specs = nc_specs(fn, data_type, station_idx, alt_names)
+        return cls(data_type=data_type,
+                   units=specs.pop("units", None),
+                   read_from_netcdf=filter_for(ReadFromNetCDF, specs))
 
 class Gauge(Command):
     name: str = "default"
@@ -441,8 +457,8 @@ class Gauge(Command):
     elevation: float = Field(0, alias="Elevation")
 
     # Accept strings to embed parameter names into Ostrich templates
-    rain_correction: float = Field(None, alias="RainCorrection")
-    snow_correction: float = Field(None, alias="SnowCorrection")
+    rain_correction: float = Field(None, alias="RainCorrection", description="Rain correction")
+    snow_correction: float = Field(None, alias="SnowCorrection", description="Snow correction")
 
     monthly_ave_evaporation: Tuple[float] = Field(None, alias="MonthlyAveEvaporation")
     monthly_ave_temperature: Tuple[float] = Field(None, alias="MonthlyAveTemperature")
@@ -461,6 +477,11 @@ class Gauge(Command):
             raise ValidationError("One value per month needed.")
         return v
 
+    @classmethod
+    def from_nc(cls, fn, data_type, station_idx=(1,), alt_names=()):
+        for idx in station_idx:
+            specs = nc_specs(fn, data_type, station_idx, alt_names)
+
 
 class ObservationData(Data):
     uid: int = 1  # Basin ID or HRU ID
@@ -470,6 +491,33 @@ class ObservationData(Data):
         {_commands}
         :EndObservationData
         """
+
+    @classmethod
+    def from_nc(cls, fn, data_type, station_idx=1, uid=1, alt_names=()):
+        specs = nc_specs(fn, data_type, station_idx, alt_names)
+        return cls(data_type=data_type,
+                   uid=uid,
+                   units=specs.pop("units", None),
+                   read_from_netcdf=filter_for(ReadFromNetCDF, specs))
+
+
+class Process(Command):
+    """Process type embedded in HydrologicProcesses command.
+
+    See processes.py for list of processes.
+    """
+    algo: str = "RAVEN_DEFAULT"
+    source: list = ()
+    to: list = ()
+
+    def to_rv(self):
+        s = " ".join(self.source)
+        t = ("To" + " ".join(self.to)) if self.to else " "
+        return f":{self.__class__.__name__} {s} {t}\n"
+
+
+class HydrologicProcesses(Command):
+    __root__: List[Any]
 
 
 class HRUState(Command):
@@ -626,7 +674,7 @@ class LandUseClass(Command):
         return self.to_rv()
 
 
-class LandUseClassesCommand(Command):
+class LandUseClasses(Command):
     __root__: Sequence[LandUseClass]
     _template = """
         :LandUseClasses

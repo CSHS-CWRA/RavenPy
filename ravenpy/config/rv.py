@@ -44,28 +44,6 @@ class RV:
         return out
 
 
-@dataclass
-class RVC(RV):
-    hru_states: HRUStateVariableTableCommand = HRUStateVariableTableCommand()
-    basin_states: BasinStateVariablesCommand = BasinStateVariablesCommand()
-
-    @classmethod
-    def from_solution(cls, solution: str):
-        hru_states = HRUStateVariableTableCommand.parse(solution).hru_states
-        basin_states = BasinStateVariablesCommand.parse(solution).basin_states
-        return cls(hru_states=hru_states, basin_states=basin_states)
-
-
-@dataclass
-class RVH(RV):
-    subbasins: SubBasinsCommand = None
-    hrus: HRUsCommand = None
-    land_subbasin_group: SubBasinGroupCommand = None
-    land_subbasin_property_multiplier: SBGroupPropertyMultiplierCommand = None
-    lake_subbasin_group: SubBasinGroupCommand = None
-    lake_subbasin_property_multiplier: SBGroupPropertyMultiplierCommand = None
-    reservoirs: Tuple[ReservoirCommand] = None
-
 
 @dataclass
 class RVI(RV):
@@ -97,6 +75,30 @@ class RVI(RV):
     lake_storage: LakeStorage = None
     hydrologic_processes: HydrologicProcesses = ()
     netcdf_attribute: NetCDFAttribute = None
+
+@dataclass
+class RVC(RV):
+    hru_states: HRUStateVariableTableCommand = HRUStateVariableTableCommand()
+    basin_states: BasinStateVariablesCommand = BasinStateVariablesCommand()
+
+    @classmethod
+    def from_solution(cls, solution: str):
+        hru_states = HRUStateVariableTableCommand.parse(solution).hru_states
+        basin_states = BasinStateVariablesCommand.parse(solution).basin_states
+        return cls(hru_states=hru_states, basin_states=basin_states)
+
+
+@dataclass
+class RVH(RV):
+    subbasins: SubBasinsCommand = None
+    hrus: HRUsCommand = None
+    land_subbasin_group: SubBasinGroupCommand = None
+    land_subbasin_property_multiplier: SBGroupPropertyMultiplierCommand = None
+    lake_subbasin_group: SubBasinGroupCommand = None
+    lake_subbasin_property_multiplier: SBGroupPropertyMultiplierCommand = None
+    reservoirs: Tuple[ReservoirCommand] = None
+
+
 
 
 

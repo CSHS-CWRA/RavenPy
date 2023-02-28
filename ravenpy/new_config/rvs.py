@@ -1,7 +1,7 @@
 import datetime as dt
 from enum import Enum
 from typing import Dict, Sequence, TypeVar, Union
-
+from pathlib import Path
 import cftime
 from pydantic import BaseModel, Extra, Field, validator
 from pydantic.dataclasses import dataclass
@@ -9,7 +9,7 @@ from pydantic.dataclasses import dataclass
 from ravenpy.config import options as o
 
 from . import commands as rc
-from .base import RV
+from .base import RV, parse_symbolic
 
 
 class RVI(RV):
@@ -23,6 +23,7 @@ class RVI(RV):
     evaluation_period: Sequence[rc.EvaluationPeriod] = Field(
         None, alias="EvaluationPeriod"
     )
+    evaluation_metrics: Sequence[o.EvaluationMetrics] = Field(None, alias="EvaluationMetrics")
 
     # Model description
     routing: o.Routing = Field(None, alias="Routing")
@@ -40,20 +41,21 @@ class RVI(RV):
     potential_melt_method: o.PotentialMeltMethod = Field(
         None, alias="PotentialMeltMethod"
     )
-    # oro_temp_correct: rc.OroTempCorrect = None
-    # oro_precip_correct: rc.OroPrecipCorrect = None
-    # oro_pet_correct: rc.OroPETCorrect = None
+    oro_temp_correct: o.OroTempCorrect = Field(None, alias="OroTempCorrect")
+    oro_precip_correct: o.OroPrecipCorrect = Field(None, alias="OroPrecipCorrect")
+    oro_pet_correct: o.OroPETCorrect = Field(None, alias="OroPETCorrect")
     cloud_cover_method: o.CloudCoverMethod = Field(None, alias="CloudCoverMethod")
     precip_icept_frac: o.PrecipIceptFract = Field(None, alias="PrecipIceptFract")
     subdaily_method: o.SubdailyMethod = Field(None, alias="SubdailyMethod")
     mim: o.MonthlyInterpolationMethod = Field(None, alias="MonthlyInterpolationMethod")
     soil_model: Union[int, rc.SoilModel] = Field(None, alias="SoilModel")
     lake_storage: o.StateVariables = Field(None, alias="LakeStorage")
+    alias: Dict[str, str] = Field(None, alias="Alias")
+    hydrologic_processes: rc.HydrologicProcesses = Field(None, alias="HydrologicProcesses")
 
     # Options
-    alias: Dict[str, str] = Field(None, alias="Alias")
+    write_netcdf_format: bool = Field(True, alias="WriteNetcdfFormat")
     netcdf_attribute: Dict[str, str] = Field(None, alias="NetCDFAttribute")
-    # hydrologic_processes: rc.HydrologicProcesses
 
     custom_output: rc.CustomOutput = Field(None, alias="CustomOutput")
     direct_evaporation: bool = Field(
@@ -130,6 +132,7 @@ class RVP(RV):
     )
 
 
+
 class RVC(RV):
     hru_states: rc.HRUStateVariableTable = ()
     basin_states: rc.BasinStateVariables = ()
@@ -143,6 +146,41 @@ class RVH(RV):
     land_subbasin_property_multiplier: rc.SBGroupPropertyMultiplierCommand = None
     lake_subbasin_property_multiplier: rc.SBGroupPropertyMultiplierCommand = None
     reservoirs: Sequence[rc.Reservoir] = ()
+
+
+class Config(RVI, RVC, RVH, RVT, RVP):
+    @validator("*", pre=True)
+    def assign_symbolic(cls, v, values, config, field):
+        if field.name != "params":
+            return parse_symbolic(v, **values["params"].__fields__)
+        return v
+
+    def to_rv(self, rv: str):
+        """Return RV configuration text."""
+        rvs = {b.__name__: b for b in Config.__bases__}
+        cls = rvs[rv.upper()]
+
+        p = {f.name: self.__dict__[f.name] for f in cls.__fields__}
+        rv = cls(**p)
+        return rv.to_rv()
+
+    def write(self, workdir: Union[str, Path]):
+        """Write configuration files to disk.
+
+        Parameters
+        ----------
+        workdir: str, Path
+          An existing directory where rv files will be written to disk.
+        """
+        # Check that params has been set
+        workdir = Path(workdir)
+
+        for rv in ["rvi", "rvp", "rvc", "rvh", "rvt"]:
+            fn = workdir / f"{self.run_name.value}.{rv}"
+            fn.write_text(self.to_rv(rv))
+
+
+
 
 
 """
