@@ -3,11 +3,12 @@ from dataclasses import asdict, fields
 from pathlib import Path
 from typing import cast
 
-from pydantic.dataclasses import dataclass
 from pydantic import Field
+from pydantic.dataclasses import dataclass
+
 import ravenpy.config.rv
 from ravenpy.config import options
-from ravenpy.new_config.base import Params, RavenCommand, Sym, SymConfig, Variable
+from ravenpy.config.base import Params, RavenCommand, Sym, SymConfig, Variable
 from ravenpy.config.commands import (
     HRU,
     LU,
@@ -60,9 +61,7 @@ class P(Params):
     CEMANEIGE_X2: Sym = Variable("CEMANEIGE_X2")
 
 
-
-
-class GR4JCNOld(Raven):
+class GR4JCN(Raven):
     """GR4J + Cemaneige global hydrological model
 
     References

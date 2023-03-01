@@ -6,7 +6,7 @@ from itertools import chain
 from pathlib import Path
 from textwrap import dedent, indent
 from typing import (
-Any,
+    Any,
     ClassVar,
     Dict,
     List,
@@ -31,7 +31,7 @@ from pydantic.dataclasses import dataclass
 
 from ravenpy.config import options
 
-from .base import Command, ParameterList, ParameterListCommand, RecordCommand
+from .base import Command, ParameterList, ParameterListCommand, Sym
 from .data import filter_for, nc_specs
 
 INDENT = " " * 4
@@ -53,11 +53,28 @@ def reorder_time(cls, v):
     return tuple(dims)
 
 
+class Process(Command):
+    """Process type embedded in HydrologicProcesses command.
+
+    See processes.py for list of processes.
+    """
+
+    algo: str = "RAVEN_DEFAULT"
+    source: list = ()
+    to: list = ()
+
+    def to_rv(self):
+        s = " ".join(self.source)
+        t = ("To" + " ".join(self.to)) if self.to else " "
+        return f":{self.__class__.__name__} {s} {t}"
+
+
 class SoilModel(Command):
     n: int = None
 
     def to_rv(self):
-        return f":SoilModel            SOIL_MULTILAYER {self.n}\n"
+        cmd = "SoilModel"
+        return f":{cmd:<20} SOIL_MULTILAYER {self.n}\n"
 
 
 class LinearTransform(Command):
@@ -133,9 +150,9 @@ class CustomOutput(Command):
 
 
 class SoilProfile(Command):
-    name: str
-    soil_classes: Tuple[str, ...] = ()
-    thicknesses: Tuple[float, ...] = ()
+    name: str = ""
+    soil_classes: Sequence[str] = ()
+    thicknesses: Sequence[Sym] = ()
 
     def to_rv(self):
         # From the Raven manual: {profile_name,#horizons,{soil_class_name,thick.}x{#horizons}}x[NP]
@@ -143,10 +160,6 @@ class SoilProfile(Command):
         horizon_data = list(itertools.chain(*zip(self.soil_classes, self.thicknesses)))
         fmt = "{:<16},{:>4}," + ",".join(n_horizons * ["{:>12},{:>6}"])
         return fmt.format(self.name, n_horizons, *horizon_data)
-
-
-class SoilProfiles(Command):
-    __root__: Sequence[SoilProfile]
 
 
 class SubBasin(Command):
@@ -236,13 +249,13 @@ class Reservoir(Command):
     def to_rv(self):
         template = """
             :Reservoir {name}
-                :SubBasinID {subbasin_id}
-                :HRUID {hru_id}
-                :Type RESROUTE_STANDARD
-                :WeirCoefficient {weir_coefficient}
-                :CrestWidth {crest_width}
-                :MaxDepth {max_depth}
-                :LakeArea {lake_area}
+              :SubBasinID {subbasin_id}
+              :HRUID {hru_id}
+              :Type RESROUTE_STANDARD
+              :WeirCoefficient {weir_coefficient}
+              :CrestWidth {crest_width}
+              :MaxDepth {max_depth}
+              :LakeArea {lake_area}
             :EndReservoir
             """
         return dedent(template).format(**self.dict())
@@ -272,14 +285,13 @@ class SubBasinGroup(Command):
 
 
 class SBGroupPropertyMultiplierCommand(Command):
-
     group_name: str
     parameter_name: str
     mult: float
 
     def to_rv(self):
         template = ":SBGroupPropertyMultiplier {group_name} {parameter_name} {mult}"
-        return dedent(template).format(**asdict(self))
+        return dedent(template).format(**self.dict())
 
 
 class ChannelProfile(Command):
@@ -293,13 +305,13 @@ class ChannelProfile(Command):
     def to_rv(self):
         template = """
             :ChannelProfile {name}
-                :Bedslope {bed_slope}
-                :SurveyPoints
+              :Bedslope {bed_slope}
+              :SurveyPoints
             {survey_points}
-                :EndSurveyPoints
-                :RoughnessZones
+              :EndSurveyPoints
+              :RoughnessZones
             {roughness_zones}
-                :EndRoughnessZones
+              :EndRoughnessZones
             :EndChannelProfile
             """
         d = self.dict()
@@ -381,11 +393,21 @@ class RedirectToFile(Command):
 class ReadFromNetCDF(Command):
     # TODO: When encoding Path, return only path.name
     # Order of HttpUrl, Path is important to avoid casting strings to Path.
-    file_name_nc: Union[HttpUrl, Path] = Field(..., alias="FileNameNC", description="NetCDF file name.")
-    var_name_nc: str = Field(..., alias="VarNameNC", description="NetCDF variable name.")
+    file_name_nc: Union[HttpUrl, Path] = Field(
+        ..., alias="FileNameNC", description="NetCDF file name."
+    )
+    var_name_nc: str = Field(
+        ..., alias="VarNameNC", description="NetCDF variable name."
+    )
     dim_names_nc: Sequence[str] = Field(..., alias="DimNamesNC")
-    station_idx: int = Field(1, alias="StationIdx", description="NetCDF index along station dimension. Starts at 1.")
-    time_shift: float = Field(None, alias="TimeShift", description="Time stamp shift in days.")
+    station_idx: int = Field(
+        1,
+        alias="StationIdx",
+        description="NetCDF index along station dimension. Starts at 1.",
+    )
+    time_shift: float = Field(
+        None, alias="TimeShift", description="Time stamp shift in days."
+    )
     linear_transform: LinearTransform = Field(None, alias="LinearTransform")
     deaccumulate: bool = Field(None, alias="Deaccumulate")
 
@@ -400,8 +422,7 @@ class ReadFromNetCDF(Command):
         """Instantiate class from netCDF dataset."""
         specs = nc_specs(fn, data_type, station_idx, alt_names)
         attrs = filter_for(cls, specs)
-        return cls(station_idx=station_idx,
-                   **attrs)
+        return cls(station_idx=station_idx, **attrs)
 
 
 class GriddedForcing(ReadFromNetCDF):
@@ -422,15 +443,20 @@ class GriddedForcing(ReadFromNetCDF):
     @validator("dim_names_nc")
     def check_3_dims(cls, v):
         if len(v) != 3:
-            raise ValueError("GriddedForcing netCDF datasets should have three dimensions (lon, lat, time).")
+            raise ValueError(
+                "GriddedForcing netCDF datasets should have three dimensions (lon, lat, time)."
+            )
 
 
 class StationForcing(GriddedForcing):
     """StationForcing command (RVT)."""
+
     @validator("dim_names_nc")
     def check_2_dims(cls, v):
         if len(v) != 2:
-            raise ValueError("StationForcing netCDF datasets should have two dimensions (station, time).")
+            raise ValueError(
+                "StationForcing netCDF datasets should have two dimensions (station, time)."
+            )
 
 
 class Data(Command):
@@ -443,12 +469,16 @@ class Data(Command):
                 {_commands}
                 :End{_cmd}
                 """
+
     @classmethod
     def from_nc(cls, fn, data_type, station_idx=1, alt_names=()):
         specs = nc_specs(fn, data_type, station_idx, alt_names)
-        return cls(data_type=data_type,
-                   units=specs.pop("units", None),
-                   read_from_netcdf=filter_for(ReadFromNetCDF, specs))
+        return cls(
+            data_type=data_type,
+            units=specs.pop("units", None),
+            read_from_netcdf=filter_for(ReadFromNetCDF, specs),
+        )
+
 
 class Gauge(Command):
     name: str = "default"
@@ -457,8 +487,12 @@ class Gauge(Command):
     elevation: float = Field(0, alias="Elevation")
 
     # Accept strings to embed parameter names into Ostrich templates
-    rain_correction: float = Field(None, alias="RainCorrection", description="Rain correction")
-    snow_correction: float = Field(None, alias="SnowCorrection", description="Snow correction")
+    rain_correction: float = Field(
+        None, alias="RainCorrection", description="Rain correction"
+    )
+    snow_correction: float = Field(
+        None, alias="SnowCorrection", description="Snow correction"
+    )
 
     monthly_ave_evaporation: Tuple[float] = Field(None, alias="MonthlyAveEvaporation")
     monthly_ave_temperature: Tuple[float] = Field(None, alias="MonthlyAveTemperature")
@@ -483,6 +517,7 @@ class Gauge(Command):
             specs = nc_specs(fn, data_type, station_idx, alt_names)
 
 
+
 class ObservationData(Data):
     uid: int = 1  # Basin ID or HRU ID
 
@@ -495,29 +530,12 @@ class ObservationData(Data):
     @classmethod
     def from_nc(cls, fn, data_type, station_idx=1, uid=1, alt_names=()):
         specs = nc_specs(fn, data_type, station_idx, alt_names)
-        return cls(data_type=data_type,
-                   uid=uid,
-                   units=specs.pop("units", None),
-                   read_from_netcdf=filter_for(ReadFromNetCDF, specs))
-
-
-class Process(Command):
-    """Process type embedded in HydrologicProcesses command.
-
-    See processes.py for list of processes.
-    """
-    algo: str = "RAVEN_DEFAULT"
-    source: list = ()
-    to: list = ()
-
-    def to_rv(self):
-        s = " ".join(self.source)
-        t = ("To" + " ".join(self.to)) if self.to else " "
-        return f":{self.__class__.__name__} {s} {t}\n"
-
-
-class HydrologicProcesses(Command):
-    __root__: List[Any]
+        return cls(
+            data_type=data_type,
+            uid=uid,
+            units=specs.pop("units", None),
+            read_from_netcdf=filter_for(ReadFromNetCDF, specs),
+        )
 
 
 class HRUState(Command):
@@ -550,10 +568,11 @@ class HRUStateVariableTable(Command):
 
     @root_validator
     def check_attributes_are_uniform(cls, values):
-        attrs = [tuple(s.data.keys()) for s in values["__root__"]]
-        if len(set(attrs)) > 1:
-            raise ValidationError("Attributes not all the same.")
-        values["_attributes_str"] = ",".join(attrs[0])
+        if values["__root__"]:
+            attrs = [tuple(s.data.keys()) for s in values["__root__"]]
+            if len(set(attrs)) > 1:
+                raise ValidationError("Attributes not all the same.")
+            values["_attributes_str"] = ",".join(attrs[0])
         return values
 
     @classmethod
@@ -628,18 +647,14 @@ class BasinStateVariables(Command):
         return cls.parse_obj(bs)
 
 
-class SoilClass(Command):
-    __root__: str
-
-    def to_rv(self):
-        return f"{self.__root__}\n"
-
-
 class SoilClasses(Command):
-    __root__: Sequence[SoilClass]
+    names: Sequence[str] = ()
+
+    def commands(self):
+        return "\n".join(self.names)
 
 
-class VegetationClasses(Command):
+class VegetationClass(Command):
     name: str = ""
     max_ht: float = 0
     max_lai: float = 0
@@ -647,11 +662,11 @@ class VegetationClasses(Command):
 
     def to_rv(self):
         template = "{name:<16},{max_ht:>14},{max_lai:>14},{max_leaf_cond:>14}"
-        return template.format(**asdict(self))
+        return template.format(**self.dict())
 
 
-class VegetationClassesCommand(Command):
-    __root__: Sequence[VegetationClasses]
+class VegetationClasses(Command):
+    __root__: Sequence[VegetationClass]
     _template = """
     :VegetationClasses
       :Attributes     ,        MAX_HT,       MAX_LAI, MAX_LEAF_COND
@@ -668,7 +683,7 @@ class LandUseClass(Command):
 
     def to_rv(self):
         template = "{name:<16},{impermeable_frac:>16},{forest_coverage:>16}"
-        return template.format(**asdict(self))
+        return template.format(**self.dict())
 
     def __str__(self):
         return self.to_rv()

@@ -2,6 +2,7 @@ import datetime as dt
 from enum import Enum
 from textwrap import dedent, indent
 from typing import Any, ClassVar, Dict, List, Literal, Sequence, Tuple, TypeVar, Union
+
 from pymbolic.primitives import Expression, Variable
 
 """
@@ -17,6 +18,7 @@ This is why Params is defined as a dataclass
 import pytest
 from pydantic import BaseModel, Extra, Field, ValidationError, validator
 
+
 class SymConfig:
     arbitrary_types_allowed = True
 
@@ -24,7 +26,7 @@ class SymConfig:
 Sym = Union[Variable, Expression, float, None]
 
 
-class Params():
+class Params:
     pass
 
 
@@ -33,17 +35,28 @@ def encoder(v):
         if obj is None:
             out = ""
         elif isinstance(obj, bool):
+            # :Command\n
             out = f":{cmd}\n" if obj else ""
         elif isinstance(obj, dict):
-            out = "\n".join([f":{cmd} {key} {value}" for (key, value) in obj.items()])
+            # :Command key value\n
+            out = (
+                "\n".join([f":{cmd} {key} {value}" for (key, value) in obj.items()])
+                + "\n\n"
+            )
         elif isinstance(obj, Enum):
+            # :Command value\n
             out = f":{cmd:<20} {obj.value}\n"
         elif isinstance(obj, (Command, RecordCommand)):
+            # Custom
             out = obj.to_rv()
         elif isinstance(obj, (list, tuple)):
             o0 = obj[0]
-            if isinstance(o0, Command):
-                out = "".join([o.to_rv() for o in obj])
+            if hasattr(o0, "to_rv"):
+                c = "\n".join([o.to_rv() for o in obj])
+                if cmd == "__root__":
+                    out = c
+                else:
+                    out = f":{cmd}\n{indent(c, '  ')}\n:End{cmd}\n"
             elif isinstance(o0, Enum):
                 seq = ", ".join([o.value for o in obj])
                 out = f":{cmd:<20} {seq}\n"
@@ -68,6 +81,7 @@ class Command(BaseModel):
             {_commands}
             :End{_cmd}
             """
+    _indent: str = "  "
 
     def __str__(self):
         return self.to_rv()
@@ -94,7 +108,7 @@ class Command(BaseModel):
         d = self.dict()
         d.update(self.command_json())
         d["_cmd"] = self.__class__.__name__
-        d["_commands"] = indent(self.commands().strip(), "  ")
+        d["_commands"] = indent(self.commands().strip(), self._indent)
         return dedent(self._template).format(**d)
 
     class Config:
@@ -163,7 +177,7 @@ class RecordCommand(tuple):
 
 class ParameterList(Command):
     name: str = ""
-    vals: Sequence[Union[float, None]] = ()
+    vals: Sequence[Union[Sym, None]] = ()
 
     @validator("vals", pre=True)
     def no_none_in_default(cls, v, values):
@@ -221,6 +235,13 @@ class ParameterListCommand(Command):
 class RV(Command):
     """"""
 
+    _template: str = "{_commands}"
+    _indent: str = ""
+
+    class Config:
+        allow_population_by_field_name = True
+        validate_all = True
+
 
 def parse_symbolic(value, **kwds):
     """Inject values of symbolic variables into object and return object."""
@@ -234,9 +255,7 @@ def parse_symbolic(value, **kwds):
         return [parse_symbolic(v, **kwds) for v in value]
 
     elif isinstance(value, Command):
-        # Cannot use asdict here as it recurses down nested classes
-        # attrs = {f.name: value.__dict__[f.name] for f in fields(value)}
-        attrs = value.command_objs()
+        attrs = value.dict()
         return value.__class__(**parse_symbolic(attrs, **kwds))
 
     elif isinstance(value, (Variable, Expression)):
@@ -245,4 +264,6 @@ def parse_symbolic(value, **kwds):
 
     else:
         return value
+
+
 # ---

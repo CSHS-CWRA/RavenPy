@@ -1,7 +1,9 @@
 import datetime as dt
+from dataclasses import asdict
 from enum import Enum
-from typing import Dict, Sequence, TypeVar, Union
 from pathlib import Path
+from typing import Any, Dict, Sequence, Type, TypeVar, Union
+
 import cftime
 from pydantic import BaseModel, Extra, Field, validator
 from pydantic.dataclasses import dataclass
@@ -23,7 +25,9 @@ class RVI(RV):
     evaluation_period: Sequence[rc.EvaluationPeriod] = Field(
         None, alias="EvaluationPeriod"
     )
-    evaluation_metrics: Sequence[o.EvaluationMetrics] = Field(None, alias="EvaluationMetrics")
+    evaluation_metrics: Sequence[o.EvaluationMetrics] = Field(
+        None, alias="EvaluationMetrics"
+    )
 
     # Model description
     routing: o.Routing = Field(None, alias="Routing")
@@ -51,7 +55,9 @@ class RVI(RV):
     soil_model: Union[int, rc.SoilModel] = Field(None, alias="SoilModel")
     lake_storage: o.StateVariables = Field(None, alias="LakeStorage")
     alias: Dict[str, str] = Field(None, alias="Alias")
-    hydrologic_processes: rc.HydrologicProcesses = Field(None, alias="HydrologicProcesses")
+    hydrologic_processes: Sequence[rc.Process] = Field(
+        None, alias="HydrologicProcesses"
+    )
 
     # Options
     write_netcdf_format: bool = Field(True, alias="WriteNetcdfFormat")
@@ -93,9 +99,10 @@ class RVI(RV):
     @validator("start_date", "end_date", pre=True)
     def dates2cf(cls, val, values):
         """Convert dates to cftime dates."""
-        return cftime._cftime.DATE_TYPES[values["calendar"].lower()](
-            *val.timetuple()[:6]
-        )
+        if val is not None:
+            return cftime._cftime.DATE_TYPES[values["calendar"].value.lower()](
+                *val.timetuple()[:6]
+            )
 
     class Config:
         arbitrary_types_allowed = True
@@ -108,13 +115,11 @@ class RVT(RV):
 
 
 class RVP(RV):
-    # params = rc.Params
+    params: Any
     soil_classes: rc.SoilClasses = Field(None, alias="SoilClasses")
-    soil_profiles: rc.SoilProfiles = Field(None, alias="SoilProfiles")
-    vegetation_classes: rc.VegetationClassesCommand = Field(
-        None, alias="VegetationClasses"
-    )
-    land_use_classes: rc.LandUseClassesCommand = Field(None, alias="LandUseClasses")
+    soil_profiles: Sequence[rc.SoilProfile] = Field(None, alias="SoilProfiles")
+    vegetation_classes: rc.VegetationClasses = Field(None, alias="VegetationClasses")
+    land_use_classes: rc.LandUseClasses = Field(None, alias="LandUseClasses")
     soil_parameter_list: rc.SoilParameterList = Field(None, alias="SoilParameterList")
     land_use_parameter_list: rc.LandUseParameterList = Field(
         None, alias="LandUseParameterList"
@@ -130,7 +135,6 @@ class RVP(RV):
     rain_snow_transition: rc.RainSnowTransition = Field(
         None, alias="RainSnowTransition"
     )
-
 
 
 class RVC(RV):
@@ -152,15 +156,17 @@ class Config(RVI, RVC, RVH, RVT, RVP):
     @validator("*", pre=True)
     def assign_symbolic(cls, v, values, config, field):
         if field.name != "params":
-            return parse_symbolic(v, **values["params"].__fields__)
+            return parse_symbolic(v, **asdict(values["params"]))
         return v
 
     def to_rv(self, rv: str):
         """Return RV configuration text."""
+        # Get RV class
         rvs = {b.__name__: b for b in Config.__bases__}
         cls = rvs[rv.upper()]
 
-        p = {f.name: self.__dict__[f.name] for f in cls.__fields__}
+        # Instantiate RV class
+        p = {f: self.__dict__[f] for f in cls.__fields__}
         rv = cls(**p)
         return rv.to_rv()
 
@@ -176,25 +182,5 @@ class Config(RVI, RVC, RVH, RVT, RVP):
         workdir = Path(workdir)
 
         for rv in ["rvi", "rvp", "rvc", "rvh", "rvt"]:
-            fn = workdir / f"{self.run_name.value}.{rv}"
+            fn = workdir / f"{self.run_name}.{rv}"
             fn.write_text(self.to_rv(rv))
-
-
-
-
-
-"""
-@dataclass
-class Emulator:
-    rvi: RVI = RVI()
-    rvp: RVP = RVP()
-    rvc: RVC = RVC()
-    rvh: RVH = RVH()
-    rvt: RVT = RVT()
-
-    def write(self, stem="raven", path="."):
-        p = Path(path)
-        for k, v in asdict(self).items():
-            fn = p / f"{stem}.{k}"
-            fn.write_text(v.to_rv())
-"""
