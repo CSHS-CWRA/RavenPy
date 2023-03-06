@@ -49,6 +49,7 @@ extensions = [
 ]
 
 linkcheck_ignore = [
+    r"https://www.ouranos.ca",  # bad ssl certificate
     # Added on 2023-03-06: Wiley does not allow linkcheck requests (error 403)
     r"https://doi.org/10.1029/2020WR029229"
 ]
