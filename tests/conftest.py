@@ -12,6 +12,8 @@ from ravenpy.utilities.testdata import _default_cache_dir
 from ravenpy.utilities.testdata import get_file as _get_file
 from ravenpy.utilities.testdata import get_local_testdata as _get_local_testdata
 
+from .common import _convert_2d, _convert_3d
+
 MAIN_TESTDATA_BRANCH = os.getenv("MAIN_TESTDATA_BRANCH", "master")
 SKIP_TEST_DATA = os.getenv("SKIP_TEST_DATA")
 
@@ -203,6 +205,39 @@ def params(ts_stats, tmp_path):
     fn = tmp_path / "fit.nc"
     p.to_netcdf(fn)
     return fn
+
+
+# Used in test_emulators.py
+@pytest.fixture(scope="session")
+def input2d(threadsafe_data_dir):
+    """Convert 1D input to 2D output by copying all the time series along a new region dimension."""
+    ts = _get_file(
+        "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
+        cache_dir=threadsafe_data_dir,
+        branch=MAIN_TESTDATA_BRANCH,
+    )
+
+    ds = _convert_2d(ts)
+    fn_out = threadsafe_data_dir / "input2d.nc"
+    ds.to_netcdf(fn_out)
+    return fn_out
+
+
+# Used in test_emulators.py
+@pytest.fixture(scope="session")
+def input3d(threadsafe_data_dir):
+    """Convert 1D input to 2D output by copying all the time series along a new region dimension."""
+    ts = _get_file(
+        "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
+        cache_dir=threadsafe_data_dir,
+        branch=MAIN_TESTDATA_BRANCH,
+    )
+
+    ds = _convert_3d(ts)
+    ds = ds.drop_vars("qobs")
+    fn_out = threadsafe_data_dir / "input3d.nc"
+    ds.to_netcdf(fn_out)
+    return fn_out
 
 
 if __name__ == "__main__":
