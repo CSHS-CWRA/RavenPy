@@ -27,6 +27,7 @@ exclude .editorconfig
 exclude .pre-commit-config.yaml
 exclude .readthedocs.yml
 exclude .yamllint.yaml
+exclude .zenodo.json
 exclude Makefile
 exclude environment.yml
 exclude environment-rtd.yml
