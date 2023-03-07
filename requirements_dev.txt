@@ -11,7 +11,7 @@ twine
 Click
 pytest
 pytest-cov
-pytest-xdist
+pytest-xdist>=3.2.0
 filelock
 black>=23.1.0
 isort

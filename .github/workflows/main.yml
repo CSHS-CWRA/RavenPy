@@ -6,6 +6,9 @@ on:
       - master
   pull_request:
 
+env:
+  RAVENPY_TESTDATA_BRANCH: master
+
 jobs:
   black:
     name: Code linting
@@ -51,7 +54,7 @@ jobs:
         sudo apt-get install libgdal-dev
     - name: Install tox and setuptools
       run: |
-        pip install tox
+        pip install tox~=4.0
         pip install --upgrade "setuptools<65.6"
     - name: Test with tox and report coverage
       run: env GDAL_VERSION="$(gdal-config --version)" tox -e ${{ matrix.tox-env }}
@@ -90,7 +93,7 @@ jobs:
           conda list
       - name: Test RavenPy
         run: |
-          pytest --cov ravenpy
+          pytest --cov --numprocesses=logical ravenpy
       - name: Report coverage
         run: coveralls --service=github
         env:
