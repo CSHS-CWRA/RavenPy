@@ -188,16 +188,22 @@ class Config(RVI, RVC, RVH, RVT, RVP):
         rv = cls(**p)
         return rv.to_rv()
 
-    def write(self, workdir: Union[str, Path]):
+    def write(self, workdir: Union[str, Path], overwrite=False):
         """Write configuration files to disk.
 
         Parameters
         ----------
         workdir: str, Path
-          An existing directory where rv files will be written to disk.
+          A directory where rv files will be written to disk.
+        overwrite: bool
+          If True, overwrite existing configuration files.
         """
         workdir = Path(workdir)
+        if not workdir.exists():
+            workdir.mkdir()
 
         for rv in ["rvi", "rvp", "rvc", "rvh", "rvt"]:
             fn = workdir / f"{self.run_name}.{rv}"
+            if fn.exists() and not overwrite:
+                raise OSError(f"{fn} already exists and would be overwritten.")
             fn.write_text(self.to_rv(rv))

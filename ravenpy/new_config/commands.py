@@ -27,7 +27,7 @@ from pydantic import (
 )
 
 from . import options
-from .base import Command, ParameterList, ParameterListCommand, Sym
+from .base import Command, GenericParameterList, ParameterList, Sym
 from .utils import filter_for, nc_specs
 
 """
@@ -628,42 +628,63 @@ class HRUState(Command):
 
 
 class HRUStateVariableTable(Command):
-    __root__: List[HRUState]
+    """Table of HRU state variables.
+
+    If the HRUState include different attributes, the states will be modified to include all attributes.
+    """
+
+    __root__: Sequence[HRUState]
 
     _attributes_str: Sequence[str] = PrivateAttr(None)
 
     _template = """
                  :HRUStateVariableTable
                    :Attributes,{_attributes_str}
-                   :Units
                  {_commands}
                  :EndHRUStateVariableTable
                  """
 
     @root_validator
     def check_attributes_are_uniform(cls, values):
+        from itertools import chain
+
         if values["__root__"]:
-            attrs = [tuple(s.data.keys()) for s in values["__root__"]]
-            if len(set(attrs)) > 1:
-                raise ValidationError("Attributes not all the same.")
-            values["_attributes_str"] = ",".join(attrs[0])
+            hs = values["__root__"]
+            # Get all attribute names from HRUStates
+            names = sorted(list(set(chain(*[tuple(s.data.keys()) for s in hs]))))
+            # Store names in private class attribute
+            values["_attributes_str"] = ",".join(names)
+
+            values["__root__"] = [
+                HRUState(index=s.index, data={n: s.data.get(n, 0.0) for n in names})
+                for s in hs
+            ]
         return values
 
     @classmethod
-    def parse(cls, sol):
-        pat = r"""
-        :HRUStateVariableTable
-        \s*:Attributes,(.+)
-        \s*:Units.*?
-        (.+)
-        :EndHRUStateVariableTable
-        """
-        m = re.search(dedent(pat).strip(), sol, re.DOTALL)
-        names = m.group(1).strip().split(",")
-        lines = m.group(2).strip().splitlines()  # type: ignore
+    def parse(cls, sol: str):
+        from collections import defaultdict
 
-        states = [HRUState.parse(line, names) for line in lines]
-        return cls.parse_obj(states)
+        pat = re.compile(
+            r"^:HRUStateVariableTable$\s*:Attributes,(?P<atts>.+)$\s*:Units,.*$\s*(?:("
+            r"?P<vars>.+)$)+\s*:EndHRUStateVariableTable",
+            re.MULTILINE,
+        )
+        matches = pat.findall(sol)
+
+        d = defaultdict(dict)
+        for m in matches:
+            atts = [a.strip() for a in m[0].strip(",").split(",")]
+            vals = [re.split(r",|\s+", line.strip(",")) for line in m[1:]]
+
+            for val in vals:
+                idx, *values = val
+            d[idx].update(dict(zip(atts, values)))
+
+        out = []
+        for idx, data in d.items():
+            out.append(HRUState(index=idx, data=data))
+        return cls(__root__=out)
 
 
 class BasinIndex(Command):
@@ -774,15 +795,15 @@ class LandUseClasses(Command):
         """
 
 
-class SoilParameterList(ParameterListCommand):
+class SoilParameterList(GenericParameterList):
     names: Sequence[options.SoilParameters] = ()
 
 
-class VegetationParameterList(ParameterListCommand):
+class VegetationParameterList(GenericParameterList):
     names: Sequence[options.VegetationParameters] = ()
 
 
-class LandUseParameterList(ParameterListCommand):
+class LandUseParameterList(GenericParameterList):
     names: Sequence[options.LandUseParameters] = ()
 
 

@@ -175,6 +175,15 @@ def cleanup(request):
     request.addfinalizer(remove_data_written_flag)
 
 
+alt_names = {
+    "PRECIP": "rain",
+    "TEMP_MIN": "tmin",
+    "TEMP_MAX": "tmax",
+    "PET": "pet",
+    "HYDROGRAPH": "qobs",
+}
+
+
 @pytest.fixture(scope="session")
 def q_sim_1(threadsafe_data_dir):
     """A file storing a Raven streamflow simulation over one basin."""
@@ -203,6 +212,51 @@ def params(ts_stats, tmp_path):
     fn = tmp_path / "fit.nc"
     p.to_netcdf(fn)
     return fn
+
+
+@pytest.fixture(scope="session")
+def salmon_hru():
+    out = {}
+    out["land"] = dict(
+        area=4250.6,
+        elevation=843.0,
+        latitude=54.4848,
+        longitude=-123.3659,
+        hru_type="land",
+    )
+    return out
+
+
+@pytest.fixture(scope="session")
+def gr4jcn_config(tmp_path_factory, get_local_testdata, salmon_hru):
+    import datetime as dt
+
+    from ravenpy.new_config import commands as rc
+    from ravenpy.new_config.emulators.gr4jcn import GR4JCN
+
+    f = get_local_testdata(
+        "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
+    )
+
+    m = GR4JCN(
+        params=[0.529, -3.396, 407.29, 1.072, 16.9, 0.947],
+        Gauge=rc.Gauge.from_nc(
+            f,
+            data_type=["PRECIP", "TEMP_MIN", "TEMP_MAX"],
+            alt_names=alt_names,
+            extra={1: {"elevation": salmon_hru["land"]["elevation"]}},
+        ),
+        ObservationData=rc.ObservationData.from_nc(f, alt_names="qobs"),
+        HRUs=[salmon_hru["land"]],
+        StartDate=dt.datetime(2000, 1, 1),
+        EndDate=dt.datetime(2002, 1, 1),
+        RunName="test",
+        CustomOutput=rc.CustomOutput("YEARLY", "AVERAGE", "PRECIP", "ENTIRE_WATERSHED"),
+        GlobalParameter={"AVG_ANNUAL_RUNOFF": 208.480},
+    )
+    out = tmp_path_factory.mktemp("gr4jcn") / "config"
+    m.write(out)
+    return out
 
 
 if __name__ == "__main__":

@@ -17,10 +17,6 @@ alt_names = {
     "HYDROGRAPH": "qobs",
 }
 
-salmon_land_hru_1 = dict(
-    area=4250.6, elevation=843.0, latitude=54.4848, longitude=-123.3659, hru_type="land"
-)
-
 
 @dataclass(config=SymConfig)
 class P:
@@ -37,25 +33,5 @@ def test_emulator():
     assert t.air_snow_coeff == 0.5
 
 
-def test_gr4j(tmpdir, get_local_testdata):
-    f = get_local_testdata(
-        "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
-    )
-
-    m = GR4JCN(
-        params=[0.529, -3.396, 407.29, 1.072, 16.9, 0.947],
-        Gauge=rc.Gauge.from_nc(
-            f,
-            data_type=["PRECIP", "TEMP_MIN", "TEMP_MAX"],
-            alt_names=alt_names,
-            extra={1: {"elevation": salmon_land_hru_1["elevation"]}},
-        ),
-        ObservationData=rc.ObservationData.from_nc(f, alt_names="qobs"),
-        HRUs=[salmon_land_hru_1],
-        StartDate=dt.datetime(2000, 1, 1),
-        EndDate=dt.datetime(2002, 1, 1),
-        RunName="test",
-        CustomOutput=rc.CustomOutput("YEARLY", "AVERAGE", "PRECIP", "ENTIRE_WATERSHED"),
-        GlobalParameter={"AVG_ANNUAL_RUNOFF": 208.480},
-    )
-    m.write("/tmp/test_config")
+def test_gr4j(gr4jcn_config):
+    assert (gr4jcn_config / "test.rvi").exists()

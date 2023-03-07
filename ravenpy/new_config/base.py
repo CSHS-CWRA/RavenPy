@@ -130,9 +130,9 @@ class Command(BaseModel):
 
 class ParameterList(Command):
     name: str = ""
-    vals: Sequence[Union[Sym, None]] = ()
+    values: Sequence[Union[Sym, None]] = ()
 
-    @validator("vals", pre=True)
+    @validator("values", pre=True)
     def no_none_in_default(cls, v, values):
         """Make sure that no values are None for the [DEFAULT] record."""
         if values["name"] == "[DEFAULT]" and None in v:
@@ -140,24 +140,24 @@ class ParameterList(Command):
         return v
 
     def to_rv(self, **kwds):
-        fmt = "{name:<16}" + len(self.vals) * ",{:>18}"
+        fmt = "{name:<16}" + len(self.values) * ",{:>18}"
         evals = []
-        for v in self.vals:
+        for v in self.values:
             ev = "_DEFAULT" if v is None else v
             evals.append(ev)
 
         return fmt.format(name=self.name, *evals)
 
 
-class ParameterListCommand(Command):
-    names: Sequence[str] = ()
-    records: Sequence[ParameterList] = ()
+class GenericParameterList(Command):
+    names: Sequence[str] = Field(None, description="Parameter names")
+    pl: Sequence[ParameterList] = ()
 
-    @validator("records")
+    @validator("pl")
     def num_values_equal_num_names(cls, val, values):
         n = len(values["names"])
         for v in val:
-            if len(v.vals) != n:
+            if len(v.values) != n:
                 raise ValidationError(
                     "Number of values should match number of parameters."
                 )
@@ -181,7 +181,7 @@ class ParameterListCommand(Command):
             _cmd=self.__class__.__name__,
             name_list=fmt.format(*self.names),
             unit_list=fmt.format(*units),
-            _commands=indent("\n".join([rec.to_rv() for rec in self.records]), "  "),
+            _commands=indent("\n".join([rec.to_rv() for rec in self.pl]), "  "),
         )
 
 
