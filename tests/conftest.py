@@ -210,39 +210,36 @@ def params(ts_stats, tmp_path):
     return fn
 
 
+@pytest.fixture(scope="session")
+def salmon(threadsafe_data_dir):
+    """A file storing a Raven streamflow simulation over one basin."""
+    return _get_file(
+        "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
+        cache_dir=threadsafe_data_dir,
+        branch=MAIN_TESTDATA_BRANCH,
+    )
+
+
 # Used in test_emulators.py
 @pytest.fixture(scope="session")
-def input2d(threadsafe_data_dir):
+def input2d(threadsafe_data_dir, salmon):
     """Convert 1D input to 2D output by copying all the time series along a new region dimension."""
 
     fn_out = threadsafe_data_dir / "input2d.nc"
-
     if not fn_out.exists():
-        ts = _get_file(
-            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
-            cache_dir=threadsafe_data_dir,
-            branch=MAIN_TESTDATA_BRANCH,
-        )
-        ds = _convert_2d(ts)
-        ds.to_netcdf(fn_out)
+        _convert_2d(salmon).to_netcdf(fn_out)
 
     return fn_out
 
 
 # Used in test_emulators.py
 @pytest.fixture(scope="session")
-def input3d(threadsafe_data_dir):
+def input3d(threadsafe_data_dir, salmon):
     """Convert 1D input to 2D output by copying all the time series along a new region dimension."""
 
     fn_out = threadsafe_data_dir / "input3d.nc"
-
     if not fn_out.exists():
-        ts = _get_file(
-            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
-            cache_dir=threadsafe_data_dir,
-            branch=MAIN_TESTDATA_BRANCH,
-        )
-        ds = _convert_3d(ts)
+        ds = _convert_3d(salmon)
         ds = ds.drop_vars("qobs")
         ds.to_netcdf(fn_out)
 

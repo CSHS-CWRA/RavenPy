@@ -82,7 +82,7 @@ def _convert_2d(fn):
 
     # Add geometry feature variables
     for key, val in features.items():
-        ds[key] = xr.DataArray(name=key, data=[val], dims=("region"))
+        ds[key] = xr.DataArray(name=key, data=[val], dims="region")
 
     return ds
 
