@@ -198,12 +198,15 @@ def ts_stats(q_sim_1, tmp_path):
 
 @pytest.fixture(scope="session")
 def params(ts_stats, tmp_path):
-    ds = xr.open_dataset(ts_stats)
-    name = list(ds.data_vars.keys()).pop()
-    q = ds[name]
-    p = fit(q, dist="gumbel_r")
     fn = tmp_path / "fit.nc"
-    p.to_netcdf(fn)
+
+    if not fn.exists():
+        ds = xr.open_dataset(ts_stats)
+        name = list(ds.data_vars.keys()).pop()
+        q = ds[name]
+        p = fit(q, dist="gumbel_r")
+        p.to_netcdf(fn)
+
     return fn
 
 
@@ -211,15 +214,18 @@ def params(ts_stats, tmp_path):
 @pytest.fixture(scope="session")
 def input2d(threadsafe_data_dir):
     """Convert 1D input to 2D output by copying all the time series along a new region dimension."""
-    ts = _get_file(
-        "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
-        cache_dir=threadsafe_data_dir,
-        branch=MAIN_TESTDATA_BRANCH,
-    )
 
-    ds = _convert_2d(ts)
     fn_out = threadsafe_data_dir / "input2d.nc"
-    ds.to_netcdf(fn_out)
+
+    if not fn_out.exists():
+        ts = _get_file(
+            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
+            cache_dir=threadsafe_data_dir,
+            branch=MAIN_TESTDATA_BRANCH,
+        )
+        ds = _convert_2d(ts)
+        ds.to_netcdf(fn_out)
+
     return fn_out
 
 
@@ -227,16 +233,19 @@ def input2d(threadsafe_data_dir):
 @pytest.fixture(scope="session")
 def input3d(threadsafe_data_dir):
     """Convert 1D input to 2D output by copying all the time series along a new region dimension."""
-    ts = _get_file(
-        "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
-        cache_dir=threadsafe_data_dir,
-        branch=MAIN_TESTDATA_BRANCH,
-    )
 
-    ds = _convert_3d(ts)
-    ds = ds.drop_vars("qobs")
     fn_out = threadsafe_data_dir / "input3d.nc"
-    ds.to_netcdf(fn_out)
+
+    if not fn_out.exists():
+        ts = _get_file(
+            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
+            cache_dir=threadsafe_data_dir,
+            branch=MAIN_TESTDATA_BRANCH,
+        )
+        ds = _convert_3d(ts)
+        ds = ds.drop_vars("qobs")
+        ds.to_netcdf(fn_out)
+
     return fn_out
 
 
