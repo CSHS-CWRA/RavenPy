@@ -12,6 +12,15 @@ In pydantic, BaseModel and dataclasses behave slightly differently.
 A dataclass object can be instantiated using positional arguments, while BaseModels cannot.
 This is why Params is defined as a dataclass
 
+Two cases
+RV
+    Command, alias="A1"
+    Sequence[Command], alias="A2"
+
+Sometimes, we want A2 to be printed as a command (HydrologicProcesses)
+Sometime, we don't (Gauges)
+In general, let's print the alias except if the parent is __root__, or if the parent's name is the same as the
+children (Data holding multiple Data elements).
 """
 
 
@@ -31,6 +40,8 @@ class Params:
 
 
 def encoder(v):
+    import warnings
+
     for cmd, obj in v.items():
         if obj is None:
             out = ""
@@ -46,22 +57,22 @@ def encoder(v):
         elif isinstance(obj, Enum):
             # :Command value\n
             out = f":{cmd:<20} {obj.value}\n"
-        elif isinstance(obj, (Command, RecordCommand)):
+        elif hasattr(obj, "to_rv"):
             # Custom
             out = obj.to_rv()
         elif isinstance(obj, (list, tuple)):
             o0 = obj[0]
             if hasattr(o0, "to_rv"):
                 c = "\n".join([o.to_rv() for o in obj])
-                if cmd == "__root__":
+                if cmd == "__root__" or cmd == o0.__class__.__name__:
                     out = c
                 else:
                     out = f":{cmd}\n{indent(c, '  ')}\n:End{cmd}\n"
             elif isinstance(o0, Enum):
-                seq = ", ".join([o.value for o in obj])
+                seq = " ".join([o.value for o in obj])
                 out = f":{cmd:<20} {seq}\n"
             else:
-                seq = ", ".join(map(str, obj))
+                seq = " ".join(map(str, obj))
                 out = f":{cmd:<20} {seq}\n"
         else:
             out = f":{cmd:<20} {obj}\n"
@@ -114,65 +125,7 @@ class Command(BaseModel):
     class Config:
         extra = Extra.forbid
         arbitrary_types_allowed = True
-
-
-class Record(Command):
-    __root__: List
-
-
-class RecordCommand(tuple):
-    record: TypeVar
-    _template: str = """
-        :{_cmd}
-        {_commands}
-        :End{_cmd}
-        """
-
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
-
-    @classmethod
-    def validate(cls, values):
-        for v in values:
-            if not isinstance(v, cls.record):
-                raise TypeError
-        return cls(values)
-
-    def command_objs(self):
-        """Return attributes that are Raven commands."""
-        d = {}
-        for key, field in self.__dict__.items():
-            if field.has_alias and self.__dict__[key] is not None:
-                d[field.alias] = self.__dict__[key]
-
-        for i, v in enumerate(self):
-            d[i] = v
-
-        return d
-
-    def command_json(self):
-        """Return dictionary of Raven commands."""
-        return encoder(self.command_objs())
-
-    def commands(self):
-        """String of Raven commands."""
-        return "".join(self.command_json().values())
-
-    def to_rv(self):
-        """Return Raven configuration string."""
-        d = self.__dict__.copy()
-        d.update(self.command_json())
-        d["_cmd"] = self.__class__.__name__
-        d["_commands"] = indent(self.commands().strip(), "  ")
-        return dedent(self._template).format(**d)
-
-    def to_rv_old(self):
-        d = {
-            "_cmd": self.__class__.__name__,
-            "_commands": indent("\n".join(map(str, self)), "  "),
-        }
-        return dedent(self._template).format(**d)
+        allow_population_by_field_name = True
 
 
 class ParameterList(Command):

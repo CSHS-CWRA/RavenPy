@@ -1,6 +1,8 @@
-from .commands import Process
-from typing import Literal
+from typing import Literal, Tuple, Union
 
+from ravenpy.config import options as o
+
+from .commands import Process
 
 
 # --- Processes --- #
@@ -14,9 +16,9 @@ class CanopyEvap(Process):
     algo: Literal["CANEVP_RUTTER", "CANEVP_MAXIMUM"]
 
 
-
 class SoilEvaporation(Process):
     """"""
+
     algo: Literal[
         "SOIL_EVAP_VIC",
         "SOIL_EVAP_HBV",
@@ -76,7 +78,7 @@ class CapilaryRise(Process):
     algo: Literal["CRISE_HBV"]
 
 
-class BaseFlow(Process):
+class Baseflow(Process):
     """"""
 
     algo: Literal[
@@ -124,7 +126,8 @@ class SnowBalance(Process):
         "SNOWBAL_COLD_CONTENT",
         "SNOWBAL_HBV",
         "SNOWBAL_TWO_LAYER",
-        "SNOWBAL_CEMA_NEIGE",
+        # "SNOWBAL_CEMA_NEIGE",
+        "SNOBAL_CEMA_NIEGE",
         "SNOWBAL_GAWSER",
         "SNOWBAL_UBC",
     ]
@@ -164,21 +167,22 @@ class GlacierRelease(Process):
     algo: Literal["GRELEASE_LINEAR", "GRELEASE_HBV_EC"]
 
 
-
 class Flush(Process):
     """"""
 
     algo: Literal["RAVEN_DEFAULT"]
-
+    p: float = None
 
 
 class Overflow(Process):
     algo: Literal["OVERFLOW_RAVEN"]
 
 
-
 class Split(Process):
     """"""
+
+    p: float = None
+    to: Tuple[str, str]
 
 
 class Convolve(Process):
@@ -187,9 +191,15 @@ class Convolve(Process):
     algo: Literal["CONVOL_GR4J_1", "CONVOL_GR4J_2"]
 
 
-
 class LateralFlush(Process):
     """Lateral flush"""
+
+
+class LateralEquilibrate(Process):
+    """Lateral equilibrate
+
+    Instantaneously equilibrates groundwater storage in basin HRUs.
+    """
 
 
 # --- End processes --- #

@@ -39,7 +39,6 @@ Forcings = Literal[
     "PET_MONTH_AVE",
     "POTENTIAL_MELT",
     "SUBDAILY_CORR",
-    "HYDROGRAPH",
 ]
 
 # Allowed soil parameters
@@ -131,6 +130,7 @@ StateVariables = Literal[
     "CONSTITUENT_SRC",
     "CONSTITUENT_SW",
     "CONSTITUENT_SINK",
+    "MULTIPLE",
 ]
 
 LandUseParameters = Literal[

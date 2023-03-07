@@ -17,10 +17,10 @@ from .base import RV, parse_symbolic
 class RVI(RV):
     # Run parameters
     run_name: str = Field("run", alias="RunName")
-    calendar: o.Calendar = Field("STANDARD", alias="Calendar")
+    calendar: o.Calendar = Field("PROLEPTIC_GREGORIAN", alias="Calendar")
     start_date: cftime.datetime = Field(None, alias="StartDate")
     end_date: cftime.datetime = Field(None, alias="EndDate")
-    duration: float = Field(1, alias="Duration")
+    duration: float = Field(None, alias="Duration")
     time_step: float = Field(1.0, alias="TimeStep")
     evaluation_period: Sequence[rc.EvaluationPeriod] = Field(
         None, alias="EvaluationPeriod"
@@ -54,7 +54,7 @@ class RVI(RV):
     mim: o.MonthlyInterpolationMethod = Field(None, alias="MonthlyInterpolationMethod")
     soil_model: Union[int, rc.SoilModel] = Field(None, alias="SoilModel")
     lake_storage: o.StateVariables = Field(None, alias="LakeStorage")
-    alias: Dict[str, str] = Field(None, alias="Alias")
+    # alias: Dict[str, str] = Field(None, alias="Alias")
     hydrologic_processes: Sequence[rc.Process] = Field(
         None, alias="HydrologicProcesses"
     )
@@ -109,9 +109,13 @@ class RVI(RV):
 
 
 class RVT(RV):
-    gauge: Sequence[rc.Gauge] = ()
-    data: Sequence[rc.Data] = ()
-    observation: Sequence[rc.ObservationData] = ()
+    gauge: Sequence[rc.Gauge] = Field(None, alias="Gauge")
+    # data: Sequence[rc.Data] = ()
+    station_forcing: Sequence[rc.StationForcing] = Field(None, alias="StationForcing")
+    gridded_forcing: Sequence[rc.GriddedForcing] = Field(None, alias="GriddedForcing")
+    observation_data: Sequence[rc.ObservationData] = Field(
+        None, alias="ObservationData"
+    )
 
 
 class RVP(RV):
@@ -140,11 +144,20 @@ class RVP(RV):
 class RVC(RV):
     hru_states: rc.HRUStateVariableTable = ()
     basin_states: rc.BasinStateVariables = ()
+    uniform_initial_conditions: Dict[str, float] = Field(
+        None, alias="UniformInitialConditions"
+    )
+
+    @classmethod
+    def from_solution(cls, solution: str):
+        hru_states = rc.HRUStateVariableTable.parse(solution)
+        basin_states = rc.BasinStateVariables.parse(solution)
+        return cls(hru_states=hru_states, basin_states=basin_states)
 
 
 class RVH(RV):
-    subbasins: Sequence[rc.SubBasin] = (rc.SubBasin(),)
-    hrus: Sequence[rc.HRU] = ()
+    subbasins: rc.SubBasins = Field([rc.SubBasin()], alias="SubBasins")
+    hrus: rc.HRUs = Field(None, alias="HRUs")
     land_subbasin_group: Sequence[rc.SubBasinGroup] = ()
     lake_subbasin_group: Sequence[rc.SubBasinGroup] = ()
     land_subbasin_property_multiplier: rc.SBGroupPropertyMultiplierCommand = None
@@ -159,6 +172,11 @@ class Config(RVI, RVC, RVH, RVT, RVP):
             return parse_symbolic(v, **asdict(values["params"]))
         return v
 
+    @validator("global_parameter", pre=True)
+    def update_defaults(cls, v, values, config, field):
+        """Some configuration parameters should be updated with user given arguments, not overwritten."""
+        return {**cls.__fields__[field.name].default, **v}
+
     def to_rv(self, rv: str):
         """Return RV configuration text."""
         # Get RV class
@@ -166,7 +184,8 @@ class Config(RVI, RVC, RVH, RVT, RVP):
         cls = rvs[rv.upper()]
 
         # Instantiate RV class
-        p = {f: self.__dict__[f] for f in cls.__fields__}
+        attrs = dict(self)
+        p = {f: attrs[f] for f in cls.__fields__}
         rv = cls(**p)
         return rv.to_rv()
 
@@ -178,7 +197,6 @@ class Config(RVI, RVC, RVH, RVT, RVP):
         workdir: str, Path
           An existing directory where rv files will be written to disk.
         """
-        # Check that params has been set
         workdir = Path(workdir)
 
         for rv in ["rvi", "rvp", "rvc", "rvh", "rvt"]:

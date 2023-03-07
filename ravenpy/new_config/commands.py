@@ -1,6 +1,7 @@
 import datetime as dt
 import itertools
 import re
+import warnings
 from dataclasses import asdict, field
 from itertools import chain
 from pathlib import Path
@@ -15,6 +16,7 @@ from typing import (
     Sequence,
     Tuple,
     Union,
+    get_args,
     no_type_check,
 )
 
@@ -24,10 +26,10 @@ from pydantic import (
     HttpUrl,
     PrivateAttr,
     ValidationError,
+    dataclasses,
     root_validator,
     validator,
 )
-from pydantic.dataclasses import dataclass
 
 from ravenpy.config import options
 
@@ -60,13 +62,30 @@ class Process(Command):
     """
 
     algo: str = "RAVEN_DEFAULT"
-    source: list = ()
-    to: list = ()
+    source: str = None
+    to: Sequence[str] = ()
+
+    @validator("to", pre=True)
+    def is_list(cls, v):
+        if isinstance(v, str):
+            return [
+                v,
+            ]
+        return v
+
+    @validator("source", "to", each_item=True)
+    def is_state_variable(cls, v):
+        if re.split(r"\[", v)[0] not in get_args(options.StateVariables):
+            raise ValueError(f"{v} not recognized as a state variable.")
+        return v
 
     def to_rv(self):
-        s = " ".join(self.source)
-        t = ("To" + " ".join(self.to)) if self.to else " "
-        return f":{self.__class__.__name__} {s} {t}"
+        t = " ".join(map("{:<19}".format, self.to))
+        p = getattr(self, "p", None)
+        p = p if p is not None else ""
+        return (
+            f":{self.__class__.__name__:<20} {self.algo:<19} {self.source:<19} {t} {p}"
+        )
 
 
 class SoilModel(Command):
@@ -117,7 +136,8 @@ class EvaluationPeriod(Command):
         return f":EvaluationPeriod {self.name} {self.start} {self.end}"
 
 
-class CustomOutput(Command):
+@dataclasses.dataclass
+class CustomOutput:
     """
     Create custom output file to track a single variable, parameter or forcing function over time at a number of
     basins, HRUs, or across the watershed.
@@ -146,7 +166,7 @@ class CustomOutput(Command):
 
     def to_rv(self):
         template = ":CustomOutput {time_per} {stat} {variable} {space_agg} {filename}\n"
-        return template.format(**self.dict())
+        return template.format(**asdict(self))
 
 
 class SoilProfile(Command):
@@ -168,14 +188,14 @@ class SubBasin(Command):
     subbasin_id: int = 1
     name: str = "sub_001"
     downstream_id: int = -1
-    profile: str = "None"
+    profile: str = "NONE"
     reach_length: float = 0
     gauged: bool = True
     gauge_id: Optional[str] = ""  # This attribute is not rendered to RVH
 
     def to_rv(self):
         d = self.dict()
-        d["reach_length"] = d["reach_length"] if d["reach_length"] else "ZERO-"
+        d["reach_length"] = d["reach_length"]  #  if d["reach_length"] else "ZERO-"
         d["gauged"] = int(d["gauged"])
         del d["gauge_id"]
         return " ".join(f"{v: <{VALUE_PADDING}}" for v in d.values())
@@ -216,20 +236,26 @@ class HRU(Command):
     hru_type: Optional[str] = None
 
     def to_rv(self):
+        import numpy as np
+
         d = self.dict()
         del d["hru_type"]
-        return " ".join(f"{v: <{VALUE_PADDING * 2}}" for v in d.values())
+        # Adjust spacing
+        attrs = HRUs._template.splitlines()[2].strip()
+        ns = np.array(list(map(len, re.split(r"\s[\w\:]", attrs))))
+        ns[1:] += 1
+        return " ".join(f"{v:<{n}}" for v, n in zip(d.values(), ns))
 
 
-class HRUsCommand(Command):
+class HRUs(Command):
     """HRUs command (RVH)."""
 
     __root__: Sequence[HRU]
 
     _template = """
         :HRUs
-          :Attributes      AREA  ELEVATION       LATITUDE      LONGITUDE BASIN_ID       LAND_USE_CLASS            VEG_CLASS      SOIL_PROFILE  AQUIFER_PROFILE TERRAIN_CLASS      SLOPE     ASPECT
-          :Units            km2          m            deg            deg     none                  none                none              none             none          none        deg       degN
+          :Attributes    AREA      ELEVATION       LATITUDE      LONGITUDE BASIN_ID       LAND_USE_CLASS         VEG_CLASS      SOIL_PROFILE  AQUIFER_PROFILE TERRAIN_CLASS      SLOPE     ASPECT
+          :Units          km2              m            deg            deg     none                 none              none              none             none          none        deg       degN
         {_commands}
         :EndHRUs
         """
@@ -238,24 +264,19 @@ class HRUsCommand(Command):
 class Reservoir(Command):
     """Reservoir command (RVH)."""
 
-    subbasin_id: int = 0
-    hru_id: int = 0
     name: str = "Lake_XXX"
-    weir_coefficient: float = 0
-    crest_width: float = 0
-    max_depth: float = 0
-    lake_area: float = 0  # in m^2
+    subbasin_id: int = Field(0, alias="SubBasinID")
+    hru_id: int = Field(0, alias="HRUID")
+    type: str = Field("RESROUTE_STANDARD", alias="Type")
+    weir_coefficient: float = Field(0, alias="WeirCoefficient")
+    crest_width: float = Field(0, alias="CrestWidth")
+    max_depth: float = Field(0, alias="MaxDepth")
+    lake_area: float = Field(0, alias="LakeArea", description="Lake area in m2")
 
     def to_rv(self):
         template = """
             :Reservoir {name}
-              :SubBasinID {subbasin_id}
-              :HRUID {hru_id}
-              :Type RESROUTE_STANDARD
-              :WeirCoefficient {weir_coefficient}
-              :CrestWidth {crest_width}
-              :MaxDepth {max_depth}
-              :LakeArea {lake_area}
+            {_commands}
             :EndReservoir
             """
         return dedent(template).format(**self.dict())
@@ -265,7 +286,7 @@ class SubBasinGroup(Command):
     """SubBasinGroup command (RVH)."""
 
     name: str = ""
-    sb_ids: Tuple[int, ...] = ()
+    sb_ids: Sequence[int] = ()
 
     def to_rv(self):
         template = """
@@ -336,7 +357,7 @@ class GridWeights(Command):
 
     number_hrus: int = Field(1, alias="NumberHRUs")
     number_grid_cells: int = Field(1, alias="NumberGridCells")
-    data: Tuple[Tuple[int, int, float], ...] = ((1, 0, 1.0),)
+    data: Sequence[Tuple[int, int, float]] = ((1, 0, 1.0),)
 
     data_str: str = None  # Will be created in the __init__
 
@@ -412,7 +433,7 @@ class ReadFromNetCDF(Command):
     deaccumulate: bool = Field(None, alias="Deaccumulate")
 
     latitude_var_name_nc: str = Field(None, alias="LatitudeVarNameNC")
-    longitude_var_name_nc: str = Field(None, alias="LonitudeVarNameNC")
+    longitude_var_name_nc: str = Field(None, alias="LongitudeVarNameNC")
     elevation_var_name_nc: str = Field(None, alias="ElevationVarNameNC")
 
     _reorder_time = validator("dim_names_nc", allow_reuse=True)(reorder_time)
@@ -433,6 +454,8 @@ class GriddedForcing(ReadFromNetCDF):
     grid_weights: Union[GridWeights, RedirectToFile] = Field(
         GridWeights(), alias="GridWeights"
     )
+    # StationIdx not relevant to GriddedForcing
+    station_idx: int = None
 
     _template = """
     :{_cmd} {name}
@@ -441,22 +464,40 @@ class GriddedForcing(ReadFromNetCDF):
     """
 
     @validator("dim_names_nc")
-    def check_3_dims(cls, v):
+    def check_dims(cls, v):
         if len(v) != 3:
             raise ValueError(
-                "GriddedForcing netCDF datasets should have three dimensions (lon, lat, time)."
+                "GriddedForcing netCDF datasets should have  three dimensions (lon, lat, time)."
             )
+        return v
 
 
 class StationForcing(GriddedForcing):
     """StationForcing command (RVT)."""
 
     @validator("dim_names_nc")
-    def check_2_dims(cls, v):
+    def check_dims(cls, v):
         if len(v) != 2:
             raise ValueError(
                 "StationForcing netCDF datasets should have two dimensions (station, time)."
             )
+        return v
+
+    @classmethod
+    def from_nc(cls, fn, data_type, station_idx=None, alt_names=()):
+        """Instantiate class from netCDF dataset."""
+        specs = nc_specs(fn, data_type, station_idx, alt_names)
+        attrs = filter_for(cls, specs)
+
+        # Build default gridweights
+        size = specs["_dim_size_nc"]
+        size.pop(specs["_time_dim_name_nc"])
+        nstations = list(size.values())[0]
+        data = [[i + 1, i + 1, 1] for i in range(nstations)]
+        gw = GridWeights(number_hrus=nstations, number_grid_cells=nstations, data=data)
+        attrs["grid_weights"] = gw
+
+        return cls(**attrs)
 
 
 class Data(Command):
@@ -482,9 +523,9 @@ class Data(Command):
 
 class Gauge(Command):
     name: str = "default"
-    latitude: float = Field(0, alias="Latitude")
-    longitude: float = Field(0, alias="Lonitude")
-    elevation: float = Field(0, alias="Elevation")
+    latitude: float = Field(..., alias="Latitude")
+    longitude: float = Field(..., alias="Longitude")
+    elevation: float = Field(None, alias="Elevation")
 
     # Accept strings to embed parameter names into Ostrich templates
     rain_correction: float = Field(
@@ -507,19 +548,40 @@ class Gauge(Command):
 
     @validator("monthly_ave_evaporation", "monthly_ave_temperature")
     def confirm_monthly(cls, v):
-        if len(v) != 12:
+        if v is not None and len(v) != 12:
             raise ValidationError("One value per month needed.")
         return v
 
     @classmethod
-    def from_nc(cls, fn, data_type, station_idx=(1,), alt_names=()):
-        for idx in station_idx:
-            specs = nc_specs(fn, data_type, station_idx, alt_names)
+    def from_nc(cls, fn, data_type=None, station_idx=(1,), alt_names={}, extra={}):
+        """Return list of Gauge commands."""
+        from typing import get_args
 
+        if data_type is None:
+            data_type = get_args(options.Forcings)
+
+        out = []
+        for idx in station_idx:
+            data = []
+            for dtyp in data_type:
+                try:
+                    specs = nc_specs(fn, dtyp, idx, alt_names.get(dtyp, ()))
+                    data.append(Data(**filter_for(Data, specs)))
+                except ValueError:
+                    pass
+            else:
+                if len(data) == 0:
+                    raise ValueError("No data found in file.")
+            attrs = filter_for(cls, specs)
+            attrs["data"] = data
+            attrs["name"] = attrs.get("name", f"Gauge_{idx}")
+            out.append(cls(**attrs, **extra.get(idx, {})))
+        return out
 
 
 class ObservationData(Data):
     uid: int = 1  # Basin ID or HRU ID
+    data_type: Literal["HYDROGRAPH"] = "HYDROGRAPH"
 
     _template = """
         :ObservationData {data_type} {uid} {units}
@@ -528,14 +590,21 @@ class ObservationData(Data):
         """
 
     @classmethod
-    def from_nc(cls, fn, data_type, station_idx=1, uid=1, alt_names=()):
-        specs = nc_specs(fn, data_type, station_idx, alt_names)
-        return cls(
-            data_type=data_type,
-            uid=uid,
-            units=specs.pop("units", None),
-            read_from_netcdf=filter_for(ReadFromNetCDF, specs),
-        )
+    def from_nc(cls, fn, station_idx=(1,), uid=1, alt_names=()):
+        if type(station_idx) == int:
+            station_idx = station_idx
+        out = []
+        for idx in station_idx:
+            specs = nc_specs(fn, "HYDROGRAPH", idx, alt_names)
+            out.append(
+                cls(
+                    data_type="HYDROGRAPH",
+                    uid=uid,
+                    units=specs.pop("units", None),
+                    read_from_netcdf=filter_for(ReadFromNetCDF, specs),
+                )
+            )
+        return out
 
 
 class HRUState(Command):
@@ -656,9 +725,9 @@ class SoilClasses(Command):
 
 class VegetationClass(Command):
     name: str = ""
-    max_ht: float = 0
-    max_lai: float = 0
-    max_leaf_cond: float = 0
+    max_ht: float = 0.0
+    max_lai: float = 0.0
+    max_leaf_cond: float = 0.0
 
     def to_rv(self):
         template = "{name:<16},{max_ht:>14},{max_lai:>14},{max_leaf_cond:>14}"
@@ -698,53 +767,6 @@ class LandUseClasses(Command):
         {_commands}
         :EndLandUseClasses
         """
-
-
-@dataclass
-class OldParameterList(Command):
-    @dataclass
-    class Record(Command):
-        name: str = ""
-        vals: Sequence[Union[float, None]] = ()
-
-        @validator("vals", pre=True)
-        def no_none_in_default(cls, v, values):
-            """Make sure that no values are None for the [DEFAULT] record."""
-            if values["name"] == "[DEFAULT]" and None in v:
-                raise ValueError("Default record can not contain None.")
-            return v
-
-        def to_rv(self, **kwds):
-            fmt = "{name:<16}" + len(self.vals) * ",{:>18}"
-            evals = []
-            for v in self.vals:
-                ev = "_DEFAULT" if v is None else v
-                evals.append(ev)
-
-            return fmt.format(name=self.name, *evals)
-
-    names: Sequence[str] = ()  # Subclass this with the right type.
-    records: Sequence[Record] = ()
-
-    _cmd: ClassVar[str]
-
-    def to_rv(self, **kwds):
-        template = """
-        :{cmd}
-            :Parameters     {parameter_names}
-            :Units          {units}
-            {records}
-        :End{cmd}
-        """
-
-        fmt = ",{:>18}" * len(self.names)
-        units = ",              none" * len(self.names)
-        return dedent(template).format(
-            cmd=self._cmd,
-            parameter_names=fmt.format(*self.names),
-            units=units,
-            records="\n    ".join([r.to_rv(**kwds) for r in self.records]),
-        )
 
 
 class SoilParameterList(ParameterListCommand):
