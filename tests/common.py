@@ -73,18 +73,25 @@ def _convert_2d(fn):
         "latitude": 54.4848,
         "longitude": -123.3659,
     }
-
     ds = xr.open_dataset(fn, decode_times=False).rename({"nstations": "region"})
+
+    out = xr.Dataset(
+        coords={
+            "lon": ds.lon.expand_dims("lon").squeeze("region"),
+            "lat": ds.lat.expand_dims("lat").squeeze("region"),
+            "time": ds.time,
+        }
+    )
 
     for v in ds.data_vars:
         if v not in ["lon", "lat"]:
-            ds[v] = ds[v].expand_dims("region", axis=1)
+            out[v] = ds[v].expand_dims("region", axis=1)
 
     # Add geometry feature variables
     for key, val in features.items():
-        ds[key] = xr.DataArray(name=key, data=[val], dims="region")
+        out[key] = xr.DataArray(name=key, data=[val], dims="region")
 
-    return ds
+    return out
 
 
 def _convert_3d(fn):
