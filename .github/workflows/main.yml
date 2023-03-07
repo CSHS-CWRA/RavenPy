@@ -6,6 +6,9 @@ on:
       - master
   pull_request:
 
+env:
+  RAVENPY_TESTDATA_BRANCH: master
+
 jobs:
   black:
     name: Code linting
@@ -83,7 +86,7 @@ jobs:
 
     - name: Install tox
       run: |
-        python3 -m pip install tox
+        python3 -m pip install tox~=4.0
     - name: Test with tox and report coverage
       run: |
         python3 -m tox -e ${{ matrix.tox-env }}
@@ -164,7 +167,7 @@ jobs:
           raven -v
       - name: Test RavenPy
         run: |
-          python -m pytest --cov ravenpy
+          python -m pytest --cov --numprocesses=logical ravenpy
       - name: Report coverage
         run: |
           python -m coveralls
