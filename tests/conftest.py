@@ -13,7 +13,7 @@ from ravenpy.utilities.testdata import get_file as _get_file
 from ravenpy.utilities.testdata import get_local_testdata as _get_local_testdata
 
 MAIN_TESTDATA_BRANCH = os.getenv("MAIN_TESTDATA_BRANCH", "master")
-SKIP_TEST_DATA = os.getenv("SKIP_TEST_DATA")
+SKIP_TEST_DATA = True  # os.getenv("SKIP_TEST_DATA")
 
 
 def populate_testing_data(
