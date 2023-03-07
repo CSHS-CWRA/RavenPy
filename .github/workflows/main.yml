@@ -93,7 +93,7 @@ jobs:
           conda list
       - name: Test RavenPy
         run: |
-          pytest --cov --numprocesses=logical ravenpy
+          pytest --cov --numprocesses=logical
       - name: Report coverage
         run: coveralls --service=github
         env:
