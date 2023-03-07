@@ -12,6 +12,7 @@ Click
 pytest
 pytest-cov
 pytest-xdist
+filelock
 black>=23.1.0
 isort
 pre-commit
