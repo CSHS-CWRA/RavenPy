@@ -239,7 +239,7 @@ class RVH(RV):
 class RVI(RV):
     _pre_tmpl = """
     :Calendar              {calendar}
-    :RunName               {run_name}-{run_index}
+    :RunName               {identifier}-{run_index}
     :StartDate             {start_date}
     :EndDate               {end_date}
     :TimeStep              {time_step}
@@ -1023,7 +1023,7 @@ class Config:
             rvo = getattr(self, rvx, None) or self.ost
             rvo.content = fn.read_text()
             rvo.is_ostrich_tmpl = fn.suffixes[-1] == ".tpl"
-            # This is a sorry hack: I want to have rvi.run_name have a default of "run"
+            # This is a sorry hack: I want to have rvi.identifier have a default of "run"
             # because I don't want to burden the user with setting it.. but the problem
             # is that externally supplied rv files might not have it (to be discussed)
             self.rvi.run_name = None

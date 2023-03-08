@@ -424,7 +424,7 @@ class Raven:
 
     def parse_results(self, path=None, run_name=None):
         """Store output files in the self.outputs dictionary."""
-        # Output files default names. The actual output file names will be composed of the run_name and the default
+        # Output files default names. The actual output file names will be composed of the identifier and the default
         # name.
         path = path or self.exec_path
         run_name = run_name or self.config.rvi.run_name or ""
@@ -754,7 +754,7 @@ class Ostrich(Raven):
 
     def parse_results(self):
         """Store output files in the self.outputs dictionary."""
-        # Output files default names. The actual output file names will be composed of the run_name and the default
+        # Output files default names. The actual output file names will be composed of the identifier and the default
         # name.
         Raven.parse_results(self, path=self.final_path)
 

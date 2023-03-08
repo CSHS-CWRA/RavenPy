@@ -351,7 +351,7 @@ def assimilation_initialization(
 
     # ==== Initialization (just to get reasonable states) ====
     # Set initialization run options
-    model.config.rvi.run_name = "init"
+    model.config.rvi.identifier = "init"
     model.config.rvi.start_date = start_date
     # Richard: what is the end date policy for the init run ?
     model.config.rvi.end_date = start_date + dt.timedelta(days=assim_days[0])

@@ -445,7 +445,7 @@ class TestGR4JCN:
         model = GR4JCN()
 
         # This is a regular attribute member
-        model.config.update("run_name", "test")
+        model.config.update("identifier", "test")
         assert model.config.rvi.run_name == "test"
 
         # This is a computed property
