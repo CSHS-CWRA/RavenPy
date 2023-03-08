@@ -1,5 +1,4 @@
 import datetime as dt
-import os
 import zipfile
 from dataclasses import astuple
 from pathlib import Path
@@ -33,33 +32,8 @@ from ravenpy.models import (
     get_average_annual_runoff,
 )
 
-from .common import _convert_2d, _convert_3d
-
 # Link to THREDDS Data Server netCDF testdata
 TDS = "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/birdhouse/testdata/raven"
-
-
-@pytest.fixture
-def input2d(tmpdir, get_file):
-    """Convert 1D input to 2D output by copying all the time series along a new region dimension."""
-    ts = get_file(salmon_river)
-
-    ds = _convert_2d(ts)
-    fn_out = os.path.join(tmpdir, "input2d.nc")
-    ds.to_netcdf(fn_out)
-    return Path(fn_out)
-
-
-@pytest.fixture
-def input3d(tmpdir, get_file):
-    """Convert 1D input to 2D output by copying all the time series along a new region dimension."""
-    ts = get_file(salmon_river)
-
-    ds = _convert_3d(ts)
-    ds = ds.drop_vars("qobs")
-    fn_out = os.path.join(tmpdir, "input3d.nc")
-    ds.to_netcdf(fn_out)
-    return Path(fn_out)
 
 
 def test_race():
