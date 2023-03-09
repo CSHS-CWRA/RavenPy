@@ -37,6 +37,7 @@ requirements = [
     "pandas",
     "pint>=0.20",
     "pydantic",
+    "pymbolic",
     "requests",
     "scipy",
     "spotpy",

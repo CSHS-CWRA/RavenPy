@@ -12,13 +12,15 @@ from ravenpy.utilities.testdata import _default_cache_dir
 from ravenpy.utilities.testdata import get_file as _get_file
 from ravenpy.utilities.testdata import get_local_testdata as _get_local_testdata
 
-MAIN_TESTDATA_BRANCH = os.getenv("MAIN_TESTDATA_BRANCH", "master")
-SKIP_TEST_DATA = True  # os.getenv("SKIP_TEST_DATA")
+from .common import _convert_2d, _convert_3d
+
+TESTDATA_BRANCH = os.getenv("RAVENPY_TESTDATA_BRANCH", "master")
+SKIP_TEST_DATA = os.getenv("RAVENPY_SKIP_TEST_DATA")
 
 
 def populate_testing_data(
     temp_folder: Optional[Path] = None,
-    branch: str = MAIN_TESTDATA_BRANCH,
+    branch: str = TESTDATA_BRANCH,
     _local_cache: Path = _default_cache_dir,
 ):
     if _local_cache.joinpath(".data_written").exists():
@@ -118,9 +120,7 @@ def threadsafe_data_dir(tmp_path_factory) -> Path:
 @pytest.fixture(scope="session")
 def get_file(threadsafe_data_dir):
     def _get_session_scoped_file(file: Union[str, Path]):
-        return _get_file(
-            file, cache_dir=threadsafe_data_dir, branch=MAIN_TESTDATA_BRANCH
-        )
+        return _get_file(file, cache_dir=threadsafe_data_dir, branch=TESTDATA_BRANCH)
 
     return _get_session_scoped_file
 
@@ -131,7 +131,7 @@ def get_local_testdata(threadsafe_data_dir):
         return _get_local_testdata(
             file,
             temp_folder=threadsafe_data_dir,
-            branch=MAIN_TESTDATA_BRANCH,
+            branch=TESTDATA_BRANCH,
             _local_cache=_default_cache_dir,
         )
 
@@ -147,14 +147,14 @@ def gather_session_data(threadsafe_data_dir, worker_id):
     threadsafe_data_dir."""
     if worker_id == "master":
         if not SKIP_TEST_DATA:
-            populate_testing_data(branch=MAIN_TESTDATA_BRANCH)
+            populate_testing_data(branch=TESTDATA_BRANCH)
     else:
         if not SKIP_TEST_DATA:
             _default_cache_dir.mkdir(exist_ok=True)
             test_data_being_written = FileLock(_default_cache_dir.joinpath(".lock"))
             with test_data_being_written as fl:
                 # This flag prevents multiple calls from re-attempting to download testing data in the same pytest run
-                populate_testing_data(branch=MAIN_TESTDATA_BRANCH)
+                populate_testing_data(branch=TESTDATA_BRANCH)
                 _default_cache_dir.joinpath(".data_written").touch()
             fl.acquire()
         shutil.copytree(_default_cache_dir, threadsafe_data_dir)
@@ -190,7 +190,7 @@ def q_sim_1(threadsafe_data_dir):
     return _get_file(
         "hydro_simulations/raven-gr4j-cemaneige-sim_hmets-0_Hydrographs.nc",
         cache_dir=threadsafe_data_dir,
-        branch=MAIN_TESTDATA_BRANCH,
+        branch=TESTDATA_BRANCH,
     )
 
 
@@ -205,12 +205,15 @@ def ts_stats(q_sim_1, tmp_path):
 
 @pytest.fixture(scope="session")
 def params(ts_stats, tmp_path):
-    ds = xr.open_dataset(ts_stats)
-    name = list(ds.data_vars.keys()).pop()
-    q = ds[name]
-    p = fit(q, dist="gumbel_r")
     fn = tmp_path / "fit.nc"
-    p.to_netcdf(fn)
+
+    if not fn.exists():
+        ds = xr.open_dataset(ts_stats)
+        name = list(ds.data_vars.keys()).pop()
+        q = ds[name]
+        p = fit(q, dist="gumbel_r")
+        p.to_netcdf(fn)
+
     return fn
 
 
@@ -259,5 +262,41 @@ def gr4jcn_config(tmp_path_factory, get_local_testdata, salmon_hru):
     return out
 
 
+@pytest.fixture(scope="session")
+def salmon(threadsafe_data_dir):
+    """A file storing a Raven streamflow simulation over one basin."""
+    return _get_file(
+        "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
+        cache_dir=threadsafe_data_dir,
+        branch=TESTDATA_BRANCH,
+    )
+
+
+# Used in test_emulators.py
+@pytest.fixture(scope="session")
+def input2d(threadsafe_data_dir, salmon):
+    """Convert 1D input to 2D output by copying all the time series along a new region dimension."""
+
+    fn_out = threadsafe_data_dir / "input2d.nc"
+    if not fn_out.exists():
+        _convert_2d(salmon).to_netcdf(fn_out)
+
+    return fn_out
+
+
+# Used in test_emulators.py
+@pytest.fixture(scope="session")
+def input3d(threadsafe_data_dir, salmon):
+    """Convert 1D input to 2D output by copying all the time series along a new region dimension."""
+
+    fn_out = threadsafe_data_dir / "input3d.nc"
+    if not fn_out.exists():
+        ds = _convert_3d(salmon)
+        ds = ds.drop_vars("qobs")
+        ds.to_netcdf(fn_out)
+
+    return fn_out
+
+
 if __name__ == "__main__":
-    populate_testing_data(branch=MAIN_TESTDATA_BRANCH)
+    populate_testing_data(branch=TESTDATA_BRANCH)
