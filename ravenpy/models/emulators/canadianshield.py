@@ -537,7 +537,7 @@ class CANADIANSHIELD_OST(Ostrich, CANADIANSHIELD):
 
         BeginResponseVars
           #name   filename                              keyword         line    col     token
-          RawMetric  ./model/output/{identifier}-{run_index}_Diagnostics.csv;       OST_NULL        1       3       ','
+          RawMetric  ./model/output/{run_name}-{run_index}_Diagnostics.csv;       OST_NULL        1       3       ','
         EndResponseVars
 
         BeginTiedRespVars

@@ -77,12 +77,12 @@ def run(
         warn(msg, category=RavenWarning)
 
 
-def parse(identifier, outputdir: [str, Path]):
+def parse(run_name, outputdir: [str, Path]):
     """Parse outputs from model execution.
 
     Parameters
     ----------
-    identifier: str
+    run_name: str
       RunName value identifying model outputs.
     outputdir: str, Path
       Path to model output directory.
@@ -102,10 +102,10 @@ def parse(identifier, outputdir: [str, Path]):
         outputdir = Path(outputdir)
 
     out = {}
-    out["solution"] = parse_solution(outputdir / f"{identifier}_solution.rvc")
-    out["hydrograph"] = parse_nc(outputdir / f"{identifier}_Hydrographs.nc")
-    out["storage"] = parse_nc(outputdir / f"{identifier}_WatershedStorage.nc")
-    out["diagnostics"] = parse_diagnostics(outputdir / f"{identifier}_Diagnostics.csv")
+    out["solution"] = parse_solution(outputdir / f"{run_name}_solution.rvc")
+    out["hydrograph"] = parse_nc(outputdir / f"{run_name}_Hydrographs.nc")
+    out["storage"] = parse_nc(outputdir / f"{run_name}_WatershedStorage.nc")
+    out["diagnostics"] = parse_diagnostics(outputdir / f"{run_name}_Diagnostics.csv")
 
     return out
 

@@ -51,7 +51,7 @@ class RavenMultiModel(Raven):
         if overwrite:
             self.setup(overwrite)
 
-        self._rename_run_name(kwds.pop("identifier", None))
+        self._rename_run_name(kwds.pop("run_name", None))
 
         p = {}
         for m in self._models:
@@ -69,8 +69,8 @@ class RavenMultiModel(Raven):
         return procs
 
     def parse_results(self):
-        # The Raven parent class uses `identifier` as the glob prefix, but here
-        # since we have multiple models (with each its own config.rvi.identifier)
+        # The Raven parent class uses `run_name` as the glob prefix, but here
+        # since we have multiple models (with each its own config.rvi.run_name)
         # we simply use no prefix, which has the effect of getting all the files,
         # for all models
         patterns = {

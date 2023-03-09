@@ -101,7 +101,7 @@ def perform_climatology_esp(
       Array of streamflow values from the ESP method along with list of member years
 
     """
-    original_run_name = kwds.get("identifier", "esp")
+    original_run_name = kwds.get("run_name", "esp")
 
     # Get the timeseries
     tsnc = xr.open_dataset(kwds["ts"])
@@ -152,7 +152,7 @@ def perform_climatology_esp(
         rvc = kwds.pop("rvc")
     else:
         # Run model to get rvc file after warm-up using base meteo
-        kwds["identifier"] = f"{original_run_name}_warmup"
+        kwds["run_name"] = f"{original_run_name}_warmup"
         rvc = get_raven_states(model_name, workdir=workdir, **kwds)
 
     # We need to check which years are long enough (ex: wrapping years, 365-day forecast starting in
@@ -179,7 +179,7 @@ def perform_climatology_esp(
         # Setup the initial states from the warm-up and run the model.
         # Note that info on start/end dates and timeseries are in the kwds.
         m.resume(rvc)
-        kwds["identifier"] = f"{original_run_name}_{years}"
+        kwds["run_name"] = f"{original_run_name}_{years}"
         m(**kwds)
 
         # Add member to the ensemble and retag the dates to the real forecast dates

@@ -119,7 +119,7 @@ def regionalize(
 
     for i, params in enumerate(reg_params):
         kwds["params"] = params
-        kwds["identifier"] = f"reg_{i}"
+        kwds["run_name"] = f"reg_{i}"
         m(**kwds)
         qsims.append(m.q_sim.copy(deep=True))
 
