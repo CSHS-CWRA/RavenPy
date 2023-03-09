@@ -118,7 +118,7 @@ class RVT(RV):
 
 
 class RVP(RV):
-    params: Any
+    params: Any = Field(None)
     soil_classes: rc.SoilClasses = Field(None, alias="SoilClasses")
     soil_profiles: Sequence[rc.SoilProfile] = Field(None, alias="SoilProfiles")
     vegetation_classes: rc.VegetationClasses = Field(None, alias="VegetationClasses")
@@ -155,19 +155,19 @@ class RVC(RV):
 
 
 class RVH(RV):
-    subbasins: rc.SubBasins = Field([rc.SubBasin()], alias="SubBasins")
+    sub_basins: rc.SubBasins = Field([rc.SubBasin()], alias="SubBasins")
     hrus: rc.HRUs = Field(None, alias="HRUs")
-    land_subbasin_group: Sequence[rc.SubBasinGroup] = ()
-    lake_subbasin_group: Sequence[rc.SubBasinGroup] = ()
-    land_subbasin_property_multiplier: rc.SBGroupPropertyMultiplierCommand = None
-    lake_subbasin_property_multiplier: rc.SBGroupPropertyMultiplierCommand = None
+    sub_basin_group: Sequence[rc.SubBasinGroup] = Field(None, alias="SubBasinGroup")
+    sb_group_property_multiplier: Sequence[rc.SBGroupPropertyMultiplier] = Field(
+        None, alias="SBGroupPropertyMultiplier"
+    )
     reservoirs: Sequence[rc.Reservoir] = ()
 
 
 class Config(RVI, RVC, RVH, RVT, RVP):
     @validator("*", pre=True)
     def assign_symbolic(cls, v, values, config, field):
-        if field.name != "params":
+        if field.name != "params" and values.get("params") is not None:
             return parse_symbolic(v, **asdict(values["params"]))
         return v
 

@@ -15,9 +15,6 @@ from ravenpy.extractors.routing_product import (
 from ravenpy.models import Raven, get_average_annual_runoff
 
 
-@pytest.mark.skip(
-    reason="Bug with Raven 3.5 regarding netCDF reservoir output to be fixed in next release."
-)
 class TestRouting:
     def test_lievre_tutorial(self, get_file):
         """

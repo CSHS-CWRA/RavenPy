@@ -310,7 +310,7 @@ class SubBasinGroup(Command):
         return dedent(template).format(**d)
 
 
-class SBGroupPropertyMultiplierCommand(Command):
+class SBGroupPropertyMultiplier(Command):
     group_name: str
     parameter_name: str
     mult: float

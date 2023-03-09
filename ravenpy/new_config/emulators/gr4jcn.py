@@ -77,7 +77,7 @@ class GR4JCN(Config):
     rain_snow_fraction: o.RainSnowFraction = Field(
         "RAINSNOW_DINGMAN", alias="RainSnowFraction"
     )
-    soil_model: Union[int, SoilModel] = Field(4, alias="SoilModel")
+    soil_model: SoilModel = Field(4, alias="SoilModel")
     routing: o.Routing = Field("ROUTE_NONE", alias="Routing")
     catchment_route: o.CatchmentRoute = Field("ROUTE_DUMP", alias="CatchmentRoute")
     potential_melt: o.PotentialMeltMethod = Field(

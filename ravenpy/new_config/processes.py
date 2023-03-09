@@ -9,7 +9,7 @@ from .commands import Process
 class Precipitation(Process):
     """Precipitation"""
 
-    algo: Literal["PRECIP_RAVEN"]
+    algo: Literal["PRECIP_RAVEN"] = "PRECIP_RAVEN"
 
 
 class CanopyEvap(Process):
@@ -32,11 +32,11 @@ class SoilEvaporation(Process):
 
 
 class LakeEvaporation(Process):
-    algo: Literal["LAKE_EVAP_BASIC"]
+    algo: Literal["LAKE_EVAP_BASIC"] = "LAKE_EVAP_BASIC"
 
 
 class OpenWaterEvaporation(Process):
-    algo: Literal["OPEN_WATER_EVAP"]
+    algo: Literal["OPEN_WATER_EVAP"] = "OPEN_WATER_EVAP"
 
 
 class Infiltration(Process):
@@ -75,7 +75,7 @@ class Percolation(Process):
 
 
 class CapilaryRise(Process):
-    algo: Literal["CRISE_HBV"]
+    algo: Literal["CRISE_HBV"] = "CRISE_HBV"
 
 
 class Baseflow(Process):
@@ -93,11 +93,11 @@ class Baseflow(Process):
 
 
 class Interflow(Process):
-    algo: Literal["PRMS"]
+    algo: Literal["PRMS"] = "PRMS"
 
 
 class Seepage(Process):
-    algo: Literal["SEEP_LINEAR"]
+    algo: Literal["SEEP_LINEAR"] = "SEEP_LINEAR"
 
 
 class DepressionOverflow(Process):
@@ -105,7 +105,7 @@ class DepressionOverflow(Process):
 
 
 class LakeRelease(Process):
-    algo: Literal["LAKEREL_LINEAR"]
+    algo: Literal["LAKEREL_LINEAR"] = "LAKEREL_LINEAR"
 
 
 class Abstraction(Process):
@@ -113,11 +113,11 @@ class Abstraction(Process):
 
 
 class SnowMelt(Process):
-    algo: Literal["MELT_POTMELT"]
+    algo: Literal["MELT_POTMELT"] = "MELT_POTMELT"
 
 
 class SnowRefreeze(Process):
-    algo: Literal["FREEZE_DEGREE_DAY"]
+    algo: Literal["FREEZE_DEGREE_DAY"] = "FREEZE_DEGREE_DAY"
 
 
 class SnowBalance(Process):
@@ -144,11 +144,11 @@ class Sublimation(Process):
 
 
 class SnowAlbedoEvolve(Process):
-    algo: Literal["SNOALB_UBC"]
+    algo: Literal["SNOALB_UBC"] = "SNOALB_UBC"
 
 
 class SnowTempEvolve(Process):
-    algo: Literal["SNOTEMP_NEWTONS"]
+    algo: Literal["SNOTEMP_NEWTONS"] = "SNOTEMP_NEWTONS"
 
 
 class CanopyDrip(Process):
@@ -156,7 +156,7 @@ class CanopyDrip(Process):
 
 
 class CropHeatUnitEvolve(Process):
-    algo: Literal["CHU_ONTARIO"]
+    algo: Literal["CHU_ONTARIO"] = "CHU_ONTARIO"
 
 
 class GlacierMelt(Process):
@@ -170,12 +170,12 @@ class GlacierRelease(Process):
 class Flush(Process):
     """"""
 
-    algo: Literal["RAVEN_DEFAULT"]
+    algo: Literal["RAVEN_DEFAULT"] = "RAVEN_DEFAULT"
     p: float = None
 
 
 class Overflow(Process):
-    algo: Literal["OVERFLOW_RAVEN"]
+    algo: Literal["OVERFLOW_RAVEN"] = "OVERFLOW_RAVEN"
 
 
 class Split(Process):

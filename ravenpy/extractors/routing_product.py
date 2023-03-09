@@ -86,6 +86,7 @@ class RoutingProductShapefileExtractor:
                Sequence of `commands.HRUsCommand.Record` objects
 
         """
+        # TODO: This should be removed
         self.model_cls = model
 
         # As one subbasin can be mapped to many rows (HRUs), we use a dict,
@@ -95,6 +96,102 @@ class RoutingProductShapefileExtractor:
         lake_sb_ids = []
         reservoir_cmds = []  # those are meant to be injected inline in the RVH
         channel_profile_cmds = []  # those are meant to be injected inline in the RVP
+        hru_recs = []  # each row corresponds to a HRU
+
+        # Collect all subbasin_ids for fast lookup in next loop
+        subbasin_ids = {int(row["SubId"]) for _, row in self._df.iterrows()}
+
+        for _, row in self._df.iterrows():
+            # HRU
+            hru_attrs = self._extract_hru(row)
+
+            if model is not None:
+                # Instantiate HRUs with emulator specific land_use_class, veg_class and soil_profile names.
+                lu = hru_attrs.pop("land_use_class")
+                for attr in ["veg_class", "soil_profile"]:
+                    hru_attrs.pop(attr)
+
+                if lu == "Landuse_Land_HRU":
+                    hru_rec = model.LandHRU(**hru_attrs)
+
+                if lu == "Landuse_Lake_HRU":
+                    hru_rec = model.LakeHRU(**hru_attrs)
+            else:
+                # Instantiate HRUs with generic land_use_class, veg_class and soil_profile names.
+                hru_rec = HRUsCommand.Record(**hru_attrs)
+
+            hru_recs.append(hru_rec)
+
+            subbasin_id = int(row["SubId"])
+
+            is_lake = False
+
+            lake_field = (
+                "IsLake" if self.routing_product_version == "1.0" else "Lake_Cat"
+            )
+
+            if row[lake_field] > 0 and row["HRU_IsLake"] > 0:
+                lake_sb_ids.append(subbasin_id)
+                reservoir_cmds.append(ReservoirCommand(**self._extract_reservoir(row)))
+                is_lake = True
+            elif row[lake_field] > 0:
+                continue  # not sure about this condition!
+            else:
+                land_sb_ids.append(subbasin_id)
+
+            # Subbasin
+            sb = SubBasinsCommand.Record(
+                **self._extract_subbasin(row, is_lake, subbasin_ids)
+            )
+
+            if sb.subbasin_id not in subbasin_recs:
+                subbasin_recs[sb.subbasin_id] = sb
+
+                # ChannelProfile
+                channel_profile_cmds.append(
+                    ChannelProfileCommand(**self._extract_channel_profile(row))
+                )
+
+        return dict(
+            subbasins=list(subbasin_recs.values()),
+            land_subbasin_ids=land_sb_ids,
+            lake_subbasin_ids=lake_sb_ids,
+            reservoirs=reservoir_cmds,
+            channel_profiles=channel_profile_cmds,
+            hrus=hru_recs,
+        )
+
+    def extract_new_config(self):
+        """Extract data from the Routing Product shapefile and return
+        dictionaries that can be parsed into Raven Commands.
+
+        Parameters
+        ----------
+        model : Raven subclass
+          Emulator class used to customize HRU objects extracted.
+
+        Returns
+        -------
+        dict
+            "sub_basins"
+               Sequence of dictionaries with `SubBasin` attributes.
+            "sub_basin_group"
+               Sequence of dictionaries with `SubBasinGroup` attributes.
+            "reservoirs"
+               Sequence of dictionaries with `Reservoir` attributes.
+            "channel_profiles"
+               Sequence of dictionaries with `ChannelProfile` attributes.
+            "hrus"
+               Sequence of dictionaries with `HRU` attributes.
+
+        """
+        # As one subbasin can be mapped to many rows (HRUs), we use a dict,
+        # keyed by their IDs, which we'll transform into a list in the end
+        subbasin_recs = {}  #
+        land_sb_ids = []
+        lake_sb_ids = []
+        reservoirs = []  # those are meant to be injected inline in the RVH
+        channel_profiles = []  # those are meant to be injected inline in the RVP
         hru_recs = []  # each row corresponds to a HRU
 
         # Collect all subbasin_ids for fast lookup in next loop
@@ -114,7 +211,7 @@ class RoutingProductShapefileExtractor:
 
             if row[lake_field] > 0 and row["HRU_IsLake"] > 0:
                 lake_sb_ids.append(subbasin_id)
-                reservoir_cmds.append(self._extract_reservoir(row))
+                reservoirs.append(self._extract_reservoir(row))
                 is_lake = True
             elif row[lake_field] > 0:
                 continue  # not sure about this condition!
@@ -124,22 +221,24 @@ class RoutingProductShapefileExtractor:
             # Subbasin
             sb = self._extract_subbasin(row, is_lake, subbasin_ids)
 
-            if sb.subbasin_id not in subbasin_recs:
-                subbasin_recs[sb.subbasin_id] = sb
+            if sb["subbasin_id"] not in subbasin_recs:
+                subbasin_recs[sb["subbasin_id"]] = sb
 
                 # ChannelProfile
-                channel_profile_cmds.append(self._extract_channel_profile(row))
+                channel_profiles.append(self._extract_channel_profile(row))
 
         return dict(
-            subbasins=list(subbasin_recs.values()),
-            land_subbasin_ids=land_sb_ids,
-            lake_subbasin_ids=lake_sb_ids,
-            reservoirs=reservoir_cmds,
-            channel_profiles=channel_profile_cmds,
+            sub_basins=list(subbasin_recs.values()),
+            sub_basin_group=[
+                {"name": "Land", "sb_ids": land_sb_ids},
+                {"name": "Lakes", "sb_ids": lake_sb_ids},
+            ],
+            reservoirs=reservoirs,
+            channel_profiles=channel_profiles,
             hrus=hru_recs,
         )
 
-    def _extract_subbasin(self, row, is_lake, subbasin_ids) -> SubBasinsCommand.Record:
+    def _extract_subbasin(self, row, is_lake, subbasin_ids) -> dict:
         subbasin_id = int(row["SubId"])
         # is_lake = row["HRU_IsLake"] >= 0
         riv_length_field = (
@@ -162,7 +261,7 @@ class RoutingProductShapefileExtractor:
             is_lake and RoutingProductShapefileExtractor.USE_LAKE_AS_GAUGE
         )
         gauge_id = row["Obs_NM"] if gauged else ""
-        rec = SubBasinsCommand.Record(
+        return dict(
             subbasin_id=subbasin_id,
             name=f"sub_{subbasin_id}",
             downstream_id=downstream_id,
@@ -172,12 +271,10 @@ class RoutingProductShapefileExtractor:
             gauge_id=gauge_id,
         )
 
-        return rec
-
-    def _extract_reservoir(self, row) -> ReservoirCommand:
+    def _extract_reservoir(self, row) -> dict:
         lake_id = int(row["HyLakeId"])
 
-        return ReservoirCommand(
+        return dict(
             subbasin_id=int(row["SubId"]),
             hru_id=int(row["HRU_ID"]),
             name=f"Lake_{lake_id}",
@@ -187,7 +284,7 @@ class RoutingProductShapefileExtractor:
             lake_area=row["HRU_Area"],
         )
 
-    def _extract_channel_profile(self, row) -> ChannelProfileCommand:
+    def _extract_channel_profile(self, row) -> dict:
         subbasin_id = int(row["SubId"])
         slope = max(row["RivSlope"], RoutingProductShapefileExtractor.MAX_RIVER_SLOPE)
 
@@ -248,14 +345,14 @@ class RoutingProductShapefileExtractor:
             (sidwdfp + 2 * channel_width + 2 * sidwd + botwd, floodn),
         )
 
-        return ChannelProfileCommand(
+        return dict(
             name=f"chn_{subbasin_id}",
             bed_slope=slope,
             survey_points=survey_points,
             roughness_zones=roughness_zones,
         )
 
-    def _extract_hru(self, row) -> HRUsCommand.Record:
+    def _extract_hru(self, row) -> dict:
         aspect = row["HRU_A_mean"]
 
         if self.hru_aspect_convention == "GRASS":
@@ -267,7 +364,7 @@ class RoutingProductShapefileExtractor:
         else:
             assert False
 
-        attrs = dict(
+        return dict(
             hru_id=int(row["HRU_ID"]),
             area=row["HRU_Area"] / 1_000_000,
             elevation=row["HRU_E_mean"],
@@ -276,24 +373,11 @@ class RoutingProductShapefileExtractor:
             subbasin_id=int(row["SubId"]),
             aquifer_profile="[NONE]",
             terrain_class="[NONE]",
-            slope=row["HRU_S_mean"],
-            aspect=aspect,
-        )
-
-        if self.model_cls is not None:
-            # Instantiate HRUs with emulator specific land_use_class, veg_class and soil_profile names.
-            if row["LAND_USE_C"] == "Landuse_Land_HRU":
-                return self.model_cls.LandHRU(**attrs)
-
-            if row["LAND_USE_C"] == "Landuse_Lake_HRU":
-                return self.model_cls.LakeHRU(**attrs)
-
-        # Instantiate HRUs with generic land_use_class, veg_class and soil_profile names.
-        return HRUsCommand.Record(
             land_use_class=row["LAND_USE_C"],
             veg_class=row["VEG_C"],
             soil_profile=row["SOIL_PROF"],
-            **attrs,
+            slope=row["HRU_S_mean"],
+            aspect=aspect,
         )
 
 

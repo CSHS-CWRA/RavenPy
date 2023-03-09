@@ -312,6 +312,7 @@ class PotentialMeltMethod(Enum):
     """:PotentialMelt algorithms"""
 
     DEGREE_DAY = "POTMELT_DEGREE_DAY"
+    NONE = "POTMELT_NONE"
     RESTRICTED = "POTMELT_RESTRICTED"
     DATA = "POTMELT_DATA"
     EB = "POTMELT_EB"
