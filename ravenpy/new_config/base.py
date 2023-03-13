@@ -229,6 +229,7 @@ class RV(Command):
     class Config:
         allow_population_by_field_name = True
         validate_all = True
+        validate_assignment = True
 
 
 def parse_symbolic(value, **kwds):

@@ -6,6 +6,8 @@ def test_run_and_parse(gr4jcn_config_rv):
     out = parse(run_name="test", outputdir=gr4jcn_config_rv / "output")
     assert len(out["hydrograph"].q_sim.time) > 600
 
+    assert out["diagnostics"]["DIAG_RMSE"]
+
 
 def test_emulator(gr4jcn_config, tmpdir):
     e = Emulator(config=gr4jcn_config, path=tmpdir)

@@ -17,7 +17,7 @@ RAVEN_EXEC_PATH = os.getenv("RAVENPY_RAVEN_BINARY_PATH") or shutil.which("raven"
 class Emulator:
     def __init__(self, config: Config, path: Union[Path, str]):
         self._config = config
-        self._path = path
+        self._path = Path(path)
 
     def build(self, overwrite=True):
         """Write the configuration files to disk."""

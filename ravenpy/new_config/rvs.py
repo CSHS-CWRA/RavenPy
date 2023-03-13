@@ -31,9 +31,6 @@ class RVI(RV):
     evaluation_period: Sequence[rc.EvaluationPeriod] = Field(
         None, alias="EvaluationPeriod"
     )
-    evaluation_metrics: Sequence[o.EvaluationMetrics] = Field(
-        None, alias="EvaluationMetrics"
-    )
 
     # Model description
     routing: o.Routing = Field(None, alias="Routing")
@@ -63,6 +60,9 @@ class RVI(RV):
     # alias: Dict[str, str] = Field(None, alias="Alias")
     hydrologic_processes: Sequence[rc.Process] = Field(
         None, alias="HydrologicProcesses"
+    )
+    evaluation_metrics: Sequence[o.EvaluationMetrics] = Field(
+        None, alias="EvaluationMetrics"
     )
 
     # Options
@@ -240,7 +240,7 @@ class Config(RVI, RVC, RVH, RVT, RVP):
             fn = workdir / self.rv_fn(rv)
             if fn.exists() and not overwrite:
                 raise OSError(f"{fn} already exists and would be overwritten.")
-            logger.info(f"Writing {rv}")
+            logger.info(f"Writing {rv}: {fn}")
             fn.write_text(self._rv(rv))
             out[rv] = fn
 

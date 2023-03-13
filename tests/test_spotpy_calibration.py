@@ -4,9 +4,24 @@ import time
 import spotpy
 
 from ravenpy.models import GR4JCN
-from ravenpy.utilities.calibration import SpotpySetup
+from ravenpy.utilities.calibration import SpotpySetup, SpotSetup
 
 salmon_river = "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
+
+
+def test_spotpy_calibration(gr4jcn_config, tmpdir):
+    spot_setup = SpotSetup(
+        config=gr4jcn_config,
+        low=(0.01, -15.0, 10.0, 0.0, 1.0, 0.0),
+        high=(2.5, 10.0, 700.0, 7.0, 30.0, 1.0),
+        path=tmpdir,
+    )
+
+    sampler = spotpy.algorithms.dds(
+        spot_setup, dbname="RAVEN_model_run", dbformat="ram", save_sim=False
+    )
+
+    sampler.sample(10, trials=1)
 
 
 class TestGR4JCNSpotpy:

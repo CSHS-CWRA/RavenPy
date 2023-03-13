@@ -257,6 +257,21 @@ class EvaluationMetrics(Enum):
     KLING_GUPTA = "KLING_GUPTA"
 
 
+evaluation_metrics_multiplier = dict(
+    NASH_SUTCLIFFE=1,
+    LOG_NASH=1,
+    RMSE=-1,
+    PCT_BIAS="Not Supported",
+    ABSERR=-1,
+    ABSMAX=-1,
+    PDIFF=-1,
+    TMVOL=-1,
+    RCOEFF=-1,
+    NSC=1,
+    KLING_GUPTA=1,
+)
+
+
 class Evaporation(Enum):
     PET_CONSTANT = "PET_CONSTANT"
     PET_PENMAN_MONTEITH = "PET_PENMAN_MONTEITH"

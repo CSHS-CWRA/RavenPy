@@ -33,5 +33,5 @@ def test_emulator():
     assert t.air_snow_coeff == 0.5
 
 
-def test_gr4j(gr4jcn_config):
-    assert (gr4jcn_config / "test.rvi").exists()
+def test_gr4j(gr4jcn_config_rv):
+    assert (gr4jcn_config_rv / "test.rvi").exists()

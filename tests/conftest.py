@@ -256,6 +256,7 @@ def gr4jcn_config(get_local_testdata, salmon_hru):
         RunName="test",
         CustomOutput=rc.CustomOutput("YEARLY", "AVERAGE", "PRECIP", "ENTIRE_WATERSHED"),
         GlobalParameter={"AVG_ANNUAL_RUNOFF": 208.480},
+        EvaluationMetrics=("RMSE",),
     )
     return m
 
