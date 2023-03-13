@@ -132,17 +132,15 @@ class GR4JCN(Config):
     )
 
     soil_classes: SoilClasses = Field(
-        SoilClasses(
-            names=["SOIL_PROD", "SOIL_ROUT", "SOIL_TEMP", "SOIL_GW", "AQUIFER"]
-        ),
+        ["SOIL_PROD", "SOIL_ROUT", "SOIL_TEMP", "SOIL_GW", "AQUIFER"],
         alias="SoilClasses",
     )
 
     soil_parameter_list: SoilParameterList = Field(
-        SoilParameterList(
-            names=("POROSITY", "GR4J_X3", "GR4J_X2"),
-            pl=[PL(name="[DEFAULT]", values=(1, P.GR4J_X3, P.GR4J_X2))],
-        ),
+        {
+            "names": ("POROSITY", "GR4J_X3", "GR4J_X2"),
+            "pl": [PL(name="[DEFAULT]", values=(1, P.GR4J_X3, P.GR4J_X2))],
+        },
         alias="SoilParameterList",
     )
 
@@ -159,19 +157,19 @@ class GR4JCN(Config):
     )
 
     vegetation_classes: VegetationClasses = Field(
-        VegetationClasses.parse_obj([{"name": "VEG_ALL"}, {"name": "VEG_WATER"}]),
+        [{"name": "VEG_ALL"}, {"name": "VEG_WATER"}],
         alias="VegetationClasses",
     )
 
     land_use_classes: LandUseClasses = Field(
-        LandUseClasses.parse_obj([{"name": "LU_ALL"}, {"name": "LU_WATER"}]),
+        [{"name": "LU_ALL"}, {"name": "LU_WATER"}],
         alias="LandUseClasses",
     )
 
     land_use_parameter_list: LandUseParameterList = Field(
-        LandUseParameterList(
-            names=("GR4J_X4", "MELT_FACTOR"),
-            pl=[PL(name="[DEFAULT]", values=(P.GR4J_X4, 7.73))],
-        ),
+        {
+            "names": ("GR4J_X4", "MELT_FACTOR"),
+            "pl": [PL(name="[DEFAULT]", values=(P.GR4J_X4, 7.73))],
+        },
         alias="LandUseParameterList",
     )

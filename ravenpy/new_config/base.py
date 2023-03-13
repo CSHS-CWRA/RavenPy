@@ -21,9 +21,8 @@ Sometimes, we want A2 to be printed as a command (HydrologicProcesses)
 Sometime, we don't (Gauges)
 In general, let's print the alias except if the parent is __root__, or if the parent's name is the same as the
 children (Data holding multiple Data elements).
+
 """
-
-
 import pytest
 from pydantic import BaseModel, Extra, Field, ValidationError, validator
 
@@ -39,12 +38,27 @@ class Params:
     pass
 
 
-def encoder(v):
+def encoder(v: dict) -> dict:
+    """
+    Return string representation of objects in dictionary.
+
+    This is meant to be applied to BaseModel attributes that either have an `alias` defined,
+    or have a `__root__` attribute. The objective is to avoid creating `Command` objects for every
+    configuration option.
+
+    - bool: ':{cmd}\n' if obj else ''
+    - dict: ':{cmd} {key} {value}'
+    - enum: ':{cmd} {obj.value}'
+    - Command: obj.to_rv()
+    - Sequence: complicated
+    - Any other: ':{cmd} {obj}'
+
+    """
     import warnings
 
     for cmd, obj in v.items():
         if obj is None:
-            out = ""
+            continue
         elif isinstance(obj, bool):
             # :Command\n
             out = f":{cmd}\n" if obj else ""
@@ -61,18 +75,18 @@ def encoder(v):
             # Custom
             out = obj.to_rv()
         elif isinstance(obj, (list, tuple)):
+            s = map(str, obj)
             o0 = obj[0]
-            if hasattr(o0, "to_rv"):
-                c = "\n".join([o.to_rv() for o in obj])
-                if cmd == "__root__" or cmd == o0.__class__.__name__:
-                    out = c
-                else:
-                    out = f":{cmd}\n{indent(c, '  ')}\n:End{cmd}\n"
+            if cmd == "__root__" or issubclass(o0.__class__, FlatCommand):
+                out = "\n".join(s)
+            elif issubclass(o0.__class__, (Command, Record)):
+                rec = indent("\n".join(s), Command._indent)
+                out = f":{cmd}\n{rec}\n:End{cmd}\n"
             elif isinstance(o0, Enum):
                 seq = " ".join([o.value for o in obj])
                 out = f":{cmd:<20} {seq}\n"
             else:
-                seq = " ".join(map(str, obj))
+                seq = " ".join(s)
                 out = f":{cmd:<20} {seq}\n"
         else:
             out = f":{cmd:<20} {obj}\n"
@@ -82,6 +96,13 @@ def encoder(v):
     return v
 
 
+class Record(BaseModel):
+    class Config:
+        extra = Extra.forbid
+        arbitrary_types_allowed = True
+        allow_population_by_field_name = True
+
+
 class Command(BaseModel):
     """
     Base class for Raven commands.
@@ -89,7 +110,7 @@ class Command(BaseModel):
 
     _template: str = """
             :{_cmd}
-            {_commands}
+            {_commands}{_records}
             :End{_cmd}
             """
     _indent: str = "  "
@@ -97,35 +118,49 @@ class Command(BaseModel):
     def __str__(self):
         return self.to_rv()
 
-    def command_objs(self):
-        """Return attributes that are Raven commands."""
+    def _models(self) -> Dict[str, str]:
+        """Return dictionary of RV strings for class attributes that are Raven models."""
         d = {}
         for key, field in self.__fields__.items():
             if field.has_alias or field.alias == "__root__":
-                if self.__dict__[key] is not None:
+                obj = self.__dict__[key]
+                if obj is not None:
                     d[field.alias] = self.__dict__[key]
-        return d
+        return encoder(d)
 
-    def command_json(self):
-        """Return dictionary of Raven commands."""
-        return encoder(self.command_objs())
-
-    def commands(self):
-        """String of Raven commands."""
-        return "".join(self.command_json().values())
+    def _records(self) -> List[str]:
+        """Return list of RV strings for records."""
+        return [
+            str(o)
+            for o in self.__dict__.get("__root__", [])
+            if issubclass(o.__class__, Record)
+        ]
 
     def to_rv(self):
         """Return Raven configuration string."""
         d = self.dict()
-        d.update(self.command_json())
+        cmds = self._models()
+        d.update(cmds)
+
+        recs = "\n".join(self._records())
+        if recs:
+            recs = indent(recs, self._indent)
+
         d["_cmd"] = self.__class__.__name__
-        d["_commands"] = indent(self.commands().strip(), self._indent)
+        d["_commands"] = indent("".join(cmds.values()).strip(), self._indent)
+        if cmds and recs and "_commands" in self._template:
+            recs = "\n" + recs
+        d["_records"] = recs
         return dedent(self._template).format(**d)
 
     class Config:
         extra = Extra.forbid
         arbitrary_types_allowed = True
         allow_population_by_field_name = True
+
+
+class FlatCommand(Command):
+    """Only used to discriminate Commands that should not be nested."""
 
 
 class ParameterList(Command):
@@ -207,7 +242,7 @@ def parse_symbolic(value, **kwds):
     elif isinstance(value, (list, tuple)):
         return [parse_symbolic(v, **kwds) for v in value]
 
-    elif isinstance(value, Command):
+    elif isinstance(value, (Command, Record)):
         attrs = value.dict()
         return value.__class__(**parse_symbolic(attrs, **kwds))
 

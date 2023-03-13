@@ -5,12 +5,19 @@ from pathlib import Path
 from typing import Any, Dict, Sequence, Type, TypeVar, Union
 
 import cftime
+from loguru import logger
 from pydantic import BaseModel, Extra, Field, validator
 from pydantic.dataclasses import dataclass
 
 from . import commands as rc
 from . import options as o
 from .base import RV, parse_symbolic
+
+"""
+Generic Raven model configuration
+
+Note that alias are set to identify class attributes as Raven commands.
+"""
 
 
 class RVI(RV):
@@ -108,7 +115,7 @@ class RVI(RV):
 
 
 class RVT(RV):
-    gauge: Sequence[rc.Gauge] = Field(None, alias="Gauge")
+    gauge: Sequence[rc.Gauge] = Field(None, alias="Gauge", flat=True)
     # data: Sequence[rc.Data] = ()
     station_forcing: Sequence[rc.StationForcing] = Field(None, alias="StationForcing")
     gridded_forcing: Sequence[rc.GriddedForcing] = Field(None, alias="GriddedForcing")
@@ -206,4 +213,5 @@ class Config(RVI, RVC, RVH, RVT, RVP):
             fn = workdir / f"{self.run_name}.{rv}"
             if fn.exists() and not overwrite:
                 raise OSError(f"{fn} already exists and would be overwritten.")
+            logger.info(f"Writing {rv}")
             fn.write_text(self.to_rv(rv))

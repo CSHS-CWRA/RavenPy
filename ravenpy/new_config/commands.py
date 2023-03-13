@@ -27,7 +27,7 @@ from pydantic import (
 )
 
 from . import options
-from .base import Command, GenericParameterList, ParameterList, Sym
+from .base import Command, FlatCommand, GenericParameterList, ParameterList, Record, Sym
 from .utils import filter_for, nc_specs
 
 """
@@ -174,12 +174,12 @@ class CustomOutput:
         return template.format(**asdict(self))
 
 
-class SoilProfile(Command):
+class SoilProfile(Record):
     name: str = ""
     soil_classes: Sequence[str] = ()
     thicknesses: Sequence[Sym] = ()
 
-    def to_rv(self):
+    def __str__(self):
         # From the Raven manual: {profile_name,#horizons,{soil_class_name,thick.}x{#horizons}}x[NP]
         n_horizons = len(self.soil_classes)
         horizon_data = list(itertools.chain(*zip(self.soil_classes, self.thicknesses)))
@@ -187,7 +187,7 @@ class SoilProfile(Command):
         return fmt.format(self.name, n_horizons, *horizon_data)
 
 
-class SubBasin(Command):
+class SubBasin(Record):
     """Record to populate RVH :SubBasins command internal table."""
 
     subbasin_id: int = 1
@@ -198,7 +198,7 @@ class SubBasin(Command):
     gauged: bool = True
     gauge_id: Optional[str] = ""  # This attribute is not rendered to RVH
 
-    def to_rv(self):
+    def __str__(self):
         d = self.dict()
         d["reach_length"] = d["reach_length"]  # if d["reach_length"] else "ZERO-"
         d["gauged"] = int(d["gauged"])
@@ -215,12 +215,12 @@ class SubBasins(Command):
         :SubBasins
           :Attributes   ID NAME DOWNSTREAM_ID PROFILE REACH_LENGTH  GAUGED
           :Units      none none          none    none           km    none
-        {_commands}
+        {_records}
         :EndSubBasins
     """
 
 
-class HRU(Command):
+class HRU(Record):
     """Record to populate :HRUs command internal table (RVH)."""
 
     hru_id: int = 1
@@ -240,7 +240,7 @@ class HRU(Command):
     # to specify which HRU subclass to use when necessary
     hru_type: Optional[str] = None
 
-    def to_rv(self):
+    def __str__(self):
         import numpy as np
 
         d = self.dict()
@@ -261,7 +261,7 @@ class HRUs(Command):
         :HRUs
           :Attributes    AREA      ELEVATION       LATITUDE      LONGITUDE BASIN_ID       LAND_USE_CLASS         VEG_CLASS      SOIL_PROFILE  AQUIFER_PROFILE TERRAIN_CLASS      SLOPE     ASPECT
           :Units          km2              m            deg            deg     none                 none              none              none             none          none        deg       degN
-        {_commands}
+        {_records}
         :EndHRUs
         """
 
@@ -320,6 +320,7 @@ class SBGroupPropertyMultiplierCommand(Command):
         return dedent(template).format(**self.dict())
 
 
+# TODO: Convert to new config
 class ChannelProfile(Command):
     """ChannelProfile command (RVP)."""
 
@@ -364,20 +365,8 @@ class GridWeights(Command):
     number_grid_cells: int = Field(1, alias="NumberGridCells")
     data: Sequence[Tuple[int, int, float]] = ((1, 0, 1.0),)
 
-    data_str: str = None  # Will be created in the __init__
-
-    _template = """
-            :GridWeights
-            {_commands}
-            {data_str}
-            :EndGridWeights
-            """
-
-    def __init__(self, **data):
-        super().__init__(**data)
-        self.data_str = indent(
-            "\n".join(f"{p[0]} {p[1]} {p[2]}" for p in self.data), "  "
-        )
+    def __records__(self):
+        return (f"{p[0]} {p[1]} {p[2]}" for p in self.data)
 
     @classmethod
     def parse(cls, s):
@@ -416,7 +405,7 @@ class RedirectToFile(Command):
         return v
 
 
-class ReadFromNetCDF(Command):
+class ReadFromNetCDF(FlatCommand):
     # TODO: When encoding Path, return only path.name
     # Order of HttpUrl, Path is important to avoid casting strings to Path.
     file_name_nc: Union[HttpUrl, Path] = Field(
@@ -505,7 +494,7 @@ class StationForcing(GriddedForcing):
         return cls(**attrs)
 
 
-class Data(Command):
+class Data(FlatCommand):
     data_type: options.Forcings = ""
     units: str = ""
     read_from_netcdf: ReadFromNetCDF = Field(..., alias="ReadFromNetCDF")
@@ -515,6 +504,8 @@ class Data(Command):
                 {_commands}
                 :End{_cmd}
                 """
+
+    _nested: bool = False
 
     @classmethod
     def from_nc(cls, fn, data_type, station_idx=1, alt_names=()):
@@ -526,7 +517,7 @@ class Data(Command):
         )
 
 
-class Gauge(Command):
+class Gauge(FlatCommand):
     name: str = "default"
     latitude: float = Field(..., alias="Latitude")
     longitude: float = Field(..., alias="Longitude")
@@ -550,6 +541,8 @@ class Gauge(Command):
         {_commands}
         :EndGauge
         """
+
+    _nested: bool = False
 
     @validator("monthly_ave_evaporation", "monthly_ave_temperature")
     def confirm_monthly(cls, v):
@@ -612,11 +605,11 @@ class ObservationData(Data):
         return out
 
 
-class HRUState(Command):
+class HRUState(Record):
     index: int = 1
     data: Dict[str, float] = Field(default_factory=dict)
 
-    def to_rv(self):
+    def __str__(self):
         return ",".join(map(str, (self.index,) + tuple(self.data.values())))
 
     @classmethod
@@ -648,7 +641,7 @@ class HRUStateVariableTable(Command):
     def check_attributes_are_uniform(cls, values):
         from itertools import chain
 
-        if values["__root__"]:
+        if values.get("__root__"):
             hs = values["__root__"]
             # Get all attribute names from HRUStates
             names = sorted(list(set(chain(*[tuple(s.data.keys()) for s in hs]))))
@@ -743,19 +736,19 @@ class BasinStateVariables(Command):
 
 
 class SoilClasses(Command):
-    names: Sequence[str] = ()
+    __root__: Sequence[str] = ()
 
-    def commands(self):
-        return "\n".join(self.names)
+    def __records__(self):
+        return self.__root__
 
 
-class VegetationClass(Command):
+class VegetationClass(Record):
     name: str = ""
     max_ht: float = 0.0
     max_lai: float = 0.0
     max_leaf_cond: float = 0.0
 
-    def to_rv(self):
+    def __str__(self):
         template = "{name:<16},{max_ht:>14},{max_lai:>14},{max_leaf_cond:>14}"
         return template.format(**self.dict())
 
@@ -766,22 +759,19 @@ class VegetationClasses(Command):
     :VegetationClasses
       :Attributes     ,        MAX_HT,       MAX_LAI, MAX_LEAF_COND
       :Units          ,             m,          none,      mm_per_s
-    {_commands}
+    {_records}
     :EndVegetationClasses
     """
 
 
-class LandUseClass(Command):
+class LandUseClass(Record):
     name: str = ""
     impermeable_frac: float = 0
     forest_coverage: float = 0
 
-    def to_rv(self):
+    def __str__(self):
         template = "{name:<16},{impermeable_frac:>16},{forest_coverage:>16}"
         return template.format(**self.dict())
-
-    def __str__(self):
-        return self.to_rv()
 
 
 class LandUseClasses(Command):
@@ -790,7 +780,7 @@ class LandUseClasses(Command):
         :LandUseClasses
           :Attributes     ,IMPERMEABLE_FRAC, FOREST_COVERAGE
           :Units          ,           fract,           fract
-        {_commands}
+        {_records}
         :EndLandUseClasses
         """
 

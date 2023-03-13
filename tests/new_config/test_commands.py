@@ -39,7 +39,7 @@ def test_hrus():
 
 def test_hru_state():
     s = rc.HRUState(index=1, data={"SOIL[0]": 1, "SOIL[1]": 2.0})
-    assert s.to_rv() == "1,1.0,2.0"
+    assert str(s) == "1,1.0,2.0"
 
 
 def test_linear_transform():
@@ -73,7 +73,7 @@ def test_vegetation_classes():
 def test_soil_classes():
     from ravenpy.new_config.commands import SoilClasses
 
-    c = SoilClasses(names=["TOPSOIL", "FAST_RES", "SLOW_RES"])
+    c = SoilClasses.parse_obj(["TOPSOIL", "FAST_RES", "SLOW_RES"])
     assert dedent(c.to_rv()) == dedent(
         """
     :SoilClasses
@@ -98,7 +98,7 @@ def test_soil_profiles(x=42.0):
 
     pat = r"DEFAULT_P\s*,\s*3,\s*TOPSOIL,\s*(.+),\s*FAST_RES,\s*100.0,\s*SLOW_RES,\s*100.0"
 
-    m = re.findall(pat, c.to_rv())[0]
+    m = re.findall(pat, str(c))[0]
     assert m == "42.0"
 
 
@@ -262,3 +262,19 @@ def test_gauge(get_local_testdata):
 
     s = dedent(g[0].to_rv())
     assert "Data" in s
+
+
+def test_grid_weights():
+    gw = rc.GridWeights()
+    gw.to_rv()
+
+
+def test_redirect_to_file(get_local_testdata):
+    f = get_local_testdata("raven-routing-sample/VIC_test_nodata_weights.rvt")
+    r = rc.RedirectToFile(path=f)
+    r.to_rv()
+
+
+def test_land_use_class():
+    # TODO
+    pass
