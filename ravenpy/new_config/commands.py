@@ -766,8 +766,8 @@ class VegetationClasses(Command):
 
 class LandUseClass(Record):
     name: str = ""
-    impermeable_frac: float = 0
-    forest_coverage: float = 0
+    impermeable_frac: float = 0.0
+    forest_coverage: float = 0.0
 
     def __str__(self):
         template = "{name:<16},{impermeable_frac:>16},{forest_coverage:>16}"

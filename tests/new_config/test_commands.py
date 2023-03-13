@@ -47,11 +47,11 @@ def test_linear_transform():
 
 
 def test_vegetation_classes():
-    from ravenpy.new_config.commands import VegetationClasses
-
     class Test(RV):
-        vegetation_classes: VegetationClasses = Field(
-            VegetationClasses.parse_obj([{"name": "VEG_ALL"}, {"name": "VEG_WATER"}]),
+        vegetation_classes: rc.VegetationClasses = Field(
+            rc.VegetationClasses.parse_obj(
+                [{"name": "VEG_ALL"}, {"name": "VEG_WATER"}]
+            ),
             alias="VegetationClasses",
         )
 
@@ -66,6 +66,32 @@ def test_vegetation_classes():
       VEG_ALL         ,           0.0,           0.0,           0.0
       VEG_WATER       ,           0.0,           0.0,           0.0
     :EndVegetationClasses"""
+        ).strip()
+    )
+
+
+def test_land_use_class():
+    class Test(RV):
+        lu_classes: rc.LandUseClasses = Field(None, alias="LandUseClasses")
+
+    t = Test(
+        LandUseClasses=[
+            {"name": "Lake"},
+            {"name": "Land", "impermeable_frac": 0.1, "forest_coverage": 0.8},
+        ]
+    )
+    s = dedent(t.to_rv()).strip()
+    assert (
+        s
+        == dedent(
+            """
+        :LandUseClasses
+          :Attributes     ,IMPERMEABLE_FRAC, FOREST_COVERAGE
+          :Units          ,           fract,           fract
+          Lake            ,             0.0,             0.0
+          Land            ,             0.1,             0.8
+        :EndLandUseClasses
+        """
         ).strip()
     )
 
@@ -273,8 +299,3 @@ def test_redirect_to_file(get_local_testdata):
     f = get_local_testdata("raven-routing-sample/VIC_test_nodata_weights.rvt")
     r = rc.RedirectToFile(path=f)
     r.to_rv()
-
-
-def test_land_use_class():
-    # TODO
-    pass
