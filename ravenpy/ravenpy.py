@@ -9,13 +9,40 @@ from pathlib import Path
 from typing import Union
 from warnings import warn
 
-from ravenpy.new_config.rvs import RVC
+from ravenpy.new_config.rvs import RVC, Config
 
 RAVEN_EXEC_PATH = os.getenv("RAVENPY_RAVEN_BINARY_PATH") or shutil.which("raven")
 
 
+class Emulator:
+    def __init__(self, config: Config, path: Union[Path, str]):
+        self._config = config
+        self._path = path
+
+    def build(self, overwrite=True):
+        """Write the configuration files to disk."""
+        self._config.build(self.path, overwrite=overwrite)
+
+    def run(self):
+        """Run the model."""
+        self._outputdir = run(self.config.run_name, self.path)
+        return self._outputdir
+
+    def parse(self):
+        """Return model outputs."""
+        return parse(self.config.run_name, self._outputdir)
+
+    @property
+    def config(self):
+        return self._config
+
+    @property
+    def path(self):
+        return self._path
+
+
 def run(
-    identifier: str,
+    run_name: str,
     configdir: Union[str, Path],
     outputdir: Union[str, Path] = None,
     overwrite: bool = True,
@@ -25,13 +52,17 @@ def run(
 
     Parameters
     ----------
-    identifier : str
+    run_name : str
       Configuration files stem, i.e. the file name without extension.
     configdir : str, Path
       Path to configuration files directory.
     outputdir: str, Path
       Path to model simulation output. If None, will write to configdir/output.
 
+    Return
+    ------
+    Path
+      Path to model outputs.
     """
     if not RAVEN_EXEC_PATH:
         raise RuntimeError(
@@ -55,7 +86,7 @@ def run(
         os.makedirs(str(outputdir))
 
     # Launch executable, wait for completion.
-    cmd = [RAVEN_EXEC_PATH, identifier, "-o", str(outputdir)]
+    cmd = [RAVEN_EXEC_PATH, run_name, "-o", str(outputdir)]
 
     process = subprocess.Popen(
         cmd,
@@ -76,6 +107,8 @@ def run(
 
     for msg in messages["WARNING"]:
         warn(msg, category=RavenWarning)
+
+    return outputdir
 
 
 def parse(run_name, outputdir: [str, Path]):

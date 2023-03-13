@@ -183,8 +183,9 @@ class Config(RVI, RVC, RVH, RVT, RVP):
         """Some configuration parameters should be updated with user given arguments, not overwritten."""
         return {**cls.__fields__[field.name].default, **v}
 
-    def to_rv(self, rv: str):
-        """Return RV configuration text."""
+    def _rv(self, rv: str):
+        """Return RV configuration."""
+
         # Get RV class
         rvs = {b.__name__: b for b in Config.__bases__}
         cls = rvs[rv.upper()]
@@ -195,7 +196,31 @@ class Config(RVI, RVC, RVH, RVT, RVP):
         rv = cls(**p)
         return rv.to_rv()
 
-    def write(self, workdir: Union[str, Path], overwrite=False):
+    @property
+    def rvi(self):
+        return self._rv("rvi")
+
+    @property
+    def rvt(self):
+        return self._rv("rvt")
+
+    @property
+    def rvp(self):
+        return self._rv("rvp")
+
+    @property
+    def rvc(self):
+        return self._rv("rvc")
+
+    @property
+    def rvh(self):
+        return self._rv("rvh")
+
+    def rv_fn(self, rv):
+        """RV file name."""
+        return f"{self.run_name}.{rv}"
+
+    def build(self, workdir: Union[str, Path], overwrite=False, rv=None):
         """Write configuration files to disk.
 
         Parameters
@@ -209,9 +234,30 @@ class Config(RVI, RVC, RVH, RVT, RVP):
         if not workdir.exists():
             workdir.mkdir()
 
-        for rv in ["rvi", "rvp", "rvc", "rvh", "rvt"]:
-            fn = workdir / f"{self.run_name}.{rv}"
+        rvs = [rv] if rv else ["rvi", "rvp", "rvc", "rvh", "rvt"]
+        out = {}
+        for rv in rvs:
+            fn = workdir / self.rv_fn(rv)
             if fn.exists() and not overwrite:
                 raise OSError(f"{fn} already exists and would be overwritten.")
             logger.info(f"Writing {rv}")
-            fn.write_text(self.to_rv(rv))
+            fn.write_text(self._rv(rv))
+            out[rv] = fn
+
+        return out
+
+    def zip(self, path):
+        """Write configuration to zip file.
+
+        Parameters
+        ----------
+        path: Path, str
+          Path to zip archive storing RV files.
+        """
+        import zipfile
+
+        with zipfile.ZipFile(path, "w") as fh:
+            for rv in ["rvi", "rvp", "rvc", "rvh", "rvt"]:
+                fn = self.rv_fn(rv)
+                fh.write(fn, self._rv(rv))
+        return zip

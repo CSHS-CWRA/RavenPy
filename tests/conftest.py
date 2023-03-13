@@ -231,7 +231,7 @@ def salmon_hru():
 
 
 @pytest.fixture(scope="session")
-def gr4jcn_config(tmp_path_factory, get_local_testdata, salmon_hru):
+def gr4jcn_config(get_local_testdata, salmon_hru):
     import datetime as dt
 
     from ravenpy.new_config import commands as rc
@@ -257,8 +257,13 @@ def gr4jcn_config(tmp_path_factory, get_local_testdata, salmon_hru):
         CustomOutput=rc.CustomOutput("YEARLY", "AVERAGE", "PRECIP", "ENTIRE_WATERSHED"),
         GlobalParameter={"AVG_ANNUAL_RUNOFF": 208.480},
     )
+    return m
+
+
+@pytest.fixture(scope="session")
+def gr4jcn_config_rv(tmp_path_factory, gr4jcn_config):
     out = tmp_path_factory.mktemp("gr4jcn") / "config"
-    m.write(out)
+    gr4jcn_config.build(out)
     return out
 
 
