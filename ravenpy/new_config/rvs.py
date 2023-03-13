@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Any, Dict, Sequence, Type, TypeVar, Union
 
 import cftime
-from loguru import logger
 from pydantic import BaseModel, Extra, Field, validator
 from pydantic.dataclasses import dataclass
 
@@ -240,7 +239,7 @@ class Config(RVI, RVC, RVH, RVT, RVP):
             fn = workdir / self.rv_fn(rv)
             if fn.exists() and not overwrite:
                 raise OSError(f"{fn} already exists and would be overwritten.")
-            logger.info(f"Writing {rv}: {fn}")
+
             fn.write_text(self._rv(rv))
             out[rv] = fn
 
