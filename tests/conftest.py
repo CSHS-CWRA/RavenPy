@@ -13,6 +13,7 @@ from ravenpy.utilities.testdata import get_file as _get_file
 from ravenpy.utilities.testdata import get_local_testdata as _get_local_testdata
 
 from .common import _convert_2d, _convert_3d
+from .emulators import emulator, emulator_rv
 
 TESTDATA_BRANCH = os.getenv("RAVENPY_TESTDATA_BRANCH", "master")
 SKIP_TEST_DATA = os.getenv("RAVENPY_SKIP_TEST_DATA")
@@ -231,6 +232,13 @@ def salmon_hru():
 
 
 @pytest.fixture(scope="session")
+def salmon_meteo(get_local_testdata):
+    return get_local_testdata(
+        "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
+    )
+
+
+@pytest.fixture(scope="session")
 def gr4jcn_config(get_local_testdata, salmon_hru):
     import datetime as dt
 
@@ -304,5 +312,6 @@ def input3d(threadsafe_data_dir, salmon):
     return fn_out
 
 
-if __name__ == "__main__":
-    populate_testing_data(branch=TESTDATA_BRANCH)
+#
+# if __name__ == "__main__":
+#     populate_testing_data(branch=TESTDATA_BRANCH)

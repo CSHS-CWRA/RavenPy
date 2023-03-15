@@ -24,7 +24,7 @@ children (Data holding multiple Data elements).
 
 """
 import pytest
-from pydantic import BaseModel, Extra, Field, ValidationError, validator
+from pydantic import BaseModel, Extra, Field, ValidationError, root_validator, validator
 
 
 class SymConfig:
@@ -118,20 +118,20 @@ class Command(BaseModel):
     def __str__(self):
         return self.to_rv()
 
-    def _models(self) -> Dict[str, str]:
-        """Return dictionary of RV strings for class attributes that are Raven models."""
+    def __subcommands__(self) -> Dict[str, str]:
+        """Return dictionary of class attributes that are Raven models."""
         d = {}
         for key, field in self.__fields__.items():
             if field.has_alias or field.alias == "__root__":
                 obj = self.__dict__[key]
                 if obj is not None:
                     d[field.alias] = self.__dict__[key]
-        return encoder(d)
+        return d
 
-    def _records(self) -> List[str]:
-        """Return list of RV strings for records."""
+    def __records__(self) -> List[str]:
+        """Return list of records."""
         return [
-            str(o)
+            o
             for o in self.__dict__.get("__root__", [])
             if issubclass(o.__class__, Record)
         ]
@@ -139,10 +139,13 @@ class Command(BaseModel):
     def to_rv(self):
         """Return Raven configuration string."""
         d = self.dict()
-        cmds = self._models()
-        d.update(cmds)
+        recs = self.__records__()
+        sc = self.__subcommands__()
 
-        recs = "\n".join(self._records())
+        cmds = {k: v for (k, v) in sc.items() if v != recs}
+        d.update(encoder(cmds))
+
+        recs = "\n".join(map(str, recs))
         if recs:
             recs = indent(recs, self._indent)
 
@@ -188,15 +191,15 @@ class GenericParameterList(Command):
     names: Sequence[str] = Field(None, description="Parameter names")
     pl: Sequence[ParameterList] = ()
 
-    @validator("pl")
-    def num_values_equal_num_names(cls, val, values):
+    @root_validator(pre=True)
+    def num_values_equal_num_names(cls, values):
         n = len(values["names"])
-        for v in val:
-            if len(v.values) != n:
-                raise ValidationError(
-                    "Number of values should match number of parameters."
-                )
-        return val
+        pl = values["pl"]
+        for v in pl:
+            assert (
+                len(v.values) == n
+            ), "Number of values should match number of parameters."
+        return values
 
     def to_rv(self):
         template: str = """

@@ -111,15 +111,25 @@ def test_soil_classes():
     )
 
 
-def test_soil_profiles(x=42.0):
-    from ravenpy.new_config.commands import SoilProfile
+def test_soil_model():
+    class Test(RV):
+        soil_model: rc.SoilModel = Field(None, alias="SoilModel")
 
-    c = SoilProfile.parse_obj(
-        {
-            "name": "DEFAULT_P",
-            "soil_classes": ["TOPSOIL", "FAST_RES", "SLOW_RES"],
-            "thicknesses": [x, 100.0, 100.0],
-        }
+    t = Test(soil_model=3)
+    assert t.to_rv().strip() == ":SoilModel            SOIL_MULTILAYER 3"
+
+
+def test_soil_profiles(x=42.0):
+    from ravenpy.new_config.commands import SoilProfiles
+
+    c = SoilProfiles.parse_obj(
+        [
+            {
+                "name": "DEFAULT_P",
+                "soil_classes": ["TOPSOIL", "FAST_RES", "SLOW_RES"],
+                "thicknesses": [x, 100.0, 100.0],
+            },
+        ]
     )
 
     pat = r"DEFAULT_P\s*,\s*3,\s*TOPSOIL,\s*(.+),\s*FAST_RES,\s*100.0,\s*SLOW_RES,\s*100.0"

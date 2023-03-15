@@ -70,6 +70,8 @@ class Process(Command):
     source: str = None
     to: Sequence[str] = ()
 
+    _sub = ""
+
     @validator("to", pre=True)
     def is_list(cls, v):
         if isinstance(v, str):
@@ -88,17 +90,16 @@ class Process(Command):
         t = " ".join(map("{:<19}".format, self.to))
         p = getattr(self, "p", None)
         p = p if p is not None else ""
-        return (
-            f":{self.__class__.__name__:<20} {self.algo:<19} {self.source:<19} {t} {p}"
-        ).strip()
+        cmd = self._sub + self.__class__.__name__
+        return (f":{cmd:<20} {self.algo:<19} {self.source:<19} {t} {p}").strip()
 
 
 class SoilModel(Command):
-    n: int = None
+    __root__: int = None
 
     def to_rv(self):
         cmd = "SoilModel"
-        return f":{cmd:<20} SOIL_MULTILAYER {self.n}\n"
+        return f":{cmd:<20} SOIL_MULTILAYER {self.__root__}\n"
 
 
 class LinearTransform(Command):
@@ -185,6 +186,10 @@ class SoilProfile(Record):
         horizon_data = list(itertools.chain(*zip(self.soil_classes, self.thicknesses)))
         fmt = "{:<16},{:>4}," + ",".join(n_horizons * ["{:>12},{:>6}"])
         return fmt.format(self.name, n_horizons, *horizon_data)
+
+
+class SoilProfiles(Command):
+    __root__: Sequence[SoilProfile]
 
 
 class SubBasin(Record):

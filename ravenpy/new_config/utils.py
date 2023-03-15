@@ -38,7 +38,9 @@ def nc_specs(fn, data_type, station_idx, alt_names=()):
     i = station_idx - 1
 
     if Path(fn).exists():
-        fn = Path(fn).resolve()
+        fn = Path(fn).resolve(strict=True)
+    else:
+        raise ValueError("NetCDF file not found.")
 
     if isinstance(alt_names, str):
         alt_names = (alt_names,)

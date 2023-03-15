@@ -54,7 +54,7 @@ class RVI(RV):
     precip_icept_frac: o.PrecipIceptFract = Field(None, alias="PrecipIceptFract")
     subdaily_method: o.SubdailyMethod = Field(None, alias="SubdailyMethod")
     mim: o.MonthlyInterpolationMethod = Field(None, alias="MonthlyInterpolationMethod")
-    soil_model: Union[int, rc.SoilModel] = Field(None, alias="SoilModel")
+    soil_model: rc.SoilModel = Field(None, alias="SoilModel")
     lake_storage: o.StateVariables = Field(None, alias="LakeStorage")
     # alias: Dict[str, str] = Field(None, alias="Alias")
     hydrologic_processes: Sequence[rc.Process] = Field(
@@ -98,7 +98,7 @@ class RVI(RV):
     @validator("soil_model", pre=True)
     def init_soil_model(cls, v):
         if isinstance(v, int):
-            return rc.SoilModel(n=v)
+            return rc.SoilModel.parse_obj(v)
         return v
 
     @validator("start_date", "end_date", pre=True)
@@ -126,7 +126,7 @@ class RVT(RV):
 class RVP(RV):
     params: Any
     soil_classes: rc.SoilClasses = Field(None, alias="SoilClasses")
-    soil_profiles: Sequence[rc.SoilProfile] = Field(None, alias="SoilProfiles")
+    soil_profiles: rc.SoilProfiles = Field(None, alias="SoilProfiles")
     vegetation_classes: rc.VegetationClasses = Field(None, alias="VegetationClasses")
     land_use_classes: rc.LandUseClasses = Field(None, alias="LandUseClasses")
     soil_parameter_list: rc.SoilParameterList = Field(None, alias="SoilParameterList")

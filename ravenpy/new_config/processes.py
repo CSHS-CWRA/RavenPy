@@ -9,7 +9,7 @@ from .commands import Process
 class Precipitation(Process):
     """Precipitation"""
 
-    algo: Literal["PRECIP_RAVEN"]
+    algo: Literal["PRECIP_RAVEN", "RAVEN_DEFAULT"] = "PRECIP_RAVEN"
 
 
 class CanopyEvap(Process):
@@ -28,6 +28,7 @@ class SoilEvaporation(Process):
         "SOIL_EVAP_SEQUEN",
         "SOIL_EVAP_ROOTFRAC",
         "SOIL_EVAP_GOWSWER",
+        "SOILEVAP_ALL",
     ]
 
 
@@ -55,6 +56,7 @@ class Infiltration(Process):
         "INF_VIC",
         "INF_VIC_ARNO",
         "INF_PRMS",
+        "INF_HMETS",
     ]
 
 
@@ -128,6 +130,7 @@ class SnowBalance(Process):
         "SNOWBAL_TWO_LAYER",
         # "SNOWBAL_CEMA_NEIGE",
         "SNOBAL_CEMA_NIEGE",
+        "SNOBAL_HMETS",
         "SNOWBAL_GAWSER",
         "SNOWBAL_UBC",
     ]
@@ -176,6 +179,8 @@ class Flush(Process):
 
 class Overflow(Process):
     algo: Literal["OVERFLOW_RAVEN"]
+    _sub = "-->"
+    _indent = "    "
 
 
 class Split(Process):
@@ -188,7 +193,7 @@ class Split(Process):
 class Convolve(Process):
     """"""
 
-    algo: Literal["CONVOL_GR4J_1", "CONVOL_GR4J_2"]
+    algo: Literal["CONVOL_GR4J_1", "CONVOL_GR4J_2", "CONVOL_GAMMA", "CONVOL_GAMMA_2"]
 
 
 class LateralFlush(Process):

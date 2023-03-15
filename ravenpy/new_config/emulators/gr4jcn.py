@@ -18,7 +18,7 @@ from ravenpy.new_config.commands import (
     SoilClasses,
     SoilModel,
     SoilParameterList,
-    SoilProfile,
+    SoilProfiles,
     VegetationClasses,
 )
 from ravenpy.new_config.rvs import Config
@@ -144,14 +144,14 @@ class GR4JCN(Config):
         alias="SoilParameterList",
     )
 
-    soil_profiles: Sequence[SoilProfile] = Field(
+    soil_profiles: SoilProfiles = Field(
         [
-            SoilProfile(
+            dict(
                 name="DEFAULT_P",
                 soil_classes=["SOIL_PROD", "SOIL_ROUT", "SOIL_TEMP", "SOIL_GW"],
                 thicknesses=[P.GR4J_X1, 0.3, 1, 1],
             ),
-            SoilProfile(name="LAKE"),
+            dict(name="LAKE"),
         ],
         alias="SoilProfiles",
     )

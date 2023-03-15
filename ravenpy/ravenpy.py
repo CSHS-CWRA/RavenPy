@@ -97,17 +97,21 @@ def run(
         universal_newlines=True,
     )
 
-    process.communicate(input="\n")
-    process.wait()
+    stdout, stderr = process.communicate(input="\n")
+    returncode = process.wait()
 
+    if returncode != 0:
+        raise OSError(f"Raven segfaulted : \n{stdout}")
+
+    print(process.returncode)
     # Deal with errors and warnings
     messages = extract_raven_messages(configdir)
 
+    for msg in messages["WARNING"] + messages["ADVISORY"]:
+        warn(msg, category=RavenWarning)
+
     if messages["ERROR"]:
         raise RavenError("\n".join(messages["ERROR"]))
-
-    for msg in messages["WARNING"]:
-        warn(msg, category=RavenWarning)
 
     return outputdir
 
