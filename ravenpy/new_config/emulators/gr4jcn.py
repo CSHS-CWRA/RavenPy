@@ -145,7 +145,13 @@ class GR4JCN(Config):
     )
 
     soil_classes: SoilClasses = Field(
-        ["SOIL_PROD", "SOIL_ROUT", "SOIL_TEMP", "SOIL_GW", "AQUIFER"],
+        [
+            {"name": "SOIL_PROD"},
+            {"name": "SOIL_ROUT"},
+            {"name": "SOIL_TEMP"},
+            {"name": "SOIL_GW"},
+            {"name": "AQUIFER"},
+        ],
         alias="SoilClasses",
     )
 

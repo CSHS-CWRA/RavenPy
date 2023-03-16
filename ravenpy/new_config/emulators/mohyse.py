@@ -59,7 +59,9 @@ class Mohyse(Config):
 
     params: P
     hrus: HRUs = Field(..., alias="HRUs")
-    soil_classes: rc.SoilClasses = Field(["TOPSOIL", "GWSOIL"], alias="SoilClasses")
+    soil_classes: rc.SoilClasses = Field(
+        [{"name": "TOPSOIL"}, {"name": "GWSOIL"}], alias="SoilClasses"
+    )
     land_use_classes: rc.LandUseClasses = Field(
         [{"name": "LU_ALL", "impermeable_frac": 0, "forest_coverage": 1}],
         alias="LandUseClasses",
