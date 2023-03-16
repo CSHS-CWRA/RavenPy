@@ -45,8 +45,20 @@ class HRUs(rc.Command):
 
 
 class Mohyse(Config):
+    """Modèle Hydrologique Simplifié à l'Extrême (MOHYSE)
+
+    References
+    ----------
+    Fortin, V.; Turcotte, R. Le modèle hydrologique MOHYSE. In Note de Cours Pour SCA7420,
+    Université du Québec à Montréal: Montréal, QC, Canada, 2007; p. 14.
+
+    Troin, M., Arsenault, R. and Brissette, F., 2015. Performance and uncertainty evaluation
+    of snow models on snowmelt flow simulations over a Nordic catchment (Mistassibi, Canada).
+    Hydrology, 2(4), pp.289-317.
+    """
+
     params: P
-    hrus: HRUs = Field(None, alias="HRUs")
+    hrus: HRUs = Field(..., alias="HRUs")
     soil_classes: rc.SoilClasses = Field(["TOPSOIL", "GWSOIL"], alias="SoilClasses")
     land_use_classes: rc.LandUseClasses = Field(
         [{"name": "LU_ALL", "impermeable_frac": 0, "forest_coverage": 1}],

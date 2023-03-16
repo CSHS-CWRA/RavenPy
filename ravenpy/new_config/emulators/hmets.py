@@ -56,10 +56,17 @@ class HRUs(rc.Command):
 
 
 class HMETS(Config):
-    """Needs to be run with RAINFALL forcing, not PRECIP."""
+    """Hydrology Model - École de technologie supérieure (HMETS)
+
+    References
+    ----------
+    Martel, J.-L., Demeester, K., Brissette, F., Arsenault, R., Poulin, A. 2017.
+    HMETS: A simple and efficient hydrology model for teaching hydrological modelling,
+    flow forecasting and climate change impacts. Int. J. Eng. Educ., 33, 1307–1316.
+    """
 
     params: P
-    hrus: HRUs = Field(None, alias="HRUs")
+    hrus: HRUs = Field(..., alias="HRUs")
     uniform_initial_conditions: Dict[str, float] = Field(
         {"SOIL[0]": P.TOPSOIL / 2, "SOIL[1]": P.PHREATIC / 2},
         alias="UniformInitialConditions",

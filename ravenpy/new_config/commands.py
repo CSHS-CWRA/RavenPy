@@ -740,10 +740,34 @@ class BasinStateVariables(Command):
 
 
 class SoilClasses(Command):
-    __root__: Sequence[str] = ()
+    class SoilClass(Record):
+        name: str
+        mineral: Tuple[float, float, float] = None
+        organic: float = None
 
-    def __records__(self):
-        return self.__root__
+        @validator("mineral")
+        def validate_mineral(cls, v):
+            """Assert sum of mineral fraction is 1."""
+            if v is not None:
+                assert sum(v) == 1, "Mineral fraction should sum to 1."
+            return v
+
+        @validator("mineral", "organic", each_item=True)
+        def validate_pct(cls, v):
+            if v is not None:
+                assert v >= 0 and v <= 1, "Value should be in [0,1]."
+            return v
+
+        def __str__(self):
+            if self.mineral is None and self.organic is None:
+                return self.name
+            else:
+                fmt = "{name:<16},{mineral[0]:>18},{mineral[1]:>18},{mineral[2]:>18},{organic:>18}"
+                return fmt.format(**self.dict())
+
+    __root__: Sequence[SoilClass] = ()
+    _Attributes: Sequence[str] = PrivateAttr(["%SAND", "%CLAY", "%SILT", "%ORGANIC"])
+    _Units: Sequence[str] = PrivateAttr(["none", "none", "none", "none"])
 
 
 class VegetationClass(Record):

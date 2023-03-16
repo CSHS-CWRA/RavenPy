@@ -77,9 +77,9 @@ def encoder(v: dict) -> dict:
             o0 = obj[0]
             if cmd == "__root__" or issubclass(o0.__class__, FlatCommand):
                 out = "\n".join(s)
-            elif cmd == "Attributes":
-                out = f":{cmd}," + ",".join(s) + "\n"
-            elif cmd in ["Parameters", "Units"]:
+            # elif cmd == "Attributes":
+            #     out = f":{cmd}," + ",".join(s) + "\n"
+            elif cmd in ["Parameters", "Attributes", "Units"]:
                 fmt = ":{cmd:<15}" + len(obj) * ",{:>18}" + "\n"
                 out = fmt.format(cmd=cmd, *obj)
             elif issubclass(o0.__class__, (Command, Record)):

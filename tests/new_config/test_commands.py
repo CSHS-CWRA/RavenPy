@@ -99,13 +99,32 @@ def test_land_use_class():
 def test_soil_classes():
     from ravenpy.new_config.commands import SoilClasses
 
-    c = SoilClasses.parse_obj(["TOPSOIL", "FAST_RES", "SLOW_RES"])
+    c = SoilClasses.parse_obj(
+        [{"name": "TOPSOIL"}, {"name": "FAST_RES"}, {"name": "SLOW_RES"}]
+    )
     assert dedent(c.to_rv()) == dedent(
         """
     :SoilClasses
+      :Attributes     ,             %SAND,             %CLAY,             %SILT,          %ORGANIC
+      :Units          ,              none,              none,              none,              none
       TOPSOIL
       FAST_RES
       SLOW_RES
+    :EndSoilClasses
+    """
+    )
+
+    c = SoilClasses.parse_obj(
+        [
+            {"name": "TOPSOIL", "mineral": (0.1, 0.7, 0.2), "organic": 0.1},
+        ]
+    )
+    assert dedent(c.to_rv()) == dedent(
+        """
+    :SoilClasses
+      :Attributes     ,             %SAND,             %CLAY,             %SILT,          %ORGANIC
+      :Units          ,              none,              none,              none,              none
+      TOPSOIL         ,               0.1,               0.7,               0.2,               0.1
     :EndSoilClasses
     """
     )
@@ -120,9 +139,7 @@ def test_soil_model():
 
 
 def test_soil_profiles(x=42.0):
-    from ravenpy.new_config.commands import SoilProfiles
-
-    c = SoilProfiles.parse_obj(
+    c = rc.SoilProfiles.parse_obj(
         [
             {
                 "name": "DEFAULT_P",
@@ -139,7 +156,6 @@ def test_soil_profiles(x=42.0):
 
 
 def test_hydrologic_processes():
-    from ravenpy.new_config.commands import Process
     from ravenpy.new_config.processes import Precipitation, SnowTempEvolve
 
     hp = [
@@ -148,18 +164,20 @@ def test_hydrologic_processes():
     ]
 
     class Test(RV):
-        hydrologic_processes: Sequence[Process] = Field(hp, alias="HydrologicProcesses")
+        hydrologic_processes: Sequence[rc.Process] = Field(
+            hp, alias="HydrologicProcesses"
+        )
 
     out = dedent(Test().to_rv())
     assert (
         out
         == dedent(
             """
-    :HydrologicProcesses
-      :Precipitation        PRECIP_RAVEN        ATMOS_PRECIP        MULTIPLE
-      :SnowTempEvolve       SNOTEMP_NEWTONS     SNOW_TEMP
-    :EndHydrologicProcesses
-    """
+        :HydrologicProcesses
+          :Precipitation        PRECIP_RAVEN        ATMOS_PRECIP        MULTIPLE
+          :SnowTempEvolve       SNOTEMP_NEWTONS     SNOW_TEMP
+        :EndHydrologicProcesses
+        """
         ).strip()
     )
 
@@ -237,7 +255,7 @@ class TestHRUStateVariableTable:
         assert dedent(t.to_rv()) == dedent(
             """
             :HRUStateVariableTable
-              :Attributes,SOIL[0],SOIL[1],SOIL[2],SOIL[3]
+              :Attributes     ,           SOIL[0],           SOIL[1],           SOIL[2],           SOIL[3]
               1,0.1,1.0,0.0,0.0
               2,0.0,0.0,2.0,3.0
             :EndHRUStateVariableTable

@@ -67,8 +67,21 @@ class HRUs(rc.Command):
 
 
 class GR4JCN(Config):
+    """GR4J + Cemaneige global hydrological model
+
+    References
+    ----------
+    Perrin, C., C. Michel and V. Andréassian (2003). Improvement of a parsimonious model for streamflow simulation.
+    Journal of Hydrology, 279(1-4), 275-289. doi: 10.1016/S0022-1694(03)00225-7.
+
+    Valéry, Audrey, Vazken Andréassian, and Charles Perrin. 2014. “’As Simple as Possible but Not Simpler’: What Is
+    Useful in a Temperature-Based Snow-Accounting Routine? Part 2 - Sensitivity Analysis of the Cemaneige Snow
+    Accounting Routine on 380 Catchments.” Journal of Hydrology, no. 517(0): 1176–87,
+    doi: 10.1016/j.jhydrol.2014.04.058.
+    """
+
     params: P
-    hrus: HRUs = Field(None, alias="HRUs")
+    hrus: HRUs = Field(..., alias="HRUs")
     uniform_initial_conditions: Dict[str, float] = Field(
         {"SOIL[0]": P.GR4J_X1 * 1000 / 2, "SOIL[1]": 15},
         alias="UniformInitialConditions",
