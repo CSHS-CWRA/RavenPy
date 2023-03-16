@@ -368,10 +368,14 @@ class GridWeights(Command):
 
     number_hrus: int = Field(1, alias="NumberHRUs")
     number_grid_cells: int = Field(1, alias="NumberGridCells")
-    data: Sequence[Tuple[int, int, float]] = ((1, 0, 1.0),)
 
-    def __records__(self):
-        return (f"{p[0]} {p[1]} {p[2]}" for p in self.data)
+    class GWRecord(Record):
+        __root__: Tuple[int, int, float] = (1, 0, 1.0)
+
+    def __str__(self):
+        return " ".join(self.__root__)
+
+    data: Sequence[GWRecord] = Field(GWRecord())
 
     @classmethod
     def parse(cls, s):
@@ -633,31 +637,26 @@ class HRUStateVariableTable(Command):
 
     __root__: Sequence[HRUState]
 
-    _attributes_str: Sequence[str] = PrivateAttr(None)
+    _Attributes: Sequence[str] = PrivateAttr(None)
 
-    _template = """
-                 :HRUStateVariableTable
-                   :Attributes,{_attributes_str}
-                 {_commands}
-                 :EndHRUStateVariableTable
-                 """
-
-    @root_validator
-    def check_attributes_are_uniform(cls, values):
+    def __init__(self, **data):
         from itertools import chain
 
-        if values.get("__root__"):
-            hs = values["__root__"]
+        if data.get("__root__"):
+            hs = data["__root__"]
             # Get all attribute names from HRUStates
             names = sorted(list(set(chain(*[tuple(s.data.keys()) for s in hs]))))
-            # Store names in private class attribute
-            values["_attributes_str"] = ",".join(names)
 
-            values["__root__"] = [
+            data["__root__"] = [
                 HRUState(index=s.index, data={n: s.data.get(n, 0.0) for n in names})
                 for s in hs
             ]
-        return values
+        else:
+            names = None
+
+        super().__init__(**data)
+        # Store names in private class attribute
+        self._Attributes = names
 
     @classmethod
     def parse(cls, sol: str):
@@ -790,16 +789,37 @@ class LandUseClasses(Command):
         """
 
 
+class SubBasinProperty(Record):
+    sb_id: str
+    values: Sequence[float]
+
+    def __str__(self):
+        return indent(
+            ", ".join(
+                [
+                    self.sb_id,
+                ]
+                + list(map(str, self.values))
+            ),
+            Command._indent,
+        )
+
+
+class SubBasinProperties(Command):
+    parameters: Sequence[options.SubBasinProperties] = Field(None, alias="Parameters")
+    records: Sequence[SubBasinProperty] = Field(None)
+
+
 class SoilParameterList(GenericParameterList):
-    names: Sequence[options.SoilParameters] = ()
+    parameters: Sequence[options.SoilParameters] = Field(None, alias="Parameters")
 
 
 class VegetationParameterList(GenericParameterList):
-    names: Sequence[options.VegetationParameters] = ()
+    parameters: Sequence[options.VegetationParameters] = Field(None, alias="Parameters")
 
 
 class LandUseParameterList(GenericParameterList):
-    names: Sequence[options.LandUseParameters] = ()
+    parameters: Sequence[options.LandUseParameters] = Field(None, alias="Parameters")
 
 
 # Aliases for convenience

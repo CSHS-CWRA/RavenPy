@@ -168,6 +168,7 @@ class RVH(RV):
     land_subbasin_property_multiplier: rc.SBGroupPropertyMultiplierCommand = None
     lake_subbasin_property_multiplier: rc.SBGroupPropertyMultiplierCommand = None
     reservoirs: Sequence[rc.Reservoir] = ()
+    subbasin_properties: rc.SubBasinProperties = Field(None, alias="SubBasinProperties")
 
 
 class Config(RVI, RVC, RVH, RVT, RVP):

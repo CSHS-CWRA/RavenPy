@@ -16,7 +16,7 @@ from .common import _convert_2d, _convert_3d
 from .emulators import emulator, emulator_rv
 
 TESTDATA_BRANCH = os.getenv("RAVENPY_TESTDATA_BRANCH", "master")
-SKIP_TEST_DATA = os.getenv("RAVENPY_SKIP_TEST_DATA")
+SKIP_TEST_DATA = True  # os.getenv("RAVENPY_SKIP_TEST_DATA")
 
 
 def populate_testing_data(
@@ -236,44 +236,6 @@ def salmon_meteo(get_local_testdata):
     return get_local_testdata(
         "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
     )
-
-
-@pytest.fixture(scope="session")
-def gr4jcn_config(get_local_testdata, salmon_hru):
-    import datetime as dt
-
-    from ravenpy.new_config import commands as rc
-    from ravenpy.new_config.emulators.gr4jcn import GR4JCN
-
-    f = get_local_testdata(
-        "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
-    )
-
-    m = GR4JCN(
-        params=[0.529, -3.396, 407.29, 1.072, 16.9, 0.947],
-        Gauge=rc.Gauge.from_nc(
-            f,
-            data_type=["PRECIP", "TEMP_MIN", "TEMP_MAX"],
-            alt_names=alt_names,
-            extra={1: {"elevation": salmon_hru["land"]["elevation"]}},
-        ),
-        ObservationData=rc.ObservationData.from_nc(f, alt_names="qobs"),
-        HRUs=[salmon_hru["land"]],
-        StartDate=dt.datetime(2000, 1, 1),
-        EndDate=dt.datetime(2002, 1, 1),
-        RunName="test",
-        CustomOutput=rc.CustomOutput("YEARLY", "AVERAGE", "PRECIP", "ENTIRE_WATERSHED"),
-        GlobalParameter={"AVG_ANNUAL_RUNOFF": 208.480},
-        EvaluationMetrics=("RMSE",),
-    )
-    return m
-
-
-@pytest.fixture(scope="session")
-def gr4jcn_config_rv(tmp_path_factory, gr4jcn_config):
-    out = tmp_path_factory.mktemp("gr4jcn") / "config"
-    gr4jcn_config.build(out)
-    return out
 
 
 @pytest.fixture(scope="session")

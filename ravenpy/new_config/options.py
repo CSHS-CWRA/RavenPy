@@ -383,6 +383,24 @@ class SoilModel(Enum):
     MULTILAYER = "SOIL_MULTILAYER"
 
 
+SubBasinProperties = Literal[
+    "TIME_TO_PEAK ",
+    "TIME_CONC",
+    "TIME_LAG",
+    "NUM_RESERVOIRS",
+    "RES_CONSTANT",
+    "GAMMA_SHAPE",
+    "GAMMA_SCALE",
+    "Q_REFERENCE",
+    "MANNINGS_N",
+    "SLOPE",
+    "DIFFUSIVITY",
+    "CELERITY",
+    "RAIN_CORR",
+    "SNOW_CORR",
+]
+
+
 class SubdailyMethod(Enum):
     NONE = "SUBDAILY_NONE"
     SIMPLE = "SUBDAILY_SIMPLE"

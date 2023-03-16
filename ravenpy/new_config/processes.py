@@ -29,6 +29,7 @@ class SoilEvaporation(Process):
         "SOIL_EVAP_ROOTFRAC",
         "SOIL_EVAP_GOWSWER",
         "SOILEVAP_ALL",
+        "SOILEVAP_LINEAR",
     ]
 
 
@@ -124,10 +125,10 @@ class SnowRefreeze(Process):
 
 class SnowBalance(Process):
     algo: Literal[
-        "SNOWBAL_SIMPLE_MELT",
-        "SNOWBAL_COLD_CONTENT",
-        "SNOWBAL_HBV",
-        "SNOWBAL_TWO_LAYER",
+        "SNOBAL_SIMPLE_MELT",
+        "SNOBAL_COLD_CONTENT",
+        "SNOBAL_HBV",
+        "SNOBAL_TWO_LAYER",
         # "SNOWBAL_CEMA_NEIGE",
         "SNOBAL_CEMA_NIEGE",
         "SNOBAL_HMETS",

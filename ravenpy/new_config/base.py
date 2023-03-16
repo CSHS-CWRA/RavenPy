@@ -1,8 +1,8 @@
-import datetime as dt
 from enum import Enum
 from textwrap import dedent, indent
-from typing import Any, ClassVar, Dict, List, Literal, Sequence, Tuple, TypeVar, Union
+from typing import Any, ClassVar, Dict, List, Literal, Sequence, Tuple, Union
 
+from pydantic import BaseModel, Extra, Field, PrivateAttr, root_validator, validator
 from pymbolic.primitives import Expression, Variable
 
 """
@@ -23,8 +23,6 @@ In general, let's print the alias except if the parent is __root__, or if the pa
 children (Data holding multiple Data elements).
 
 """
-import pytest
-from pydantic import BaseModel, Extra, Field, ValidationError, root_validator, validator
 
 
 class SymConfig:
@@ -79,6 +77,11 @@ def encoder(v: dict) -> dict:
             o0 = obj[0]
             if cmd == "__root__" or issubclass(o0.__class__, FlatCommand):
                 out = "\n".join(s)
+            elif cmd == "Attributes":
+                out = f":{cmd}," + ",".join(s) + "\n"
+            elif cmd in ["Parameters", "Units"]:
+                fmt = ":{cmd:<15}" + len(obj) * ",{:>18}" + "\n"
+                out = fmt.format(cmd=cmd, *obj)
             elif issubclass(o0.__class__, (Command, Record)):
                 rec = indent("\n".join(s), Command._indent)
                 out = f":{cmd}\n{rec}\n:End{cmd}\n"
@@ -118,29 +121,36 @@ class Command(BaseModel):
     def __str__(self):
         return self.to_rv()
 
-    def __subcommands__(self) -> Dict[str, str]:
+    def __subcommands__(self) -> Tuple[Dict[str, str], list]:
         """Return dictionary of class attributes that are Raven models."""
-        d = {}
+        cmds = {}
+        recs = []
         for key, field in self.__fields__.items():
-            if field.has_alias or field.alias == "__root__":
-                obj = self.__dict__[key]
-                if obj is not None:
-                    d[field.alias] = self.__dict__[key]
-        return d
+            obj = self.__dict__[key]
+            if obj is not None:
+                try:
+                    o = obj[0]
+                except (TypeError, IndexError, KeyError):
+                    pass
+                else:
+                    if issubclass(o.__class__, Record):
+                        if recs:
+                            raise ValueError("More than one record attribute found.")
+                        recs = obj
+                        continue
+                finally:
+                    if field.has_alias or field.alias == "__root__":
+                        cmds[field.alias] = self.__dict__[key]
 
-    def __records__(self) -> List[str]:
-        """Return list of records."""
-        return [
-            o
-            for o in self.__dict__.get("__root__", [])
-            if issubclass(o.__class__, Record)
-        ]
+        for key, field in self.__private_attributes__.items():
+            cmds[key.strip("_")] = getattr(self, key)
+
+        return cmds, recs
 
     def to_rv(self):
         """Return Raven configuration string."""
         d = self.dict()
-        recs = self.__records__()
-        sc = self.__subcommands__()
+        sc, recs = self.__subcommands__()
 
         cmds = {k: v for (k, v) in sc.items() if v != recs}
         d.update(encoder(cmds))
@@ -166,7 +176,7 @@ class FlatCommand(Command):
     """Only used to discriminate Commands that should not be nested."""
 
 
-class ParameterList(Command):
+class ParameterList(Record):
     name: str = ""
     values: Sequence[Union[Sym, None]] = ()
 
@@ -177,7 +187,7 @@ class ParameterList(Command):
             raise ValueError("Default record can not contain None.")
         return v
 
-    def to_rv(self, **kwds):
+    def __str__(self):
         fmt = "{name:<16}" + len(self.values) * ",{:>18}"
         evals = []
         for v in self.values:
@@ -188,39 +198,25 @@ class ParameterList(Command):
 
 
 class GenericParameterList(Command):
-    names: Sequence[str] = Field(None, description="Parameter names")
+    parameters: Sequence[str] = Field(
+        None, alias="Parameters", description="Parameter names"
+    )
     pl: Sequence[ParameterList] = ()
+    _Units: Sequence[str] = PrivateAttr(None)
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        self._Units = ["none"] * len(data["parameters"])
 
     @root_validator(pre=True)
     def num_values_equal_num_names(cls, values):
-        n = len(values["names"])
+        n = len(values["parameters"])
         pl = values["pl"]
         for v in pl:
             assert (
                 len(v.values) == n
             ), "Number of values should match number of parameters."
         return values
-
-    def to_rv(self):
-        template: str = """
-            :{_cmd}
-              :Parameters     {name_list}
-              :Units          {unit_list}
-            {_commands}
-            :End{_cmd}
-        """
-
-        fmt = ",{:>18}" * len(self.names)
-        units = [
-            "none",
-        ] * len(self.names)
-
-        return dedent(template).format(
-            _cmd=self.__class__.__name__,
-            name_list=fmt.format(*self.names),
-            unit_list=fmt.format(*units),
-            _commands=indent("\n".join([rec.to_rv() for rec in self.pl]), "  "),
-        )
 
 
 class RV(Command):

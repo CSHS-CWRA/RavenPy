@@ -3,8 +3,7 @@ import datetime as dt
 import pytest
 
 from ravenpy.new_config import commands as rc
-from ravenpy.new_config.emulators.gr4jcn import GR4JCN
-from ravenpy.new_config.emulators.hmets import HMETS
+from ravenpy.new_config.emulators import GR4JCN, HMETS, Mohyse
 
 alt_names = {
     "RAINFALL": "rain",
@@ -16,8 +15,8 @@ alt_names = {
 }
 
 
-names = ["GR4JCN", "HMETS", "MOHYSE"]
-config = {"GR4JCN": GR4JCN, "HMETS": HMETS}
+names = ["GR4JCN", "HMETS", "Mohyse"][-1:]
+config = {"GR4JCN": GR4JCN, "HMETS": HMETS, "Mohyse": Mohyse}
 params = {
     "GR4JCN": [0.529, -3.396, 407.29, 1.072, 16.9, 0.947],
     "HMETS": [
@@ -43,7 +42,7 @@ params = {
         310.7211,
         916.1947,
     ],
-    "MOHYSE": (
+    "Mohyse": (
         1.0,
         0.0468,
         4.2952,

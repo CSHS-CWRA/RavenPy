@@ -166,7 +166,7 @@ def test_hydrologic_processes():
 
 def test_soil_parameter_list():
     c = rc.SoilParameterList(
-        names=["POROSITY", "FIELD_CAPACITY"],
+        parameters=["POROSITY", "FIELD_CAPACITY"],
         pl=[
             rc.PL(name="[DEFAULT]", values=[1, 0]),
             rc.PL(name="FAST_RES", values=[None, None]),
@@ -187,7 +187,12 @@ def test_soil_parameter_list():
 
 def test_vegetation_parameter_list():
     c = rc.VegetationParameterList(
-        names=["MAX_CAPACITY", "MAX_SNOW_CAPACITY", "RAIN_ICEPT_PCT", "SNOW_ICEPT_PCT"],
+        parameters=[
+            "MAX_CAPACITY",
+            "MAX_SNOW_CAPACITY",
+            "RAIN_ICEPT_PCT",
+            "SNOW_ICEPT_PCT",
+        ],
         pl=[rc.PL(name="VEG_ALL", values=[10000, 10000, 0.88, 0.88])],
     )
 
@@ -204,7 +209,7 @@ def test_vegetation_parameter_list():
 
 def test_land_use_parameter_list():
     c = rc.LandUseParameterList(
-        names=["MELT_FACTOR", "MIN_MELT_FACTOR"],
+        parameters=["MELT_FACTOR", "MIN_MELT_FACTOR"],
         pl=[rc.PL(name="[DEFAULT]", values=[1, 2.2])],
     )
     assert dedent(c.to_rv()) == dedent(
@@ -309,3 +314,11 @@ def test_redirect_to_file(get_local_testdata):
     f = get_local_testdata("raven-routing-sample/VIC_test_nodata_weights.rvt")
     r = rc.RedirectToFile(path=f)
     r.to_rv()
+
+
+def test_subbasin_properties():
+    c = rc.SubBasinProperties(
+        parameters=["GAMMA_SCALE", "GAMMA_SHAPE"],
+        records=[{"sb_id": 1, "values": (0, 1)}],
+    )
+    assert "0, 1" in c.to_rv()

@@ -138,7 +138,7 @@ class GR4JCN(Config):
 
     soil_parameter_list: SoilParameterList = Field(
         {
-            "names": ("POROSITY", "GR4J_X3", "GR4J_X2"),
+            "parameters": ("POROSITY", "GR4J_X3", "GR4J_X2"),
             "pl": [PL(name="[DEFAULT]", values=(1, P.GR4J_X3, P.GR4J_X2))],
         },
         alias="SoilParameterList",
@@ -168,7 +168,7 @@ class GR4JCN(Config):
 
     land_use_parameter_list: LandUseParameterList = Field(
         {
-            "names": ("GR4J_X4", "MELT_FACTOR"),
+            "parameters": ("GR4J_X4", "MELT_FACTOR"),
             "pl": [PL(name="[DEFAULT]", values=(P.GR4J_X4, 7.73))],
         },
         alias="LandUseParameterList",

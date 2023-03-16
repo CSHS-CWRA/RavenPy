@@ -125,7 +125,12 @@ class HMETS(Config):
     )
     soil_parameter_list: rc.SoilParameterList = Field(
         {
-            "names": ("POROSITY", "PERC_COEFF", "PET_CORRECTION", "BASEFLOW_COEFF"),
+            "parameters": (
+                "POROSITY",
+                "PERC_COEFF",
+                "PET_CORRECTION",
+                "BASEFLOW_COEFF",
+            ),
             "pl": [
                 PL(
                     name="TOPSOIL",
@@ -138,7 +143,7 @@ class HMETS(Config):
     )
     land_use_parameter_list: rc.LandUseParameterList = Field(
         {
-            "names": [
+            "parameters": [
                 "MIN_MELT_FACTOR",
                 "MAX_MELT_FACTOR",
                 "DD_MELT_TEMP",
@@ -176,7 +181,7 @@ class HMETS(Config):
     )
     vegetation_parameter_list: rc.VegetationParameterList = Field(
         {
-            "names": ["RAIN_ICEPT_PCT", "SNOW_ICEPT_PCT"],
+            "parameters": ["RAIN_ICEPT_PCT", "SNOW_ICEPT_PCT"],
             "pl": [PL(name="[DEFAULT]", values=(0, 0))],
         },
         alias="VegetationParameterList",
