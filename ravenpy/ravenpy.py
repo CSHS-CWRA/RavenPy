@@ -19,7 +19,7 @@ class Emulator:
         self._config = config
         self._path = Path(path)
 
-    def build(self, overwrite=True):
+    def build(self, overwrite=False):
         """Write the configuration files to disk."""
         self._config.build(self.path, overwrite=overwrite)
 
