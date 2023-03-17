@@ -61,10 +61,10 @@ def test_vegetation_classes():
         == dedent(
             """
     :VegetationClasses
-      :Attributes     ,        MAX_HT,       MAX_LAI, MAX_LEAF_COND
-      :Units          ,             m,          none,      mm_per_s
-      VEG_ALL         ,           0.0,           0.0,           0.0
-      VEG_WATER       ,           0.0,           0.0,           0.0
+      :Attributes     ,            MAX_HT,           MAX_LAI,     MAX_LEAF_COND
+      :Units          ,                 m,              none,          mm_per_s
+      VEG_ALL         ,               0.0,               0.0,               0.0
+      VEG_WATER       ,               0.0,               0.0,               0.0
     :EndVegetationClasses"""
         ).strip()
     )
@@ -86,10 +86,10 @@ def test_land_use_class():
         == dedent(
             """
         :LandUseClasses
-          :Attributes     ,IMPERMEABLE_FRAC, FOREST_COVERAGE
-          :Units          ,           fract,           fract
-          Lake            ,             0.0,             0.0
-          Land            ,             0.1,             0.8
+          :Attributes     ,  IMPERMEABLE_FRAC,   FOREST_COVERAGE
+          :Units          ,             fract,             fract
+          Lake            ,               0.0,               0.0
+          Land            ,               0.1,               0.8
         :EndLandUseClasses
         """
         ).strip()

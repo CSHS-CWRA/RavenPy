@@ -71,8 +71,8 @@ class HBVEC(Config):
     Ottawa, Ontario: National Research Council.
     """
 
-    params: P
-    hrus: HRUs = Field(..., alias="HRUs")
+    params: P = P()
+    hrus: HRUs = Field([LandHRU()], alias="HRUs")
 
     routing: o.Routing = Field("ROUTE_NONE", alias="Routing")
     catchment_route: o.CatchmentRoute = Field("TRIANGULAR_UH", alias="CatchmentRoute")

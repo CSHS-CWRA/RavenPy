@@ -20,7 +20,7 @@ from ravenpy.new_config.rvs import Config
 from ravenpy.ravenpy import parse_diagnostics
 
 
-class SpotSetup(Emulator):
+class SpotSetup:
     def __init__(
         self,
         config: Config,
@@ -28,23 +28,32 @@ class SpotSetup(Emulator):
         high: [Params, Sequence],
         path: Union[Path, str],
     ):
-        super().__init__(config, path)
+        """
+        Class to configure spotpy with Raven emulators.
 
-        if self.config.suppress_output is not False:
+        Parameters
+        ----------
+        config: Config
+          A Config instance with symbolic expressions.
+        """
+        self.config = config
+        self.path = path
+        self.diagnostics = None
+
+        if config.suppress_output is not False:
             warnings.warn(
                 "Add the `SuppressOutput` command to the configuration to reduce IO."
             )
 
-        if self.config.evaluation_metrics is None:
+        if config.evaluation_metrics is None:
             raise AttributeError(":EvaluationMetrics is undefined.")
 
         # Get evaluation metrics and their multiplier (spotpy maximizes the obj function)
-        self.metrics = [m.value for m in self.config.evaluation_metrics]
+        self.metrics = [m.value for m in config.evaluation_metrics]
         self._multipliers = {m: evaluation_metrics_multiplier[m] for m in self.metrics}
 
-        p = self._config.params
+        p = config.params
 
-        self.p0 = astuple(p)
         self.pnames = list(p.__dataclass_fields__.keys())
         self.pdist = self.init_params(low, high)
         self._iteration = 0
@@ -80,11 +89,18 @@ class SpotSetup(Emulator):
         self._iteration += 1
 
         # Update parameters
-        self.config.params = list(x)
+        c = self.config.set_params(list(x))
+
+        # Create emulator instance
+        emulator = Emulator(config=c, path=self.path / f"c{self._iteration:03}")
 
         # Run the model
-        self.build(self.path / f"c{self._iteration:03}")
-        self.run()
+        emulator.build()
+        emulator.run()
+
+        self.diagnostics = emulator.parse_diagnostics()
+
+        self._iteration += 1
 
         return 1
 
@@ -95,10 +111,10 @@ class SpotSetup(Emulator):
         been computed by Raven.
         """
 
-        d = parse_diagnostics(
-            self._outputdir / f"{self.config.run_name}_Diagnostics.csv"
-        )
-        return [d[f"DIAG_{m}"][0] * self._multipliers[m] for m in self.metrics]
+        return [
+            self.diagnostics[f"DIAG_{m}"][0] * self._multipliers[m]
+            for m in self.metrics
+        ]
 
 
 class SpotpySetup:

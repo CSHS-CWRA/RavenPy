@@ -17,13 +17,13 @@ bounds = {
 }
 
 
-def test_spotpy_calibration(emulator, tmpdir):
-    name = emulator.__class__.__name__
+def test_spotpy_calibration(symbolic_config, tmpdir):
+    name = symbolic_config.__class__.__name__
     if name not in bounds:
         pytest.skip("No bounds defined.")
 
     spot_setup = SpotSetup(
-        config=emulator,
+        config=symbolic_config,
         low=bounds[name]["low"],
         high=bounds[name]["high"],
         path=tmpdir,

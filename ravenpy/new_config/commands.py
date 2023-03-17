@@ -795,7 +795,7 @@ class VegetationClass(Record):
     max_leaf_cond: float = 0.0
 
     def __str__(self):
-        template = "{name:<16},{max_ht:>14},{max_lai:>14},{max_leaf_cond:>14}"
+        template = "{name:<16},{max_ht:>18},{max_lai:>18},{max_leaf_cond:>18}"
         return template.format(**self.dict())
 
 
@@ -811,7 +811,7 @@ class LandUseClass(Record):
     forest_coverage: float = 0.0
 
     def __str__(self):
-        template = "{name:<16},{impermeable_frac:>16},{forest_coverage:>16}"
+        template = "{name:<16},{impermeable_frac:>18},{forest_coverage:>18}"
         return template.format(**self.dict())
 
 

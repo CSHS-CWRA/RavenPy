@@ -57,8 +57,8 @@ class Mohyse(Config):
     Hydrology, 2(4), pp.289-317.
     """
 
-    params: P
-    hrus: HRUs = Field(..., alias="HRUs")
+    params: P = P()
+    hrus: HRUs = Field([LandHRU()], alias="HRUs")
     soil_classes: rc.SoilClasses = Field(
         [{"name": "TOPSOIL"}, {"name": "GWSOIL"}], alias="SoilClasses"
     )

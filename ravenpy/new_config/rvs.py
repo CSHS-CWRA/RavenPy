@@ -5,12 +5,12 @@ from pathlib import Path
 from typing import Any, Dict, Sequence, Type, TypeVar, Union
 
 import cftime
-from pydantic import BaseModel, Extra, Field, validator
+from pydantic import BaseModel, Extra, Field, root_validator, validator
 from pydantic.dataclasses import dataclass
 
 from . import commands as rc
 from . import options as o
-from .base import RV, parse_symbolic
+from .base import RV, Sym, parse_symbolic
 
 """
 Generic Raven model configuration
@@ -142,7 +142,7 @@ class RVP(RV):
     channel_profiles: Sequence[rc.ChannelProfile] = ()
 
     # TODO: create list of all available parameters to constrain key
-    global_parameter: Dict[str, str] = Field({}, alias="GlobalParameter")
+    global_parameter: Dict[str, Sym] = Field({}, alias="GlobalParameter")
     rain_snow_transition: rc.RainSnowTransition = Field(
         None, alias="RainSnowTransition"
     )
@@ -151,7 +151,7 @@ class RVP(RV):
 class RVC(RV):
     hru_states: rc.HRUStateVariableTable = ()
     basin_states: rc.BasinStateVariables = ()
-    uniform_initial_conditions: Dict[str, float] = Field(
+    uniform_initial_conditions: Dict[str, Sym] = Field(
         None, alias="UniformInitialConditions"
     )
 
@@ -174,11 +174,34 @@ class RVH(RV):
 
 
 class Config(RVI, RVC, RVH, RVT, RVP):
-    @validator("*", pre=True)
-    def assign_symbolic(cls, v, values, config, field):
-        if field.name != "params":
-            return parse_symbolic(v, **asdict(values["params"]))
-        return v
+    def set_params(self, params) -> "Config":
+        """Return a new instance of Config with params set to their numerical values."""
+        # Parse symbolic expressions based on numerical values for params.
+        # Get the configuration fields
+        dc = self.__dict__.copy()
+
+        # Create params with numerical values
+        sym_p = dc.pop("params")
+        num_p = sym_p.__class__(*params)
+
+        # Parse symbolic expressions using numerical params values
+        out = parse_symbolic(dc, **asdict(num_p))
+
+        # Instantiate config class
+        # Note: `construct` skips validation. benchmark to see if it speeds things up.
+        return self.__class__(params=num_p, **out)
+
+    @root_validator
+    def assign_symbolic(cls, values):
+        """If params is numerical, convert symbolic expressions from other fields."""
+        from pymbolic.primitives import Variable
+
+        p = asdict(values["params"])
+        is_sym = any([isinstance(v, Variable) for v in p.values()])
+
+        if not is_sym:
+            return parse_symbolic(values, **p)
+        return values
 
     @validator("global_parameter", pre=True)
     def update_defaults(cls, v, values, config, field):

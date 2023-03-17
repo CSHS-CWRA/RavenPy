@@ -13,7 +13,7 @@ from ravenpy.utilities.testdata import get_file as _get_file
 from ravenpy.utilities.testdata import get_local_testdata as _get_local_testdata
 
 from .common import _convert_2d, _convert_3d
-from .emulators import emulator, emulator_rv
+from .emulators import config_rv, numeric_config, symbolic_config
 
 TESTDATA_BRANCH = os.getenv("RAVENPY_TESTDATA_BRANCH", "master")
 SKIP_TEST_DATA = True  # os.getenv("RAVENPY_SKIP_TEST_DATA")

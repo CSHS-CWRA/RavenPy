@@ -80,9 +80,9 @@ class GR4JCN(Config):
     doi: 10.1016/j.jhydrol.2014.04.058.
     """
 
-    params: P
-    hrus: HRUs = Field(..., alias="HRUs")
-    uniform_initial_conditions: Dict[str, float] = Field(
+    params: P = P()
+    hrus: HRUs = Field([LandHRU()], alias="HRUs")
+    uniform_initial_conditions: Dict[str, Sym] = Field(
         {"SOIL[0]": P.GR4J_X1 * 1000 / 2, "SOIL[1]": 15},
         alias="UniformInitialConditions",
     )
@@ -97,7 +97,7 @@ class GR4JCN(Config):
         "POTMELT_DEGREE_DAY", alias="PotentialMeltMethod"
     )
 
-    hydrologic_processes: Sequence[Process] = Field(
+    hydrologic_processes: Sequence[Union[Process, rc.Conditional]] = Field(
         [
             p.Precipitation(algo="PRECIP_RAVEN", source="ATMOS_PRECIP", to="MULTIPLE"),
             p.SnowTempEvolve(algo="SNOTEMP_NEWTONS", source="SNOW_TEMP"),
@@ -129,12 +129,10 @@ class GR4JCN(Config):
         alias="HydrologicProcesses",
     )
 
-    # air_snow_coeff: Sym = Field(1 - P.CEMANEIGE_X2, alias="AirSnowCoeff")
-    # avg_annual_snow: Sym = Field(P.CEMANEIGE_X1, alias="AvgAnnualSnow")
     rain_snow_transition: RainSnowTransition = Field(
         {"temp": 0, "delta": 1}, alias="RainSnowTransition"
     )
-    global_parameter: Dict[str, str] = Field(
+    global_parameter: Dict[str, Sym] = Field(
         {
             "PRECIP_LAPSE": 0.0004,
             "ADIABATIC_LAPSE": 0.0065,

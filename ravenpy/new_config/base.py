@@ -201,12 +201,8 @@ class GenericParameterList(Command):
     parameters: Sequence[str] = Field(
         None, alias="Parameters", description="Parameter names"
     )
+    units: Sequence[str] = Field(None, alias="Units")
     pl: Sequence[ParameterList] = ()
-    _Units: Sequence[str] = PrivateAttr(None)
-
-    def __init__(self, **data):
-        super().__init__(**data)
-        self._Units = ["none"] * len(data["parameters"])
 
     @root_validator(pre=True)
     def num_values_equal_num_names(cls, values):
@@ -216,6 +212,8 @@ class GenericParameterList(Command):
             assert (
                 len(v.values) == n
             ), "Number of values should match number of parameters."
+
+        values["units"] = ("none",) * n
         return values
 
 
@@ -240,10 +238,10 @@ def parse_symbolic(value, **kwds):
         return {k: parse_symbolic(v, **kwds) for k, v in value.items()}
 
     elif isinstance(value, (list, tuple)):
-        return [parse_symbolic(v, **kwds) for v in value]
+        return type(value)(parse_symbolic(v, **kwds) for v in value)
 
     elif isinstance(value, (Command, Record)):
-        attrs = value.dict()
+        attrs = value.__dict__
         return value.__class__(**parse_symbolic(attrs, **kwds))
 
     elif isinstance(value, (Variable, Expression)):

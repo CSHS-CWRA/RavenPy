@@ -15,8 +15,8 @@ alt_names = {
 }
 
 
-names = ["GR4JCN", "HMETS", "Mohyse", "HBVEC"][-1:]
-config = {"GR4JCN": GR4JCN, "HMETS": HMETS, "Mohyse": Mohyse, "HBVEC": HBVEC}
+names = ["GR4JCN", "HMETS", "Mohyse", "HBVEC"]
+configs = {"GR4JCN": GR4JCN, "HMETS": HMETS, "Mohyse": Mohyse, "HBVEC": HBVEC}
 params = {
     "GR4JCN": [0.529, -3.396, 407.29, 1.072, 16.9, 0.947],
     "HMETS": [
@@ -94,9 +94,10 @@ def salmon_hru():
 
 
 @pytest.fixture(scope="session", params=names)
-def emulator(salmon_meteo, salmon_hru, request):
+def symbolic_config(salmon_meteo, salmon_hru, request):
+    """Config with symbolic parameters"""
     name = request.param
-    cls = config[name]
+    cls = configs[name]
     data_type = ["RAINFALL", "TEMP_MIN", "TEMP_MAX", "SNOWFALL"]
     extras = {}
     if name in ["GR4JCN"]:
@@ -109,7 +110,6 @@ def emulator(salmon_meteo, salmon_hru, request):
         data_type.extend(["SNOWFALL", "PET"])
 
     yield cls(
-        params=params[name],
         Gauge=rc.Gauge.from_nc(
             salmon_meteo,
             data_type=data_type,
@@ -126,9 +126,15 @@ def emulator(salmon_meteo, salmon_hru, request):
     )
 
 
+@pytest.fixture(scope="session", params=names)
+def numeric_config(symbolic_config, request):
+    name = request.param
+    yield symbolic_config.set_params(params[name])
+
+
 @pytest.fixture(scope="session")
-def emulator_rv(tmp_path_factory, emulator):
-    name = emulator.__class__.__name__
+def config_rv(tmp_path_factory, numeric_config):
+    name = numeric_config.__class__.__name__
     out = tmp_path_factory.mktemp(name) / "config"
-    emulator.build(out)
+    numeric_config.build(out)
     yield out

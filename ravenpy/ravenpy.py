@@ -32,6 +32,11 @@ class Emulator:
         """Return model outputs."""
         return parse(self.config.run_name, self._outputdir)
 
+    def parse_diagnostics(self):
+        return parse_diagnostics(
+            self._outputdir / f"{self.config.run_name}_Diagnostics.csv"
+        )
+
     @property
     def config(self):
         return self._config
