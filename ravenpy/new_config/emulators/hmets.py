@@ -65,9 +65,9 @@ class HMETS(Config):
     flow forecasting and climate change impacts. Int. J. Eng. Educ., 33, 1307–1316.
     """
 
-    params: P
-    hrus: HRUs = Field(..., alias="HRUs")
-    uniform_initial_conditions: Dict[str, float] = Field(
+    params: P = P()
+    hrus: HRUs = Field([ForestHRU()], alias="HRUs")
+    uniform_initial_conditions: Dict[str, Sym] = Field(
         {"SOIL[0]": P.TOPSOIL / 2, "SOIL[1]": P.PHREATIC / 2},
         alias="UniformInitialConditions",
     )
@@ -123,7 +123,7 @@ class HMETS(Config):
             },
         ]
     )
-    global_parameter: Dict[str, str] = Field(
+    global_parameter: Dict[str, Sym] = Field(
         {
             "SNOW_SWI_MIN": P.SNOW_SWI_MIN,
             "SNOW_SWI_MAX": P.SNOW_SWI_MAX,

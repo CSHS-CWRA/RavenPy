@@ -15,7 +15,7 @@ alt_names = {
 }
 
 
-names = ["GR4JCN", "HMETS", "Mohyse", "HBVEC"]
+names = ["GR4JCN", "HMETS", "Mohyse", "HBVEC"][3:4]
 configs = {"GR4JCN": GR4JCN, "HMETS": HMETS, "Mohyse": Mohyse, "HBVEC": HBVEC}
 params = {
     "GR4JCN": [0.529, -3.396, 407.29, 1.072, 16.9, 0.947],

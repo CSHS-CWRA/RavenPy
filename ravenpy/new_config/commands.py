@@ -138,8 +138,8 @@ class RainSnowTransition(Command):
       Range [C].
     """
 
-    temp: float
-    delta: float
+    temp: Sym
+    delta: Sym
 
     def to_rv(self):
         return f":RainSnowTransition {self.temp} {self.delta}\n"
@@ -823,7 +823,7 @@ class LandUseClasses(Command):
 
 class SubBasinProperty(Record):
     sb_id: str
-    values: Sequence[float]
+    values: Sequence[Sym]
 
     def __str__(self):
         return indent(
