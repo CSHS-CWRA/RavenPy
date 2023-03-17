@@ -1,4 +1,4 @@
-from typing import Dict, Literal, Sequence
+from typing import Dict, Literal, Sequence, Union
 
 from pydantic import Field
 from pydantic.dataclasses import dataclass
@@ -73,6 +73,81 @@ class HBVEC(Config):
 
     params: P
     hrus: HRUs = Field(..., alias="HRUs")
+
+    routing: o.Routing = Field("ROUTE_NONE", alias="Routing")
+    catchment_route: o.CatchmentRoute = Field("TRIANGULAR_UH", alias="CatchmentRoute")
+    evaporation: o.Evaporation = Field("PET_FROMMONTHLY", alias="Evaporation")
+    ow_evaporation: o.Evaporation = Field("PET_FROMMONTHLY", alias="OW_Evaporation")
+    sw_radiation_method: o.SWRadiationMethod = Field(
+        "SW_RAD_DEFAULT", alias="SWRadiationMethod"
+    )
+    sw_cloud_correct: o.SWCloudCorrect = Field(
+        "SW_CLOUD_CORR_NONE", alias="SWCloudCorrect"
+    )
+    sw_canopy_correct: o.SWCanopyCorrect = Field(
+        "SW_CANOPY_CORR_NONE", alias="SWCanopyCorrect"
+    )
+    lw_radiation_method: o.LWRadiationMethod = Field(
+        "LW_RAD_DEFAULT", alias="LWRadiationMethod"
+    )
+    rain_snow_fraction: o.RainSnowFraction = Field("RAINSNOW_HBV")
+    potential_melt_method: o.PotentialMeltMethod = Field(
+        "POTMELT_HBV", alias="PotentialMeltMethod"
+    )
+    oro_temp_correct: o.OroTempCorrect = Field("OROCORR_HBV", alias="OroTempCorrect")
+    oro_precip_correct: o.OroPrecipCorrect = Field(
+        "OROCORR_HBV", alias="OroPrecipCorrect"
+    )
+    oro_pet_correct: o.OroPETCorrect = Field("OROCORR_HBV", alias="OroPETCorrect")
+    cloud_cover_method: o.CloudCoverMethod = Field(
+        "CLOUDCOV_NONE", alias="CloudCoverMethod"
+    )
+    precip_icept_frac: o.PrecipIceptFract = Field(
+        "PRECIP_ICEPT_USER", alias="PrecipIcepFract"
+    )
+    monthly_interpolation_method: o.MonthlyInterpolationMethod = Field(
+        "MONTHINT_LINEAR_21", alias="MonthlyInterpolationMethod"
+    )
+    soil_model: rc.SoilModel = Field(3, alias="SoilModel")
+    lake_storage: o.StateVariables = Field("SLOW_RESERVOIR", alias="LakeStorage")
+    hydrologic_processes: Sequence[Union[Process, p.Conditional]] = Field(
+        [
+            p.SnowRefreeze(algo="FREEZE_DEGREE_DAY", source="SNOW_LIQ", to="SNOW"),
+            p.Precipitation(algo="PRECIP_RAVEN", source="ATMOS_PRECIP", to="MULTIPLE"),
+            p.CanopySublimation(algo="CANEVP_ALL", source="CANOPY", to="ATMOSPHERE"),
+            p.CanopySublimation(
+                algo="CANEVP_ALL", source="CANOPY_SNOW", to="ATMOSPHERE"
+            ),
+            p.SnowBalance(algo="SNOBAL_SIMPLE_MELT", source="SNOW", to="SNOW_LIQ"),
+            p.Overflow(algo="RAVEN_DEFAULT", source="SNOW_LIQ", to="PONDED_WATER"),
+            p.Flush(algo="RAVEN_DEFAULT", source="PONDED_WATER", to="GLACIER"),
+            p.Conditional(kind="HRU_TYPE", op="IS", value="GLACIER"),
+            p.GlacierMelt(algo="GMELT_HBV", source="GLACIER_ICE", to="GLACIER"),
+            p.GlacierRelease(
+                algo="GRELEASE_HBV_EC", source="GLACIER", to="SURFACE_WATER"
+            ),
+            p.Infiltration(algo="INF_HBV", source="PONDED_WATER", to="MULTIPLE"),
+            p.Flush(algo="RAVEN_DEFAULT", source="SURFACE_WATER", to="SOIL[1]"),
+            p.Conditional(kind="HRU_TYPE", op="IS_NOT", value="GLACIER"),
+            p.SoilEvaporation(algo="SOILEVAP_HBV", source="SOIL[0]", to="ATMOSPHERE"),
+            p.CapillaryRise(algo="RISE_HBV", source="SOIL[1]", to="SOIL[0]"),
+            p.LakeEvaporation(
+                algo="LAKE_EVAP_BASIC", source="SOIL[2]", to="ATMOSPHERE"
+            ),
+            p.Percolation(algo="PERC_CONSTANT", source="SOIL[1]", to="SOIL[2]"),
+            p.Baseflow(algo="BASE_POWER_LAW", source="SOIL[1]", to="SURFACE_WATER"),
+            p.Baseflow(algo="BASE_LINEAR", source="SOIL[2]", to="SURFACE_WATER"),
+        ]
+    )
+
+    subbasin_properties: rc.SubBasinProperties = Field(
+        {
+            "parameters": ["TIME_CONC", "TIME_TO_PEAK"],
+            "records": [{"sb_id": 1, "values": (P.X11, P.X11 / 2)}],
+        },
+        alias="SubBasinProperties",
+    )
+
     rain_snow_transition: rc.RainSnowTransition = Field(
         {"temp": P.X01, "delta": 2}, alias="RainSnowTransition"
     )
@@ -84,4 +159,116 @@ class HBVEC(Config):
         },
         alias="GlobalParameters",
     )
-    soil_classes: rc.SoilClasses = Field([])
+    soil_classes: rc.SoilClasses = Field(
+        [
+            {"name": "TOPSOIL", "mineral": (1, 0, 0), "organic": 0},
+            {"name": "SLOWRES", "mineral": (1, 0, 0), "organic": 0},
+            {"name": "FASTRES", "mineral": (1, 0, 0), "organic": 0},
+        ],
+        alias="SoilClasses",
+    )
+    soil_parameter_list: rc.SoilParameterList = Field(
+        {
+            "parameters": [
+                "POROSITY",
+                "FIELD_CAPACITY",
+                "SAT_WILT",
+                "HBV_BETA",
+                "MAX_CAP_RISE_RATE",
+                "MAX_PERC_RATE",
+                "BASEFLOW_COEFF",
+                "BASEFLOW_N",
+            ],
+            "pl": [
+                PL(
+                    name="[DEFAULT]",
+                    values=(P.X05, P.X06, P.X14, P.X07, P.X16, 0.0, 0.0, 0.0),
+                ),
+                PL(
+                    name="FAST_RES",
+                    values=(
+                        "_DEFAULT",
+                        "_DEFAULT",
+                        0.0,
+                        "_DEFAULT",
+                        "_DEFAULT",
+                        P.X08,
+                        P.X09,
+                        P.X15 + 1,
+                    ),
+                ),
+                PL(
+                    name="SLOW_RES",
+                    values=(
+                        "_DEFAULT",
+                        "_DEFAULT",
+                        0.0,
+                        "_DEFAULT",
+                        "_DEFAULT",
+                        "_DEFAULT",
+                        P.X10,
+                        1.0,
+                    ),
+                ),
+            ],
+        },
+        alias="SoilParameterList",
+    )
+    soil_profiles: rc.SoilProfiles = Field(
+        [
+            {
+                "name": "DEFAULT_P",
+                "soil_classes": ["TOPSOIL", "FAST_RES", "CONSTANT"],
+                "thicknesses": (P.X17, 100, 100),
+            }
+        ],
+        alias="SoilProfiles",
+    )
+    vegetation_classes: rc.VegetationClasses = Field(
+        [{"name": "VEG_ALL", "max_ht": 25, "max_lai": 6, "max_leaf_cond": 5.3}],
+        alias="VegetationClasses",
+    )
+    vegetation_parameter_list: rc.VegetationParameterList = Field(
+        {
+            "parameters": ["MAX_CAPACITY", "MAX_SNOW_CAPACITY", "TFRAIN", "TFSNOW"],
+            "pl": [PL(name="VEG_ALL", values=(10000, 10000, 0.88, 0.88))],
+        },
+        alias="VegetationParameterList",
+    )
+    land_use_classes: rc.LandUseClasses = Field(
+        [{"name": "LU_ALL", "impermeable_frac": 0, "forest_coverage": 1}],
+        alias="LandUseClasses",
+    )
+    land_use_parameter_list: rc.LandUseParameterList = Field(
+        {
+            "parameters": [
+                "MELT_FACTOR",
+                "MIN_MELT_FACTOR",
+                "HBV_MELT_FOR_CORR",
+                "REFREEZE_FACTOR",
+                "HBV_MELT_ASP_CORR",
+                "HBV_MELT_GLACIER_CORR",
+                "HBV_GLACIER_KMIN",
+                "GLAC_STORAGE_COEFF",
+                "HBV_GLACIER_AG",
+            ],
+            "pl": [
+                PL(
+                    name="[DEFAULT]",
+                    values=(P.X02, 2.2, P.X18, P.X03, 0.48, 1.64, 0.05, P.X19, 0.05),
+                )
+            ],
+        },
+        alias="LandUseParameterList",
+    )
+
+    hru_states: rc.HRUStateVariableTable = Field(
+        [{"index": 1, "data": {"[SOIL[2]": 0.50657}}]
+    )
+
+    def __init__(self, **data):
+        super().__init__(**data)
+
+        for gauge in self.get("gauge", []):
+            gauge.rain_correction = data["params"].X20
+            gauge.snow_correction = data["params"].X21

@@ -23,3 +23,10 @@ NetCDFAttribute = {
     "time_coverage_start": "{start_date}",
     "time_coverage_end": "{end_date}",
 }
+
+MonthlyAverages = {
+    "TEMP_AVE": "MonthlyAveTemperature",
+    "TEMP_MIN": "MonthlyMinTemperature",
+    "TEMP_MAX": "MonthlyMaxTemperature",
+    "PET": "MonthlyAveEvaporation",
+}

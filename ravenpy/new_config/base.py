@@ -178,7 +178,7 @@ class FlatCommand(Command):
 
 class ParameterList(Record):
     name: str = ""
-    values: Sequence[Union[Sym, None]] = ()
+    values: Sequence[Union[Sym, str, None]] = ()
 
     @validator("values", pre=True)
     def no_none_in_default(cls, v, values):

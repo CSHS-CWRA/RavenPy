@@ -41,7 +41,7 @@ class RVI(RV):
     sw_radiation_method: o.SWRadiationMethod = Field(None, alias="SWRadiationMethod")
     sw_cloud_correct: o.SWCloudCorrect = Field(None, alias="SWCloudCorrect")
     sw_canopy_correct: o.SWCanopyCorrect = Field(None, alias="SWCanopyCorrect")
-    # lw_radiation_method: rc.LWRadiationMethod = None
+    lw_radiation_method: o.LWRadiationMethod = Field(None, alias="LWRadiationMethod")
     windspeed_method: o.WindspeedMethod = Field(None, alias="WindspeedMethod")
     rain_snow_fraction: o.RainSnowFraction = Field(None, alias="RainSnowFraction")
     potential_melt_method: o.PotentialMeltMethod = Field(
@@ -53,11 +53,13 @@ class RVI(RV):
     cloud_cover_method: o.CloudCoverMethod = Field(None, alias="CloudCoverMethod")
     precip_icept_frac: o.PrecipIceptFract = Field(None, alias="PrecipIceptFract")
     subdaily_method: o.SubdailyMethod = Field(None, alias="SubdailyMethod")
-    mim: o.MonthlyInterpolationMethod = Field(None, alias="MonthlyInterpolationMethod")
+    monthly_interpolation_method: o.MonthlyInterpolationMethod = Field(
+        None, alias="MonthlyInterpolationMethod"
+    )
     soil_model: rc.SoilModel = Field(None, alias="SoilModel")
     lake_storage: o.StateVariables = Field(None, alias="LakeStorage")
     # alias: Dict[str, str] = Field(None, alias="Alias")
-    hydrologic_processes: Sequence[rc.Process] = Field(
+    hydrologic_processes: Sequence[Union[rc.Process, rc.Conditional]] = Field(
         None, alias="HydrologicProcesses"
     )
     evaluation_metrics: Sequence[o.EvaluationMetrics] = Field(

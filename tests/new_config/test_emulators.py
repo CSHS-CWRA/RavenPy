@@ -2,7 +2,7 @@ import numpy as np
 
 from ravenpy import Emulator
 
-NSE = {"GR4JCN": -0.117301, "HMETS": -3.0132, "Mohyse": 0.194612}
+NSE = {"GR4JCN": -0.117301, "HMETS": -3.0132, "Mohyse": 0.194612, "HBVEC": 0.0186633}
 
 
 def test_rv(emulator_rv):

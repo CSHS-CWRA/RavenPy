@@ -2,10 +2,10 @@ import dataclasses
 
 import xarray as xr
 
-from .conventions import CF_RAVEN
+from .conventions import CF_RAVEN, MonthlyAverages
 
 
-def nc_specs(fn, data_type, station_idx, alt_names=()):
+def nc_specs(fn, data_type, station_idx, alt_names=(), mon_ave=False):
     """Extract specifications from netCDF file.
 
     Parameters
@@ -18,6 +18,8 @@ def nc_specs(fn, data_type, station_idx, alt_names=()):
       Index along station dimension. Starts at 1.
     alt_names: str, list
       Alternative variable names for data type if not the CF standard default.
+    mon_ave: bool
+      If True, compute the monthly average.
 
     Returns
     -------
@@ -60,6 +62,10 @@ def nc_specs(fn, data_type, station_idx, alt_names=()):
                 if attrs["units"] is not None:
                     s, o = infer_scale_and_offset(nc_var, data_type)
                     attrs["linear_transform"] = dict(scale=s, offset=o)
+                if mon_ave:
+                    ma = MonthlyAverages.get(data_type)
+                    if ma:
+                        attrs[ma] = nc_var.groupby("time.month").mean().values
 
                 break
         else:

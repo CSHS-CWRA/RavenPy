@@ -2,7 +2,7 @@ from typing import Literal, Tuple, Union
 
 from ravenpy.config import options as o
 
-from .commands import Process
+from .commands import Conditional, Process
 
 
 # --- Processes --- #
@@ -12,22 +12,34 @@ class Precipitation(Process):
     algo: Literal["PRECIP_RAVEN", "RAVEN_DEFAULT"] = "PRECIP_RAVEN"
 
 
-class CanopyEvap(Process):
-    algo: Literal["CANEVP_RUTTER", "CANEVP_MAXIMUM"]
+class CapillaryRise(Process):
+    algo: Literal["RISE_HBV", "CRISE_HBV"]
+
+
+class CanopyEvaporation(Process):
+    algo: Literal["CANEVP_RUTTER", "CANEVP_MAXIMUM", "CANEVP_ALL"]
+
+
+class CanopySublimation(Process):
+    algo: Literal["CANEVP_ALL", "CANEVP_MAXIMUM", "CANSUBLIM_ALL", "CANSUBLIM_MAXIMUM"]
 
 
 class SoilEvaporation(Process):
     """"""
 
     algo: Literal[
-        "SOIL_EVAP_VIC",
-        "SOIL_EVAP_HBV",
-        "SOIL_EVAL_CHU",
+        "SOILEVAP_VIC",
+        "SOILEVAP_HBV",
+        "SOILEVAP_HYPR",
+        "SOILEVAL_CHU",
+        "SOILEVAP_UBC",
         "SOILEVAP_GR4J",
-        "SOIL_EVAP_TOPMODEL",
-        "SOIL_EVAP_SEQUEN",
-        "SOIL_EVAP_ROOTFRAC",
-        "SOIL_EVAP_GOWSWER",
+        "SOILEVAP_TOPMODEL",
+        "SOILEVAP_SEQUEN",
+        "SOILEVAP_ROOT",
+        "SOILEVAP_ROOT_CONSTRAIN",
+        "SOILEVAP_ROOTFRAC",
+        "SOILEVAP_GAWSER",
         "SOILEVAP_ALL",
         "SOILEVAP_LINEAR",
     ]
@@ -179,7 +191,7 @@ class Flush(Process):
 
 
 class Overflow(Process):
-    algo: Literal["OVERFLOW_RAVEN"]
+    algo: Literal["OVERFLOW_RAVEN", "RAVEN_DEFAULT"]
     _sub = "-->"
     _indent = "    "
 

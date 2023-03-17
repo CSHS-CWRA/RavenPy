@@ -262,6 +262,9 @@ class TestHRUStateVariableTable:
             """
         )
 
+        s1 = dict(index=1, data={"SOIL[0]": 0.1, "SOIL[1]": 1.0})
+        t = rc.HRUStateVariableTable(__root__=[s1])
+
     def test_parse(self):
         solution = """
 :HRUStateVariableTable

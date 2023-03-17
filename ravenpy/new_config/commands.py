@@ -91,7 +91,21 @@ class Process(Command):
         p = getattr(self, "p", None)
         p = p if p is not None else ""
         cmd = self._sub + self.__class__.__name__
-        return (f":{cmd:<20} {self.algo:<19} {self.source:<19} {t} {p}").strip()
+        return f":{cmd:<20} {self.algo:<19} {self.source:<19} {t} {p}".strip()
+
+
+class Conditional(Command):
+    """Conditional statement"""
+
+    kind: Literal["HRU_TYPE", "LAND_CLASS", "HRU_GROUP"]
+    op: Literal["IS", "IS_NOT"]
+    value: str
+
+    _sub = "-->"
+
+    def to_rv(self):
+        cmd = self._sub + self.__class__.__name__
+        return f":{cmd:<20} {self.kind} {self.op} {self.value}"
 
 
 class SoilModel(Command):
@@ -532,16 +546,17 @@ class Gauge(FlatCommand):
     longitude: float = Field(..., alias="Longitude")
     elevation: float = Field(None, alias="Elevation")
 
-    # Accept strings to embed parameter names into Ostrich templates
-    rain_correction: float = Field(
+    rain_correction: Sym = Field(
         None, alias="RainCorrection", description="Rain correction"
     )
-    snow_correction: float = Field(
+    snow_correction: Sym = Field(
         None, alias="SnowCorrection", description="Snow correction"
     )
 
     monthly_ave_evaporation: Tuple[float] = Field(None, alias="MonthlyAveEvaporation")
     monthly_ave_temperature: Tuple[float] = Field(None, alias="MonthlyAveTemperature")
+    monthly_min_temperature: Tuple[float] = Field(None, alias="MonthlyMinTemperature")
+    monthly_max_temperature: Tuple[float] = Field(None, alias="MonthlyMaxTemperature")
 
     data: Sequence[Data] = Field(None, alias="Data")
 
@@ -584,6 +599,9 @@ class Gauge(FlatCommand):
             attrs["name"] = attrs.get("name", f"Gauge_{idx}")
             out.append(cls(**attrs, **extra.get(idx, {})))
         return out
+
+    def monthly_ave(cls, fn, variables=()):
+        """Return monthly average."""
 
 
 class ObservationData(Data):
@@ -642,19 +660,19 @@ class HRUStateVariableTable(Command):
     def __init__(self, **data):
         from itertools import chain
 
-        if data.get("__root__"):
-            hs = data["__root__"]
-            # Get all attribute names from HRUStates
-            names = sorted(list(set(chain(*[tuple(s.data.keys()) for s in hs]))))
-
-            data["__root__"] = [
-                HRUState(index=s.index, data={n: s.data.get(n, 0.0) for n in names})
-                for s in hs
-            ]
-        else:
-            names = None
-
         super().__init__(**data)
+
+        # Get all attribute names from HRUStates
+        names = (
+            sorted(list(set(chain(*[tuple(s.data.keys()) for s in self.__root__]))))
+            or None
+        )
+
+        self.__root__ = [
+            HRUState(index=s.index, data={n: s.data.get(n, 0.0) for n in names})
+            for s in self.__root__
+        ]
+
         # Store names in private class attribute
         self._Attributes = names
 
@@ -783,13 +801,8 @@ class VegetationClass(Record):
 
 class VegetationClasses(Command):
     __root__: Sequence[VegetationClass]
-    _template = """
-    :VegetationClasses
-      :Attributes     ,        MAX_HT,       MAX_LAI, MAX_LEAF_COND
-      :Units          ,             m,          none,      mm_per_s
-    {_records}
-    :EndVegetationClasses
-    """
+    _Attributes: Sequence[str] = PrivateAttr(["MAX_HT", "MAX_LAI", "MAX_LEAF_COND"])
+    _Units: Sequence[str] = PrivateAttr(["m", "none", "mm_per_s"])
 
 
 class LandUseClass(Record):
@@ -804,13 +817,8 @@ class LandUseClass(Record):
 
 class LandUseClasses(Command):
     __root__: Sequence[LandUseClass]
-    _template = """
-        :LandUseClasses
-          :Attributes     ,IMPERMEABLE_FRAC, FOREST_COVERAGE
-          :Units          ,           fract,           fract
-        {_records}
-        :EndLandUseClasses
-        """
+    _Attributes: Sequence[str] = PrivateAttr(["IMPERMEABLE_FRAC", "FOREST_COVERAGE"])
+    _Units: Sequence[str] = PrivateAttr(["fract", "fract"])
 
 
 class SubBasinProperty(Record):
