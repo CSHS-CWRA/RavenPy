@@ -117,7 +117,6 @@ class RVI(RV):
 
 class RVT(RV):
     gauge: Sequence[rc.Gauge] = Field(None, alias="Gauge", flat=True)
-    # data: Sequence[rc.Data] = ()
     station_forcing: Sequence[rc.StationForcing] = Field(None, alias="StationForcing")
     gridded_forcing: Sequence[rc.GriddedForcing] = Field(None, alias="GriddedForcing")
     observation_data: Sequence[rc.ObservationData] = Field(

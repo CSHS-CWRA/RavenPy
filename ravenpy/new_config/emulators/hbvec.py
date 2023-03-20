@@ -109,7 +109,7 @@ class HBVEC(Config):
         "MONTHINT_LINEAR_21", alias="MonthlyInterpolationMethod"
     )
     soil_model: rc.SoilModel = Field(3, alias="SoilModel")
-    lake_storage: o.StateVariables = Field("SLOW_RESERVOIR", alias="LakeStorage")
+    lake_storage: o.StateVariables = Field("SOIL[2]", alias="LakeStorage")
     hydrologic_processes: Sequence[Union[Process, p.Conditional]] = Field(
         [
             p.SnowRefreeze(algo="FREEZE_DEGREE_DAY", source="SNOW_LIQ", to="SNOW"),
@@ -162,8 +162,8 @@ class HBVEC(Config):
     soil_classes: rc.SoilClasses = Field(
         [
             {"name": "TOPSOIL", "mineral": (1, 0, 0), "organic": 0},
-            {"name": "SLOWRES", "mineral": (1, 0, 0), "organic": 0},
-            {"name": "FASTRES", "mineral": (1, 0, 0), "organic": 0},
+            {"name": "SLOW_RES", "mineral": (1, 0, 0), "organic": 0},
+            {"name": "FAST_RES", "mineral": (1, 0, 0), "organic": 0},
         ],
         alias="SoilClasses",
     )
@@ -218,7 +218,7 @@ class HBVEC(Config):
         [
             {
                 "name": "DEFAULT_P",
-                "soil_classes": ["TOPSOIL", "FAST_RES", "CONSTANT"],
+                "soil_classes": ["TOPSOIL", "FAST_RES", "SLOW_RES"],
                 "thicknesses": (P.X17, 100, 100),
             }
         ],
@@ -269,6 +269,7 @@ class HBVEC(Config):
     def __init__(self, **data):
         super().__init__(**data)
 
-        for gauge in self.get("gauge", []):
-            gauge.rain_correction = data["params"].X20
-            gauge.snow_correction = data["params"].X21
+        if self.gauge:
+            for gauge in self.gauge:
+                gauge.rain_correction = self.params.X20
+                gauge.snow_correction = self.params.X21

@@ -65,7 +65,7 @@ def nc_specs(fn, data_type, station_idx, alt_names=(), mon_ave=False):
                 if mon_ave:
                     ma = MonthlyAverages.get(data_type)
                     if ma:
-                        attrs[ma] = nc_var.groupby("time.month").mean().values
+                        attrs[ma] = nc_var.groupby("time.month").mean().values.tolist()
 
                 break
         else:
@@ -113,6 +113,8 @@ def filter_for(kls, attrs):
         for key, field in kls.__fields__.items():
             if key in attrs:
                 out[key] = attrs[key]
+            elif field.alias in attrs:
+                out[field.alias] = attrs[field.alias]
             elif type(field.type_) == ModelMetaclass and issubclass(
                 field.type_, Command
             ):

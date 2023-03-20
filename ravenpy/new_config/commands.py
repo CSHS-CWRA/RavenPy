@@ -43,6 +43,20 @@ TODO: Create tests in tests/new_config/test_commands.py
 
 INDENT = " " * 4
 VALUE_PADDING = 10
+T12 = Tuple[
+    float,
+    float,
+    float,
+    float,
+    float,
+    float,
+    float,
+    float,
+    float,
+    float,
+    float,
+    float,
+]
 
 
 # Validators
@@ -553,10 +567,10 @@ class Gauge(FlatCommand):
         None, alias="SnowCorrection", description="Snow correction"
     )
 
-    monthly_ave_evaporation: Tuple[float] = Field(None, alias="MonthlyAveEvaporation")
-    monthly_ave_temperature: Tuple[float] = Field(None, alias="MonthlyAveTemperature")
-    monthly_min_temperature: Tuple[float] = Field(None, alias="MonthlyMinTemperature")
-    monthly_max_temperature: Tuple[float] = Field(None, alias="MonthlyMaxTemperature")
+    monthly_ave_evaporation: Sequence = Field(None, alias="MonthlyAveEvaporation")
+    monthly_ave_temperature: Sequence = Field(None, alias="MonthlyAveTemperature")
+    monthly_min_temperature: Sequence = Field(None, alias="MonthlyMinTemperature")
+    monthly_max_temperature: Sequence = Field(None, alias="MonthlyMaxTemperature")
 
     data: Sequence[Data] = Field(None, alias="Data")
 
@@ -575,7 +589,9 @@ class Gauge(FlatCommand):
         return v
 
     @classmethod
-    def from_nc(cls, fn, data_type=None, station_idx=(1,), alt_names={}, extra={}):
+    def from_nc(
+        cls, fn, data_type=None, station_idx=(1,), alt_names={}, mon_ave=False, extra={}
+    ):
         """Return list of Gauge commands."""
         from typing import get_args
 
@@ -585,19 +601,24 @@ class Gauge(FlatCommand):
         out = []
         for idx in station_idx:
             data = []
+            gattrs = {}
             for dtyp in data_type:
                 try:
-                    specs = nc_specs(fn, dtyp, idx, alt_names.get(dtyp, ()))
+                    specs = nc_specs(
+                        fn, dtyp, idx, alt_names.get(dtyp, ()), mon_ave=mon_ave
+                    )
                     data.append(Data(**filter_for(Data, specs)))
                 except ValueError:
                     pass
+                else:
+                    gattrs.update(filter_for(cls, specs))
             else:
                 if len(data) == 0:
                     raise ValueError("No data found in file.")
-            attrs = filter_for(cls, specs)
-            attrs["data"] = data
-            attrs["name"] = attrs.get("name", f"Gauge_{idx}")
-            out.append(cls(**attrs, **extra.get(idx, {})))
+
+            gattrs["data"] = data
+            gattrs["name"] = gattrs.get("name", f"Gauge_{idx}")
+            out.append(cls(**gattrs, **extra.get(idx, {})))
         return out
 
     def monthly_ave(cls, fn, variables=()):

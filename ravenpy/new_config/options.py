@@ -98,6 +98,8 @@ StateVariables = Literal[
     "ATMOS_PRECIP",
     "PONDED_WATER",
     "SOIL",
+    "SOIL[1]",
+    "SOIL[2]",
     "GROUNDWATER",
     "CANOPY",
     "CANOPY_SNOW",
@@ -208,7 +210,13 @@ VegetationParameters = Literal[
     "DRIP_PROPORTION",
     "MAX_INTERCEPT_RATE",
     "CHU_MATURITY",
-    "PET_VEG_CORR",
+    "VEG_DIAM",
+    "VEG_MBETA",
+    "VEG_DENS" "PET_VEG_CORR",
+    "TFRAIN",
+    "TFSNOW",
+    "RELATIVE_HT",
+    "RELATIVE_LAI",
 ]
 
 
@@ -236,8 +244,12 @@ class CatchmentRoute(Enum):
     DUMP = "ROUTE_DUMP"
     GAMMA = "ROUTE_GAMMA_CONVOLUTION"
     TRI = "ROUTE_TRI_CONVOLUTION"
+    TRI_CONVOLUTION = "TRI_CONVOLUTION"
+    TRIANGULAR_UH = "TRIANGULAR_UH"
     RESERVOIR = "ROUTE_RESERVOIR_SERIES"
     EXP = "ROUTE_EXPONENTIAL"
+    DELAYED_FIRST_ORDER = "ROUTE_DELAYED_FIRST_ORDER"
+    EXPONENTIAL_UH = "EXPONENTIAL_UH"
 
 
 class CloudCoverMethod(Enum):
@@ -384,7 +396,7 @@ class SoilModel(Enum):
 
 
 SubBasinProperties = Literal[
-    "TIME_TO_PEAK ",
+    "TIME_TO_PEAK",
     "TIME_CONC",
     "TIME_LAG",
     "NUM_RESERVOIRS",
@@ -415,9 +427,10 @@ class SWCanopyCorrect(Enum):
 
 
 class SWCloudCorrect(Enum):
-    NONE = "SW_CLOUDCOV_CORR_NONE"  # Default
-    DINGMAN = "SW_CLOUDCOV_CORR_DINGMAN"
-    UBC = "SW_CLOUDCOV_CORR_UBC"
+    NONE = "SW_CLOUD_CORR_NONE"  # Default
+    DINGMAN = "SW_CLOUD_CORR_DINGMAN"
+    UBC = "SW_CLOUD_CORR_UBCWM"
+    ANNANDALE = "SW_CLOUD_CORR_ANNANDALE"
 
 
 class SWRadiationMethod(Enum):

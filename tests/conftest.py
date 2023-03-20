@@ -16,7 +16,7 @@ from .common import _convert_2d, _convert_3d
 from .emulators import config_rv, numeric_config, symbolic_config
 
 TESTDATA_BRANCH = os.getenv("RAVENPY_TESTDATA_BRANCH", "master")
-SKIP_TEST_DATA = True  # os.getenv("RAVENPY_SKIP_TEST_DATA")
+SKIP_TEST_DATA = os.getenv("RAVENPY_SKIP_TEST_DATA")
 
 
 def populate_testing_data(

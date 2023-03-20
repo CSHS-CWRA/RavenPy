@@ -1,6 +1,7 @@
 import datetime as dt
 
 import pytest
+import xarray as xr
 
 from ravenpy.new_config import commands as rc
 from ravenpy.new_config.emulators import GR4JCN, HBVEC, HMETS, Mohyse
@@ -99,7 +100,22 @@ def symbolic_config(salmon_meteo, salmon_hru, request):
     name = request.param
     cls = configs[name]
     data_type = ["RAINFALL", "TEMP_MIN", "TEMP_MAX", "SNOWFALL"]
+
+    # Extra attributes for gauges
+    gextras = {1: {"elevation": salmon_hru["land"]["elevation"]}}
+
+    if name == "HBVEC":
+        ds = xr.open_dataset(salmon_meteo)
+        gextras[1]["monthly_ave_temperature"] = (
+            ((ds.tmin + ds.tmax) / 2).groupby("time.month").mean().values.tolist()
+        )
+        gextras[1]["monthly_ave_evaporation"] = (
+            ds.pet.groupby("time.month").mean().values.tolist()
+        )
+
+    # Extra attributes for emulator
     extras = {}
+
     if name in ["GR4JCN"]:
         extras.update(
             dict(
@@ -114,7 +130,7 @@ def symbolic_config(salmon_meteo, salmon_hru, request):
             salmon_meteo,
             data_type=data_type,
             alt_names=alt_names,
-            extra={1: {"elevation": salmon_hru["land"]["elevation"]}},
+            extra=gextras,
         ),
         ObservationData=rc.ObservationData.from_nc(salmon_meteo, alt_names="qobs"),
         HRUs=[salmon_hru["land"]],
