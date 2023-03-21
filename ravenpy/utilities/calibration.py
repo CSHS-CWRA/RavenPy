@@ -115,7 +115,7 @@ class SpotSetup:
             self.diagnostics[f"DIAG_{m}"][0] * self._multipliers[m]
             for m in self.metrics
         ]
-        print(out)
+
         return out
 
 

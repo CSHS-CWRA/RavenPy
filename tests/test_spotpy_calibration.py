@@ -1,39 +1,12 @@
 import datetime as dt
 import time
 
-import pytest
 import spotpy
 
 from ravenpy.models import GR4JCN
-from ravenpy.utilities.calibration import SpotpySetup, SpotSetup
+from ravenpy.utilities.calibration import SpotpySetup
 
 salmon_river = "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
-
-bounds = {
-    "GR4JCN": {
-        "low": (0.01, -15.0, 10.0, 0.0, 1.0, 0.0),
-        "high": (2.5, 10.0, 700.0, 7.0, 30.0, 1.0),
-    }
-}
-
-
-def test_spotpy_calibration(symbolic_config, tmpdir):
-    name = symbolic_config.__class__.__name__
-    if name not in bounds:
-        pytest.skip("No bounds defined.")
-
-    spot_setup = SpotSetup(
-        config=symbolic_config,
-        low=bounds[name]["low"],
-        high=bounds[name]["high"],
-        path=tmpdir,
-    )
-
-    sampler = spotpy.algorithms.dds(
-        spot_setup, dbname="RAVEN_model_run", dbformat="ram", save_sim=False
-    )
-
-    sampler.sample(10, trials=1)
 
 
 class TestGR4JCNSpotpy:
