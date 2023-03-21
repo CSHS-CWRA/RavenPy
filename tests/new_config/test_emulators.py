@@ -9,6 +9,7 @@ NSE = {
     "HBVEC": 0.0186633,
     "CanadianShield": 0.39602,
     "HYPR": 0.685188,
+    "SACSMA": -0.0382907,
 }
 
 

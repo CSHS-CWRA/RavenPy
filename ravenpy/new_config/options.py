@@ -74,6 +74,8 @@ SoilParameters = Literal[
     "PERC_COEFF",
     "SAC_PERC_ALPHA",
     "SAC_PERC_EXPON",
+    "SAC_PERC_PFREE",
+    "UNAVAIL_FRAC",
     "HBV_BETA",
     "MAX_BASEFLOW_RATE",
     "BASEFLOW_N",
@@ -183,6 +185,8 @@ LandUseParameters = Literal[
     "AET_COEFF",
     "GR4J_X4",
     "UBC_ICEPT_FACTOR",
+    "STREAM_FRACTION",
+    "BF_LOSS_FRACTION",
 ]
 
 VegetationParameters = Literal[

@@ -24,6 +24,12 @@ class CanopySublimation(Process):
     algo: Literal["CANEVP_ALL", "CANEVP_MAXIMUM", "CANSUBLIM_ALL", "CANSUBLIM_MAXIMUM"]
 
 
+class SoilBalance(Process):
+    """"""
+
+    algo: Literal["SOILBAL_SACSMA"]
+
+
 class SoilEvaporation(Process):
     """"""
 
@@ -40,8 +46,10 @@ class SoilEvaporation(Process):
         "SOILEVAP_ROOT_CONSTRAIN",
         "SOILEVAP_ROOTFRAC",
         "SOILEVAP_GAWSER",
+        "SOILEVAP_FEDERER",
         "SOILEVAP_ALL",
         "SOILEVAP_LINEAR",
+        "SOILEVAP_SACSMA",
     ]
 
 
@@ -50,7 +58,7 @@ class LakeEvaporation(Process):
 
 
 class OpenWaterEvaporation(Process):
-    algo: Literal["OPEN_WATER_EVAP"]
+    algo: Literal["OPEN_WATER_EVAP", "OPEN_WATER_RIPARIAN"]
 
 
 class Infiltration(Process):

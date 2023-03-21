@@ -9,6 +9,7 @@ from ravenpy.new_config.emulators import (
     HBVEC,
     HMETS,
     HYPR,
+    SACSMA,
     CanadianShield,
     Mohyse,
 )
@@ -23,7 +24,7 @@ alt_names = {
 }
 
 
-names = ["GR4JCN", "HMETS", "Mohyse", "HBVEC", "CanadianShield", "HYPR"][-1:]
+names = ["GR4JCN", "HMETS", "Mohyse", "HBVEC", "CanadianShield", "HYPR", "SACSMA"][-1:]
 configs = {
     "GR4JCN": GR4JCN,
     "HMETS": HMETS,
@@ -31,6 +32,7 @@ configs = {
     "HBVEC": HBVEC,
     "CanadianShield": CanadianShield,
     "HYPR": HYPR,
+    "SACSMA": SACSMA,
 }
 params = {
     "GR4JCN": [0.529, -3.396, 407.29, 1.072, 16.9, 0.947],
@@ -150,6 +152,29 @@ params = {
         1.59920500e00,
         2.51938100e00,
         1.14820100e00,
+    ),
+    "SACSMA": (
+        0.0100000,
+        0.0500000,
+        0.3000000,
+        0.0500000,
+        0.0500000,
+        0.1300000,
+        0.0250000,
+        0.0600000,
+        0.0600000,
+        1.0000000,
+        40.000000,
+        0.0000000,
+        0.0000000,
+        0.1000000,
+        0.0000000,
+        0.0100000,
+        1.5000000,
+        0.4827523,
+        4.0998200,
+        1.0000000,
+        1.0000000,
     ),
 }
 

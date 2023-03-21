@@ -15,8 +15,8 @@ lu = LU("FOREST", impermeable_frac=0.0, forest_coverage=0.02345)
 
 
 class TestSACSMA:
-    def test_simple(self, get_file):
-        ts = get_file(salmon_river)
+    def test_simple(self, get_local_testdata):
+        ts = get_local_testdata(salmon_river)
 
         model = SACSMA()
         params = SACSMA.Params(
@@ -59,7 +59,7 @@ class TestSACSMA:
 
 
 class TestSACSMA_OST:
-    def test_simple(self, get_file):
+    def test_simple(self, get_local_testdata):
         model = SACSMA_OST()
         params = SACSMA.Params(
             0.0100000,  # feed 10**par_x01; ; not par_x1=???
@@ -132,12 +132,12 @@ class TestSACSMA_OST:
         )
 
         model.configure(
-            get_file(
+            get_local_testdata(
                 "ostrich-gr4j-cemaneige/OstRandomNumbers.txt",
             )
         )
 
-        ts = get_file(salmon_river)
+        ts = get_local_testdata(salmon_river)
 
         model(
             ts,
