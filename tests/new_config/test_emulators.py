@@ -8,6 +8,7 @@ NSE = {
     "Mohyse": 0.194612,
     "HBVEC": 0.0186633,
     "CanadianShield": 0.39602,
+    "HYPR": 0.685188,
 }
 
 

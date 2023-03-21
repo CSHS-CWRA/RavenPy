@@ -4,7 +4,14 @@ import pytest
 import xarray as xr
 
 from ravenpy.new_config import commands as rc
-from ravenpy.new_config.emulators import GR4JCN, HBVEC, HMETS, CanadianShield, Mohyse
+from ravenpy.new_config.emulators import (
+    GR4JCN,
+    HBVEC,
+    HMETS,
+    HYPR,
+    CanadianShield,
+    Mohyse,
+)
 
 alt_names = {
     "RAINFALL": "rain",
@@ -16,13 +23,14 @@ alt_names = {
 }
 
 
-names = ["GR4JCN", "HMETS", "Mohyse", "HBVEC", "CanadianShield"][-1:]
+names = ["GR4JCN", "HMETS", "Mohyse", "HBVEC", "CanadianShield", "HYPR"][-1:]
 configs = {
     "GR4JCN": GR4JCN,
     "HMETS": HMETS,
     "Mohyse": Mohyse,
     "HBVEC": HBVEC,
     "CanadianShield": CanadianShield,
+    "HYPR": HYPR,
 }
 params = {
     "GR4JCN": [0.529, -3.396, 407.29, 1.072, 16.9, 0.947],
@@ -120,6 +128,29 @@ params = {
         1.179003000e00,
         7.98001300e-01,
     ),
+    "HYPR": (
+        -1.856410e-01,
+        2.92301100e00,
+        3.1194200e-02,
+        4.3982810e-01,
+        4.6509760e-01,
+        1.1770040e-01,
+        1.31236800e01,
+        4.0417950e-01,
+        1.21225800e00,
+        5.91273900e01,
+        1.6612030e-01,
+        4.10501500e00,
+        8.2296110e-01,
+        4.15635200e01,
+        5.85111700e00,
+        6.9090140e-01,
+        9.2459950e-01,
+        1.64358800e00,
+        1.59920500e00,
+        2.51938100e00,
+        1.14820100e00,
+    ),
 }
 
 
@@ -133,7 +164,7 @@ def symbolic_config(salmon_meteo, salmon_hru, request):
     # Extra attributes for gauges
     gextras = {1: {"elevation": salmon_hru["land"]["elevation"]}}
 
-    if name == "HBVEC":
+    if name in ["HBVEC", "HYPR"]:
         ds = xr.open_dataset(salmon_meteo)
         gextras[1]["monthly_ave_temperature"] = (
             ((ds.tmin + ds.tmax) / 2).groupby("time.month").mean().values.tolist()

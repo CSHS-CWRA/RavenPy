@@ -78,7 +78,7 @@ SoilParameters = Literal[
     "MAX_BASEFLOW_RATE",
     "BASEFLOW_N",
     "BASEFLOW_COEFF",
-    "BASEFLOW_COEF2",
+    "BASEFLOW_COEFF2",
     "BASEFLOW_THRESH",
     "BF_LOSS_FRACTION",
     "STORAGE_THRESHOLD",

@@ -98,12 +98,16 @@ class Baseflow(Process):
 
     algo: Literal[
         "BASE_LINEAR",
+        "BASE_LINEAR_CONSTRAIN",
+        "BASE_LINEAR_ANALYTIC",
         "BASE_POWER_LAW",
         "BASE_CONSTANT",
         "BASE_VIC",
         "BASE_THRESH_POWER",
+        "BASE_THRESH_STOR",
         "BASE_GR4J",
         "BASE_TOPMODEL",
+        "BASE_SACRAMENTO",
     ]
 
 
@@ -124,7 +128,7 @@ class LakeRelease(Process):
 
 
 class Abstraction(Process):
-    algo: Literal["ABST_PERCENTAGE", "ABST_FILL", "ABST_SCS"]
+    algo: Literal["ABST_PERCENTAGE", "ABST_FILL", "ABST_SCS", "ABST_PDMROF"]
 
 
 class SnowMelt(Process):
