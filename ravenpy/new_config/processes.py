@@ -108,7 +108,7 @@ class Baseflow(Process):
 
 
 class Interflow(Process):
-    algo: Literal["PRMS"]
+    algo: Literal["INTERFLOW_PRMS"]
 
 
 class Seepage(Process):

@@ -220,7 +220,7 @@ class GenericParameterList(Command):
 class RV(Command):
     """"""
 
-    _template: str = "{_commands}"
+    _template: str = "{_commands}\n"
     _indent: str = ""
 
     class Config:

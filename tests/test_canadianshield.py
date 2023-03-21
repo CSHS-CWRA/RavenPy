@@ -19,10 +19,10 @@ class TestCANADIANSHIELD:
         "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
     )
 
-    def test_simple(self, get_file):
-        ts = get_file(self.salmon_river)
+    def test_simple(self, get_local_testdata):
+        ts = get_local_testdata(self.salmon_river)
 
-        model = CANADIANSHIELD()
+        model = CANADIANSHIELD("/tmp/cs")
         model.config.rvh.hrus = (
             CANADIANSHIELD.HRU_ORGANIC(**hru_default_values),
             CANADIANSHIELD.HRU_BEDROCK(**hru_default_values),
@@ -77,8 +77,8 @@ class TestCANADIANSHIELD:
 
         np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], 0.39602, 4)
 
-    def test_bad_config(self, get_file):
-        ts = get_file(self.salmon_river)
+    def test_bad_config(self, get_local_testdata):
+        ts = get_local_testdata(self.salmon_river)
 
         model = CANADIANSHIELD()
         params = (
@@ -151,8 +151,8 @@ class TestCANADIANSHIELD_OST:
         "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
     )
 
-    def test_simple(self, get_file):
-        ts = get_file(self.salmon_river)
+    def test_simple(self, get_local_testdata):
+        ts = get_local_testdata(self.salmon_river)
 
         model = CANADIANSHIELD_OST()
         model.config.rvh.hrus = (
@@ -268,7 +268,9 @@ class TestCANADIANSHIELD_OST:
             1.000,  # par_x34
         )
 
-        model.configure(get_file("ostrich-gr4j-cemaneige/OstRandomNumbers.txt"))
+        model.configure(
+            get_local_testdata("ostrich-gr4j-cemaneige/OstRandomNumbers.txt")
+        )
 
         model(
             ts,

@@ -145,11 +145,17 @@ class RVP(RV):
     rain_snow_transition: rc.RainSnowTransition = Field(
         None, alias="RainSnowTransition"
     )
+    seasonal_relative_lai: rc.SeasonalRelativeLAI = Field(
+        None, alias="SeasonalRelativeLAI"
+    )
+    seasonal_relative_height: rc.SeasonalRelativeHeight = Field(
+        None, alias="SeasonalRelativeLAI"
+    )
 
 
 class RVC(RV):
-    hru_states: rc.HRUStateVariableTable = ()
-    basin_states: rc.BasinStateVariables = ()
+    hru_states: rc.HRUStateVariableTable = Field(None, alias="HRUStateVariableTable")
+    basin_states: rc.BasinStateVariables = Field(None, alias="BasinStateVariables")
     uniform_initial_conditions: Dict[str, Sym] = Field(
         None, alias="UniformInitialConditions"
     )
@@ -188,7 +194,7 @@ class Config(RVI, RVC, RVH, RVT, RVP):
 
         # Instantiate config class
         # Note: `construct` skips validation. benchmark to see if it speeds things up.
-        return self.__class__(params=num_p, **out)
+        return self.__class__.construct(params=num_p, **out)
 
     @root_validator
     def assign_symbolic(cls, values):

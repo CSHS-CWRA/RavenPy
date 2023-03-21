@@ -4,7 +4,7 @@ import pytest
 import xarray as xr
 
 from ravenpy.new_config import commands as rc
-from ravenpy.new_config.emulators import GR4JCN, HBVEC, HMETS, Mohyse
+from ravenpy.new_config.emulators import GR4JCN, HBVEC, HMETS, CanadianShield, Mohyse
 
 alt_names = {
     "RAINFALL": "rain",
@@ -16,8 +16,14 @@ alt_names = {
 }
 
 
-names = ["GR4JCN", "HMETS", "Mohyse", "HBVEC"][:]
-configs = {"GR4JCN": GR4JCN, "HMETS": HMETS, "Mohyse": Mohyse, "HBVEC": HBVEC}
+names = ["GR4JCN", "HMETS", "Mohyse", "HBVEC", "CanadianShield"][-1:]
+configs = {
+    "GR4JCN": GR4JCN,
+    "HMETS": HMETS,
+    "Mohyse": Mohyse,
+    "HBVEC": HBVEC,
+    "CanadianShield": CanadianShield,
+}
 params = {
     "GR4JCN": [0.529, -3.396, 407.29, 1.072, 16.9, 0.947],
     "HMETS": [
@@ -78,20 +84,43 @@ params = {
         1.141608,
         1.024278,
     ),
+    "CanadianShield": (
+        4.72304300e-01,
+        8.16392200e-01,
+        9.86197600e-02,
+        3.92699900e-03,
+        4.69073600e-02,
+        4.95528400e-01,
+        6.803492000e00,
+        4.33050200e-03,
+        1.01425900e-05,
+        1.823470000e00,
+        5.12215400e-01,
+        9.017555000e00,
+        3.077103000e01,
+        5.094095000e01,
+        1.69422700e-01,
+        8.23412200e-02,
+        2.34595300e-01,
+        7.30904000e-02,
+        1.284052000e00,
+        3.653415000e00,
+        2.306515000e01,
+        2.402183000e00,
+        2.522095000e00,
+        5.80344900e-01,
+        1.614157000e00,
+        6.031781000e00,
+        3.11129800e-01,
+        6.71695100e-02,
+        5.83759500e-05,
+        9.824723000e00,
+        9.00747600e-01,
+        8.04057300e-01,
+        1.179003000e00,
+        7.98001300e-01,
+    ),
 }
-
-
-@pytest.fixture
-def salmon_hru():
-    out = {}
-    out["land"] = dict(
-        area=4250.6,
-        elevation=843.0,
-        latitude=54.4848,
-        longitude=-123.3659,
-        hru_type="land",
-    )
-    return out
 
 
 @pytest.fixture(scope="session", params=names)
@@ -115,7 +144,7 @@ def symbolic_config(salmon_meteo, salmon_hru, request):
 
     # Extra attributes for emulator
     extras = {}
-
+    hrus = [salmon_hru["land"]]
     if name in ["GR4JCN"]:
         extras.update(
             dict(
@@ -125,6 +154,10 @@ def symbolic_config(salmon_meteo, salmon_hru, request):
     if name in ["HMETS"]:
         data_type.extend(["SNOWFALL", "PET"])
 
+    if name in ["CanadianShield"]:
+        hrus = [salmon_hru["land"], salmon_hru["land"]]
+        extras["SuppressOutput"] = True
+
     yield cls(
         Gauge=rc.Gauge.from_nc(
             salmon_meteo,
@@ -133,7 +166,7 @@ def symbolic_config(salmon_meteo, salmon_hru, request):
             extra=gextras,
         ),
         ObservationData=rc.ObservationData.from_nc(salmon_meteo, alt_names="qobs"),
-        HRUs=[salmon_hru["land"]],
+        HRUs=hrus,
         StartDate=dt.datetime(2000, 1, 1),
         EndDate=dt.datetime(2002, 1, 1),
         RunName="test",

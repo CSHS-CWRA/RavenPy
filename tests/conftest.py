@@ -226,6 +226,7 @@ def salmon_hru():
         elevation=843.0,
         latitude=54.4848,
         longitude=-123.3659,
+        slope=0.01234,
         hru_type="land",
     )
     return out

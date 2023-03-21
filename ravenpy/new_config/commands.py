@@ -212,7 +212,7 @@ class SoilProfile(Record):
         # From the Raven manual: {profile_name,#horizons,{soil_class_name,thick.}x{#horizons}}x[NP]
         n_horizons = len(self.soil_classes)
         horizon_data = list(itertools.chain(*zip(self.soil_classes, self.thicknesses)))
-        fmt = "{:<16},{:>4}," + ",".join(n_horizons * ["{:>12},{:>6}"])
+        fmt = "{:<16},{:>4}," + ",".join(n_horizons * ["{:>12}, {:>8}"])
         return fmt.format(self.name, n_horizons, *horizon_data)
 
 
@@ -257,7 +257,7 @@ class HRU(Record):
     """Record to populate :HRUs command internal table (RVH)."""
 
     hru_id: int = 1
-    area: float = 0  # km^2
+    area: Sym = 0  # km^2
     elevation: float = 0  # meters
     latitude: float = 0
     longitude: float = 0
@@ -278,10 +278,12 @@ class HRU(Record):
 
         d = self.dict()
         del d["hru_type"]
-        # Adjust spacing
+
+        # Adjust horizontal spacing to match attributes names
         attrs = HRUs._template.splitlines()[2].strip()
         ns = np.array(list(map(len, re.split(r"\s[\w\:]", attrs))))
         ns[1:] += 1
+
         return " ".join(f"{v:<{n}}" for v, n in zip(d.values(), ns))
 
 
@@ -655,7 +657,7 @@ class ObservationData(Data):
 
 class HRUState(Record):
     index: int = 1
-    data: Dict[str, float] = Field(default_factory=dict)
+    data: Dict[str, Sym] = Field(default_factory=dict)
 
     def __str__(self):
         return ",".join(map(str, (self.index,) + tuple(self.data.values())))
@@ -840,6 +842,24 @@ class LandUseClasses(Command):
     __root__: Sequence[LandUseClass]
     _Attributes: Sequence[str] = PrivateAttr(["IMPERMEABLE_FRAC", "FOREST_COVERAGE"])
     _Units: Sequence[str] = PrivateAttr(["fract", "fract"])
+
+
+class _MonthlyRecord:
+    name: str = "[DEFAULT]"
+    values: Sequence[float] = 12 * [
+        1.0,
+    ]
+
+    def __str__(self):
+        return f"{self.name:<16} " + ", ".join(map(str, self.values))
+
+
+class SeasonalRelativeLAI(Command):
+    __root__: Sequence[_MonthlyRecord] = (_MonthlyRecord(),)
+
+
+class SeasonalRelativeHeight(Command):
+    __root__: Sequence[_MonthlyRecord] = (_MonthlyRecord(),)
 
 
 class SubBasinProperty(Record):
