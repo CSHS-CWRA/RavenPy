@@ -114,7 +114,7 @@ class HBVEC(Config):
         [
             p.SnowRefreeze(algo="FREEZE_DEGREE_DAY", source="SNOW_LIQ", to="SNOW"),
             p.Precipitation(algo="PRECIP_RAVEN", source="ATMOS_PRECIP", to="MULTIPLE"),
-            p.CanopySublimation(algo="CANEVP_ALL", source="CANOPY", to="ATMOSPHERE"),
+            p.CanopyEvaporation(algo="CANEVP_ALL", source="CANOPY", to="ATMOSPHERE"),
             p.CanopySublimation(
                 algo="CANEVP_ALL", source="CANOPY_SNOW", to="ATMOSPHERE"
             ),
@@ -153,8 +153,8 @@ class HBVEC(Config):
     )
     global_parameter: Dict = Field(
         {
-            "AdiabaticLapseRate": P.X13,
-            "IrreducibleSnowSaturation": P.X04,
+            "AdiabaticLapse": P.X13,
+            "SNOW_SWI": P.X04,
             "PRECIP_LAPSE": P.X12,
         },
         alias="GlobalParameters",
@@ -263,7 +263,7 @@ class HBVEC(Config):
     )
 
     hru_states: rc.HRUStateVariableTable = Field(
-        [{"index": 1, "data": {"[SOIL[2]": 0.50657}}]
+        [{"index": 1, "data": {"SOIL[2]": 0.50657}}]
     )
 
     def __init__(self, **data):

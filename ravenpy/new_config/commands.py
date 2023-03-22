@@ -122,6 +122,26 @@ class Conditional(Command):
         return f":{cmd:<20} {self.kind} {self.op} {self.value}"
 
 
+class ProcessGroup(Command):
+    p: Sequence[Process]
+    params: Sequence[Sym]
+
+    _template: str = """
+                :{_cmd}
+                {_processes}
+                :End{_cmd} CALCULATE_WTS {_params}
+                """
+    _indent: str = "    "
+
+    def to_rv(self):
+        d = {
+            "_cmd": "ProcessGroup",
+            "_processes": indent("\n".join(str(p) for p in self.p), self._indent),
+            "_params": " ".join(map(str, self.params)),
+        }
+        return dedent(self._template).format(**d)
+
+
 class SoilModel(Command):
     __root__: int = None
 
@@ -844,6 +864,27 @@ class LandUseClasses(Command):
     _Units: Sequence[str] = PrivateAttr(["fract", "fract"])
 
 
+class TerrainClass(Record):
+    name: str
+    hillslope_length: Sym
+    drainage_density: Sym
+    topmodel_lambda: Sym = None
+
+    def __str__(self):
+        out = f"{self.name:<16},{self.hillslope_length:>18},{self.drainage_density:>18}"
+        if self.topmodel_lambda is not None:
+            out += f",{self.topmodel_lambda:>18}"
+        return out
+
+
+class TerrainClasses(Command):
+    __root__: Sequence[TerrainClass]
+    _Attributes: Sequence[str] = PrivateAttr(
+        ["HILLSLOPE_LENGTH", "DRAINAGE_DENSITY", "TOPMODEL_LAMBDA"]
+    )
+    _Units: Sequence[str] = PrivateAttr(["m", "km/km2"])
+
+
 class _MonthlyRecord:
     name: str = "[DEFAULT]"
     values: Sequence[float] = 12 * [
@@ -895,13 +936,18 @@ class LandUseParameterList(GenericParameterList):
     parameters: Sequence[options.LandUseParameters] = Field(None, alias="Parameters")
 
 
+# TODO: Harmonize this...
 # Aliases for convenience
 # HRU = HRUsCommand.Record
 # HRUState = HRUStateVariableTableCommand.Record
+SC = SoilClasses.SoilClass
 LU = LandUseClass
+VC = VegetationClass
+TC = TerrainClass
 SB = SubBasin
 SP = SoilProfile
-VC = VegetationClasses
+
+
 PL = ParameterList
 
 

@@ -1,3 +1,4 @@
+from ravenpy.new_config.emulators.blended import Blended
 from ravenpy.new_config.emulators.canadianshield import CanadianShield
 from ravenpy.new_config.emulators.gr4jcn import GR4JCN
 from ravenpy.new_config.emulators.hbvec import HBVEC

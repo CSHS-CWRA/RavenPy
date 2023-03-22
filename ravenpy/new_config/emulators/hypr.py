@@ -209,7 +209,7 @@ class HYPR(Config):
             ),
             "pl": [
                 PL(
-                    name="DEFAULT",
+                    name="[DEFAULT]",
                     values=(1.0, P.X04, 0.0, P.X16, 0, 0, 0, 0, 0, 0),
                 ),
                 PL(

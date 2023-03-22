@@ -10,10 +10,12 @@ from ravenpy.new_config.emulators import (
     HMETS,
     HYPR,
     SACSMA,
+    Blended,
     CanadianShield,
     Mohyse,
 )
 
+# Alternative names for variables in meteo forcing file
 alt_names = {
     "RAINFALL": "rain",
     "TEMP_MIN": "tmin",
@@ -23,8 +25,19 @@ alt_names = {
     "SNOWFALL": "snow",
 }
 
+# Names of emulators to be included in tests
+names = [
+    "GR4JCN",
+    "HMETS",
+    "Mohyse",
+    "HBVEC",
+    "CanadianShield",
+    "HYPR",
+    "SACSMA",
+    "Blended",
+][:]
 
-names = ["GR4JCN", "HMETS", "Mohyse", "HBVEC", "CanadianShield", "HYPR", "SACSMA"][-1:]
+# Mapping of emulator names to configuration classes
 configs = {
     "GR4JCN": GR4JCN,
     "HMETS": HMETS,
@@ -33,7 +46,10 @@ configs = {
     "CanadianShield": CanadianShield,
     "HYPR": HYPR,
     "SACSMA": SACSMA,
+    "Blended": Blended,
 }
+
+# Model parameters that match NSE criteria computed by Juliane
 params = {
     "GR4JCN": [0.529, -3.396, 407.29, 1.072, 16.9, 0.947],
     "HMETS": [
@@ -176,12 +192,57 @@ params = {
         1.0000000,
         1.0000000,
     ),
+    "Blended": (
+        2.930702e-02,
+        2.211166e00,
+        2.166229e00,
+        0.0002254976,
+        2.173976e01,
+        1.565091e00,
+        6.211146e00,
+        9.313578e-01,
+        3.486263e-02,
+        0.251835,
+        0.0002279250,
+        1.214339e00,
+        4.736668e-02,
+        0.2070342,
+        7.806324e-02,
+        -1.336429e00,
+        2.189741e-01,
+        3.845617e00,
+        2.950022e-01,
+        4.827523e-01,
+        4.099820e00,
+        1.283144e01,
+        5.937894e-01,
+        1.651588e00,
+        1.705806,
+        3.719308e-01,
+        7.121015e-02,
+        1.906440e-02,
+        4.080660e-01,
+        9.415693e-01,
+        -1.856108e00,
+        2.356995e00,
+        1.0e00,
+        1.0e00,
+        7.510967e-03,
+        5.321608e-01,
+        2.891977e-02,
+        9.605330e-01,
+        6.128669e-01,
+        9.558293e-01,
+        1.008196e-01,
+        9.275730e-02,
+        7.469583e-01,
+    ),
 }
 
 
 @pytest.fixture(scope="session", params=names)
 def symbolic_config(salmon_meteo, salmon_hru, request):
-    """Config with symbolic parameters"""
+    """Emulator configuration instantiated with symbolic parameters."""
     name = request.param
     cls = configs[name]
     data_type = ["RAINFALL", "TEMP_MIN", "TEMP_MAX", "SNOWFALL"]
@@ -200,7 +261,12 @@ def symbolic_config(salmon_meteo, salmon_hru, request):
 
     # Extra attributes for emulator
     extras = {}
+
+    if name in ["CanadianShield", "HYPR", "SACSMA", "Blended"]:
+        salmon_hru["slope"] = 0.01234
+
     hrus = [salmon_hru["land"]]
+
     if name in ["GR4JCN"]:
         extras.update(
             dict(
@@ -214,7 +280,7 @@ def symbolic_config(salmon_meteo, salmon_hru, request):
         hrus = [salmon_hru["land"], salmon_hru["land"]]
         extras["SuppressOutput"] = True
 
-    yield cls(
+    yield name, cls(
         Gauge=rc.Gauge.from_nc(
             salmon_meteo,
             data_type=data_type,
@@ -231,15 +297,17 @@ def symbolic_config(salmon_meteo, salmon_hru, request):
     )
 
 
-@pytest.fixture(scope="session", params=names)
-def numeric_config(symbolic_config, request):
-    name = request.param
-    yield symbolic_config.set_params(params[name])
+@pytest.fixture(scope="session")
+def numeric_config(symbolic_config):
+    """Emulator configuration instantiated with numeric parameters."""
+    name, cls = symbolic_config
+    yield name, cls.set_params(params[name])
 
 
 @pytest.fixture(scope="session")
 def config_rv(tmp_path_factory, numeric_config):
-    name = numeric_config.__class__.__name__
+    """Directory with emulator configuration files written to disk."""
+    name, cls = numeric_config
     out = tmp_path_factory.mktemp(name) / "config"
-    numeric_config.build(out)
-    yield out
+    cls.build(out)
+    yield name, out

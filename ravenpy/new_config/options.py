@@ -91,6 +91,7 @@ SoilParameters = Literal[
     "UBC_INFIL_SOIL_DEF",
     "GR4J_X2",
     "GR4J_X3",
+    "B_EXP",
     "PET_CORRECTION",  # Not in Raven Docs Table A.3
 ]
 

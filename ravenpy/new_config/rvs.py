@@ -59,9 +59,9 @@ class RVI(RV):
     soil_model: rc.SoilModel = Field(None, alias="SoilModel")
     lake_storage: o.StateVariables = Field(None, alias="LakeStorage")
     # alias: Dict[str, str] = Field(None, alias="Alias")
-    hydrologic_processes: Sequence[Union[rc.Process, rc.Conditional]] = Field(
-        None, alias="HydrologicProcesses"
-    )
+    hydrologic_processes: Sequence[
+        Union[rc.Process, rc.Conditional, rc.ProcessGroup]
+    ] = Field(None, alias="HydrologicProcesses")
     evaluation_metrics: Sequence[o.EvaluationMetrics] = Field(
         None, alias="EvaluationMetrics"
     )
@@ -130,6 +130,7 @@ class RVP(RV):
     soil_profiles: rc.SoilProfiles = Field(None, alias="SoilProfiles")
     vegetation_classes: rc.VegetationClasses = Field(None, alias="VegetationClasses")
     land_use_classes: rc.LandUseClasses = Field(None, alias="LandUseClasses")
+    terrain_classes: rc.TerrainClasses = Field(None, alias="TerrainClasses")
     soil_parameter_list: rc.SoilParameterList = Field(None, alias="SoilParameterList")
     land_use_parameter_list: rc.LandUseParameterList = Field(
         None, alias="LandUseParameterList"

@@ -20,7 +20,7 @@ def test_evaluation_metrics():
             ["RMSE", "NASH_SUTCLIFFE"], alias="EvaluationMetrics"
         )
 
-    assert Test().to_rv() == ":EvaluationMetrics    RMSE NASH_SUTCLIFFE"
+    assert Test().to_rv().strip() == ":EvaluationMetrics    RMSE NASH_SUTCLIFFE"
 
 
 def test_hru():
@@ -55,7 +55,7 @@ def test_vegetation_classes():
             alias="VegetationClasses",
         )
 
-    s = dedent(Test().to_rv())
+    s = dedent(Test().to_rv().strip())
     assert (
         s
         == dedent(
@@ -168,7 +168,7 @@ def test_hydrologic_processes():
             hp, alias="HydrologicProcesses"
         )
 
-    out = dedent(Test().to_rv())
+    out = dedent(Test().to_rv().strip())
     assert (
         out
         == dedent(
@@ -177,6 +177,29 @@ def test_hydrologic_processes():
           :Precipitation        PRECIP_RAVEN        ATMOS_PRECIP        MULTIPLE
           :SnowTempEvolve       SNOTEMP_NEWTONS     SNOW_TEMP
         :EndHydrologicProcesses
+        """
+        ).strip()
+    )
+
+
+def test_process_group():
+    from ravenpy.new_config.processes import Precipitation, SnowTempEvolve
+
+    hp = [
+        Precipitation(algo="PRECIP_RAVEN", source="ATMOS_PRECIP", to="MULTIPLE"),
+        SnowTempEvolve(algo="SNOTEMP_NEWTONS", source="SNOW_TEMP"),
+    ]
+    c = rc.ProcessGroup(p=hp, params=(0, 1))
+    out = dedent(c.to_rv().strip())
+
+    assert (
+        out
+        == dedent(
+            """
+    :ProcessGroup
+        :Precipitation        PRECIP_RAVEN        ATMOS_PRECIP        MULTIPLE
+        :SnowTempEvolve       SNOTEMP_NEWTONS     SNOW_TEMP
+    :EndProcessGroup CALCULATE_WTS 0.0 1.0
         """
         ).strip()
     )
