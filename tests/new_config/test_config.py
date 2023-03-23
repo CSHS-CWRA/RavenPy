@@ -40,6 +40,9 @@ def test_emulator():
     t1 = st.set_params([0.5])
     assert t1.air_snow_coeff == 0.5
 
+    with pytest.raises(ValueError):
+        t1.set_params([0.6])
+
     # Instantiate with numerical params
     nt = TestConfig(params=[0.5], Calendar="NOLEAP")
     assert nt.air_snow_coeff == 0.5

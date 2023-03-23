@@ -232,12 +232,17 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
 
     def set_params(self, params) -> "Config":
         """Return a new instance of Config with params set to their numerical values."""
-        # Parse symbolic expressions based on numerical values for params.
         # Get the configuration fields
         dc = self.__dict__.copy()
 
         # Create params with numerical values
         sym_p = dc.pop("params")
+        if not is_symbolic(sym_p):
+            raise ValueError(
+                "Setting `params` on a configuration without symbolic expressions has no effect."
+                "Leave `params` to its default value when instantiating the emulator configuration."
+            )
+
         num_p = sym_p.__class__(*params)
 
         # Parse symbolic expressions using numerical params values
@@ -252,7 +257,8 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
 
         if is_symbolic(self.params):
             raise ValueError(
-                "Cannot write RV files if parameters are symbolic expressions."
+                "Cannot write RV files if `params` has symbolic variables. Use `set_params` method to set numerical "
+                "values for `params`."
             )
 
         # Get RV class
