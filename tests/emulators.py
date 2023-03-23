@@ -300,14 +300,14 @@ def symbolic_config(salmon_meteo, salmon_hru, request):
 @pytest.fixture(scope="session")
 def numeric_config(symbolic_config):
     """Emulator configuration instantiated with numeric parameters."""
-    name, cls = symbolic_config
-    yield name, cls.set_params(params[name])
+    name, conf = symbolic_config
+    yield name, conf.set_params(params[name])
 
 
 @pytest.fixture(scope="session")
 def config_rv(tmp_path_factory, numeric_config):
     """Directory with emulator configuration files written to disk."""
-    name, cls = numeric_config
+    name, conf = numeric_config
     out = tmp_path_factory.mktemp(name) / "config"
-    cls.build(out)
+    conf.build(out)
     yield name, out

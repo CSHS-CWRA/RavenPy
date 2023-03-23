@@ -21,10 +21,10 @@ def test_rv(config_rv):
     assert (path / "test.rvi").exists()
 
 
-def test_run(numeric_config, tmpdir):
+def test_run(numeric_config, tmp_path):
     """Test that the emulator actually runs and returns the expected NSE."""
-    name, cls = numeric_config
-    e = Emulator(config=cls, path=tmpdir)
+    name, conf = numeric_config
+    e = Emulator(config=conf, path=tmp_path)
     e.build()
     e.run()
     out = e.parse()

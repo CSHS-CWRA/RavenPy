@@ -21,7 +21,7 @@ class Emulator:
 
     def build(self, overwrite=False):
         """Write the configuration files to disk."""
-        self._config.build(self.path, overwrite=overwrite)
+        self._config.build(workdir=self.path, overwrite=overwrite)
 
     def run(self):
         """Run the model."""

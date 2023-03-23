@@ -1,5 +1,6 @@
 import datetime as dt
 
+import pytest
 from pydantic import Field
 from pydantic.dataclasses import dataclass
 
@@ -31,6 +32,9 @@ def test_emulator():
 
     # Test with symbolic params
     st = TestConfig(params=P(), Calendar="NOLEAP")
+
+    with pytest.raises(ValueError):
+        assert st.rvi
 
     # Set params
     t1 = st.set_params([0.5])

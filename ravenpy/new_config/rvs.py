@@ -21,9 +21,13 @@ Note that alias are set to identify class attributes as Raven commands.
 
 class RVI(RV):
     # Run parameters
+    silent_mode: bool = Field(None, alias="SilentMode")
+    noisy_mode: bool = Field(None, alias="NoisyMode")
+
     run_name: str = Field("run", alias="RunName")
     calendar: o.Calendar = Field("PROLEPTIC_GREGORIAN", alias="Calendar")
     start_date: cftime.datetime = Field(None, alias="StartDate")
+    assimilation_start_time: dt.datetime = Field(None, alias="AssimilationStartTime")
     end_date: cftime.datetime = Field(None, alias="EndDate")
     duration: float = Field(None, alias="Duration")
     time_step: float = Field(1.0, alias="TimeStep")
@@ -59,12 +63,17 @@ class RVI(RV):
     soil_model: rc.SoilModel = Field(None, alias="SoilModel")
     lake_storage: o.StateVariables = Field(None, alias="LakeStorage")
     # alias: Dict[str, str] = Field(None, alias="Alias")
+
+    define_hru_groups: Sequence[str] = Field(None, alias="DefineHRUGroups")
+
     hydrologic_processes: Sequence[
         Union[rc.Process, rc.Conditional, rc.ProcessGroup]
     ] = Field(None, alias="HydrologicProcesses")
     evaluation_metrics: Sequence[o.EvaluationMetrics] = Field(
         None, alias="EvaluationMetrics"
     )
+
+    ensemble_mode: rc.EnsembleMode = Field(None, alias="EnsembleMode")
 
     # Options
     write_netcdf_format: bool = Field(True, alias="WriteNetcdfFormat")
@@ -84,7 +93,7 @@ class RVI(RV):
         description="Do not write watershed storage variables to disk.",
     )
     pavics_mode: bool = Field(None, alias="PavicsMode")
-    silent_mode: bool = Field(None, alias="SilentMode")
+
     suppress_output: bool = Field(
         None,
         alias="SuppressOutput",
@@ -170,16 +179,57 @@ class RVC(RV):
 
 class RVH(RV):
     subbasins: rc.SubBasins = Field([rc.SubBasin()], alias="SubBasins")
-    hrus: rc.HRUs = Field(None, alias="HRUs")
-    land_subbasin_group: Sequence[rc.SubBasinGroup] = ()
-    lake_subbasin_group: Sequence[rc.SubBasinGroup] = ()
-    land_subbasin_property_multiplier: rc.SBGroupPropertyMultiplierCommand = None
-    lake_subbasin_property_multiplier: rc.SBGroupPropertyMultiplierCommand = None
-    reservoirs: Sequence[rc.Reservoir] = ()
+    subbasin_group: Sequence[rc.SubBasinGroup] = ()
     subbasin_properties: rc.SubBasinProperties = Field(None, alias="SubBasinProperties")
+    subbasin_property_multiplier: rc.SBGroupPropertyMultiplierCommand = None
+    hrus: rc.HRUs = Field(None, alias="HRUs")
+    hru_group: Sequence[rc.HRUGroup] = Field(None, alias="HRUGroup")
+    reservoirs: Sequence[rc.Reservoir] = ()
 
 
-class Config(RVI, RVC, RVH, RVT, RVP):
+class RVE(RV):
+    """Ensemble Kalman filter configuration"""
+
+    output_directory_format: Union[str, Path] = Field(
+        None, alias="OutputDirectoryFormat"
+    )
+    warm_ensemble: Union[str, Path] = Field(
+        None,
+        alias="WarmEnsemble",
+        description="RunName of the simulation whose initial states is used.",
+    )
+    forecast_rvt_filename: str = Field(None, alias="ForecastRVTFilename")
+    truncate_hindcasts: bool = Field(None, alias="TruncateHindcasts")
+    forcing_perturbation: Sequence[rc.ForcingPerturbation] = Field(
+        None, alias="ForcingPerturbation"
+    )
+    assimilated_state: Sequence[rc.AssimilatedState] = Field(
+        None, alias="AssimilatedState"
+    )
+    assimilate_streamflow: Sequence[rc.AssimilateStreamflow] = Field(
+        None, alias="AssimilateStreamflow"
+    )
+    observational_error_model: Sequence[rc.ObservationalErrorModel] = Field(
+        None, alias="ObservationalErrorModel"
+    )
+
+
+class Config(RVI, RVC, RVH, RVT, RVP, RVE):
+    @root_validator
+    def assign_symbolic(cls, values):
+        """If params is numerical, convert symbolic expressions from other fields."""
+
+        p = asdict(values["params"])
+
+        if not is_symbolic(p):
+            return parse_symbolic(values, **p)
+        return values
+
+    @validator("global_parameter", pre=True)
+    def update_defaults(cls, v, values, config, field):
+        """Some configuration parameters should be updated with user given arguments, not overwritten."""
+        return {**cls.__fields__[field.name].default, **v}
+
     def set_params(self, params) -> "Config":
         """Return a new instance of Config with params set to their numerical values."""
         # Parse symbolic expressions based on numerical values for params.
@@ -197,25 +247,13 @@ class Config(RVI, RVC, RVH, RVT, RVP):
         # Note: `construct` skips validation. benchmark to see if it speeds things up.
         return self.__class__.construct(params=num_p, **out)
 
-    @root_validator
-    def assign_symbolic(cls, values):
-        """If params is numerical, convert symbolic expressions from other fields."""
-        from pymbolic.primitives import Variable
-
-        p = asdict(values["params"])
-        is_sym = any([isinstance(v, Variable) for v in p.values()])
-
-        if not is_sym:
-            return parse_symbolic(values, **p)
-        return values
-
-    @validator("global_parameter", pre=True)
-    def update_defaults(cls, v, values, config, field):
-        """Some configuration parameters should be updated with user given arguments, not overwritten."""
-        return {**cls.__fields__[field.name].default, **v}
-
     def _rv(self, rv: str):
         """Return RV configuration."""
+
+        if is_symbolic(self.params):
+            raise ValueError(
+                "Cannot write RV files if parameters are symbolic expressions."
+            )
 
         # Get RV class
         rvs = {b.__name__: b for b in Config.__bases__}
@@ -247,11 +285,15 @@ class Config(RVI, RVC, RVH, RVT, RVP):
     def rvh(self):
         return self._rv("rvh")
 
+    @property
+    def rve(self):
+        return self._rv("rve")
+
     def rv_fn(self, rv):
         """RV file name."""
         return f"{self.run_name}.{rv}"
 
-    def build(self, workdir: Union[str, Path], overwrite=False, rv=None):
+    def build(self, workdir: Union[str, Path], overwrite=False):
         """Write configuration files to disk.
 
         Parameters
@@ -265,15 +307,19 @@ class Config(RVI, RVC, RVH, RVT, RVP):
         if not workdir.exists():
             workdir.mkdir()
 
-        rvs = [rv] if rv else ["rvi", "rvp", "rvc", "rvh", "rvt"]
+        mandatory = ["rvi", "rvp", "rvc", "rvh", "rvt"]
+        optional = ["rve"]
+
         out = {}
-        for rv in rvs:
+        for rv in mandatory + optional:
             fn = workdir / self.rv_fn(rv)
             if fn.exists() and not overwrite:
                 raise OSError(f"{fn} already exists and would be overwritten.")
 
-            fn.write_text(self._rv(rv))
-            out[rv] = fn
+            text = self._rv(rv)
+            if rv in mandatory or text.strip():
+                fn.write_text(text)
+                out[rv] = fn
 
         return out
 
@@ -292,3 +338,15 @@ class Config(RVI, RVC, RVH, RVT, RVP):
                 fn = self.rv_fn(rv)
                 fh.write(fn, self._rv(rv))
         return zip
+
+
+def is_symbolic(params: Dict) -> bool:
+    """Return True if parameters include a symbolic variable."""
+    from dataclasses import is_dataclass
+
+    from pymbolic.primitives import Variable
+
+    if is_dataclass(params):
+        params = asdict(params)
+
+    return any([isinstance(v, Variable) for v in params.values()])

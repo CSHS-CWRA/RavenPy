@@ -101,6 +101,7 @@ StateVariables = Literal[
     "ATMOS_PRECIP",
     "PONDED_WATER",
     "SOIL",
+    "SOIL[0]",
     "SOIL[1]",
     "SOIL[2]",
     "GROUNDWATER",

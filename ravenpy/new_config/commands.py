@@ -321,6 +321,23 @@ class HRUs(Command):
         """
 
 
+class HRUGroup(FlatCommand):
+    class _Rec(Record):
+        __root__: Sequence[str]
+
+        def __str__(self):
+            return ",".join(self.__root__)
+
+    name: str
+    groups: _Rec
+
+    _template = """
+        :{_cmd} {name}
+        {_records}
+        :End{_cmd}
+        """
+
+
 class Reservoir(Command):
     """Reservoir command (RVH)."""
 
@@ -455,7 +472,7 @@ class RedirectToFile(Command):
 
     path: Path
 
-    _template = ":{_cmd} {path}"
+    _template = ":{_cmd} {path}\n"
 
     @validator("path")
     def check_exists(cls, v):
@@ -636,7 +653,7 @@ class Gauge(FlatCommand):
                     gattrs.update(filter_for(cls, specs))
             else:
                 if len(data) == 0:
-                    raise ValueError("No data found in file.")
+                    raise ValueError(f"No variable for {data_type} found in file.")
 
             gattrs["data"] = data
             gattrs["name"] = gattrs.get("name", f"Gauge_{idx}")
@@ -934,6 +951,46 @@ class VegetationParameterList(GenericParameterList):
 
 class LandUseParameterList(GenericParameterList):
     parameters: Sequence[options.LandUseParameters] = Field(None, alias="Parameters")
+
+
+class EnsembleMode(Command):
+    n: int = Field(..., description="Number of members")
+    mode: Literal["ENSEMBLE_ENKF"] = "ENSEMBLE_ENKF"
+
+    _template = ":{_cmd} {mode} {n}\n"
+
+
+class ObservationalErrorModel(FlatCommand):
+    state: Literal["STREAMFLOW"]
+    dist: Literal["DIST_UNIFORM", "DIST_NORMAL", "DIST_GAMMA"]
+    p1: float
+    p2: float
+    adj: Literal["ADDITIVE", "MULTIPLICATIVE"]
+
+    _template = ":{_cmd} {state} {dist} {p1} {p2} {adj}\n"
+
+
+class ForcingPerturbation(FlatCommand):
+    forcing: options.Forcings
+    dist: Literal["DIST_UNIFORM", "DIST_NORMAL", "DIST_GAMMA"]
+    p1: float
+    p2: float
+    adj: Literal["ADDITIVE", "MULTIPLICATIVE"]
+    hru_grp: str = ""
+
+    _template = ":{_cmd} {forcing} {dist} {p1} {p2} {adj} {hru_grp}\n"
+
+
+class AssimilatedState(FlatCommand):
+    state: Union[options.StateVariables, Literal["STREAMFLOW"]]
+    group: str
+
+    _template = ":{_cmd} {state} {group}\n"
+
+
+class AssimilateStreamflow(FlatCommand):
+    sb_id: str
+    _template = ":{_cmd} {sb_id}\n"
 
 
 # TODO: Harmonize this...

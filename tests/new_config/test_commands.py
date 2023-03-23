@@ -366,3 +366,46 @@ def test_subbasin_properties():
         records=[{"sb_id": 1, "values": (0, 1)}],
     )
     assert "0, 1" in c.to_rv()
+
+
+def test_ensemble_mode():
+    c = rc.EnsembleMode(n=10)
+    s = c.to_rv().strip()
+    assert s == ":EnsembleMode ENSEMBLE_ENKF 10"
+
+
+def test_observational_error_model():
+    c = rc.ObservationalErrorModel(
+        state="STREAMFLOW", dist="DIST_UNIFORM", p1=1, p2=2, adj="ADDITIVE"
+    )
+
+    assert (
+        c.to_rv().strip()
+        == ":ObservationalErrorModel STREAMFLOW DIST_UNIFORM 1.0 2.0 ADDITIVE"
+    )
+
+
+def test_forcing_perturbation():
+    c = rc.ForcingPerturbation(
+        forcing="TEMP_AVE", dist="DIST_UNIFORM", p1=1, p2=2, adj="ADDITIVE"
+    )
+
+    assert (
+        c.to_rv().strip()
+        == ":ForcingPerturbation TEMP_AVE DIST_UNIFORM 1.0 2.0 ADDITIVE"
+    )
+
+
+def test_hru_group():
+    c = rc.HRUGroup(name="ForestedHRUs", groups=["1", "3-5"])
+    s = dedent(c.to_rv()).strip()
+    assert (
+        s
+        == dedent(
+            """
+            :HRUGroup ForestedHRUs
+              1,3-5
+            :EndHRUGroup
+                """
+        ).strip()
+    )

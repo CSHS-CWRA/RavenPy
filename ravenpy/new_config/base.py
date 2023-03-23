@@ -72,11 +72,13 @@ def encoder(v: dict) -> dict:
         elif hasattr(obj, "to_rv"):
             # Custom
             out = obj.to_rv()
+        elif issubclass(obj.__class__, Record):
+            out = str(obj)
         elif isinstance(obj, (list, tuple)):
             s = map(str, obj)
             o0 = obj[0]
             if cmd == "__root__" or issubclass(o0.__class__, FlatCommand):
-                out = "\n".join(s)
+                out = "".join(s)
             # elif cmd == "Attributes":
             #     out = f":{cmd}," + ",".join(s) + "\n"
             elif cmd in ["Parameters", "Attributes", "Units"]:
@@ -141,6 +143,10 @@ class Command(BaseModel):
                 finally:
                     if field.has_alias or field.alias == "__root__":
                         cmds[field.alias] = self.__dict__[key]
+                    elif issubclass(obj.__class__, Record):
+                        recs = [
+                            obj,
+                        ]
 
         for key, field in self.__private_attributes__.items():
             cmds[key.strip("_")] = getattr(self, key)
