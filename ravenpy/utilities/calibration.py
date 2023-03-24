@@ -34,7 +34,7 @@ class SpotSetup:
         Parameters
         ----------
         config: Config
-          A Config instance with symbolic expressions.
+          Emulator Config instance with symbolic expressions.
         """
         self.config = config
         self.path = path
@@ -95,7 +95,7 @@ class SpotSetup:
         emulator = Emulator(config=c, path=self.path / f"c{self._iteration:03}")
 
         # Run the model
-        emulator.build()
+        emulator.write_rv()
         emulator.run()
 
         self.diagnostics = emulator.parse_diagnostics()

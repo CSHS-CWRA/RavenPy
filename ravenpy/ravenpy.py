@@ -16,33 +16,49 @@ RAVEN_EXEC_PATH = os.getenv("RAVENPY_RAVEN_BINARY_PATH") or shutil.which("raven"
 
 class Emulator:
     def __init__(self, config: Config, path: Union[Path, str]):
-        self._config = config
+        """
+        Convenience class to work with the Raven modeling framework.
+
+        Parameters
+        ----------
+        config : Config
+          Emulator Config instance fully parameterized, i.e. without symbolic expressions.
+        path : str, Path
+          Path to rv files and model outputs.
+        """
+        self._config = config.copy()
         self._path = Path(path)
 
-    def build(self, overwrite=False):
+        # Emulator config is made immutable to avoid complex behavior.
+        self._config.__config__.allow_mutation = False
+
+    def write_rv(self, overwrite=False):
         """Write the configuration files to disk."""
-        self._config.build(workdir=self.path, overwrite=overwrite)
+        self._config.write_rv(workdir=self.path, overwrite=overwrite)
 
     def run(self):
         """Run the model."""
         self._outputdir = run(self.config.run_name, self.path)
         return self._outputdir
 
-    def parse(self):
+    def parse_outputs(self):
         """Return model outputs."""
-        return parse(self.config.run_name, self._outputdir)
+        return parse_outputs(self.config.run_name, self._outputdir)
 
     def parse_diagnostics(self):
+        """Return model diagnostics."""
         return parse_diagnostics(
             self._outputdir / f"{self.config.run_name}_Diagnostics.csv"
         )
 
     @property
     def config(self):
+        """Read-only model configuration."""
         return self._config
 
     @property
     def path(self):
+        """Path to RV files and output sub-directory."""
         return self._path
 
 
@@ -121,7 +137,7 @@ def run(
     return outputdir
 
 
-def parse(run_name, outputdir: [str, Path]):
+def parse_outputs(run_name, outputdir: [str, Path]):
     """Parse outputs from model execution.
 
     Parameters

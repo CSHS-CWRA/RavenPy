@@ -19,30 +19,20 @@ alt_names = {
 }
 
 
-@dataclass(config=SymConfig)
-class P:
-    X1: Sym = Variable("X1")
-
-
-def test_emulator():
-    class TestConfig(Config):
-        params: P
-        calendar: o.Calendar = Field("JULIAN", alias="Calendar")
-        air_snow_coeff: Sym = Field(1 - P.X1, alias="AirSnowCoeff")
-
-    # Test with symbolic params
-    st = TestConfig(params=P(), Calendar="NOLEAP")
+def test_emulator(dummy_config):
+    cls, P = dummy_config
+    conf = cls(Calendar="NOLEAP")
 
     with pytest.raises(ValueError):
-        assert st.rvi
+        assert conf.rvi
 
     # Set params
-    t1 = st.set_params([0.5])
-    assert t1.air_snow_coeff == 0.5
+    num = conf.set_params([0.5])
+    assert num.air_snow_coeff == 0.5
 
     with pytest.raises(ValueError):
-        t1.set_params([0.6])
+        num.set_params([0.6])
 
     # Instantiate with numerical params
-    nt = TestConfig(params=[0.5], Calendar="NOLEAP")
+    nt = cls(params=[0.5], Calendar="NOLEAP")
     assert nt.air_snow_coeff == 0.5

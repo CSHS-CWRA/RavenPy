@@ -299,7 +299,7 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
         """RV file name."""
         return f"{self.run_name}.{rv}"
 
-    def build(self, workdir: Union[str, Path], overwrite=False):
+    def write_rv(self, workdir: Union[str, Path], overwrite=False):
         """Write configuration files to disk.
 
         Parameters

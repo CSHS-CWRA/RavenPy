@@ -76,6 +76,6 @@ def test_enkf(salmon_meteo, salmon_hru, tmp_path):
     )
 
     e = Emulator(config=conf, path=tmp_path)
-    e.build()
+    e.write_rv()
     e.run()
     assert len(list(tmp_path.glob("ens_*"))) == 14
