@@ -1,5 +1,3 @@
-import dataclasses
-
 import xarray as xr
 
 from .conventions import CF_RAVEN, MonthlyAverages

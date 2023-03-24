@@ -3,6 +3,7 @@ from textwrap import dedent
 from typing import Sequence
 
 import pytest
+import xarray as xr
 from pydantic import Field
 
 from ravenpy.new_config import commands as rc
@@ -325,6 +326,7 @@ def test_read_from_netcdf(get_local_testdata):
         re.VERBOSE + re.MULTILINE,
     )
     assert pat.search(s) is not None
+    assert isinstance(c.da, xr.DataArray)
 
 
 def test_station_forcing(get_local_testdata):
@@ -343,10 +345,12 @@ def test_gauge(get_local_testdata):
     f = get_local_testdata(
         "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
     )
-    g = Gauge.from_nc(f, alt_names={"PRECIP": "rain"})
+    gauges = Gauge.from_nc(f, alt_names={"RAINFALL": "rain", "SNOWFALL": "snow"})
+    g = gauges[0]
 
-    s = dedent(g[0].to_rv())
-    assert "Data" in s
+    assert "Data" in g.to_rv()
+    assert isinstance(g.ds, xr.Dataset)
+    assert "RAINFALL" in g.ds
 
 
 def test_grid_weights():

@@ -16,6 +16,8 @@ from typing import (
     no_type_check,
 )
 
+import cftime
+import xarray as xr
 from pydantic import (
     Field,
     HttpUrl,
@@ -515,6 +517,18 @@ class ReadFromNetCDF(FlatCommand):
         attrs = filter_for(cls, specs)
         return cls(station_idx=station_idx, **attrs)
 
+    @property
+    def da(self) -> xr.DataArray:
+        """Return DataArray from configuration."""
+        # TODO: Apply linear transform and time shift
+        da = xr.open_dataset(self.file_name_nc)[self.var_name_nc]
+        if len(self.dim_names_nc) == 1:
+            return da
+        elif len(self.dim_names_nc) == 2:
+            return da.isel({self.dim_names_nc[0]: self.station_idx})
+        else:
+            raise NotImplementedError
+
 
 class GriddedForcing(ReadFromNetCDF):
     """GriddedForcing command (RVT)."""
@@ -630,8 +644,8 @@ class Gauge(FlatCommand):
     @classmethod
     def from_nc(
         cls, fn, data_type=None, station_idx=(1,), alt_names={}, mon_ave=False, extra={}
-    ):
-        """Return list of Gauge commands."""
+    ) -> Sequence["Gauge"]:
+        """Return list of Gauge instances."""
         from typing import get_args
 
         if data_type is None:
@@ -660,8 +674,13 @@ class Gauge(FlatCommand):
             out.append(cls(**gattrs, **extra.get(idx, {})))
         return out
 
-    def monthly_ave(cls, fn, variables=()):
-        """Return monthly average."""
+    @property
+    def ds(self) -> xr.DataArray:
+        """Return xarray Dataset with forcing variables keyed by Raven forcing names."""
+        ds = {}
+        for data in self.data:
+            ds[data.data_type] = data.read_from_netcdf.da
+        return xr.Dataset(ds)
 
 
 class ObservationData(Data):
