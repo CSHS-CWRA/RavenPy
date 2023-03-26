@@ -170,12 +170,6 @@ class RVC(RV):
         None, alias="UniformInitialConditions"
     )
 
-    @classmethod
-    def from_solution(cls, solution: str):
-        hru_states = rc.HRUStateVariableTable.parse(solution)
-        basin_states = rc.BasinStateVariables.parse(solution)
-        return cls(hru_states=hru_states, basin_states=basin_states)
-
 
 class RVH(RV):
     subbasins: rc.SubBasins = Field([rc.SubBasin()], alias="SubBasins")
@@ -232,12 +226,17 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
 
     def set_params(self, params) -> "Config":
         """Return a new instance of Config with params set to their numerical values."""
-        # Parse symbolic expressions based on numerical values for params.
         # Get the configuration fields
         dc = self.__dict__.copy()
 
         # Create params with numerical values
         sym_p = dc.pop("params")
+        if not is_symbolic(sym_p):
+            raise ValueError(
+                "Setting `params` on a configuration without symbolic expressions has no effect."
+                "Leave `params` to its default value when instantiating the emulator configuration."
+            )
+
         num_p = sym_p.__class__(*params)
 
         # Parse symbolic expressions using numerical params values
@@ -247,12 +246,24 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
         # Note: `construct` skips validation. benchmark to see if it speeds things up.
         return self.__class__.construct(params=num_p, **out)
 
+    def set_solution(self, fn: Path):
+        """Return a new instance of Config with hru, basin states and start date set from an existing solution.
+
+        Note that EndDate is set to None to avoid inconsistencies.
+        """
+        from .parsers import parse_solution
+
+        out = self.__dict__.copy()
+        out.update(**parse_solution(fn, calendar=self.calendar.value))
+        return self.__class__(**out)
+
     def _rv(self, rv: str):
         """Return RV configuration."""
 
         if is_symbolic(self.params):
             raise ValueError(
-                "Cannot write RV files if parameters are symbolic expressions."
+                "Cannot write RV files if `params` has symbolic variables. Use `set_params` method to set numerical "
+                "values for `params`."
             )
 
         # Get RV class
@@ -293,7 +304,7 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
         """RV file name."""
         return f"{self.run_name}.{rv}"
 
-    def build(self, workdir: Union[str, Path], overwrite=False):
+    def write_rv(self, workdir: Union[str, Path], overwrite=False):
         """Write configuration files to disk.
 
         Parameters

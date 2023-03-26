@@ -1,7 +1,7 @@
 import pytest
 import spotpy
 
-from ravenpy.utilities.calibration import SpotSetup
+from ravenpy.utilities.new_config.calibration import SpotSetup
 
 # Low and high bounds for parameter distribution
 bounds = {
@@ -374,6 +374,7 @@ bounds = {
 }
 
 
+@pytest.mark.slow
 def test_spotpy_calibration(symbolic_config, tmpdir):
     """Confirm that calibration actually improves the NSE."""
     name, cls = symbolic_config

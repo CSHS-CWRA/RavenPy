@@ -1,6 +1,6 @@
 import datetime as dt
 
-from ravenpy import Emulator
+from ravenpy import Emulator, EnsembleReader
 from ravenpy.new_config import commands as rc
 from ravenpy.new_config.emulators import GR4JCN
 
@@ -75,7 +75,12 @@ def test_enkf(salmon_meteo, salmon_hru, tmp_path):
         NoisyMode=True,
     )
 
-    e = Emulator(config=conf, path=tmp_path)
-    e.build()
+    e = Emulator(config=conf, workdir=tmp_path)
+    e.write_rv()
     e.run()
-    assert len(list(tmp_path.glob("ens_*"))) == 14
+    paths = list(tmp_path.glob("ens_*"))
+    paths.sort()
+    assert len(paths) == 14
+
+    ens = EnsembleReader(conf.run_name, paths)
+    assert len(ens.files["hydrograph"]) == 14

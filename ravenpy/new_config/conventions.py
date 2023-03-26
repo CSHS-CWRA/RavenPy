@@ -30,3 +30,11 @@ MonthlyAverages = {
     "TEMP_MAX": "MonthlyMaxTemperature",
     "PET": "MonthlyAveEvaporation",
 }
+
+RAVEN_OUTPUT_FMT = {
+    "solution": "{run_name}_solution.rvc",
+    "hydrograph": "{run_name}_Hydrographs.nc",
+    "storage": "{run_name}_WatershedStorage.nc",
+    "diagnostics": "{run_name}_Diagnostics.csv",
+    "messages": "Raven_errors.txt",
+}

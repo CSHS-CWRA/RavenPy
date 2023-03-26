@@ -2,48 +2,171 @@
 
 import collections
 import os
-import re
 import shutil
 import subprocess
 from pathlib import Path
 from typing import Union
 from warnings import warn
 
-from ravenpy.new_config.rvs import RVC, Config
+import xarray as xr
+
+from ravenpy.new_config import conventions, parsers
+from ravenpy.new_config.rvs import Config
 
 RAVEN_EXEC_PATH = os.getenv("RAVENPY_RAVEN_BINARY_PATH") or shutil.which("raven")
 
 
 class Emulator:
-    def __init__(self, config: Config, path: Union[Path, str]):
-        self._config = config
-        self._path = Path(path)
+    def __init__(self, config: Config, workdir: Union[Path, str]):
+        """
+        Convenience class to work with the Raven modeling framework.
 
-    def build(self, overwrite=False):
+        Parameters
+        ----------
+        config : Config
+          Emulator Config instance fully parameterized, i.e. without symbolic expressions.
+        path : str, Path
+          Path to rv files and model outputs.
+        """
+        self._config = config.copy()
+        self._workdir = Path(workdir)
+        self._output = None
+
+        # Emulator config is made immutable to avoid complex behavior.
+        self._config.__config__.allow_mutation = False
+
+    def write_rv(self, overwrite=False):
         """Write the configuration files to disk."""
-        self._config.build(workdir=self.path, overwrite=overwrite)
+        self._config.write_rv(workdir=self.workdir, overwrite=overwrite)
 
-    def run(self):
-        """Run the model."""
-        self._outputdir = run(self.config.run_name, self.path)
-        return self._outputdir
+    def run(self) -> "OutputReader":
+        """Run the model. This will write RV files if not already done."""
+        if not (self.workdir / f"{self.config.run_name}.rvi").exists():
+            self.write_rv()
 
-    def parse(self):
-        """Return model outputs."""
-        return parse(self.config.run_name, self._outputdir)
-
-    def parse_diagnostics(self):
-        return parse_diagnostics(
-            self._outputdir / f"{self.config.run_name}_Diagnostics.csv"
-        )
+        self._output_path = run(self.config.run_name, self.workdir, "output")
+        self._output = OutputReader(self.config.run_name, path=self._output_path)
+        return self._output
 
     @property
-    def config(self):
+    def config(self) -> Config:
+        """Read-only model configuration."""
         return self._config
 
     @property
-    def path(self):
+    def workdir(self) -> Path:
+        """Path to RV files and output sub-directory."""
+        return self._workdir
+
+    @property
+    def output_path(self) -> Path:
+        """Path to model outputs."""
+        return self._output_path
+
+    def resume(self) -> Config:
+        """Return new model configuration using state variables from the end of the run."""
+        out = self.config.set_solution(self._output.files["solution"])
+        out.__config__.allow_mutation = True
+        return out
+
+
+class OutputReader:
+    def __init__(self, run_name: str, path: Path):
+        """Class facilitating access to Raven model output."""
+        self._run_name = run_name
+        self._path = path
+
+    @property
+    def files(self) -> dict:
+        """Return paths to output files."""
+        return parsers.output_files(self._run_name, self._path)
+
+    @property
+    def objs(self) -> dict:
+        """Return model outputs as Python objects.
+
+        - diagnostics: dict
+        - hydrograph: xr.Dataset
+        - storage: xr.Dataset
+        - solution:
+
+        """
+        return parsers.parse_outputs(self._run_name, self._path)
+
+    @property
+    def solution(self) -> str:
+        """Return solution file content."""
+        solution = self.files.get("solution")
+        if solution:
+            return parsers.parse_solution(solution)
+
+    @property
+    def diagnostics(self) -> dict:
+        """Return model diagnostics."""
+        diag = self.files.get("diagnostics")
+        if diag:
+            return parsers.parse_diagnostics(diag)
+
+    @property
+    def hydrograph(self) -> xr.Dataset:
+        """Return the hydrograph."""
+        h = self.files.get("hydrograph")
+        if h:
+            return parsers.parse_nc(h)
+
+    @property
+    def storage(self) -> xr.Dataset:
+        s = self.files.get("storage")
+        if s:
+            return parsers.parse_nc(s)
+
+    @property
+    def messages(self) -> str:
+        msg = self.files.get("messages")
+        if msg:
+            return msg.read_text()
+
+    @property
+    def path(self) -> Path:
+        """Path to output directory."""
         return self._path
+
+
+class EnsembleReader:
+    def __init__(self, run_name, paths, dim="member"):
+        """
+        Class facilitating access to ensemble of Raven outputs.
+
+        Parameters
+        ----------
+        run_name: str
+          Name of simulation.
+        paths: list
+          List of output paths.
+        """
+        self._paths = paths
+        self._outputs = [OutputReader(run_name, p) for p in paths]
+        self._dim = dim
+
+    @property
+    def files(self):
+        out = collections.defaultdict(list)
+        for o in self._outputs:
+            for k, v in o.files.items():
+                out[k].append(v)
+        return out
+
+    @property
+    def storage(self):
+        return xr.concat(
+            [xr.open_dataset(f) for f in self.files["storage"]], dim=self._dim
+        )
+
+    @property
+    def hydrograph(self):
+        return xr.concat(
+            [xr.open_dataset(f) for f in self.files["hydrograph"]], dim=self._dim
+        )
 
 
 def run(
@@ -53,7 +176,7 @@ def run(
     overwrite: bool = True,
 ):
     """
-    Run Raven given the path to a model configuration.
+    Run Raven given the path to an existing model configuration.
 
     Parameters
     ----------
@@ -110,7 +233,7 @@ def run(
 
     print(process.returncode)
     # Deal with errors and warnings
-    messages = extract_raven_messages(configdir)
+    messages = parsers.parse_raven_messages(outputdir / "Raven_errors.txt")
 
     for msg in messages["WARNING"] + messages["ADVISORY"]:
         warn(msg, category=RavenWarning)
@@ -119,106 +242,6 @@ def run(
         raise RavenError("\n".join(messages["ERROR"]))
 
     return outputdir
-
-
-def parse(run_name, outputdir: [str, Path]):
-    """Parse outputs from model execution.
-
-    Parameters
-    ----------
-    run_name: str
-      RunName value identifying model outputs.
-    outputdir: str, Path
-      Path to model output directory.
-
-    Returns
-    -------
-    dict
-      Dictionary holding model outputs:
-        - hydrograph: xarray.Dataset
-        - storage: xarray.Dataset
-        - solution: RVC
-        - diagnostics: Dict[str, list]
-      Values are set to None if no file is found.
-
-    """
-    if type(outputdir) == str:
-        outputdir = Path(outputdir)
-
-    out = {}
-    out["solution"] = parse_solution(outputdir / f"{run_name}_solution.rvc")
-    out["hydrograph"] = parse_nc(outputdir / f"{run_name}_Hydrographs.nc")
-    out["storage"] = parse_nc(outputdir / f"{run_name}_WatershedStorage.nc")
-    out["diagnostics"] = parse_diagnostics(outputdir / f"{run_name}_Diagnostics.csv")
-
-    return out
-
-
-def parse_diagnostics(fn: Path):
-    """Return dictionary of performance metrics."""
-    import csv
-
-    if fn.exists():
-        out = collections.defaultdict(list)
-
-        with open(fn) as f:
-            reader = csv.reader(f.readlines())
-            header = next(reader)
-            for row in reader:
-                for key, val in zip(header, row):
-                    if "DIAG" in key:
-                        val = float(val)  # type: ignore
-                    out[key].append(val)
-
-            out.pop("")
-
-        return out
-
-
-def parse_nc(fn: Path):
-    """Open netCDF dataset with xarray if the path is valid, otherwise return None."""
-    import xarray as xr
-
-    if fn.exists():
-        if fn.suffix == ".nc":
-            return xr.open_dataset(fn)
-        else:
-            raise NotImplementedError
-
-
-def parse_solution(fn: Path):
-    """Create RVC from model output."""
-    if fn.exists():
-        if fn.suffix == ".rvc":
-            return RVC.from_solution(fn.read_text())
-        else:
-            raise NotImplementedError
-
-
-def extract_raven_messages(path):
-    """Parse Raven_errors and extract the messages, structured by types."""
-    err_filepaths = path.rglob("Raven_errors.txt")
-    messages = {
-        "ERROR": [],
-        "WARNING": [],
-        "ADVISORY": [],
-        "SIMULATION COMPLETE": False,
-    }
-    for p in err_filepaths:
-        # The error message for an unknown command is exceptionally on two lines
-        # (the second starts with a triple space)
-        for m in re.findall("^([A-Z ]+) :(.+)(?:\n   (.+))?", p.read_text(), re.M):
-            if m[0] == "SIMULATION COMPLETE":
-                messages["SIMULATION COMPLETE"] = True
-                continue
-            msg_type = m[0]
-            msg = f"{m[1]} {m[2]}".strip()
-            if msg == "Errors found in input data. See Raven_errors.txt for details":
-                # Skip this one because it's a bit circular
-                continue
-            messages[msg_type].append(msg)  # type: ignore
-
-    return messages
 
 
 class RavenError(Exception):
