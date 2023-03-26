@@ -643,26 +643,55 @@ class Gauge(FlatCommand):
 
     @classmethod
     def from_nc(
-        cls, fn, data_type=None, station_idx=(1,), alt_names={}, mon_ave=False, extra={}
+        cls,
+        fn: Path,
+        data_type: Sequence = None,
+        station_idx: Sequence = (1,),
+        alt_names: dict = {},
+        mon_ave: bool = False,
+        extra: dict = {},
     ) -> Sequence["Gauge"]:
-        """Return list of Gauge instances."""
-        from typing import get_args
+        """Return list of Gauge instances.
 
-        if data_type is None:
-            data_type = get_args(options.Forcings)
+        Parameters
+        ----------
+        fn : str, Path
+          NetCDF file path.
+        data_type: str
+          Raven data type.
+        station_idx: Sequence[int]
+          Index along station dimension. Starts at 1.
+        alt_names: str, list
+          Alternative variable names for data type if not the CF standard default.
+        mon_ave: bool
+          If True, compute the monthly average.
+        extra: dict
+          Additional `Gauge` parameters.
+
+        Returns
+        -------
+        [Gauge,]
+          List of Gauge instances, one for each station index.
+        """
+        from typing import get_args
 
         out = []
         for idx in station_idx:
             data = []
             gattrs = {}
-            for dtyp in data_type:
+            for dtyp in data_type or get_args(options.Forcings):
                 try:
                     specs = nc_specs(
                         fn, dtyp, idx, alt_names.get(dtyp, ()), mon_ave=mon_ave
                     )
                     data.append(Data(**filter_for(Data, specs)))
-                except ValueError:
-                    pass
+                except ValueError as err:
+                    if data_type is None:
+                        # There is no explicit instruction to find something in particular.
+                        pass
+                    else:
+                        raise err
+
                 else:
                     gattrs.update(filter_for(cls, specs))
             else:

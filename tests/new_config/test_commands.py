@@ -352,6 +352,15 @@ def test_gauge(get_local_testdata):
     assert isinstance(g.ds, xr.Dataset)
     assert "RAINFALL" in g.ds
 
+    with pytest.raises(ValueError):
+        Gauge.from_nc(
+            f,
+            data_type=[
+                "RAINFALL",
+            ],
+            alt_names={"RAINFALL": "bad_name"},
+        )
+
 
 def test_grid_weights():
     gw = rc.GridWeights()
