@@ -300,14 +300,14 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
     def rve(self):
         return self._rv("rve")
 
-    def write_rv(self, workdir: Union[str, Path], stem=None, overwrite=False):
+    def write_rv(self, workdir: Union[str, Path], modelname=None, overwrite=False):
         """Write configuration files to disk.
 
         Parameters
         ----------
         workdir: str, Path
           A directory where rv files will be written to disk.
-        stem: str
+        modelname: str
           File name stem for rv files. If not given, defaults to `RunName` if set, otherwise `raven`.
         overwrite: bool
           If True, overwrite existing configuration files.
@@ -319,12 +319,12 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
         mandatory = ["rvi", "rvp", "rvc", "rvh", "rvt"]
         optional = ["rve"]
 
-        if stem is None:
-            stem = self.run_name or "raven"
+        if modelname is None:
+            modelname = self.run_name or "raven"
 
         out = {}
         for rv in mandatory + optional:
-            fn = workdir / f"{stem}.{rv}"
+            fn = workdir / f"{modelname}.{rv}"
             if fn.exists() and not overwrite:
                 raise OSError(f"{fn} already exists and would be overwritten.")
 

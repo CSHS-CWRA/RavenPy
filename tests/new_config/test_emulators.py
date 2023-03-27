@@ -39,12 +39,15 @@ def test_run(numeric_config, tmp_path):
     if name == "CanadianShield":
         pytest.skip("Missing solution due to SuppressOutput.")
 
+    # Start new simulation with final state from initial run.
     new = e.resume()
     new.start_date = conf.end_date
     new.end_date = dt.datetime(2002, 1, 7)
+    new.run_name = None
 
     e2 = Emulator(config=new, workdir=tmp_path / "resumed")
     out = e2.run()
+    assert e2.modelname == "raven"
     assert isinstance(out.hydrograph, xr.Dataset)
     assert isinstance(out.storage, xr.Dataset)
 
@@ -63,7 +66,7 @@ def test_no_run_name(dummy_config, tmp_path):
     cls, P = dummy_config
     conf = cls(params=[0.5])
 
-    paths = conf.write_rv(tmp_path, stem="ham")
+    paths = conf.write_rv(tmp_path, modelname="ham")
     assert "ham.rvi" in str(paths["rvi"])
 
     paths = conf.write_rv(tmp_path, overwrite=True)

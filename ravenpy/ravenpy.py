@@ -17,7 +17,7 @@ RAVEN_EXEC_PATH = os.getenv("RAVENPY_RAVEN_BINARY_PATH") or shutil.which("raven"
 
 
 class Emulator:
-    def __init__(self, config: Config, workdir: Union[Path, str]):
+    def __init__(self, config: Config, workdir: Union[Path, str], modelname=None):
         """
         Convenience class to work with the Raven modeling framework.
 
@@ -27,24 +27,32 @@ class Emulator:
           Emulator Config instance fully parameterized, i.e. without symbolic expressions.
         path : str, Path
           Path to rv files and model outputs.
+        modelname : str, None
+          File name stem of configuration files: `<modelname>.rv*`.
         """
         self._config = config.copy()
         self._workdir = Path(workdir)
-        self._output = None
+        self._output = None  # Model output path
+        self._modelname = modelname
+        self._rv = None  # Model config files
 
         # Emulator config is made immutable to avoid complex behavior.
         self._config.__config__.allow_mutation = False
 
     def write_rv(self, overwrite=False):
         """Write the configuration files to disk."""
-        self._config.write_rv(workdir=self.workdir, overwrite=overwrite)
+        self._rv = self._config.write_rv(workdir=self.workdir, modelname=self.modelname, overwrite=overwrite)
+        if self.modelname is None:
+            # modelname default set by `write_rv`
+            self._modelname = self._rv["rvi"].stem
+        return self._rv
 
     def run(self) -> "OutputReader":
         """Run the model. This will write RV files if not already done."""
-        if not (self.workdir / f"{self.config.run_name}.rvi").exists():
+        if not (self.workdir / f"{self.modelname}.rvi").exists():
             self.write_rv()
 
-        self._output_path = run(self.config.run_name, self.workdir, "output")
+        self._output_path = run(self.modelname, self.workdir, "output")
         self._output = OutputReader(self.config.run_name, path=self._output_path)
         return self._output
 
@@ -63,6 +71,16 @@ class Emulator:
         """Path to model outputs."""
         return self._output_path
 
+    @property
+    def modelname(self) -> str:
+        """File name stem of configuration files."""
+        return self._modelname
+
+    @property
+    def output(self) -> "OutputReader":
+        """Return simulation output object."""
+        return self._output
+
     def resume(self) -> Config:
         """Return new model configuration using state variables from the end of the run."""
         out = self.config.set_solution(self._output.files["solution"])
@@ -70,11 +88,21 @@ class Emulator:
         return out
 
 
+
+
 class OutputReader:
-    def __init__(self, run_name: str, path: Path):
-        """Class facilitating access to Raven model output."""
+    def __init__(self, run_name: str=None, path: Path=None):
+        """Class facilitating access to Raven model output.
+
+        Parameters
+        ----------
+        run_name : str, None
+          Simulation name, if any is specified by the `RunName` configuration.
+        path : str, Path
+          Output directory where model results are stored. Defaults to the current directory.
+        """
         self._run_name = run_name
-        self._path = Path(path)
+        self._path = Path(path) if path else Path.cwd()
 
     @property
     def files(self) -> dict:
@@ -170,7 +198,7 @@ class EnsembleReader:
 
 
 def run(
-    run_name: str,
+    modelname: str,
     configdir: Union[str, Path],
     outputdir: Union[str, Path] = None,
     overwrite: bool = True,
@@ -180,7 +208,7 @@ def run(
 
     Parameters
     ----------
-    run_name : str
+    modelname : str
       Configuration files stem, i.e. the file name without extension.
     configdir : str, Path
       Path to configuration files directory.
@@ -215,7 +243,7 @@ def run(
         os.makedirs(str(outputdir))
 
     # Launch executable, wait for completion.
-    cmd = [RAVEN_EXEC_PATH, run_name, "-o", str(outputdir)]
+    cmd = [RAVEN_EXEC_PATH, modelname, "-o", str(outputdir)]
 
     process = subprocess.Popen(
         cmd,
