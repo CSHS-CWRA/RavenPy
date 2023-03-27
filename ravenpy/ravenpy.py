@@ -41,7 +41,9 @@ class Emulator:
 
     def write_rv(self, overwrite=False):
         """Write the configuration files to disk."""
-        self._rv = self._config.write_rv(workdir=self.workdir, modelname=self.modelname, overwrite=overwrite)
+        self._rv = self._config.write_rv(
+            workdir=self.workdir, modelname=self.modelname, overwrite=overwrite
+        )
         if self.modelname is None:
             # modelname default set by `write_rv`
             self._modelname = self._rv["rvi"].stem
@@ -88,10 +90,8 @@ class Emulator:
         return out
 
 
-
-
 class OutputReader:
-    def __init__(self, run_name: str=None, path: Path=None):
+    def __init__(self, run_name: str = None, path: Path = None):
         """Class facilitating access to Raven model output.
 
         Parameters
