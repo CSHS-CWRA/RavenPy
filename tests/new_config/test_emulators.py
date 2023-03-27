@@ -2,6 +2,7 @@ import datetime as dt
 
 import numpy as np
 import pytest
+import xarray as xr
 
 from ravenpy import Emulator
 from ravenpy.new_config.rvs import Config
@@ -43,10 +44,12 @@ def test_run(numeric_config, tmp_path):
     new.end_date = dt.datetime(2002, 1, 7)
 
     e2 = Emulator(config=new, workdir=tmp_path / "resumed")
-    e2.run()
+    out = e2.run()
+    assert isinstance(out.hydrograph, xr.Dataset)
+    assert isinstance(out.storage, xr.Dataset)
 
 
-def test_emulator(dummy_config, tmp_path):
+def test_emulator_config_is_read_only(dummy_config, tmp_path):
     cls, P = dummy_config
 
     e = Emulator(config=cls(), workdir=tmp_path)
@@ -54,3 +57,14 @@ def test_emulator(dummy_config, tmp_path):
     # The emulator configuration should be read-only.
     with pytest.raises(TypeError):
         e.config.run_name = "Renamed"
+
+
+def test_no_run_name(dummy_config, tmp_path):
+    cls, P = dummy_config
+    conf = cls(params=[0.5])
+
+    paths = conf.write_rv(tmp_path, stem="ham")
+    assert "ham.rvi" in str(paths["rvi"])
+
+    paths = conf.write_rv(tmp_path, overwrite=True)
+    assert "raven.rvi" in str(paths["rvi"])

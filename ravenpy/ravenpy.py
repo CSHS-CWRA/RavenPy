@@ -74,7 +74,7 @@ class OutputReader:
     def __init__(self, run_name: str, path: Path):
         """Class facilitating access to Raven model output."""
         self._run_name = run_name
-        self._path = path
+        self._path = Path(path)
 
     @property
     def files(self) -> dict:

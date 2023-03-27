@@ -95,13 +95,13 @@ def output_files(run_name: str, path: Path):
     """Return path to each output file if it exists."""
     out = {}
     for k, v in RAVEN_OUTPUT_FMT.items():
-        p = path / v.format(run_name=run_name)
+        p = path / v.format(run_name=run_name + "_" if run_name is not None else "")
         if p.exists():
             out[k] = p
     return out
 
 
-def parse_outputs(run_name, outputdir: [str, Path]):
+def parse_outputs(run_name: str = None, outputdir: [str, Path] = None):
     """Parse outputs from model execution.
 
     Parameters
@@ -109,7 +109,7 @@ def parse_outputs(run_name, outputdir: [str, Path]):
     run_name: str
       RunName value identifying model outputs.
     outputdir: str, Path
-      Path to model output directory.
+      Path to model output directory. Current directory if None.
 
     Returns
     -------
@@ -122,7 +122,9 @@ def parse_outputs(run_name, outputdir: [str, Path]):
       Values are set to None if no file is found.
 
     """
-    if type(outputdir) == str:
+    if outputdir is None:
+        outputdir = Path.cwd()
+    elif type(outputdir) == str:
         outputdir = Path(outputdir)
 
     parser = RAVEN_OUTPUT_PARSERS

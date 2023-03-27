@@ -24,7 +24,7 @@ class RVI(RV):
     silent_mode: bool = Field(None, alias="SilentMode")
     noisy_mode: bool = Field(None, alias="NoisyMode")
 
-    run_name: str = Field("run", alias="RunName")
+    run_name: str = Field(None, alias="RunName")
     calendar: o.Calendar = Field("PROLEPTIC_GREGORIAN", alias="Calendar")
     start_date: cftime.datetime = Field(None, alias="StartDate")
     assimilation_start_time: dt.datetime = Field(None, alias="AssimilationStartTime")
@@ -300,17 +300,15 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
     def rve(self):
         return self._rv("rve")
 
-    def rv_fn(self, rv):
-        """RV file name."""
-        return f"{self.run_name}.{rv}"
-
-    def write_rv(self, workdir: Union[str, Path], overwrite=False):
+    def write_rv(self, workdir: Union[str, Path], stem=None, overwrite=False):
         """Write configuration files to disk.
 
         Parameters
         ----------
         workdir: str, Path
           A directory where rv files will be written to disk.
+        stem: str
+          File name stem for rv files. If not given, defaults to `RunName` if set, otherwise `raven`.
         overwrite: bool
           If True, overwrite existing configuration files.
         """
@@ -321,9 +319,12 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
         mandatory = ["rvi", "rvp", "rvc", "rvh", "rvt"]
         optional = ["rve"]
 
+        if stem is None:
+            stem = self.run_name or "raven"
+
         out = {}
         for rv in mandatory + optional:
-            fn = workdir / self.rv_fn(rv)
+            fn = workdir / f"{stem}.{rv}"
             if fn.exists() and not overwrite:
                 raise OSError(f"{fn} already exists and would be overwritten.")
 
