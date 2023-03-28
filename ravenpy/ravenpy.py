@@ -17,7 +17,9 @@ RAVEN_EXEC_PATH = os.getenv("RAVENPY_RAVEN_BINARY_PATH") or shutil.which("raven"
 
 
 class Emulator:
-    def __init__(self, config: Config, workdir: Union[Path, str], modelname=None, overwrite=False):
+    def __init__(
+        self, config: Config, workdir: Union[Path, str], modelname=None, overwrite=False
+    ):
         """
         Convenience class to work with the Raven modeling framework.
 
