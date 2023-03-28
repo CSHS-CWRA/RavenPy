@@ -107,23 +107,12 @@ class OutputReader:
         """
         self._run_name = run_name
         self._path = Path(path) if path else Path.cwd()
+        self._files = parsers.output_files(self._run_name, self._path)
 
     @property
     def files(self) -> dict:
         """Return paths to output files."""
-        return parsers.output_files(self._run_name, self._path)
-
-    @property
-    def objs(self) -> dict:
-        """Return model outputs as Python objects.
-
-        - diagnostics: dict
-        - hydrograph: xr.Dataset
-        - storage: xr.Dataset
-        - solution:
-
-        """
-        return parsers.parse_outputs(self._run_name, self._path)
+        return self._files
 
     @property
     def solution(self) -> str:
@@ -165,7 +154,7 @@ class OutputReader:
 
 
 class EnsembleReader:
-    def __init__(self, run_name, paths, dim="member"):
+    def __init__(self, run_name=None, paths=None, runs=None, dim="member"):
         """
         Class facilitating access to ensemble of Raven outputs.
 
@@ -174,11 +163,23 @@ class EnsembleReader:
         run_name: str
           Name of simulation.
         paths: list
-          List of output paths.
+          List of output paths. Defaults to all directories in current directory.
+        runs: List[OutputReader]
+          List of OutputReader instances.
+        dim : str
+          Name of concatenation dimension.
         """
-        self._paths = paths
-        self._outputs = [OutputReader(run_name, p) for p in paths]
         self._dim = dim
+        if runs is not None:
+            self._outputs = runs
+            self._paths = [o.path for o in self._outputs]
+
+        else:
+            if paths is None:
+                paths = [p for p in Path.cwd().iterdir() if p.is_dir()]
+            self._paths = [Path(p) for p in paths]
+
+            self._outputs = [OutputReader(run_name, p) for p in self._paths]
 
     @property
     def files(self):
@@ -197,7 +198,9 @@ class EnsembleReader:
     @property
     def hydrograph(self):
         return xr.concat(
-            [xr.open_dataset(f) for f in self.files["hydrograph"]], dim=self._dim
+            [xr.open_dataset(f) for f in self.files["hydrograph"]],
+            dim=self._dim,
+            coords="different",
         )
 
 

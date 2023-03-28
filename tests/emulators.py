@@ -274,7 +274,7 @@ def symbolic_config(salmon_meteo, salmon_hru, request):
             )
         )
     if name in ["HMETS"]:
-        data_type.extend(["SNOWFALL", "PET"])
+        data_type.extend(["PET"])
 
     if name in ["CanadianShield"]:
         hrus = [salmon_hru["land"], salmon_hru["land"]]
@@ -302,6 +302,26 @@ def numeric_config(symbolic_config):
     """Emulator configuration instantiated with numeric parameters."""
     name, conf = symbolic_config
     yield name, conf.set_params(params[name])
+
+
+@pytest.fixture(scope="session")
+def minimal_emulator(salmon_meteo, salmon_hru):
+    """Return the config for a single emulator."""
+    cls = configs["HMETS"]
+    data_type = ["RAINFALL", "TEMP_MIN", "TEMP_MAX", "SNOWFALL", "PET"]
+
+    return cls(
+        params=params["HMETS"],
+        Gauge=rc.Gauge.from_nc(
+            salmon_meteo,
+            data_type=data_type,
+            alt_names=alt_names,
+        ),
+        ObservationData=rc.ObservationData.from_nc(salmon_meteo, alt_names="qobs"),
+        HRUs=[salmon_hru["land"]],
+        StartDate=dt.datetime(2000, 1, 1),
+        Duration=15,
+    )
 
 
 @pytest.fixture(scope="session")

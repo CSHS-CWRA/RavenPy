@@ -704,7 +704,7 @@ class Gauge(FlatCommand):
         return out
 
     @property
-    def ds(self) -> xr.DataArray:
+    def ds(self) -> xr.Dataset:
         """Return xarray Dataset with forcing variables keyed by Raven forcing names."""
         ds = {}
         for data in self.data:

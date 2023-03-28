@@ -17,6 +17,7 @@ Generic Raven model configuration
 
 Note that alias are set to identify class attributes as Raven commands.
 """
+date = Union[dt.date, dt.datetime, cftime.datetime]
 
 
 class RVI(RV):
@@ -26,9 +27,9 @@ class RVI(RV):
 
     run_name: str = Field(None, alias="RunName")
     calendar: o.Calendar = Field("PROLEPTIC_GREGORIAN", alias="Calendar")
-    start_date: cftime.datetime = Field(None, alias="StartDate")
-    assimilation_start_time: dt.datetime = Field(None, alias="AssimilationStartTime")
-    end_date: cftime.datetime = Field(None, alias="EndDate")
+    start_date: date = Field(None, alias="StartDate")
+    assimilation_start_time: date = Field(None, alias="AssimilationStartTime")
+    end_date: date = Field(None, alias="EndDate")
     duration: float = Field(None, alias="Duration")
     time_step: float = Field(1.0, alias="TimeStep")
     evaluation_period: Sequence[rc.EvaluationPeriod] = Field(
@@ -112,7 +113,7 @@ class RVI(RV):
             return rc.SoilModel.parse_obj(v)
         return v
 
-    @validator("start_date", "end_date", pre=True)
+    @validator("start_date", "end_date", "assimilation_start_time")
     def dates2cf(cls, val, values):
         """Convert dates to cftime dates."""
         if val is not None:
@@ -318,7 +319,7 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
         """
         workdir = Path(workdir)
         if not workdir.exists():
-            workdir.mkdir()
+            workdir.mkdir(parents=True)
 
         mandatory = ["rvi", "rvp", "rvc", "rvh", "rvt"]
         optional = ["rve"]
