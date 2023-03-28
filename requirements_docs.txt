@@ -13,9 +13,12 @@ numpydoc
 autodoc_pydantic
 birdhouse-birdy
 intake
+intake-esm
 ipyleaflet
 ipywidgets
 jupyter
 s3fs
 clisops
 intake-xarray
+gcsfs
+

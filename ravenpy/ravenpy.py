@@ -17,7 +17,9 @@ RAVEN_EXEC_PATH = os.getenv("RAVENPY_RAVEN_BINARY_PATH") or shutil.which("raven"
 
 
 class Emulator:
-    def __init__(self, config: Config, workdir: Union[Path, str], modelname=None):
+    def __init__(
+        self, config: Config, workdir: Union[Path, str], modelname=None, overwrite=False
+    ):
         """
         Convenience class to work with the Raven modeling framework.
 
@@ -35,6 +37,7 @@ class Emulator:
         self._output = None  # Model output path
         self._modelname = modelname
         self._rv = None  # Model config files
+        self._overwrite = overwrite
 
         # Emulator config is made immutable to avoid complex behavior.
         # This propagates to the original config. The copy doesn't really work...
@@ -42,6 +45,9 @@ class Emulator:
 
     def write_rv(self, overwrite=False):
         """Write the configuration files to disk."""
+        if self._overwrite is not None:
+            overwrite = self._overwrite
+
         self._rv = self._config.write_rv(
             workdir=self.workdir, modelname=self.modelname, overwrite=overwrite
         )
