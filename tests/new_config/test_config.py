@@ -23,6 +23,8 @@ def test_emulator(dummy_config):
     cls, P = dummy_config
     conf = cls(Calendar="NOLEAP")
 
+    assert conf.__config__.allow_mutation
+
     with pytest.raises(ValueError):
         assert conf.rvi
 

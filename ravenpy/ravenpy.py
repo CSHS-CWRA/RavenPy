@@ -30,14 +30,15 @@ class Emulator:
         modelname : str, None
           File name stem of configuration files: `<modelname>.rv*`.
         """
-        self._config = config.copy()
+        self._config = config.copy(deep=True)
         self._workdir = Path(workdir)
         self._output = None  # Model output path
         self._modelname = modelname
         self._rv = None  # Model config files
 
         # Emulator config is made immutable to avoid complex behavior.
-        self._config.__config__.allow_mutation = False
+        # This propagates to the original config. The copy doesn't really work...
+        # self._config.__config__.allow_mutation = False
 
     def write_rv(self, overwrite=False):
         """Write the configuration files to disk."""
@@ -49,10 +50,10 @@ class Emulator:
             self._modelname = self._rv["rvi"].stem
         return self._rv
 
-    def run(self) -> "OutputReader":
+    def run(self, overwrite=False) -> "OutputReader":
         """Run the model. This will write RV files if not already done."""
         if not (self.workdir / f"{self.modelname}.rvi").exists():
-            self.write_rv()
+            self.write_rv(overwrite=overwrite)
 
         self._output_path = run(self.modelname, self.workdir, "output")
         self._output = OutputReader(self.config.run_name, path=self._output_path)

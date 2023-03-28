@@ -29,6 +29,8 @@ def test_rv(config_rv):
 def test_run(numeric_config, tmp_path):
     """Test that the emulator actually runs and returns the expected NSE."""
     name, conf = numeric_config
+    assert conf.__config__.allow_mutation
+
     e = Emulator(config=conf, workdir=tmp_path)
     e.write_rv()
     out = e.run()

@@ -254,7 +254,11 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
         from .parsers import parse_solution
 
         out = self.__dict__.copy()
-        out.update(**parse_solution(fn, calendar=self.calendar.value))
+        out.update(
+            **parse_solution(fn, calendar=self.calendar.value),
+            uniform_initial_conditions={},
+        )
+
         return self.__class__(**out)
 
     def _rv(self, rv: str):

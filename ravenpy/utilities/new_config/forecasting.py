@@ -39,8 +39,8 @@ def climatology_esp(config, path, years: List[int] = None) -> List[Emulator]:
     Ensemble Streamflow Prediction based on historical variability.
 
     Run the model using forcing for different years.
-    The initial states should be consistent with the start date.
-
+    No model warm-up is performed by this function, make sure the initial states are
+    consistent with the start date.
 
     Parameters
     ----------
@@ -55,6 +55,7 @@ def climatology_esp(config, path, years: List[int] = None) -> List[Emulator]:
     Returns
     -------
     EnsembleReader
+      Class facilitating the analysis of multiple Raven outputs.
     """
     path = Path(path)
 
@@ -135,6 +136,64 @@ def make_climpred_hindcast_object(hindcast, observations):
     hindcast_obj = hindcast_obj.add_observations(observations)
 
     return hindcast_obj
+
+
+def warm_up(config, duration: int, path: Path):
+    """Run the model on a time series preceding the start date.
+
+    Parameters
+    ----------
+    config : Config
+      Model configuration.
+    duration : int
+      Number of days the warm-up simulation should last *before* the start date.
+    path: Path
+      Work directory.
+
+    Returns
+    -------
+    Config
+      Model configuration with initial state set by running the model prior to the start date.
+    """
+    wup = config.copy()
+    wup.start_date = config.start_date - dt.timedelta(days=duration)
+    wup.duration = duration
+    wup.end_date = None
+
+    e = Emulator(wup, path=path)
+    out = e.run()
+    return config.set_solution(out.files["solution"])
+
+
+def climatology_esp_hindcast(
+    config, path, warm_up_duration, years=None, hindcast_years=None
+):
+    time = config.gauges.ds.time
+
+    if hindcast_years is None:
+        # Create list of years
+        years = list(range(time[0].dt.year.values, time[-1].dt.year.values + 1))
+
+    q_sims = {}
+    for year in hindcast_years:
+        # Compute initial state for each year
+        config.start_date = config.start_date.replace(year=year)
+        conf = warm_up(config, duration=warm_up_duration, path=path / "wup" / year)
+
+        # Run climatology ESP
+        esp = climatology_esp(conf, years=years, path=path / "esp" / year)
+
+        # Format results for climpred
+        q_sim = esp.hydrograph.q_sim.expand_dims(init=config.start_date)
+        q_sim = q_sim.rename({"time": "lead"})
+        q_sim.lead.attrs["units"] = "days"
+        q_sim = q_sim.assign_coords(lead=list(range(1, len(q_sim.lead) + 1)))
+
+        q_sims[year] = q_sim
+
+    q_sims = xr.concat(q_sims.values(), dim="init")
+    q_sims = q_sims.assign_coords(init=pd.to_datetime(q_sims.init))
+    return q_sims
 
 
 # TODO: convert to new config
