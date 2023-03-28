@@ -41,7 +41,13 @@ class Emulator:
         # self._config.__config__.allow_mutation = False
 
     def write_rv(self, overwrite=False):
-        """Write the configuration files to disk."""
+        """Write the configuration files to disk.
+
+        Parameters
+        ----------
+        overwrite: bool
+            If True, overwrite existing files.
+        """
 
         self._rv = self._config.write_rv(
             workdir=self.workdir, modelname=self.modelname, overwrite=overwrite
@@ -52,7 +58,12 @@ class Emulator:
         return self._rv
 
     def run(self, overwrite=False) -> "OutputReader":
-        """Run the model. This will write RV files if not already done."""
+        """Run the model. This will write RV files if not already done.
+
+        Parameters
+        ----------
+        overwrite: bool
+            If True, overwrite existing files."""
         if not (self.workdir / f"{self.modelname}.rvi").exists():
             self.write_rv(overwrite=overwrite)
 
@@ -221,6 +232,8 @@ def run(
       Path to configuration files directory.
     outputdir: str, Path
       Path to model simulation output. If None, will write to configdir/output.
+    overwrite: bool
+      If True, overwrite existing files.
 
     Return
     ------

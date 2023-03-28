@@ -138,7 +138,7 @@ def to_climpred_hindcast_ensemble(hindcast, observations):
     return hindcast_obj
 
 
-def warm_up(config, duration: int, path: Path):
+def warm_up(config, duration: int, path: Path, overwrite=False):
     """Run the model on a time series preceding the start date.
 
     Parameters
@@ -149,6 +149,8 @@ def warm_up(config, duration: int, path: Path):
       Number of days the warm-up simulation should last *before* the start date.
     path: Path
       Work directory.
+    overwrite: bool
+      If True, overwrite existing files.
 
     Returns
     -------
@@ -160,13 +162,17 @@ def warm_up(config, duration: int, path: Path):
     wup.duration = duration
     wup.end_date = None
 
-    e = Emulator(wup, workdir=path)
-    out = e.run()
+    out = Emulator(wup, workdir=path).run(overwrite=overwrite)
     return config.set_solution(out.files["solution"])
 
 
 def hindcast_climatology_esp(
-    config, path, warm_up_duration, years=None, hindcast_years=None
+    config,
+    path,
+    warm_up_duration,
+    years=None,
+    hindcast_years=None,
+    overwrite: bool = False,
 ) -> xr.DataArray:
     """Hindcast of Ensemble Prediction Streamflow.
 
@@ -189,6 +195,8 @@ def hindcast_climatology_esp(
     hindcast_years:  List[int]
       Years for which the model will be initialized and the `climatology_esp` function run.
       Defaults to all years when forcing data is available.
+    overwrite: bool
+      If True, overwrite existing files.
 
     Returns
     -------
@@ -229,11 +237,16 @@ def hindcast_climatology_esp(
 
         # Run warm-up simulation to set initial state
         conf = warm_up(
-            config, duration=warm_up_duration, path=path / "wup" / f"Y{year}"
+            config,
+            duration=warm_up_duration,
+            path=path / "wup" / f"Y{year}",
+            overwrite=overwrite,
         )
 
         # Run climatology ESP
-        esp = climatology_esp(conf, years=years, path=path / "esp" / f"Y{year}")
+        esp = climatology_esp(
+            conf, years=years, path=path / "esp" / f"Y{year}", overwrite=overwrite
+        )
 
         # Format results for climpred
         q_sim = esp.hydrograph.q_sim.expand_dims(
