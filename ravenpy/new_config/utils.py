@@ -3,13 +3,13 @@ import xarray as xr
 from .conventions import CF_RAVEN, MonthlyAverages
 
 
-def nc_specs(fn, data_type, station_idx, alt_names=(), mon_ave=False):
+def nc_specs(fn, data_type: str, station_idx: int, alt_names=(), mon_ave=False):
     """Extract specifications from netCDF file.
 
     Parameters
     ----------
     fn : str, Path
-      NetCDF file path.
+      NetCDF file path or DAP link.
     data_type: str
       Raven data type.
     station_idx: int
@@ -37,7 +37,9 @@ def nc_specs(fn, data_type, station_idx, alt_names=(), mon_ave=False):
     # Convert to NumPy 0-based indexing
     i = station_idx - 1
 
-    if Path(fn).exists():
+    if isinstance(fn, str) and str(fn)[:4] == "http":
+        pass
+    elif Path(fn).exists():
         fn = Path(fn).resolve(strict=True)
     else:
         raise ValueError("NetCDF file not found.")

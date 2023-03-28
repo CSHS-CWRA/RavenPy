@@ -5,6 +5,7 @@ import pytest
 import xarray as xr
 
 from ravenpy import Emulator
+from ravenpy.new_config import commands as rc
 from ravenpy.new_config.rvs import Config
 
 # Expected NSE for emulator configuration from the `config_rv` test fixture.
@@ -74,3 +75,27 @@ def test_no_run_name(dummy_config, tmp_path):
 
     paths = conf.write_rv(tmp_path, overwrite=True)
     assert "raven.rvi" in str(paths["rvi"])
+
+
+@pytest.mark.slow
+@pytest.mark.online
+@pytest.mark.xfail(raises=OSError, reason="pavics.ouranos.ca is unreachable")
+def test_run_with_dap_link(minimal_emulator, tmp_path):
+    """Test Raven with DAP link instead of local netCDF file."""
+    # Link to THREDDS Data Server netCDF testdata
+    TDS = "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/birdhouse/testdata/raven"
+    fn = f"{TDS}/raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
+
+    alt_names = {
+        "RAINFALL": "rain",
+        "TEMP_MIN": "tmin",
+        "TEMP_MAX": "tmax",
+        "PET": "pet",
+        "HYDROGRAPH": "qobs",
+        "SNOWFALL": "snow",
+    }
+
+    conf = minimal_emulator
+    conf.gauge = rc.Gauge.from_nc(fn, alt_names=alt_names)
+
+    out = Emulator(conf, workdir=tmp_path).run()
