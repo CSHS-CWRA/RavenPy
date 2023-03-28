@@ -140,7 +140,7 @@ class HBVEC(Config):
         ]
     )
 
-    subbasin_properties: rc.SubBasinProperties = Field(
+    sub_basin_properties: rc.SubBasinProperties = Field(
         {
             "parameters": ["TIME_CONC", "TIME_TO_PEAK"],
             "records": [{"sb_id": 1, "values": (P.X11, P.X11 / 2)}],

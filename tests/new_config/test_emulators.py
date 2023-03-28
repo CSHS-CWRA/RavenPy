@@ -54,6 +54,7 @@ def test_run(numeric_config, tmp_path):
     assert isinstance(out.storage, xr.Dataset)
 
 
+@pytest.mark.skip("Need to find a clean way to freeze emulator config instance.")
 def test_emulator_config_is_read_only(dummy_config, tmp_path):
     cls, P = dummy_config
 

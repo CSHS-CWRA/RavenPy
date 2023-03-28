@@ -295,7 +295,7 @@ class HYPR(Config):
         },
         alias="VegetationParameterList",
     )
-    subbasin_properties: rc.SubBasinProperties = Field(
+    sub_basin_properties: rc.SubBasinProperties = Field(
         {"parameters": ["TIME_CONC"], "records": [{"sb_id": 1, "values": (P.X15,)}]},
         alias="SubBasinProperties",
     )

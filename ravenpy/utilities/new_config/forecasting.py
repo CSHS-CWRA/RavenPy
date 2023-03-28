@@ -20,7 +20,9 @@ from ravenpy.new_config.rvs import Config
 LOGGER = logging.getLogger("PYWPS")
 
 
-def climatology_esp(config, path, years: List[int] = None) -> EnsembleReader:
+def climatology_esp(
+    config, path, years: List[int] = None, overwrite=False
+) -> EnsembleReader:
     """
     Ensemble Streamflow Prediction based on historical variability.
 
@@ -81,7 +83,9 @@ def climatology_esp(config, path, years: List[int] = None) -> EnsembleReader:
         if len(time.sel(time=slice(str(s), str(end.replace(year=year))))) < duration:
             continue
 
-        out = Emulator(config=config, workdir=path / f"Y{year}").run()
+        out = Emulator(config=config, workdir=path / f"Y{year}").run(
+            overwrite=overwrite
+        )
 
         # Format output so that `time` is set to the forecast time, not the forcing time.
         if "hydrograph" in out.files:
@@ -277,7 +281,7 @@ def _shift_esp_time(nc, year, dim="member"):
 
     # Write to disk
     fn = nc.with_stem(nc.stem + "_shifted")
-    out.to_netcdf(fn)
+    out.to_netcdf(fn, mode="w")
     return fn
 
 

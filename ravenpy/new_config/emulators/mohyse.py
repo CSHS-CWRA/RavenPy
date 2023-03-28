@@ -146,7 +146,7 @@ class Mohyse(Config):
             p.Baseflow(algo="BASE_LINEAR", source="SOIL[1]", to="SURFACE_WATER"),
         ]
     )
-    subbasin_properties: rc.SubBasinProperties = Field(
+    sub_basin_properties: rc.SubBasinProperties = Field(
         {
             "parameters": ["GAMMA_SCALE", "GAMMA_SHAPE"],
             "records": [

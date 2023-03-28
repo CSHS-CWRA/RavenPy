@@ -198,7 +198,7 @@ class GlacierRelease(Process):
 class Flush(Process):
     """"""
 
-    algo: Literal["RAVEN_DEFAULT"]
+    algo: Literal["RAVEN_DEFAULT"] = "RAVEN_DEFAULT"
     p: float = None
 
 

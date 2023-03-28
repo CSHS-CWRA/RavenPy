@@ -173,10 +173,12 @@ class RVC(RV):
 
 
 class RVH(RV):
-    subbasins: rc.SubBasins = Field([rc.SubBasin()], alias="SubBasins")
-    subbasin_group: Sequence[rc.SubBasinGroup] = ()
-    subbasin_properties: rc.SubBasinProperties = Field(None, alias="SubBasinProperties")
-    subbasin_property_multiplier: rc.SBGroupPropertyMultiplierCommand = None
+    sub_basins: rc.SubBasins = Field([rc.SubBasin()], alias="SubBasins")
+    sub_basin_group: Sequence[rc.SubBasinGroup] = ()
+    sub_basin_properties: rc.SubBasinProperties = Field(
+        None, alias="SubBasinProperties"
+    )
+    sub_basin_property_multiplier: rc.SBGroupPropertyMultiplierCommand = None
     hrus: rc.HRUs = Field(None, alias="HRUs")
     hru_group: Sequence[rc.HRUGroup] = Field(None, alias="HRUGroup")
     reservoirs: Sequence[rc.Reservoir] = ()
@@ -214,10 +216,12 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
     def assign_symbolic(cls, values):
         """If params is numerical, convert symbolic expressions from other fields."""
 
-        p = asdict(values["params"])
+        if values["params"] is not None:
+            p = asdict(values["params"])
 
-        if not is_symbolic(p):
-            return parse_symbolic(values, **p)
+            if not is_symbolic(p):
+                return parse_symbolic(values, **p)
+
         return values
 
     @validator("global_parameter", pre=True)
@@ -265,7 +269,7 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
     def _rv(self, rv: str):
         """Return RV configuration."""
 
-        if is_symbolic(self.params):
+        if self.params and is_symbolic(self.params):
             raise ValueError(
                 "Cannot write RV files if `params` has symbolic variables. Use `set_params` method to set numerical "
                 "values for `params`."
