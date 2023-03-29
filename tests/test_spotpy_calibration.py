@@ -3,14 +3,11 @@ import time
 
 import spotpy
 
-
-from ravenpy.utilities.new_config.calibration import SpotSetup
-
+from ravenpy.new_config import commands as rc
 from ravenpy.new_config.emulators.gr4jcn import GR4JCN
 from ravenpy.new_config.emulators.hmets import HMETS
 from ravenpy.new_config.emulators.mohyse import Mohyse
-
-from ravenpy.new_config import commands as rc
+from ravenpy.utilities.new_config.calibration import SpotSetup
 
 salmon_river = "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
 
@@ -33,8 +30,10 @@ class TestGR4JCNSpotpy:
         )
 
         model = GR4JCN(
-            #params=[0.529, -3.396, 407.29, 1.072, 16.9, 0.947],  # Pas d'erreur?
-            ObservationData=rc.ObservationData.from_nc(ts, alt_names="qobs"),  # Juste necessaire pour la calibration
+            # params=[0.529, -3.396, 407.29, 1.072, 16.9, 0.947],  # Pas d'erreur?
+            ObservationData=rc.ObservationData.from_nc(
+                ts, alt_names="qobs"
+            ),  # Juste necessaire pour la calibration
             Gauge=rc.Gauge.from_nc(
                 ts,
                 alt_names=alt_names,
