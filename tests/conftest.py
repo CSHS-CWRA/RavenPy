@@ -80,6 +80,7 @@ def populate_testing_data(
             "nrcan/NRCAN_2006-2007_subset.nc",
             "polygons/mars.geojson",
             "polygons/mars.zip",
+            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_2d.nc",
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_3d.nc",
             "raven-routing-sample/OTT_sub.zip",
@@ -92,6 +93,7 @@ def populate_testing_data(
             "raven-routing-sample/finalcat_hru_info.zip",
             "raven-routing-sample/lievre_hrus_v21.zip",
             "watershed_vector/LSJ_LL.zip",
+            "basinmaker/drainage_region_0175_v2-1/finalcat_info_v2-1.zip",
         ]
     )
 

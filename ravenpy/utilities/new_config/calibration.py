@@ -27,8 +27,14 @@ class SpotSetup:
         config: Config
           Emulator Config instance with symbolic expressions.
         """
+        if not config.is_symbolic:
+            raise ValueError(
+                "config should be a symbolic configuration, where params are not set to their numerical "
+                "values."
+            )
+
         self.config = config
-        self.path = path
+        self.path = Path(path)
         self.diagnostics = None
 
         if config.suppress_output is not False:

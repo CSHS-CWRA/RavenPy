@@ -1,19 +1,22 @@
 from ravenpy.extractors.new_config.routing_product import (
+    BasinMakerExtractor,
     RoutingProductGridWeightExtractor,
-    RoutingProductShapefileExtractor,
+    open_shapefile,
 )
 from ravenpy.new_config.emulators import BasicRoute
 
 
-def test_routing_product_shapefile_extractor(get_local_testdata, tmp_path):
+def test_basinmaker_extractor(get_local_testdata, tmp_path):
     routing_product_shp_path = get_local_testdata(
-        "raven-routing-sample/finalcat_hru_info.zip"
+        "basinmaker/drainage_region_0175_v2-1/finalcat_info_v2-1.zip"
     )
-
-    rvh_extractor = RoutingProductShapefileExtractor(
+    df = open_shapefile(
         routing_product_shp_path,
+    )
+    rvh_extractor = BasinMakerExtractor(
+        df=df,
         hru_aspect_convention="ArcGIS",
-        routing_product_version="1.0",
+        routing_product_version="2.1",
     )
     rvh_config = rvh_extractor.extract()
     rvh_config.pop("channel_profiles")

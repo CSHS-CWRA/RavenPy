@@ -6,7 +6,9 @@ import collections
 import json
 import logging
 from pathlib import Path
-from typing import List, Union
+from typing import List, Optional, Union
+
+import pandas as pd
 
 from . import gis_import_error_message
 
@@ -242,3 +244,91 @@ def generic_vector_reproject(
                             f"{err}: Unable to reproject feature {feature}"
                         )
                         raise
+
+
+def determine_upstream_ids(
+    fid: str,
+    df: pd.DataFrame,
+    basin_field: str = None,
+    downstream_field: str = None,
+    basin_family: Optional[str] = None,
+) -> pd.DataFrame:
+    """Return a list of upstream features by evaluating the downstream networks.
+
+    Parameters
+    ----------
+    fid : str
+        feature ID of the downstream feature of interest.
+    df : pd.DataFrame
+        Dataframe comprising the watershed attributes.
+    basin_field : str
+        The field used to determine the id of the basin according to hydro project.
+    downstream_field : str
+        The field identifying the downstream sub-basin for the hydro project.
+    basin_family : str, optional
+        Regional watershed code (For HydroBASINS dataset).
+
+    Returns
+    -------
+    pd.DataFrame
+        Basins ids including `fid` and its upstream contributors.
+    """
+
+    def upstream_ids(bdf, bid):
+        return bdf[bdf[downstream_field] == bid][basin_field]
+
+    # Note: Hydro Routing `SubId` is a float for some reason and Python float != GeoServer double. Cast them to int.
+    if isinstance(fid, float):
+        fid = int(fid)
+        df[basin_field] = df[basin_field].astype(int)
+        df[downstream_field] = df[downstream_field].astype(int)
+
+    # Locate the downstream feature
+    ds = df.set_index(basin_field).loc[fid]
+    if basin_family is not None:
+        # Do a first selection on the main basin ID of the downstream feature.
+        sub = df[df[basin_family] == ds[basin_family]]
+    else:
+        sub = None
+
+    # Find upstream basins
+    up = [fid]
+    for b in up:
+        tmp = upstream_ids(sub if sub is not None else df, b)
+        if len(tmp):
+            up.extend(tmp)
+
+    return (
+        sub[sub[basin_field].isin(up)]
+        if sub is not None
+        else df[df[basin_field].isin(up)]
+    )
+
+
+def find_geometry_from_coord(lon, lat, df):
+    """Return the geometry containing the given coordinates.
+
+    lon : float
+      Longitude.
+    lat : float
+      Latitude
+    df : GeoDataFrame
+      Data.
+
+    Returns
+    -------
+    GeoDataFrame
+      Record whose geometry contains the point.
+    """
+    from shapely.geometry import Point
+
+    p = Point(lon, lat)
+
+    c = df.contains(p)
+    n = c.sum()
+    if n == 0:
+        raise ValueError(f"Point {p} not in any geometry.")
+    elif n > 1:
+        raise ValueError(f"Point {p} found in multiple geometries.")
+
+    return df[c]

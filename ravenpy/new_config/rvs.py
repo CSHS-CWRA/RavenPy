@@ -286,6 +286,15 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
         return rv.to_rv()
 
     @property
+    def is_symbolic(self):
+        """Return True if configuration contains symbolic expressions."""
+        if self.params is not None:
+            p = asdict(self.params)
+            return is_symbolic(p)
+
+        return False
+
+    @property
     def rvi(self):
         return self._rv("rvi")
 

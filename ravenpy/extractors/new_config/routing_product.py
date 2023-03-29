@@ -18,8 +18,20 @@ import netCDF4 as nc4
 import numpy as np
 
 
-class RoutingProductShapefileExtractor:
+def open_shapefile(path):
+    """Return GeoDataFrame from shapefile path."""
+    if isinstance(path, (Path, str)):
+        if Path(path).suffix == ".zip":
+            path = f"zip://{path}"
+        df = geopandas.read_file(path)
+    elif isinstance(path, geopandas.GeoDataFrame):
+        df = path
+    else:
+        raise NotImplementedError
+    return df
 
+
+class BasinMakerExtractor:
     """
     This is a class to encapsulate the logic of converting the Routing
     Product into the required data structures to generate the RVH file
@@ -33,21 +45,15 @@ class RoutingProductShapefileExtractor:
     USE_MANNING_COEFF = False
     MANNING_DEFAULT = 0.035
     HRU_ASPECT_CONVENTION = "GRASS"  # GRASS | ArcGIS
-    ROUTING_PRODUCT_VERSION = "1.0"  # 1.0 | 2.1
+    ROUTING_PRODUCT_VERSION = "2.1"  # 1.0 | 2.1
 
     def __init__(
         self,
-        shapefile_path,
+        df,
         hru_aspect_convention=HRU_ASPECT_CONVENTION,
         routing_product_version=ROUTING_PRODUCT_VERSION,
     ):
-        if isinstance(shapefile_path, (Path, str)):
-            if Path(shapefile_path).suffix == ".zip":
-                shapefile_path = f"zip://{shapefile_path}"
-            self._df = geopandas.read_file(shapefile_path)
-        elif isinstance(shapefile_path, geopandas.GeoDataFrame):
-            self._df = shapefile_path
-
+        self._df = df
         self.hru_aspect_convention = hru_aspect_convention
         self.routing_product_version = routing_product_version
 
@@ -93,18 +99,10 @@ class RoutingProductShapefileExtractor:
 
             subbasin_id = int(row["SubId"])
 
-            is_lake = False
-
-            lake_field = (
-                "IsLake" if self.routing_product_version == "1.0" else "Lake_Cat"
-            )
-
-            if row[lake_field] > 0 and row["HRU_IsLake"] > 0:
+            is_lake = row["Lake_Cat"] == 1
+            if is_lake:
                 lake_sb_ids.append(subbasin_id)
                 reservoirs.append(self._extract_reservoir(row))
-                is_lake = True
-            elif row[lake_field] > 0:
-                continue  # not sure about this condition!
             else:
                 land_sb_ids.append(subbasin_id)
 
@@ -148,7 +146,7 @@ class RoutingProductShapefileExtractor:
             "IsObs" if self.routing_product_version == "1.0" else "Has_Gauge"
         )
         gauged = row[has_gauge_field] > 0 or (
-            is_lake and RoutingProductShapefileExtractor.USE_LAKE_AS_GAUGE
+            is_lake and BasinMakerExtractor.USE_LAKE_AS_GAUGE
         )
         gauge_id = row["Obs_NM"] if gauged else ""
         return dict(
@@ -166,17 +164,16 @@ class RoutingProductShapefileExtractor:
 
         return dict(
             subbasin_id=int(row["SubId"]),
-            hru_id=int(row["HRU_ID"]),
             name=f"Lake_{lake_id}",
-            weir_coefficient=RoutingProductShapefileExtractor.WEIR_COEFFICIENT,
+            weir_coefficient=BasinMakerExtractor.WEIR_COEFFICIENT,
             crest_width=row["BkfWidth"],
             max_depth=row["LakeDepth"],
-            lake_area=row["HRU_Area"],
+            lake_area=row["LakeArea"],
         )
 
     def _extract_channel_profile(self, row) -> dict:
         subbasin_id = int(row["SubId"])
-        slope = max(row["RivSlope"], RoutingProductShapefileExtractor.MAX_RIVER_SLOPE)
+        slope = max(row["RivSlope"], BasinMakerExtractor.MAX_RIVER_SLOPE)
 
         # SWAT: top width of channel when filled with water; bankfull width W_bnkfull
         channel_width = max(row["BkfWidth"], 1)
@@ -223,10 +220,10 @@ class RoutingProductShapefileExtractor:
             (2 * sidwdfp + 4 * channel_width + 2 * sidwd + botwd, zfld),
         )
 
-        if RoutingProductShapefileExtractor.USE_MANNING_COEFF:
+        if BasinMakerExtractor.USE_MANNING_COEFF:
             mann = channeln
         else:
-            mann = RoutingProductShapefileExtractor.MANNING_DEFAULT
+            mann = BasinMakerExtractor.MANNING_DEFAULT
 
         # roughness zones of channel and floodplain
         roughness_zones = (
@@ -243,6 +240,31 @@ class RoutingProductShapefileExtractor:
         )
 
     def _extract_hru(self, row) -> dict:
+        """Here we assume one HRU per sub-basin."""
+        aspect = row["BasAspect"]
+
+        if self.hru_aspect_convention == "GRASS":
+            aspect -= 360
+            if aspect < 0:
+                aspect += 360
+        elif self.hru_aspect_convention == "ArcGIS":
+            aspect = 360 - aspect
+        else:
+            assert False
+
+        return dict(
+            hru_id=int(row["SubId"]),
+            area=row["BasArea"] / 1e6,
+            elevation=row["MeanElev"],
+            latitude=row["centroid_y"],
+            longitude=row["centroid_x"],
+            subbasin_id=int(row["SubId"]),
+            slope=row["BasSlope"],
+            aspect=aspect,
+            hru_type="lake" if row["Lake_Cat"] == 1 else "land",
+        )
+
+    def _extract_old_hru(self, row) -> dict:
         aspect = row["HRU_A_mean"]
 
         if self.hru_aspect_convention == "GRASS":
@@ -761,3 +783,54 @@ class RoutingProductGridWeightExtractor:
             and min_lon_cell <= max_lon_shape
             and max_lon_cell >= min_lon_shape
         )
+
+
+def upstream_from_id(fid: int, df: "GeoDataFrame") -> "GeoDataFrame":
+    """Return upstream sub-basins by evaluating the downstream networks.
+
+    Parameters
+    ----------
+    fid : int
+        feature ID of the downstream feature of interest.
+    df : pd.DataFrame
+        Dataframe comprising the watershed attributes.
+
+    Returns
+    -------
+    GeoDataFrame
+        Basins ids including `fid` and its upstream contributors.
+    """
+    from ravenpy.utilities.geo import determine_upstream_ids
+
+    return determine_upstream_ids(
+        fid, df, basin_field="SubId", downstream_field="DowSubId"
+    )
+
+
+def upstream_from_coords(lon: float, lat: float, df: "GeoDataFrame") -> "GeoDataFrame":
+    """Return the sub-basins located upstream from outlet.
+
+    Parameters
+    ----------
+    lon : float
+      Longitude of outlet
+    lat : float
+      Latitude of outlet
+    df : GeoDataFrame
+      Routing product.
+
+    Returns
+    -------
+    GeoDataFrame
+      Sub-basins located upstream from outlet.
+    """
+    from ravenpy.utilities.geo import find_geometry_from_coord
+
+    # Find the outlet sub-basin ID
+    out_sb = find_geometry_from_coord(lon, lat, df)
+    out_sb_id = int(out_sb["SubId"])
+
+    # Find upstream sub-basins
+    up_ids = upstream_from_id(out_sb_id, df)
+
+    return up_ids
