@@ -28,7 +28,7 @@ class SpotSetup:
           Emulator Config instance with symbolic expressions.
         """
         self.config = config
-        self.path = path
+        self.path = Path(path)
         self.diagnostics = None
 
         if config.suppress_output is not False:
