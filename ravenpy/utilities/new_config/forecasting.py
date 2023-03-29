@@ -72,14 +72,18 @@ def climatology_esp(
 
     # Define start date
     start = config.start_date
+
     if start.month == 2 and start.day == 29:
         start = start.replace(day=28)
+
+    # Get the start data that is immutable
+    startdate_fixed = start
 
     # Run the model for each year
     ensemble = []
     for year in years:
         # Prepare model instance
-        config.start_date = s = start.replace(year=year)
+        config.start_date = s = startdate_fixed.replace(year=year)
         if len(time.sel(time=slice(str(s), str(end.replace(year=year))))) < duration:
             continue
 
@@ -90,10 +94,12 @@ def climatology_esp(
         # Format output so that `time` is set to the forecast time, not the forcing time.
         if "hydrograph" in out.files:
             out.files["hydrograph"] = _shift_esp_time(
-                out.files["hydrograph"], start.year
+                out.files["hydrograph"], startdate_fixed.year
             )
         if "storage" in out.files:
-            out.files["storage"] = _shift_esp_time(out.files["storage"], start.year)
+            out.files["storage"] = _shift_esp_time(
+                out.files["storage"], startdate_fixed.year
+            )
         ensemble.append(out)
 
     return EnsembleReader(config.run_name, runs=ensemble)
@@ -119,8 +125,8 @@ def to_climpred_hindcast_ensemble(hindcast, observations):
     """
 
     # Make sure the variable names are the same.
-    var_names = set(hindcast.data_vars().keys()).intersection(
-        observations.data_vars().keys()
+    var_names = set(hindcast.data_vars.keys()).intersection(
+        observations.data_vars.keys()
     )
     if len(var_names) == 0:
         raise ValueError(
@@ -173,7 +179,7 @@ def hindcast_climatology_esp(
     years=None,
     hindcast_years=None,
     overwrite: bool = False,
-) -> xr.DataArray:
+) -> xr.Dataset:
     """Hindcast of Ensemble Prediction Streamflow.
 
     This function runs an emulator initialized for each year in `hindcast_years`,
@@ -264,6 +270,8 @@ def hindcast_climatology_esp(
     q_sims = xr.concat(q_sims.values(), dim="init")
     q_sims.lead.attrs["units"] = "days"
     # q_sims = q_sims.assign_coords(init=q_sims.init)
+    q_sims = q_sims.to_dataset()
+
     return q_sims
 
 
