@@ -500,10 +500,6 @@ def compute_forecast_flood_risk(forecast, flood_level, path):
                   xarray Dataset including streamflow forecasts (ensemble or deterministic)
                   to evaluate the flood risk based on the flood level (threshold).
 
-    #          forecast_variable:
-    #              Sting containing the name of the variable within the fcst netcdf file
-    #              to access the data using a variable naming scheme.
-
               flood_level:
                   Flood level threshold. Will be used to determine if forecasts exceed
                   this specified flood threshold. Should be in the same units as the forecasted streamflow.
