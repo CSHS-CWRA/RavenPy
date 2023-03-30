@@ -45,7 +45,9 @@ def param(model):
     )
 
 
-def infer_scale_and_offset(da: xr.DataArray, data_type: str) -> (float, float):
+def infer_scale_and_offset(
+    da: xr.DataArray, data_type: str, cumulative=False
+) -> (float, float):
     """Return scale and offset parameters from data.
 
     Infer scale and offset parameters describing the linear transformation from the units in file to Raven
@@ -62,6 +64,10 @@ def infer_scale_and_offset(da: xr.DataArray, data_type: str) -> (float, float):
     -------
     float, float
       Scale and offset parameters.
+
+    Notes
+    -----
+    Does not work with accumulated variables.
     """
     import pint
     from xclim.core.units import FREQ_UNITS, parse_offset, units, units2pint

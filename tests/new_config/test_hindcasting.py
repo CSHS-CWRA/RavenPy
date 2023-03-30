@@ -32,15 +32,16 @@ class TestHindcasting:
             "SNOWFALL": "snow",
         }
         hru = salmon_hru["land"]
-        extra = {
+        data_kwds = {
             "ALL": {"Latitude": hru["latitude"], "Longitude": hru["longitude"]},
             "PRECIP": {
                 "Deaccumulate": True,
                 "TimeShift": -0.25,
+                "LinearTransform": {"scale": 1000},
             },
         }
 
-        init_conf = GR4JCN(
+        pre_conf = GR4JCN(
             StartDate=dt.datetime(2018, 6, 10),
             EndDate=dt.datetime(2018, 6, 14),
             HRUs=[
@@ -49,28 +50,41 @@ class TestHindcasting:
             params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
             GlobalParameter={"AVG_ANNUAL_RUNOFF": 208.480},
             Gauge=[
-                rc.Gauge.from_nc(ts20, data_type=["PRECIP", "TEMP_AVE"], extra=extra),
+                rc.Gauge.from_nc(
+                    ts20, data_type=["PRECIP", "TEMP_AVE"], data_kwds=data_kwds
+                ),
             ],
         )
 
-        conf = warm_up(init_conf, duration=8, path=tmp_path / "wup")
+        init_conf = warm_up(pre_conf, duration=8, path=tmp_path / "wup")
 
         # Create gauges for each member and run the model
         nm = 3
         ens = []
         for i in range(nm):
             g = rc.Gauge.from_nc(
-                ts20, station_idx=i + 1, data_type=["PRECIP", "TEMP_AVE"], extra=extra
+                ts20,
+                station_idx=i + 1,
+                data_type=["PRECIP", "TEMP_AVE"],
+                data_kwds=data_kwds,
+            )
+            assert g.data[0].read_from_netcdf.station_idx == i + 1
+            assert g.data[0].read_from_netcdf.linear_transform.scale == 1000
+
+            mem_conf = init_conf.copy(
+                update=dict(
+                    gauge=[g],
+                    custom_output={
+                        "time_per": "DAILY",
+                        "stat": "AVERAGE",
+                        "variable": "PRECIP",
+                        "space_agg": "BY_BASIN",
+                    },
+                ),
             )
 
             e = Emulator(
-                config=conf.copy(
-                    update=dict(
-                        Gauge=[
-                            g,
-                        ]
-                    )
-                ),
+                config=mem_conf,
                 workdir=tmp_path / f"m{i:02}",
             )
             ens.append(e.run())

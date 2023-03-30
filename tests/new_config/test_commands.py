@@ -348,7 +348,7 @@ def test_gauge(get_local_testdata):
     g = Gauge.from_nc(
         f,
         alt_names={"RAINFALL": "rain", "SNOWFALL": "snow"},
-        extra={"ALL": {"Deaccumulate": True}},
+        data_kwds={"ALL": {"Deaccumulate": True}},
     )
 
     assert "Data" in g.to_rv()

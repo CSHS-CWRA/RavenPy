@@ -512,8 +512,9 @@ class ReadFromNetCDF(FlatCommand):
     def from_nc(cls, fn, data_type, station_idx=1, alt_names=(), **kwds):
         """Instantiate class from netCDF dataset."""
         specs = nc_specs(fn, data_type, station_idx, alt_names)
+        specs.update(kwds)
         attrs = filter_for(cls, specs)
-        return cls(station_idx=station_idx, **attrs, **kwds)
+        return cls(**attrs)
 
     @property
     def da(self) -> xr.DataArray:
@@ -536,7 +537,7 @@ class GriddedForcing(ReadFromNetCDF):
     grid_weights: Union[GridWeights, RedirectToFile] = Field(
         GridWeights(), alias="GridWeights"
     )
-    # StationIdx not relevant to GriddedForcing
+    # StationIdx is not relevant to GriddedForcing
     station_idx: int = None
 
     _template = """
@@ -566,9 +567,11 @@ class StationForcing(GriddedForcing):
         return v
 
     @classmethod
-    def from_nc(cls, fn, data_type, station_idx=None, alt_names=(), **kwds):
+    def from_nc(cls, fn, data_type, alt_names=(), **kwds):
         """Instantiate class from netCDF dataset."""
-        specs = nc_specs(fn, data_type, station_idx, alt_names)
+        specs = nc_specs(fn, data_type, station_idx=None, alt_names=alt_names)
+        specs.update(kwds)
+
         attrs = filter_for(cls, specs)
 
         # Build default gridweights
@@ -582,7 +585,7 @@ class StationForcing(GriddedForcing):
             )
             attrs["grid_weights"] = gw
 
-        return cls(**attrs, **kwds)
+        return cls(**attrs)
 
 
 class Data(FlatCommand):
@@ -599,13 +602,16 @@ class Data(FlatCommand):
     _nested: bool = False
 
     @classmethod
-    def from_nc(cls, fn, data_type, station_idx=1, alt_names=()):
+    def from_nc(cls, fn, data_type, station_idx=1, alt_names=(), **kwds):
         specs = nc_specs(fn, data_type, station_idx, alt_names)
-        return cls(
-            data_type=data_type,
-            units=specs.pop("units", None),
-            read_from_netcdf=filter_for(ReadFromNetCDF, specs),
-        )
+        specs.update(kwds)
+        attrs = filter_for(cls, specs)
+        return cls(**attrs)
+        # return cls(
+        #     data_type=data_type,
+        #     units=specs.pop("units", None),
+        #     read_from_netcdf=filter_for(ReadFromNetCDF, specs),
+        # )
 
 
 class Gauge(FlatCommand):
@@ -650,7 +656,8 @@ class Gauge(FlatCommand):
         station_idx: int = 1,
         alt_names: dict = {},
         mon_ave: bool = False,
-        extra: dict = {},
+        data_kwds: dict = {},
+        **kwds,
     ) -> "Gauge":
         """Return Gauge instance.
 
@@ -666,9 +673,11 @@ class Gauge(FlatCommand):
           Alternative variable names for data type if not the CF standard default.
         mon_ave: bool
           If True, compute the monthly average.
-        extra: Dict[options.Forcings, Dict[str, str]]]
+        data_kwds: Dict[options.Forcings, Dict[str, str]]]
           Additional `Gauge` parameters keyed by forcing type and station id.
           Use keyword "ALL" to pass parameters to all variables.
+        **kwds
+          Arguments for Gauge.
 
         Returns
         -------
@@ -677,21 +686,20 @@ class Gauge(FlatCommand):
         """
         from typing import get_args
 
-        out = []
         idx = station_idx
         data = []
-        gattrs = {}
+        attrs = {}
+
         for dtyp in data_type or get_args(options.Forcings):
             try:
                 specs = nc_specs(
                     fn, dtyp, idx, alt_names.get(dtyp, ()), mon_ave=mon_ave
                 )
                 # Add extra keywords
-                ex_f = {**extra.get(dtyp, {}), **extra.get("ALL", {})}
-                specs.update(**ex_f)
+                ex_f = {**data_kwds.get(dtyp, {}), **data_kwds.get("ALL", {})}
 
                 # Filter data attributes
-                data.append(filter_for(Data, specs))
+                data.append(filter_for(Data, specs, **ex_f))
             except ValueError as err:
                 if data_type is None:
                     # There is no explicit instruction to find something in particular.
@@ -700,14 +708,16 @@ class Gauge(FlatCommand):
                     raise err
 
             else:
-                gattrs.update(filter_for(cls, specs))
+                attrs.update(filter_for(cls, specs))
 
         if len(data) == 0:
             raise ValueError(f"No variable for {data_type} found in file.")
 
-        gattrs["data"] = data
-        name = gattrs.get("name", f"Gauge_{idx}")
-        return cls(name=name, **gattrs)
+        # Default Gauge name
+        attrs["name"] = attrs.get("name", f"Gauge_{idx}")
+
+        attrs = filter_for(cls, attrs, **kwds, data=data)
+        return cls(**attrs)
 
     @property
     def ds(self) -> xr.Dataset:
@@ -719,7 +729,7 @@ class Gauge(FlatCommand):
 
 
 class ObservationData(Data):
-    uid: int = 1  # Basin ID or HRU ID
+    uid: str = "1"  # Basin ID or HRU ID
     data_type: Literal["HYDROGRAPH"] = "HYDROGRAPH"
 
     _template = """
@@ -729,24 +739,10 @@ class ObservationData(Data):
         """
 
     @classmethod
-    def from_nc(cls, fn, station_idx=(1,), uid=(1,), alt_names=()):
-        if len(station_idx) != len(uid):
-            raise ValueError("`station_idx` and `uid` should have the same length.")
-
-        if type(station_idx) == int:
-            station_idx = station_idx
-        out = []
-        for idx, i in zip(station_idx, uid):
-            specs = nc_specs(fn, "HYDROGRAPH", idx, alt_names)
-            out.append(
-                cls(
-                    data_type="HYDROGRAPH",
-                    uid=i,
-                    units=specs.pop("units", None),
-                    read_from_netcdf=filter_for(ReadFromNetCDF, specs),
-                )
-            )
-        return out
+    def from_nc(cls, fn, station_idx: int = 1, alt_names=(), **kwds):
+        specs = nc_specs(fn, "HYDROGRAPH", station_idx, alt_names)
+        attrs = filter_for(cls, specs, **kwds, data_type="HYDROGRAPH")
+        return cls(**attrs)
 
 
 class HRUState(Record):

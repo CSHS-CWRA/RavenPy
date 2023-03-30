@@ -3,7 +3,14 @@ import xarray as xr
 from .conventions import CF_RAVEN, MonthlyAverages
 
 
-def nc_specs(fn, data_type: str, station_idx: int, alt_names=(), mon_ave=False):
+def nc_specs(
+    fn,
+    data_type: str,
+    station_idx: int,
+    alt_names=(),
+    mon_ave=False,
+    linear_transform=None,
+):
     """Extract specifications from netCDF file.
 
     Parameters
@@ -12,7 +19,7 @@ def nc_specs(fn, data_type: str, station_idx: int, alt_names=(), mon_ave=False):
       NetCDF file path or DAP link.
     data_type: str
       Raven data type.
-    station_idx: int
+    station_idx: int, None
       Index along station dimension. Starts at 1.
     alt_names: str, list
       Alternative variable names for data type if not the CF standard default.
@@ -35,7 +42,8 @@ def nc_specs(fn, data_type: str, station_idx: int, alt_names=(), mon_ave=False):
     from ravenpy.utilities.coords import infer_scale_and_offset
 
     # Convert to NumPy 0-based indexing
-    i = station_idx - 1
+    if station_idx is not None:
+        i = station_idx - 1
 
     if isinstance(fn, str) and str(fn)[:4] == "http":
         pass
@@ -47,7 +55,12 @@ def nc_specs(fn, data_type: str, station_idx: int, alt_names=(), mon_ave=False):
     if isinstance(alt_names, str):
         alt_names = (alt_names,)
 
-    attrs = {"file_name_nc": fn, "data_type": data_type, "forcing_type": data_type}
+    attrs = {
+        "file_name_nc": fn,
+        "data_type": data_type,
+        "forcing_type": data_type,
+        "station_idx": station_idx,
+    }
 
     with xr.open_dataset(fn) as ds:
         var_names = (CF_RAVEN.get(data_type),) + alt_names
@@ -71,38 +84,46 @@ def nc_specs(fn, data_type: str, station_idx: int, alt_names=(), mon_ave=False):
         else:
             raise ValueError(f"No variable found for {data_type}.\n {ds.data_vars}")
 
-        try:
-            attrs["latitude_var_name_nc"] = ds.cf["latitude"].name
-            attrs["longitude_var_name_nc"] = ds.cf["longitude"].name
+        if station_idx is not None:
+            try:
+                attrs["latitude_var_name_nc"] = ds.cf["latitude"].name
+                attrs["longitude_var_name_nc"] = ds.cf["longitude"].name
 
-            attrs["latitude"] = ds.cf["latitude"][i]
-            attrs["longitude"] = ds.cf["longitude"][i]
+                attrs["latitude"] = ds.cf["latitude"][i]
+                attrs["longitude"] = ds.cf["longitude"][i]
 
-        except KeyError:
-            pass
+            except KeyError:
+                pass
 
-        try:
-            nc_elev = ds.cf["vertical"].name
-            attrs["elevation"] = ds.cf["vertical"][i]
-        except KeyError:
-            nc_elev = "elevation" if "elevation" in ds else None
-        finally:
-            if nc_elev is not None:
-                attrs["elevation_var_name_nc"] = nc_elev
-                attrs["elevation"] = ds["elevation"][i]
+            try:
+                nc_elev = ds.cf["vertical"].name
+                attrs["elevation"] = ds.cf["vertical"][i]
+            except KeyError:
+                nc_elev = "elevation" if "elevation" in ds else None
+            finally:
+                if nc_elev is not None:
+                    attrs["elevation_var_name_nc"] = nc_elev
+                    attrs["elevation"] = ds["elevation"][i]
 
-        if "station_id" in ds:
-            if ds["station_id"].shape and len(ds["station_id"]) > i:
-                attrs["name"] = ds["station_id"].values[i]
+            if "station_id" in ds:
+                if ds["station_id"].shape and len(ds["station_id"]) > i:
+                    attrs["name"] = ds["station_id"].values[i]
 
         return attrs
 
 
-def filter_for(kls, attrs):
-    """Return attributes that are fields of dataclass."""
+def filter_for(kls, attrs, **kwds):
+    """Return attributes that are fields of dataclass.
+
+    Note that if attrs includes an attribute name and its Raven alias, e.g.
+    `linear_transform` and `LinearTransform`, the latter has priority.
+
+    """
     from pydantic.main import ModelMetaclass
 
     from .commands import Command
+
+    attrs.update(kwds)
 
     if hasattr(kls, "__dataclass_fields__"):
         return {
@@ -111,10 +132,10 @@ def filter_for(kls, attrs):
     else:
         out = {}
         for key, field in kls.__fields__.items():
-            if key in attrs:
-                out[key] = attrs[key]
-            elif field.alias in attrs:
+            if field.alias in attrs:
                 out[field.alias] = attrs[field.alias]
+            elif key in attrs:
+                out[key] = attrs[key]
             elif type(field.type_) == ModelMetaclass and issubclass(
                 field.type_, Command
             ):

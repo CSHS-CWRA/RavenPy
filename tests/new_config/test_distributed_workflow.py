@@ -74,17 +74,34 @@ def test_simple_workflow(get_local_testdata, minimal_emulator, tmp_path):
         )
         for (dtyp, alias) in forcing.items()
     ]
+    # Weights for some HRUs do not sum to one.
 
     # Meteo forcing per station (virtual stations, since this is ERA5 data)
-    meteo_station = get_local_testdata("matapedia/Meteo_stations_Matapedia_ERA5.nc")
+    meteo_station = get_local_testdata("matapedia/meteo_stations_Matapedia_ERA5.nc")
+    sf = [
+        rc.StationForcing.from_nc(meteo_station, dtyp, alt_names=(alias,))
+        for (dtyp, alias) in forcing.items()
+    ]
+    # TODO: Complete with weights calculations
+
+    # Virtual Gauges
+    gauges = [
+        rc.Gauge.from_nc(
+            meteo_station,
+            data_type=forcing.keys(),
+            station_idx=i + 1,
+            alt_names=forcing,
+        )
+        for i in range(6)
+    ]
 
     conf = GR4JCN(
         params=[0.529, -3.396, 407.29, 1.072, 16.9, 0.947],
         StartDate=dt.datetime(2000, 1, 1),
         Duration=15,
         GlobalParameter={"AVG_ANNUAL_RUNOFF": 208.480},
-        ObservationData=qobs,
-        GriddedForcing=gf,
+        ObservationData=[qobs],
+        Gauges=gauges,
         **rvh,
     )
 
