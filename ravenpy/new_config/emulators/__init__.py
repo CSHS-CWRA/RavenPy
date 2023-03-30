@@ -7,3 +7,23 @@ from ravenpy.new_config.emulators.hypr import HYPR
 from ravenpy.new_config.emulators.mohyse import Mohyse
 from ravenpy.new_config.emulators.routing import BasicRoute
 from ravenpy.new_config.emulators.sacsma import SACSMA
+
+
+def get_model(name):
+    """Return the corresponding Raven emulator configuration class.
+
+    Parameters
+    ----------
+    name : str
+      Model class name or model identifier.
+
+    Returns
+    -------
+    Raven model configuration class
+    """
+    cls = globals().get(name)
+
+    if cls is None:
+        raise ValueError(f"Model {name} is not recognized.")
+
+    return cls

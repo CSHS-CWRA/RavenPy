@@ -251,18 +251,31 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
         # Note: `construct` skips validation. benchmark to see if it speeds things up.
         return self.__class__.construct(params=num_p, **out)
 
-    def set_solution(self, fn: Path):
-        """Return a new instance of Config with hru, basin states and start date set from an existing solution.
+    def set_solution(self, fn: Path, timestamp: bool = True) -> "Config":
+        """Return a new instance of Config with hru, basin states
+         and start date set from an existing solution.
 
-        Note that EndDate is set to None to avoid inconsistencies.
+         Parameters
+         ----------
+         fn : Path
+           Path to solution file.
+        timestamp: bool
+          If False, ignore time stamp information in the solution. If True, the solution
+          will set StartDate to the solution's timestamp.
+
+        Returns
+        -------
+        Config
+          Config with internal state set from the solution file.
         """
         from .parsers import parse_solution
 
         out = self.__dict__.copy()
-        out.update(
-            **parse_solution(fn, calendar=self.calendar.value),
-            uniform_initial_conditions={},
-        )
+        sol = parse_solution(fn, calendar=self.calendar.value)
+        if timestamp is False:
+            sol.pop("start_date")
+
+        out.update(**sol, uniform_initial_conditions={})
 
         return self.__class__(**out)
 

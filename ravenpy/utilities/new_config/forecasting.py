@@ -376,3 +376,55 @@ def hindcast_from_meteo_forecast(
         ensemble.append(out)
 
     return EnsembleReader(config.run_name, runs=ensemble)
+
+
+def compute_forecast_flood_risk(forecast: xr.Dataset, flood_level: float):
+    """Returns the empirical exceedance probability for each forecast day based
+    on a flood level threshold.
+
+    Parameters
+    ----------
+    forecast : xr.Dataset
+      Ensemble or deterministic streamflow forecast.
+    flood_level: float
+      Flood level threshold. Will be used to determine if forecasts exceed
+      this specified flood threshold. Should be in the same units as the forecasted streamflow.
+
+    Returns
+    -------
+    xr.Dataset
+      Time series of probabilities of flood level exceedance.
+    """
+
+    # ---- Calculations ---- #
+    # Ensemble: for each day, calculate the percentage of members that are above the threshold
+    if "member" in forecast.coords:
+        # Get number of members originally
+        number_members = len(forecast.member)
+
+        # now compute the ratio of cases that are above the threshold
+        pct = (
+            forecast.where(forecast > flood_level)
+            .notnull()
+            .sum(dim="member", keep_attrs=True)
+            / number_members
+        )
+
+    # it's deterministic:
+    else:
+        pct = (
+            forecast.where(forecast > flood_level).notnull() / 1.0
+        )  # This is needed to return values instead of floats
+
+    out = pct.to_dataset(name="exceedance_probability")
+    out.attrs["source"] = "PAVICS-Hydro flood risk forecasting tool, pavics.ouranos.ca"
+    out.attrs["history"] = (
+        "File created on "
+        + dt.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+        + "UTC on the PAVICS-Hydro service available at pavics.ouranos.ca"
+    )
+    out.attrs[
+        "title"
+    ] = "Identification of ensemble members that exceed a certain flow threshold."
+
+    return out
