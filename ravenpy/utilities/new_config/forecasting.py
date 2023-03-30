@@ -165,7 +165,7 @@ def warm_up(config, duration: int, path: Path, overwrite=False):
     Config
       Model configuration with initial state set by running the model prior to the start date.
     """
-    wup = config.copy()
+    wup = config.copy(deep=True)
     wup.start_date = config.start_date - dt.timedelta(days=duration)
     wup.duration = duration
     wup.end_date = None
