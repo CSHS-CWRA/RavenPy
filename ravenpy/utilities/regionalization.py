@@ -60,9 +60,9 @@ def regionalize(
     qsim : DataArray (time, )
       Multi-donor averaged predicted streamflow.
     ensemble : Dataset
-      q_sim : DataArray  (realization, time)
+      q_sim : DataArray  (member, time)
         Ensemble of members based on number of donors.
-      parameter : DataArray (realization, param)
+      parameter : DataArray (member, param)
         Parameters used to run the model.
     """
     # TODO: Include list of available properties in docstring.
@@ -310,7 +310,7 @@ def IDW(qsims, dist):
     Parameters
     ----------
     qsims : DataArray
-      Ensemble of hydrogram stacked along the `realization` dimension.
+      Ensemble of hydrogram stacked along the `members` dimension.
     dist : pd.Series
       Distance from catchment which generated each hydrogram to target catchment.
 
@@ -322,7 +322,7 @@ def IDW(qsims, dist):
 
     # In IDW, weights are 1 / distance
     weights = xr.DataArray(
-        1.0 / dist, dims="realization", coords={"realization": qsims.realization}
+        1.0 / dist, dims="members", coords={"members": qsims.members}
     )
 
     # Make weights sum to one
