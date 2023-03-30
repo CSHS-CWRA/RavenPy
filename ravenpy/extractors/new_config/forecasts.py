@@ -2,6 +2,7 @@ import datetime as dt
 import logging
 import re
 
+import fiona
 import pandas as pd
 import xarray as xr
 
@@ -96,6 +97,9 @@ def get_recent_ECCC_forecast(region_coll, climate_model="GEPS"):
     """
 
     [ds, times] = get_ECCC_dataset(climate_model)
+
+    # Make the variable name compatible with the hindcasting tools.
+    ds = ds.rename({"member": "members"})
 
     return get_subsetted_forecast(region_coll, ds, times, False)
 

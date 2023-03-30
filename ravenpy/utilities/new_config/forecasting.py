@@ -379,11 +379,10 @@ def hindcast_from_meteo_forecast(
 
     # Run the model for each year
     ensemble = []
-    forecast_ds = xr.open_dataset(forecast)
+    forecast_ds = xr.open_dataset(forecast, use_cftime=True)
 
     for member in range(0, len(forecast_ds.members)):
         # Prepare model instance
-        # config.start_date = s = startdate_fixed
 
         out = Emulator(
             config=config.copy(
