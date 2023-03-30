@@ -1,6 +1,6 @@
 from ravenpy.extractors.new_config.routing_product import (
     BasinMakerExtractor,
-    RoutingProductGridWeightExtractor,
+    GridWeightExtractor,
     open_shapefile,
 )
 from ravenpy.new_config.emulators import BasicRoute

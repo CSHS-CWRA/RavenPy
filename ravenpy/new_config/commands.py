@@ -647,7 +647,7 @@ class Gauge(FlatCommand):
         cls,
         fn: Path,
         data_type: Sequence = None,
-        station_idx: Sequence = (1,),
+        station_idx: int = 1,
         alt_names: dict = {},
         mon_ave: bool = False,
         extra: dict = {},
@@ -660,14 +660,15 @@ class Gauge(FlatCommand):
           NetCDF file path.
         data_type: str
           Raven data type.
-        station_idx: Sequence[int]
+        station_idx: int
           Index along station dimension. Starts at 1.
         alt_names: str, list
           Alternative variable names for data type if not the CF standard default.
         mon_ave: bool
           If True, compute the monthly average.
-        extra: dict
-          Additional `Gauge` parameters.
+        extra: Dict[options.Forcings, Dict[str, str]]]
+          Additional `Gauge` parameters keyed by forcing type and station id.
+          Use keyword "ALL" to pass parameters to all variables.
 
         Returns
         -------
@@ -677,32 +678,36 @@ class Gauge(FlatCommand):
         from typing import get_args
 
         out = []
-        for idx in station_idx:
-            data = []
-            gattrs = {}
-            for dtyp in data_type or get_args(options.Forcings):
-                try:
-                    specs = nc_specs(
-                        fn, dtyp, idx, alt_names.get(dtyp, ()), mon_ave=mon_ave
-                    )
-                    data.append(Data(**filter_for(Data, specs)))
-                except ValueError as err:
-                    if data_type is None:
-                        # There is no explicit instruction to find something in particular.
-                        pass
-                    else:
-                        raise err
+        idx = station_idx
+        data = []
+        gattrs = {}
+        for dtyp in data_type or get_args(options.Forcings):
+            try:
+                specs = nc_specs(
+                    fn, dtyp, idx, alt_names.get(dtyp, ()), mon_ave=mon_ave
+                )
+                # Add extra keywords
+                ex_f = {**extra.get(dtyp, {}), **extra.get("ALL", {})}
+                specs.update(**ex_f)
 
+                # Filter data attributes
+                data.append(filter_for(Data, specs))
+            except ValueError as err:
+                if data_type is None:
+                    # There is no explicit instruction to find something in particular.
+                    pass
                 else:
-                    gattrs.update(filter_for(cls, specs))
-            else:
-                if len(data) == 0:
-                    raise ValueError(f"No variable for {data_type} found in file.")
+                    raise err
 
-            gattrs["data"] = data
-            gattrs["name"] = gattrs.get("name", f"Gauge_{idx}")
-            out.append(cls(**gattrs, **extra.get(idx, {})))
-        return out
+            else:
+                gattrs.update(filter_for(cls, specs))
+
+        if len(data) == 0:
+            raise ValueError(f"No variable for {data_type} found in file.")
+
+        gattrs["data"] = data
+        name = gattrs.get("name", f"Gauge_{idx}")
+        return cls(name=name, **gattrs)
 
     @property
     def ds(self) -> xr.Dataset:

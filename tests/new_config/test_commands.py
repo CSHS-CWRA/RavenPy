@@ -345,8 +345,7 @@ def test_gauge(get_local_testdata):
     f = get_local_testdata(
         "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
     )
-    gauges = Gauge.from_nc(f, alt_names={"RAINFALL": "rain", "SNOWFALL": "snow"})
-    g = gauges[0]
+    g = Gauge.from_nc(f, alt_names={"RAINFALL": "rain", "SNOWFALL": "snow"})
 
     assert "Data" in g.to_rv()
     assert isinstance(g.ds, xr.Dataset)

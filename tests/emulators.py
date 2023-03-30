@@ -248,14 +248,14 @@ def symbolic_config(salmon_meteo, salmon_hru, request):
     data_type = ["RAINFALL", "TEMP_MIN", "TEMP_MAX", "SNOWFALL"]
 
     # Extra attributes for gauges
-    gextras = {1: {"elevation": salmon_hru["land"]["elevation"]}}
+    gextras = {"ALL": {"elevation": salmon_hru["land"]["elevation"]}}
 
     if name in ["HBVEC", "HYPR"]:
         ds = xr.open_dataset(salmon_meteo)
-        gextras[1]["monthly_ave_temperature"] = (
+        gextras["ALL"]["monthly_ave_temperature"] = (
             ((ds.tmin + ds.tmax) / 2).groupby("time.month").mean().values.tolist()
         )
-        gextras[1]["monthly_ave_evaporation"] = (
+        gextras["ALL"]["monthly_ave_evaporation"] = (
             ds.pet.groupby("time.month").mean().values.tolist()
         )
 
@@ -281,12 +281,14 @@ def symbolic_config(salmon_meteo, salmon_hru, request):
         extras["SuppressOutput"] = True
 
     yield name, cls(
-        Gauge=rc.Gauge.from_nc(
-            salmon_meteo,
-            data_type=data_type,
-            alt_names=alt_names,
-            extra=gextras,
-        ),
+        Gauge=[
+            rc.Gauge.from_nc(
+                salmon_meteo,
+                data_type=data_type,
+                alt_names=alt_names,
+                extra=gextras,
+            ),
+        ],
         ObservationData=rc.ObservationData.from_nc(salmon_meteo, alt_names="qobs"),
         HRUs=hrus,
         StartDate=dt.datetime(2000, 1, 1),
@@ -312,11 +314,13 @@ def minimal_emulator(salmon_meteo, salmon_hru):
 
     return cls(
         params=params["HMETS"],
-        Gauge=rc.Gauge.from_nc(
-            salmon_meteo,
-            data_type=data_type,
-            alt_names=alt_names,
-        ),
+        Gauge=[
+            rc.Gauge.from_nc(
+                salmon_meteo,
+                data_type=data_type,
+                alt_names=alt_names,
+            ),
+        ],
         ObservationData=rc.ObservationData.from_nc(salmon_meteo, alt_names="qobs"),
         HRUs=[salmon_hru["land"]],
         StartDate=dt.datetime(2000, 1, 1),

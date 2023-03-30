@@ -33,18 +33,21 @@ def test_simple_workflow(get_local_testdata, minimal_emulator, tmp_path):
     # Confirm we got the right watershed
     assert 175000128 in sub["SubId"].to_list()
 
+    # Extract the subbasins and HRUs (one HRU per sub-basin)
     bm = BasinMakerExtractor(
         df=sub,
         hru_aspect_convention="ArcGIS",
     )
     rvh = bm.extract()
 
+    # Streamflow obs
     qobs_fn = get_local_testdata("matapedia/Qobs_Matapedia_01BD009.nc")
     qobs = rc.ObservationData.from_nc(
         qobs_fn,
         alt_names=("discharge",),
     )
 
+    # Meteo obs for GriddedForcing - does not work because subbasins do not overlap 100% with the ERA data
     meteo_grid_fn = get_local_testdata("matapedia/Matapedia_meteo_data_2D.nc")
 
     # Dict of GW attributes
@@ -71,6 +74,9 @@ def test_simple_workflow(get_local_testdata, minimal_emulator, tmp_path):
         )
         for (dtyp, alias) in forcing.items()
     ]
+
+    # Meteo forcing per station (virtual stations, since this is ERA5 data)
+    meteo_station = get_local_testdata("matapedia/Meteo_stations_Matapedia_ERA5.nc")
 
     conf = GR4JCN(
         params=[0.529, -3.396, 407.29, 1.072, 16.9, 0.947],

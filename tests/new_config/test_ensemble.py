@@ -23,12 +23,14 @@ def test_enkf(salmon_meteo, salmon_hru, tmp_path):
 
     conf = cls(
         params=(0.14, -0.005, 576, 7.0, 1.1, 0.92),
-        Gauge=rc.Gauge.from_nc(
-            salmon_meteo,
-            data_type=data_type,
-            alt_names=alt_names,
-            extra={1: {"elevation": salmon_hru["land"]["elevation"]}},
-        ),
+        Gauge=[
+            rc.Gauge.from_nc(
+                salmon_meteo,
+                data_type=data_type,
+                alt_names=alt_names,
+                extra={"ALL": {"elevation": salmon_hru["land"]["elevation"]}},
+            ),
+        ],
         ObservationData=rc.ObservationData.from_nc(salmon_meteo, alt_names="qobs"),
         HRUs=[salmon_hru["land"]],
         StartDate=dt.datetime(1996, 9, 1),
