@@ -21,4 +21,4 @@ s3fs
 clisops
 intake-xarray
 gcsfs
-
+hs_restclient

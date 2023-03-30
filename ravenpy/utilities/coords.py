@@ -15,10 +15,10 @@ def realization(n):
       Size of the ensemble.
     """
     return xr.IndexVariable(
-        "realization",
+        "members",
         data=range(n),
         attrs={
-            "standard_name": "realization",
+            "standard_name": "members",
             "axis": "E",
             "units": "1",
             "long_name": "Label identifying the ensemble member",
