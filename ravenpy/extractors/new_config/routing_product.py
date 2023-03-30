@@ -36,6 +36,15 @@ class BasinMakerExtractor:
     This is a class to encapsulate the logic of converting the Routing
     Product into the required data structures to generate the RVH file
     format.
+
+    Parameters
+    ----------
+    df : GeoDataFrame
+      Sub-basin information.
+    hru_aspect_convention : {"GRASS", "ArcGIS"}
+      How sub-basin aspect is defined.
+    routing_product_version: {"2.1", "1.0"}
+      Version of the BasinMaker data.
     """
 
     MAX_RIVER_SLOPE = 0.00001
@@ -293,15 +302,26 @@ class BasinMakerExtractor:
         )
 
 
-class RoutingProductGridWeightExtractor:
-
+class GridWeightExtractor:
     """
+    Class to extract grid weights.
+
+    Parameters
+    ----------
+    input_file_path: Path, str
+      NetCDF file or shapefile with the data to be weighted.
+    routing_file_path: Path, str
+      Sub-basin delineation.
+
+
+    Notes
+    -----
     The original version of this algorithm can be found at: https://github.com/julemai/GridWeightsGenerator
     """
 
     DIM_NAMES = ("lon_dim", "lat_dim")
     VAR_NAMES = ("lon", "lat")
-    ROUTING_ID_FIELD = "HRU_ID"
+    ROUTING_ID_FIELD = "SubId"
     NETCDF_INPUT_FIELD = "NetCDF_col"
     AREA_ERROR_THRESHOLD = 0.05
     CRS_LLDEG = 4326  # EPSG id of lat/lon (deg) coordinate reference system (CRS)
@@ -331,28 +351,21 @@ class RoutingProductGridWeightExtractor:
             self._gauge_ids and self._sub_ids
         ), "Only one of gauge_ids or sub_ids can be specified"
 
-        self._input_is_netcdf = True
-
         input_file_path = Path(input_file_path)
         if input_file_path.suffix == ".nc":
             # Note that we cannot use xarray because it complains about variables and dimensions
             # having the same name.
             self._input_data = nc4.Dataset(input_file_path)
-        elif input_file_path.suffix == ".zip":
-            self._input_data = geopandas.read_file(f"zip://{input_file_path}")
-            self._input_is_netcdf = False
-        elif input_file_path.suffix == ".shp":
-            self._input_data = geopandas.read_file(input_file_path)
+            self._input_is_netcdf = True
+        elif input_file_path.suffix in [".zip", ".shp"]:
+            self._input_data = open_shapefile(input_file_path)
             self._input_is_netcdf = False
         else:
             raise ValueError(
                 "The input file must be a shapefile (.shp or .zip) or NetCDF"
             )
 
-        routing_file_path = Path(routing_file_path)
-        if routing_file_path.suffix == ".zip":
-            routing_file_path = f"zip://{routing_file_path}"
-        self._routing_data = geopandas.read_file(routing_file_path)
+        self._routing_data = open_shapefile(routing_file_path)
 
     def extract(self) -> dict:
         """Return dictionary to create a GridWeights command."""
@@ -363,7 +376,7 @@ class RoutingProductGridWeightExtractor:
 
         # WGS 84 / North Pole LAEA Canada
         self._routing_data = self._routing_data.to_crs(
-            epsg=RoutingProductGridWeightExtractor.CRS_CAEA
+            epsg=GridWeightExtractor.CRS_CAEA
         )
 
         def keep_only_valid_downsubid_and_obs_nm(g):
@@ -377,19 +390,19 @@ class RoutingProductGridWeightExtractor:
             """
             if len(g) == 1:
                 return g
-            hru_id_field = self._routing_id_field
+            rid = self._routing_id_field
             row = g[g["DowSubId"] != -1].copy()
             if len(row) > 1:
                 row = row[:1].copy()
                 warnings.warn(
-                    f"More than one row with HRU_ID={row[hru_id_field]} having DowSubId = -1"
+                    f"More than one row with ID={row[rid]} having DowSubId = -1"
                 )
             obs_nm = g[g["Obs_NM"] != -9999]
             if not obs_nm.empty:
                 row["Obs_NM"] = obs_nm["Obs_NM"].iloc[0]
             else:
                 warnings.warn(
-                    f"All values of Obs_NM are -9999 for rows with HRU_ID={row[hru_id_field]}"
+                    f"All values of Obs_NM are -9999 for rows with ID={row[rid]}"
                 )
 
             return row
@@ -571,7 +584,7 @@ class RoutingProductGridWeightExtractor:
             # input data is a shapefile
 
             self._input_data = self._input_data.to_crs(
-                epsg=RoutingProductGridWeightExtractor.CRS_CAEA
+                epsg=GridWeightExtractor.CRS_CAEA
             )
 
             self._nlon = 1  # only for consistency
@@ -634,7 +647,7 @@ class RoutingProductGridWeightExtractor:
                         ]
 
                     tmp = self._shape_to_geometry(
-                        gridcell_edges, epsg=RoutingProductGridWeightExtractor.CRS_CAEA
+                        gridcell_edges, epsg=GridWeightExtractor.CRS_CAEA
                     )
                     grid_cell_geom_gpd_wkt[ilat][ilon] = tmp
 
@@ -725,7 +738,7 @@ class RoutingProductGridWeightExtractor:
         if epsg:
             source = osr.SpatialReference()
             # usual lat/lon projection
-            source.ImportFromEPSG(RoutingProductGridWeightExtractor.CRS_LLDEG)
+            source.ImportFromEPSG(GridWeightExtractor.CRS_LLDEG)
 
             target = osr.SpatialReference()
             target.ImportFromEPSG(epsg)  # any projection to convert to

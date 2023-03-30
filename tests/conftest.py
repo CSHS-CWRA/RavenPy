@@ -94,6 +94,8 @@ def populate_testing_data(
             "raven-routing-sample/lievre_hrus_v21.zip",
             "watershed_vector/LSJ_LL.zip",
             "basinmaker/drainage_region_0175_v2-1/finalcat_info_v2-1.zip",
+            "matapedia/Qobs_Matapedia_01BD009.nc",
+            "matapedia/Matapedia_meteo_data_2D.nc",
         ]
     )
 

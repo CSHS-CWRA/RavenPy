@@ -1,8 +1,17 @@
 from enum import Enum
+from pathlib import Path
 from textwrap import dedent, indent
 from typing import Any, ClassVar, Dict, List, Literal, Sequence, Tuple, Union
 
-from pydantic import BaseModel, Extra, Field, PrivateAttr, root_validator, validator
+from pydantic import (
+    BaseModel,
+    Extra,
+    Field,
+    FilePath,
+    PrivateAttr,
+    root_validator,
+    validator,
+)
 from pymbolic.primitives import Expression, Variable
 
 """
@@ -69,6 +78,7 @@ def encoder(v: dict) -> dict:
         elif isinstance(obj, Enum):
             # :Command value\n
             out = f":{cmd:<20} {obj.value}\n"
+
         elif hasattr(obj, "to_rv"):
             # Custom
             out = obj.to_rv()

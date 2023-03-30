@@ -1,6 +1,6 @@
 import re
 from textwrap import dedent
-from typing import Sequence
+from typing import Sequence, Union
 
 import pytest
 import xarray as xr
@@ -8,7 +8,7 @@ from pydantic import Field
 
 from ravenpy.new_config import commands as rc
 from ravenpy.new_config import options as o
-from ravenpy.new_config.base import RV
+from ravenpy.new_config.base import RV, encoder
 
 salmon_land_hru_1 = dict(
     area=4250.6, elevation=843.0, latitude=54.4848, longitude=-123.3659, hru_type="land"
@@ -369,8 +369,16 @@ def test_grid_weights():
 
 def test_redirect_to_file(get_local_testdata):
     f = get_local_testdata("raven-routing-sample/VIC_test_nodata_weights.rvt")
-    r = rc.RedirectToFile(path=f)
-    r.to_rv()
+    r = rc.RedirectToFile(__root__=f)
+    assert re.match(r"^:RedirectToFile (\S+)$", r.to_rv())
+
+    class Test(RV):
+        gw: Union[rc.GridWeights, rc.RedirectToFile] = Field(
+            None, alias="RedirectToFile"
+        )
+
+    t = Test(gw=f)
+    assert t.gw.__root__ == f
 
 
 def test_subbasin_properties():

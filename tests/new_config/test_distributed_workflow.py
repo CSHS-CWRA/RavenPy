@@ -1,9 +1,14 @@
+import datetime as dt
+
+from ravenpy import Emulator
 from ravenpy.extractors.new_config.routing_product import (
     BasinMakerExtractor,
+    GridWeightExtractor,
     open_shapefile,
     upstream_from_coords,
 )
 from ravenpy.new_config import commands as rc
+from ravenpy.new_config.emulators import GR4JCN
 
 """
 Distributed model workflow
@@ -34,10 +39,49 @@ def test_simple_workflow(get_local_testdata, minimal_emulator, tmp_path):
     )
     rvh = bm.extract()
 
-    obs = rc.ObservationData.from_nc(
-        get_local_testdata("matapedia/Qobs_Matapedia_01BD009.nc"),
+    qobs_fn = get_local_testdata("matapedia/Qobs_Matapedia_01BD009.nc")
+    qobs = rc.ObservationData.from_nc(
+        qobs_fn,
         alt_names=("discharge",),
     )
 
-    conf = minimal_emulator.copy(update={**rvh, "ObservationData": obs})
-    conf.write_rv(workdir=tmp_path)
+    meteo_grid_fn = get_local_testdata("matapedia/Matapedia_meteo_data_2D.nc")
+
+    # Dict of GW attributes
+    gw = GridWeightExtractor(
+        meteo_grid_fn,
+        shp_path,
+        dim_names=("longitude", "latitude"),
+        var_names=("longitude", "latitude"),
+        gauge_ids=[
+            "01BD009",
+        ],
+    ).extract()
+
+    assert gw["number_hrus"] == len(sub)
+
+    # Write GW command to file
+    gw_fn = tmp_path / "gw.txt"
+    gw_fn.write_text(rc.GridWeights(**gw).to_rv())
+
+    forcing = {"TEMP_MIN": "tmin", "TEMP_MAX": "tmax", "PRECIP": "pr"}
+    gf = [
+        rc.GriddedForcing.from_nc(
+            meteo_grid_fn, dtyp, alt_names=(alias,), grid_weights=gw_fn
+        )
+        for (dtyp, alias) in forcing.items()
+    ]
+
+    conf = GR4JCN(
+        params=[0.529, -3.396, 407.29, 1.072, 16.9, 0.947],
+        StartDate=dt.datetime(2000, 1, 1),
+        Duration=15,
+        GlobalParameter={"AVG_ANNUAL_RUNOFF": 208.480},
+        ObservationData=qobs,
+        GriddedForcing=gf,
+        **rvh,
+    )
+
+    out = Emulator(conf, workdir=tmp_path).run()
+
+    assert len(out.hydrograph.nbasins) == len(sub)

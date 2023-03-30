@@ -20,9 +20,12 @@ import cftime
 import xarray as xr
 from pydantic import (
     Field,
+    FilePath,
     HttpUrl,
+    NonNegativeFloat,
     PrivateAttr,
     ValidationError,
+    confloat,
     dataclasses,
     root_validator,
     validator,
@@ -284,13 +287,13 @@ class HRU(Record):
     latitude: float = 0
     longitude: float = 0
     subbasin_id: int = 1
-    land_use_class: str = ""
-    veg_class: str = ""
-    soil_profile: str = ""
-    aquifer_profile: str = ""
-    terrain_class: str = ""
-    slope: float = 0.0
-    aspect: float = 0.0
+    land_use_class: str = "[NONE]"
+    veg_class: str = "[NONE]"
+    soil_profile: str = "[NONE]"
+    aquifer_profile: str = "[NONE]"
+    terrain_class: str = "[NONE]"
+    slope: NonNegativeFloat = 0.0
+    aspect: confloat(ge=0, le=360) = 0.0
     # This field is not part of the Raven config, it is needed for serialization,
     # to specify which HRU subclass to use when necessary
     hru_type: Optional[str] = None
@@ -441,8 +444,8 @@ class GridWeights(Command):
     class GWRecord(Record):
         __root__: Tuple[int, int, float] = (1, 0, 1.0)
 
-    def __str__(self):
-        return " ".join(self.__root__)
+        def __str__(self):
+            return " ".join(map(str, self.__root__))
 
     data: Sequence[GWRecord] = Field(GWRecord())
 
@@ -472,15 +475,10 @@ class RedirectToFile(Command):
     desired.
     """
 
-    path: Path
+    __root__: FilePath
 
-    _template = ":{_cmd} {path}\n"
-
-    @validator("path")
-    def check_exists(cls, v):
-        if not v.exists():
-            raise ValidationError(f"File not found {v}")
-        return v
+    def to_rv(self):
+        return f":RedirectToFile {self.__root__}\n"
 
 
 class ReadFromNetCDF(FlatCommand):
@@ -511,11 +509,11 @@ class ReadFromNetCDF(FlatCommand):
     _reorder_time = validator("dim_names_nc", allow_reuse=True)(reorder_time)
 
     @classmethod
-    def from_nc(cls, fn, data_type, station_idx=1, alt_names=()):
+    def from_nc(cls, fn, data_type, station_idx=1, alt_names=(), **kwds):
         """Instantiate class from netCDF dataset."""
         specs = nc_specs(fn, data_type, station_idx, alt_names)
         attrs = filter_for(cls, specs)
-        return cls(station_idx=station_idx, **attrs)
+        return cls(station_idx=station_idx, **attrs, **kwds)
 
     @property
     def da(self) -> xr.DataArray:
@@ -568,20 +566,23 @@ class StationForcing(GriddedForcing):
         return v
 
     @classmethod
-    def from_nc(cls, fn, data_type, station_idx=None, alt_names=()):
+    def from_nc(cls, fn, data_type, station_idx=None, alt_names=(), **kwds):
         """Instantiate class from netCDF dataset."""
         specs = nc_specs(fn, data_type, station_idx, alt_names)
         attrs = filter_for(cls, specs)
 
         # Build default gridweights
-        size = specs["_dim_size_nc"]
-        size.pop(specs["_time_dim_name_nc"])
-        nstations = list(size.values())[0]
-        data = [[i + 1, i + 1, 1] for i in range(nstations)]
-        gw = GridWeights(number_hrus=nstations, number_grid_cells=nstations, data=data)
-        attrs["grid_weights"] = gw
+        if "grid_weights" not in kwds or "GridWeights" not in kwds:
+            size = specs["_dim_size_nc"]
+            size.pop(specs["_time_dim_name_nc"])
+            nstations = list(size.values())[0]
+            data = [[i + 1, i + 1, 1] for i in range(nstations)]
+            gw = GridWeights(
+                number_hrus=nstations, number_grid_cells=nstations, data=data
+            )
+            attrs["grid_weights"] = gw
 
-        return cls(**attrs)
+        return cls(**attrs, **kwds)
 
 
 class Data(FlatCommand):
@@ -723,16 +724,19 @@ class ObservationData(Data):
         """
 
     @classmethod
-    def from_nc(cls, fn, station_idx=(1,), uid=1, alt_names=()):
+    def from_nc(cls, fn, station_idx=(1,), uid=(1,), alt_names=()):
+        if len(station_idx) != len(uid):
+            raise ValueError("`station_idx` and `uid` should have the same length.")
+
         if type(station_idx) == int:
             station_idx = station_idx
         out = []
-        for idx in station_idx:
+        for idx, i in zip(station_idx, uid):
             specs = nc_specs(fn, "HYDROGRAPH", idx, alt_names)
             out.append(
                 cls(
                     data_type="HYDROGRAPH",
-                    uid=uid,
+                    uid=i,
                     units=specs.pop("units", None),
                     read_from_netcdf=filter_for(ReadFromNetCDF, specs),
                 )
