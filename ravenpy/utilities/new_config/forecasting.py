@@ -7,6 +7,7 @@ Created on Fri Jul 17 09:11:58 2020
 import collections
 import datetime as dt
 import logging
+import re
 from pathlib import Path
 from typing import List
 
@@ -76,7 +77,7 @@ def climatology_esp(
     if start.month == 2 and start.day == 29:
         start = start.replace(day=28)
 
-    # Get the start data that is immutable
+    # Get the start date that is immutable
     startdate_fixed = start
 
     # Run the model for each year
@@ -317,3 +318,77 @@ def _get_time(config):
     else:
         raise NotImplementedError
     return time
+
+
+def hindcast_from_meteo_forecast(
+    config, forecast, path, overwrite=False
+) -> EnsembleReader:
+    """
+    Ensemble Streamflow Prediction based on historical weather forecasts (Caspar or other).
+
+    Run the model using forcing for different years.
+    No model warm-up is performed by this function, make sure the initial states are
+    consistent with the start date.
+
+    Parameters
+    ----------
+    config : Config
+      Model configuration.
+    forecast: xarray Dataset
+      Forecast subsetted to the catchment location.
+    path: str, Path
+      Path to rv files and model outputs.
+    overwrite: bool
+      Overwrite files when writing to disk.
+
+    Returns
+    -------
+    EnsembleReader
+      Class facilitating the analysis of multiple Raven outputs.
+    """
+    path = Path(path)
+
+    # Time from meteo forcing files.
+    time = _get_time(config)
+
+    # Define duration and end_date
+    # Make sure configuration uses duration instead of end_date
+    if config.duration is None:
+        if config.end_date is None or config.start_date is None:
+            raise ValueError("StartDate and Duration must be configured.")
+        duration = config.end_date - config.start_date
+        end = config.end_date
+        config.duration = duration.days
+        config.end_date = None
+
+    else:
+        if config.start_date is None:
+            raise ValueError("StartDate must be configured.")
+        duration = config.duration
+        end = config.start_date + dt.timedelta(days=duration)
+
+    # Define start date
+    start = config.start_date
+
+    if start.month == 2 and start.day == 29:
+        start = start.replace(day=28)
+
+    # Get the start date that is immutable
+    startdate_fixed = start
+
+    # Run the model for each year
+    ensemble = []
+    for member in range(0, len(forecast.members)):
+        # Prepare model instance
+        config.start_date = s = startdate_fixed
+        if len(time.sel(time=slice(str(s), str(end)))) < duration:
+            continue
+
+        out = Emulator(config=config, workdir=path / f"Y{member}").run(
+            overwrite=overwrite
+        )
+
+        # Append to the ensemble.
+        ensemble.append(out)
+
+    return EnsembleReader(config.run_name, runs=ensemble)
