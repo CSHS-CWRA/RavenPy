@@ -16,6 +16,7 @@ import xarray as xr
 from climpred import HindcastEnsemble
 
 from ravenpy import Emulator, EnsembleReader
+from ravenpy.new_config import commands as rc
 from ravenpy.new_config.rvs import Config
 
 LOGGER = logging.getLogger("PYWPS")
@@ -321,7 +322,7 @@ def _get_time(config):
 
 
 def hindcast_from_meteo_forecast(
-    config, forecast, path, overwrite=False
+    config, forecast, path, overwrite=False, **kwds
 ) -> EnsembleReader:
     """
     Ensemble Streamflow Prediction based on historical weather forecasts (Caspar or other).
@@ -381,12 +382,24 @@ def hindcast_from_meteo_forecast(
     for member in range(0, len(forecast.members)):
         # Prepare model instance
         config.start_date = s = startdate_fixed
+
         if len(time.sel(time=slice(str(s), str(end)))) < duration:
             continue
 
-        out = Emulator(config=config, workdir=path / f"Y{member}").run(
-            overwrite=overwrite
-        )
+        out = Emulator(
+            config=config.copy(
+                update={
+                    "Gauge": [
+                        rc.Gauge.from_nc(
+                            forecast,
+                            **kwds,
+                            station_idx=member,
+                        ),
+                    ]
+                },
+                workdir=path / f"Y{member}",
+            )
+        ).run(overwrite=overwrite)
 
         # Append to the ensemble.
         ensemble.append(out)
