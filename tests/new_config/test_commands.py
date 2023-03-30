@@ -345,11 +345,16 @@ def test_gauge(get_local_testdata):
     f = get_local_testdata(
         "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
     )
-    g = Gauge.from_nc(f, alt_names={"RAINFALL": "rain", "SNOWFALL": "snow"})
+    g = Gauge.from_nc(
+        f,
+        alt_names={"RAINFALL": "rain", "SNOWFALL": "snow"},
+        extra={"ALL": {"Deaccumulate": True}},
+    )
 
     assert "Data" in g.to_rv()
     assert isinstance(g.ds, xr.Dataset)
     assert "RAINFALL" in g.ds
+    assert g.data[0].read_from_netcdf.deaccumulate
 
     with pytest.raises(ValueError):
         Gauge.from_nc(

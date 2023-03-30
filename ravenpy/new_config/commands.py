@@ -651,8 +651,8 @@ class Gauge(FlatCommand):
         alt_names: dict = {},
         mon_ave: bool = False,
         extra: dict = {},
-    ) -> Sequence["Gauge"]:
-        """Return list of Gauge instances.
+    ) -> "Gauge":
+        """Return Gauge instance.
 
         Parameters
         ----------
