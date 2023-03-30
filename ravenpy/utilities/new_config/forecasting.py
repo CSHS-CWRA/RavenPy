@@ -322,7 +322,7 @@ def _get_time(config):
 
 
 def hindcast_from_meteo_forecast(
-    config, forecast, path, overwrite=False, **kwds
+    config, forecast, path, overwrite=True, **kwds
 ) -> EnsembleReader:
     """
     Ensemble Streamflow Prediction based on historical weather forecasts (Caspar or other).
@@ -335,8 +335,8 @@ def hindcast_from_meteo_forecast(
     ----------
     config : Config
       Model configuration.
-    forecast: xarray Dataset
-      Forecast subsetted to the catchment location.
+    forecast: Path to forecast file
+      Forecast subsetted to the catchment location (.nc).
     path: str, Path
       Path to rv files and model outputs.
     overwrite: bool
@@ -379,12 +379,11 @@ def hindcast_from_meteo_forecast(
 
     # Run the model for each year
     ensemble = []
-    for member in range(0, len(forecast.members)):
-        # Prepare model instance
-        config.start_date = s = startdate_fixed
+    forecast_ds = xr.open_dataset(forecast)
 
-        if len(time.sel(time=slice(str(s), str(end)))) < duration:
-            continue
+    for member in range(0, len(forecast_ds.members)):
+        # Prepare model instance
+        # config.start_date = s = startdate_fixed
 
         out = Emulator(
             config=config.copy(
@@ -392,13 +391,13 @@ def hindcast_from_meteo_forecast(
                     "Gauge": [
                         rc.Gauge.from_nc(
                             forecast,
-                            **kwds,
                             station_idx=member,
+                            **kwds,
                         ),
                     ]
                 },
-                workdir=path / f"Y{member}",
-            )
+            ),
+            workdir=path / f"Y{member}",
         ).run(overwrite=overwrite)
 
         # Append to the ensemble.
