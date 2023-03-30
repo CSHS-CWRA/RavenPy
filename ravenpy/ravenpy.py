@@ -4,6 +4,7 @@ import collections
 import os
 import shutil
 import subprocess
+import tempfile
 from pathlib import Path
 from typing import Union
 from warnings import warn
@@ -17,7 +18,9 @@ RAVEN_EXEC_PATH = os.getenv("RAVENPY_RAVEN_BINARY_PATH") or shutil.which("raven"
 
 
 class Emulator:
-    def __init__(self, config: Config, workdir: Union[Path, str], modelname=None):
+    def __init__(
+        self, config: Config, workdir: Union[Path, str] = None, modelname=None
+    ):
         """
         Convenience class to work with the Raven modeling framework.
 
@@ -25,13 +28,13 @@ class Emulator:
         ----------
         config : Config
           Emulator Config instance fully parameterized, i.e. without symbolic expressions.
-        path : str, Path
-          Path to rv files and model outputs.
+        workdir : str, Path
+          Path to rv files and model outputs. If None, create a temporary directory.
         modelname : str, None
           File name stem of configuration files: `<modelname>.rv*`.
         """
         self._config = config.copy(deep=True)
-        self._workdir = Path(workdir)
+        self._workdir = Path(workdir or tempfile.mkdtemp())
         self._output = None  # Model output path
         self._modelname = modelname
         self._rv = None  # Model config files
@@ -279,7 +282,6 @@ def run(
     if returncode != 0:
         raise OSError(f"Raven segfaulted : \n{stdout}")
 
-    print(process.returncode)
     # Deal with errors and warnings
     messages = parsers.parse_raven_messages(outputdir / "Raven_errors.txt")
 

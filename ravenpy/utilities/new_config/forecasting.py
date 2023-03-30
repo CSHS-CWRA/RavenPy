@@ -8,8 +8,9 @@ import collections
 import datetime as dt
 import logging
 import re
+import tempfile
 from pathlib import Path
-from typing import List
+from typing import List, Union
 
 import pandas as pd
 import xarray as xr
@@ -23,7 +24,7 @@ LOGGER = logging.getLogger("PYWPS")
 
 
 def climatology_esp(
-    config, path, years: List[int] = None, overwrite=False
+    config, workdir: Union[str, Path] = None, years: List[int] = None, overwrite=False
 ) -> EnsembleReader:
     """
     Ensemble Streamflow Prediction based on historical variability.
@@ -36,18 +37,18 @@ def climatology_esp(
     ----------
     config : Config
       Model configuration.
-    path: str, Path
-      Path to rv files and model outputs.
     years : List[int]
       Years from which forcing time series will be drawn. If None, run for all years where
       forcing data is available.
+    workdir: str, Path
+      Path to rv files and model outputs. If None, create a temporary directory.
 
     Returns
     -------
     EnsembleReader
       Class facilitating the analysis of multiple Raven outputs.
     """
-    path = Path(path)
+    workdir = Path(workdir or tempfile.mkdtemp())
 
     # Time from meteo forcing files.
     time = _get_time(config)
@@ -89,7 +90,7 @@ def climatology_esp(
         if len(time.sel(time=slice(str(s), str(end.replace(year=year))))) < duration:
             continue
 
-        out = Emulator(config=config, workdir=path / f"Y{year}").run(
+        out = Emulator(config=config, workdir=workdir / f"Y{year}").run(
             overwrite=overwrite
         )
 
@@ -146,7 +147,7 @@ def to_climpred_hindcast_ensemble(hindcast, observations):
     return hindcast_obj
 
 
-def warm_up(config, duration: int, path: Path, overwrite=False):
+def warm_up(config, duration: int, workdir: Union[str, Path] = None, overwrite=False):
     """Run the model on a time series preceding the start date.
 
     Parameters
@@ -155,7 +156,7 @@ def warm_up(config, duration: int, path: Path, overwrite=False):
       Model configuration.
     duration : int
       Number of days the warm-up simulation should last *before* the start date.
-    path: Path
+    workdir: Path
       Work directory.
     overwrite: bool
       If True, overwrite existing files.
@@ -170,16 +171,16 @@ def warm_up(config, duration: int, path: Path, overwrite=False):
     wup.duration = duration
     wup.end_date = None
 
-    out = Emulator(wup, workdir=path).run(overwrite=overwrite)
+    out = Emulator(wup, workdir=workdir).run(overwrite=overwrite)
     return config.set_solution(out.files["solution"])
 
 
 def hindcast_climatology_esp(
     config,
-    path,
     warm_up_duration,
     years=None,
     hindcast_years=None,
+    workdir: Union[str, Path] = None,
     overwrite: bool = False,
 ) -> xr.Dataset:
     """Hindcast of Ensemble Prediction Streamflow.
@@ -193,10 +194,10 @@ def hindcast_climatology_esp(
     ----------
     config: Config
       Model configuration. Initial states will be overwritten.
-    path: Path
-      Work directory.
     warm_up_duration : int
       Number of days to run the model prior to the starting date to initialize the state variables.
+    workdir: Path
+      Work directory. If None create a temporary directory.
     years : List[int]
       Years from which forcing time series will be drawn. If None, run for all years where
       forcing data is available.
@@ -218,7 +219,7 @@ def hindcast_climatology_esp(
      - `member`: ESP members of the hindcasting experiment,
      - `lead`: number of lead days of the forecast.
     """
-    path = Path(path)
+    workdir = Path(workdir or tempfile.mkdtemp())
 
     # `hindcast_years` defaults to all available years
     time = _get_time(config)
@@ -247,13 +248,13 @@ def hindcast_climatology_esp(
         conf = warm_up(
             config,
             duration=warm_up_duration,
-            path=path / "wup" / f"Y{year}",
+            workdir=workdir / "wup" / f"Y{year}",
             overwrite=overwrite,
         )
 
         # Run climatology ESP
         esp = climatology_esp(
-            conf, years=years, path=path / "esp" / f"Y{year}", overwrite=overwrite
+            conf, years=years, workdir=workdir / "esp" / f"Y{year}", overwrite=overwrite
         )
 
         # Format results for climpred
@@ -322,7 +323,7 @@ def _get_time(config):
 
 
 def hindcast_from_meteo_forecast(
-    config, forecast, path, overwrite=True, **kwds
+    config, forecast, workdir=None, overwrite=True, **kwds
 ) -> EnsembleReader:
     """
     Ensemble Streamflow Prediction based on historical weather forecasts (Caspar or other).
@@ -337,8 +338,8 @@ def hindcast_from_meteo_forecast(
       Model configuration.
     forecast: Path to forecast file
       Forecast subsetted to the catchment location (.nc).
-    path: str, Path
-      Path to rv files and model outputs.
+    workdir: str, Path
+      Path to rv files and model outputs. If None, create temporary directory.
     overwrite: bool
       Overwrite files when writing to disk.
 
@@ -347,35 +348,7 @@ def hindcast_from_meteo_forecast(
     EnsembleReader
       Class facilitating the analysis of multiple Raven outputs.
     """
-    path = Path(path)
-
-    # Time from meteo forcing files.
-    time = _get_time(config)
-
-    # Define duration and end_date
-    # Make sure configuration uses duration instead of end_date
-    if config.duration is None:
-        if config.end_date is None or config.start_date is None:
-            raise ValueError("StartDate and Duration must be configured.")
-        duration = config.end_date - config.start_date
-        end = config.end_date
-        config.duration = duration.days
-        config.end_date = None
-
-    else:
-        if config.start_date is None:
-            raise ValueError("StartDate must be configured.")
-        duration = config.duration
-        end = config.start_date + dt.timedelta(days=duration)
-
-    # Define start date
-    start = config.start_date
-
-    if start.month == 2 and start.day == 29:
-        start = start.replace(day=28)
-
-    # Get the start date that is immutable
-    startdate_fixed = start
+    workdir = Path(workdir or tempfile.mkdtemp())
 
     # Run the model for each year
     ensemble = []
@@ -387,16 +360,16 @@ def hindcast_from_meteo_forecast(
         out = Emulator(
             config=config.copy(
                 update={
-                    "Gauge": [
+                    "gauge": [
                         rc.Gauge.from_nc(
                             forecast,
-                            station_idx=member,
+                            station_idx=member + 1,
                             **kwds,
                         ),
                     ]
                 },
             ),
-            workdir=path / f"Y{member}",
+            workdir=workdir / f"Y{member}",
         ).run(overwrite=overwrite)
 
         # Append to the ensemble.

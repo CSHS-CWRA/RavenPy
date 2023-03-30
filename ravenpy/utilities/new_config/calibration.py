@@ -1,3 +1,4 @@
+import tempfile
 import warnings
 from dataclasses import astuple
 from pathlib import Path
@@ -17,7 +18,7 @@ class SpotSetup:
         config: Config,
         low: Union[Params, Sequence],
         high: [Params, Sequence],
-        path: Union[Path, str],
+        workdir: Union[Path, str] = None,
     ):
         """
         Class to configure spotpy with Raven emulators.
@@ -26,6 +27,12 @@ class SpotSetup:
         ----------
         config: Config
           Emulator Config instance with symbolic expressions.
+        low: Union[Params, Sequence]
+          Lower boundary for parameters.
+        high: Union[Params, Sequence]
+          Upper boundary for parameters.
+        workdir: Union[str, Path]
+          Work directory. If None, a temporary directory will be created.
         """
         if not config.is_symbolic:
             raise ValueError(
@@ -34,10 +41,10 @@ class SpotSetup:
             )
 
         self.config = config
-        self.path = Path(path)
+        self.path = Path(workdir or tempfile.mkdtemp())
         self.diagnostics = None
 
-        if config.suppress_output is not False:
+        if config.suppress_output is not True:
             warnings.warn(
                 "Add the `SuppressOutput` command to the configuration to reduce IO."
             )

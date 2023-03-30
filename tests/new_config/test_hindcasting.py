@@ -56,7 +56,7 @@ class TestHindcasting:
             ],
         )
 
-        init_conf = warm_up(pre_conf, duration=8, path=tmp_path / "wup")
+        init_conf = warm_up(pre_conf, duration=8, workdir=tmp_path / "wup")
 
         # Create gauges for each member and run the model
         nm = 3

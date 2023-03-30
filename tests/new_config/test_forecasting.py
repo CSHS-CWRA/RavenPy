@@ -13,7 +13,7 @@ from ravenpy.utilities.new_config.forecasting import (
 
 
 def test_warm_up(minimal_emulator, tmp_path):
-    conf = warm_up(minimal_emulator, duration=10, path=tmp_path)
+    conf = warm_up(minimal_emulator, duration=10, workdir=tmp_path)
     wup = OutputReader(path=tmp_path / "output")
 
     assert conf.start_date == minimal_emulator.start_date
@@ -22,7 +22,7 @@ def test_warm_up(minimal_emulator, tmp_path):
 
 
 def test_climatology_esp(minimal_emulator, tmp_path):
-    esp = climatology_esp(minimal_emulator, tmp_path, years=[1955, 1956])
+    esp = climatology_esp(minimal_emulator, workdir=tmp_path, years=[1955, 1956])
     np.testing.assert_array_equal(esp.storage.member, [1955, 1956])
     assert len(esp.hydrograph.time) == minimal_emulator.duration + 1
 
@@ -30,10 +30,10 @@ def test_climatology_esp(minimal_emulator, tmp_path):
 def test_hindcast_climatology_esp(minimal_emulator, tmp_path, salmon_meteo):
     hc = hindcast_climatology_esp(
         minimal_emulator,
-        tmp_path,
         warm_up_duration=5,
         years=[1955, 1956, 1957],
         hindcast_years=[1990, 1991],
+        workdir=tmp_path,
     )
     assert hc.sizes == {
         "lead": minimal_emulator.duration + 1,

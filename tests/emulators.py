@@ -286,7 +286,7 @@ def symbolic_config(salmon_meteo, salmon_hru, request):
                 salmon_meteo,
                 data_type=data_type,
                 alt_names=alt_names,
-                extra=gextras,
+                data_kwds=gextras,
             ),
         ],
         ObservationData=[rc.ObservationData.from_nc(salmon_meteo, alt_names="qobs")],
