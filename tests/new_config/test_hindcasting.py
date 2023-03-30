@@ -35,12 +35,11 @@ class TestHindcasting:
         extra = {
             "ALL": {"Latitude": hru["latitude"], "Longitude": hru["longitude"]},
             "PRECIP": {
-                "ALL": {
-                    "Deaccumulate": True,
-                    "TimeShift": -0.25,
-                }
+                "Deaccumulate": True,
+                "TimeShift": -0.25,
             },
         }
+
         init_conf = GR4JCN(
             StartDate=dt.datetime(2018, 6, 10),
             EndDate=dt.datetime(2018, 6, 14),
