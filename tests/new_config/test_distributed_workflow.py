@@ -42,7 +42,7 @@ def test_simple_workflow(get_local_testdata, minimal_emulator, tmp_path):
 
     # Streamflow obs
     qobs_fn = get_local_testdata("matapedia/Qobs_Matapedia_01BD009.nc")
-    
+
     qobs = rc.ObservationData.from_nc(
         qobs_fn,
         alt_names=("discharge",),
@@ -64,7 +64,6 @@ def test_simple_workflow(get_local_testdata, minimal_emulator, tmp_path):
 
     assert gw["number_hrus"] == len(sub)
 
-    
     # Write GW command to file
     gw_fn = tmp_path / "gw.txt"
     gw_fn.write_text(rc.GridWeights(**gw).to_rv())
@@ -106,7 +105,7 @@ def test_simple_workflow(get_local_testdata, minimal_emulator, tmp_path):
         Gauge=gf,
         **rvh,
     )
-    
+
     out = Emulator(conf, workdir=tmp_path).run()
 
     assert len(out.hydrograph.nbasins) == len(sub)
