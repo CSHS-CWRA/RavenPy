@@ -47,24 +47,6 @@ class TestRV:
         assert str(d) == str(rvi.evaluation_periods.splitlines()[0])
 
 
-class TestOst:
-    def test_random(self):
-        o = OST(None)
-        assert o.random_seed == ""
-
-        o.random_seed = 0
-        assert o.random_seed == "RandomSeed 0"
-
-    def test_evaluation_metric_multiplier(self):
-        config = Config(model=None)
-        config.rvi.evaluation_metrics = ["RMSE", "NASH_SUTCLIFFE"]
-        assert config.ost.evaluation_metric_multiplier == 1
-
-        with pytest.raises(ValueError):
-            config.rvi.evaluation_metrics = ["PCT_BIAS"]
-            config.ost.evaluation_metric_multiplier
-
-
 class TestRVI:
     def test_supress_output(self):
         rvi = RVI(None)

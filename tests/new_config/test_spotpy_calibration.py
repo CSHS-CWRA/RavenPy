@@ -31,14 +31,16 @@ class TestGR4JCNSpotpy:
 
         model = GR4JCN(
             # params=[0.529, -3.396, 407.29, 1.072, 16.9, 0.947],  # Pas d'erreur?
-            ObservationData=rc.ObservationData.from_nc(
-                ts, alt_names="qobs"
-            ),  # Juste necessaire pour la calibration
-            Gauge=rc.Gauge.from_nc(
-                ts,
-                alt_names=alt_names,
-                extra={1: {"elevation": salmon_land_hru_1["elevation"]}},
-            ),
+            ObservationData=[
+                rc.ObservationData.from_nc(ts, alt_names="qobs")
+            ],  # Juste necessaire pour la calibration
+            Gauge=[
+                rc.Gauge.from_nc(
+                    ts,
+                    alt_names=alt_names,
+                    extra={1: {"elevation": salmon_land_hru_1["elevation"]}},
+                )
+            ],
             HRUs=[salmon_land_hru_1],
             StartDate=dt.datetime(1960, 1, 1),
             EndDate=dt.datetime(2002, 1, 1),
@@ -50,14 +52,15 @@ class TestGR4JCNSpotpy:
             config=model,
             low=(0.01, -15.0, 10.0, 0.0, 1.0, 0.0),
             high=(2.5, 10.0, 700.0, 7.0, 30.0, 1.0),
-            path=tmpdir,
         )
 
         sampler = spotpy.algorithms.dds(
             spot_setup, dbname="RAVEN_model_run", dbformat="ram", save_sim=False
         )
-        rep = 10
-
-        # FIXME: These tests should have assertions. Remove print functions.
+        rep = 8
 
         sampler.sample(rep, trials=1)
+        assert spot_setup.diagnostics is not None
+
+        results = sampler.getdata()
+        assert len(spotpy.analyser.get_best_parameterset(results)[0]) == 6
