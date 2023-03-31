@@ -102,16 +102,15 @@ class HYPR(Config):
         ],
         alias="HRUs",
     )
-
+    time_step: float = Field(1.0, alias="TimeStep")
+    calendar: o.Calendar = Field("PROLEPTIC_GREGORIAN", alias="Calendar")
     routing: o.Routing = Field("ROUTE_NONE", alias="Routing")
     catchment_route: o.CatchmentRoute = Field(
         "ROUTE_TRI_CONVOLUTION", alias="CatchmentRouting"
     )
-    evaporation: o.Evaporation = Field(
-        o.Evaporation.PET_FROMMONTHLY, alias="Evaporation"
-    )
+    evaporation: o.Evaporation = Field(o.Evaporation.FROMMONTHLY, alias="Evaporation")
     ow_evaporation: o.Evaporation = Field(
-        o.Evaporation.PET_FROMMONTHLY, alias="OW_Evaporation"
+        o.Evaporation.FROMMONTHLY, alias="OW_Evaporation"
     )
     rain_snow_fraction: o.RainSnowFraction = Field(
         o.RainSnowFraction.HBV, alias="RainSnowFraction"

@@ -54,6 +54,8 @@ class HRUs(rc.Command):
 class BasicRoute(Config):
     """Raven configuration performing routing only."""
 
+    time_step: float = Field(1.0, alias="TimeStep")
+    calendar: o.Calendar = Field("PROLEPTIC_GREGORIAN", alias="Calendar")
     catchment_route: o.CatchmentRoute = Field(
         "ROUTE_DUMP",
         alias="CatchmentRoute",

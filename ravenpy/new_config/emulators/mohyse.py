@@ -59,6 +59,8 @@ class Mohyse(Config):
 
     params: P = P()
     hrus: HRUs = Field([LandHRU()], alias="HRUs")
+    time_step: float = Field(1.0, alias="TimeStep")
+    calendar: o.Calendar = Field("PROLEPTIC_GREGORIAN", alias="Calendar")
     soil_classes: rc.SoilClasses = Field(
         [{"name": "TOPSOIL"}, {"name": "GWSOIL"}], alias="SoilClasses"
     )

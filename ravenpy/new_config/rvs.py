@@ -26,12 +26,12 @@ class RVI(RV):
     noisy_mode: bool = Field(None, alias="NoisyMode")
 
     run_name: str = Field(None, alias="RunName")
-    calendar: o.Calendar = Field("PROLEPTIC_GREGORIAN", alias="Calendar")
+    calendar: o.Calendar = Field(None, alias="Calendar")
     start_date: date = Field(None, alias="StartDate")
     assimilation_start_time: date = Field(None, alias="AssimilationStartTime")
     end_date: date = Field(None, alias="EndDate")
     duration: float = Field(None, alias="Duration")
-    time_step: float = Field(1.0, alias="TimeStep")
+    time_step: float = Field(None, alias="TimeStep")
     evaluation_period: Sequence[rc.EvaluationPeriod] = Field(
         None, alias="EvaluationPeriod"
     )
@@ -117,9 +117,10 @@ class RVI(RV):
     def dates2cf(cls, val, values):
         """Convert dates to cftime dates."""
         if val is not None:
-            return cftime._cftime.DATE_TYPES[values["calendar"].value.lower()](
-                *val.timetuple()[:6]
-            )
+            calendar = (
+                values.get("calendar") or o.Calendar.PROLEPTIC_GREGORIAN
+            ).value.lower()
+            return cftime._cftime.DATE_TYPES[calendar](*val.timetuple()[:6])
 
     class Config:
         arbitrary_types_allowed = True

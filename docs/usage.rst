@@ -2,119 +2,93 @@
 Usage
 =====
 
-RavenPy is designed to make RAVEN easier to use from an interactive Python programming environment. It creates a temporary directory for execution, writes configuration files and creates symbolic links to input files before executing the model. Once the simulation is complete, RavenPy reads output files and converts them into native Python objects whenever possible.
+RavenPy is designed to make Raven easier to use from an interactive Python programming environment. At its most basic, it can run an existing model configuration and expose the results as `xarray.Datasets`. It can also be used to configure model *emulators* and write configuration files.
+
 
 Running Raven from existing configuration files
 -----------------------------------------------
-
-In a situation where Raven configuration files (`.rv*` files) exist already, Raven can be run by:
-
-.. code-block:: python
-
-    from ravenpy.models import Raven
-
-    model = ravenpy.models.Raven(workdir="/tmp/testrun")
-    model.configure(["conf.rvi", "conf.rvt", "conf.rvh", "conf.rvc", "conf.rvp"])
-    model(["tas.nc", "pr.nc"])
-
-
-The `configure` method copies the configuration files to a directory, creates a symbolic link to the Raven executable in the same directory and runs it. The simulated hydrograph can then be accessed using the `q_sim` attribute, for example:
+When Raven configuration files (`.rv*` files) exist already, Raven can be run by:
 
 .. code-block:: python
 
-    model.q_sim.plot()
+    from ravenpy import run
 
-The real value of RavenPy is however in its templating capability. Formatting tags inserted in configuration files can be replaced by Python objects injected at run time. So for example, instead of specifying the start and end dates of a simulation in the configuration file, we can write a configuration file with::
+    output_path = run(modelname, configdir)
 
-  :StartDate             {start_date}
-  :EndDate               {end_date}
+`run` simply returns the directory storing the model outputs. If Raven emits warnings, those will be printed in the console. If Raven raises errors, `run` will halt the execution with a `RavenError` and display the error messages we typically find in `Raven_errors.txt`.
 
-and then pass `start_date` and `end_date` as arguments to the `model` call:
+
+Exposing model outputs as Python objects
+----------------------------------------
+The model outputs can be read with the `OutputReader` class:
 
 .. code-block:: python
 
-    import datetime as dt
+    from ravenpy import OutputReader
 
-    model = ravenpy.models.Raven()
-    model.configure(["conf.rvi", "conf.rvt", "conf.rvh", "conf.rvc", "conf.rvp"])
-    model(start_date=dt.datetime(2020, 1, 1), end_date=dt.datetime(2020, 2, 1))
+    out = OutputReader(run_name, path=output_path)
+    out.hydrograph.q_sim
+    out.storage["Ponded Water"]
 
-This templating mechanism has been put in place for all four emulated models offered by RavenPy.
+Note that this works only if simulated variables are stored as netCDF files, that is, if the `rvi` file includes a `:WriteNetCDFFormat` command.
 
-Running a Raven emulated model
-------------------------------
+The class `EnsembleReader` does the same for an ensemble of model outputs, concatenating netCDF outputs along a new dimension:
 
-RavenPy supports pre-defined Raven-emulated models:
+.. code-block:: python
 
-  - GR4J-Cemaneige
+    from ravenpy import EnsembleReader
+
+    out = EnsembleReader(
+        run_name,
+        paths=[
+            output_path,
+        ],
+        dim="ensemble_dim",
+    )
+    out.hydrograph.q_sim
+    out.storage["Ponded Water"]
+
+
+Configuring emulators
+---------------------
+Ravenpy comes packaged with pre-configured emulators, that is, Raven model configurations that can be modified on the fly. These emulators are made out of symbolic expressions, connecting model parameters to properties and coefficients. For example, the code below creates a model configuration for emulated model GR4JCN using the parameters given, as well as a `Gauge` configuration inferred b inspecting the `meteo.nc` file.
+
+.. code-block:: python
+
+    from ravenpy.config.emulators import GR4JCN
+    from ravenpy.config.commands import Gauge
+
+    gr4jcn = GR4JCN(
+        params=[0.5, -3.0, 400, 1.0, 17, 0.9], Gauge=[rc.Gauge.from_nc("meteo.nc")]
+    )
+
+Note that `Gauge.from_nc` will only find the required information is the netCDF file complies with the `CF-Convention`. Otherwise, additional parameters have to be provided to complete the configuration.
+
+Ravenpy includes a suite of eight emulators
+  - GR4JCN (GR4J-Cemaneige)
   - HMETS
-  - HBV-EC
-  - MOHYSE
-  - BLENDED
-  - CANADIANSHIELD
+  - HBVEC
+  - Mohyse
+  - Blended
+  - CanadianShield
   - SACSMA
   - HYPR
 
-For each one of these, `.rv` files are provided that reproduce almost perfectly the behavior of the original models and let hydrologists template typical model options. Running a simulation from an emulated model minimally requires passing a vector of model parameters and mandatory model options, as well as the list of input forcing files. RavenPy will then fill the `.rv` files with user-defined parameters and launch the simulation, for example:
+
+Running an emulator
+-------------------
+The RV files for the emulator above can be inspected using the `rvi`, `rvh`, `rvp`, `rvc` and `rvt` properties, e.g. `print(gr4jcn.rvt)` will show the `rvt` file as it would be written to disk. Configuration files can then be written to disk using `gr4jcn.write_rv(workdir, modelname)`, and the model launched using the `run` function introduced before.
+
+For convenience, `ravenpy` also proposes the `Emulator` class, designed to streamline the execution of the model and the retrieval of the results.
 
 .. code-block:: python
 
-    from ravenpy.models import GR4JCN
+    from ravenpy import Emulator
 
-    model = GR4JCN()
-    model(
-        ts=["meteo.nc"],
-        params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
-        start_date=dt.datetime(2000, 1, 1),
-        end_date=dt.datetime(2002, 1, 1),
-        area=4250.6,
-        elevation=843.0,
-        latitude=54.4848,
-        longitude=-123.3659,
-    )
-    model.q_sim.plot()
+    e = Emulator(config=gr4jcn, workdir="/tmp/gr4jcn/run_1")
+    out = e.run()
+    out.hydrograph.q_sim
 
-The model configuration can be found as a zip archive in:
+If no `workdir` is given, a temporary directory will be created, available from  The `Emulator.workdir` property. `Emulator` also has `resume` method that returns a copy of the original configuration with the internal states and start date set to the values stored in the `solution.rvc` file, which can then be used to launch another simulation following the first one.
 
-.. code-block:: python
-
-    model.outputs["rv_config"]
-
-
-Setting initial conditions
---------------------------
-Each emulated model defines default initial conditions for its state variables (e.g. storage). Initial conditions can be set explicitly by passing the `HRUState` parameter when calling the model:
-
-.. code-block:: python
-
-    from ravenpy.models import GR4JCN
-    from ravenpy.config.commands import HRUState
-
-    model = GR4JCN()
-    model(ts=ts, hru_state=HRUState(data={"SOIL[0]": 100}), **kwargs)
-
-
-Resuming from a previous run
-----------------------------
-Once a first simulation has completed, it's possible to initialize a second simulation using the state at the end of the first simulation. This can be done from a saved `rvc` *solution* file:
-
-.. code-block:: python
-
-    model = GR4JCN()
-    rvc = open("/path/to/solution.rvc")
-    model.resume(rvc)
-    model(ts=ts, **kwargs)
-
-or if a model instance already exists, simply by calling the `resume` method on it:
-
-.. code-block:: python
-
-    model = GR4JCN()
-    model(
-        ts=ts,
-        start_date=dt.datetime(2000, 1, 1),
-        end_date=dt.datetime(2002, 2, 1),
-        **kwargs
-    )
-    model.resume()
-    model(ts=ts, start_date=dt.datetime(2000, 2, 1), end_date=dt.datetime(2002, 3, 1))
+For more information on model configuration, see `Configuration`_.
