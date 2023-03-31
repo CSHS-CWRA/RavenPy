@@ -109,5 +109,5 @@ def test_simple_workflow(get_local_testdata, minimal_emulator, tmp_path):
     out = Emulator(conf, workdir=tmp_path).run()
 
     # Number of gauged sub-basins
-    ng = sum([sb.gauged for sb in conf.sub_basins.__root__])
+    ng = sum([sb.gauged for sb in conf.sub_basins])
     assert len(out.hydrograph.nbasins) == ng

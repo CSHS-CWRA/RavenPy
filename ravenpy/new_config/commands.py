@@ -23,6 +23,7 @@ from pydantic import (
     FilePath,
     HttpUrl,
     NonNegativeFloat,
+    PositiveInt,
     PrivateAttr,
     ValidationError,
     confloat,
@@ -32,7 +33,15 @@ from pydantic import (
 )
 
 from . import options
-from .base import Command, FlatCommand, GenericParameterList, ParameterList, Record, Sym
+from .base import (
+    Command,
+    FlatCommand,
+    GenericParameterList,
+    ListCommand,
+    ParameterList,
+    Record,
+    Sym,
+)
 from .utils import filter_for, nc_specs
 
 """
@@ -241,14 +250,14 @@ class SoilProfile(Record):
         return fmt.format(self.name, n_horizons, *horizon_data)
 
 
-class SoilProfiles(Command):
+class SoilProfiles(ListCommand):
     __root__: Sequence[SoilProfile]
 
 
 class SubBasin(Record):
     """Record to populate RVH :SubBasins command internal table."""
 
-    subbasin_id: int = 1
+    subbasin_id: PositiveInt = 1
     name: str = "sub_001"
     downstream_id: int = -1
     profile: str = "NONE"
@@ -264,7 +273,7 @@ class SubBasin(Record):
         return " ".join(f"{v: <{VALUE_PADDING}}" for v in d.values())
 
 
-class SubBasins(Command):
+class SubBasins(ListCommand):
     """SubBasins command (RVH)."""
 
     __root__: Sequence[SubBasin]
@@ -281,12 +290,12 @@ class SubBasins(Command):
 class HRU(Record):
     """Record to populate :HRUs command internal table (RVH)."""
 
-    hru_id: int = 1
+    hru_id: PositiveInt = 1
     area: Sym = 0  # km^2
     elevation: float = 0  # meters
     latitude: float = 0
     longitude: float = 0
-    subbasin_id: int = 1
+    subbasin_id: PositiveInt = 1
     land_use_class: str = "[NONE]"
     veg_class: str = "[NONE]"
     soil_profile: str = "[NONE]"
@@ -312,7 +321,7 @@ class HRU(Record):
         return " ".join(f"{v:<{n}}" for v, n in zip(d.values(), ns))
 
 
-class HRUs(Command):
+class HRUs(ListCommand):
     """HRUs command (RVH)."""
 
     __root__: Sequence[HRU]
@@ -760,7 +769,7 @@ class HRUState(Record):
         return cls(index=idx, data=dict(zip(names, values)))
 
 
-class HRUStateVariableTable(Command):
+class HRUStateVariableTable(ListCommand):
     """Table of HRU state variables.
 
     If the HRUState include different attributes, the states will be modified to include all attributes.
@@ -853,7 +862,7 @@ class BasinIndex(Command):
         return cls(**rec_values)
 
 
-class BasinStateVariables(Command):
+class BasinStateVariables(ListCommand):
     __root__: Sequence[BasinIndex]
 
     @classmethod
@@ -870,7 +879,7 @@ class BasinStateVariables(Command):
         return cls.parse_obj(bs)
 
 
-class SoilClasses(Command):
+class SoilClasses(ListCommand):
     class SoilClass(Record):
         name: str
         mineral: Tuple[float, float, float] = None
@@ -912,7 +921,7 @@ class VegetationClass(Record):
         return template.format(**self.dict())
 
 
-class VegetationClasses(Command):
+class VegetationClasses(ListCommand):
     __root__: Sequence[VegetationClass]
     _Attributes: Sequence[str] = PrivateAttr(["MAX_HT", "MAX_LAI", "MAX_LEAF_COND"])
     _Units: Sequence[str] = PrivateAttr(["m", "none", "mm_per_s"])
@@ -928,7 +937,7 @@ class LandUseClass(Record):
         return template.format(**self.dict())
 
 
-class LandUseClasses(Command):
+class LandUseClasses(ListCommand):
     __root__: Sequence[LandUseClass]
     _Attributes: Sequence[str] = PrivateAttr(["IMPERMEABLE_FRAC", "FOREST_COVERAGE"])
     _Units: Sequence[str] = PrivateAttr(["fract", "fract"])
@@ -947,7 +956,7 @@ class TerrainClass(Record):
         return out
 
 
-class TerrainClasses(Command):
+class TerrainClasses(ListCommand):
     __root__: Sequence[TerrainClass]
     _Attributes: Sequence[str] = PrivateAttr(
         ["HILLSLOPE_LENGTH", "DRAINAGE_DENSITY", "TOPMODEL_LAMBDA"]
@@ -965,11 +974,11 @@ class _MonthlyRecord:
         return f"{self.name:<16} " + ", ".join(map(str, self.values))
 
 
-class SeasonalRelativeLAI(Command):
+class SeasonalRelativeLAI(ListCommand):
     __root__: Sequence[_MonthlyRecord] = (_MonthlyRecord(),)
 
 
-class SeasonalRelativeHeight(Command):
+class SeasonalRelativeHeight(ListCommand):
     __root__: Sequence[_MonthlyRecord] = (_MonthlyRecord(),)
 
 

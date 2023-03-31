@@ -140,23 +140,16 @@ class Command(BaseModel):
         for key, field in self.__fields__.items():
             obj = self.__dict__[key]
             if obj is not None:
-                try:
-                    o = obj[0]
-                except (TypeError, IndexError, KeyError):
-                    pass
-                else:
-                    if issubclass(o.__class__, Record):
-                        if recs:
-                            raise ValueError("More than one record attribute found.")
-                        recs = obj
-                        continue
-                finally:
-                    if field.has_alias or field.alias == "__root__":
-                        cmds[field.alias] = self.__dict__[key]
-                    elif issubclass(obj.__class__, Record):
-                        recs = [
-                            obj,
-                        ]
+                if issubclass(obj.__class__, Record):
+                    recs = [obj]
+                elif (
+                    getattr(field.annotation, "_name", "") == "Sequence"
+                    and len(obj)
+                    and issubclass(obj[0].__class__, Record)
+                ):
+                    recs = obj
+                elif field.has_alias or field.alias == "__root__":
+                    cmds[field.alias] = self.__dict__[key]
 
         for key, field in self.__private_attributes__.items():
             cmds[key.strip("_")] = getattr(self, key)
@@ -166,11 +159,12 @@ class Command(BaseModel):
     def to_rv(self):
         """Return Raven configuration string."""
         d = self.dict()
-        sc, recs = self.__subcommands__()
+        cmds, recs = self.__subcommands__()
 
-        cmds = {k: v for (k, v) in sc.items() if v != recs}
+        # Write command strings
         d.update(encoder(cmds))
 
+        # Write record strings
         recs = "\n".join(map(str, recs))
         if recs:
             recs = indent(recs, self._indent)
@@ -190,6 +184,16 @@ class Command(BaseModel):
 
 class FlatCommand(Command):
     """Only used to discriminate Commands that should not be nested."""
+
+
+class ListCommand(Command):
+    """Use so that commands with __root__: Sequence[Command] behave like a list."""
+
+    def __iter__(self):
+        return iter(self.__root__)
+
+    def __getitem__(self, item):
+        return self.__root__[item]
 
 
 class ParameterList(Record):

@@ -24,18 +24,10 @@ def test_evaluation_metrics():
     assert Test().to_rv().strip() == ":EvaluationMetrics    RMSE NASH_SUTCLIFFE"
 
 
-def test_hru():
-    hru = rc.HRUs.parse_obj([salmon_land_hru_1])
-    hru.to_rv()
-
-
 def test_hrus():
-    hrus = rc.HRUs(
-        __root__=[
-            salmon_land_hru_1,
-        ]
-    )
+    hrus = rc.HRUs.parse_obj([salmon_land_hru_1])
     hrus.to_rv()
+    assert hrus[0].subbasin_id == 1
 
 
 def test_hru_state():
@@ -391,6 +383,18 @@ def test_subbasin_properties():
         records=[{"sb_id": 1, "values": (0, 1)}],
     )
     assert "0, 1" in c.to_rv()
+
+
+def test_subbasins():
+    c = rc.SubBasins.parse_obj([{"name": "SB1"}])
+    c.to_rv()
+    assert c[0].gauged
+
+    class Test(RV):
+        sub_basins: rc.SubBasins = Field([rc.SubBasin()], alias="SubBasins")
+        hrus: rc.HRUs = Field([rc.HRU()], alias="HRUs")
+
+    Test().to_rv()
 
 
 def test_ensemble_mode():
