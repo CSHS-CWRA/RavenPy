@@ -30,7 +30,7 @@ The model outputs can be read with the `OutputReader` class:
     out.hydrograph.q_sim
     out.storage["Ponded Water"]
 
-Note that this works only if simulated variables are stored as netCDF files, that is, if the `rvi` file includes a `:WriteNetCDFFormat` command.
+Note that this works only if simulated variables are stored as netCDF files, that is, if the `rvi` file includes a `:WriteNetCDFFormat` command. Also the `run_name` parameter should be set to None, if the output files from Raven aren't renamed. If they are renamed `run_name` should be a string of this new file prefix.
 
 The class `EnsembleReader` does the same for an ensemble of model outputs, concatenating netCDF outputs along a new dimension:
 
@@ -51,7 +51,7 @@ The class `EnsembleReader` does the same for an ensemble of model outputs, conca
 
 Configuring emulators
 ---------------------
-Ravenpy comes packaged with pre-configured emulators, that is, Raven model configurations that can be modified on the fly. These emulators are made out of symbolic expressions, connecting model parameters to properties and coefficients. For example, the code below creates a model configuration for emulated model GR4JCN using the parameters given, as well as a `Gauge` configuration inferred b inspecting the `meteo.nc` file.
+Ravenpy comes packaged with pre-configured emulators, that is, Raven model configurations that can be modified on the fly. These emulators are made out of symbolic expressions, connecting model parameters to properties and coefficients. For example, the code below creates a model configuration for emulated model GR4JCN using the parameters given, as well as a `Gauge` configuration inferred by inspecting the `meteo.nc` file.
 
 .. code-block:: python
 
@@ -62,7 +62,7 @@ Ravenpy comes packaged with pre-configured emulators, that is, Raven model confi
         params=[0.5, -3.0, 400, 1.0, 17, 0.9], Gauge=[rc.Gauge.from_nc("meteo.nc")]
     )
 
-Note that `Gauge.from_nc` will only find the required information is the netCDF file complies with the `CF-Convention`. Otherwise, additional parameters have to be provided to complete the configuration.
+Note that `Gauge.from_nc` will only find the required information if the netCDF file complies with the `CF-Convention`. Otherwise, additional parameters have to be provided to complete the configuration.
 
 Ravenpy includes a suite of eight emulators
   - GR4JCN (GR4J-Cemaneige)
