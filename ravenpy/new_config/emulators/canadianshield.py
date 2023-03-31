@@ -53,7 +53,7 @@ class BedRockHRU(HRU):
     terrain_class: str = "[NONE]"
 
 
-class HRUs(rc.Command):
+class HRUs(rc.HRUs):
     """HRUs command for GR4J.
 
     Pydantic is able to automatically detect if an HRU is Land or Lake if `hru_type` is provided.

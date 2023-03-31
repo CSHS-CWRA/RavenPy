@@ -46,7 +46,7 @@ class ForestHRU(HRU):
     hru_type: Literal["land"] = "land"
 
 
-class HRUs(rc.Command):
+class HRUs(rc.HRUs):
     """HRUs command for HMETS.
 
     Pydantic is able to automatically detect if an HRU is Land or Lake if `hru_type` is provided.

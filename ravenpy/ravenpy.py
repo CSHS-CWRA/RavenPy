@@ -123,6 +123,9 @@ class OutputReader:
         self._path = Path(path) if path else Path.cwd()
         self._files = parsers.output_files(self._run_name, self._path)
 
+        # TODO: Check if no files are found. Otherwise we get cryptic errors.
+        # if self._files["hydrograph"]
+
     @property
     def files(self) -> dict:
         """Return paths to output files."""

@@ -322,8 +322,8 @@ def _get_time(config):
     return time
 
 
-def hindcast_from_meteo_forecast(
-    config, forecast, workdir=None, overwrite=True, **kwds
+def ensemble_prediction(
+    config, forecast, ens_dim="member", workdir=None, overwrite=True, **kwds
 ) -> EnsembleReader:
     """
     Ensemble Streamflow Prediction based on historical weather forecasts (Caspar or other).
@@ -338,10 +338,14 @@ def hindcast_from_meteo_forecast(
       Model configuration.
     forecast: Path to forecast file
       Forecast subsetted to the catchment location (.nc).
+    ens_dim: str
+      Name of dimension to iterate over.
     workdir: str, Path
       Path to rv files and model outputs. If None, create temporary directory.
     overwrite: bool
       Overwrite files when writing to disk.
+    **kwds: dict
+      Keywords for the `Gauge.from_nc` function.
 
     Returns
     -------
@@ -354,7 +358,7 @@ def hindcast_from_meteo_forecast(
     ensemble = []
     forecast_ds = xr.open_dataset(forecast, use_cftime=True)
 
-    for member in range(0, len(forecast_ds.members)):
+    for member in range(0, len(forecast_ds[ens_dim])):
         # Prepare model instance
 
         out = Emulator(
@@ -375,7 +379,11 @@ def hindcast_from_meteo_forecast(
         # Append to the ensemble.
         ensemble.append(out)
 
-    return EnsembleReader(config.run_name, runs=ensemble)
+    return EnsembleReader(config.run_name, runs=ensemble, dim=ens_dim)
+
+
+# Alias
+hindcast_from_meteo_forecast = ensemble_prediction
 
 
 def compute_forecast_flood_risk(forecast: xr.Dataset, flood_level: float):

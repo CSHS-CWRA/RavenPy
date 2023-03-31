@@ -1,11 +1,14 @@
+import datetime as dt
+
 import numpy as np
 import pytest
 import xarray as xr
 from climpred import HindcastEnsemble
 
-from ravenpy import OutputReader
+from ravenpy import Emulator, OutputReader
 from ravenpy.utilities.new_config.forecasting import (
     climatology_esp,
+    ensemble_prediction,
     hindcast_climatology_esp,
     to_climpred_hindcast_ensemble,
     warm_up,
@@ -54,3 +57,63 @@ def test_hindcast_climatology_esp(minimal_emulator, tmp_path, salmon_meteo):
         alignment="same_inits",
     )
     assert rank_histo_verif.q_sim.shape[0] == minimal_emulator.duration + 1
+
+
+def test_forecasting_GEPS(numeric_config, get_local_testdata):
+    """
+    Test to perform a forecast using auto-queried ECCC data aggregated on THREDDS.
+    """
+    name, wup = numeric_config
+    if name != "GR4JCN":
+        pytest.skip()
+
+    geps = get_local_testdata("eccc_forecasts/geps_watershed.nc")
+
+    # Prepare a RAVEN model run using historical data, GR4JCN in this case.
+    # This is a dummy run to get initial states. In a real forecast situation,
+    # this run would end on the day before the forecast, but process is the same.
+    wup.start_date = dt.datetime(2000, 1, 1)
+    wup.duration = 30
+
+    e = Emulator(wup)
+    e.run()
+
+    # Extract the final states that will be used as the next initial states
+    conf = e.resume()
+
+    # Set run parameters
+    conf.start_date = "2020-12-10"
+    conf.end_date = None
+    conf.duration = 9
+
+    # Collect test forecast data for location and climate model (20 members)
+    nm = 20
+    data_kwds = {
+        "ALL": {
+            "TimeShift": -0.25,
+            "Latitude": conf.hrus[0].latitude,
+            "Longitude": conf.hrus[0].longitude,
+        },
+        "PRECIP": {"Deaccumulate": True},
+    }
+
+    # Data types to extract from netCDF
+    data_type = ["TEMP_AVE", "PRECIP"]
+
+    # Run the 20 members
+    out = ensemble_prediction(
+        conf,
+        geps,
+        ens_dim="member",
+        data_kwds=data_kwds,
+        data_type=data_type,
+    )
+
+    # The model now has the forecast data generated and has 10 days of forecasts.
+    assert len(out.hydrograph.time) == 10
+
+    # Also see if GEPS has 20 members produced.
+    assert len(out.hydrograph.q_sim.member) == nm
+
+    # Check all members are different (checking snow because data in winter)
+    assert len(set(out.storage.Snow.isel(time=-1).values)) == nm
