@@ -43,7 +43,7 @@ def regionalize(
     Parameters
     ----------
     config: Config
-      Emulator configuration. Only GR4JCN, HMETS and Mohyse are supported.
+      Symbolic emulator configuration. Only GR4JCN, HMETS and Mohyse are supported.
     method : {'MLR', 'SP', 'PS', 'SP_IDW', 'PS_IDW', 'SP_IDW_RA', 'PS_IDW_RA'}
       Name of the regionalization method to use.
     nash : pd.Series
@@ -79,6 +79,9 @@ def regionalize(
     name = config.__class__.__name__
     if name not in ["GR4JCN", "HMETS", "Mohyse"]:
         raise ValueError(f"Emulator {name} is not supported for regionalization.")
+
+    if not config.is_symbolic:
+        raise ValueError("config should be a symbolic configuration.")
 
     # TODO: Include list of available properties in docstring.
     # TODO: Add error checking for source, target stuff wrt method chosen.
