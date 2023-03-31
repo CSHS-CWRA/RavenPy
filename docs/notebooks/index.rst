@@ -34,8 +34,9 @@ More complex workflows making use of the RavenWPS server on the PAVICS platform
    :maxdepth: 1
    Assess_probabilistic_flood_risk
    Comparing_hindcasts_and_ESP_forecasts
+   Distributed_hydrlological_modelling
+   Hydrological_realtime_forecasting   
    hydro_routing_product_example
-   Hydrological_realtime_forecasting
    HydroShare_integration
    Perform_Regionalization
    Running_HMETS_with_CANOPEX_dataset
