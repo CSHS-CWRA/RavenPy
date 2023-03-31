@@ -289,7 +289,9 @@ def run(
         warn(msg, category=RavenWarning)
 
     if messages["ERROR"]:
-        raise RavenError("\n".join(messages["ERROR"]))
+        raise RavenError(
+            "\n".join([f"Config directory: {configdir}"] + messages["ERROR"])
+        )
 
     return outputdir
 
