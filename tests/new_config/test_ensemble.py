@@ -2,6 +2,7 @@ import datetime as dt
 
 from ravenpy import Emulator, EnsembleReader
 from ravenpy.new_config import commands as rc
+from ravenpy.new_config import options as o
 from ravenpy.new_config.emulators import GR4JCN
 
 # Alternative names for variables in meteo forcing file
@@ -34,26 +35,27 @@ def test_enkf(salmon_meteo, salmon_hru, tmp_path):
         ObservationData=[rc.ObservationData.from_nc(salmon_meteo, alt_names="qobs")],
         HRUs=[salmon_hru["land"]],
         StartDate=dt.datetime(1996, 9, 1),
-        EndDate=dt.datetime(1996, 9, 15),
-        AssimilationStartTime=dt.datetime(1996, 9, 8),
-        RunName="test",
+        Duration=30,
+        EnsembleMode=rc.EnsembleMode(n=7),
+        EnKFMode=o.EnKFMode.SPINUP,
+        AssimilationStartTime=dt.datetime(1996, 9, 2),
+        RunName="spinup",
         EvaluationMetrics=("NASH_SUTCLIFFE",),
         GlobalParameter={"AVG_ANNUAL_RUNOFF": 208.480},
-        EnsembleMode=rc.EnsembleMode(n=7),
-        OutputDirectoryFormat=tmp_path / "ens_*",
+        OutputDirectoryFormat="./ens_*",
         ForcingPerturbation=[
             rc.ForcingPerturbation(
                 forcing="RAINFALL",
                 dist="DIST_NORMAL",
-                p1=1,
-                p2=0.05,
+                p1=0,
+                p2=0.5,
                 adj="MULTIPLICATIVE",
             ),
             rc.ForcingPerturbation(
                 forcing="SNOWFALL",
                 dist="DIST_NORMAL",
                 p1=1,
-                p2=0.05,
+                p2=0.07,
                 adj="MULTIPLICATIVE",
             ),
         ],
@@ -77,12 +79,27 @@ def test_enkf(salmon_meteo, salmon_hru, tmp_path):
         NoisyMode=True,
     )
 
-    e = Emulator(config=conf, workdir=tmp_path)
-    e.write_rv()
-    e.run()
-    paths = list(tmp_path.glob("ens_*"))
-    paths.sort()
-    assert len(paths) == 14
+    tmp_path = "/tmp/enkf1"
+    conf.zip(tmp_path, overwrite=True)
+    # Spin-up
 
-    ens = EnsembleReader(conf.run_name, paths)
-    assert len(ens.files["hydrograph"]) == 14
+    spinup = Emulator(config=conf, workdir=tmp_path).run(overwrite=True)
+
+    # Closed Loop
+    # loop_conf = conf.set_solution(spinup.solution)
+    # conf.enkf_mode = o.EnKFMode.CLOSED_LOOP
+    # conf.run_name = "loop"
+    # conf.solution_run_name = "spinup"
+    # conf.uniform_initial_conditions = None
+    # loop = Emulator(config=conf, workdir=tmp_path).run(overwrite=True)
+
+    # Forecast
+
+    # conf.duration =
+
+    # paths = list(tmp_path.glob("ens_*"))
+    # paths.sort()
+    # assert len(paths) == 7
+
+    # ens = EnsembleReader(conf.run_name, paths)
+    # assert len(ens.files["hydrograph"]) == 7

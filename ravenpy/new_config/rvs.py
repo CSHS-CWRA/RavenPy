@@ -187,14 +187,15 @@ class RVH(RV):
 class RVE(RV):
     """Ensemble Kalman filter configuration"""
 
+    enkf_mode: o.EnKFMode = Field(None, alias="EnKFMode")
+    window_size: int = Field(None, alias="WindowSize")
+    solution_run_name: str = Field(None, alias="SolutionRunName")
+    extra_rvt_filename: str = Field(None, alias="ExtraRVTFilename")
+
     output_directory_format: Union[str, Path] = Field(
         None, alias="OutputDirectoryFormat"
     )
-    warm_ensemble: Union[str, Path] = Field(
-        None,
-        alias="WarmEnsemble",
-        description="RunName of the simulation whose initial states is used.",
-    )
+
     forecast_rvt_filename: str = Field(None, alias="ForecastRVTFilename")
     truncate_hindcasts: bool = Field(None, alias="TruncateHindcasts")
     forcing_perturbation: Sequence[rc.ForcingPerturbation] = Field(
@@ -366,20 +367,35 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
 
         return out
 
-    def zip(self, path):
+    def zip(self, workdir: Union[str, Path], modelname=None, overwrite=False):
         """Write configuration to zip file.
 
         Parameters
         ----------
-        path: Path, str
+        workdir: Path, str
           Path to zip archive storing RV files.
+        modelname: str
+          File name stem for rv files. If not given, defaults to `RunName` if set, otherwise `raven`.
+        overwrite: bool
+          If True, overwrite existing configuration zip file.
         """
         import zipfile
 
-        with zipfile.ZipFile(path, "w") as fh:
+        workdir = Path(workdir)
+        if not workdir.exists():
+            workdir.mkdir(parents=True)
+
+        if modelname is None:
+            modelname = self.run_name or "raven"
+
+        fn = workdir / f"{modelname}.zip"
+        if fn.exists() and not overwrite:
+            raise OSError(f"{fn} already exists and would be overwritten.")
+
+        with zipfile.ZipFile(fn, "w") as fh:
             for rv in ["rvi", "rvp", "rvc", "rvh", "rvt"]:
-                fn = self.rv_fn(rv)
-                fh.write(fn, self._rv(rv))
+                f = f"{modelname}.{rv}"
+                fh.writestr(f, self._rv(rv))
         return zip
 
 
