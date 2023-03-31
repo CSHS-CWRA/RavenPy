@@ -1,10 +1,7 @@
-import datetime as dt
-
 import numpy as np
 import pandas as pd
 import pytest
 
-from ravenpy.models import GR4JCN
 from ravenpy.utilities.new_config.regionalization import regionalize
 from ravenpy.utilities.regionalization import (
     distance,
@@ -21,10 +18,6 @@ class TestRegionalization:
         if name not in ["GR4JCN", "HMETS", "Mohyse"]:
             pytest.skip(f"Model {name} is not supported.")
 
-        ts = get_local_testdata(
-            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
-        )
-
         nash, params = read_gauged_params(name.upper())
         variables = ["latitude", "longitude", "area", "forest"]
         props = read_gauged_properties(variables)
@@ -34,12 +27,6 @@ class TestRegionalization:
             "area": 4250.6,
             "forest": 0.4,
         }
-
-        hrus = (
-            GR4JCN.LandHRU(
-                area=4250.6, elevation=843.0, latitude=40.4848, longitude=-103.3659
-            ),
-        )
 
         qsim, ens = regionalize(
             config=config,
