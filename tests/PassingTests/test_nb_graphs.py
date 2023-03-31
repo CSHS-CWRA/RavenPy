@@ -2,6 +2,7 @@ import pytest
 
 from ravenpy.utilities.testdata import open_dataset
 
+
 class TestNBGraphs:
     hydrographs = "hydro_simulations/raven-gr4j-cemaneige-sim_hmets-0_Hydrographs.nc"
 
