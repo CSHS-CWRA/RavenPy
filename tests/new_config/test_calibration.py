@@ -402,4 +402,6 @@ def test_spotpy_calibration(symbolic_config, tmpdir):
     assert spot_setup.diagnostics is not None
 
     results = sampler.getdata()
-    assert len(spotpy.analyser.get_best_parameterset(results)[0]) == len(bounds[name]["high"])
+    assert len(spotpy.analyser.get_best_parameterset(results)[0]) == len(
+        bounds[name]["high"]
+    )
