@@ -1,15 +1,16 @@
 import datetime as dt
 
+import xarray as xr
+import xskillscore as xs
+
 from ravenpy import Emulator, EnsembleReader
 from ravenpy.new_config import commands as rc
 from ravenpy.new_config.emulators import GR4JCN
 from ravenpy.utilities.new_config.forecasting import (
-    warm_up,
     hindcast_climatology_esp,
     to_climpred_hindcast_ensemble,
-    )
-import xarray as xr
-import xskillscore as xs
+    warm_up,
+)
 
 """
 Test to perform a hindcast using Caspar data on THREDDS.
@@ -17,6 +18,7 @@ Currently only runs GEPS, eventually will run GEPS, GDPS, REPS and RDPS.
 To do so will need to add the actual data from Caspar, currently being downloaded
 but this is a good proof of concept.
 """
+
 
 class TestHindcasting:
     def test_hindcasting_GEPS(self, get_local_testdata, salmon_hru, tmp_path):
@@ -100,19 +102,20 @@ class TestHindcasting:
         assert len(out.hydrograph.member) == 3
         assert len(out.hydrograph.time) == 5
 
-
     def test_climpred_hindcast_verif(self, get_local_testdata, salmon_hru, tmp_path):
-        ts = get_local_testdata("raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc")
+        ts = get_local_testdata(
+            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
+        )
 
         # This is the forecast start date, on which the forecasts will be launched.
         start_date = dt.datetime(1980, 6, 1)
-        
+
         # Provide the length of the forecast, in days:
         forecast_duration = 100
-        
+
         # Define HRU to build the hydrological model
         hru = salmon_hru["land"]
-        
+
         # Set alternative names for netCDF variables
         alt_names = {
             "TEMP_MIN": "tmin",
@@ -120,7 +123,7 @@ class TestHindcasting:
             "RAINFALL": "rain",
             "SNOWFALL": "snow",
         }
-        
+
         # Data types to extract from netCDF
         data_type = ["TEMP_MAX", "TEMP_MIN", "RAINFALL", "SNOWFALL"]
         data_kwds = {
@@ -130,7 +133,7 @@ class TestHindcasting:
                 ],  # No need for lat/lon as they are included in the netcdf file already
             }
         }
-        
+
         # Model configuration
         model_config = GR4JCN(
             params=[0.529, -3.396, 407.29, 1.072, 16.9, 0.947],
@@ -144,30 +147,28 @@ class TestHindcasting:
             Duration=forecast_duration,
             GlobalParameter={"AVG_ANNUAL_RUNOFF": 208.480},
         )
-    
+
         hindcasts = hindcast_climatology_esp(
             config=model_config,  # Note that the forecast duration is already set-up in the model_config above.
             warm_up_duration=365,  # number of days for the warm-up
             years=[1985, 1986, 1987, 1988, 1989, 1990],
             hindcast_years=[2001, 2002, 2003, 2004, 2005, 2006, 2007],
         )
-        
+
         q_obs = xr.open_dataset(ts)
 
         # However, our simulated streamflow is named "q_sim" and climpred requires the observation to be named the same thing
         # so let's rename it. While we're at it, we need to make sure that the identifier is the same. In our observation
         # dataset, it is called "nstations" but in our simulated streamflow it's called "nbasins". Here we standardize.
         q_obs = q_obs.rename({"qobs": "q_sim", "nstations": "nbasins"})
-        
+
         # Make the hindcasting object we can use to compute statistics and metrics
         hindcast_object = to_climpred_hindcast_ensemble(hindcasts, q_obs)
-        
-        
+
         # This function is used to convert to binary to see if yes/no forecast is larger than observations
         def pos(x):
             return x > 0  # Check for binary outcome
-        
-        
+
         # Rank histogram verification metric
         rank_histo_verif = hindcast_object.verify(
             metric="rank_histogram",
@@ -176,20 +177,20 @@ class TestHindcasting:
             alignment="same_inits",
         )
         assert "q_sim" in rank_histo_verif
-        assert rank_histo_verif.q_sim.shape[0]-1 == forecast_duration
-        
+        assert rank_histo_verif.q_sim.shape[0] - 1 == forecast_duration
+
         # CRPS verification metric
         crps_verif = hindcast_object.verify(
             metric="crps",
             comparison="m2o",
             dim=["member", "init"],
             alignment="same_inits",
-        )        
+        )
         assert "q_sim" in crps_verif
-        assert crps_verif.q_sim.shape[0]-1 == forecast_duration
-        
+        assert crps_verif.q_sim.shape[0] - 1 == forecast_duration
+
         # TODO: Fix this part
-        '''
+        """
         reliability_verif = hindcast_object.verify(
             metric="reliability",
             comparison="m2o",
@@ -197,8 +198,7 @@ class TestHindcasting:
             alignment="same_inits",
             logical=pos,
         )
-        
+
         assert "flow" in reliability_verif
         assert reliability_verif.flow.shape[0] == forecast_duration
-        '''
-        
+        """
