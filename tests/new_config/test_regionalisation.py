@@ -9,6 +9,7 @@ from ravenpy.utilities.regionalization import (
     read_gauged_properties,
 )
 
+
 class TestRegionalization:
     def test_full_example(self, symbolic_config, get_local_testdata):
         name, config = symbolic_config
