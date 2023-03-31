@@ -96,6 +96,7 @@ def populate_testing_data(
             "basinmaker/drainage_region_0175_v2-1/finalcat_info_v2-1.zip",
             "matapedia/Qobs_Matapedia_01BD009.nc",
             "matapedia/Matapedia_meteo_data_2D.nc",
+            "matapedia/Matapedia_meteo_data_stations.nc",
         ]
     )
 
@@ -285,5 +286,5 @@ def input3d(threadsafe_data_dir, salmon):
 
 
 #
-# if __name__ == "__main__":
-#     populate_testing_data(branch=TESTDATA_BRANCH)
+if __name__ == "__main__":
+    populate_testing_data(branch=TESTDATA_BRANCH)

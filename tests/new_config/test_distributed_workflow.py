@@ -102,10 +102,12 @@ def test_simple_workflow(get_local_testdata, minimal_emulator, tmp_path):
         Duration=15,
         GlobalParameter={"AVG_ANNUAL_RUNOFF": 208.480},
         ObservationData=[qobs],
-        Gauge=gf,
+        Gauge=gauges,
         **rvh,
     )
 
     out = Emulator(conf, workdir=tmp_path).run()
 
-    assert len(out.hydrograph.nbasins) == len(sub)
+    # Number of gauged sub-basins
+    ng = sum([sb.gauged for sb in conf.sub_basins.__root__])
+    assert len(out.hydrograph.nbasins) == ng
