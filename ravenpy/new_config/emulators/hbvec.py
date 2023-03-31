@@ -73,7 +73,8 @@ class HBVEC(Config):
 
     params: P = P()
     hrus: HRUs = Field([LandHRU()], alias="HRUs")
-
+    time_step: float = Field(1.0, alias="TimeStep")
+    calendar: o.Calendar = Field("PROLEPTIC_GREGORIAN", alias="Calendar")
     routing: o.Routing = Field("ROUTE_NONE", alias="Routing")
     catchment_route: o.CatchmentRoute = Field("TRIANGULAR_UH", alias="CatchmentRoute")
     evaporation: o.Evaporation = Field("PET_FROMMONTHLY", alias="Evaporation")

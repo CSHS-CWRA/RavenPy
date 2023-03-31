@@ -223,7 +223,7 @@ def run(
     configdir: Union[str, Path],
     outputdir: Union[str, Path] = None,
     overwrite: bool = True,
-):
+) -> Path:
     """
     Run Raven given the path to an existing model configuration.
 

@@ -4,18 +4,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
 
-from ravenpy.utilities.new_config.data_assimilation import (
-    #assimilation_initialization,
-    perturb_full_series,
-    perturbation,
-    sequential_assimilation,
-)
-
 from ravenpy import Emulator, RavenWarning
 from ravenpy.new_config import commands as rc
 from ravenpy.new_config.emulators import GR4JCN
 from ravenpy.ravenpy import run
-
+from ravenpy.utilities.new_config.data_assimilation import (  # assimilation_initialization,
+    perturb_full_series,
+    perturbation,
+    sequential_assimilation,
+)
 from ravenpy.utilities.testdata import open_dataset
 
 
@@ -87,21 +84,21 @@ class TestAssimilationGR4JCN:
             longitude=-123.3659,
             hru_type="land",
         )
-                
+
         # Set alternative names for netCDF variables
         alt_names = {
             "TEMP_MIN": "tmin",
             "TEMP_MAX": "tmax",
             "RAINFALL": "rain",
-            "SNOWFALL": "snow"
+            "SNOWFALL": "snow",
         }
-        
+
         # Data types to extract from netCDF
         data_type = ["TEMP_MAX", "TEMP_MIN", "RAINFALL", "SNOWFALL"]
-        
+
         # Define parameters
-        params=[0.1353389, -0.005067198, 576.8007, 6.986121, 1.102917, 0.9224778]
-              
+        params = [0.1353389, -0.005067198, 576.8007, 6.986121, 1.102917, 0.9224778]
+
         model_config = GR4JCN(
             params=params,
             Gauge=rc.Gauge.from_nc(
@@ -122,7 +119,6 @@ class TestAssimilationGR4JCN:
         # set the start and end dates for the first assimilation period, warm-up
         assim_start_date = dt.datetime(1996, 9, 1)
         assim_end_date = dt.datetime(1996, 9, 30)
-
 
         # Do the first assimilation pass to get hru_states and basin_states.
         # Can be skipped if there is already this data from a previous run.
@@ -145,7 +141,9 @@ class TestAssimilationGR4JCN:
         )
 
         # Get observed streamflow for computing results later
-        q_obs = xr.open_dataset(ts)["qobs"].sel(time=slice(assim_start_date, assim_end_date))
+        q_obs = xr.open_dataset(ts)["qobs"].sel(
+            time=slice(assim_start_date, assim_end_date)
+        )
 
         # Create netcdf for the model.
         p_fn = model.workdir / "perturbed_forcing.nc"
@@ -167,7 +165,7 @@ class TestAssimilationGR4JCN:
         )
 
         # ==== Reference run ====
-        ''' 
+        """
         TODO LATER
         model.config.rvi.run_name = "ref"
         model.config.rvi.start_date = start_date
@@ -179,7 +177,7 @@ class TestAssimilationGR4JCN:
         model.config.rvc.soil1 = 15
 
         model([ts])
-        
+
         # We can now plot everything!
         plt.plot(q_assim.T, "r", label="Assimilated")  # plot the assimilated flows
         plt.plot(q_obs.T, "b", label="Observed")  # plot the observed flows
@@ -193,7 +191,8 @@ class TestAssimilationGR4JCN:
         # print('RMSE - Open-Loop: ' + str(xss.rmse(model.q_sim[0:q_assim.shape[1],0],q_obs[0:q_assim.shape[1]].T).data))
 
         assert q_assim.shape[0] == n_members
-        '''
+        """
+
 
 if "__name__" == "__main__":
     TestAssimilationGR4JCN()

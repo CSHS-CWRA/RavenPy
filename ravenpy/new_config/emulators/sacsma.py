@@ -69,12 +69,13 @@ class SACSMA(Config):
         ],
         alias="HRUs",
     )
-
+    time_step: float = Field(1.0, alias="TimeStep")
+    calendar: o.Calendar = Field("PROLEPTIC_GREGORIAN", alias="Calendar")
     routing: o.Routing = Field("ROUTE_NONE", alias="Routing")
     catchment_route: o.CatchmentRoute = Field(
         "ROUTE_GAMMA_CONVOLUTION", alias="CatchmentRouting"
     )
-    evaporation: o.Evaporation = Field(o.Evaporation.PET_OUDIN, alias="Evaporation")
+    evaporation: o.Evaporation = Field(o.Evaporation.OUDIN, alias="Evaporation")
     rain_snow_fraction: o.RainSnowFraction = Field(
         o.RainSnowFraction.DATA, alias="RainSnowFraction"
     )

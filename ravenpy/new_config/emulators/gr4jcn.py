@@ -82,6 +82,8 @@ class GR4JCN(Config):
 
     params: P = P()
     hrus: HRUs = Field([LandHRU()], alias="HRUs")
+    time_step: float = Field(1.0, alias="TimeStep")
+    calendar: o.Calendar = Field("PROLEPTIC_GREGORIAN", alias="Calendar")
     uniform_initial_conditions: Dict[str, Sym] = Field(
         {"SOIL[0]": P.GR4J_X1 * 1000 / 2, "SOIL[1]": 15},
         alias="UniformInitialConditions",

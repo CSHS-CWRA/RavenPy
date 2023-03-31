@@ -71,6 +71,8 @@ class CanadianShield(Config):
 
     params: P = P()
     hrus: HRUs = Field([OrganicHRU(), BedRockHRU()], alias="HRUs")
+    time_step: float = Field(1.0, alias="TimeStep")
+    calendar: o.Calendar = Field("PROLEPTIC_GREGORIAN", alias="Calendar")
     land_use_classes: LandUseClasses = Field(
         [rc.LU(name="FOREST", impermeable_frac=0.0, forest_coverage=0.02345)],
         alias="LandUseClasses",
@@ -81,10 +83,10 @@ class CanadianShield(Config):
         "ROUTE_TRI_CONVOLUTION", alias="CatchmentRouting"
     )
     evaporation: o.Evaporation = Field(
-        o.Evaporation.PET_HARGREAVES_1985, alias="Evaporation"
+        o.Evaporation.HARGREAVES_1985, alias="Evaporation"
     )
     ow_evaporation: o.Evaporation = Field(
-        o.Evaporation.PET_HARGREAVES_1985, alias="OW_Evaporation"
+        o.Evaporation.HARGREAVES_1985, alias="OW_Evaporation"
     )
     sw_canopy_correct: o.SWCanopyCorrect = Field(
         o.SWCanopyCorrect.STATIC, alias="SWCanopyCorrect"
