@@ -41,11 +41,12 @@ extensions = [
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
     "IPython.sphinxext.ipython_console_highlighting",
-    "nbsphinx",
+    #"nbsphinx",
+    "myst_nb",
     "sphinx_click",
     "sphinx_codeautolink",
     "sphinx_copybutton",
-    "sphinxcontrib.autodoc_pydantic",
+    #"sphinxcontrib.autodoc_pydantic",
 ]
 
 linkcheck_ignore = [
@@ -54,11 +55,21 @@ linkcheck_ignore = [
     r"https://doi.org/10.1029/2020WR029229"
 ]
 
+nbsphinx_custom_formats = {
+    ".md": ["jupytext.reads", {"fmt": "mystnb"}],
+}
 autosectionlabel_prefix_document = True
 autosectionlabel_maxdepth = 2
 
 autosummary_generate = True
+
+nb_execution_mode = "cache"
+nb_execution_allow_errors = True
+
 nbsphinx_execute = "auto"
+nbsphinx_timeout = 1
+nbsphinx_allow_errors = True
+
 
 # To ensure that underlined fields (e.g. `_field`) are shown in the docs.
 autodoc_default_options = {

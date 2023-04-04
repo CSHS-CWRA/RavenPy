@@ -30,7 +30,7 @@ The model outputs can be read with the `OutputReader` class:
     out.hydrograph.q_sim
     out.storage["Ponded Water"]
 
-Note that this works only if simulated variables are stored as netCDF files, that is, if the `rvi` file includes a `:WriteNetCDFFormat` command. Also the `run_name` parameter should be set to None, if the output files from Raven aren't renamed. If they are renamed `run_name` should be a string of this new file prefix.
+Note that this works only if simulated variables are stored as netCDF files, that is, if the `rvi` file includes a `:WriteNetCDFFormat` command. Note also that the `run_name` parameter should reflect the value of the `:RunName` configuration option. If `:RunName` is not configured, then the `run_name` argument should be left to its default `None` value.
 
 The class `EnsembleReader` does the same for an ensemble of model outputs, concatenating netCDF outputs along a new dimension:
 

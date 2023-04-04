@@ -119,9 +119,7 @@ class Record(BaseModel):
 
 
 class Command(BaseModel):
-    """
-    Base class for Raven commands.
-    """
+    """Base class for Raven commands."""
 
     _template: str = """
             :{_cmd}
@@ -222,7 +220,7 @@ class GenericParameterList(Command):
         None, alias="Parameters", description="Parameter names"
     )
     units: Sequence[str] = Field(None, alias="Units")
-    pl: Sequence[ParameterList] = ()
+    pl: Sequence[ParameterList] = Field(None)
 
     @root_validator(pre=True)
     def num_values_equal_num_names(cls, values):

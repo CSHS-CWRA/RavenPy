@@ -79,7 +79,6 @@ def test_no_run_name(dummy_config, tmp_path):
 
 @pytest.mark.slow
 @pytest.mark.online
-@pytest.mark.xfail(raises=OSError, reason="pavics.ouranos.ca is unreachable")
 def test_run_with_dap_link(minimal_emulator, tmp_path):
     """Test Raven with DAP link instead of local netCDF file."""
     # Link to THREDDS Data Server netCDF testdata
@@ -96,6 +95,6 @@ def test_run_with_dap_link(minimal_emulator, tmp_path):
     }
 
     conf = minimal_emulator
-    conf.gauge = rc.Gauge.from_nc(fn, alt_names=alt_names)
+    conf.gauge = [rc.Gauge.from_nc(fn, alt_names=alt_names)]
 
     out = Emulator(conf, workdir=tmp_path).run()

@@ -59,6 +59,8 @@ class Mohyse(Config):
 
     params: P = P()
     hrus: HRUs = Field([LandHRU()], alias="HRUs")
+    sub_basins: rc.SubBasins = Field([rc.SubBasin()], alias="SubBasins")
+    write_netcdf_format: bool = Field(True, alias="WriteNetcdfFormat")
     time_step: float = Field(1.0, alias="TimeStep")
     calendar: o.Calendar = Field("PROLEPTIC_GREGORIAN", alias="Calendar")
     soil_classes: rc.SoilClasses = Field(

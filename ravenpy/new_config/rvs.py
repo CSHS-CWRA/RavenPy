@@ -77,7 +77,7 @@ class RVI(RV):
     ensemble_mode: rc.EnsembleMode = Field(None, alias="EnsembleMode")
 
     # Options
-    write_netcdf_format: bool = Field(True, alias="WriteNetcdfFormat")
+    write_netcdf_format: bool = Field(None, alias="WriteNetcdfFormat")
     netcdf_attribute: Dict[str, str] = Field(None, alias="NetCDFAttribute")
 
     custom_output: rc.CustomOutput = Field(None, alias="CustomOutput")
@@ -174,7 +174,7 @@ class RVC(RV):
 
 
 class RVH(RV):
-    sub_basins: rc.SubBasins = Field([rc.SubBasin()], alias="SubBasins")
+    sub_basins: rc.SubBasins = Field(None, alias="SubBasins")
     sub_basin_group: Sequence[rc.SubBasinGroup] = ()
     sub_basin_properties: rc.SubBasinProperties = Field(
         None, alias="SubBasinProperties"
@@ -215,7 +215,7 @@ class RVE(RV):
 
 class Config(RVI, RVC, RVH, RVT, RVP, RVE):
     @root_validator
-    def assign_symbolic(cls, values):
+    def _assign_symbolic(cls, values):
         """If params is numerical, convert symbolic expressions from other fields."""
 
         if values["params"] is not None:
@@ -227,7 +227,7 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
         return values
 
     @validator("global_parameter", pre=True)
-    def update_defaults(cls, v, values, config, field):
+    def _update_defaults(cls, v, values, config, field):
         """Some configuration parameters should be updated with user given arguments, not overwritten."""
         return {**cls.__fields__[field.name].default, **v}
 
@@ -280,6 +280,12 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
         out.update(**sol, uniform_initial_conditions={})
 
         return self.__class__(**out)
+
+    def duplicate(self, **kwds):
+        """Duplicate this model, changing the values given in the keywords."""
+        return self.copy(
+            update=self.validate(kwds).dict(exclude_unset=True, exclude_defaults=True)
+        )
 
     def _rv(self, rv: str):
         """Return RV configuration."""

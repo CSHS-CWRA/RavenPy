@@ -54,6 +54,8 @@ class HRUs(rc.HRUs):
 class BasicRoute(Config):
     """Raven configuration performing routing only."""
 
+    sub_basins: rc.SubBasins = Field([rc.SubBasin()], alias="SubBasins")
+    write_netcdf_format: bool = Field(True, alias="WriteNetcdfFormat")
     time_step: float = Field(1.0, alias="TimeStep")
     calendar: o.Calendar = Field("PROLEPTIC_GREGORIAN", alias="Calendar")
     catchment_route: o.CatchmentRoute = Field(

@@ -616,11 +616,6 @@ class Data(FlatCommand):
         specs.update(kwds)
         attrs = filter_for(cls, specs)
         return cls(**attrs)
-        # return cls(
-        #     data_type=data_type,
-        #     units=specs.pop("units", None),
-        #     read_from_netcdf=filter_for(ReadFromNetCDF, specs),
-        # )
 
 
 class Gauge(FlatCommand):
@@ -660,67 +655,75 @@ class Gauge(FlatCommand):
     @classmethod
     def from_nc(
         cls,
-        fn: Path,
-        data_type: Sequence = None,
+        fn: Union[Path, Sequence[Path]],
+        data_type: Sequence[str] = None,
         station_idx: int = 1,
         alt_names: dict = {},
         mon_ave: bool = False,
         data_kwds: dict = {},
         **kwds,
     ) -> "Gauge":
-        """Return Gauge instance.
+        """Return Gauge instance with configuration options inferred from the netCDF itself.
 
         Parameters
         ----------
-        fn : str, Path
-          NetCDF file path.
-        data_type: str
-          Raven data type.
+        fn : Union[Path, Sequence[Path]],
+          NetCDF file path or paths.
+        data_type: Sequence[str], None
+          Raven data types to extract from netCDF files, e.g. 'PRECIP', 'AVE_TEMP'. The algorithm tries to find all
+          forcings in each file until one is found, then it stops searching for it in the following files.
         station_idx: int
-          Index along station dimension. Starts at 1.
-        alt_names: str, list
-          Alternative variable names for data type if not the CF standard default.
+          Index along station dimension. Starts at 1. Should be the same for all netCDF files.
+        alt_names: dict
+          Alternative variable names keyed by data type. Use this if variables do not correspond to CF
+          standard defaults.
         mon_ave: bool
           If True, compute the monthly average.
         data_kwds: Dict[options.Forcings, Dict[str, str]]]
-          Additional `Gauge` parameters keyed by forcing type and station id.
+          Additional `:Data` parameters keyed by forcing type and station id. Overrides inferred parameters.
           Use keyword "ALL" to pass parameters to all variables.
         **kwds
-          Arguments for Gauge.
+          Additional arguments for Gauge.
 
         Returns
         -------
-        [Gauge,]
-          List of Gauge instances, one for each station index.
+        Gauge
+          Gauge instance.
         """
         from typing import get_args
 
+        if isinstance(fn, (str, Path)):
+            fn = list(fn)
+
         idx = station_idx
-        data = []
+        data = {}
         attrs = {}
 
-        for dtyp in data_type or get_args(options.Forcings):
-            try:
-                specs = nc_specs(
-                    fn, dtyp, idx, alt_names.get(dtyp, ()), mon_ave=mon_ave
-                )
-                # Add extra keywords
-                ex_f = {**data_kwds.get(dtyp, {}), **data_kwds.get("ALL", {})}
+        forcings = set(data_type or get_args(options.Forcings))
 
-                # Filter data attributes
-                data.append(filter_for(Data, specs, **ex_f))
-            except ValueError as err:
-                if data_type is None:
-                    # There is no explicit instruction to find something in particular.
+        for f in fn:
+            for dtyp in forcings:
+                try:
+                    specs = nc_specs(
+                        f, dtyp, idx, alt_names.get(dtyp, ()), mon_ave=mon_ave
+                    )
+                except ValueError as err:
                     pass
-                else:
-                    raise err
 
-            else:
-                attrs.update(filter_for(cls, specs))
+                else:
+                    # Add extra keywords
+                    ex_f = {**data_kwds.get(dtyp, {}), **data_kwds.get("ALL", {})}
+
+                    # Filter data attributes
+                    data[dtyp] = filter_for(Data, specs, **ex_f)
+
+                    attrs.update(filter_for(cls, specs))
+
+            # Remove forcings that have been found so they're not searched in the following files.
+            forcings.difference_update(data)
 
         if len(data) == 0:
-            raise ValueError(f"No variable for {data_type} found in file.")
+            raise ValueError(f"No data found in netCDF files.")
 
         # Default Gauge name
         attrs["name"] = attrs.get("name", f"Gauge_{idx}")
