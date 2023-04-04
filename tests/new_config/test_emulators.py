@@ -8,7 +8,6 @@ from ravenpy import Emulator
 from ravenpy.new_config import commands as rc
 from ravenpy.new_config.rvs import Config
 
-
 # Expected NSE for emulator configuration from the `config_rv` test fixture.
 NSE = {
     "GR4JCN": -0.117301,
@@ -102,17 +101,19 @@ def test_run_with_dap_link(minimal_emulator, tmp_path):
     out = Emulator(conf, workdir=tmp_path).run()
 
 
-
-
 # Salmon catchment is now split into land- and lake-part.
 # The areas do not sum up to overall area of 4250.6 [km2].
 # This is the reason the "test_routing" will give different
 # results compared to "test_simple". The "salmon_land_hru"
 # however is kept at the overall area of 4250.6 [km2] such
 # that other tests still obtain same results as before.
-salmon_land_hru_1 = dict(area=4250.6, elevation=843.0, latitude=54.4848, longitude=-123.3659)
+salmon_land_hru_1 = dict(
+    area=4250.6, elevation=843.0, latitude=54.4848, longitude=-123.3659
+)
 salmon_lake_hru_1 = dict(area=100.0, elevation=839.0, latitude=54.0, longitude=-123.4)
-salmon_land_hru_2 = dict(area=2000.0, elevation=835.0, latitude=54.123, longitude=-123.4234)
+salmon_land_hru_2 = dict(
+    area=2000.0, elevation=835.0, latitude=54.123, longitude=-123.4234
+)
 
 salmon_river = "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
 salmon_river_2d = (
@@ -120,46 +121,40 @@ salmon_river_2d = (
 )
 
 
-from ravenpy.new_config.emulators import GR4JCN
-
 from pydantic import Field
+
 from ravenpy.extractors.new_config.routing_product import (
     BasinMakerExtractor,
     GridWeightExtractor,
     open_shapefile,
     upstream_from_coords,
 )
-
+from ravenpy.new_config.emulators import GR4JCN
 
 
 def test_routing(get_file):
     """We need at least 2 subbasins to activate routing."""
     ts_2d = get_file(salmon_river_2d)
-    
-    
+
     #########
     # R V I #
     #########
-    
+
     start_date = dt.datetime(2000, 1, 1)
     end_date = dt.datetime(2002, 1, 1)
     run_name = "test_gr4jcn_routing"
     routing_algo = "ROUTE_DIFFUSIVE_WAVE"
-    
-    
-    
+
     #########
     # R V P #
     #########
-    
+
     parameters = [0.529, -3.396, 407.29, 1.072, 16.9, 0.947]
-    
-    
-    
+
     #########
     # R V H #
-    #########    
-        
+    #########
+
     # Here we assume that we have two subbasins. The first one (subbasin_id=10)
     # has a lake (hru_id=2; area-100km2) and the rest is covered by land (hru_id=1;
     # area=4250.6km2). The second subbasin (subbasin_id=20) does not contain a
@@ -171,69 +166,76 @@ def test_routing(get_file):
     # station (see :ObservationData in RVT). We will compare these observations
     # with the simulated streamflow. That is the reason why "gauged=True" for
     # the second basin.
-    
+
     # HRU IDs are 1 to 3
 
     hru1 = hru2 = hru3 = sub1 = sub2 = {}
-    hru1= dict(hru_id=1, subbasin_id=10, **salmon_land_hru_1)
-    hru2= dict(hru_id=2, subbasin_id=10, **salmon_lake_hru_1)
-    hru3= dict(hru_id=3, subbasin_id=20, **salmon_land_hru_2)
-    
+    hru1 = dict(hru_id=1, subbasin_id=10, **salmon_land_hru_1)
+    hru2 = dict(hru_id=2, subbasin_id=10, **salmon_lake_hru_1)
+    hru3 = dict(hru_id=3, subbasin_id=20, **salmon_land_hru_2)
+
     # Sub-basin IDs are 10 and 20 (not 1 and 2), to help disambiguate
-    
+
     # gauged = False:
     # Usually this output would only be written for user's convenience.
     # There is usually no observation of streamflow available within
     # catchments; only at the outlet. That's most commonly the reason
     # why a catchment is defined as it is defined.
-    sub1 = dict(name="upstream",subbasin_id=10,downstream_id=20,profile="chn_10",gauged=False)
+    sub1 = dict(
+        name="upstream",
+        subbasin_id=10,
+        downstream_id=20,
+        profile="chn_10",
+        gauged=False,
+    )
     # gauged = True:
     # Since this is the outlet, this would usually be what we calibrate
     # against (i.e. we try to match this to Qobs).
-    sub2 = dict(name="downstream",subbasin_id=20,downstream_id=-1,profile="chn_20",gauged=True)  
-    
-    SBP = [rc.SBGroupPropertyMultiplierCommand("Land", "MANNINGS_N", 1.0), rc.SBGroupPropertyMultiplierCommand("Lakes", "RESERVOIR_CREST_WIDTH", 1.0)]
-    
-    
+    sub2 = dict(
+        name="downstream",
+        subbasin_id=20,
+        downstream_id=-1,
+        profile="chn_20",
+        gauged=True,
+    )
+
+    SBP = [
+        rc.SBGroupPropertyMultiplierCommand("Land", "MANNINGS_N", 1.0),
+        rc.SBGroupPropertyMultiplierCommand("Lakes", "RESERVOIR_CREST_WIDTH", 1.0),
+    ]
+
     #########
     # R V T #
     #########
-    
+
     alt_names = {
         "RAINFALL": "rain",
         "TEMP_MIN": "tmin",
         "TEMP_MAX": "tmax",
         "SNOWFALL": "snow",
     }
-    
+
     data_type = ["RAINFALL", "TEMP_MIN", "TEMP_MAX", "SNOWFALL"]
-   
-    gauges = [rc.Gauge.from_nc(ts_2d, data_type = data_type, alt_names = alt_names)]    
-    
-    
+
+    gauges = [rc.Gauge.from_nc(ts_2d, data_type=data_type, alt_names=alt_names)]
+
     #############
     # Run model #
     #############
-    
-    
-    model=GR4JCN(
-        StartDate = start_date,
-        EndDate = end_date,
-        RunName = run_name,
-        Routing = routing_algo,
-        params = parameters,
-        HRUs = [hru1, hru2, hru3],
+
+    model = GR4JCN(
+        StartDate=start_date,
+        EndDate=end_date,
+        RunName=run_name,
+        Routing=routing_algo,
+        params=parameters,
+        HRUs=[hru1, hru2, hru3],
         SubBasins=[sub1, sub2],
         SBGroupPropertyMultiplierCommand=SBP,
-        Gauge = gauges,
-        
-        
+        Gauge=gauges,
     )
-    
-  
 
-    
-    '''
+    r"""
     total_area_in_km2 = sum(hru.area for hru in model.config.rvh.hrus)
     total_area_in_m2 = total_area_in_km2 * 1000 * 1000
     model.config.rvp.avg_annual_runoff = get_average_annual_runoff(
@@ -301,7 +303,7 @@ def test_routing(get_file):
     #############
 
     model(ts_2d)
-    '''
+    """
     ###########
     # Verify  #
     ###########
