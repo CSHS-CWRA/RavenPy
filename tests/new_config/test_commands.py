@@ -39,6 +39,15 @@ def test_linear_transform():
     assert rc.LinearTransform(scale=1, offset=0).to_rv() == ""
 
 
+def test_global_parameter():
+    class Test(RV):
+        gp: dict = Field({"A": 1}, alias="GlobalParameter")
+
+    s = Test().to_rv().strip()
+
+    assert s == ":GlobalParameter A 1"
+
+
 def test_vegetation_classes():
     class Test(RV):
         vegetation_classes: rc.VegetationClasses = Field(

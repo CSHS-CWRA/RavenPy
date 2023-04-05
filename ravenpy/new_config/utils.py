@@ -1,6 +1,7 @@
 import xarray as xr
 
 from .conventions import CF_RAVEN, MonthlyAverages
+from .defaults import RAVEN_NO_DATA_VALUE
 
 
 def nc_specs(
@@ -142,3 +143,27 @@ def filter_for(kls, attrs, **kwds):
                 out[key] = filter_for(field.type_, attrs)
         return out
         # return {k: v for (k, v) in attrs.items() if k in kls.__fields__.keys()}
+
+
+def get_average_annual_runoff(
+    nc_file_path,
+    area_in_m2,
+    time_dim="time",
+    obs_var="qobs",
+    na_value=RAVEN_NO_DATA_VALUE,
+):
+    """
+    Compute the average annual runoff from observed data.
+    """
+    import numpy as np
+
+    with xr.open_dataset(nc_file_path) as ds:
+        qobs = ds.where(ds[obs_var] != na_value)[obs_var]
+        qobs *= 86400.0  # convert m**3/s to m**3/d
+        axis = qobs.dims.index(time_dim)
+        # avg daily runoff [m3/d] for each year in record
+        qyear = np.nanmean(qobs.groupby("time.year").mean("time"), axis=axis)
+        qyear = qyear / area_in_m2 * 365 * 1000.0  # [mm/yr] for each year in record
+        qyear = np.mean(qyear)  # [mm/yr] mean over all years in record
+
+    return qyear

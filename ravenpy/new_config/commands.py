@@ -352,7 +352,7 @@ class HRUGroup(FlatCommand):
         """
 
 
-class Reservoir(Command):
+class Reservoir(FlatCommand):
     """Reservoir command (RVH)."""
 
     name: str = "Lake_XXX"
@@ -364,16 +364,14 @@ class Reservoir(Command):
     max_depth: float = Field(0, alias="MaxDepth")
     lake_area: float = Field(0, alias="LakeArea", description="Lake area in m2")
 
-    def to_rv(self):
-        template = """
+    _template = """
             :Reservoir {name}
             {_commands}
             :EndReservoir
             """
-        return dedent(template).format(**self.dict())
 
 
-class SubBasinGroup(Command):
+class SubBasinGroup(FlatCommand):
     """SubBasinGroup command (RVH)."""
 
     name: str = ""
@@ -396,18 +394,16 @@ class SubBasinGroup(Command):
         return dedent(template).format(**d)
 
 
-class SBGroupPropertyMultiplierCommand(Command):
+class SBGroupPropertyMultiplier(FlatCommand):
     group_name: str
     parameter_name: str
     mult: float
 
-    def to_rv(self):
-        template = ":SBGroupPropertyMultiplier {group_name} {parameter_name} {mult}"
-        return dedent(template).format(**self.dict())
+    _template = ":SBGroupPropertyMultiplier {group_name} {parameter_name} {mult}"
 
 
 # TODO: Convert to new config
-class ChannelProfile(Command):
+class ChannelProfile(FlatCommand):
     """ChannelProfile command (RVP)."""
 
     name: str = "chn_XXX"
@@ -693,7 +689,7 @@ class Gauge(FlatCommand):
         from typing import get_args
 
         if isinstance(fn, (str, Path)):
-            fn = list(fn)
+            fn = [fn]
 
         idx = station_idx
         data = {}
@@ -728,7 +724,7 @@ class Gauge(FlatCommand):
         # Default Gauge name
         attrs["name"] = attrs.get("name", f"Gauge_{idx}")
 
-        attrs = filter_for(cls, attrs, **kwds, data=data)
+        attrs = filter_for(cls, attrs, **kwds, data=list(data.values()))
         return cls(**attrs)
 
     @property

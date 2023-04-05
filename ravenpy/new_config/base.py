@@ -140,14 +140,25 @@ class Command(BaseModel):
             if obj is not None:
                 if issubclass(obj.__class__, Record):
                     recs = [obj]
-                elif (
-                    getattr(field.annotation, "_name", "") == "Sequence"
-                    and len(obj)
-                    and issubclass(obj[0].__class__, Record)
-                ):
-                    recs = obj
-                elif field.has_alias or field.alias == "__root__":
+                elif issubclass(obj.__class__, Command):
                     cmds[field.alias] = self.__dict__[key]
+                else:
+                    try:
+                        o = obj[0]
+                    except (TypeError, IndexError, KeyError):
+                        o = None
+                    if issubclass(o.__class__, Record):
+                        recs = obj
+                    elif field.has_alias or field.alias == "__root__":
+                        cmds[field.alias] = self.__dict__[key]
+                # elif (
+                #     getattr(field.annotation, "_name", "") == "Sequence"
+                #     and len(obj)
+                #     and issubclass(obj[0].__class__, Record)
+                # ):
+                #     recs = obj
+                # elif field.has_alias or field.alias == "__root__":
+                #     cmds[field.alias] = self.__dict__[key]
 
         for key, field in self.__private_attributes__.items():
             cmds[key.strip("_")] = getattr(self, key)

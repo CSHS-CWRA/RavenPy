@@ -38,3 +38,5 @@ units = {
     "SUBDAILY_CORR": "",
     "HYDROGRAPH": "m**3/s",
 }
+
+RAVEN_NO_DATA_VALUE = -1.2345

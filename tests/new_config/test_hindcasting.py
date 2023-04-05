@@ -76,7 +76,9 @@ class TestHindcasting:
                 data_kwds=data_kwds,
             )
             assert g.data[0].read_from_netcdf.station_idx == i + 1
-            assert g.data[0].read_from_netcdf.linear_transform.scale == 1000
+            for d in g.data:
+                if d.data_type == "PRECIP":
+                    assert d.read_from_netcdf.linear_transform.scale == 1000
 
             mem_conf = init_conf.copy(
                 update=dict(

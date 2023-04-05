@@ -150,7 +150,7 @@ class RVP(RV):
         None, alias="VegetationParameterList"
     )
 
-    channel_profiles: Sequence[rc.ChannelProfile] = ()
+    channel_profile: Sequence[rc.ChannelProfile] = Field(None, alias="ChannelProfile")
 
     # TODO: create list of all available parameters to constrain key
     global_parameter: Dict[str, Sym] = Field({}, alias="GlobalParameter")
@@ -175,14 +175,16 @@ class RVC(RV):
 
 class RVH(RV):
     sub_basins: rc.SubBasins = Field(None, alias="SubBasins")
-    sub_basin_group: Sequence[rc.SubBasinGroup] = ()
+    sub_basin_group: Sequence[rc.SubBasinGroup] = Field(None, alias="SubBasinGroup")
     sub_basin_properties: rc.SubBasinProperties = Field(
         None, alias="SubBasinProperties"
     )
-    sub_basin_property_multiplier: rc.SBGroupPropertyMultiplierCommand = None
+    sb_group_property_multiplier: Sequence[rc.SBGroupPropertyMultiplier] = Field(
+        None, alias="SBGroupPropertyMultiplier"
+    )
     hrus: rc.HRUs = Field(None, alias="HRUs")
     hru_group: Sequence[rc.HRUGroup] = Field(None, alias="HRUGroup")
-    reservoirs: Sequence[rc.Reservoir] = ()
+    reservoirs: Sequence[rc.Reservoir] = Field(None, alias="Reservoirs")
 
 
 class RVE(RV):

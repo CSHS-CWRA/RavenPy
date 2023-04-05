@@ -6,7 +6,9 @@ import xarray as xr
 
 from ravenpy import Emulator
 from ravenpy.new_config import commands as rc
+from ravenpy.new_config.emulators import GR4JCN
 from ravenpy.new_config.rvs import Config
+from ravenpy.new_config.utils import get_average_annual_runoff
 
 # Expected NSE for emulator configuration from the `config_rv` test fixture.
 NSE = {
@@ -100,49 +102,40 @@ def test_run_with_dap_link(minimal_emulator, tmp_path):
     out = Emulator(conf, workdir=tmp_path).run()
 
 
-# Salmon catchment is now split into land- and lake-part.
-# The areas do not sum up to overall area of 4250.6 [km2].
-# This is the reason the "test_routing" will give different
-# results compared to "test_simple". The "salmon_land_hru"
-# however is kept at the overall area of 4250.6 [km2] such
-# that other tests still obtain same results as before.
-salmon_land_hru_1 = dict(
-    area=4250.6, elevation=843.0, latitude=54.4848, longitude=-123.3659
-)
-salmon_lake_hru_1 = dict(area=100.0, elevation=839.0, latitude=54.0, longitude=-123.4)
-salmon_land_hru_2 = dict(
-    area=2000.0, elevation=835.0, latitude=54.123, longitude=-123.4234
-)
-
-salmon_river = "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
-salmon_river_2d = (
-    "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_2d.nc"
-)
-
-
-from pydantic import Field
-
-from ravenpy.extractors.new_config.routing_product import (
-    BasinMakerExtractor,
-    GridWeightExtractor,
-    open_shapefile,
-    upstream_from_coords,
-)
-from ravenpy.new_config.emulators import GR4JCN
-
-
-def test_routing(get_file):
+def test_routing(get_local_testdata):
     """We need at least 2 subbasins to activate routing."""
-    ts_2d = get_file(salmon_river_2d)
 
-    #########
-    # R V I #
-    #########
+    # Salmon catchment is now split into land- and lake-part.
+    # The areas do not sum up to overall area of 4250.6 [km2].
+    # This is the reason the "test_routing" will give different
+    # results compared to "test_run". The "salmon_land_hru"
+    # however is kept at the overall area of 4250.6 [km2] such
+    # that other tests still obtain same results as before.
 
-    start_date = dt.datetime(2000, 1, 1)
-    end_date = dt.datetime(2002, 1, 1)
-    run_name = "test_gr4jcn_routing"
-    routing_algo = "ROUTE_DIFFUSIVE_WAVE"
+    salmon_land_hru_1 = dict(
+        area=4250.6,
+        elevation=843.0,
+        latitude=54.4848,
+        longitude=-123.3659,
+        hru_type="land",
+    )
+    salmon_lake_hru_1 = dict(
+        area=100.0, elevation=839.0, latitude=54.0, longitude=-123.4, hru_type="lake"
+    )
+    salmon_land_hru_2 = dict(
+        area=2000.0,
+        elevation=835.0,
+        latitude=54.123,
+        longitude=-123.4234,
+        hru_type="land",
+    )
+
+    salmon_river = "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
+    salmon_river_2d = (
+        "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_2d.nc"
+    )
+
+    ts_2d = get_local_testdata(salmon_river_2d)
 
     #########
     # R V P #
@@ -167,13 +160,11 @@ def test_routing(get_file):
     # the second basin.
 
     # HRU IDs are 1 to 3
-
-    hru1 = hru2 = hru3 = sub1 = sub2 = {}
+    # Sub-basin IDs are 10 and 20 (not 1 and 2), to help disambiguate
     hru1 = dict(hru_id=1, subbasin_id=10, **salmon_land_hru_1)
     hru2 = dict(hru_id=2, subbasin_id=10, **salmon_lake_hru_1)
     hru3 = dict(hru_id=3, subbasin_id=20, **salmon_land_hru_2)
-
-    # Sub-basin IDs are 10 and 20 (not 1 and 2), to help disambiguate
+    hrus = [hru1, hru2, hru3]
 
     # gauged = False:
     # Usually this output would only be written for user's convenience.
@@ -198,53 +189,24 @@ def test_routing(get_file):
         gauged=True,
     )
 
+    SB_groups = [
+        rc.SubBasinGroup(name="Land", sb_ids=[10]),
+        rc.SubBasinGroup(name="Lakes", sb_ids=[20]),
+    ]
     SBP = [
-        rc.SBGroupPropertyMultiplierCommand("Land", "MANNINGS_N", 1.0),
-        rc.SBGroupPropertyMultiplierCommand("Lakes", "RESERVOIR_CREST_WIDTH", 1.0),
+        rc.SBGroupPropertyMultiplier(
+            group_name="Land", parameter_name="MANNINGS_N", mult=1.0
+        ),
+        rc.SBGroupPropertyMultiplier(
+            group_name="Lakes", parameter_name="RESERVOIR_CREST_WIDTH", mult=1.0
+        ),
     ]
 
-    #########
-    # R V T #
-    #########
-
-    alt_names = {
-        "RAINFALL": "rain",
-        "TEMP_MIN": "tmin",
-        "TEMP_MAX": "tmax",
-        "SNOWFALL": "snow",
-    }
-
-    data_type = ["RAINFALL", "TEMP_MIN", "TEMP_MAX", "SNOWFALL"]
-
-    gauges = [rc.Gauge.from_nc(ts_2d, data_type=data_type, alt_names=alt_names)]
-
-    #############
-    # Run model #
-    #############
-
-    model = GR4JCN(
-        StartDate=start_date,
-        EndDate=end_date,
-        RunName=run_name,
-        Routing=routing_algo,
-        params=parameters,
-        HRUs=[hru1, hru2, hru3],
-        SubBasins=[sub1, sub2],
-        SBGroupPropertyMultiplierCommand=SBP,
-        Gauge=gauges,
-    )
+    total_area_in_m2 = sum(hru["area"] for hru in hrus) * 1000 * 1000
+    avg_annual_runoff = get_average_annual_runoff(ts_2d, total_area_in_m2)
+    np.testing.assert_almost_equal(avg_annual_runoff, 139.5407534171111)
 
     r"""
-    total_area_in_km2 = sum(hru.area for hru in model.config.rvh.hrus)
-    total_area_in_m2 = total_area_in_km2 * 1000 * 1000
-    model.config.rvp.avg_annual_runoff = get_average_annual_runoff(
-        ts_2d, total_area_in_m2
-    )
-
-    np.testing.assert_almost_equal(
-        model.config.rvp.avg_annual_runoff, 139.5407534171111
-    )
-
     # These channel profiles describe the geometry of the actual river crossection.
     # The eight points (x) to describe the following geometry are given in each
     # profile:
@@ -256,8 +218,9 @@ def test_routing(get_file):
     #               \   RIVERBED   /
     #                 x----------x
     #
-    model.config.rvp.channel_profiles = [
-        ChannelProfileCommand(
+    """
+    channel_profiles = [
+        rc.ChannelProfile(
             name="chn_10",
             bed_slope=7.62066e-05,
             survey_points=[
@@ -276,7 +239,7 @@ def test_routing(get_file):
                 (128.4742, 0.0909167),
             ],
         ),
-        ChannelProfileCommand(
+        rc.ChannelProfile(
             name="chn_20",
             bed_slope=9.95895e-05,
             survey_points=[
@@ -296,18 +259,66 @@ def test_routing(get_file):
             ],
         ),
     ]
+    #########
+    # R V T #
+    #########
+
+    alt_names = {
+        "RAINFALL": "rain",
+        "TEMP_MIN": "tmin",
+        "TEMP_MAX": "tmax",
+        "SNOWFALL": "snow",
+    }
+
+    data_type = ["RAINFALL", "TEMP_MIN", "TEMP_MAX", "SNOWFALL"]
+    gw = rc.GridWeights(
+        number_hrus=3,
+        number_grid_cells=1,
+        # Here we have a special case: station is 0 for every row because the example NC
+        # has only one region/station (which is column 0)
+        data=((1, 0, 1.0), (2, 0, 1.0), (3, 0, 1.0)),
+    )
+
+    gauges = [
+        rc.Gauge.from_nc(
+            ts_2d,
+            data_type=data_type,
+            alt_names=alt_names,
+            data_kwds={"ALL": {"GridWeights": gw}},
+        )
+    ]
+
+    ###################
+    # Configure model #
+    ###################
+
+    model = GR4JCN(
+        StartDate=dt.datetime(2000, 1, 1),
+        EndDate=dt.datetime(2002, 1, 1),
+        RunName="test_gr4jcn_routing",
+        Routing="ROUTE_DIFFUSIVE_WAVE",
+        params=parameters,
+        HRUs=hrus,
+        SubBasins=[sub1, sub2],
+        SubBasinGroup=SB_groups,
+        SBGroupPropertyMultiplier=SBP,
+        ChannelProfile=channel_profiles,
+        Gauge=gauges,
+        GlobalParameter={"AVG_ANNUAL_RUNOFF": avg_annual_runoff},
+        WriteForcingFunctions=True,
+    )
 
     #############
     # Run model #
     #############
 
-    model(ts_2d)
-    """
+    out = Emulator(model).run()
+
     ###########
     # Verify  #
     ###########
 
-    hds = model.q_sim
+    hds = out.hydrograph.q_sim
 
     assert len(hds.nbasins) == 1  # number of "gauged" basins is 1
 
@@ -346,4 +357,4 @@ def test_routing(get_file):
     d = model.diagnostics
     np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.0141168, 4)
 
-    assert len(list(model.output_path.glob("*ForcingFunctions.nc"))) == 1
+    assert len(list(out.output_path.glob("*ForcingFunctions.nc"))) == 1
