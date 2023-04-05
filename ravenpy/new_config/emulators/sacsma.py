@@ -198,10 +198,10 @@ class SACSMA(Config):
         },
         alias="VegetationParameterList",
     )
-    hru_states: rc.HRUStateVariableTable = Field(
+    hru_state_variable_table: rc.HRUStateVariableTable = Field(
         [
             rc.HRUState(
-                index=1,
+                hru_id=1,
                 data={
                     "SOIL[0]": P.X04 * 1000,
                     "SOIL[2]": P.X06 * 1000,

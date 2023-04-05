@@ -53,8 +53,8 @@ def parse_solution(fn: Path, calendar: str = "PROLEPTIC_GREGORIAN"):
             solution = fn.read_text()
 
             out = {}
-            out["hru_states"] = rc.HRUStateVariableTable.parse(solution)
-            out["basin_states"] = rc.BasinStateVariables.parse(solution)
+            out["hru_state_variable_table"] = rc.HRUStateVariableTable.parse(solution)
+            out["basin_state_variables"] = rc.BasinStateVariables.parse(solution)
             out["start_date"] = _time_stamp_from_solution(solution, calendar)
             return out
 

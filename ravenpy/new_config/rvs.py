@@ -166,9 +166,13 @@ class RVP(RV):
 
 
 class RVC(RV):
-    hru_states: rc.HRUStateVariableTable = Field(None, alias="HRUStateVariableTable")
-    basin_states: rc.BasinStateVariables = Field(None, alias="BasinStateVariables")
-    uniform_initial_conditions: Dict[str, Sym] = Field(
+    hru_state_variable_table: rc.HRUStateVariableTable = Field(
+        None, alias="HRUStateVariableTable"
+    )
+    basin_state_variables: rc.BasinStateVariables = Field(
+        None, alias="BasinStateVariables"
+    )
+    uniform_initial_conditions: Union[Dict[str, Sym], None] = Field(
         None, alias="UniformInitialConditions"
     )
 

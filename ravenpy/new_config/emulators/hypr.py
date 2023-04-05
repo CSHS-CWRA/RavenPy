@@ -301,10 +301,10 @@ class HYPR(Config):
         alias="SubBasinProperties",
     )
 
-    hru_states: rc.HRUStateVariableTable = Field(
+    hru_state_variable_table: rc.HRUStateVariableTable = Field(
         [
             rc.HRUState(
-                index=1,
+                hru_id=1,
                 data={
                     "SOIL[0]": 10,
                     "SOIL[1]": 10,

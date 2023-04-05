@@ -175,7 +175,7 @@ class TestGR4JCN:
 
     def test_routing(self, get_file):
         """We need at least 2 subbasins to activate routing."""
-        model = GR4JCN()
+        model = GR4JCN("/tmp/test_old_routing")
 
         ts_2d = get_file(salmon_river_2d)
 

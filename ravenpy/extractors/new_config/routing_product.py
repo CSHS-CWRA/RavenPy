@@ -84,7 +84,7 @@ class BasinMakerExtractor:
                Sequence of dictionaries with `SubBasinGroup` attributes.
             "reservoirs"
                Sequence of dictionaries with `Reservoir` attributes.
-            "channel_profiles"
+            "channel_profile"
                Sequence of dictionaries with `ChannelProfile` attributes.
             "hrus"
                Sequence of dictionaries with `HRU` attributes.
@@ -131,7 +131,7 @@ class BasinMakerExtractor:
                 {"name": "Lakes", "sb_ids": lake_sb_ids},
             ],
             reservoirs=reservoirs,
-            channel_profiles=channel_profiles,
+            channel_profile=channel_profiles,
             hrus=hru_recs,
         )
 

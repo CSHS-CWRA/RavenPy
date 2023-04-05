@@ -19,7 +19,7 @@ class TestHYPR:
     def test_simple(self, get_file):
         ts = get_file(salmon_river)
 
-        model = HYPR()
+        model = HYPR("/tmp/test_hypr")
         params = (
             -1.856410e-01,  # par_x01
             2.92301100e00,  # par_x02

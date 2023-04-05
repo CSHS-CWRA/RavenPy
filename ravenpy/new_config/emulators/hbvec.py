@@ -265,8 +265,8 @@ class HBVEC(Config):
         alias="LandUseParameterList",
     )
 
-    hru_states: rc.HRUStateVariableTable = Field(
-        [{"index": 1, "data": {"SOIL[2]": 0.50657}}]
+    hru_state_variable_table: rc.HRUStateVariableTable = Field(
+        [{"hru_id": 1, "data": {"SOIL[2]": 0.50657}}]
     )
 
     def __init__(self, **data):

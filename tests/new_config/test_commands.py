@@ -31,7 +31,7 @@ def test_hrus():
 
 
 def test_hru_state():
-    s = rc.HRUState(index=1, data={"SOIL[0]": 1, "SOIL[1]": 2.0})
+    s = rc.HRUState(hru_id=1, data={"SOIL[0]": 1, "SOIL[1]": 2.0})
     assert str(s) == "1,1.0,2.0"
 
 
@@ -274,8 +274,8 @@ def test_land_use_parameter_list():
 
 class TestHRUStateVariableTable:
     def test_to_rv(self):
-        s1 = rc.HRUState(index=1, data={"SOIL[0]": 0.1, "SOIL[1]": 1.0})
-        s2 = rc.HRUState(index=2, data={"SOIL[3]": 3, "SOIL[2]": 2.0})
+        s1 = rc.HRUState(hru_id=1, data={"SOIL[0]": 0.1, "SOIL[1]": 1.0})
+        s2 = rc.HRUState(hru_id=2, data={"SOIL[3]": 3, "SOIL[2]": 2.0})
         t = rc.HRUStateVariableTable(__root__=[s1, s2])
         assert dedent(t.to_rv()) == dedent(
             """
@@ -287,7 +287,7 @@ class TestHRUStateVariableTable:
             """
         )
 
-        s1 = dict(index=1, data={"SOIL[0]": 0.1, "SOIL[1]": 1.0})
+        s1 = dict(hru_id=1, data={"SOIL[0]": 0.1, "SOIL[1]": 1.0})
         t = rc.HRUStateVariableTable(__root__=[s1])
 
     def test_parse(self):
@@ -300,7 +300,7 @@ class TestHRUStateVariableTable:
         """
         sv = rc.HRUStateVariableTable.parse(solution).__root__
         assert len(sv) == 1
-        assert sv[0].index == 1
+        assert sv[0].hru_id == 1
         assert sv[0].data["ATMOS_PRECIP"] == -0.16005
 
 

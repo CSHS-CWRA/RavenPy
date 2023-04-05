@@ -104,6 +104,7 @@ def test_run_with_dap_link(minimal_emulator, tmp_path):
 
 def test_routing(get_local_testdata):
     """We need at least 2 subbasins to activate routing."""
+    from ravenpy.new_config.emulators.gr4jcn import P
 
     # Salmon catchment is now split into land- and lake-part.
     # The areas do not sum up to overall area of 4250.6 [km2].
@@ -130,12 +131,12 @@ def test_routing(get_local_testdata):
         hru_type="land",
     )
 
-    salmon_river = "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
-    salmon_river_2d = (
+    salmon_river = get_local_testdata(
+        "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
+    )
+    ts_2d = get_local_testdata(
         "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_2d.nc"
     )
-
-    ts_2d = get_local_testdata(salmon_river_2d)
 
     #########
     # R V P #
@@ -166,6 +167,12 @@ def test_routing(get_local_testdata):
     hru3 = dict(hru_id=3, subbasin_id=20, **salmon_land_hru_2)
     hrus = [hru1, hru2, hru3]
 
+    hs = [
+        rc.HRUState(hru_id=1, data={"SOIL[0]": P.GR4J_X1 * 1000 / 2, "SOIL[1]": 15}),
+        rc.HRUState(hru_id=2, data={"SOIL[0]": 0, "SOIL[1]": 0}),
+        rc.HRUState(hru_id=3, data={"SOIL[0]": P.GR4J_X1 * 1000 / 2, "SOIL[1]": 15}),
+    ]
+
     # gauged = False:
     # Usually this output would only be written for user's convenience.
     # There is usually no observation of streamflow available within
@@ -188,6 +195,9 @@ def test_routing(get_local_testdata):
         profile="chn_20",
         gauged=True,
     )
+
+    # Set basin state variables to 0
+    bs = [rc.BasinIndex(sb_id=10), rc.BasinIndex(sb_id=20)]
 
     SB_groups = [
         rc.SubBasinGroup(name="Land", sb_ids=[10]),
@@ -268,9 +278,10 @@ def test_routing(get_local_testdata):
         "TEMP_MIN": "tmin",
         "TEMP_MAX": "tmax",
         "SNOWFALL": "snow",
+        "PET": "pet",
     }
 
-    data_type = ["RAINFALL", "TEMP_MIN", "TEMP_MAX", "SNOWFALL"]
+    data_type = ["RAINFALL", "TEMP_MIN", "TEMP_MAX", "SNOWFALL", "PET"]
     gw = rc.GridWeights(
         number_hrus=3,
         number_grid_cells=1,
@@ -279,14 +290,12 @@ def test_routing(get_local_testdata):
         data=((1, 0, 1.0), (2, 0, 1.0), (3, 0, 1.0)),
     )
 
-    gauges = [
-        rc.Gauge.from_nc(
-            ts_2d,
-            data_type=data_type,
-            alt_names=alt_names,
-            data_kwds={"ALL": {"GridWeights": gw}},
-        )
+    sf = [
+        rc.StationForcing.from_nc(ts_2d, typ, alt_names=alt_names[typ], GridWeights=gw)
+        for typ in data_type
     ]
+
+    obs = [rc.ObservationData.from_nc(salmon_river, alt_names="qobs", uid=20)]
 
     ###################
     # Configure model #
@@ -299,13 +308,18 @@ def test_routing(get_local_testdata):
         Routing="ROUTE_DIFFUSIVE_WAVE",
         params=parameters,
         HRUs=hrus,
+        HRUStateVariableTable=hs,
         SubBasins=[sub1, sub2],
         SubBasinGroup=SB_groups,
         SBGroupPropertyMultiplier=SBP,
+        BasinStateVariables=bs,
         ChannelProfile=channel_profiles,
-        Gauge=gauges,
+        StationForcing=sf,
+        ObservationData=obs,
         GlobalParameter={"AVG_ANNUAL_RUNOFF": avg_annual_runoff},
         WriteForcingFunctions=True,
+        UniformInitialConditions=None,
+        EvaluationMetrics=("NASH_SUTCLIFFE",),
     )
 
     #############
@@ -354,7 +368,7 @@ def test_routing(get_local_testdata):
     # - basin we have here is larger (4250.6 [km2] + 100 [km2] + 2000.0 [km2])
     # - we do routing: so water from subbasin 1 needs some time to arrive at the
     #   outlet of subbasin 2
-    d = model.diagnostics
+    d = out.diagnostics
     np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.0141168, 4)
 
-    assert len(list(out.output_path.glob("*ForcingFunctions.nc"))) == 1
+    assert len(list(out.path.glob("*ForcingFunctions.nc"))) == 1

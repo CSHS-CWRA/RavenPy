@@ -580,7 +580,7 @@ class StationForcing(GriddedForcing):
         attrs = filter_for(cls, specs)
 
         # Build default gridweights
-        if "grid_weights" not in kwds or "GridWeights" not in kwds:
+        if "grid_weights" not in kwds and "GridWeights" not in kwds:
             size = specs["_dim_size_nc"]
             size.pop(specs["_time_dim_name_nc"])
             nstations = list(size.values())[0]
@@ -754,18 +754,18 @@ class ObservationData(Data):
 
 
 class HRUState(Record):
-    index: int = 1
+    hru_id: int = 1
     data: Dict[str, Sym] = Field(default_factory=dict)
 
     def __str__(self):
-        return ",".join(map(str, (self.index,) + tuple(self.data.values())))
+        return ",".join(map(str, (self.hru_id,) + tuple(self.data.values())))
 
     @classmethod
     def parse(cls, sol, names=None):
         idx, *values = re.split(r",|\s+", sol.strip())
         if names is None:
             names = [f"S{i}" for i in range(len(values))]
-        return cls(index=idx, data=dict(zip(names, values)))
+        return cls(hru_id=idx, data=dict(zip(names, values)))
 
 
 class HRUStateVariableTable(ListCommand):
@@ -790,7 +790,7 @@ class HRUStateVariableTable(ListCommand):
         )
 
         self.__root__ = [
-            HRUState(index=s.index, data={n: s.data.get(n, 0.0) for n in names})
+            HRUState(hru_id=s.hru_id, data={n: s.data.get(n, 0.0) for n in names})
             for s in self.__root__
         ]
 
@@ -819,7 +819,7 @@ class HRUStateVariableTable(ListCommand):
 
         out = []
         for idx, data in d.items():
-            out.append(HRUState(index=idx, data=data))
+            out.append(HRUState(hru_id=idx, data=data))
         return cls(__root__=out)
 
 
@@ -827,7 +827,7 @@ class BasinIndex(Command):
     """Initial conditions for a flow segment."""
 
     # TODO: Check that qout and cie can be written with separating commas.
-    index: int = 1
+    sb_id: int = 1
     name: str = "watershed"
     channel_storage: float = Field(0.0, alias="ChannelStorage")
     rivulet_storage: float = Field(0.0, alias="RivuletStorage")
@@ -836,7 +836,7 @@ class BasinIndex(Command):
     qin: Sequence[float] = Field(None, alias="Qin")
 
     _template = """
-         :BasinIndex {index} {name}
+         :BasinIndex {sb_id} {name}
          {_commands}
           """
 
@@ -849,7 +849,7 @@ class BasinIndex(Command):
         """
         m = re.search(dedent(pat).strip(), s, re.DOTALL)
         index_name = re.split(r",|\s+", m.group(1).strip())
-        rec_values = {"index": index_name[0], "name": index_name[1]}
+        rec_values = {"sb_id": index_name[0], "name": index_name[1]}
         for line in m.group(2).strip().splitlines():
             all_values = filter(None, re.split(r",|\s+", line.strip()))
             cmd, *values = all_values

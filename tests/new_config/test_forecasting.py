@@ -21,7 +21,7 @@ def test_warm_up(minimal_emulator, tmp_path):
 
     assert conf.start_date == minimal_emulator.start_date
     assert len(wup.hydrograph.q_sim.time) == 11
-    assert conf.hru_states != minimal_emulator.hru_states
+    assert conf.hru_state_variable_table != minimal_emulator.hru_state_variable_table
 
 
 def test_climatology_esp(minimal_emulator, tmp_path):

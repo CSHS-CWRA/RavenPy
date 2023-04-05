@@ -231,10 +231,10 @@ class CanadianShield(Config):
         rc.SeasonalRelativeHeight(), alias="SeasonalRelativeHeight"
     )
 
-    hru_states: rc.HRUStateVariableTable = Field(
+    hru_state_variable_table: rc.HRUStateVariableTable = Field(
         [
             rc.HRUState(
-                index=1,
+                hru_id=1,
                 data={
                     "SOIL[0]": P.X01 * 500,
                     "SOIL[1]": P.X02 * 500,
@@ -242,7 +242,7 @@ class CanadianShield(Config):
                 },
             ),
             rc.HRUState(
-                index=2,
+                hru_id=2,
                 data={
                     "SOIL[0]": P.X01 * 500,
                     "SOIL[1]": P.X02 * 500,
