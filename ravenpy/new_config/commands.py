@@ -399,7 +399,7 @@ class SBGroupPropertyMultiplier(FlatCommand):
     parameter_name: str
     mult: float
 
-    _template = ":SBGroupPropertyMultiplier {group_name} {parameter_name} {mult}"
+    _template = "\n:SBGroupPropertyMultiplier {group_name} {parameter_name} {mult}"
 
 
 # TODO: Convert to new config
