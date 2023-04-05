@@ -341,7 +341,7 @@ class OroTempCorrect(Enum):
     HBV = "OROCORR_HBV"
     UBC = "OROCORR_UBC"
     UBC2 = "OROCORR_UBC_2"
-    SIMPLE = "OROCORR_SIMPLELAPSE"
+    SIMPLELAPSE = "OROCORR_SIMPLELAPSE"
 
 
 class PotentialMeltMethod(Enum):

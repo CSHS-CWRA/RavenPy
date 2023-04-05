@@ -64,7 +64,12 @@ def nc_specs(
     }
 
     with xr.open_dataset(fn) as ds:
-        var_names = (CF_RAVEN.get(data_type),) + alt_names
+        var_names = CF_RAVEN.get(data_type, ()) + tuple(alt_names)
+        if len(var_names) == 0:
+            raise ValueError(
+                f"Provide alternative variable name with `alt_names` for {data_type}"
+            )
+
         for v in var_names:
             if v in ds.data_vars:
                 nc_var = ds[v]

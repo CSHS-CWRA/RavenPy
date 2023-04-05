@@ -215,7 +215,7 @@ class TestGR4JCN:
         # Sub-basin IDs are 10 and 20 (not 1 and 2), to help disambiguate
         model.config.rvh.subbasins = (
             # gauged = False:
-            # Usually this output would only be written for user's convenience.
+            # Usually this output would only be written for user's convenience.a as
             # There is usually no observation of streamflow available within
             # catchments; only at the outlet. That's most commonly the reason
             # why a catchment is defined as it is defined.

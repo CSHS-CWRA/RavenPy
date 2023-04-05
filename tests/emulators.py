@@ -35,7 +35,7 @@ names = [
     "HYPR",
     "SACSMA",
     "Blended",
-][4:5]
+]
 
 # Mapping of emulator names to configuration classes
 configs = {
