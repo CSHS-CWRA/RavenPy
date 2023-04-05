@@ -100,6 +100,12 @@ class GR4JCN(Config):
     potential_melt: o.PotentialMeltMethod = Field(
         "POTMELT_DEGREE_DAY", alias="PotentialMeltMethod"
     )
+    oro_temp_correct: o.OroTempCorrect = Field(
+        o.OroTempCorrect.SIMPLELAPSE, alias="OroTempCorrect"
+    )
+    oro_precip_correct: o.OroPrecipCorrect = Field(
+        o.OroPrecipCorrect.SIMPLELAPSE, alias="OroPrecipCorrect"
+    )
 
     hydrologic_processes: Sequence[Union[Process, rc.Conditional]] = Field(
         [
