@@ -11,7 +11,7 @@ kernelspec:
   name: python3
 ---
 
-# Model configuration
+# Model Configuration
 
 
 Raven lets hydrologist customize how models are defined, and provides examples of model configuration that can reproduce outputs from known hydrological models: HBV-EC, HMETS, Sacramento-SMA, etc. RavenPy can be used to create Python objects representing those emulators, facilitating the setup of complex modeling experiments. The following is a walk-through covering the basics of emulator configuration.
