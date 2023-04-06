@@ -35,7 +35,6 @@ def test_run(numeric_config, tmp_path):
     assert conf.__config__.allow_mutation
 
     e = Emulator(config=conf, workdir=tmp_path)
-    e.write_rv()
     out = e.run()
 
     d = out.diagnostics
@@ -46,7 +45,7 @@ def test_run(numeric_config, tmp_path):
 
     # Start new simulation with final state from initial run.
     new = e.resume()
-    new.start_date = conf.end_date
+    assert new.start_date == conf.end_date
     new.end_date = dt.datetime(2002, 1, 7)
     new.run_name = None
 

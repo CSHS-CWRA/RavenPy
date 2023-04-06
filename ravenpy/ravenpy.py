@@ -19,7 +19,11 @@ RAVEN_EXEC_PATH = os.getenv("RAVENPY_RAVEN_BINARY_PATH") or shutil.which("raven"
 
 class Emulator:
     def __init__(
-        self, config: Config, workdir: Union[Path, str] = None, modelname=None
+        self,
+        config: Config,
+        workdir: Union[Path, str] = None,
+        modelname=None,
+        overwrite=False,
     ):
         """
         Convenience class to work with the Raven modeling framework.
@@ -32,33 +36,21 @@ class Emulator:
           Path to rv files and model outputs. If None, create a temporary directory.
         modelname : str, None
           File name stem of configuration files: `<modelname>.rv*`.
+        overwrite: bool
+          If True, overwrite existing files.
         """
         self._config = config.copy(deep=True)
         self._workdir = Path(workdir or tempfile.mkdtemp())
-        self._output = None  # Model output path
         self._modelname = modelname
-        self._rv = None  # Model config files
+        self.overwrite = overwrite
+        self._output = None  # Model output path
 
-        # Emulator config is made immutable to avoid complex behavior.
-        # This propagates to the original config. The copy doesn't really work...
-        # self._config.__config__.allow_mutation = False
-
-    def write_rv(self, overwrite=False):
-        """Write the configuration files to disk.
-
-        Parameters
-        ----------
-        overwrite: bool
-            If True, overwrite existing files.
-        """
-
+        # Write model config files
         self._rv = self._config.write_rv(
             workdir=self.workdir, modelname=self.modelname, overwrite=overwrite
         )
-        if self.modelname is None:
-            # modelname default set by `write_rv`
-            self._modelname = self._rv["rvi"].stem
-        return self._rv
+        # Grab modelname in case it was set by config.write_rv
+        self._modelname = self._rv["rvi"].stem
 
     def run(self, overwrite=False) -> "OutputReader":
         """Run the model. This will write RV files if not already done.
@@ -101,11 +93,16 @@ class Emulator:
         """Return simulation output object."""
         return self._output
 
-    def resume(self) -> Config:
-        """Return new model configuration using state variables from the end of the run."""
-        out = self.config.set_solution(self._output.files["solution"])
-        out.__config__.allow_mutation = True
-        return out
+    def resume(self, timestamp: bool = True) -> Config:
+        """Return new model configuration using state variables from the end of the run.
+
+        timestamp: bool
+          If False, ignore time stamp information in the solution. If True, the solution
+          will set StartDate to the solution's timestamp.
+        """
+        return self.config.set_solution(
+            self.output.files["solution"], timestamp=timestamp
+        )
 
 
 class OutputReader:
