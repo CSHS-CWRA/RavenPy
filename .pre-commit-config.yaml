@@ -16,7 +16,7 @@ repos:
         exclude: .ipynb|.rvc|.rvh|.rvi|.rvp|.rvt|.tpl|.txt
       - id: check-json
       - id: check-yaml
-        args: [ '--allow-multiple-documents' ]
+        args: [ --allow-multiple-documents ]
       - id: pretty-format-json
         args: [ '--autofix', '--no-ensure-ascii', '--no-sort-keys' ]
       - id: debug-statements
@@ -24,32 +24,35 @@ repos:
     rev: v1.10.0
     hooks:
       - id: python-check-blanket-noqa
-      - id: rst-inline-touching-normal
-  - repo: https://github.com/pycqa/flake8
-    rev: 6.0.0
-    hooks:
-      - id: flake8
-        args: [ '--config=setup.cfg' ]
+      - id: rst-inline-touching-normal      
   - repo: https://github.com/psf/black
     rev: 23.3.0
     hooks:
       - id: black
         exclude: ^docs/
-        args: [ '--target-version=py38' ]
+        args: [ --target-version=py38 ]
+  - repo: https://github.com/pycqa/flake8
+    rev: 6.0.0
+    hooks:
+      - id: flake8
+        args: [ --config=setup.cfg ]
   - repo: https://github.com/PyCQA/isort
     rev: 5.12.0
     hooks:
       - id: isort
-        args: [ '--settings-file=setup.cfg' ]
+        args: [ --settings-file=setup.cfg ]
   - repo: https://github.com/nbQA-dev/nbQA
     rev: 1.7.0
     hooks:
       - id: nbqa-pyupgrade
-        args: [ "--py38-plus" ]
+        args: [ --py38-plus ]
+        additional_dependencies: [ pyupgrade==3.3.1 ]
       - id: nbqa-black
-        args: [ "--target-version=py38" ]
+        args: [ --target-version=py38 ]
+        additional_dependencies: [ black==23.3.0 ]
       - id: nbqa-isort
-        args: [ "--settings-file=setup.cfg" ]
+        args: [ --settings-file=setup.cfg ]
+        additional_dependencies: [ isort==5.12.0 ]
   - repo: https://github.com/pycqa/pydocstyle
     rev: 6.3.0
     hooks:
@@ -59,7 +62,7 @@ repos:
     rev: v0.3.8
     hooks:
       - id: blackdoc
-        additional_dependencies: [ 'black==22.10.0' ]
+        additional_dependencies: [ black==23.3.0 ]
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.30.0
     hooks:
@@ -82,6 +85,7 @@ repos:
 ci:
   autofix_commit_msg: |
     [pre-commit.ci] auto fixes from pre-commit.com hooks
+    
     for more information, see https://pre-commit.ci
   autofix_prs: true
   autoupdate_branch: ''
