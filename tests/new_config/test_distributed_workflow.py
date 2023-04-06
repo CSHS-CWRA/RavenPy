@@ -45,6 +45,7 @@ def test_simple_workflow(get_local_testdata, minimal_emulator, tmp_path):
 
     qobs = rc.ObservationData.from_nc(
         qobs_fn,
+        uid=175000128,
         alt_names=("discharge",),
     )
 

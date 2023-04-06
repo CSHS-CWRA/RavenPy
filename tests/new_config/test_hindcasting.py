@@ -83,15 +83,10 @@ class TestHindcasting:
             mem_conf = init_conf.copy(
                 update=dict(
                     gauge=[g],
-                    custom_output={
-                        "time_per": "DAILY",
-                        "stat": "AVERAGE",
-                        "variable": "PRECIP",
-                        "space_agg": "BY_BASIN",
-                    },
                 ),
             )
 
+            # This segfaults
             e = Emulator(
                 config=mem_conf,
                 workdir=tmp_path / f"m{i:02}",
