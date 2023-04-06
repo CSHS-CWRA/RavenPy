@@ -99,7 +99,6 @@ class SpotSetup:
         emulator = Emulator(config=c, workdir=self.path / f"c{self._iteration:03}")
 
         # Run the model
-        emulator.write_rv()
         output = emulator.run()
 
         self.diagnostics = output.diagnostics

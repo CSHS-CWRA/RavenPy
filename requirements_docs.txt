@@ -22,3 +22,7 @@ clisops
 intake-xarray
 gcsfs
 hs_restclient
+jupytext
+jupyter-cache
+myst_nb
+
