@@ -17,5 +17,3 @@ ravenpy provides two mechanisms to execute a model configuration. The first one 
 
 ## The Emulator class
 deserves more explanations, as it's a class that accepts
-
-
