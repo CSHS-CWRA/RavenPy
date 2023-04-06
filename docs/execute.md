@@ -16,6 +16,7 @@ kernelspec:
 ravenpy provides two mechanisms to execute a model configuration. The first one described in [usage] is the `ravenpy.run` function, which expects to find a directory with RV files and returns the path to the output directory. The second one is the `ravenpy.Emulator` class which exposes more functionalities and deserves some explanations.
 
 ## The Emulator class
+
 The `Emulator` class minimally expects a fully configured `Config` instance, which it immediately writes to disk. Other optional arguments are `workdir`, the path to the work directory where configuration files are written, and `modelname`, the string used to create configuration file names. By default, `workdir` will be set to a temporary directory, so make sure to specify another location if you want to hold on to the results.
 
 When the `run` method of an `Emulator` instance is called, it launches the model which writes simulations results in the `output` folder, then returns an instance of the `OutputReader` class. Beyond the `write_rv` and `run` methods, Emulator has a number of properties:
