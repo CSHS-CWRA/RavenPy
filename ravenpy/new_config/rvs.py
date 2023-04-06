@@ -222,9 +222,12 @@ class RVE(RV):
 class Config(RVI, RVC, RVH, RVT, RVP, RVE):
     @root_validator
     def _assign_symbolic(cls, values):
-        """If params is numerical, convert symbolic expressions from other fields."""
+        """If params is numerical, convert symbolic expressions from other fields.
 
-        if values["params"] is not None:
+        Note that this is called for attribute assignment as well.
+        """
+
+        if values.get("params") is not None:
             p = asdict(values["params"])
 
             if not is_symbolic(p):
@@ -239,17 +242,18 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
 
     def set_params(self, params) -> "Config":
         """Return a new instance of Config with params set to their numerical values."""
-        # Get the configuration fields
-        dc = self.__dict__.copy()
-
         # Create params with numerical values
-        sym_p = dc.pop("params")
-        if not is_symbolic(sym_p):
+        if not self.is_symbolic:
             raise ValueError(
                 "Setting `params` on a configuration without symbolic expressions has no effect."
                 "Leave `params` to its default value when instantiating the emulator configuration."
             )
+        # out = self.duplicate()
+        # out.params = params
+        # return out
 
+        dc = self.__dict__.copy()
+        sym_p = dc.pop("params")
         num_p = sym_p.__class__(*params)
 
         # Parse symbolic expressions using numerical params values
@@ -296,7 +300,7 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
     def _rv(self, rv: str):
         """Return RV configuration."""
 
-        if self.params and is_symbolic(self.params):
+        if self.is_symbolic:
             raise ValueError(
                 "Cannot write RV files if `params` has symbolic variables. Use `set_params` method to set numerical "
                 "values for `params`."

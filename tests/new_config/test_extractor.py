@@ -19,7 +19,7 @@ def test_basinmaker_extractor(get_local_testdata, tmp_path):
         routing_product_version="2.1",
     )
     rvh_config = rvh_extractor.extract()
-    rvh_config.pop("channel_profiles")
+    rvh_config.pop("channel_profile")
 
     config = BasicRoute(**rvh_config)
     config.write_rv(tmp_path, modelname="routing")

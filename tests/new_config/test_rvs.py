@@ -1,9 +1,13 @@
 import datetime as dt
+from typing import Union
 
 import cftime
 import pytest
-from pydantic import ValidationError
+from pydantic import Field, ValidationError
+from pydantic.dataclasses import dataclass
+from pymbolic.primitives import Variable
 
+from ravenpy.new_config import commands as rc
 from ravenpy.new_config.rvs import RVI, Config
 
 
@@ -35,3 +39,23 @@ def test_duplicate():
     assert isinstance(out.start_date, cftime.datetime)
     assert out.duration == 10
     assert out.debug_mode
+
+
+def test_set_params():
+    @dataclass(config=dict(arbitrary_types_allowed=True))
+    class P:
+        X01: Union[Variable, float] = Variable("X01")
+
+    class MySymbolicEmulator(Config):
+        params: P = P()
+        rain_snow_transition: rc.RainSnowTransition = Field(
+            default=rc.RainSnowTransition(temp=P.X01, delta=2),
+            alias="RainSnowTransition",
+        )
+
+    exp = MySymbolicEmulator(params=[0.5])
+    s = MySymbolicEmulator()
+    assert s.set_params([0.5]) == exp
+    s.params = [0.5]
+    assert s.rain_snow_transition == exp.rain_snow_transition
+    assert s.rvp == exp.rvp
