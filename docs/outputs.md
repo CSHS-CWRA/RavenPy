@@ -13,13 +13,13 @@ kernelspec:
 
 # Reading Model Outputs
 
-ravenpy includes two relatively simples classes that expose Raven outputs as Python objects: `OutputReader` for single simulation outputs, and `EnsembleReader` to aggregate the results of multiple simulations.
+ravenpy includes two relatively simples classes that expose Raven outputs as Python objects: `OutputReader` for single simulation outputs, and `EnsembleReader` to aggregate the results of multiple simulations as would be done in ensemble streamflow forecasting, for example.
 
 (output_reader)=
 ## Accessing simulation results with `OutputReader`
 Each Raven simulation creates output files in a directory. These outputs can be exposed as Python objects using the `ravenpy.OutputReader` class. `OutputReader` takes a `run_name` and `path` arguments, and returns an object with a number of read-only properties:
 - `files`: dictionary of file path keyed by input kind;
-- `solution`: dictionary with final model states for HRUs and sub-basins and end date;
+- `solution`: dictionary with final model states for HRUs and sub-basins, as well as end date;
 - `diagnostics`: dictionary storing the values of evaluation metrics;
 - `hydrograph`: `xr.Dataset` of the simulated hydrograph;
 - `storage`: `xr.Dataset` of the simulated storage variables;
@@ -63,7 +63,7 @@ conf = HMETS(**kwds)
 runs = [Emulator(conf.set_params(param), workdir=p / f"m{i}").run() for i, param in enumerate(params)]
 ```
 
-Now `ens` stores a list of `OutputReader` instances. The time series stored in `hydrograph` and `storage` can be concatenated together using the `EnsembleReader` class:
+Now `runs` stores a list of `OutputReader` instances. The time series stored in `hydrograph` and `storage` can be concatenated together using the `EnsembleReader` class:
 
 ```{code-cell} python3
 :tags: ["skip-execution"]
