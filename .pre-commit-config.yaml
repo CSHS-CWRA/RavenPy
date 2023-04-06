@@ -24,7 +24,7 @@ repos:
     rev: v1.10.0
     hooks:
       - id: python-check-blanket-noqa
-      - id: rst-inline-touching-normal      
+      - id: rst-inline-touching-normal
   - repo: https://github.com/psf/black
     rev: 23.3.0
     hooks:
@@ -85,7 +85,7 @@ repos:
 ci:
   autofix_commit_msg: |
     [pre-commit.ci] auto fixes from pre-commit.com hooks
-    
+
     for more information, see https://pre-commit.ci
   autofix_prs: true
   autoupdate_branch: ''
