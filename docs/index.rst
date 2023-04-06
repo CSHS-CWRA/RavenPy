@@ -9,6 +9,8 @@ Welcome to RavenPy's documentation!
    installation
    usage
    configuration
+   execute
+   outputs
    notebooks/index
    contributing
    authors

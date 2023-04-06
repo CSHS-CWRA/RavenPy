@@ -16,6 +16,7 @@ from .common import _convert_2d, _convert_3d
 from .emulators import (
     config_rv,
     dummy_config,
+    gr4jcn_config,
     minimal_emulator,
     numeric_config,
     symbolic_config,

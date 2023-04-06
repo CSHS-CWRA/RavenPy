@@ -129,7 +129,7 @@ class OutputReader:
         return self._files
 
     @property
-    def solution(self) -> str:
+    def solution(self) -> dict:
         """Return solution file content."""
         solution = self.files.get("solution")
         if solution:
@@ -174,8 +174,8 @@ class EnsembleReader:
 
         Parameters
         ----------
-        run_name: str
-          Name of simulation.
+        run_name: str, None
+          Name given to simulation, if any.
         paths: list
           List of output paths. Defaults to all directories in current directory.
         runs: List[OutputReader]
@@ -192,7 +192,6 @@ class EnsembleReader:
             if paths is None:
                 paths = [p for p in Path.cwd().iterdir() if p.is_dir()]
             self._paths = [Path(p) for p in paths]
-
             self._outputs = [OutputReader(run_name, p) for p in self._paths]
 
     @property
@@ -205,12 +204,21 @@ class EnsembleReader:
 
     @property
     def storage(self):
+        if len(self.files["storage"]) == 0:
+            raise ValueError(
+                "No file found, make sure you have the right `run_name` and output `paths`."
+            )
+
         return xr.concat(
             [xr.open_dataset(f) for f in self.files["storage"]], dim=self._dim
         )
 
     @property
     def hydrograph(self):
+        if len(self.files["hydrograph"]) == 0:
+            raise ValueError(
+                "No file found, make sure you have the right `run_name` and output `paths`."
+            )
         return xr.concat(
             [xr.open_dataset(f) for f in self.files["hydrograph"]],
             dim=self._dim,

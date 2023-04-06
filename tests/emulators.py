@@ -240,6 +240,27 @@ params = {
 }
 
 
+@pytest.fixture(scope="session")
+def gr4jcn_config(salmon_meteo, salmon_hru) -> (GR4JCN, params):
+    """Return symbolic config and params for basic gr4jcn."""
+
+    yield GR4JCN(
+        Gauge=[
+            rc.Gauge.from_nc(
+                salmon_meteo,
+                data_type=["RAINFALL", "TEMP_MIN", "TEMP_MAX", "SNOWFALL"],
+                alt_names=alt_names,
+                data_kwds={"ALL": {"elevation": salmon_hru["land"]["elevation"]}},
+            ),
+        ],
+        ObservationData=[rc.ObservationData.from_nc(salmon_meteo, alt_names="qobs")],
+        HRUs=[salmon_hru["land"]],
+        StartDate=dt.datetime(2000, 1, 1),
+        Duration=15,
+        EvaluationMetrics=("NASH_SUTCLIFFE",),
+    ), params["GR4JCN"]
+
+
 @pytest.fixture(scope="session", params=names)
 def symbolic_config(salmon_meteo, salmon_hru, request):
     """Emulator configuration instantiated with symbolic parameters."""
