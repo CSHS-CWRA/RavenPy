@@ -83,7 +83,7 @@ def test_enkf(salmon_meteo, salmon_hru, tmp_path):
     conf.zip(tmp_path, overwrite=True)
     # Spin-up
 
-    spinup = Emulator(config=conf, workdir=tmp_path).run(overwrite=True)
+    spinup = Emulator(config=conf, workdir=tmp_path, overwrite=True).run(overwrite=True)
 
     # Closed Loop
     # loop_conf = conf.set_solution(spinup.solution)
