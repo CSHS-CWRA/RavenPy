@@ -79,27 +79,33 @@ def test_enkf(salmon_meteo, salmon_hru, tmp_path):
         NoisyMode=True,
     )
 
-    tmp_path = "/tmp/enkf1"
+    from pathlib import Path
+
+    # tmp_path = Path("/tmp/enkf1")
     conf.zip(tmp_path, overwrite=True)
     # Spin-up
 
-    spinup = Emulator(config=conf, workdir=tmp_path).run(overwrite=True)
+    spinup = Emulator(config=conf, workdir=tmp_path).run()
 
     # Closed Loop
-    # loop_conf = conf.set_solution(spinup.solution)
-    # conf.enkf_mode = o.EnKFMode.CLOSED_LOOP
-    # conf.run_name = "loop"
-    # conf.solution_run_name = "spinup"
-    # conf.uniform_initial_conditions = None
-    # loop = Emulator(config=conf, workdir=tmp_path).run(overwrite=True)
+    conf_loop = conf.duplicate(
+        EnKFMode=o.EnKFMode.CLOSED_LOOP,
+        RunName="loop",
+        SolutionRunName="spinup",
+        UniformInitialConditions=None,
+    )
+    loop = Emulator(config=conf_loop, workdir=tmp_path).run()
 
     # Forecast
+    conf_cast = conf_loop.duplicate(
+        EnKFMode=o.EnKFMode.FORECAST, RunName="forecast", SolutionRunName="loop"
+    )
+    cast = Emulator(config=conf_cast, workdir=tmp_path).run()
 
-    # conf.duration =
+    paths = list(tmp_path.glob("ens_*"))
+    paths.sort()
+    assert len(paths) == 7
 
-    # paths = list(tmp_path.glob("ens_*"))
-    # paths.sort()
-    # assert len(paths) == 7
-
-    # ens = EnsembleReader(conf.run_name, paths)
-    # assert len(ens.files["hydrograph"]) == 7
+    ens = EnsembleReader(conf_cast.run_name, paths=paths)
+    assert conf_cast.run_name == "forecast"
+    assert len(ens.files["hydrograph"]) == 7
