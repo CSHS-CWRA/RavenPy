@@ -87,6 +87,7 @@ def populate_testing_data(
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_3d.nc",
             "raven-routing-sample/OTT_sub.zip",
             "raven-routing-sample/VIC_streaminputs.nc",
+            "raven-routing-sample/VIC_streaminputs_weights.rvt",
             "raven-routing-sample/VIC_temperatures.nc",
             "raven-routing-sample/VIC_test_nodata.nc",
             "raven-routing-sample/VIC_test_nodata_weights.rvt",

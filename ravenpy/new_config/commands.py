@@ -1021,7 +1021,7 @@ class EnsembleMode(Command):
     _template = ":{_cmd} {mode} {n}\n"
 
 
-class ObservationalErrorModel(FlatCommand):
+class ObservationErrorModel(FlatCommand):
     state: Literal["STREAMFLOW"]
     dist: Literal["DIST_UNIFORM", "DIST_NORMAL", "DIST_GAMMA"]
     p1: float

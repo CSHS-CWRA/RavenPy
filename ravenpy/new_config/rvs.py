@@ -214,8 +214,8 @@ class RVE(RV):
     assimilate_streamflow: Sequence[rc.AssimilateStreamflow] = Field(
         None, alias="AssimilateStreamflow"
     )
-    observational_error_model: Sequence[rc.ObservationalErrorModel] = Field(
-        None, alias="ObservationalErrorModel"
+    observation_error_model: Sequence[rc.ObservationErrorModel] = Field(
+        None, alias="ObservationErrorModel"
     )
 
 
@@ -410,9 +410,11 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
             raise OSError(f"{fn} already exists and would be overwritten.")
 
         with zipfile.ZipFile(fn, "w") as fh:
-            for rv in ["rvi", "rvp", "rvc", "rvh", "rvt"]:
+            for rv in ["rvi", "rvp", "rvc", "rvh", "rvt", "rve"]:
                 f = f"{modelname}.{rv}"
-                fh.writestr(f, self._rv(rv))
+                txt = self._rv(rv)
+                if txt.strip():
+                    fh.writestr(f, txt)
         return zip
 
 

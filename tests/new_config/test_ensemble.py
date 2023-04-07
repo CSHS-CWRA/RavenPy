@@ -45,14 +45,7 @@ def test_enkf(salmon_meteo, salmon_hru, tmp_path):
         OutputDirectoryFormat="./ens_*",
         ForcingPerturbation=[
             rc.ForcingPerturbation(
-                forcing="RAINFALL",
-                dist="DIST_NORMAL",
-                p1=0,
-                p2=0.5,
-                adj="MULTIPLICATIVE",
-            ),
-            rc.ForcingPerturbation(
-                forcing="SNOWFALL",
+                forcing="PRECIP",
                 dist="DIST_NORMAL",
                 p1=1,
                 p2=0.07,
@@ -66,8 +59,8 @@ def test_enkf(salmon_meteo, salmon_hru, tmp_path):
             rc.AssimilatedState(state="SOIL[1]", group="All"),
         ],
         AssimilateStreamflow=[rc.AssimilateStreamflow(sb_id=1)],
-        ObservationalErrorModel=[
-            rc.ObservationalErrorModel(
+        ObservationErrorModel=[
+            rc.ObservationErrorModel(
                 state="STREAMFLOW",
                 dist="DIST_NORMAL",
                 p1=1,
@@ -83,8 +76,8 @@ def test_enkf(salmon_meteo, salmon_hru, tmp_path):
 
     # tmp_path = Path("/tmp/enkf1")
     conf.zip(tmp_path, overwrite=True)
-    # Spin-up
 
+    # Spin-up
     spinup = Emulator(config=conf, workdir=tmp_path).run()
 
     # Closed Loop
