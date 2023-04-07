@@ -378,7 +378,7 @@ def test_canopex():
         "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/birdhouse/ets"
         "/Watersheds_5797_cfcompliant.nc"
     )
-    
+
     # Set HRU
     hru = dict(
         area=3650.47,
@@ -393,7 +393,7 @@ def test_canopex():
         "TEMP_MIN": "tasmin",
         "TEMP_MAX": "tasmax",
         "PRECIP": "pr",
-        }
+    }
 
     data_kwds = {
         "ALL": {
@@ -402,17 +402,18 @@ def test_canopex():
             "longitude": hru["longitude"],
         }
     }
-    
+
     basin = 5600
-    
-    qobs=[
-        rc.ObservationData.from_nc(CANOPEX_DAP, 
-                                   alt_names="discharge", 
-                                   station_idx=basin,
-                                   )
+
+    qobs = [
+        rc.ObservationData.from_nc(
+            CANOPEX_DAP,
+            alt_names="discharge",
+            station_idx=basin,
+        )
     ]
-    
-    gauge_data=[
+
+    gauge_data = [
         rc.Gauge.from_nc(
             CANOPEX_DAP,
             station_idx=basin,
@@ -421,7 +422,7 @@ def test_canopex():
             data_kwds=data_kwds,
         )
     ]
-    
+
     # Set config
     model = GR4JCN(
         start_date=dt.datetime(2010, 6, 1),
@@ -431,19 +432,21 @@ def test_canopex():
         run_name="Test_run",
         rain_snow_fraction="RAINSNOW_DINGMAN",
         hrus=[hru],
-        params=[108.02, 2.8693, 25.352, 1.3696, 1.2483, 0.30679]
+        params=[108.02, 2.8693, 25.352, 1.3696, 1.2483, 0.30679],
     )
-    
+
     # Test that it at least runs while we're here
     emu = Emulator(config=model, overwrite=True).run(overwrite=True)
-    
+
     # Check unit transformation parameters are correctly inferred
     var = model.gauge[0].data[0].data_type
-    assert var in ['TEMP_MIN', 'TEMP_MAX', 'PRECIP']
+    assert var in ["TEMP_MIN", "TEMP_MAX", "PRECIP"]
 
-    if var in ['TEMP_MIN', 'TEMP_MAX']:
+    if var in ["TEMP_MIN", "TEMP_MAX"]:
         assert model.gauge[0].data[0].read_from_netcdf.linear_transform.scale == 1.0
-        assert model.gauge[0].data[0].read_from_netcdf.linear_transform.offset == -273.15
-    else:      
+        assert (
+            model.gauge[0].data[0].read_from_netcdf.linear_transform.offset == -273.15
+        )
+    else:
         assert model.gauge[0].data[0].read_from_netcdf.linear_transform.scale == 86400.0
         assert model.gauge[0].data[0].read_from_netcdf.linear_transform.offset == 0.0
