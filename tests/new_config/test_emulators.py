@@ -371,3 +371,79 @@ def test_routing(get_local_testdata):
     np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.0141168, 4)
 
     assert len(list(out.path.glob("*ForcingFunctions.nc"))) == 1
+
+
+def test_canopex():
+    CANOPEX_DAP = (
+        "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/birdhouse/ets"
+        "/Watersheds_5797_cfcompliant.nc"
+    )
+    
+    # Set HRU
+    hru = dict(
+        area=3650.47,
+        elevation=330.59,
+        latitude=49.51,
+        longitude=-95.72,
+        hru_type="land",
+    )
+    data_type = ["TEMP_MAX", "TEMP_MIN", "PRECIP"]
+
+    alt_names = {
+        "TEMP_MIN": "tasmin",
+        "TEMP_MAX": "tasmax",
+        "PRECIP": "pr",
+        }
+
+    data_kwds = {
+        "ALL": {
+            "elevation": hru["elevation"],
+            "latitude": hru["latitude"],
+            "longitude": hru["longitude"],
+        }
+    }
+    
+    basin = 5600
+    
+    qobs=[
+        rc.ObservationData.from_nc(CANOPEX_DAP, 
+                                   alt_names="discharge", 
+                                   station_idx=basin,
+                                   )
+    ]
+    
+    gauge_data=[
+        rc.Gauge.from_nc(
+            CANOPEX_DAP,
+            station_idx=basin,
+            data_type=data_type,  # Note that this is the list of all the variables
+            alt_names=alt_names,  # Note that all variables here are mapped to their names in the netcdf file.
+            data_kwds=data_kwds,
+        )
+    ]
+    
+    # Set config
+    model = GR4JCN(
+        start_date=dt.datetime(2010, 6, 1),
+        end_date=dt.datetime(2010, 6, 10),
+        Gauge=gauge_data,
+        ObservationData=qobs,
+        run_name="Test_run",
+        rain_snow_fraction="RAINSNOW_DINGMAN",
+        hrus=[hru],
+        params=[108.02, 2.8693, 25.352, 1.3696, 1.2483, 0.30679]
+    )
+    
+    # Test that it at least runs while we're here
+    emu = Emulator(config=model, overwrite=True).run(overwrite=True)
+    
+    # Check unit transformation parameters are correctly inferred
+    var = model.gauge[0].data[0].data_type
+    assert var in ['TEMP_MIN', 'TEMP_MAX', 'PRECIP']
+
+    if var in ['TEMP_MIN', 'TEMP_MAX']:
+        assert model.gauge[0].data[0].read_from_netcdf.linear_transform.scale == 1.0
+        assert model.gauge[0].data[0].read_from_netcdf.linear_transform.offset == -273.15
+    else:      
+        assert model.gauge[0].data[0].read_from_netcdf.linear_transform.scale == 86400.0
+        assert model.gauge[0].data[0].read_from_netcdf.linear_transform.offset == 0.0
