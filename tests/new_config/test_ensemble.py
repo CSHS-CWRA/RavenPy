@@ -77,8 +77,7 @@ def test_enkf(salmon_meteo, salmon_hru, tmp_path):
     # tmp_path = Path("/tmp/enkf1")
     conf.zip(tmp_path, overwrite=True)
 
-    # Spin-up
-    spinup = Emulator(config=conf, workdir=tmp_path).run()
+    spinup = Emulator(config=conf, workdir=tmp_path, overwrite=True).run(overwrite=True)
 
     # Closed Loop
     conf_loop = conf.duplicate(
