@@ -369,7 +369,12 @@ def test_gauge(get_local_testdata):
 
 def test_grid_weights():
     gw = rc.GridWeights()
-    gw.to_rv()
+    txt = gw.to_rv()
+
+    parsed = rc.GridWeights.parse(txt)
+    assert parsed.number_hrus == gw.number_hrus
+    assert parsed.number_grid_cells == gw.number_grid_cells
+    assert parsed.data == gw.data
 
 
 def test_redirect_to_file(get_local_testdata):

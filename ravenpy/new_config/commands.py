@@ -449,21 +449,27 @@ class GridWeights(Command):
     class GWRecord(Record):
         __root__: Tuple[int, int, float] = (1, 0, 1.0)
 
+        def __iter__(self):
+            return iter(self.__root__)
+
+        def __getitem__(self, item):
+            return self.__root__[item]
+
         def __str__(self):
             return " ".join(map(str, self.__root__))
 
-    data: Sequence[GWRecord] = Field(GWRecord())
+    data: Sequence[GWRecord] = Field((GWRecord(),))
 
     @classmethod
     def parse(cls, s):
         pat = r"""
         :GridWeights
-          :NumberHRUs (\d+)
-          :NumberGridCells (\d+)
-          (.+)
+        \s*:NumberHRUs\s+(\d+)
+        \s*:NumberGridCells\s+(\d+)
+        \s*(.+)
         :EndGridWeights
         """
-        m = re.match(dedent(pat).strip(), s, re.DOTALL)
+        m = re.match(dedent(pat).strip(), s.strip(), re.DOTALL)
         n_hrus, n_grid_cells, data = m.groups()  # type: ignore
         data = [d.strip().split() for d in data.split("\n")]
         data = tuple((int(h), int(c), float(w)) for h, c, w in data)

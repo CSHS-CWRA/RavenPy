@@ -321,7 +321,7 @@ class GridWeightExtractor:
     """
 
     DIM_NAMES = ("lon_dim", "lat_dim")
-    VAR_NAMES = ("lon", "lat")
+    VAR_NAMES = ("longitude", "latitude")
     ROUTING_ID_FIELD = "SubId"
     NETCDF_INPUT_FIELD = "NetCDF_col"
     AREA_ERROR_THRESHOLD = 0.05
