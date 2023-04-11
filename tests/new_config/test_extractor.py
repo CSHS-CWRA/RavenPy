@@ -27,28 +27,10 @@ def test_basinmaker_extractor(get_local_testdata, tmp_path):
     #      **rvh_config,
     #                 SBGroupPropertyMultiplier=[{"group_name": "Land", "parameter_name":
     # "MANNINGS_N", "mult": 1.0}, {"group_name": "Lakes", "parameter_name": "RESERVOIR_CREST_WIDTH", "mult": 1.0}])
-    
-    
-    
-    
-    
-    
-    
-    
+
+
 import pytest
 import xarray as xr
-
-#from ravenpy.new_config.commands import (
-#    LandUseClassesCommand,
-#    SBGroupPropertyMultiplierCommand,
-#    SoilClassesCommand,
-#    SoilProfilesCommand,
-#    VegetationClassesCommand,
-#)
-#from ravenpy.extractors.new_config.routing_product import (
-#    RoutingProductGridWeightExtractor,
-#    RoutingProductShapefileExtractor,
-#)
 
 from ravenpy import Emulator
 from ravenpy.extractors.new_config.routing_product import (
@@ -57,14 +39,27 @@ from ravenpy.extractors.new_config.routing_product import (
     open_shapefile,
     upstream_from_coords,
 )
+from ravenpy.new_config import Config
 from ravenpy.new_config import commands as rc
 from ravenpy.new_config.emulators import GR4JCN
-from ravenpy.new_config import Config
+
+# from ravenpy.new_config.commands import (
+#    LandUseClassesCommand,
+#    SBGroupPropertyMultiplierCommand,
+#    SoilClassesCommand,
+#    SoilProfilesCommand,
+#    VegetationClassesCommand,
+# )
+# from ravenpy.extractors.new_config.routing_product import (
+#    RoutingProductGridWeightExtractor,
+#    RoutingProductShapefileExtractor,
+# )
 
 
-#@pytest.mark.skip(
+
+# @pytest.mark.skip(
 #    reason="Bug with Raven 3.5 regarding netCDF reservoir output to be fixed in next release."
-#)
+# )
 class TestRouting:
     def test_lievre_tutorial(self, get_file):
         """
@@ -92,9 +87,8 @@ class TestRouting:
         #########
 
         model = Config()
-        model.run_name="raven-lievre-routing"
-        #model.description="Lievre catchment draining towards 02LE024",
-        
+        model.run_name = "raven-lievre-routing"
+        # model.description="Lievre catchment draining towards 02LE024",
 
         #######
         # RVI #
@@ -519,4 +513,3 @@ class TestRouting:
             (4000, 128.70284018326998),
         ]:
             assert model.hydrograph.q_sim[d].item() == pytest.approx(q_sim)
-
