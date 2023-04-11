@@ -193,7 +193,7 @@ class RainSnowTransition(Command):
         return f":RainSnowTransition {self.temp} {self.delta}\n"
 
 
-class EvaluationPeriod(Command):
+class EvaluationPeriod(FlatCommand):
     """:EvaluationPeriod [period_name] [start yyyy-mm-dd] [end yyyy-mm-dd]"""
 
     name: str
@@ -201,11 +201,10 @@ class EvaluationPeriod(Command):
     end: dt.date
 
     def to_rv(self):
-        return f":EvaluationPeriod {self.name} {self.start} {self.end}"
+        return f":EvaluationPeriod     {self.name} {self.start} {self.end}\n"
 
 
-@dataclasses.dataclass
-class CustomOutput:
+class CustomOutput(FlatCommand):
     """
     Create custom output file to track a single variable, parameter or forcing function over time at a number of
     basins, HRUs, or across the watershed.
@@ -234,7 +233,7 @@ class CustomOutput:
 
     def to_rv(self):
         template = ":CustomOutput {time_per} {stat} {variable} {space_agg} {filename}\n"
-        return template.format(**asdict(self))
+        return template.format(**self.dict())
 
 
 class SoilProfile(Record):

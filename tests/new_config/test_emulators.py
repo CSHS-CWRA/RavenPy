@@ -78,6 +78,38 @@ def test_no_run_name(dummy_config, tmp_path):
     assert "raven.rvi" in str(paths["rvi"])
 
 
+def test_set_params(gr4jcn_config):
+    """Set params with numpy array, list and tuple."""
+    gr4jcn, params = gr4jcn_config
+
+    conf = gr4jcn.set_params(np.array([0.529, -3.396, 407.29, 1.072, 16.9, 0.947]))
+    assert conf.params.GR4J_X1 == 0.529
+
+    conf = gr4jcn.set_params([0.529, -3.396, 407.29, 1.072, 16.9, 0.947])
+    assert conf.params.GR4J_X1 == 0.529
+
+    conf = gr4jcn.set_params((0.529, -3.396, 407.29, 1.072, 16.9, 0.947))
+    assert conf.params.GR4J_X1 == 0.529
+
+
+def test_evaluation_periods(gr4jcn_config, tmp_path):
+    """Test multiple evaluation periods are parsed correctly."""
+    gr4jcn, params = gr4jcn_config
+
+    conf = gr4jcn.set_params(params)
+    conf.evaluation_metrics = ["RMSE", "KLING_GUPTA"]
+    conf.evaluation_period = [
+        rc.EvaluationPeriod(name="period1", start="2000-01-01", end="2000-01-7"),
+        rc.EvaluationPeriod(name="period2", start="2001-01-01", end="2000-01-15"),
+    ]
+    out = Emulator(conf, workdir=tmp_path).run()
+
+    d = out.diagnostics
+    assert "DIAG_RMSE" in d
+    assert "DIAG_KLING_GUPTA" in d
+    assert len(d["DIAG_RMSE"]) == 3  # ALL, period1, period2
+
+
 @pytest.mark.slow
 @pytest.mark.online
 def test_run_with_dap_link(minimal_emulator, tmp_path):

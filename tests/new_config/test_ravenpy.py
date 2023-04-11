@@ -13,6 +13,10 @@ def test_ensemble_reader(gr4jcn_config, tmp_path):
     # Output directory for all simulations
     p = tmp_path / "ensemble"
 
+    # Writing to the same custom output cause segfaults
+    # conf.custom_output = [rc.CustomOutput(time_per="DAILY", stat="AVERAGE", variable="RAINFALL",
+    # space_agg="ENTIRE_WATERSHED")]
+
     # Run the model for each parameter set in `params`
     runs = [
         Emulator(conf.set_params(param), workdir=p / f"m{i}").run()

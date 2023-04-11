@@ -32,9 +32,6 @@ class RVI(RV):
     end_date: date = Field(None, alias="EndDate")
     duration: float = Field(None, alias="Duration")
     time_step: float = Field(None, alias="TimeStep")
-    evaluation_period: Sequence[rc.EvaluationPeriod] = Field(
-        None, alias="EvaluationPeriod"
-    )
 
     # Model description
     routing: o.Routing = Field(None, alias="Routing")
@@ -73,14 +70,16 @@ class RVI(RV):
     evaluation_metrics: Sequence[o.EvaluationMetrics] = Field(
         None, alias="EvaluationMetrics"
     )
-
+    evaluation_period: Sequence[rc.EvaluationPeriod] = Field(
+        None, alias="EvaluationPeriod"
+    )
     ensemble_mode: rc.EnsembleMode = Field(None, alias="EnsembleMode")
 
     # Options
     write_netcdf_format: bool = Field(None, alias="WriteNetcdfFormat")
     netcdf_attribute: Dict[str, str] = Field(None, alias="NetCDFAttribute")
 
-    custom_output: rc.CustomOutput = Field(None, alias="CustomOutput")
+    custom_output: Sequence[rc.CustomOutput] = Field(None, alias="CustomOutput")
     direct_evaporation: bool = Field(
         None,
         alias="DirectEvaporation",

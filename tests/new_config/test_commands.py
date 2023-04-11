@@ -417,14 +417,14 @@ def test_ensemble_mode():
     assert s == ":EnsembleMode ENSEMBLE_ENKF 10"
 
 
-def test_observational_error_model():
-    c = rc.ObservationalErrorModel(
+def test_observation_error_model():
+    c = rc.ObservationErrorModel(
         state="STREAMFLOW", dist="DIST_UNIFORM", p1=1, p2=2, adj="ADDITIVE"
     )
 
     assert (
         c.to_rv().strip()
-        == ":ObservationalErrorModel STREAMFLOW DIST_UNIFORM 1.0 2.0 ADDITIVE"
+        == ":ObservationErrorModel STREAMFLOW DIST_UNIFORM 1.0 2.0 ADDITIVE"
     )
 
 
