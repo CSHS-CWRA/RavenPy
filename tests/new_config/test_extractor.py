@@ -56,7 +56,6 @@ from ravenpy.new_config.emulators import GR4JCN
 # )
 
 
-
 # @pytest.mark.skip(
 #    reason="Bug with Raven 3.5 regarding netCDF reservoir output to be fixed in next release."
 # )
