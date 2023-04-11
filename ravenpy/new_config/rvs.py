@@ -161,7 +161,7 @@ class RVP(RV):
         None, alias="SeasonalRelativeLAI"
     )
     seasonal_relative_height: rc.SeasonalRelativeHeight = Field(
-        None, alias="SeasonalRelativeLAI"
+        None, alias="SeasonalRelativeHeight"
     )
 
 
