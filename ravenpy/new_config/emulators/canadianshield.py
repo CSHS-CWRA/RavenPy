@@ -70,7 +70,7 @@ class CanadianShield(Config):
     hrus: HRUs = Field([OrganicHRU(), BedRockHRU()], alias="HRUs")
     sub_basins: rc.SubBasins = Field([rc.SubBasin()], alias="SubBasins")
     write_netcdf_format: bool = Field(True, alias="WriteNetcdfFormat")
-    time_step: float = Field(1.0, alias="TimeStep")
+    time_step: Union[float, str] = Field(1.0, alias="TimeStep")
     calendar: o.Calendar = Field("PROLEPTIC_GREGORIAN", alias="Calendar")
     land_use_classes: LandUseClasses = Field(
         [rc.LU(name="FOREST", impermeable_frac=0.0, forest_coverage=0.02345)],

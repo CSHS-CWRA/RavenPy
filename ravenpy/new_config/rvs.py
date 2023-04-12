@@ -31,7 +31,7 @@ class RVI(RV):
     assimilation_start_time: date = Field(None, alias="AssimilationStartTime")
     end_date: date = Field(None, alias="EndDate")
     duration: float = Field(None, alias="Duration")
-    time_step: float = Field(None, alias="TimeStep")
+    time_step: Union[float, str] = Field(None, alias="TimeStep")
 
     # Model description
     routing: o.Routing = Field(None, alias="Routing")

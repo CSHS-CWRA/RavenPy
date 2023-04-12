@@ -104,7 +104,7 @@ class HYPR(Config):
     )
     sub_basins: rc.SubBasins = Field([rc.SubBasin()], alias="SubBasins")
     write_netcdf_format: bool = Field(True, alias="WriteNetcdfFormat")
-    time_step: float = Field(1.0, alias="TimeStep")
+    time_step: Union[float, str] = Field(1.0, alias="TimeStep")
     calendar: o.Calendar = Field("PROLEPTIC_GREGORIAN", alias="Calendar")
     routing: o.Routing = Field("ROUTE_NONE", alias="Routing")
     catchment_route: o.CatchmentRoute = Field(

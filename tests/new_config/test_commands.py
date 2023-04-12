@@ -331,22 +331,29 @@ def test_read_from_netcdf(get_local_testdata):
 
 
 def test_station_forcing(get_local_testdata):
-    from ravenpy.new_config.commands import StationForcing
-
     f = get_local_testdata(
         "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_2d.nc"
     )
-    c = StationForcing.from_nc(f, "PRECIP", station_idx=1, alt_names="rain")
+    c = rc.StationForcing.from_nc(f, "PRECIP", station_idx=1, alt_names="rain")
     dedent(c.to_rv())
 
 
-def test_gauge(get_local_testdata):
-    from ravenpy.new_config.commands import Gauge
+def test_gridded_forcing(get_local_testdata):
+    """TODO: Make sure dimensions are in the order x, y, t."""
+    fn = get_local_testdata("raven-routing-sample/VIC_temperatures.nc")
+    gf = rc.GriddedForcing.from_nc(fn, data_type="TEMP_AVE", alt_names=("Avg_temp",))
+    # assert gf.dim_names_nc == ("lon", "lat", "time")
 
+    fn = get_local_testdata("raven-routing-sample/VIC_streaminputs.nc")
+    gf = rc.GriddedForcing.from_nc(fn, data_type="PRECIP", alt_names=("Streaminputs",))
+    # assert gf.dim_names_nc == ("lon_dim", "lat_dim", "time")
+
+
+def test_gauge(get_local_testdata):
     f = get_local_testdata(
         "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
     )
-    g = Gauge.from_nc(
+    g = rc.Gauge.from_nc(
         f,
         alt_names={"RAINFALL": "rain", "SNOWFALL": "snow"},
         data_kwds={"ALL": {"Deaccumulate": True}},
@@ -358,7 +365,7 @@ def test_gauge(get_local_testdata):
     assert g.data[0].read_from_netcdf.deaccumulate
 
     with pytest.raises(ValueError):
-        Gauge.from_nc(
+        rc.Gauge.from_nc(
             f,
             data_type=[
                 "RAINFALL",
