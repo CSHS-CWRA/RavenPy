@@ -67,6 +67,18 @@ def test_emulator_config_is_read_only(dummy_config, tmp_path):
         e.config.run_name = "Renamed"
 
 
+def test_duplicate(gr4jcn_config, salmon_hru, tmp_path):
+    hru = salmon_hru["land"]
+    conf1 = GR4JCN(hrus=[hru], Duration=10)
+    conf2 = conf1.duplicate(hrus=[hru])
+
+    assert conf2.hrus == conf1.hrus
+    assert conf2.duration == conf1.duration
+
+    conf1.duration = 20
+    assert conf2.duration == 10
+
+
 def test_no_run_name(dummy_config, tmp_path):
     cls, P = dummy_config
     conf = cls(params=[0.5])
@@ -442,6 +454,7 @@ def test_routing(get_local_testdata):
     assert len(list(out.path.glob("*ForcingFunctions.nc"))) == 1
 
 
+@pytest.mark.slow
 def test_routing_lievre_tutorial(get_local_testdata, tmp_path):
     from ravenpy.extractors.new_config import (
         BasinMakerExtractor,

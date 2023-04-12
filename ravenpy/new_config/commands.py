@@ -169,8 +169,9 @@ class LinearTransform(Command):
     offset: float = 0
 
     def to_rv(self):
+        cmd = "LinearTransform"
         if (self.scale != 1) or (self.offset != 0):
-            return f":LinearTransform {self.scale:.15f} {self.offset:.15f}\n"
+            return f":{cmd:<20} {self.scale:.15f} {self.offset:.15f}\n"
         return ""
 
 
@@ -488,7 +489,8 @@ class RedirectToFile(Command):
     __root__: FilePath
 
     def to_rv(self):
-        return f":RedirectToFile {self.__root__}\n"
+        cmd = "RedirectToFile"
+        return f":{cmd:<20} {self.__root__}\n"
 
 
 class ReadFromNetCDF(FlatCommand):

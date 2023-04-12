@@ -204,6 +204,9 @@ class ListCommand(Command):
     def __getitem__(self, item):
         return self.__root__[item]
 
+    def __len__(self):
+        return len(self.__root__)
+
 
 class ParameterList(Record):
     name: str = ""

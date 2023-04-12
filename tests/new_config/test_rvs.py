@@ -1,4 +1,5 @@
 import datetime as dt
+import re
 from typing import Union
 
 import cftime
@@ -59,3 +60,50 @@ def test_set_params():
     s.params = [0.5]
     assert s.rain_snow_transition == exp.rain_snow_transition
     assert s.rvp == exp.rvp
+
+
+def test_solution(get_local_testdata):
+    sol = get_local_testdata("gr4j_cemaneige/solution.rvc")
+    conf = Config().set_solution(sol)
+    assert len(conf.hru_state_variable_table) == 1
+    assert conf.hru_state_variable_table[0].data["ATMOSPHERE"] == 821.98274
+    assert conf.hru_state_variable_table[0].data["ATMOS_PRECIP"] == -1233.16
+
+    assert len(conf.basin_state_variables) == 1
+    assert conf.basin_state_variables[0].channel_storage == 0
+    assert conf.basin_state_variables[0].qout == (1, 13.21660, 13.29232)
+
+    assert ":BasinIndex 1 watershed" in conf.rvc
+
+
+def test_rvh_from_extractor(get_local_testdata):
+    from ravenpy.extractors.new_config import BasinMakerExtractor, open_shapefile
+
+    shp = get_local_testdata(
+        "basinmaker/drainage_region_0175_v2-1/finalcat_info_v2-1.zip"
+    )
+    bm = BasinMakerExtractor(open_shapefile(shp))
+
+    # Smoke test
+    Config(**bm.extract(hru_from_sb=True))
+
+
+def test_config(dummy_config):
+    cls, P = dummy_config
+    conf = cls(Calendar="NOLEAP")
+
+    assert conf.__config__.allow_mutation
+
+    with pytest.raises(ValueError):
+        assert conf.rvi
+
+    # Set params
+    num = conf.set_params([0.5])
+    assert num.air_snow_coeff == 0.5
+
+    with pytest.raises(ValueError):
+        num.set_params([0.6])
+
+    # Instantiate with numerical params
+    nt = cls(params=[0.5], Calendar="NOLEAP")
+    assert nt.air_snow_coeff == 0.5
