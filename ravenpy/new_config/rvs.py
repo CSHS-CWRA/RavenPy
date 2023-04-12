@@ -279,10 +279,16 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
         Config
           Config with internal state set from the solution file.
         """
+        from .defaults import CALENDAR
         from .parsers import parse_solution
 
+        try:
+            calendar = self.calendar.value
+        except AttributeError:
+            calendar = CALENDAR
+
         out = self.__dict__.copy()
-        sol = parse_solution(fn, calendar=self.calendar.value)
+        sol = parse_solution(fn, calendar=calendar)
         if timestamp is False:
             sol.pop("start_date")
 
