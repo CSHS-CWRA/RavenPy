@@ -2,8 +2,8 @@
 Tools for hydrological regionalization.
 """
 
-import tempfile
 import logging
+import tempfile
 from pathlib import Path
 from typing import Union
 
@@ -15,8 +15,8 @@ from haversine import haversine_vector
 
 import ravenpy.models as models
 from ravenpy.ravenpy import Emulator, EnsembleReader
-from . import coords
 
+from . import coords
 
 LOGGER = logging.getLogger("PYWPS")
 
@@ -185,7 +185,6 @@ def regionalize(
 
     # TODO: Add global attributes (model name, date, version, etc)
     return qsim, ens
-
 
 
 def read_gauged_properties(properties):
