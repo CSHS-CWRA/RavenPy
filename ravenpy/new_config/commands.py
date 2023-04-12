@@ -75,7 +75,7 @@ T12 = Tuple[
 
 # Validators
 def reorder_time(cls, v):
-    """Return dimensions with time as the last dimension."""
+    """TODO: Return dimensions as x, y, t. Currently only puts time at the end."""
     dims = list(v)
     for time_dim in ("t", "time"):
         if time_dim in dims:

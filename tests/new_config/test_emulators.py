@@ -6,7 +6,7 @@ import xarray as xr
 
 from ravenpy import Emulator
 from ravenpy.new_config import commands as rc
-from ravenpy.new_config.emulators import GR4JCN
+from ravenpy.new_config.emulators import GR4JCN, BasicRoute
 from ravenpy.new_config.rvs import Config
 from ravenpy.new_config.utils import get_average_annual_runoff
 
@@ -90,6 +90,43 @@ def test_set_params(gr4jcn_config):
 
     conf = gr4jcn.set_params((0.529, -3.396, 407.29, 1.072, 16.9, 0.947))
     assert conf.params.GR4J_X1 == 0.529
+
+
+def test_resume(gr4jcn_config, tmp_path):
+    gr4jcn, params = gr4jcn_config
+    gr4jcn = gr4jcn.set_params(params)
+
+    # First run
+    conf_a = gr4jcn.duplicate(RunName="a")
+    a = Emulator(conf_a, workdir=tmp_path / "a")
+    out_a = a.run()
+
+    # Second run starting at the end of thr first one
+    conf_b = a.resume()
+    b = Emulator(conf_b, workdir=tmp_path / "b")
+    out_b = b.run()
+
+    # Complete run covering both periods
+    conf_ab = gr4jcn.duplicate(Duration=gr4jcn.duration * 2, RunName="ab")
+    ab = Emulator(conf_ab, workdir=tmp_path / "ab")
+    out_ab = ab.run()
+
+    for key in ["Soil Water[0]", "Soil Water[1]"]:
+        np.testing.assert_array_almost_equal(
+            out_b.storage[key] - out_ab.storage[key], 0, 5
+        )
+
+    # Confirm that the start_date is not changed when timestamp is False
+    conf_c = a.resume(timestamp=False)
+    assert conf_c.start_date == conf_a.start_date
+
+
+# def test_version(self):
+#     model = Raven()
+#     assert model.raven_version == "3.6"
+#
+#     model = GR4JCN()
+#     assert model.raven_version == "3.6"
 
 
 def test_evaluation_periods(gr4jcn_config, tmp_path):
@@ -403,6 +440,163 @@ def test_routing(get_local_testdata):
     np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.0141168, 4)
 
     assert len(list(out.path.glob("*ForcingFunctions.nc"))) == 1
+
+
+def test_routing_lievre_tutorial(get_local_testdata, tmp_path):
+    from ravenpy.extractors.new_config import (
+        BasinMakerExtractor,
+        GridWeightExtractor,
+        open_shapefile,
+    )
+
+    ###############
+    # Input files #
+    ###############
+
+    routing_product_shp_path = get_local_testdata(
+        "raven-routing-sample/lievre_hrus_v21.zip"
+    )
+
+    vic_streaminputs_nc_path = get_local_testdata(
+        "raven-routing-sample/VIC_streaminputs.nc"
+    )
+    vic_temperatures_nc_path = get_local_testdata(
+        "raven-routing-sample/VIC_temperatures.nc"
+    )
+
+    observation_data_nc_path = get_local_testdata("raven-routing-sample/WSC02LE024.nc")
+
+    streaminputs = xr.open_dataset(vic_streaminputs_nc_path)
+
+    attrs = {
+        "StartDate": streaminputs.indexes["time"][0],
+        "EndDate": streaminputs.indexes["time"][-4],
+        "TimeStep": "24:00:00",
+        "EvaluationMetrics": [
+            "NASH_SUTCLIFFE",
+            "PCT_BIAS",
+            "KLING_GUPTA",
+        ],
+    }
+
+    #######
+    # RVH #
+    #######
+
+    rvh_extractor = BasinMakerExtractor(
+        open_shapefile(routing_product_shp_path),
+        hru_aspect_convention="ArcGIS",
+    )
+    rvh_config = rvh_extractor.extract()
+
+    # There are 3 gauged subbasins in the HRU file generated for the Routing Product V2.1,
+    # but we are only interested in the most downstream one, "02LE024".
+
+    gauged_sbs = [sb for sb in rvh_config["sub_basins"] if sb["gauged"]]
+    assert len(gauged_sbs) == 3
+
+    gauged_sb = None  # we're looking for gauge 02LE024 which is the most downstream
+    for sb in gauged_sbs:
+        if sb["gauge_id"] == "02LE024":
+            gauged_sb = sb
+        else:
+            # Raven will ignore the other two
+            sb["gauged"] = False
+            sb["gauge_id"] = ""
+
+    attrs.update(rvh_config)
+    attrs["SBGroupPropertyMultiplier"] = [
+        {"group_name": "Land", "parameter_name": "MANNINGS_N", "mult": 1.0},
+        {"group_name": "Lakes", "parameter_name": "RESERVOIR_CREST_WIDTH", "mult": 1.0},
+    ]
+    attrs["GlobalParameter"] = {"AVG_ANNUAL_RUNOFF": 597.6287}
+    attrs["SoilClasses"] = [dict(name="AQUIFER")]
+    attrs["SoilProfiles"] = [
+        dict(name="LAKE", soil_classes=["AQUIFER"], thicknesses=[5]),
+        dict(name="Soil_Land_HRU", soil_classes=["AQUIFER"], thicknesses=[5]),
+    ]
+    attrs["VegetationClasses"] = [
+        dict(name="Veg_Land_HRU", max_ht=25, max_lai=5, max_leaf_cond=5),
+        dict(
+            name="WATER",
+        ),
+    ]
+    attrs["LandUseClasses"] = [
+        dict(name="Landuse_Land_HRU", impermeable_frac=0, forest_coverage=1),
+        dict(
+            name="WATER",
+        ),
+    ]
+
+    gw_pr = GridWeightExtractor(
+        vic_streaminputs_nc_path,
+        routing_product_shp_path,
+        var_names=["lon", "lat"],
+        routing_id_field="HRU_ID",
+    ).extract()
+    gw_pr_f = tmp_path / "gw_pr.rvt"
+    gw_pr_f.write_text(str(rc.GridWeights(**gw_pr)))
+
+    gf_pr = rc.GriddedForcing.from_nc(
+        vic_streaminputs_nc_path,
+        data_type="PRECIP",
+        alt_names=("Streaminputs",),
+        grid_weights=gw_pr,
+        dim_names_nc=("lon_dim", "lat_dim", "time"),
+    )
+
+    assert gf_pr.linear_transform.scale == 4
+    assert gf_pr.linear_transform.offset == 0
+
+    gw_tas = GridWeightExtractor(
+        vic_temperatures_nc_path,
+        routing_product_shp_path,
+        var_names=["lon", "lat"],
+        routing_id_field="HRU_ID",
+    ).extract()
+    gw_tas_f = tmp_path / "gw_tas.rvt"
+    gw_tas_f.write_text(str(rc.GridWeights(**gw_tas)))
+
+    gf_tas = rc.GriddedForcing.from_nc(
+        vic_temperatures_nc_path,
+        data_type="TEMP_AVE",
+        alt_names=("Avg_temp",),
+        grid_weights=gw_tas,
+        dim_names_nc=("lon_dim", "lat_dim", "time"),
+    )
+
+    obs = rc.ObservationData.from_nc(
+        observation_data_nc_path, uid=gauged_sb["subbasin_id"], alt_names=("Q",)
+    )
+
+    conf = BasicRoute(**attrs, GriddedForcing=[gf_tas, gf_pr], ObservationData=[obs])
+
+    out = Emulator(conf, workdir=tmp_path).run()
+
+    ##########
+    # Verify #
+    ##########
+
+    assert out.hydrograph.basin_name.item() == gauged_sb["name"]
+
+    csv_lines = out.files["diagnostics"].read_text().split("\n")
+
+    assert csv_lines[1].split(",")[:-1] == [
+        "HYDROGRAPH_ALL[3077541]",
+        str(observation_data_nc_path),
+        "0.253959",  # NASH_SUTCLIFFE "0.253959",
+        "-17.0904",  # PCT_BIAS "-17.0904"
+        "0.443212",  # KLING_GUPTA "0.443212"
+    ]
+
+    for d, q_sim in [
+        (0, 85.92355875229545),
+        (1000, 74.05569855818379),
+        (2000, 62.675159400333115),
+        (3000, 42.73584909530037),
+        (4000, 128.70284018326998),
+    ]:
+        assert out.hydrograph.q_sim[d].item() == pytest.approx(q_sim)
 
 
 def test_canopex():

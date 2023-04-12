@@ -38,7 +38,7 @@ def test_simple_workflow(get_local_testdata, minimal_emulator, tmp_path):
         df=sub,
         hru_aspect_convention="ArcGIS",
     )
-    rvh = bm.extract()
+    rvh = bm.extract(hru_from_sb=True)
 
     # Streamflow obs
     qobs_fn = get_local_testdata("matapedia/Qobs_Matapedia_01BD009.nc")

@@ -36,7 +36,7 @@ class LandHRU(HRU):
 class LakeHRU(HRU):
     land_use_class: str = "Landuse_Lake_HRU"
     veg_class: str = "Veg_Lake_HRU"
-    soil_profile: str = "Lake_Soil_Lake_HRU"
+    soil_profile: str = "Soil_Lake_HRU"
     aquifer_profile: str = "[NONE]"
     terrain_class: str = "[NONE]"
     hru_type: Literal["lake"] = "lake"
@@ -54,9 +54,10 @@ class HRUs(rc.HRUs):
 class BasicRoute(Config):
     """Raven configuration performing routing only."""
 
+    hrus: HRUs = Field([LandHRU()], alias="HRUs")
     sub_basins: rc.SubBasins = Field([rc.SubBasin()], alias="SubBasins")
     write_netcdf_format: bool = Field(True, alias="WriteNetcdfFormat")
-    time_step: float = Field(1.0, alias="TimeStep")
+    time_step: Union[float, str] = Field(1.0, alias="TimeStep")
     calendar: o.Calendar = Field("PROLEPTIC_GREGORIAN", alias="Calendar")
     catchment_route: o.CatchmentRoute = Field(
         "ROUTE_DUMP",

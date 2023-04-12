@@ -1,4 +1,4 @@
-from typing import Dict, Literal, Sequence
+from typing import Dict, Literal, Sequence, Union
 
 from pydantic import Field
 from pydantic.dataclasses import dataclass
@@ -69,7 +69,7 @@ class HMETS(Config):
     hrus: HRUs = Field([ForestHRU()], alias="HRUs")
     sub_basins: rc.SubBasins = Field([rc.SubBasin()], alias="SubBasins")
     write_netcdf_format: bool = Field(True, alias="WriteNetcdfFormat")
-    time_step: float = Field(1.0, alias="TimeStep")
+    time_step: Union[float, str] = Field(1.0, alias="TimeStep")
     calendar: o.Calendar = Field("PROLEPTIC_GREGORIAN", alias="Calendar")
     uniform_initial_conditions: Dict[str, Sym] = Field(
         {"SOIL[0]": P.TOPSOIL / 2, "SOIL[1]": P.PHREATIC / 2},

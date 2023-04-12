@@ -84,7 +84,7 @@ class GR4JCN(Config):
     hrus: HRUs = Field([LandHRU()], alias="HRUs")
     sub_basins: rc.SubBasins = Field([rc.SubBasin()], alias="SubBasins")
     write_netcdf_format: bool = Field(True, alias="WriteNetcdfFormat")
-    time_step: float = Field(1.0, alias="TimeStep")
+    time_step: Union[float, str] = Field(1.0, alias="TimeStep")
     calendar: o.Calendar = Field("PROLEPTIC_GREGORIAN", alias="Calendar")
     uniform_initial_conditions: Union[Dict[str, Sym], None] = Field(
         {"SOIL[0]": P.GR4J_X1 * 1000 / 2, "SOIL[1]": 15},

@@ -66,14 +66,15 @@ class BasinMakerExtractor:
         self.hru_aspect_convention = hru_aspect_convention
         self.routing_product_version = routing_product_version
 
-    def extract(self):
+    def extract(self, hru_from_sb: bool = False):
         """Extract data from the Routing Product shapefile and return
         dictionaries that can be parsed into Raven Commands.
 
         Parameters
         ----------
-        model : Raven subclass
-          Emulator class used to customize HRU objects extracted.
+        hru_from_sb: bool
+          If True, draw HRU information from subbasin information.
+          This is likely to yield crude results.
 
         Returns
         -------
@@ -104,11 +105,17 @@ class BasinMakerExtractor:
 
         for _, row in self._df.iterrows():
             # HRU
-            hru_recs.append(self._extract_hru(row))
+            if hru_from_sb:
+                hru_recs.append(self._extract_hru_from_sb(row))
+            else:
+                hru_recs.append(self._extract_hru(row))
 
             subbasin_id = int(row["SubId"])
 
-            is_lake = row["Lake_Cat"] == 1
+            is_lake = row["Lake_Cat"] > 0
+            if not hru_from_sb:
+                is_lake = is_lake and row["HRU_IsLake"] > 0
+
             if is_lake:
                 lake_sb_ids.append(subbasin_id)
                 reservoirs.append(self._extract_reservoir(row))
@@ -249,7 +256,7 @@ class BasinMakerExtractor:
             roughness_zones=roughness_zones,
         )
 
-    def _extract_hru(self, row) -> dict:
+    def _extract_hru_from_sb(self, row) -> dict:
         """Here we assume one HRU per sub-basin."""
         aspect = row["BasAspect"]
 
@@ -274,7 +281,7 @@ class BasinMakerExtractor:
             hru_type="lake" if row["Lake_Cat"] == 1 else "land",
         )
 
-    def _extract_old_hru(self, row) -> dict:
+    def _extract_hru(self, row) -> dict:
         aspect = row["HRU_A_mean"]
 
         if self.hru_aspect_convention == "GRASS":
@@ -547,6 +554,7 @@ class GridWeightExtractor:
             # --> Making sure shape of lat/lon fields is like that
             #
 
+            # TODO: Replace with cf_xarray logic
             lon_var = self._input_data.variables[self._var_names[0]]
             lon_dims = lon_var.dimensions
             lon_var = lon_var[:]

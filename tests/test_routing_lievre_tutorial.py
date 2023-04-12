@@ -15,9 +15,6 @@ from ravenpy.extractors.routing_product import (
 from ravenpy.models import Raven, get_average_annual_runoff
 
 
-@pytest.mark.skip(
-    reason="Bug with Raven 3.5 regarding netCDF reservoir output to be fixed in next release."
-)
 class TestRouting:
     def test_lievre_tutorial(self, get_file):
         """
@@ -241,7 +238,7 @@ class TestRouting:
         ]:
             assert model.hydrograph.q_sim[d].item() == pytest.approx(q_sim)
 
-    def test_lievre_tutorial_v21(self, get_file):
+    def test_lievre_tutorial_v21(self, get_file, tmp_path):
         """
         This test reproduces the Lievre tutorial setup (with the Routing Product V2.1):
 
@@ -267,6 +264,7 @@ class TestRouting:
         model = Raven(
             identifier="raven-lievre-routing-v21",
             description="Lievre catchment draining towards 02LE024 (using Routing Product V2.1)",
+            workdir=tmp_path,
         )
 
         #######
