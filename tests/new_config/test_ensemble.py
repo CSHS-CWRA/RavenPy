@@ -10,8 +10,6 @@ alt_names = {
     "RAINFALL": "rain",
     "TEMP_MIN": "tmin",
     "TEMP_MAX": "tmax",
-    "PET": "pet",
-    "HYDROGRAPH": "qobs",
     "SNOWFALL": "snow",
 }
 
@@ -35,13 +33,11 @@ def test_enkf(salmon_meteo, salmon_hru, tmp_path):
         ObservationData=[rc.ObservationData.from_nc(salmon_meteo, alt_names="qobs")],
         HRUs=[salmon_hru["land"]],
         StartDate=dt.datetime(1996, 9, 1),
-        Duration=30,
+        EndDate=dt.datetime(1996, 9, 30),
         EnsembleMode=rc.EnsembleMode(n=7),
         EnKFMode=o.EnKFMode.SPINUP,
-        AssimilationStartTime=dt.datetime(1996, 9, 2),
         RunName="spinup",
         EvaluationMetrics=("NASH_SUTCLIFFE",),
-        GlobalParameter={"AVG_ANNUAL_RUNOFF": 208.480},
         OutputDirectoryFormat="./ens_*",
         ForcingPerturbation=[
             rc.ForcingPerturbation(
@@ -68,14 +64,7 @@ def test_enkf(salmon_meteo, salmon_hru, tmp_path):
                 adj="MULTIPLICATIVE",
             )
         ],
-        DebugMode=True,
-        NoisyMode=True,
     )
-
-    from pathlib import Path
-
-    # tmp_path = Path("/tmp/enkf1")
-    conf.zip(tmp_path, overwrite=True)
 
     spinup = Emulator(config=conf, workdir=tmp_path, overwrite=True).run(overwrite=True)
 
@@ -85,7 +74,10 @@ def test_enkf(salmon_meteo, salmon_hru, tmp_path):
         RunName="loop",
         SolutionRunName="spinup",
         UniformInitialConditions=None,
+        StartDate=dt.datetime(1996, 9, 30),
+        EndDate=dt.datetime(1996, 10, 15),
     )
+
     loop = Emulator(config=conf_loop, workdir=tmp_path).run()
 
     # Forecast
