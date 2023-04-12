@@ -1,7 +1,7 @@
 from dataclasses import field, make_dataclass
-from typing import Sequence, Union
+from typing import Sequence, Dict, Union
 
-from pydantic import Field
+from pydantic import Field, validator
 from pydantic.dataclasses import dataclass
 from pymbolic.primitives import Variable
 

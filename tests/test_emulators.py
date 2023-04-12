@@ -456,7 +456,7 @@ def test_routing(get_local_testdata):
 
 @pytest.mark.slow
 def test_routing_lievre_tutorial(get_local_testdata, tmp_path):
-    from ravenpy.extractors.config import (
+    from ravenpy.extractors.routing_product import (
         BasinMakerExtractor,
         GridWeightExtractor,
         open_shapefile,
