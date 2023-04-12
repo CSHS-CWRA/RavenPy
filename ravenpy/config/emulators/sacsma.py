@@ -1,5 +1,5 @@
 from dataclasses import field, make_dataclass
-from typing import Sequence, Dict, Union
+from typing import Dict, Sequence, Union
 
 from pydantic import Field, validator
 from pydantic.dataclasses import dataclass
