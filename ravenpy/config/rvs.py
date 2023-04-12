@@ -1,14 +1,12 @@
 import datetime as dt
 from dataclasses import asdict
-from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, Sequence, Type, TypeVar, Union
+from typing import Any, Dict, Sequence, Union
 
 import cftime
-from pydantic import BaseModel, Extra, Field, root_validator, validator
-from pydantic.dataclasses import dataclass
+from pydantic import Field, root_validator, validator
 
-from . import commands as rc
+from . import commands as rc  # noqa
 from . import options as o
 from .base import RV, Sym, parse_symbolic
 

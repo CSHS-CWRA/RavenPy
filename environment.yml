@@ -6,6 +6,7 @@ dependencies:
   - raven-hydro ==3.6
   - python >=3.8
   - affine
+  - cftime
   - cf_xarray
   - click
   - climpred >=2.1.0

@@ -1,23 +1,20 @@
 from dataclasses import field, make_dataclass
-from typing import Dict, Literal, Sequence, Tuple, Type, Union
+from typing import Dict, Sequence, Union
 
-from pydantic import Field, validator
+from pydantic import Field
 from pydantic.dataclasses import dataclass
 from pymbolic.primitives import Variable
 
 import ravenpy.config.processes as p
 from ravenpy.config import commands as rc
 from ravenpy.config import options as o
-from ravenpy.config.base import Params, Sym, SymConfig
+from ravenpy.config.base import Sym, SymConfig
 from ravenpy.config.commands import (
     HRU,
     PL,
     LandUseClasses,
     LandUseParameterList,
-    Process,
-    RainSnowTransition,
     SoilClasses,
-    SoilModel,
     SoilParameterList,
     SoilProfiles,
     VegetationClasses,
@@ -63,7 +60,6 @@ class HYPR(Config):
 
     References
     ----------
-
     Mohamed I. Ahmed, Amin Elshorbagy, and Alain Pietroniro (2020).
     Toward Simple Modeling Practices in the Complex Canadian Prairie
     Watersheds. Journal of Hydrologic Engineering, 25(6), 04020024.

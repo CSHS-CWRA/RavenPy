@@ -25,6 +25,7 @@ with open("HISTORY.rst") as history_file:
     history = history_file.read()
 
 requirements = [
+    "cftime",
     "cf-xarray",
     "click",
     "climpred>=2.1",

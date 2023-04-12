@@ -3,6 +3,7 @@ import re
 from pathlib import Path
 
 import cftime
+from xarray import open_dataset
 
 from ravenpy.config import commands as rc
 
@@ -35,11 +36,10 @@ def parse_diagnostics(fn: Path):
 
 def parse_nc(fn: Path):
     """Open netCDF dataset with xarray if the path is valid, otherwise return None."""
-    import xarray as xr
 
     if fn.exists():
         if fn.suffix == ".nc":
-            return xr.open_dataset(fn)
+            return open_dataset(fn)
         else:
             raise NotImplementedError
     else:
@@ -52,10 +52,11 @@ def parse_solution(fn: Path, calendar: str = "PROLEPTIC_GREGORIAN"):
         if fn.suffix == ".rvc":
             solution = fn.read_text()
 
-            out = {}
-            out["hru_state_variable_table"] = rc.HRUStateVariableTable.parse(solution)
-            out["basin_state_variables"] = rc.BasinStateVariables.parse(solution)
-            out["start_date"] = _time_stamp_from_solution(solution, calendar)
+            out = {
+                "hru_state_variable_table": rc.HRUStateVariableTable.parse(solution),
+                "basin_state_variables": rc.BasinStateVariables.parse(solution),
+                "start_date": _time_stamp_from_solution(solution, calendar),
+            }
             return out
 
         else:

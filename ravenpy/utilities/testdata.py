@@ -186,7 +186,7 @@ def get_file(
     name : Union[str, os.PathLike, Sequence[Union[str, os.PathLike]]]
         Name of the file or list/tuple of names of files containing the dataset(s) including suffixes.
     github_url : str
-        URL to Github repository where the data is stored.
+        URL to GitHub repository where the data is stored.
     branch : str, optional
         For GitHub-hosted files, the branch to download from.
     cache_dir : Path
@@ -235,7 +235,7 @@ def query_folder(
     pattern : str, optional
         Regex pattern to identify a file.
     github_url : str
-        URL to Github repository where the data is stored.
+        URL to GitHub repository where the data is stored.
     branch : str, optional
         For GitHub-hosted files, the branch to download from.
 
@@ -285,26 +285,26 @@ def open_dataset(
 
     Parameters
     ----------
-    name: str
+    name : str
       Name of the file containing the dataset. If no suffix is given, assumed to be netCDF ('.nc' is appended).
-    suffix: str, optional
+    suffix : str, optional
       If no suffix is given, assumed to be netCDF ('.nc' is appended). For no suffix, set "".
-    dap_url: str, optional
+    dap_url : str, optional
       URL to OPeNDAP folder where the data is stored. If supplied, supersedes github_url.
-    github_url: str
-      URL to Github repository where the data is stored.
-    branch: str, optional
+    github_url : str
+      URL to GitHub repository where the data is stored.
+    branch : str, optional
       For GitHub-hosted files, the branch to download from.
-    cache_dir: Path
+    cache_dir : Path
       The directory in which to search for and write cached data.
-    cache: bool
+    cache : bool
       If True, then cache data locally for use on subsequent calls.
-    kwds: dict, optional
+    kwds
       For NetCDF files, keywords passed to xarray.open_dataset.
 
     Returns
     -------
-    Union[Dataset, Path]
+    xr.Dataset
 
     See Also
     --------

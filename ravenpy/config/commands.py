@@ -1,12 +1,10 @@
 import datetime as dt
 import itertools
 import re
-from dataclasses import asdict
 from pathlib import Path
 from textwrap import dedent, indent
 from typing import (
     Dict,
-    List,
     Literal,
     Optional,
     Sequence,
@@ -16,7 +14,7 @@ from typing import (
     no_type_check,
 )
 
-import cftime
+import cftime  # noqa
 import xarray as xr
 from pydantic import (
     Field,
@@ -27,8 +25,6 @@ from pydantic import (
     PrivateAttr,
     ValidationError,
     confloat,
-    dataclasses,
-    root_validator,
     validator,
 )
 
@@ -540,7 +536,7 @@ class ReadFromNetCDF(FlatCommand):
         elif len(self.dim_names_nc) == 2:
             return da.isel({self.dim_names_nc[0]: self.station_idx})
         else:
-            raise NotImplementedError
+            raise NotImplementedError()
 
 
 class GriddedForcing(ReadFromNetCDF):
@@ -663,9 +659,9 @@ class Gauge(FlatCommand):
         fn: Union[Path, Sequence[Path]],
         data_type: Sequence[str] = None,
         station_idx: int = 1,
-        alt_names: dict = {},
+        alt_names: Optional[Dict[str, str]] = None,
         mon_ave: bool = False,
-        data_kwds: dict = {},
+        data_kwds: Optional[Dict[options.Forcings, Dict[str, str]]] = None,
         **kwds,
     ) -> "Gauge":
         """Return Gauge instance with configuration options inferred from the netCDF itself.
@@ -680,8 +676,8 @@ class Gauge(FlatCommand):
         station_idx: int
           Index along station dimension. Starts at 1. Should be the same for all netCDF files.
         alt_names: dict
-          Alternative variable names keyed by data type. Use this if variables do not correspond to CF
-          standard defaults.
+          Alternative variable names keyed by data type.
+          Use this if variables do not correspond to CF standard defaults.
         mon_ave: bool
           If True, compute the monthly average.
         data_kwds: Dict[options.Forcings, Dict[str, str]]]
@@ -695,7 +691,10 @@ class Gauge(FlatCommand):
         Gauge
           Gauge instance.
         """
-        from typing import get_args
+        if alt_names is None:
+            alt_names = {}
+        if data_kwds is None:
+            data_kwds = {}
 
         if isinstance(fn, (str, Path)):
             fn = [fn]
@@ -707,24 +706,24 @@ class Gauge(FlatCommand):
         forcings = set(data_type or get_args(options.Forcings))
 
         for f in fn:
-            for dtyp in forcings:
+            for dtype in forcings:
                 try:
                     specs = nc_specs(
-                        f, dtyp, idx, alt_names.get(dtyp, ()), mon_ave=mon_ave
+                        f, dtype, idx, alt_names.get(dtype, ()), mon_ave=mon_ave
                     )
                 except ValueError:
                     pass
 
                 else:
                     # Add extra keywords
-                    ex_f = {**data_kwds.get(dtyp, {}), **data_kwds.get("ALL", {})}
+                    ex_f = {**data_kwds.get(dtype, {}), **data_kwds.get("ALL", {})}
 
                     # Filter data attributes
-                    data[dtyp] = filter_for(Data, specs, **ex_f)
+                    data[dtype] = filter_for(Data, specs, **ex_f)
 
                     attrs.update(filter_for(cls, specs))
 
-            # Remove forcings that have been found so they're not searched in the following files.
+            # Remove forcings that have been found, so that they're not searched in the following files.
             forcings.difference_update(data)
 
         if len(data) == 0:
@@ -863,6 +862,7 @@ class BasinIndex(Command):
             all_values = filter(None, re.split(r",|\s+", line.strip()))
             cmd, *values = all_values
             if cmd in [":ChannelStorage", ":RivuletStorage"]:
+                # FIXME: assertions should not be found outside of testing code. Replace with conditional logic.
                 assert len(values) == 1
                 rec_values[cmd[1:]] = float(values[0])
             else:
@@ -897,13 +897,15 @@ class SoilClasses(ListCommand):
         def validate_mineral(cls, v):
             """Assert sum of mineral fraction is 1."""
             if v is not None:
+                # FIXME: assertions should not be found outside of testing code. Replace with conditional logic.
                 assert sum(v) == 1, "Mineral fraction should sum to 1."
             return v
 
         @validator("mineral", "organic", each_item=True)
         def validate_pct(cls, v):
             if v is not None:
-                assert v >= 0 and v <= 1, "Value should be in [0,1]."
+                # FIXME: assertions should not be found outside of testing code. Replace with conditional logic.
+                assert (v >= 0) and (v <= 1), "Value should be in [0,1]."
             return v
 
         def __str__(self):

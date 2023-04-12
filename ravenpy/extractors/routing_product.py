@@ -1,7 +1,8 @@
+import os
 import warnings
 from collections import defaultdict
 from pathlib import Path
-from typing import List
+from typing import List, Union
 
 from ravenpy.utilities import gis_import_error_message
 
@@ -18,7 +19,7 @@ import netCDF4 as nc4
 import numpy as np
 
 
-def open_shapefile(path):
+def open_shapefile(path: Union[str, os.PathLike]):
     """Return GeoDataFrame from shapefile path."""
     if isinstance(path, (Path, str)):
         if Path(path).suffix == ".zip":

@@ -1,5 +1,3 @@
-import datetime as dt
-
 # Taken from https://cfconventions.org/Data/cf-standard-names/current/build/cf-standard-name-table.html
 # Agumented with https://pcmdi.llnl.gov/mips/cmip3/variableList.html
 CF_RAVEN = {

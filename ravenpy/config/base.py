@@ -1,17 +1,8 @@
 from enum import Enum
-from pathlib import Path
 from textwrap import dedent, indent
-from typing import Any, ClassVar, Dict, List, Literal, Sequence, Tuple, Union
+from typing import Dict, Sequence, Tuple, Union
 
-from pydantic import (
-    BaseModel,
-    Extra,
-    Field,
-    FilePath,
-    PrivateAttr,
-    root_validator,
-    validator,
-)
+from pydantic import BaseModel, Extra, Field, root_validator, validator
 from pymbolic.primitives import Expression, Variable
 
 """
@@ -241,6 +232,7 @@ class GenericParameterList(Command):
         n = len(values["parameters"])
         pl = values["pl"]
         for v in pl:
+            # FIXME: assertions should not be found outside of testing code. Replace with conditional logic.
             assert (
                 len(v.values) == n
             ), "Number of values should match number of parameters."

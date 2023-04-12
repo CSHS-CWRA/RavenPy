@@ -6,12 +6,12 @@ import shutil
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Union
+from typing import List, Optional, Union
 from warnings import warn
 
 import xarray as xr
 
-from ravenpy.config import conventions, parsers
+from ravenpy.config import parsers
 from ravenpy.config.rvs import Config
 
 RAVEN_EXEC_PATH = os.getenv("RAVENPY_RAVEN_BINARY_PATH") or shutil.which("raven")
@@ -21,23 +21,22 @@ class Emulator:
     def __init__(
         self,
         config: Config,
-        workdir: Union[Path, str] = None,
-        modelname=None,
-        overwrite=False,
+        workdir: Union[str, os.PathLike] = None,
+        modelname: Optional[str] = None,
+        overwrite: bool = False,
     ):
-        """
-        Convenience class to work with the Raven modeling framework.
+        """Convenience class to work with the Raven modeling framework.
 
         Parameters
         ----------
         config : Config
-          Emulator Config instance fully parameterized, i.e. without symbolic expressions.
-        workdir : str, Path
-          Path to rv files and model outputs. If None, create a temporary directory.
+            Emulator Config instance fully parameterized, i.e. without symbolic expressions.
+        workdir : Path or str
+            Path to rv files and model outputs. If None, create a temporary directory.
         modelname : str, None
-          File name stem of configuration files: `<modelname>.rv*`.
-        overwrite: bool
-          If True, overwrite existing files.
+            File name stem of configuration files: `<modelname>.rv*`.
+        overwrite : bool
+            If True, overwrite existing files.
         """
         self._config = config.copy(deep=True)
         self._workdir = Path(workdir or tempfile.mkdtemp())
@@ -52,13 +51,14 @@ class Emulator:
         # Grab modelname in case it was set by config.write_rv
         self._modelname = self._rv["rvi"].stem
 
-    def run(self, overwrite=False) -> "OutputReader":
+    def run(self, overwrite: bool = False) -> "OutputReader":
         """Run the model. This will write RV files if not already done.
 
         Parameters
         ----------
-        overwrite: bool
-            If True, overwrite existing files."""
+        overwrite : bool
+            If True, overwrite existing files.
+        """
         if not (self.workdir / f"{self.modelname}.rvi").exists():
             self.write_rv(overwrite=overwrite)
 
@@ -111,10 +111,10 @@ class OutputReader:
 
         Parameters
         ----------
-        run_name : str, None
-          Simulation name, if any is specified by the `RunName` configuration.
-        path : str, Path
-          Output directory where model results are stored. Defaults to the current directory.
+        run_name : str, optional
+            Simulation name, if any is specified by the `RunName` configuration.
+        path : str or Path
+            Output directory where model results are stored. Defaults to the current directory.
         """
         self._run_name = run_name
         self._path = Path(path) if path else Path.cwd()
@@ -168,20 +168,26 @@ class OutputReader:
 
 
 class EnsembleReader:
-    def __init__(self, run_name=None, paths=None, runs=None, dim="member"):
+    def __init__(
+        self,
+        run_name: Optional[str] = None,
+        paths: Optional[List[Union[str, os.PathLike]]] = None,
+        runs: List[OutputReader] = None,
+        dim: str = "member",
+    ):
         """
         Class facilitating access to ensemble of Raven outputs.
 
         Parameters
         ----------
-        run_name: str, None
-          Name given to simulation, if any.
-        paths: list
-          List of output paths. Defaults to all directories in current directory.
-        runs: List[OutputReader]
-          List of OutputReader instances.
+        run_name : str, None
+            Name given to simulation, if any.
+        paths : list[str or Path], optional
+            List of output paths. Defaults to all directories in current directory.
+        runs : List[OutputReader]
+            List of OutputReader instances.
         dim : str
-          Name of concatenation dimension.
+            Name of concatenation dimension.
         """
         self._dim = dim
         if runs is not None:
@@ -232,25 +238,23 @@ def run(
     outputdir: Union[str, Path] = None,
     overwrite: bool = True,
 ) -> Path:
-    """
-    Run Raven given the path to an existing model configuration.
+    """Run Raven given the path to an existing model configuration.
 
     Parameters
     ----------
     modelname : str
-      Configuration files stem, i.e. the file name without extension.
-    configdir : str, Path
-      Path to configuration files directory.
-    outputdir: str, Path
-      Path to model simulation output. If None, will write to configdir/output.
-    overwrite: bool
-      If True, overwrite existing files.
+        Configuration files stem, i.e. the file name without extension.
+    configdir : Path or str
+        Path to configuration files directory.
+    outputdir : Path or str
+        Path to model simulation output. If None, will write to configdir/output.
+    overwrite : bool
+        If True, overwrite existing files.
 
     Return
     ------
     Path
       Path to model outputs.
-
     """
     if not RAVEN_EXEC_PATH:
         raise RuntimeError(

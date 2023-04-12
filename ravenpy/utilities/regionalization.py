@@ -1,11 +1,9 @@
-"""
-Tools for hydrological regionalization.
-"""
+"""Tools for hydrological regionalization."""
 
 import logging
 import tempfile
 from pathlib import Path
-from typing import Union
+from typing import List, Union
 
 import numpy as np
 import pandas as pd
@@ -13,7 +11,6 @@ import statsmodels.api as sm
 import xarray as xr
 from haversine import haversine_vector
 
-import ravenpy.models as models
 from ravenpy.ravenpy import Emulator, EnsembleReader
 
 from . import coords
@@ -26,10 +23,10 @@ regionalisation_data_dir = Path(__file__).parent.parent / "data" / "regionalisat
 def regionalize(
     config: "Config",
     method: str,
-    nash,
-    params=None,
-    props=None,
-    target_props=None,
+    nash: pd.Series,
+    params: pd.DataFrame = None,
+    props: pd.DataFrame = None,
+    target_props: Union[pd.Series, dict] = None,
     size: int = 5,
     min_NSE: float = 0.6,
     workdir: Union[str, Path] = None,
@@ -40,28 +37,28 @@ def regionalize(
 
     Parameters
     ----------
-    config: Config
-      Symbolic emulator configuration. Only GR4JCN, HMETS and Mohyse are supported.
+    config : Config
+        Symbolic emulator configuration. Only GR4JCN, HMETS and Mohyse are supported.
     method : {'MLR', 'SP', 'PS', 'SP_IDW', 'PS_IDW', 'SP_IDW_RA', 'PS_IDW_RA'}
-      Name of the regionalization method to use.
+        Name of the regionalization method to use.
     nash : pd.Series
-      NSE values for the parameters of gauged catchments.
+        NSE values for the parameters of gauged catchments.
     params : pd.DataFrame
-      Model parameters of gauged catchments. Needed for all but MRL method.
+        Model parameters of gauged catchments. Needed for all but MRL method.
     props : pd.DataFrame
-      Properties of gauged catchments to be analyzed for the regionalization. Needed for MLR and RA methods.
+        Properties of gauged catchments to be analyzed for the regionalization. Needed for MLR and RA methods.
     target_props : pd.Series or dict
-      Properties of ungauged catchment. Needed for MLR and RA methods.
+        Properties of ungauged catchment. Needed for MLR and RA methods.
     size : int
-      Number of catchments to use in the regionalization.
+        Number of catchments to use in the regionalization.
     min_NSE : float
-      Minimum calibration NSE value required to be considered as a donor.
+        Minimum calibration NSE value required to be considered as a donor.
     workdir: Union[str, Path]
-      Work directory. If None, a temporary directory will be created.
+        Work directory. If None, a temporary directory will be created.
     overwrite: bool
-      If True, existing files will be overwritten.
-    kwds : {}
-      Model configuration parameters, including the forcing files (ts).
+        If True, existing files will be overwritten.
+    kwds
+        Model configuration parameters, including the forcing files (ts).
 
     Returns
     -------
@@ -187,13 +184,13 @@ def regionalize(
     return qsim, ens
 
 
-def read_gauged_properties(properties):
+def read_gauged_properties(properties) -> pd.DataFrame:
     """Return table of gauged catchments properties over North America.
 
     Returns
     -------
     pd.DataFrame
-      Catchment properties keyed by catchment ID.
+        Catchment properties keyed by catchment ID.
     """
     f = regionalisation_data_dir / "gauged_catchment_properties.csv"
     proptable = pd.read_csv(f, index_col="ID")
@@ -202,14 +199,14 @@ def read_gauged_properties(properties):
 
 
 def read_gauged_params(model):
-    """Return table of NASH-Stucliffe Efficiency values and model parameters for North American catchments.
+    """Return table of NASH-Sutcliffe Efficiency values and model parameters for North American catchments.
 
     Returns
     -------
     pd.DataFrame
-      Nash-Sutcliffe Efficiency keyed by catchment ID.
+        Nash-Sutcliffe Efficiency keyed by catchment ID.
     pd.DataFrame
-      Model parameters keyed by catchment ID.
+        Model parameters keyed by catchment ID.
     """
     f = regionalisation_data_dir / f"{model}_parameters.csv"
     params = pd.read_csv(f, index_col="ID")
@@ -217,16 +214,19 @@ def read_gauged_params(model):
     return params["NASH"], params.iloc[:, 1:]
 
 
-def distance(gauged: pd.DataFrame, ungauged: pd.Series):
+def distance(gauged: pd.DataFrame, ungauged: pd.Series) -> pd.Series:
     """Return geographic distance [km] between ungauged and database of gauged catchments.
 
     Parameters
     ----------
     gauged : pd.DataFrame
-      Table containing columns for longitude and latitude of catchment's centroid.
+        Table containing columns for longitude and latitude of catchment's centroid.
     ungauged : pd.Series
-      Coordinates of the ungauged catchment.
+        Coordinates of the ungauged catchment.
 
+    Returns
+    -------
+    pd.Series
     """
     gauged_array = np.array(list(zip(gauged.latitude.values, gauged.longitude.values)))
 
@@ -238,18 +238,17 @@ def distance(gauged: pd.DataFrame, ungauged: pd.Series):
     )
 
 
-def similarity(gauged, ungauged, kind="ptp"):
+def similarity(gauged: pd.DataFrame, ungauged: pd.DataFrame, kind: str = "ptp"):
     """Return similarity measure between gauged and ungauged catchments.
 
     Parameters
     ----------
-    gauged : DataFrame
-      Gauged catchment properties.
-    ungauged : DataFrame
-      Ungauged catchment properties
+    gauged : pd.DataFrame
+        Gauged catchment properties.
+    ungauged : pd.DataFrame
+        Ungauged catchment properties
     kind : {'ptp', 'std', 'iqr'}
       Normalization method: peak to peak (maximum - minimum), standard deviation, interquartile range.
-
     """
 
     stats = gauged.describe()
@@ -267,28 +266,28 @@ def similarity(gauged, ungauged, kind="ptp"):
 
 
 def regionalization_params(
-    method,
-    gauged_params,
-    gauged_properties,
-    ungauged_properties,
-    filtered_params,
-    filtered_prop,
-):
+    method: str,
+    gauged_params: pd.DataFrame,
+    gauged_properties: pd.DataFrame,
+    ungauged_properties: pd.DataFrame,
+    filtered_params: pd.DataFrame,
+    filtered_prop: pd.DataFrame,
+) -> List[float]:
     """Return the model parameters to use for the regionalization.
 
     Parameters
     ----------
     method : {'MLR', 'SP', 'PS', 'SP_IDW', 'PS_IDW', 'SP_IDW_RA', 'PS_IDW_RA'}
       Name of the regionalization method to use.
-    gauged_params
+    gauged_params : pd.DataFrame
       DataFrame of parameters for donor catchments (size = number of donors)
-    gauged_properties
+    gauged_properties : pd.DataFrame
       DataFrame of properties of the donor catchments  (size = number of donors)
-    ungauged_properties
+    ungauged_properties : pd.DataFrame
       DataFrame of properties of the ungauged catchment (size = 1)
-    filtered_params
+    filtered_params : pd.DataFrame
       DataFrame of parameters of all filtered catchments (size = all catchments with NSE > min_NSE)
-    filtered_prop
+    filtered_prop : pd.DataFrame
       DataFrame of properties of all filtered catchments (size = all catchments with NSE > min_NSE)
 
     Returns
@@ -324,21 +323,21 @@ def regionalization_params(
     return out
 
 
-def IDW(qsims, dist):
+def IDW(qsims: xr.DataArray, dist: pd.Series) -> xr.DataArray:
     """
     Inverse distance weighting.
 
     Parameters
     ----------
-    qsims : DataArray
-      Ensemble of hydrogram stacked along the `members` dimension.
+    qsims : xr.DataArray
+        Ensemble of hydrogram stacked along the `members` dimension.
     dist : pd.Series
-      Distance from catchment which generated each hydrogram to target catchment.
+        Distance from catchment which generated each hydrogram to target catchment.
 
     Returns
     -------
-    DataArray
-      Inverse distance weighted average of ensemble.
+    xr.DataArray
+        Inverse distance weighted average of ensemble.
     """
 
     # In IDW, weights are 1 / distance
@@ -356,9 +355,10 @@ def IDW(qsims, dist):
     return out
 
 
-def multiple_linear_regression(source, params, target):
-    """
-    Multiple Linear Regression for model parameters over catchment properties.
+def multiple_linear_regression(
+    source: pd.DataFrame, params: pd.DataFrame, target: pd.DataFrame
+):
+    """Multiple Linear Regression for model parameters over catchment properties.
 
     Uses known catchment properties and model parameters to estimate model parameter over an
     ungauged catchment using its properties.
@@ -366,12 +366,11 @@ def multiple_linear_regression(source, params, target):
     Parameters
     ----------
     source : DataFrame
-      Properties of gauged catchments.
+        Properties of gauged catchments.
     params : DataFrame
-      Model parameters of gauged catchments.
+        Model parameters of gauged catchments.
     target : DataFrame
-      Properties of the ungauged catchment.
-
+        Properties of the ungauged catchment.
 
     Returns
     -------

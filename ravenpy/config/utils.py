@@ -1,3 +1,7 @@
+import os
+from typing import List, Optional, Union
+
+import numpy as np
 import xarray as xr
 
 from .conventions import CF_RAVEN, MonthlyAverages
@@ -5,11 +9,12 @@ from .defaults import RAVEN_NO_DATA_VALUE
 
 
 def nc_specs(
-    fn,
+    fn: Union[str, os.PathLike],
     data_type: str,
-    station_idx: int,
-    alt_names=(),
-    mon_ave=False,
+    station_idx: Optional[int] = None,
+    alt_names: Union[str, List[str]] = None,
+    mon_ave: bool = False,
+    # FIXME: Is this call signature still relevant?
     linear_transform=None,
 ):
     """Extract specifications from netCDF file.
@@ -17,15 +22,15 @@ def nc_specs(
     Parameters
     ----------
     fn : str, Path
-      NetCDF file path or DAP link.
-    data_type: str
-      Raven data type.
-    station_idx: int, None
-      Index along station dimension. Starts at 1.
-    alt_names: str, list
-      Alternative variable names for data type if not the CF standard default.
-    mon_ave: bool
-      If True, compute the monthly average.
+        NetCDF file path or DAP link.
+    data_type : str
+        Raven data type.
+    station_idx : int, optional
+        Index along station dimension. Starts at 1.
+    alt_names : str, list
+        Alternative variable names for data type if not the CF standard default.
+    mon_ave : bool
+        If True, compute the monthly average.
 
     Returns
     -------
@@ -36,7 +41,6 @@ def nc_specs(
     Attributes: var_name_nc, dim_names_nc, units, linear_transform, latitude_var_name_nc, longitude_var_name_nc,
     elevation_var_name_nc
     latitude, longitude, elevation, name
-
     """
     from pathlib import Path
 
@@ -121,8 +125,10 @@ def nc_specs(
 def filter_for(kls, attrs, **kwds):
     """Return attributes that are fields of dataclass.
 
-    Note that if attrs includes an attribute name and its Raven alias, e.g.
-    `linear_transform` and `LinearTransform`, the latter has priority.
+    Notes
+    -----
+    If attrs includes an attribute name and its Raven alias, e.g. `linear_transform` and `LinearTransform`,
+    the latter will have priority.
 
     """
     from pydantic.main import ModelMetaclass
@@ -151,24 +157,20 @@ def filter_for(kls, attrs, **kwds):
 
 
 def get_average_annual_runoff(
-    nc_file_path,
-    area_in_m2,
-    time_dim="time",
-    obs_var="qobs",
-    na_value=RAVEN_NO_DATA_VALUE,
+    nc_file_path: Union[str, os.PathLike],
+    area_in_m2: float,
+    time_dim: str = "time",
+    obs_var: str = "qobs",
+    na_value: Union[int, float] = RAVEN_NO_DATA_VALUE,
 ):
-    """
-    Compute the average annual runoff from observed data.
-    """
-    import numpy as np
-
+    """Compute the average annual runoff from observed data."""
     with xr.open_dataset(nc_file_path) as ds:
-        qobs = ds.where(ds[obs_var] != na_value)[obs_var]
-        qobs *= 86400.0  # convert m**3/s to m**3/d
-        axis = qobs.dims.index(time_dim)
+        q_obs = ds.where(ds[obs_var] != na_value)[obs_var]
+        q_obs *= 86400.0  # convert m**3/s to m**3/d
+        axis = q_obs.dims.index(time_dim)
         # avg daily runoff [m3/d] for each year in record
-        qyear = np.nanmean(qobs.groupby("time.year").mean("time"), axis=axis)
-        qyear = qyear / area_in_m2 * 365 * 1000.0  # [mm/yr] for each year in record
-        qyear = np.mean(qyear)  # [mm/yr] mean over all years in record
+        q_year = np.nanmean(q_obs.groupby("time.year").mean("time"), axis=axis)
+        q_year = q_year / area_in_m2 * 365 * 1000.0  # [mm/yr] for each year in record
+        q_year = np.mean(q_year)  # [mm/yr] mean over all years in record
 
-    return qyear
+    return q_year

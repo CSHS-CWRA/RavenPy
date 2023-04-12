@@ -2,7 +2,6 @@ import datetime as dt
 import logging
 import re
 
-import fiona
 import pandas as pd
 import xarray as xr
 
@@ -10,8 +9,8 @@ LOGGER = logging.getLogger("PYWPS")
 
 
 def get_hindcast_day(region_coll, date, climate_model="GEPS"):
-    """
-    This function generates a forecast dataset that can be used to run raven.
+    """Generate a forecast dataset that can be used to run raven.
+
     Data comes from the CASPAR archive and must be aggregated such that each file
     contains forecast data for a single day, but for all forecast timesteps and
     all members.
@@ -26,8 +25,8 @@ def get_hindcast_day(region_coll, date, climate_model="GEPS"):
     return get_subsetted_forecast(region_coll, ds, times, True)
 
 
-def get_CASPAR_dataset(climate_model, date):
-    """Return Caspar Dataset."""
+def get_CASPAR_dataset(climate_model: str, date: dt.datetime):
+    """Return CASPAR dataset."""
 
     if climate_model == "GEPS":
         d = dt.datetime.strftime(date, "%Y%m%d")
@@ -49,8 +48,8 @@ def get_CASPAR_dataset(climate_model, date):
     return ds, times
 
 
-def get_ECCC_dataset(climate_model):
-    """Return latest GEPS forecast Dataset."""
+def get_ECCC_dataset(climate_model: str):
+    """Return latest GEPS forecast dataset."""
     if climate_model == "GEPS":
         # Eventually the file will find a permanent home, until then let's use the test folder.
         file_url = "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/datasets/forecasts/eccc_geps/GEPS_latest.ncml"
@@ -72,9 +71,9 @@ def get_ECCC_dataset(climate_model):
     return ds, times
 
 
-def get_recent_ECCC_forecast(region_coll, climate_model="GEPS"):
-    """
-    This function generates a forecast dataset that can be used to run raven.
+def get_recent_ECCC_forecast(region_coll, climate_model: str = "GEPS"):
+    """Generate a forecast dataset that can be used to run raven.
+
     Data comes from the ECCC datamart and collected daily. It is aggregated
     such that each file contains forecast data for a single day, but for all
     forecast timesteps and all members.
@@ -85,15 +84,14 @@ def get_recent_ECCC_forecast(region_coll, climate_model="GEPS"):
     Parameters
     ----------
     region_coll : fiona.collection.Collection
-      The region vectors.
+        The region vectors.
     climate_model : str
-      Type of climate model, for now only "GEPS" is supported.
+        Type of climate model, for now only "GEPS" is supported.
 
     Returns
     -------
     forecast : xarray.Dataset
-      The forecast dataset.
-
+        The forecast dataset.
     """
 
     [ds, times] = get_ECCC_dataset(climate_model)
@@ -104,7 +102,9 @@ def get_recent_ECCC_forecast(region_coll, climate_model="GEPS"):
     return get_subsetted_forecast(region_coll, ds, times, False)
 
 
-def get_subsetted_forecast(region_coll, ds, times, is_caspar):
+def get_subsetted_forecast(
+    region_coll, ds: xr.Dataset, times: dt.datetime, is_caspar: bool
+):
     """
     This function takes a dataset, a region and the time sampling array and returns
     the subsetted values for the given region and times
@@ -112,19 +112,19 @@ def get_subsetted_forecast(region_coll, ds, times, is_caspar):
     Parameters
     ----------
     region_coll : fiona.collection.Collection
-      The region vectors.
+        The region vectors.
     ds : xarray.Dataset
-      The dataset containing the raw, worldwide forecast data
-    times: dt.datetime
-      The array of times required to do the forecast.
-    is_caspar: boolean
-      True if the data comes from Caspar, false otherwise. Used to define
-      lat/lon on rotated grid.
+        The dataset containing the raw, worldwide forecast data
+    times : dt.datetime
+        The array of times required to do the forecast.
+    is_caspar : boolean
+        True if the data comes from Caspar, false otherwise. Used to define
+        lat/lon on rotated grid.
 
     Returns
     -------
-    forecast : xararray.Dataset
-      The forecast dataset.
+    forcast: xarray.Dataset
+        The forecast dataset.
 
     """
     # Extract the bounding box to subset the entire forecast grid to something
