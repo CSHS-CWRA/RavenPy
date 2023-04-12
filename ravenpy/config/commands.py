@@ -191,7 +191,8 @@ class RainSnowTransition(Command):
     delta: Sym
 
     def to_rv(self):
-        return f":RainSnowTransition {self.temp} {self.delta}\n"
+        cmd = "RainSnowTransition"
+        return f":{cmd:<20} {self.temp} {self.delta}\n"
 
 
 class EvaluationPeriod(FlatCommand):
@@ -202,7 +203,8 @@ class EvaluationPeriod(FlatCommand):
     end: dt.date
 
     def to_rv(self):
-        return f":EvaluationPeriod     {self.name} {self.start} {self.end}\n"
+        cmd = "EvaluationPeriod"
+        return f":{cmd:<20} {self.name} {self.start} {self.end}\n"
 
 
 class CustomOutput(FlatCommand):
@@ -233,8 +235,8 @@ class CustomOutput(FlatCommand):
     filename: str = ""
 
     def to_rv(self):
-        template = ":CustomOutput {time_per} {stat} {variable} {space_agg} {filename}\n"
-        return template.format(**self.dict())
+        cmd = "CustomOutput"
+        return f":{cmd:<20} {self.time_per} {self.stat} {self.variable} {self.space_agg} {self.filename}\n"
 
 
 class SoilProfile(Record):
@@ -710,7 +712,7 @@ class Gauge(FlatCommand):
                     specs = nc_specs(
                         f, dtyp, idx, alt_names.get(dtyp, ()), mon_ave=mon_ave
                     )
-                except ValueError as err:
+                except ValueError:
                     pass
 
                 else:
@@ -726,7 +728,7 @@ class Gauge(FlatCommand):
             forcings.difference_update(data)
 
         if len(data) == 0:
-            raise ValueError(f"No data found in netCDF files.")
+            raise ValueError("No data found in netCDF files.")
 
         # Default Gauge name
         attrs["name"] = attrs.get("name", f"Gauge_{idx}")

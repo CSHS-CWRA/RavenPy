@@ -40,7 +40,7 @@ Config(EvaluationMetrics=["NASH_SUTCLIFFE", "RMSE"]).rvi
 Some commands require more complex structures, for example, the configuration for  `CustomOutput` is given as a dictionary with arguments `time_per`, `stat`, `variable` and `space_agg`:
 
 ```{code-cell} ipython3
-Config(CustomOutput={"time_per": "MONTHLY", "stat": "AVERAGE", "variable": "SNOW", "space_agg": "BY_BASIN"}).rvi
+Config(CustomOutput=[{"time_per": "MONTHLY", "stat": "AVERAGE", "variable": "SNOW", "space_agg": "BY_HRU"}]).rvi
 ```
 
 All Raven commands with inputs more complex than single values or simple lists are defined in `ravenpy.config.commands`. Their names match exactly with the Raven command names described in the Raven documentation. Consult the docstring to find out how each should be instantiated. Attributes can be given as dictionaries that `Config` will parse, as above, or as `Command` instances:
@@ -119,7 +119,7 @@ new = conf.duplicate(RunName="new", Duration=10)
 print(new.rvi)
 ```
 
-`duplicate` takes keyword arguments that it first validates, then uses them to create a modified copy of the original configuration, which is left intact.
+`duplicate` takes keyword arguments that it uses them to create a modified copy of the original configuration, which is left intact.
 
 
 ## Limitations
