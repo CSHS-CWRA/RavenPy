@@ -1,6 +1,6 @@
 from typing import Dict, Literal, Sequence, Type, Union
 
-from pydantic import Field
+from pydantic import Field, validator
 from pydantic.dataclasses import dataclass
 from pymbolic.primitives import Variable
 
@@ -21,6 +21,7 @@ from ravenpy.config.commands import (
     SoilProfiles,
     VegetationClasses,
 )
+from ravenpy.config.defaults import nc_attrs
 from ravenpy.config.rvs import Config
 
 
@@ -82,6 +83,7 @@ class GR4JCN(Config):
 
     params: P = P()
     hrus: HRUs = Field([LandHRU()], alias="HRUs")
+    netcdf_attribute: Dict[str, str] = {"model_id": "GR4JCN"}
     sub_basins: rc.SubBasins = Field([rc.SubBasin()], alias="SubBasins")
     write_netcdf_format: bool = Field(True, alias="WriteNetcdfFormat")
     time_step: Union[float, str] = Field(1.0, alias="TimeStep")
@@ -200,3 +202,4 @@ class GR4JCN(Config):
         },
         alias="LandUseParameterList",
     )
+    _nc_attrs = validator("netcdf_attribute", allow_reuse=True)(nc_attrs)

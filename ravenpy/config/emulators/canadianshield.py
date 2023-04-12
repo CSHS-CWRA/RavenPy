@@ -22,6 +22,7 @@ from ravenpy.config.commands import (
     SoilProfiles,
     VegetationClasses,
 )
+from ravenpy.config.defaults import nc_attrs
 from ravenpy.config.rvs import Config
 
 P = dataclass(
@@ -68,6 +69,7 @@ class CanadianShield(Config):
 
     params: P = P()
     hrus: HRUs = Field([OrganicHRU(), BedRockHRU()], alias="HRUs")
+    netcdf_attribute: Dict[str, str] = {"model_id": "CanadianShield"}
     sub_basins: rc.SubBasins = Field([rc.SubBasin()], alias="SubBasins")
     write_netcdf_format: bool = Field(True, alias="WriteNetcdfFormat")
     time_step: Union[float, str] = Field(1.0, alias="TimeStep")
@@ -260,6 +262,8 @@ class CanadianShield(Config):
         assert len(hrus) == 2, "CanadianShield must have two HRUs"
         assert hrus[0].area == hrus[1].area, "HRUs must have equal areas"
         return v
+
+    _nc_attrs = validator("netcdf_attribute", allow_reuse=True)(nc_attrs)
 
     def __init__(self, **data):
         super().__init__(**data)

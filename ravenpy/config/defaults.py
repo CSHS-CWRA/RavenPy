@@ -41,3 +41,26 @@ units = {
 
 RAVEN_NO_DATA_VALUE = -1.2345
 CALENDAR = "PROLEPTIC_GREGORIAN"
+
+
+def nc_attrs(cls, val):
+    """Ensure default netCDF attributes are present"""
+    assert "model_id" in val
+
+    out = default_nc_attrs()
+    out.update(val)
+    return out
+
+
+def default_nc_attrs():
+    """Return default NetCDF global attributes."""
+    import datetime as dt
+
+    now = dt.datetime.now().isoformat(timespec="seconds")
+    version = "3.7"
+
+    return {
+        "history": f"Created on {now} by Raven {version}",
+        "references": "Craig, J.R., and the Raven Development Team, Raven user's and developer's manual "
+        f"(Version {version}), URL: http://raven.uwaterloo.ca/ (2023).",
+    }

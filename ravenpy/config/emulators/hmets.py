@@ -1,6 +1,6 @@
 from typing import Dict, Literal, Sequence, Union
 
-from pydantic import Field
+from pydantic import Field, validator
 from pydantic.dataclasses import dataclass
 from pymbolic.primitives import Variable
 
@@ -9,6 +9,7 @@ from ravenpy.config import commands as rc
 from ravenpy.config import options as o
 from ravenpy.config.base import Params, Sym, SymConfig
 from ravenpy.config.commands import HRU, PL, Process
+from ravenpy.config.defaults import nc_attrs
 from ravenpy.config.rvs import Config
 
 
@@ -67,6 +68,7 @@ class HMETS(Config):
 
     params: P = P()
     hrus: HRUs = Field([ForestHRU()], alias="HRUs")
+    netcdf_attribute: Dict[str, str] = {"model_id": "HMETS"}
     sub_basins: rc.SubBasins = Field([rc.SubBasin()], alias="SubBasins")
     write_netcdf_format: bool = Field(True, alias="WriteNetcdfFormat")
     time_step: Union[float, str] = Field(1.0, alias="TimeStep")
@@ -199,3 +201,4 @@ class HMETS(Config):
         },
         alias="VegetationParameterList",
     )
+    _nc_attrs = validator("netcdf_attribute", allow_reuse=True)(nc_attrs)

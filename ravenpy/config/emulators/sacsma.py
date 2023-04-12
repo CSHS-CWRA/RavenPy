@@ -22,6 +22,7 @@ from ravenpy.config.commands import (
     SoilProfiles,
     VegetationClasses,
 )
+from ravenpy.config.defaults import nc_attrs
 from ravenpy.config.rvs import Config
 
 P = dataclass(
@@ -63,12 +64,8 @@ class SACSMA(Config):
     """
 
     params: P = P()
-    hrus: HRUs = Field(
-        [
-            LandHRU(),
-        ],
-        alias="HRUs",
-    )
+    hrus: HRUs = Field([LandHRU()], alias="HRUs")
+    netcdf_attribute: Dict[str, str] = {"model_id": "SACSMA"}
     sub_basins: rc.SubBasins = Field([rc.SubBasin()], alias="SubBasins")
     write_netcdf_format: bool = Field(True, alias="WriteNetcdfFormat")
     time_step: Union[float, str] = Field(1.0, alias="TimeStep")
@@ -210,6 +207,7 @@ class SACSMA(Config):
         ],
         alias="HRUStateVariableTable",
     )
+    _nc_attrs = validator("netcdf_attribute", allow_reuse=True)(nc_attrs)
 
     def __init__(self, **data):
         super().__init__(**data)
