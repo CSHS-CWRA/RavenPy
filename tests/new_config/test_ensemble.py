@@ -13,6 +13,7 @@ alt_names = {
     "SNOWFALL": "snow",
 }
 
+
 def test_enkf(salmon_meteo, salmon_hru, tmp_path):
     """Test one run of Ensemble Kalman Filter data assimilation."""
     cls = GR4JCN
@@ -32,7 +33,7 @@ def test_enkf(salmon_meteo, salmon_hru, tmp_path):
         ObservationData=[rc.ObservationData.from_nc(salmon_meteo, alt_names="qobs")],
         HRUs=[salmon_hru["land"]],
         StartDate=dt.datetime(1996, 9, 1),
-        EndDate=dt.datetime(1996,9,30),
+        EndDate=dt.datetime(1996, 9, 30),
         EnsembleMode=rc.EnsembleMode(n=7),
         EnKFMode=o.EnKFMode.SPINUP,
         RunName="spinup",
@@ -73,10 +74,10 @@ def test_enkf(salmon_meteo, salmon_hru, tmp_path):
         RunName="loop",
         SolutionRunName="spinup",
         UniformInitialConditions=None,
-        StartDate=dt.datetime(1996,9,30),
-        EndDate=dt.datetime(1996,10,15),
+        StartDate=dt.datetime(1996, 9, 30),
+        EndDate=dt.datetime(1996, 10, 15),
     )
-    
+
     loop = Emulator(config=conf_loop, workdir=tmp_path).run()
 
     # Forecast
