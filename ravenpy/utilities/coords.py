@@ -4,7 +4,7 @@ import numpy as np
 import xarray as xr
 
 import ravenpy.models as models
-
+from ravenpy.new_config.emulators import get_model
 
 def realization(n):
     """Return a realization coordinate.
@@ -34,15 +34,17 @@ def param(model):
     model : str
       Model name.
     """
-    model_cls = models.get_model(model)
+    cls = get_model(model)
+    P = cls.__fields__["params"].type_
     return xr.IndexVariable(
         "param",
-        data=np.array([f.name for f in fields(model_cls.Params)]),
+        data=np.array([f.name for f in fields(P)]),
         attrs={
             "standard_name": "parameter",
             "long_name": f"{model} model parameter name",
         },
     )
+
 
 
 def infer_scale_and_offset(

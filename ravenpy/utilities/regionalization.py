@@ -2,8 +2,10 @@
 Tools for hydrological regionalization.
 """
 
+import tempfile
 import logging
 from pathlib import Path
+from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -12,8 +14,9 @@ import xarray as xr
 from haversine import haversine_vector
 
 import ravenpy.models as models
-
+from ravenpy.ravenpy import Emulator, EnsembleReader
 from . import coords
+
 
 LOGGER = logging.getLogger("PYWPS")
 
@@ -21,24 +24,26 @@ regionalisation_data_dir = Path(__file__).parent.parent / "data" / "regionalisat
 
 
 def regionalize(
-    method,
-    model,
+    config: "Config",
+    method: str,
     nash,
     params=None,
     props=None,
     target_props=None,
-    size=5,
-    min_NSE=0.6,
+    size: int = 5,
+    min_NSE: float = 0.6,
+    workdir: Union[str, Path] = None,
+    overwrite: bool = False,
     **kwds,
 ):
     """Perform regionalization for catchment whose outlet is defined by coordinates.
 
     Parameters
     ----------
+    config: Config
+      Symbolic emulator configuration. Only GR4JCN, HMETS and Mohyse are supported.
     method : {'MLR', 'SP', 'PS', 'SP_IDW', 'PS_IDW', 'SP_IDW_RA', 'PS_IDW_RA'}
       Name of the regionalization method to use.
-    model : {'HMETS', 'GR4JCN', 'MOHYSE'}
-      Model name.
     nash : pd.Series
       NSE values for the parameters of gauged catchments.
     params : pd.DataFrame
@@ -51,6 +56,10 @@ def regionalize(
       Number of catchments to use in the regionalization.
     min_NSE : float
       Minimum calibration NSE value required to be considered as a donor.
+    workdir: Union[str, Path]
+      Work directory. If None, a temporary directory will be created.
+    overwrite: bool
+      If True, existing files will be overwritten.
     kwds : {}
       Model configuration parameters, including the forcing files (ts).
 
@@ -60,13 +69,21 @@ def regionalize(
     qsim : DataArray (time, )
       Multi-donor averaged predicted streamflow.
     ensemble : Dataset
-      q_sim : DataArray  (member, time)
+      q_sim : DataArray  (realization, time)
         Ensemble of members based on number of donors.
-      parameter : DataArray (member, param)
+      parameter : DataArray (realization, param)
         Parameters used to run the model.
     """
+    name = config.__class__.__name__
+    if name not in ["GR4JCN", "HMETS", "Mohyse"]:
+        raise ValueError(f"Emulator {name} is not supported for regionalization.")
+
+    if not config.is_symbolic:
+        raise ValueError("config should be a symbolic configuration.")
+
     # TODO: Include list of available properties in docstring.
     # TODO: Add error checking for source, target stuff wrt method chosen.
+    workdir = Path(workdir or tempfile.mkdtemp())
 
     # Select properties based on those available in the ungauged properties DataFrame.
     if isinstance(target_props, dict):
@@ -79,7 +96,7 @@ def regionalize(
         raise ValueError
 
     cr = coords.realization(1 if method == "MLR" else size)
-    cp = coords.param(model)
+    cp = coords.param(name)
 
     # Filter on NSE
     valid = nash > min_NSE
@@ -114,16 +131,20 @@ def regionalize(
     )
 
     # Run the model over all parameters and create ensemble DataArray
-    m = models.get_model(model)()
-    qsims = list()
 
-    for i, params in enumerate(reg_params):
-        kwds["params"] = params
-        kwds["run_name"] = f"reg_{i}"
-        m(**kwds)
-        qsims.append(m.q_sim.copy(deep=True))
+    ensemble = []
+    for i, rparams in enumerate(reg_params):
+        model_config_tmp = config.set_params(rparams)
 
-    qsims = xr.concat(qsims, dim=cr)
+        out = Emulator(model_config_tmp, workdir=workdir / f"donor_{i}").run(
+            overwrite=overwrite
+        )
+
+        # Append to the ensemble.
+        ensemble.append(out)
+
+    qsim_obj = EnsembleReader(runs=ensemble, dim="members")
+    qsims = qsim_obj.hydrograph.q_sim
 
     # 3. Aggregate runs into a single result -> dataset
     if method in [
@@ -131,7 +152,7 @@ def regionalize(
         "SP",
         "PS",
     ]:  # Average (one realization for MLR, so no effect).
-        qsim = qsims.mean(dim="realization", keep_attrs=True)
+        qsim = qsims.mean(dim="members", keep_attrs=True)
     elif (
         "IDW" in method
     ):  # Here we are replacing the mean by the IDW average, keeping attributes and dimensions.
@@ -145,8 +166,8 @@ def regionalize(
     # Create a DataArray for the parameters used in the regionalization
     param_da = xr.DataArray(
         reg_params,
-        dims=("realization", "param"),
-        coords={"param": cp, "realization": cr},
+        dims=("members", "param"),
+        coords={"param": cp, "members": cr},
         attrs={"long_name": "Model parameters used in the regionalization."},
     )
 
@@ -154,16 +175,17 @@ def regionalize(
         data_vars={"q_sim": qsims, "parameter": param_da},
         attrs={
             "title": "Regionalization ensemble",
-            "institution": "",
-            "source": f"RAVEN V.{m.raven_version} - {model}",
-            "history": "Created by raven regionalize.",
-            "references": "",
+            # "institution": "",
+            "source": f"Hydrological model {name}",
+            "history": "Created by ravenpy regionalize.",
+            # "references": "",
             "comment": f"Regionalization method: {method}",
         },
     )
 
     # TODO: Add global attributes (model name, date, version, etc)
     return qsim, ens
+
 
 
 def read_gauged_properties(properties):

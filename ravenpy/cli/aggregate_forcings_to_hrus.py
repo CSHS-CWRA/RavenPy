@@ -2,8 +2,8 @@ from pathlib import Path
 
 import click
 
-from ravenpy.config.commands import GridWeightsCommand
-from ravenpy.extractors.routing_product import RoutingProductGridWeightExtractor
+from ravenpy.extractors.new_config.routing_product import GridWeightExtractor
+from ravenpy.new_config.commands import GridWeights
 
 
 @click.command()
@@ -14,7 +14,7 @@ from ravenpy.extractors.routing_product import RoutingProductGridWeightExtractor
     "--dim-names",
     nargs=2,
     type=click.Tuple([str, str]),
-    default=RoutingProductGridWeightExtractor.DIM_NAMES,
+    default=GridWeightExtractor.DIM_NAMES,
     show_default=True,
     help="Ordered dimension names of longitude (x) and latitude (y) in the NetCDF INPUT_NC_FILE.",
 )
@@ -67,7 +67,7 @@ def aggregate_forcings_to_hrus(
     import netCDF4 as nc4
     import numpy as np
 
-    gws = GridWeightsCommand.parse(Path(input_weight_file).read_text())
+    gws = GridWeights.parse(Path(input_weight_file).read_text())
 
     nHRU = gws.number_hrus
     # nCells = gws.number_grid_cells
@@ -248,7 +248,7 @@ def aggregate_forcings_to_hrus(
     # the return should actually look exactly like the return of "RoutingProductGridWeightImporter"
     # not sure how to do that
 
-    gws_new = GridWeightsCommand(
+    gws_new = GridWeights(
         number_hrus=nHRU,
         number_grid_cells=nHRU,
         data=tuple(new_weights),
