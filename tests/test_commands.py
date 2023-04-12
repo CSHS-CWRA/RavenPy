@@ -6,9 +6,9 @@ import pytest
 import xarray as xr
 from pydantic import Field
 
-from ravenpy.new_config import commands as rc
-from ravenpy.new_config import options as o
-from ravenpy.new_config.base import RV, encoder
+from ravenpy.config import commands as rc
+from ravenpy.config import options as o
+from ravenpy.config.base import RV, encoder
 
 salmon_land_hru_1 = dict(
     area=4250.6, elevation=843.0, latitude=54.4848, longitude=-123.3659, hru_type="land"
@@ -99,7 +99,7 @@ def test_land_use_class():
 
 
 def test_soil_classes():
-    from ravenpy.new_config.commands import SoilClasses
+    from ravenpy.config.commands import SoilClasses
 
     c = SoilClasses.parse_obj(
         [{"name": "TOPSOIL"}, {"name": "FAST_RES"}, {"name": "SLOW_RES"}]
@@ -158,7 +158,7 @@ def test_soil_profiles(x=42.0):
 
 
 def test_hydrologic_processes():
-    from ravenpy.new_config.processes import Precipitation, SnowTempEvolve
+    from ravenpy.config.processes import Precipitation, SnowTempEvolve
 
     hp = [
         Precipitation(algo="PRECIP_RAVEN", source="ATMOS_PRECIP", to="MULTIPLE"),
@@ -185,7 +185,7 @@ def test_hydrologic_processes():
 
 
 def test_process_group():
-    from ravenpy.new_config.processes import Precipitation, SnowTempEvolve
+    from ravenpy.config.processes import Precipitation, SnowTempEvolve
 
     hp = [
         Precipitation(algo="PRECIP_RAVEN", source="ATMOS_PRECIP", to="MULTIPLE"),
@@ -305,7 +305,7 @@ class TestHRUStateVariableTable:
 
 
 def test_read_from_netcdf(get_local_testdata):
-    from ravenpy.new_config.commands import ReadFromNetCDF
+    from ravenpy.config.commands import ReadFromNetCDF
 
     f = get_local_testdata(
         "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
@@ -387,7 +387,7 @@ def test_grid_weights():
 def test_redirect_to_file(get_local_testdata):
     f = get_local_testdata("raven-routing-sample/VIC_test_nodata_weights.rvt")
     r = rc.RedirectToFile(__root__=f)
-    assert re.match(r"^:RedirectToFile (\S+)$", r.to_rv())
+    assert re.match(r"^:RedirectToFile\s+(\S+)$", r.to_rv())
 
     class Test(RV):
         gw: Union[rc.GridWeights, rc.RedirectToFile] = Field(

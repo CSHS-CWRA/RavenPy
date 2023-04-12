@@ -2,8 +2,8 @@ from pathlib import Path
 
 import click
 
-from ravenpy.extractors.new_config import GridWeightExtractor
-from ravenpy.new_config.commands import GridWeights
+from ravenpy.config.commands import GridWeights
+from ravenpy.extractors import GridWeightExtractor
 
 
 @click.command()

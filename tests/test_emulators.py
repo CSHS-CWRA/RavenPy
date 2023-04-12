@@ -5,10 +5,10 @@ import pytest
 import xarray as xr
 
 from ravenpy import Emulator
-from ravenpy.new_config import commands as rc
-from ravenpy.new_config.emulators import GR4JCN, BasicRoute
-from ravenpy.new_config.rvs import Config
-from ravenpy.new_config.utils import get_average_annual_runoff
+from ravenpy.config import commands as rc
+from ravenpy.config.emulators import GR4JCN, BasicRoute
+from ravenpy.config.rvs import Config
+from ravenpy.config.utils import get_average_annual_runoff
 
 # Expected NSE for emulator configuration from the `config_rv` test fixture.
 NSE = {
@@ -184,7 +184,7 @@ def test_run_with_dap_link(minimal_emulator, tmp_path):
 
 def test_routing(get_local_testdata):
     """We need at least 2 subbasins to activate routing."""
-    from ravenpy.new_config.emulators.gr4jcn import P
+    from ravenpy.config.emulators.gr4jcn import P
 
     # Salmon catchment is now split into land- and lake-part.
     # The areas do not sum up to overall area of 4250.6 [km2].
@@ -456,7 +456,7 @@ def test_routing(get_local_testdata):
 
 @pytest.mark.slow
 def test_routing_lievre_tutorial(get_local_testdata, tmp_path):
-    from ravenpy.extractors.new_config import (
+    from ravenpy.extractors.config import (
         BasinMakerExtractor,
         GridWeightExtractor,
         open_shapefile,

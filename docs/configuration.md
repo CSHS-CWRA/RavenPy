@@ -22,7 +22,7 @@ Raven lets hydrologists customize how models are defined, and provides examples 
 RavenPy writes configuration files using the `Config` class. `Config` recognizes most Raven commands, and has mechanisms to parse and validate the inputs, and then write them in the appropriate RV file. For example:
 
 ```{code-cell} ipython3
-from ravenpy.new_config import Config
+from ravenpy.config import Config
 conf = Config(StartDate="2023-03-31")
 conf.rvi
 ```
@@ -46,7 +46,7 @@ Config(CustomOutput={"time_per": "MONTHLY", "stat": "AVERAGE", "variable": "SNOW
 All Raven commands with inputs more complex than single values or simple lists are defined in `ravenpy.config.commands`. Their names match exactly with the Raven command names described in the Raven documentation. Consult the docstring to find out how each should be instantiated. Attributes can be given as dictionaries that `Config` will parse, as above, or as `Command` instances:
 
 ```{code-cell} ipython3
-from ravenpy.new_config import commands as rc
+from ravenpy.config import commands as rc
 
 rst = rc.RainSnowTransition(temp=-.5, delta=1)
 Config(RainSnowTransition=rst).rvp
@@ -78,7 +78,7 @@ Note that in the case of `Gauge.from_nc`, extra keyword arguments for `:Data` an
 Many Raven commands can only take specific values, for example, `:PotentialMeltMethod` can take one of nine values: "POTMELT_DEGREE_DAY", "POTMELT_DATA", "POTMELT_RESTRICTED", etc. Valid options are defined in `ravenpy.config.options.PotentialMeltMethod` as an `enum.Enum` object. If `Enum` objects are not familiar, think of them as a static mapping between keys and values. The full list of options for `PotentialMeltMethod` can be displayed by converting the Enum to a list:
 
 ```{code-cell} ipython3
-from ravenpy.new_config import options as o
+from ravenpy.config import options as o
 
 list(o.PotentialMeltMethod)
 ```
@@ -162,7 +162,7 @@ For example:
 from typing import Union
 from pydantic.dataclasses import dataclass
 from pymbolic.primitives import Variable
-from ravenpy.new_config import Sym
+from ravenpy.config import Sym
 
 @dataclass(config=dict(arbitrary_types_allowed=True))
 class P:

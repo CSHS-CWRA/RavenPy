@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from ravenpy import Emulator, EnsembleReader
-from ravenpy.new_config import commands as rc
+from ravenpy.config import commands as rc
 
 
 def test_ensemble_reader(gr4jcn_config, tmp_path):

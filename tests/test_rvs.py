@@ -8,8 +8,8 @@ from pydantic import Field, ValidationError
 from pydantic.dataclasses import dataclass
 from pymbolic.primitives import Variable
 
-from ravenpy.new_config import commands as rc
-from ravenpy.new_config.rvs import RVI, Config
+from ravenpy.config import commands as rc
+from ravenpy.config.rvs import RVI, Config
 
 
 def test_rvi_datetime():
@@ -77,7 +77,7 @@ def test_solution(get_local_testdata):
 
 
 def test_rvh_from_extractor(get_local_testdata):
-    from ravenpy.extractors.new_config import BasinMakerExtractor, open_shapefile
+    from ravenpy.extractors import BasinMakerExtractor, open_shapefile
 
     shp = get_local_testdata(
         "basinmaker/drainage_region_0175_v2-1/finalcat_info_v2-1.zip"

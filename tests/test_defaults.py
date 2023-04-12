@@ -1,4 +1,4 @@
-from ravenpy.new_config import defaults
+from ravenpy.config import defaults
 
 
 def test_defaults():

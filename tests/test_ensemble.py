@@ -1,9 +1,9 @@
 import datetime as dt
 
 from ravenpy import Emulator, EnsembleReader
-from ravenpy.new_config import commands as rc
-from ravenpy.new_config import options as o
-from ravenpy.new_config.emulators import GR4JCN
+from ravenpy.config import commands as rc
+from ravenpy.config import options as o
+from ravenpy.config.emulators import GR4JCN
 
 # Alternative names for variables in meteo forcing file
 alt_names = {

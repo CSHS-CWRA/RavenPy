@@ -7,9 +7,9 @@ from typing import Sequence, Union
 from spotpy.parameter import Uniform, generate
 
 from ravenpy import Emulator
-from ravenpy.new_config.base import Params
-from ravenpy.new_config.options import evaluation_metrics_multiplier
-from ravenpy.new_config.rvs import Config
+from ravenpy.config.base import Params
+from ravenpy.config.options import evaluation_metrics_multiplier
+from ravenpy.config.rvs import Config
 
 
 class SpotSetup:

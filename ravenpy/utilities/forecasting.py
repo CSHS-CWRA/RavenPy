@@ -17,8 +17,8 @@ import xarray as xr
 from climpred import HindcastEnsemble
 
 from ravenpy import Emulator, EnsembleReader
-from ravenpy.new_config import commands as rc
-from ravenpy.new_config.rvs import Config
+from ravenpy.config import commands as rc
+from ravenpy.config.rvs import Config
 
 LOGGER = logging.getLogger("PYWPS")
 

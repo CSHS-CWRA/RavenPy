@@ -17,7 +17,6 @@ from setuptools.command.develop import develop
 from setuptools.command.install import install
 
 RAVEN_VERSION = "3.6"
-OSTRICH_GIT_VERSION = "21.03.16"
 
 with open("README.rst") as readme_file:
     readme = readme_file.read()
@@ -104,7 +103,7 @@ def create_external_deps_install_class(command_cls):
     class InstallExternalDeps(command_cls):
         """
         Custom handler for the 'install' and 'develop' commands, to download, extract and compile
-        the source code of Raven and OSTRICH and copy the resulting binaries in a location
+        the source code of Raven and copy the resulting binaries in a location
         available on the PATH.
         """
 
@@ -116,7 +115,7 @@ def create_external_deps_install_class(command_cls):
             (
                 "with-binaries",
                 None,
-                "Download Raven and OSTRICH sources and compile them.",
+                "Download Raven sources and compile them.",
             ),
         ]
 
@@ -220,16 +219,6 @@ def create_external_deps_install_class(command_cls):
                     rev_name=f"RavenSource_v{RAVEN_VERSION}",
                     binary_name="Raven.exe",
                     remove_line="CXXFLAGS += -c++11",
-                )
-
-                url = "https://github.com/usbr/ostrich/archive/refs/tags/"
-                self.install_binary_dep(
-                    url,
-                    "ostrich",
-                    version=OSTRICH_GIT_VERSION,
-                    binary_name="Ostrich",
-                    make_target="GCC",
-                    src_folder=Path(f"ostrich-{OSTRICH_GIT_VERSION}/make"),
                 )
 
             # This works with python setup.py install, but produces this error with pip install:

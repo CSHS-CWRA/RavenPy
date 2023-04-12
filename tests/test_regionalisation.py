@@ -2,11 +2,11 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from ravenpy.utilities.new_config.regionalization import regionalize
 from ravenpy.utilities.regionalization import (
     distance,
     read_gauged_params,
     read_gauged_properties,
+    regionalize,
 )
 
 

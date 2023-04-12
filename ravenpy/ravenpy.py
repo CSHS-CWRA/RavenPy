@@ -11,8 +11,8 @@ from warnings import warn
 
 import xarray as xr
 
-from ravenpy.new_config import conventions, parsers
-from ravenpy.new_config.rvs import Config
+from ravenpy.config import conventions, parsers
+from ravenpy.config.rvs import Config
 
 RAVEN_EXEC_PATH = os.getenv("RAVENPY_RAVEN_BINARY_PATH") or shutil.which("raven")
 

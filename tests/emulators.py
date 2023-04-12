@@ -3,8 +3,8 @@ import datetime as dt
 import pytest
 import xarray as xr
 
-from ravenpy.new_config import commands as rc
-from ravenpy.new_config.emulators import (
+from ravenpy.config import commands as rc
+from ravenpy.config.emulators import (
     GR4JCN,
     HBVEC,
     HMETS,
@@ -364,9 +364,9 @@ def dummy_config():
     from pydantic import Field
     from pydantic.dataclasses import dataclass
 
-    from ravenpy.new_config import options as o
-    from ravenpy.new_config.base import Sym, SymConfig, Variable
-    from ravenpy.new_config.rvs import Config
+    from ravenpy.config import options as o
+    from ravenpy.config.base import Sym, SymConfig, Variable
+    from ravenpy.config.rvs import Config
 
     @dataclass(config=SymConfig)
     class P:

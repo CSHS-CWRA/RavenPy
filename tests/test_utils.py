@@ -1,6 +1,6 @@
 import pytest
 
-from ravenpy.new_config.utils import nc_specs
+from ravenpy.config.utils import nc_specs
 
 
 def test_nc_specs(get_local_testdata):

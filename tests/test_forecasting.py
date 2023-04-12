@@ -6,7 +6,7 @@ import xarray as xr
 from climpred import HindcastEnsemble
 
 from ravenpy import Emulator, OutputReader
-from ravenpy.utilities.new_config.forecasting import (
+from ravenpy.utilities.forecasting import (
     climatology_esp,
     ensemble_prediction,
     hindcast_climatology_esp,

@@ -2,43 +2,14 @@
 User API
 ========
 
-Base Models
-===========
 
-.. autoclass:: ravenpy.models.base.Raven
-   :members:
-   :noindex:
-
-.. autoclass:: ravenpy.models.base.Ostrich
-   :members:
-   :noindex:
-
-.. autoclass:: ravenpy.models.multimodel.RavenMultiModel
-   :members:
-   :noindex:
-
-Emulators
+Execution
 =========
 
-.. automodule::  ravenpy.models.emulators.blended
+.. automodule:: ravenpy.ravenpy
    :members:
    :noindex:
 
-.. automodule::  ravenpy.models.emulators.gr4jcn
-   :members:
-   :noindex:
-
-.. automodule::  ravenpy.models.emulators.hbvec
-   :members:
-   :noindex:
-
-.. automodule::  ravenpy.models.emulators.hmets
-   :members:
-   :noindex:
-
-.. automodule::  ravenpy.models.emulators.mohyse
-   :members:
-   :noindex:
 
 Configuration
 =============
@@ -51,12 +22,28 @@ Configuration
    :members:
    :noindex:
 
+
+
+Emulators
+=========
+
+.. automodule::  ravenpy.config.emulators
+   :members:
+   :noindex:
+
+
+
 Extractors
 ==========
 
 .. automodule::  ravenpy.extractors.routing_product
    :members:
    :noindex:
+
+.. automodule::  ravenpy.extractors.forecasts
+   :members:
+   :noindex:
+
 
 Utilities
 =========

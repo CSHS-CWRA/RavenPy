@@ -110,5 +110,5 @@ ENV/
 .vscode/
 .idea/
 
-# Download and compile site for Raven and Ostrich binaries
+# Download and compile site for Raven binaries
 external_deps

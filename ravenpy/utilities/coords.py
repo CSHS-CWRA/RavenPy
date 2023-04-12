@@ -4,7 +4,8 @@ import numpy as np
 import xarray as xr
 
 import ravenpy.models as models
-from ravenpy.new_config.emulators import get_model
+from ravenpy.config.emulators import get_model
+
 
 def realization(n):
     """Return a realization coordinate.
@@ -44,7 +45,6 @@ def param(model):
             "long_name": f"{model} model parameter name",
         },
     )
-
 
 
 def infer_scale_and_offset(

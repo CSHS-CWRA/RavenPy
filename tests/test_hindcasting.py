@@ -4,9 +4,9 @@ import xarray as xr
 import xskillscore as xs
 
 from ravenpy import Emulator, EnsembleReader
-from ravenpy.new_config import commands as rc
-from ravenpy.new_config.emulators import GR4JCN
-from ravenpy.utilities.new_config.forecasting import (
+from ravenpy.config import commands as rc
+from ravenpy.config.emulators import GR4JCN
+from ravenpy.utilities.forecasting import (
     hindcast_climatology_esp,
     to_climpred_hindcast_ensemble,
     warm_up,

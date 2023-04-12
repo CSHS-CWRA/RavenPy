@@ -44,18 +44,6 @@ def populate_testing_data(
 
     data_entries = list()
     entries = [
-        "ostrich-{model}/OstRandomNumbers.txt",
-        "ostrich-{model}/ostIn.txt",
-        "ostrich-{model}/raven-{model0}-salmon.rvc",
-        "ostrich-{model}/raven-{model0}-salmon.rvc.tpl",
-        "ostrich-{model}/raven-{model0}-salmon.rvh",
-        "ostrich-{model}/raven-{model0}-salmon.rvh.tpl",
-        "ostrich-{model}/raven-{model0}-salmon.rvi",
-        "ostrich-{model}/raven-{model0}-salmon.rvi.tpl",
-        "ostrich-{model}/raven-{model0}-salmon.rvp",
-        "ostrich-{model}/raven-{model0}-salmon.rvp.tpl",
-        "ostrich-{model}/raven-{model0}-salmon.rvt",
-        "ostrich-{model}/raven-{model0}-salmon.rvt.tpl",
         "raven-{model}/Salmon-River-Near-Prince-George_Qobs_daily.rvt",
         "raven-{model}/Salmon-River-Near-Prince-George_meteo_daily.rvt",
         "raven-{model}/raven-{model0}-salmon.rvc",

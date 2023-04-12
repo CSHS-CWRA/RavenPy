@@ -1,7 +1,7 @@
 import pytest
 import spotpy
 
-from ravenpy.utilities.new_config.calibration import SpotSetup
+from ravenpy.utilities.calibration import SpotSetup
 
 # Low and high bounds for parameter distribution
 bounds = {

@@ -1,14 +1,14 @@
 import datetime as dt
 
 from ravenpy import Emulator
-from ravenpy.extractors.new_config.routing_product import (
+from ravenpy.config import commands as rc
+from ravenpy.config.emulators import GR4JCN
+from ravenpy.extractors.routing_product import (
     BasinMakerExtractor,
     GridWeightExtractor,
     open_shapefile,
     upstream_from_coords,
 )
-from ravenpy.new_config import commands as rc
-from ravenpy.new_config.emulators import GR4JCN
 
 """
 Distributed model workflow
