@@ -66,9 +66,9 @@ autosummary_generate = True
 nb_execution_mode = "cache"
 nb_execution_allow_errors = True
 
-nbsphinx_execute = "auto"
-nbsphinx_timeout = 1
-nbsphinx_allow_errors = True
+# nbsphinx_execute = "auto"
+# nbsphinx_timeout = 1
+# nbsphinx_allow_errors = True
 
 
 # To ensure that underlined fields (e.g. `_field`) are shown in the docs.
@@ -145,7 +145,7 @@ language = "en"
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", ".jupyter_cache", "jupyter_execute"]
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "sphinx"

@@ -1034,21 +1034,18 @@ class AssimilatedState(FlatCommand):
 
 class AssimilateStreamflow(FlatCommand):
     sb_id: str
+
     _template = ":{_cmd} {sb_id}\n"
 
 
 # TODO: Harmonize this...
 # Aliases for convenience
-# HRU = HRUsCommand.Record
-# HRUState = HRUStateVariableTableCommand.Record
 SC = SoilClasses.SoilClass
 LU = LandUseClass
 VC = VegetationClass
 TC = TerrainClass
 SB = SubBasin
 SP = SoilProfile
-
-
 PL = ParameterList
 
 
