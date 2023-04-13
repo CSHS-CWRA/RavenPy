@@ -2,25 +2,7 @@
 RavenPy
 =======
 
-.. image:: https://img.shields.io/pypi/v/ravenpy.svg
-    :target: https://pypi.python.org/pypi/ravenpy
-    :alt: PyPI
-
-.. image:: https://anaconda.org/conda-forge/ravenpy/badges/version.svg
-    :target: https://anaconda.org/conda-forge/ravenpy
-    :alt: Conda-Forge
-
-.. image:: https://github.com/CSHS-CWRA/RavenPy/actions/workflows/main.yml/badge.svg
-    :target: https://github.com/CSHS-CWRA/RavenPy/actions/workflows/main.yml
-    :alt: Build status
-
-.. image:: https://readthedocs.org/projects/ravenpy/badge/?version=latest
-    :target: https://ravenpy.readthedocs.io/en/latest/?version=latest
-    :alt: Documentation Status
-
-.. image:: https://coveralls.io/repos/github/CSHS-CWRA/RavenPy/badge.svg?branch=master
-    :target: https://coveralls.io/github/CSHS-CWRA/RavenPy?branch=master
-    :alt: Coveralls
+|pypi| |conda| |license| |build| |docs| |coveralls|
 
 A Python wrapper to setup and run the hydrologic modelling framework Raven_.
 
@@ -65,3 +47,28 @@ This package was created with Cookiecutter_ and the `Ouranosinc/cookiecutter-pyp
 .. _`Ouranosinc/cookiecutter-pypackage`: https://github.com/Ouranosinc/cookiecutter-pypackage
 .. _`docs`: https://www.civil.uwaterloo.ca/raven/files/v3.5/RavenManual_v3.5.pdf
 .. _`installation docs`: https://ravenpy.readthedocs.io/en/latest/installation.html
+
+
+.. |pypi| image:: https://img.shields.io/pypi/v/ravenpy.svg
+        :target: https://pypi.python.org/pypi/ravenpy
+        :alt: PyPI
+
+.. |conda| image:: https://img.shields.io/conda/vn/conda-forge/ravenpy
+        :target: https://anaconda.org/conda-forge/ravenpy
+        :alt: Conda-Forge
+
+.. |license| image:: https://img.shields.io/github/license/CSHS-CWRA/RavenPy.svg
+        :target: https://github.com/CSHS-CWRA/RavenPy/blob/master/LICENSE
+        :alt: License
+
+.. |build| image:: https://github.com/CSHS-CWRA/RavenPy/actions/workflows/main.yml/badge.svg
+        :target: https://github.com/CSHS-CWRA/RavenPy/actions/workflows/main.yml
+        :alt: Build status
+
+.. |docs| image:: https://readthedocs.org/projects/ravenpy/badge/?version=latest
+        :target: https://ravenpy.readthedocs.io
+        :alt: Documentation Status
+
+.. |coveralls| image:: https://coveralls.io/repos/github/CSHS-CWRA/RavenPy/badge.svg?branch=master
+        :target: https://coveralls.io/github/CSHS-CWRA/RavenPy?branch=master
+        :alt: Coveralls

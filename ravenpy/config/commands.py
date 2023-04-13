@@ -140,8 +140,7 @@ class LinearTransform(Command):
 
 
 class RainSnowTransition(Command):
-    """Specify the range of temperatures over which there will be a rain/snow mix when partitioning total
-    precipitation into rain and snow components.
+    """Specify the range of temperatures over which there will be a rain/snow mix when partitioning total precipitation into rain and snow components.
 
     Attributes
     ----------

@@ -1,27 +1,27 @@
-import xclim.sdba
+import xarray as xr
 import xclim.sdba as sdba
 from xclim.core.calendar import convert_calendar
 
-from ravenpy.utilities.testdata import open_dataset
-
 
 class TestBiasCorrect:
-    def test_bias_correction(self, threadsafe_data_dir):
-        ds_fut_sub = open_dataset(
-            "cmip5/nasa_nex-gddp-1.0_day_inmcm4_historical+rcp85_nex-gddp_2070-2071_subset.nc",
-            cache_dir=threadsafe_data_dir,
+    def test_bias_correction(self, get_local_testdata):
+        ds_fut_sub = xr.open_dataset(
+            get_local_testdata(
+                "cmip5/nasa_nex-gddp-1.0_day_inmcm4_historical+rcp85_nex-gddp_2070-2071_subset.nc"
+            )
         )
-        ds_ref_sub = open_dataset(
-            "cmip5/nasa_nex-gddp-1.0_day_inmcm4_historical+rcp45_nex-gddp_1971-1972_subset.nc",
-            cache_dir=threadsafe_data_dir,
+        ds_ref_sub = xr.open_dataset(
+            get_local_testdata(
+                "cmip5/nasa_nex-gddp-1.0_day_inmcm4_historical+rcp45_nex-gddp_1971-1972_subset.nc"
+            )
         )
         ds_ref_sub = convert_calendar(ds_ref_sub, "noleap")
 
-        ds_his_sub = open_dataset(
-            "nrcan/NRCAN_1971-1972_subset.nc", cache_dir=threadsafe_data_dir
+        ds_his_sub = xr.open_dataset(
+            get_local_testdata("nrcan/NRCAN_1971-1972_subset.nc")
         )
         ds_his_sub = convert_calendar(ds_his_sub, "noleap")
-        group = xclim.sdba.Grouper("time.month")
+        group = sdba.Grouper("time.month")
         # Train the model to find the correction factors
         Adj = sdba.DetrendedQuantileMapping.train(
             ref=ds_ref_sub["pr"],

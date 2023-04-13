@@ -4,11 +4,11 @@ This module contains functions creating web-friendly interactive graphics using 
 The graphic outputs are meant to be displayed in a notebook.
 In a console, use `hvplot.show(fig)` to render the figures.
 """
-from pathlib import Path
-
+import matplotlib
 import numpy as np
 import xarray as xr
 from matplotlib import pyplot as plt
+from xclim.indices.stats import get_dist
 
 try:
     import holoviews as hv
@@ -22,7 +22,7 @@ except (ImportError, ModuleNotFoundError) as e:
 hv.extension("bokeh")
 
 
-def hydrographs(ds):
+def hydrographs(ds: xr.Dataset):
     """Return a graphic showing the discharge simulations and observations."""
 
     basin_name = ds.basin_name.values[0]  # selected basin name
@@ -44,7 +44,7 @@ def hydrographs(ds):
     return g
 
 
-def mean_annual_hydrograph(ds):
+def mean_annual_hydrograph(ds: xr.Dataset):
     """Return a graphic showing the discharge simulations and observations."""
 
     basin_name = ds.basin_name.values[0]  # selected basin name
@@ -69,11 +69,8 @@ def mean_annual_hydrograph(ds):
     return g
 
 
-def spaghetti_annual_hydrograph(ds):
-    """
-    Create a spaghetti plot of the mean hydrological cycle for one model
-    simulations.
-    """
+def spaghetti_annual_hydrograph(ds: xr.Dataset):
+    """Create a spaghetti plot of the mean hydrological cycle for one model simulations."""
     basin_name = ds.basin_name.values[0]  # selected basin name
     mq_sim = ds.q_sim.groupby("time.dayofyear").mean()
     g1 = mq_sim.hvplot.line(
@@ -108,30 +105,28 @@ def spaghetti_annual_hydrograph(ds):
             label="Observations",
             legend=False,
         )
+        return g1 + g2
+    return g1
 
-    return g1 + g2
 
-
-def ts_fit_graph(ts, params):
-    """Create graphic showing an histogram of the data and the distribution fitted to it.
+def ts_fit_graph(ts: xr.DataArray, params: xr.DataArray) -> matplotlib.pyplot.Figure:
+    """Create graphic showing a histogram of the data and the distribution fitted to it.
 
     The graphic contains one panel per watershed.
 
     Parameters
     ----------
     ts : xr.DataArray
-      Stream flow time series with dimensions (time, nbasins).
+        Stream flow time series with dimensions (time, nbasins).
     params : xr.DataArray
-      Fitted distribution parameters returned by `xclim.land.fit` indicator.
+        Fitted distribution parameters returned by `xclim.land.fit` indicator.
 
     Returns
     -------
-    fig
-      Figure showing a histogram and the parameterized pdf.
+    matplotlib.pyplot.Figure
+        Figure showing a histogram and the parameterized pdf.
     """
     # Note: The hover tool could be customized to show the histogram count in addition to the frequency.
-    from xclim.indices.stats import get_dist
-
     n = ts.nbasins.size
     if n > 1:
         raise NotImplementedError
@@ -162,10 +157,7 @@ def ts_fit_graph(ts, params):
 
     # PDF line label
     ps = ", ".join(
-        [
-            f"{key}={x:.1f}".format(x)
-            for (key, x) in zip(params.dparams.data, params.values)
-        ]
+        [f"{key}={x:.1f}" for key, x in zip(params.dparams.data, params.values)]
     )
     label = f"{dist}({ps})"
 
