@@ -25,4 +25,4 @@ hs_restclient
 jupytext
 jupyter-cache
 myst_nb
-
+cartopy
