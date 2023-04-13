@@ -1,4 +1,4 @@
-from typing import Literal, Dict, Sequence, Union
+from typing import Dict, Literal, Sequence, Union
 
 from pydantic import Field, validator
 

@@ -217,6 +217,27 @@ class RVE(RV):
 
 
 class Config(RVI, RVC, RVH, RVT, RVP, RVE):
+    def header(self, rv):
+        """Return the header to print at the top of each RV file."""
+        import datetime as dt
+        from textwrap import dedent
+
+        import ravenpy
+
+        # TODO: Better mechanism to fetch version
+        version = "3.7"
+
+        return dedent(
+            f"""
+        ###########################################################################################################
+        :FileType          {rv.upper()} Raven {version}
+        :WrittenBy         RavenPy {ravenpy.__version__} based on setups provided by James Craig and Juliane Mai
+        :CreationDate      {dt.datetime.now().isoformat(timespec="seconds")}
+        #----------------------------------------------------------------------------------------------------------
+        \n\n
+        """
+        )
+
     @root_validator
     def _assign_symbolic(cls, values):
         """If params is numerical, convert symbolic expressions from other fields.
@@ -354,7 +375,9 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
     def rve(self):
         return self._rv("rve")
 
-    def write_rv(self, workdir: Union[str, Path], modelname=None, overwrite=False):
+    def write_rv(
+        self, workdir: Union[str, Path], modelname=None, overwrite=False, header=True
+    ):
         """Write configuration files to disk.
 
         Parameters
@@ -365,6 +388,8 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
           File name stem for rv files. If not given, defaults to `RunName` if set, otherwise `raven`.
         overwrite: bool
           If True, overwrite existing configuration files.
+        header: bool
+          If True, write a header at the top of each RV file.
         """
         workdir = Path(workdir)
         if not workdir.exists():
@@ -382,7 +407,13 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
             if fn.exists() and not overwrite:
                 raise OSError(f"{fn} already exists and would be overwritten.")
 
-            text = self._rv(rv)
+            # RV header
+            text = self.header(rv) if header else ""
+
+            # RV content
+            text += self._rv(rv)
+
+            # Write to disk
             if rv in mandatory or text.strip():
                 fn.write_text(text)
                 out[rv] = fn

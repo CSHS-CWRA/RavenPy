@@ -1,6 +1,6 @@
 from typing import Literal, Tuple
 
-from .commands import Process, Conditional
+from .commands import Conditional, Process
 
 
 # --- Processes --- #
