@@ -1,6 +1,4 @@
-"""
-Tools for searching for and acquiring test data.
-"""
+"""Tools for searching for and acquiring test data."""
 import hashlib
 import logging
 import os
@@ -183,7 +181,7 @@ def get_file(
 
     Parameters
     ----------
-    name : Union[str, os.PathLike, Sequence[Union[str, os.PathLike]]]
+    name : str or os.PathLike or Sequence of str or os.PathLike
         Name of the file or list/tuple of names of files containing the dataset(s) including suffixes.
     github_url : str
         URL to GitHub repository where the data is stored.
@@ -194,7 +192,7 @@ def get_file(
 
     Returns
     -------
-    Union[Path, List[Path]]
+    Path or list of Path
     """
     if isinstance(name, (str, Path)):
         name = [name]
@@ -241,7 +239,7 @@ def query_folder(
 
     Returns
     -------
-    List[str]
+    list of str
     """
     repo_name = github_url.strip("https://github.com/")
 
@@ -286,21 +284,21 @@ def open_dataset(
     Parameters
     ----------
     name : str
-      Name of the file containing the dataset. If no suffix is given, assumed to be netCDF ('.nc' is appended).
+        Name of the file containing the dataset. If no suffix is given, assumed to be netCDF ('.nc' is appended).
     suffix : str, optional
-      If no suffix is given, assumed to be netCDF ('.nc' is appended). For no suffix, set "".
+        If no suffix is given, assumed to be netCDF ('.nc' is appended). For no suffix, set "".
     dap_url : str, optional
-      URL to OPeNDAP folder where the data is stored. If supplied, supersedes github_url.
+        URL to OPeNDAP folder where the data is stored. If supplied, supersedes github_url.
     github_url : str
-      URL to GitHub repository where the data is stored.
+        URL to GitHub repository where the data is stored.
     branch : str, optional
-      For GitHub-hosted files, the branch to download from.
+        For GitHub-hosted files, the branch to download from.
     cache_dir : Path
-      The directory in which to search for and write cached data.
+        The directory in which to search for and write cached data.
     cache : bool
-      If True, then cache data locally for use on subsequent calls.
-    kwds
-      For NetCDF files, keywords passed to xarray.open_dataset.
+        If True, then cache data locally for use on subsequent calls.
+    **kwds
+        For NetCDF files, keywords passed to xarray.open_dataset.
 
     Returns
     -------

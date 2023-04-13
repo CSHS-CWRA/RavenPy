@@ -75,7 +75,7 @@ class Emulator:
 
     @property
     def workdir(self) -> Path:
-        """Path to RV files and output sub-directory."""
+        """Path to RV files and output subdirectory."""
         return self._workdir
 
     @property

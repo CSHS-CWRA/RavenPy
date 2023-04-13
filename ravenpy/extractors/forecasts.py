@@ -1,14 +1,18 @@
 import datetime as dt
 import logging
 import re
+from typing import Any, List, Tuple, Union
 
+import fiona.collection
 import pandas as pd
 import xarray as xr
+from pandas import DatetimeIndex, Series, Timestamp
+from xarray import Dataset
 
 LOGGER = logging.getLogger("PYWPS")
 
 
-def get_hindcast_day(region_coll, date, climate_model="GEPS"):
+def get_hindcast_day(region_coll: fiona.Collection, date, climate_model="GEPS"):
     """Generate a forecast dataset that can be used to run raven.
 
     Data comes from the CASPAR archive and must be aggregated such that each file
@@ -25,7 +29,11 @@ def get_hindcast_day(region_coll, date, climate_model="GEPS"):
     return get_subsetted_forecast(region_coll, ds, times, True)
 
 
-def get_CASPAR_dataset(climate_model: str, date: dt.datetime):
+def get_CASPAR_dataset(
+    climate_model: str, date: dt.datetime
+) -> Tuple[
+    xr.Dataset, list[Union[Union[DatetimeIndex, Series, Timestamp, Timestamp], Any]]
+]:
     """Return CASPAR dataset."""
 
     if climate_model == "GEPS":
@@ -48,7 +56,11 @@ def get_CASPAR_dataset(climate_model: str, date: dt.datetime):
     return ds, times
 
 
-def get_ECCC_dataset(climate_model: str):
+def get_ECCC_dataset(
+    climate_model: str,
+) -> tuple[
+    Dataset, list[Union[Union[DatetimeIndex, Series, Timestamp, Timestamp], Any]]
+]:
     """Return latest GEPS forecast dataset."""
     if climate_model == "GEPS":
         # Eventually the file will find a permanent home, until then let's use the test folder.
@@ -71,7 +83,9 @@ def get_ECCC_dataset(climate_model: str):
     return ds, times
 
 
-def get_recent_ECCC_forecast(region_coll, climate_model: str = "GEPS"):
+def get_recent_ECCC_forecast(
+    region_coll: fiona.Collection, climate_model: str = "GEPS"
+) -> xr.Dataset:
     """Generate a forecast dataset that can be used to run raven.
 
     Data comes from the ECCC datamart and collected daily. It is aggregated
@@ -90,7 +104,7 @@ def get_recent_ECCC_forecast(region_coll, climate_model: str = "GEPS"):
 
     Returns
     -------
-    forecast : xarray.Dataset
+    xr.Dataset
         The forecast dataset.
     """
 
@@ -103,27 +117,27 @@ def get_recent_ECCC_forecast(region_coll, climate_model: str = "GEPS"):
 
 
 def get_subsetted_forecast(
-    region_coll, ds: xr.Dataset, times: dt.datetime, is_caspar: bool
-):
+    region_coll: fiona.Collection, ds: xr.Dataset, times: dt.datetime, is_caspar: bool
+) -> xr.Dataset:
     """
     This function takes a dataset, a region and the time sampling array and returns
     the subsetted values for the given region and times
 
     Parameters
     ----------
-    region_coll : fiona.collection.Collection
+    region_coll : fiona.Collection
         The region vectors.
-    ds : xarray.Dataset
+    ds : xr.Dataset
         The dataset containing the raw, worldwide forecast data
     times : dt.datetime
         The array of times required to do the forecast.
-    is_caspar : boolean
-        True if the data comes from Caspar, false otherwise. Used to define
-        lat/lon on rotated grid.
+    is_caspar : bool
+        True if the data comes from Caspar, false otherwise.
+        Used to define lat/lon on rotated grid.
 
     Returns
     -------
-    forcast: xarray.Dataset
+    xr.Dataset
         The forecast dataset.
 
     """

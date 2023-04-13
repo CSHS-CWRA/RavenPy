@@ -20,19 +20,18 @@ class SpotSetup:
         high: [Params, Sequence],
         workdir: Union[Path, str] = None,
     ):
-        """
-        Class to configure spotpy with Raven emulators.
+        """Class to configure spotpy with Raven emulators.
 
         Parameters
         ----------
-        config: Config
-          Emulator Config instance with symbolic expressions.
-        low: Union[Params, Sequence]
-          Lower boundary for parameters.
-        high: Union[Params, Sequence]
-          Upper boundary for parameters.
-        workdir: Union[str, Path]
-          Work directory. If None, a temporary directory will be created.
+        config : Config
+            Emulator Config instance with symbolic expressions.
+        low : Union[Params, Sequence]
+            Lower boundary for parameters.
+        high : Union[Params, Sequence]
+            Upper boundary for parameters.
+        workdir : Union[str, Path]
+            Work directory. If None, a temporary directory will be created.
         """
         if not config.is_symbolic:
             raise ValueError(
@@ -84,8 +83,10 @@ class SpotSetup:
         return generate(self.pdist)
 
     def evaluation(self):
-        """Return the observation. Since Raven computes the objective function itself,
-        we simply return a placeholder."""
+        """Return the observation.
+
+        Since Raven computes the objective function itself, we simply return a placeholder.
+        """
         return 1
 
     def simulation(self, x):

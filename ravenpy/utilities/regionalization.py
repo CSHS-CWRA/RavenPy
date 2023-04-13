@@ -3,13 +3,14 @@
 import logging
 import tempfile
 from pathlib import Path
-from typing import List, Union
+from typing import Any, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 import xarray as xr
 from haversine import haversine_vector
+from statsmodels.regression.linear_model import RegressionResults
 
 from ravenpy.config import Config
 from ravenpy.ravenpy import Emulator, EnsembleReader
@@ -33,7 +34,7 @@ def regionalize(
     workdir: Union[str, Path] = None,
     overwrite: bool = False,
     **kwds,
-):
+) -> Tuple[xr.DataArray, xr.Dataset]:
     """Perform regionalization for catchment whose outlet is defined by coordinates.
 
     Parameters
@@ -54,11 +55,11 @@ def regionalize(
         Number of catchments to use in the regionalization.
     min_NSE : float
         Minimum calibration NSE value required to be considered as a donor.
-    workdir: Union[str, Path]
+    workdir : Union[str, Path]
         Work directory. If None, a temporary directory will be created.
-    overwrite: bool
+    overwrite : bool
         If True, existing files will be overwritten.
-    kwds
+    **kwds
         Model configuration parameters, including the forcing files (ts).
 
     Returns
@@ -239,7 +240,9 @@ def distance(gauged: pd.DataFrame, ungauged: pd.Series) -> pd.Series:
     )
 
 
-def similarity(gauged: pd.DataFrame, ungauged: pd.DataFrame, kind: str = "ptp"):
+def similarity(
+    gauged: pd.DataFrame, ungauged: pd.DataFrame, kind: str = "ptp"
+) -> pd.Series:
     """Return similarity measure between gauged and ungauged catchments.
 
     Parameters
@@ -249,7 +252,11 @@ def similarity(gauged: pd.DataFrame, ungauged: pd.DataFrame, kind: str = "ptp"):
     ungauged : pd.DataFrame
         Ungauged catchment properties
     kind : {'ptp', 'std', 'iqr'}
-      Normalization method: peak to peak (maximum - minimum), standard deviation, interquartile range.
+        Normalization method: peak to peak (maximum - minimum), standard deviation, inter-quartile range.
+
+    Returns
+    -------
+    pd.Series
     """
 
     stats = gauged.describe()
@@ -281,15 +288,15 @@ def regionalization_params(
     method : {'MLR', 'SP', 'PS', 'SP_IDW', 'PS_IDW', 'SP_IDW_RA', 'PS_IDW_RA'}
       Name of the regionalization method to use.
     gauged_params : pd.DataFrame
-      DataFrame of parameters for donor catchments (size = number of donors)
+      A DataFrame of parameters for donor catchments (size = number of donors)
     gauged_properties : pd.DataFrame
-      DataFrame of properties of the donor catchments  (size = number of donors)
+      A DataFrame of properties of the donor catchments  (size = number of donors)
     ungauged_properties : pd.DataFrame
-      DataFrame of properties of the ungauged catchment (size = 1)
+      A DataFrame of properties of the ungauged catchment (size = 1)
     filtered_params : pd.DataFrame
-      DataFrame of parameters of all filtered catchments (size = all catchments with NSE > min_NSE)
+      A DataFrame of parameters of all filtered catchments (size = all catchments with NSE > min_NSE)
     filtered_prop : pd.DataFrame
-      DataFrame of properties of all filtered catchments (size = all catchments with NSE > min_NSE)
+      A DataFrame of properties of all filtered catchments (size = all catchments with NSE > min_NSE)
 
     Returns
     -------
@@ -325,8 +332,7 @@ def regionalization_params(
 
 
 def IDW(qsims: xr.DataArray, dist: pd.Series) -> xr.DataArray:
-    """
-    Inverse distance weighting.
+    """Inverse distance weighting.
 
     Parameters
     ----------
@@ -358,7 +364,7 @@ def IDW(qsims: xr.DataArray, dist: pd.Series) -> xr.DataArray:
 
 def multiple_linear_regression(
     source: pd.DataFrame, params: pd.DataFrame, target: pd.DataFrame
-):
+) -> Tuple[List[Any], List[int]]:
     """Multiple Linear Regression for model parameters over catchment properties.
 
     Uses known catchment properties and model parameters to estimate model parameter over an
@@ -366,16 +372,16 @@ def multiple_linear_regression(
 
     Parameters
     ----------
-    source : DataFrame
+    source : pd.DataFrame
         Properties of gauged catchments.
-    params : DataFrame
+    params : pd.DataFrame
         Model parameters of gauged catchments.
-    target : DataFrame
+    target : pd.DataFrame
         Properties of the ungauged catchment.
 
     Returns
     -------
-    (mrl_params, r2)
+    list of Any, list of int
       A named tuple of the estimated model parameters and the R2 of the linear regression.
     """
     # Add constants to the gauged predictors
