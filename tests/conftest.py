@@ -64,8 +64,8 @@ def populate_testing_data(
         [
             "caspar_eccc_hindcasts/geps_watershed.nc",
             "eccc_forecasts/geps_watershed.nc",
-            "cmip5/nasa_nex-gddp-1.0_day_inmcm4_historical%2Brcp45_nex-gddp_1971-1972_subset.nc",
-            "cmip5/nasa_nex-gddp-1.0_day_inmcm4_historical%2Brcp85_nex-gddp_2070-2071_subset.nc",
+            "cmip5/nasa_nex-gddp-1.0_day_inmcm4_historical+rcp45_nex-gddp_1971-1972_subset.nc",
+            "cmip5/nasa_nex-gddp-1.0_day_inmcm4_historical+rcp85_nex-gddp_2070-2071_subset.nc",
             "famine/famine_input.nc",
             "gr4j_cemaneige/solution.rvc",
             "hydro_simulations/raven-gr4j-cemaneige-sim_hmets-0_Hydrographs.nc",
