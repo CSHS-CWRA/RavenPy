@@ -12,7 +12,7 @@ def realization(n):
     Parameters
     ----------
     n : int
-      Size of the ensemble.
+        Size of the ensemble.
     """
     return xr.IndexVariable(
         "members",
@@ -32,7 +32,7 @@ def param(model):
     Parameters
     ----------
     model : str
-      Model name.
+        Model name.
     """
     cls = get_model(model)
     P = cls.__fields__["params"].type_
@@ -57,14 +57,14 @@ def infer_scale_and_offset(
     Parameters
     ----------
     da : xr.DataArray
-      Input data.
+        Input data.
     data_type : str
-      Raven data type, e.g. 'PRECIP', 'TEMP_AVE', etc.
+        Raven data type, e.g. 'PRECIP', 'TEMP_AVE', etc.
 
     Returns
     -------
     float, float
-      Scale and offset parameters.
+        Scale and offset parameters.
 
     Notes
     -----
@@ -96,6 +96,8 @@ def infer_scale_and_offset(
                 raise ValueError(f"Irregular time frequency for input data {da}")
             real_source = source / multi / units(FREQ_UNITS[base])
             scale, offset = units_transform(real_source, target)
+        else:
+            raise NotImplementedError(f"data_type: {data_type}")
 
     return scale, offset
 

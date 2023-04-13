@@ -185,7 +185,7 @@ def _filter_feature_attributes_wfs(
         Value for attribute queried.
     layer : str
         Name of geographic layer queried.
-    geoserver: str
+    geoserver : str
         The address of the geoserver housing the layer to be queried. Default: https://pavics.ouranos.ca/geoserver/.
 
     Returns
@@ -218,8 +218,9 @@ def _filter_feature_attributes_wfs(
 def _determine_upstream_ids(
     fid: str,
     df: pd.DataFrame,
-    basin_field: str = None,
-    downstream_field: str = None,
+    *,
+    basin_field: str,
+    downstream_field: str,
     basin_family: Optional[str] = None,
 ) -> pd.DataFrame:
     """Return a list of upstream features by evaluating the downstream networks.
@@ -229,7 +230,7 @@ def _determine_upstream_ids(
     fid : str
         feature ID of the downstream feature of interest.
     df : pd.DataFrame
-        Dataframe comprising the watershed attributes.
+        A Dataframe comprising the watershed attributes.
     basin_field : str
         The field used to determine the id of the basin according to hydro project.
     downstream_field : str
@@ -282,12 +283,12 @@ def get_raster_wcs(
 ) -> bytes:
     """Return a subset of a raster image from the local GeoServer via WCS 2.0.1 protocol.
 
-    For geographic rasters, subsetting is based on WGS84 (Long, Lat) boundaries. If not geographic, subsetting based
-    on projected coordinate system (Easting, Northing) boundaries.
+    For geographic raster grids, subsetting is based on WGS84 (Long, Lat) boundaries.
+    If not geographic, subsetting based on projected coordinate system (Easting, Northing) boundaries.
 
     Parameters
     ----------
-    coordinates : Sequence[Union[int, float, str]]
+    coordinates : Sequence of int or float or str
         Geographic coordinates of the bounding box (left, down, right, up)
     geographic : bool
         If True, uses "Long" and "Lat" in WCS call. Otherwise, uses "E" and "N".
@@ -412,9 +413,7 @@ def select_hybas_domain(
     ] = None,
     point: Optional[Tuple[Union[int, float], Union[int, float]]] = None,
 ) -> str:
-    """
-    Provided a given coordinate or boundary box, return the domain name of the geographic region
-     the coordinate is located within.
+    """Provided a given coordinate or boundary box, return the domain name of the geographic region the coordinate is located within.
 
     Parameters
     ----------
@@ -451,14 +450,14 @@ def filter_hydrobasins_attributes_wfs(
 ) -> str:
     """Return a URL that formats and returns a remote GetFeatures request from the USGS HydroBASINS dataset.
 
-    For geographic rasters, subsetting is based on WGS84 (Long, Lat) boundaries. If not geographic, subsetting based
-    on projected coordinate system (Easting, Northing) boundaries.
+    For geographic raster grids, subsetting is based on WGS84 (Long, Lat) boundaries.
+    If not geographic, subsetting based on projected coordinate system (Easting, Northing) boundaries.
 
     Parameters
     ----------
     attribute : str
         Attribute/field to be queried.
-    value: Union[str, float, int]
+    value : str or float or int
         Value for attribute queried.
     domain : {"na", "ar"}
         The domain of the HydroBASINS data.
@@ -469,7 +468,6 @@ def filter_hydrobasins_attributes_wfs(
     -------
     str
         URL to the GeoJSON-encoded WFS response.
-
     """
     lakes = True
     level = 12
@@ -492,12 +490,12 @@ def get_hydrobasins_location_wfs(
 ) -> str:
     """Return features from the USGS HydroBASINS data set using bounding box coordinates.
 
-    For geographic rasters, subsetting is based on WGS84 (Long, Lat) boundaries. If not geographic, subsetting based
-    on projected coordinate system (Easting, Northing) boundaries.
+    For geographic raster grids, subsetting is based on WGS84 (Long, Lat) boundaries.
+    If not geographic, subsetting based on projected coordinate system (Easting, Northing) boundaries.
 
     Parameters
     ----------
-    coordinates : Tuple[Union[str, float, int], Union[str, float, int]]
+    coordinates : Tuple[str or float or int, str or float or int]
         Geographic coordinates of the bounding box (left, down, right, up).
     domain : {"na", "ar"}
         The domain of the HydroBASINS data.
@@ -534,7 +532,7 @@ def hydro_routing_upstream(
 
     Parameters
     ----------
-    fid : Union[str, float, int]
+    fid : str or float or int
         Basin feature ID code of the downstream feature.
     level : int
         Level of granularity requested for the lakes vector (range(7,13)). Default: 12.
@@ -626,20 +624,20 @@ def filter_hydro_routing_attributes_wfs(
     Parameters
     ----------
     attribute : list
-      Attributes/fields to be queried.
-    value: str or int or float
-      The requested value for the attribute.
+        Attributes/fields to be queried.
+    value : str or int or float
+        The requested value for the attribute.
     level : int
-      Level of granularity requested for the lakes vector (range(7,13)). Default: 12.
+        Level of granularity requested for the lakes vector (range(7,13)). Default: 12.
     lakes : {"1km", "all"}
-      Query the version of dataset with lakes under 1km in width removed ("1km") or return all lakes ("all").
-    geoserver: str
-      The address of the geoserver housing the layer to be queried. Default: https://pavics.ouranos.ca/geoserver/.
+        Query the version of dataset with lakes under 1km in width removed ("1km") or return all lakes ("all").
+    geoserver : str
+        The address of the geoserver housing the layer to be queried. Default: https://pavics.ouranos.ca/geoserver/.
 
     Returns
     -------
     str
-      URL to the GeoJSON-encoded WFS response.
+        URL to the GeoJSON-encoded WFS response.
 
     """
     layer = f"public:routing_{lakes}Lakes_{str(level).zfill(2)}"
@@ -664,7 +662,7 @@ def get_hydro_routing_location_wfs(
 
     Parameters
     ----------
-    coordinates : Tuple[Union[str, float, int], Union[str, float, int]]
+    coordinates : Tuple[str or float or int, str or float or int]
         Geographic coordinates of the bounding box (left, down, right, up).
     lakes : {"1km", "all"}
         Query the version of dataset with lakes under 1km in width removed ("1km") or return all lakes ("all").

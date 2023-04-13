@@ -4,6 +4,8 @@ from collections import defaultdict
 from pathlib import Path
 from typing import List, Union
 
+import pandas
+
 from ravenpy.utilities import gis_import_error_message
 
 try:
@@ -68,15 +70,15 @@ class BasinMakerExtractor:
         self.hru_aspect_convention = hru_aspect_convention
         self.routing_product_version = routing_product_version
 
-    def extract(self, hru_from_sb: bool = False):
+    def extract(self, hru_from_sb: bool = False) -> dict:
         """Extract data from the Routing Product shapefile and return
         dictionaries that can be parsed into Raven Commands.
 
         Parameters
         ----------
-        hru_from_sb: bool
-          If True, draw HRU information from subbasin information.
-          This is likely to yield crude results.
+        hru_from_sb : bool
+            If True, draw HRU information from subbasin information.
+            This is likely to yield crude results.
 
         Returns
         -------
@@ -177,7 +179,8 @@ class BasinMakerExtractor:
             gauge_id=gauge_id,
         )
 
-    def _extract_reservoir(self, row) -> dict:
+    @staticmethod
+    def _extract_reservoir(row) -> dict:
         lake_id = int(row["HyLakeId"])
 
         return dict(
@@ -190,7 +193,8 @@ class BasinMakerExtractor:
             lake_area=row["LakeArea"],
         )
 
-    def _extract_channel_profile(self, row) -> dict:
+    @staticmethod
+    def _extract_channel_profile(row) -> dict:
         subbasin_id = int(row["SubId"])
         slope = max(row["RivSlope"], BasinMakerExtractor.MAX_RIVER_SLOPE)
 
@@ -313,16 +317,7 @@ class BasinMakerExtractor:
 
 
 class GridWeightExtractor:
-    """
-    Class to extract grid weights.
-
-    Parameters
-    ----------
-    input_file_path: Path, str
-      NetCDF file or shapefile with the data to be weighted.
-    routing_file_path: Path, str
-      Sub-basin delineation.
-
+    """Class to extract grid weights.
 
     Notes
     -----
@@ -349,6 +344,14 @@ class GridWeightExtractor:
         sub_ids=None,
         area_error_threshold=AREA_ERROR_THRESHOLD,
     ):
+        """
+        Parameters
+        ----------
+        input_file_path : Path or str
+            NetCDF file or shapefile with the data to be weighted.
+        routing_file_path : Path or str
+            Sub-basin delineation.
+        """
         self._dim_names = tuple(dim_names)
         self._var_names = tuple(var_names)
         self._routing_id_field = routing_id_field
@@ -394,7 +397,7 @@ class GridWeightExtractor:
             This function receives a group (g) of routing rows that have been grouped by HRU_ID.
             If there is only one row, there is nothing to do (we return it). If there are more than
             one rows, we want to return the one with the DowSubId != -1 (if there are more than one
-            we emit a warning). We also want to search for an Obs_NM value different than -9999 in
+            we emit a warning). We also want to search for an Obs_NM value different from -9999 in
             any row of the group, and if we find it we set it in the corresponding field of the
             returning row (if we can't find one we also emit a warning).
             """
@@ -759,7 +762,8 @@ class GridWeightExtractor:
 
         return poly_shape
 
-    def _check_proximity_of_envelops(self, gridcell_envelop, shape_envelop):
+    @staticmethod
+    def _check_proximity_of_envelops(gridcell_envelop, shape_envelop):
         # checks if two envelops are in proximity (intersect)
 
         # minX  --> env[0]
@@ -774,9 +778,8 @@ class GridWeightExtractor:
             and gridcell_envelop[3] >= shape_envelop[2]
         )
 
-    def _check_gridcell_in_proximity_of_shape(
-        self, gridcell_edges, shape_from_jsonfile
-    ):
+    @staticmethod
+    def _check_gridcell_in_proximity_of_shape(gridcell_edges, shape_from_jsonfile):
         # checks if a grid cell falls into the bounding box of the shape
         # does not mean it intersects but it is a quick and cheap way to
         # determine cells that might intersect
@@ -809,19 +812,21 @@ class GridWeightExtractor:
         )
 
 
-def upstream_from_id(fid: int, df: geopandas.GeoDataFrame) -> geopandas.GeoDataFrame:
+def upstream_from_id(
+    fid: int, df: Union[pandas.DataFrame, geopandas.GeoDataFrame]
+) -> Union[pandas.DataFrame, geopandas.GeoDataFrame]:
     """Return upstream sub-basins by evaluating the downstream networks.
 
     Parameters
     ----------
     fid : int
         feature ID of the downstream feature of interest.
-    df : pd.DataFrame
-        Dataframe comprising the watershed attributes.
+    df : pandas.DataFrame or geopandas.GeoDataFrame
+        A GeoDataframe comprising the watershed attributes.
 
     Returns
     -------
-    GeoDataFrame
+    pandas.DataFrame or geopandas.GeoDataFrame
         Basins ids including `fid` and its upstream contributors.
     """
     from ravenpy.utilities.geo import determine_upstream_ids
@@ -832,23 +837,23 @@ def upstream_from_id(fid: int, df: geopandas.GeoDataFrame) -> geopandas.GeoDataF
 
 
 def upstream_from_coords(
-    lon: float, lat: float, df: geopandas.GeoDataFrame
-) -> geopandas.GeoDataFrame:
+    lon: float, lat: float, df: Union[pandas.DataFrame, geopandas.GeoDataFrame]
+) -> Union[pandas.DataFrame, geopandas.GeoDataFrame]:
     """Return the sub-basins located upstream from outlet.
 
     Parameters
     ----------
     lon : float
-      Longitude of outlet
+        Longitude of outlet.
     lat : float
-      Latitude of outlet
-    df : GeoDataFrame
-      Routing product.
+        Latitude of outlet.
+    df : pandas.DataFrame or geopandas.GeoDataFrame
+        Routing product.
 
     Returns
     -------
-    GeoDataFrame
-      Sub-basins located upstream from outlet.
+    pandas.DataFrame or geopandas.GeoDataFrame
+        Sub-basins located upstream from outlet.
     """
     from ravenpy.utilities.geo import find_geometry_from_coord
 

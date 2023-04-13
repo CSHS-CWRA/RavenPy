@@ -4,15 +4,13 @@ Created on Fri Jul 17 09:11:58 2020
 
 @author: ets
 """
-import collections
 import datetime as dt
 import logging
-import re
 import tempfile
 from pathlib import Path
 from typing import List, Union
 
-import pandas as pd
+import climpred
 import xarray as xr
 from climpred import HindcastEnsemble
 
@@ -24,10 +22,12 @@ LOGGER = logging.getLogger("PYWPS")
 
 
 def climatology_esp(
-    config, workdir: Union[str, Path] = None, years: List[int] = None, overwrite=False
+    config,
+    workdir: Union[str, Path] = None,
+    years: List[int] = None,
+    overwrite: bool = False,
 ) -> EnsembleReader:
-    """
-    Ensemble Streamflow Prediction based on historical variability.
+    """Ensemble Streamflow Prediction based on historical variability.
 
     Run the model using forcing for different years.
     No model warm-up is performed by this function, make sure the initial states are
@@ -36,17 +36,19 @@ def climatology_esp(
     Parameters
     ----------
     config : Config
-      Model configuration.
+        Model configuration.
     years : List[int]
-      Years from which forcing time series will be drawn. If None, run for all years where
-      forcing data is available.
-    workdir: str, Path
-      Path to rv files and model outputs. If None, create a temporary directory.
+        Years from which forcing time series will be drawn.
+        If None, run for all years where forcing data is available.
+    workdir : str or Path
+        The path to rv files and model outputs. If None, create a temporary directory.
+    overwrite : bool
+        Whether to overwrite existing values or not. Default: False
 
     Returns
     -------
     EnsembleReader
-      Class facilitating the analysis of multiple Raven outputs.
+        Class facilitating the analysis of multiple Raven outputs.
     """
     workdir = Path(workdir or tempfile.mkdtemp())
 
@@ -108,23 +110,22 @@ def climatology_esp(
     return EnsembleReader(config.run_name, runs=ensemble)
 
 
-def to_climpred_hindcast_ensemble(hindcast, observations):
-    """
-    Ceates a hindcasting object that can be used by the `climpred`
-     toolbox for hindcast verification.
+def to_climpred_hindcast_ensemble(
+    hindcast: xr.Dataset, observations: xr.Dataset
+) -> climpred.HindcastEnsemble:
+    """Create a hindcasting object that can be used by the `climpred` toolbox for hindcast verification.
 
     Parameters
     ----------
     hindcast : xarray.Dataset
-      The hindcasted streamflow data for a given period.
+        The hindcasted streamflow data for a given period.
     observations : xarray.Dataset
-      The streamflow observations that are used to verify the hindcasts.
+        The streamflow observations that are used to verify the hindcasts.
 
     Returns
     -------
-    climpred.HindcastEnsemble object
-      The hindcast ensemble formatted to be used in climpred.
-
+    climpred.HindcastEnsemble
+        The hindcast ensemble formatted to be used in climpred.
     """
 
     # Make sure the variable names are the same.
@@ -147,24 +148,26 @@ def to_climpred_hindcast_ensemble(hindcast, observations):
     return hindcast_obj
 
 
-def warm_up(config, duration: int, workdir: Union[str, Path] = None, overwrite=False):
+def warm_up(
+    config, duration: int, workdir: Union[str, Path] = None, overwrite: bool = False
+) -> Config:
     """Run the model on a time series preceding the start date.
 
     Parameters
     ----------
     config : Config
-      Model configuration.
+        Model configuration.
     duration : int
-      Number of days the warm-up simulation should last *before* the start date.
+        Number of days the warm-up simulation should last *before* the start date.
     workdir: Path
-      Work directory.
-    overwrite: bool
-      If True, overwrite existing files.
+        Work directory.
+    overwrite : bool
+        If True, overwrite existing files.
 
     Returns
     -------
     Config
-      Model configuration with initial state set by running the model prior to the start date.
+        Model configuration with initial state set by running the model prior to the start date.
     """
     wup = config.copy(deep=True)
     wup.start_date = config.start_date - dt.timedelta(days=duration)
@@ -176,10 +179,10 @@ def warm_up(config, duration: int, workdir: Union[str, Path] = None, overwrite=F
 
 
 def hindcast_climatology_esp(
-    config,
-    warm_up_duration,
-    years=None,
-    hindcast_years=None,
+    config: Config,
+    warm_up_duration: int,
+    years: List[int] = None,
+    hindcast_years: List[int] = None,
     workdir: Union[str, Path] = None,
     overwrite: bool = False,
 ) -> xr.Dataset:
@@ -192,25 +195,25 @@ def hindcast_climatology_esp(
 
     Parameters
     ----------
-    config: Config
-      Model configuration. Initial states will be overwritten.
+    config : Config
+        Model configuration. Initial states will be overwritten.
     warm_up_duration : int
-      Number of days to run the model prior to the starting date to initialize the state variables.
-    workdir: Path
-      Work directory. If None create a temporary directory.
+        Number of days to run the model prior to the starting date to initialize the state variables.
+    workdir : Path
+        Work directory. If None, creates a temporary directory.
     years : List[int]
-      Years from which forcing time series will be drawn. If None, run for all years where
-      forcing data is available.
-    hindcast_years:  List[int]
-      Years for which the model will be initialized and the `climatology_esp` function run.
-      Defaults to all years when forcing data is available.
-    overwrite: bool
-      If True, overwrite existing files.
+        Years from which forcing time series will be drawn. If None, run for all years where
+        forcing data is available.
+    hindcast_years : List[int]
+        Years for which the model will be initialized and the `climatology_esp` function run.
+        Defaults to all years when forcing data is available.
+    overwrite : bool
+        If True, overwrite existing files.
 
     Returns
     -------
     xarray.DataArray
-      The array containing the (init, member, lead) dimensions ready for using in climpred. (qsim)
+        The array containing the (init, member, lead) dimensions ready for using in climpred. (qsim)
 
     Notes
     -----
@@ -281,8 +284,7 @@ def hindcast_climatology_esp(
 def _shift_esp_time(nc, year, dim="member"):
     """Modify netCDF time to facilitate ensemble analysis out of ESP forecasts.
 
-    Modify time such that it starts on the given year, and
-    add member dimension with original year as value.
+    Modify time such that it starts on the given year, and add member dimension with original year as value.
     """
 
     ds = xr.open_dataset(nc, use_cftime=True)
@@ -309,7 +311,7 @@ def _shift_esp_time(nc, year, dim="member"):
     return fn
 
 
-def _get_time(config):
+def _get_time(config: Config) -> xr.DataArray:
     """Return time DataArray."""
     if config.gauge is not None:
         time = config.gauge[0].ds.time
@@ -323,34 +325,37 @@ def _get_time(config):
 
 
 def ensemble_prediction(
-    config, forecast, ens_dim="member", workdir=None, overwrite=True, **kwds
+    config,
+    forecast: Union[str, Path],
+    ens_dim: str = "member",
+    workdir=None,
+    overwrite=True,
+    **kwds,
 ) -> EnsembleReader:
-    """
-    Ensemble Streamflow Prediction based on historical weather forecasts (Caspar or other).
+    """Ensemble Streamflow Prediction based on historical weather forecasts (CASPAR or other).
 
     Run the model using forcing for different years.
-    No model warm-up is performed by this function, make sure the initial states are
-    consistent with the start date.
+    No model warm-up is performed by this function, make sure the initial states are consistent with the start date.
 
     Parameters
     ----------
     config : Config
-      Model configuration.
-    forecast: Path to forecast file
-      Forecast subsetted to the catchment location (.nc).
-    ens_dim: str
-      Name of dimension to iterate over.
-    workdir: str, Path
-      Path to rv files and model outputs. If None, create temporary directory.
-    overwrite: bool
-      Overwrite files when writing to disk.
-    **kwds: dict
-      Keywords for the `Gauge.from_nc` function.
+        Model configuration.
+    forecast : str or Path
+        Forecast subsetted to the catchment location (.nc).
+    ens_dim : str
+        Name of dimension to iterate over.
+    workdir : str or Path
+        The path to rv files and model outputs. If None, create temporary directory.
+    overwrite : bool
+        Overwrite files when writing to disk.
+    **kwds
+        Keywords for the `Gauge.from_nc` function.
 
     Returns
     -------
     EnsembleReader
-      Class facilitating the analysis of multiple Raven outputs.
+        Class facilitating the analysis of multiple Raven outputs.
     """
     workdir = Path(workdir or tempfile.mkdtemp())
 
@@ -393,15 +398,15 @@ def compute_forecast_flood_risk(forecast: xr.Dataset, flood_level: float):
     Parameters
     ----------
     forecast : xr.Dataset
-      Ensemble or deterministic streamflow forecast.
-    flood_level: float
-      Flood level threshold. Will be used to determine if forecasts exceed
-      this specified flood threshold. Should be in the same units as the forecasted streamflow.
+        Ensemble or deterministic streamflow forecast.
+    flood_level : float
+        Flood level threshold. Will be used to determine if forecasts exceed
+        this specified flood threshold. Should be in the same units as the forecasted streamflow.
 
     Returns
     -------
     xr.Dataset
-      Time series of probabilities of flood level exceedance.
+        Time series of probabilities of flood level exceedance.
     """
 
     # ---- Calculations ---- #

@@ -1,13 +1,11 @@
-"""
-Tools for performing geospatial translations and transformations.
-"""
+"""Tools for performing geospatial translations and transformations."""
 
 import collections
-import json
 import logging
 from pathlib import Path
 from typing import List, Optional, Union
 
+import geopandas
 import pandas as pd
 
 from . import gis_import_error_message
@@ -22,6 +20,7 @@ try:
     from shapely.geometry import (
         GeometryCollection,
         MultiPolygon,
+        Point,
         Polygon,
         mapping,
         shape,
@@ -48,16 +47,16 @@ def geom_transform(
     Parameters
     ----------
     geom : Union[GeometryCollection, shape]
-      Source geometry.
+        Source geometry.
     source_crs : Union[str, int, CRS]
-      Projection identifier (proj4) for the source geometry, e.g. '+proj=longlat +datum=WGS84 +no_defs'.
+        Projection identifier (proj4) for the source geometry, e.g. '+proj=longlat +datum=WGS84 +no_defs'.
     target_crs : Union[str, int, CRS]
-      Projection identifier (proj4) for the target geometry.
+        Projection identifier (proj4) for the target geometry.
 
     Returns
     -------
     GeometryCollection
-      Reprojected geometry.
+        Reprojected geometry.
     """
     try:
         from functools import partial
@@ -93,25 +92,24 @@ def generic_raster_clip(
     padded: bool = True,
     raster_compression: str = RASTERIO_TIFF_COMPRESSION,
 ) -> None:
-    """
-    Crop a raster file to a given geometry.
+    """Crop a raster file to a given geometry.
 
     Parameters
     ----------
     raster : Union[str, Path]
-      Path to input raster.
+        Path to input raster.
     output : Union[str, Path]
-      Path to output raster.
+        Path to output raster.
     geometry : Union[Polygon, MultiPolygon, List[Union[Polygon, MultiPolygon]]
-      Geometry defining the region to crop.
+        Geometry defining the region to crop.
     touches : bool
-      Whether to include cells that intersect the geometry or not. Default: True.
+        Whether to include cells that intersect the geometry or not. Default: True.
     fill_with_nodata: bool
-      Whether to keep pixel values for regions outside of shape or set as nodata or not. Default: True.
+        Whether to keep pixel values for regions outside of shape or set as nodata or not. Default: True.
     padded: bool
-      Whether to add a half-pixel buffer to shape before masking or not. Default: True.
+        Whether to add a half-pixel buffer to shape before masking or not. Default: True.
     raster_compression : str
-      Level of data compression. Default: 'lzw'.
+        Level of data compression. Default: 'lzw'.
 
     Returns
     -------
@@ -151,19 +149,18 @@ def generic_raster_warp(
     target_crs: Union[str, dict, CRS],
     raster_compression: str = RASTERIO_TIFF_COMPRESSION,
 ) -> None:
-    """
-    Reproject a raster file.
+    """Reproject a raster file.
 
     Parameters
     ----------
     raster : Union[str, Path]
-      Path to input raster.
+        Path to input raster.
     output : Union[str, Path]
-      Path to output raster.
+        Path to output raster.
     target_crs : str or dict
-      Target projection identifier.
+        Target projection identifier.
     raster_compression: str
-      Level of data compression. Default: 'lzw'.
+        Level of data compression. Default: 'lzw'.
 
     Returns
     -------
@@ -206,13 +203,13 @@ def generic_vector_reproject(
     Parameters
     ----------
     vector : Union[str, Path]
-      Path to a file containing a valid vector layer.
+        Path to a file containing a valid vector layer.
     projected: Union[str, Path]
-      Path to a file to be written.
+        Path to a file to be written.
     source_crs : Union[str, dict, CRS]
-      Projection identifier (proj4) for the source geometry, Default: '+proj=longlat +datum=WGS84 +no_defs'.
+        Projection identifier (proj4) for the source geometry, Default: '+proj=longlat +datum=WGS84 +no_defs'.
     target_crs : Union[str, dict, CRS]
-      Projection identifier (proj4) for the target geometry.
+        Projection identifier (proj4) for the target geometry.
 
     Returns
     -------
@@ -248,11 +245,11 @@ def generic_vector_reproject(
 
 def determine_upstream_ids(
     fid: str,
-    df: pd.DataFrame,
+    df: Union[pd.DataFrame, geopandas.GeoDataFrame],
     basin_field: str = None,
     downstream_field: str = None,
     basin_family: Optional[str] = None,
-) -> pd.DataFrame:
+) -> Union[pd.DataFrame, geopandas.GeoDataFrame]:
     """Return a list of upstream features by evaluating the downstream networks.
 
     Parameters
@@ -260,7 +257,7 @@ def determine_upstream_ids(
     fid : str
         feature ID of the downstream feature of interest.
     df : pd.DataFrame
-        Dataframe comprising the watershed attributes.
+        A Dataframe comprising the watershed attributes.
     basin_field : str
         The field used to determine the id of the basin according to hydro project.
     downstream_field : str
@@ -305,22 +302,23 @@ def determine_upstream_ids(
     )
 
 
-def find_geometry_from_coord(lon, lat, df):
+def find_geometry_from_coord(
+    lon: float, lat: float, df: geopandas.GeoDataFrame
+) -> geopandas.GeoDataFrame:
     """Return the geometry containing the given coordinates.
 
     lon : float
-      Longitude.
+        Longitude.
     lat : float
-      Latitude
+        Latitude.
     df : GeoDataFrame
-      Data.
+        Data.
 
     Returns
     -------
     GeoDataFrame
-      Record whose geometry contains the point.
+        Record whose geometry contains the point.
     """
-    from shapely.geometry import Point
 
     p = Point(lon, lat)
 

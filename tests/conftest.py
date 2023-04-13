@@ -27,14 +27,14 @@ from ravenpy.utilities.testdata import get_local_testdata as _get_local_testdata
 from .common import _convert_2d, _convert_3d
 
 TESTDATA_BRANCH = os.getenv("RAVENPY_TESTDATA_BRANCH", "master")
-SKIP_TEST_DATA = "RAVENPY_SKIP_TEST_DATA"
+SKIP_TEST_DATA = os.getenv("RAVENPY_SKIP_TEST_DATA")
 
 
 def populate_testing_data(
     temp_folder: Optional[Path] = None,
     branch: str = TESTDATA_BRANCH,
     _local_cache: Path = _default_cache_dir,
-):
+) -> None:
     if _local_cache.joinpath(".data_written").exists():
         # This flag prevents multiple calls from re-attempting to download testing data in the same pytest run
         return
@@ -64,8 +64,8 @@ def populate_testing_data(
         [
             "caspar_eccc_hindcasts/geps_watershed.nc",
             "eccc_forecasts/geps_watershed.nc",
-            "cmip5/nasa_nex-gddp-1.0_day_inmcm4_historical%2Brcp45_nex-gddp_1971-1972_subset.nc",
-            "cmip5/nasa_nex-gddp-1.0_day_inmcm4_historical%2Brcp85_nex-gddp_2070-2071_subset.nc",
+            "cmip5/nasa_nex-gddp-1.0_day_inmcm4_historical+rcp45_nex-gddp_1971-1972_subset.nc",
+            "cmip5/nasa_nex-gddp-1.0_day_inmcm4_historical+rcp85_nex-gddp_2070-2071_subset.nc",
             "famine/famine_input.nc",
             "gr4j_cemaneige/solution.rvc",
             "hydro_simulations/raven-gr4j-cemaneige-sim_hmets-0_Hydrographs.nc",
