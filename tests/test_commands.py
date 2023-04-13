@@ -8,7 +8,7 @@ from pydantic import Field
 
 from ravenpy.config import commands as rc
 from ravenpy.config import options as o
-from ravenpy.config.base import RV, encoder
+from ravenpy.config.base import RV
 
 salmon_land_hru_1 = dict(
     area=4250.6, elevation=843.0, latitude=54.4848, longitude=-123.3659, hru_type="land"
@@ -342,11 +342,13 @@ def test_gridded_forcing(get_local_testdata):
     """TODO: Make sure dimensions are in the order x, y, t."""
     fn = get_local_testdata("raven-routing-sample/VIC_temperatures.nc")
     gf = rc.GriddedForcing.from_nc(fn, data_type="TEMP_AVE", alt_names=("Avg_temp",))
-    # assert gf.dim_names_nc == ("lon", "lat", "time")
+    # TODO: Is the order of dimensions important?
+    assert gf.dim_names_nc == ("lon", "lat", "time")
 
     fn = get_local_testdata("raven-routing-sample/VIC_streaminputs.nc")
     gf = rc.GriddedForcing.from_nc(fn, data_type="PRECIP", alt_names=("Streaminputs",))
-    # assert gf.dim_names_nc == ("lon_dim", "lat_dim", "time")
+    # TODO: Is the order of dimensions important?
+    assert gf.dim_names_nc == ("lon_dim", "lat_dim", "time")
 
 
 def test_gauge(get_local_testdata):

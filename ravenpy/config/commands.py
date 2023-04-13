@@ -4,6 +4,7 @@ import re
 from pathlib import Path
 from textwrap import dedent, indent
 from typing import (
+    Any,
     Dict,
     Literal,
     Optional,
@@ -14,7 +15,7 @@ from typing import (
     no_type_check,
 )
 
-import cftime  # noqa
+import cftime  # noqa: F401
 import xarray as xr
 from pydantic import (
     Field,
@@ -28,7 +29,8 @@ from pydantic import (
     validator,
 )
 
-from . import options
+from ravenpy.config import options
+
 from .base import (
     Command,
     FlatCommand,
@@ -661,7 +663,12 @@ class Gauge(FlatCommand):
         station_idx: int = 1,
         alt_names: Optional[Dict[str, str]] = None,
         mon_ave: bool = False,
-        data_kwds: Optional[Dict[options.Forcings, Dict[str, str]]] = None,
+        data_kwds: Optional[
+            dict[
+                str,
+                Union[dict[str, Union[bool, dict[str, int], float]], dict[str, Any]],
+            ]
+        ] = None,
         **kwds,
     ) -> "Gauge":
         """Return Gauge instance with configuration options inferred from the netCDF itself.

@@ -6,8 +6,9 @@ from typing import Any, Dict, Sequence, Union
 import cftime
 from pydantic import Field, root_validator, validator
 
-from . import commands as rc  # noqa
-from . import options as o
+from ravenpy.config import commands as rc
+from ravenpy.config import options as o
+
 from .base import RV, Sym, parse_symbolic
 
 """

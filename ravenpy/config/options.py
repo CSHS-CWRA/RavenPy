@@ -2,6 +2,7 @@ from enum import Enum
 from typing import Literal
 
 Forcings = Literal[
+    "ALL",
     "PRECIP",
     "PRECIP_DAILY_AVE",
     "PRECIP_5DAY",

@@ -1,9 +1,5 @@
 from ravenpy.config.emulators import BasicRoute
-from ravenpy.extractors.routing_product import (
-    BasinMakerExtractor,
-    GridWeightExtractor,
-    open_shapefile,
-)
+from ravenpy.extractors.routing_product import BasinMakerExtractor, open_shapefile
 
 
 def test_basinmaker_extractor(get_local_testdata, tmp_path):

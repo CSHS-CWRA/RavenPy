@@ -70,27 +70,27 @@ def test_simple_workflow(get_local_testdata, minimal_emulator, tmp_path):
     gw_fn.write_text(rc.GridWeights(**gw).to_rv())
 
     forcing = {"TEMP_MIN": "tmin", "TEMP_MAX": "tmax", "PRECIP": "pr"}
-    gf = [
-        rc.GriddedForcing.from_nc(
-            meteo_grid_fn, dtyp, alt_names=(alias,), grid_weights=gw_fn
-        )
-        for (dtyp, alias) in forcing.items()
-    ]
+    # gf = [
+    #     rc.GriddedForcing.from_nc(
+    #         meteo_grid_fn, dtyp, alt_names=(alias,), grid_weights=gw_fn
+    #     )
+    #     for (dtyp, alias) in forcing.items()
+    # ]
     # Weights for some HRUs do not sum to one.
 
     # Meteo forcing per station (virtual stations, since this is ERA5 data)
     meteo_station = get_local_testdata("matapedia/Matapedia_meteo_data_stations.nc")
-    sf = [
-        rc.StationForcing.from_nc(meteo_station, dtyp, alt_names=(alias,))
-        for (dtyp, alias) in forcing.items()
-    ]
+    # sf = [
+    #     rc.StationForcing.from_nc(meteo_station, dtyp, alt_names=(alias,))
+    #     for (dtyp, alias) in forcing.items()
+    # ]
     # TODO: Complete with weights calculations
 
     # Virtual Gauges
     gauges = [
         rc.Gauge.from_nc(
             meteo_station,
-            data_type=forcing.keys(),
+            data_type=[s for s in forcing.keys()],
             station_idx=i + 1,
             alt_names=forcing,
         )
