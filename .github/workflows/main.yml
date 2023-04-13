@@ -8,7 +8,6 @@ on:
 
 env:
   RAVENPY_TESTDATA_BRANCH: master
-  RAVENPY_SKIP_TEST_DATA: false
 
 jobs:
   black:
@@ -82,7 +81,6 @@ jobs:
             python="3.9"
       - name: Conda and Mamba versions
         run: |
-          conda --version
           mamba --version
       - name: Install RavenPy
         run: |
