@@ -8,7 +8,7 @@ on:
 
 env:
   RAVENPY_TESTDATA_BRANCH: master
-  RAVENPY_SKIP_TEST_DATA: 0
+  RAVENPY_SKIP_TEST_DATA: false
 
 jobs:
   black:
