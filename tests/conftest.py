@@ -70,6 +70,7 @@ def populate_testing_data(
             "nrcan/NRCAN_2006-2007_subset.nc",
             "polygons/mars.geojson",
             "polygons/mars.zip",
+            "polygons/Saskatoon.geojson",
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_2d.nc",
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_3d.nc",

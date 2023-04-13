@@ -242,7 +242,7 @@ class GenericParameterList(Command):
 
 
 class RV(Command):
-    """"""
+    """Base class for RV configuration objects."""
 
     _template: str = "{_commands}\n"
     _indent: str = ""
@@ -274,6 +274,3 @@ def parse_symbolic(value, **kwds):
 
     else:
         return value
-
-
-# ---
