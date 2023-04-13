@@ -7,7 +7,6 @@ import xarray as xr
 from ravenpy import Emulator
 from ravenpy.config import commands as rc
 from ravenpy.config.emulators import GR4JCN, BasicRoute
-from ravenpy.config.rvs import Config
 from ravenpy.config.utils import get_average_annual_runoff
 
 # Expected NSE for emulator configuration from the `config_rv` test fixture.
@@ -111,7 +110,7 @@ def test_resume(gr4jcn_config, tmp_path):
     # First run
     conf_a = gr4jcn.duplicate(RunName="a")
     a = Emulator(conf_a, workdir=tmp_path / "a")
-    out_a = a.run()
+    a.run()
 
     # Second run starting at the end of thr first one
     conf_b = a.resume()
@@ -179,7 +178,7 @@ def test_run_with_dap_link(minimal_emulator, tmp_path):
     conf = minimal_emulator
     conf.gauge = [rc.Gauge.from_nc(fn, alt_names=alt_names)]
 
-    out = Emulator(conf, workdir=tmp_path).run()
+    Emulator(conf, workdir=tmp_path).run()
 
 
 def test_routing(get_local_testdata):
@@ -675,7 +674,7 @@ def test_canopex():
     )
 
     # Test that it at least runs while we're here
-    emu = Emulator(config=model, overwrite=True).run(overwrite=True)
+    Emulator(config=model, overwrite=True).run(overwrite=True)
 
     # Check unit transformation parameters are correctly inferred
     var = model.gauge[0].data[0].data_type

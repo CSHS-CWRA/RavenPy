@@ -3,7 +3,6 @@ from dataclasses import fields
 import numpy as np
 import xarray as xr
 
-import ravenpy.models as models
 from ravenpy.config.emulators import get_model
 
 

@@ -24,20 +24,6 @@ class TestHindcasting:
     def test_hindcasting_GEPS(self, get_local_testdata, salmon_hru, tmp_path):
         ts20 = get_local_testdata("caspar_eccc_hindcasts/geps_watershed.nc")
 
-        data_type = [
-            "RAINFALL",
-            "TEMP_MIN",
-            "TEMP_MAX",
-            "SNOWFALL",
-        ]
-        alt_names = {
-            "RAINFALL": "rain",
-            "TEMP_MIN": "tmin",
-            "TEMP_MAX": "tmax",
-            "PET": "pet",
-            "HYDROGRAPH": "qobs",
-            "SNOWFALL": "snow",
-        }
         hru = salmon_hru["land"]
         data_kwds = {
             "ALL": {"Latitude": hru["latitude"], "Longitude": hru["longitude"]},
