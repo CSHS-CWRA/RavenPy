@@ -21,8 +21,8 @@ dependencies:
   - matplotlib
   - netCDF4
   - numpy < 1.24
-  - owslib >=0.24.1
-  - pandas
+  - owslib >=0.24.1,<0.29
+  - pandas < 2.0
   - pint >=0.20
   - pip
   - pre-commit

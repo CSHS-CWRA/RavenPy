@@ -11,6 +11,7 @@ jupyter_client
 sphinx-click
 numpydoc
 autodoc_pydantic
+owslib<0.29
 birdhouse-birdy
 intake
 intake-esm
