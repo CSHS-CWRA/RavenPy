@@ -12,7 +12,9 @@ from xarray import Dataset
 LOGGER = logging.getLogger("PYWPS")
 
 
-def get_hindcast_day(region_coll: fiona.Collection, date, climate_model="GEPS"):
+def get_hindcast_day(
+    region_coll: fiona.collection.Collection, date, climate_model="GEPS"
+):
     """Generate a forecast dataset that can be used to run raven.
 
     Data comes from the CASPAR archive and must be aggregated such that each file
@@ -117,7 +119,10 @@ def get_recent_ECCC_forecast(
 
 
 def get_subsetted_forecast(
-    region_coll: fiona.Collection, ds: xr.Dataset, times: dt.datetime, is_caspar: bool
+    region_coll: fiona.collection.Collection,
+    ds: xr.Dataset,
+    times: Union[dt.datetime, xr.DataArray],
+    is_caspar: bool,
 ) -> xr.Dataset:
     """
     This function takes a dataset, a region and the time sampling array and returns
@@ -125,11 +130,11 @@ def get_subsetted_forecast(
 
     Parameters
     ----------
-    region_coll : fiona.Collection
+    region_coll : fiona.collection.Collection
         The region vectors.
     ds : xr.Dataset
         The dataset containing the raw, worldwide forecast data
-    times : dt.datetime
+    times : dt.datetime or xr.DataArray
         The array of times required to do the forecast.
     is_caspar : bool
         True if the data comes from Caspar, false otherwise.
