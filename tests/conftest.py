@@ -27,7 +27,7 @@ from ravenpy.utilities.testdata import get_local_testdata as _get_local_testdata
 from .common import _convert_2d, _convert_3d
 
 TESTDATA_BRANCH = os.getenv("RAVENPY_TESTDATA_BRANCH", "master")
-SKIP_TEST_DATA = True  # os.getenv("RAVENPY_SKIP_TEST_DATA")
+SKIP_TEST_DATA = "RAVENPY_SKIP_TEST_DATA"
 
 
 def populate_testing_data(
