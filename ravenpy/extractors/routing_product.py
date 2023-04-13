@@ -11,6 +11,7 @@ try:
     from osgeo import __version__ as osgeo_version
     from osgeo import ogr, osr
     from shapely import wkt
+
 except (ImportError, ModuleNotFoundError) as e:
     msg = gis_import_error_message.format(Path(__file__).stem)
     raise ImportError(msg) from e
@@ -808,7 +809,7 @@ class GridWeightExtractor:
         )
 
 
-def upstream_from_id(fid: int, df: "GeoDataFrame") -> "GeoDataFrame":
+def upstream_from_id(fid: int, df: geopandas.GeoDataFrame) -> geopandas.GeoDataFrame:
     """Return upstream sub-basins by evaluating the downstream networks.
 
     Parameters
@@ -830,7 +831,9 @@ def upstream_from_id(fid: int, df: "GeoDataFrame") -> "GeoDataFrame":
     )
 
 
-def upstream_from_coords(lon: float, lat: float, df: "GeoDataFrame") -> "GeoDataFrame":
+def upstream_from_coords(
+    lon: float, lat: float, df: geopandas.GeoDataFrame
+) -> geopandas.GeoDataFrame:
     """Return the sub-basins located upstream from outlet.
 
     Parameters

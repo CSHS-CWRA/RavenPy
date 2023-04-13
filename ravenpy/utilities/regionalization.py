@@ -11,6 +11,7 @@ import statsmodels.api as sm
 import xarray as xr
 from haversine import haversine_vector
 
+from ravenpy.config import Config
 from ravenpy.ravenpy import Emulator, EnsembleReader
 
 from . import coords
@@ -21,7 +22,7 @@ regionalisation_data_dir = Path(__file__).parent.parent / "data" / "regionalisat
 
 
 def regionalize(
-    config: "Config",
+    config: Config,
     method: str,
     nash: pd.Series,
     params: pd.DataFrame = None,
