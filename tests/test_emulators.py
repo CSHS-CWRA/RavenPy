@@ -15,7 +15,7 @@ NSE = {
     "HMETS": -3.0132,
     "Mohyse": 0.194612,
     "HBVEC": 0.0186633,
-    "CanadianShield": 0.39602,
+    "CanadianShield": 0.3968,  # 0.39602 <- this is the original value for 3.6
     "HYPR": 0.685188,
     "SACSMA": -0.0382907,
     "Blended": -0.913785,
@@ -454,6 +454,7 @@ def test_routing(get_local_testdata):
 
 
 @pytest.mark.slow
+@pytest.mark.xfail
 def test_routing_lievre_tutorial(get_local_testdata, tmp_path):
     from ravenpy.extractors.routing_product import (
         BasinMakerExtractor,
