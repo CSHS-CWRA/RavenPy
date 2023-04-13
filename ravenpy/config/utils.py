@@ -1,9 +1,9 @@
 import os
 from typing import List, Optional, Union
 
+import cf_xarray
 import numpy as np
 import xarray as xr
-import cf_xarray
 
 from .conventions import CF_RAVEN, MonthlyAverages
 from .defaults import RAVEN_NO_DATA_VALUE
