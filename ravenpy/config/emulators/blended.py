@@ -89,10 +89,10 @@ class Blended(Config):
     )
     soil_model: rc.SoilModel = Field(3, alias="SoilModel")
 
-    hydrologic_processes: Sequence[Union[rc.Process, rc.ProcessGroup]] = Field(
+    hydrologic_processes: Sequence[Union[rc.Process, p.ProcessGroup]] = Field(
         [
             p.Precipitation(algo="RAVEN_DEFAULT", source="ATMOS_PRECIP", to="MULTIPLE"),
-            rc.ProcessGroup(
+            p.ProcessGroup(
                 p=[
                     p.Infiltration(
                         algo="INF_HMETS", source="PONDED_WATER", to="MULTIPLE"
@@ -107,7 +107,7 @@ class Blended(Config):
                 params=[P.R01, P.R02],
             ),
             p.Overflow(algo="OVERFLOW_RAVEN", source="SOIL[0]", to="CONVOLUTION[1]"),
-            rc.ProcessGroup(
+            p.ProcessGroup(
                 p=[
                     p.Baseflow(
                         algo="BASE_LINEAR_ANALYTIC",
@@ -124,7 +124,7 @@ class Blended(Config):
             p.Percolation(algo="PERC_LINEAR", source="SOIL[0]", to="SOIL[1]"),
             p.Overflow(algo="OVERFLOW_RAVEN", source="SOIL[1]", to="CONVOLUTION[1]"),
             p.Percolation(algo="PERC_LINEAR", source="SOIL[1]", to="SOIL[2]"),
-            rc.ProcessGroup(
+            p.ProcessGroup(
                 p=[
                     p.SoilEvaporation(
                         algo="SOILEVAP_ALL", source="SOIL[0]", to="ATMOSPHERE"
@@ -141,7 +141,7 @@ class Blended(Config):
             p.Convolve(
                 algo="CONVOL_GAMMA_2", source="CONVOLUTION[1]", to="SURFACE_WATER"
             ),
-            rc.ProcessGroup(
+            p.ProcessGroup(
                 p=[
                     p.Baseflow(
                         algo="BASE_LINEAR_ANALYTIC",
@@ -156,7 +156,7 @@ class Blended(Config):
                     P.R06,
                 ],
             ),
-            rc.ProcessGroup(
+            p.ProcessGroup(
                 p=[
                     p.SnowBalance(
                         algo="SNOBAL_HMETS", source="MULTIPLE", to="MULTIPLE"

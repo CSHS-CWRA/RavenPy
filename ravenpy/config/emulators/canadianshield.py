@@ -102,7 +102,7 @@ class CanadianShield(Config):
     monthly_interpolation_method: o.MonthlyInterpolationMethod = Field(
         o.MonthlyInterpolationMethod.LINEAR_MID, alias="MonthlyInterpolationMethod"
     )
-    hydrologic_processes: Sequence[Union[rc.Process, rc.Conditional]] = Field(
+    hydrologic_processes: Sequence[Union[rc.Process, p.Conditional]] = Field(
         [
             p.SnowRefreeze(algo="FREEZE_DEGREE_DAY", source="SNOW_LIQ", to="SNOW"),
             p.Precipitation(algo="PRECIP_RAVEN", source="ATMOS_PRECIP", to="MULTIPLE"),

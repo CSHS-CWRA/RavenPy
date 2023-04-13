@@ -70,6 +70,7 @@ def test_simple_workflow(get_local_testdata, minimal_emulator, tmp_path):
     gw_fn.write_text(rc.GridWeights(**gw).to_rv())
 
     forcing = {"TEMP_MIN": "tmin", "TEMP_MAX": "tmax", "PRECIP": "pr"}
+
     [
         rc.GriddedForcing.from_nc(
             meteo_grid_fn, dtyp, alt_names=(alias,), grid_weights=gw_fn
@@ -80,6 +81,7 @@ def test_simple_workflow(get_local_testdata, minimal_emulator, tmp_path):
 
     # Meteo forcing per station (virtual stations, since this is ERA5 data)
     meteo_station = get_local_testdata("matapedia/Matapedia_meteo_data_stations.nc")
+
     [
         rc.StationForcing.from_nc(meteo_station, dtyp, alt_names=(alias,))
         for (dtyp, alias) in forcing.items()
@@ -90,7 +92,7 @@ def test_simple_workflow(get_local_testdata, minimal_emulator, tmp_path):
     gauges = [
         rc.Gauge.from_nc(
             meteo_station,
-            data_type=forcing.keys(),
+            data_type=[s for s in forcing.keys()],
             station_idx=i + 1,
             alt_names=forcing,
         )

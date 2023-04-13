@@ -1,6 +1,8 @@
-from typing import Literal, Tuple
+from textwrap import dedent, indent
+from typing import Literal, Sequence, Tuple
 
-from .commands import Conditional, Process
+from .base import Sym
+from .commands import Command, Process
 
 
 # --- Processes --- #
@@ -231,3 +233,37 @@ class LateralEquilibrate(Process):
 
 
 # --- End processes --- #
+
+
+class Conditional(Command):
+    """Conditional statement"""
+
+    kind: Literal["HRU_TYPE", "LAND_CLASS", "HRU_GROUP"]
+    op: Literal["IS", "IS_NOT"]
+    value: str
+
+    _sub = "-->"
+
+    def to_rv(self):
+        cmd = self._sub + self.__class__.__name__
+        return f":{cmd:<20} {self.kind} {self.op} {self.value}"
+
+
+class ProcessGroup(Command):
+    p: Sequence[Process]
+    params: Sequence[Sym]
+
+    _template: str = """
+                :{_cmd}
+                {_processes}
+                :End{_cmd} CALCULATE_WTS {_params}
+                """
+    _indent: str = "    "
+
+    def to_rv(self):
+        d = {
+            "_cmd": "ProcessGroup",
+            "_processes": indent("\n".join(str(p) for p in self.p), self._indent),
+            "_params": " ".join(map(str, self.params)),
+        }
+        return dedent(self._template).format(**d)

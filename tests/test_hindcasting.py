@@ -1,7 +1,6 @@
 import datetime as dt
 
 import xarray as xr
-import xskillscore as xs
 
 from ravenpy import Emulator, EnsembleReader
 from ravenpy.config import commands as rc

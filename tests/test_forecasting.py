@@ -10,7 +10,6 @@ from ravenpy.utilities.forecasting import (
     climatology_esp,
     ensemble_prediction,
     hindcast_climatology_esp,
-    to_climpred_hindcast_ensemble,
     warm_up,
 )
 

@@ -138,7 +138,7 @@ class HYPR(Config):
     )
     soil_model: rc.SoilModel = Field(3, alias="SoilModel")
 
-    hydrologic_processes: Sequence[Union[rc.Process, rc.Conditional]] = Field(
+    hydrologic_processes: Sequence[Union[rc.Process, p.Conditional]] = Field(
         [
             p.SnowRefreeze(algo="FREEZE_DEGREE_DAY", source="SNOW_LIQ", to="SNOW"),
             p.Precipitation(algo="PRECIP_RAVEN", source="ATMOS_PRECIP", to="MULTIPLE"),

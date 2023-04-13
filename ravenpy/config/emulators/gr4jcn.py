@@ -109,7 +109,7 @@ class GR4JCN(Config):
         o.OroPrecipCorrect.SIMPLELAPSE, alias="OroPrecipCorrect"
     )
 
-    hydrologic_processes: Sequence[Union[Process, rc.Conditional]] = Field(
+    hydrologic_processes: Sequence[Union[Process, p.Conditional]] = Field(
         [
             p.Precipitation(algo="PRECIP_RAVEN", source="ATMOS_PRECIP", to="MULTIPLE"),
             p.SnowTempEvolve(algo="SNOTEMP_NEWTONS", source="SNOW_TEMP"),

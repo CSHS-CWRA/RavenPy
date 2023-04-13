@@ -4,6 +4,7 @@ import re
 from pathlib import Path
 from textwrap import dedent, indent
 from typing import (
+    Any,
     Dict,
     Literal,
     Optional,
@@ -14,7 +15,7 @@ from typing import (
     no_type_check,
 )
 
-import cftime  # noqa
+import cftime  # noqa: F401
 import xarray as xr
 from pydantic import (
     Field,
@@ -28,7 +29,8 @@ from pydantic import (
     validator,
 )
 
-from . import options
+from ravenpy.config import options
+
 from .base import (
     Command,
     FlatCommand,
@@ -116,40 +118,6 @@ class Process(Command):
         p = p if p is not None else ""
         cmd = self._sub + self.__class__.__name__
         return f":{cmd:<20} {self.algo:<19} {self.source:<19} {t} {p}".strip()
-
-
-class Conditional(Command):
-    """Conditional statement"""
-
-    kind: Literal["HRU_TYPE", "LAND_CLASS", "HRU_GROUP"]
-    op: Literal["IS", "IS_NOT"]
-    value: str
-
-    _sub = "-->"
-
-    def to_rv(self):
-        cmd = self._sub + self.__class__.__name__
-        return f":{cmd:<20} {self.kind} {self.op} {self.value}"
-
-
-class ProcessGroup(Command):
-    p: Sequence[Process]
-    params: Sequence[Sym]
-
-    _template: str = """
-                :{_cmd}
-                {_processes}
-                :End{_cmd} CALCULATE_WTS {_params}
-                """
-    _indent: str = "    "
-
-    def to_rv(self):
-        d = {
-            "_cmd": "ProcessGroup",
-            "_processes": indent("\n".join(str(p) for p in self.p), self._indent),
-            "_params": " ".join(map(str, self.params)),
-        }
-        return dedent(self._template).format(**d)
 
 
 class SoilModel(Command):
@@ -661,7 +629,12 @@ class Gauge(FlatCommand):
         station_idx: int = 1,
         alt_names: Optional[Dict[str, str]] = None,
         mon_ave: bool = False,
-        data_kwds: Optional[Dict[options.Forcings, Dict[str, str]]] = None,
+        data_kwds: Optional[
+            dict[
+                str,
+                Union[dict[str, Union[bool, dict[str, int], float]], dict[str, Any]],
+            ]
+        ] = None,
         **kwds,
     ) -> "Gauge":
         """Return Gauge instance with configuration options inferred from the netCDF itself.

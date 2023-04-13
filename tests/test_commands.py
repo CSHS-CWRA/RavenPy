@@ -185,13 +185,13 @@ def test_hydrologic_processes():
 
 
 def test_process_group():
-    from ravenpy.config.processes import Precipitation, SnowTempEvolve
+    from ravenpy.config.processes import Precipitation, ProcessGroup, SnowTempEvolve
 
     hp = [
         Precipitation(algo="PRECIP_RAVEN", source="ATMOS_PRECIP", to="MULTIPLE"),
         SnowTempEvolve(algo="SNOTEMP_NEWTONS", source="SNOW_TEMP"),
     ]
-    c = rc.ProcessGroup(p=hp, params=(0, 1))
+    c = ProcessGroup(p=hp, params=(0, 1))
     out = dedent(c.to_rv().strip())
 
     assert (
@@ -341,6 +341,7 @@ def test_station_forcing(get_local_testdata):
 def test_gridded_forcing(get_local_testdata):
     """TODO: Make sure dimensions are in the order x, y, t."""
     fn = get_local_testdata("raven-routing-sample/VIC_temperatures.nc")
+
     rc.GriddedForcing.from_nc(fn, data_type="TEMP_AVE", alt_names=("Avg_temp",))
     # assert gf.dim_names_nc == ("lon", "lat", "time")
 

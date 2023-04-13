@@ -80,7 +80,7 @@ class SACSMA(Config):
     )
     soil_model: rc.SoilModel = Field(7, alias="SoilModel")
 
-    hydrologic_processes: Sequence[Union[rc.Process, rc.Conditional]] = Field(
+    hydrologic_processes: Sequence[Union[rc.Process, p.Conditional]] = Field(
         [
             p.SnowBalance(algo="SNOBAL_SIMPLE_MELT", source="SNOW", to="PONDED_WATER"),
             p.Precipitation(algo="RAVEN_DEFAULT", source="ATMOS_PRECIP", to="MULTIPLE"),

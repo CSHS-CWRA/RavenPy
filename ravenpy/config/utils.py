@@ -1,7 +1,7 @@
 import os
-from typing import List, Optional, Union
+from typing import Optional, Sequence, Union
 
-import cf_xarray
+import cf_xarray  # noqa: F401
 import numpy as np
 import xarray as xr
 
@@ -13,7 +13,7 @@ def nc_specs(
     fn: Union[str, os.PathLike],
     data_type: str,
     station_idx: Optional[int] = None,
-    alt_names: Union[str, List[str]] = None,
+    alt_names: Union[str, Sequence[str]] = None,
     mon_ave: bool = False,
     # FIXME: Is this call signature still relevant?
     linear_transform=None,

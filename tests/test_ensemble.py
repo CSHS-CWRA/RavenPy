@@ -66,6 +66,7 @@ def test_enkf(salmon_meteo, salmon_hru, tmp_path):
         ],
     )
 
+    # Spinup
     Emulator(config=conf, workdir=tmp_path, overwrite=True).run(overwrite=True)
 
     # Closed Loop
@@ -78,12 +79,15 @@ def test_enkf(salmon_meteo, salmon_hru, tmp_path):
         EndDate=dt.datetime(1996, 10, 15),
     )
 
+    # Loop
     Emulator(config=conf_loop, workdir=tmp_path).run()
 
     # Forecast
     conf_cast = conf_loop.duplicate(
         EnKFMode=o.EnKFMode.FORECAST, RunName="forecast", SolutionRunName="loop"
     )
+
+    # Cast
     Emulator(config=conf_cast, workdir=tmp_path).run()
 
     paths = list(tmp_path.glob("ens_*"))

@@ -6,8 +6,10 @@ from typing import Any, Dict, Sequence, Union
 import cftime
 from pydantic import Field, root_validator, validator
 
-from . import commands as rc  # noqa
-from . import options as o
+from ravenpy.config import commands as rc
+from ravenpy.config import options as o
+from ravenpy.config import processes as rp
+
 from .base import RV, Sym, parse_symbolic
 
 """
@@ -63,7 +65,7 @@ class RVI(RV):
     define_hru_groups: Sequence[str] = Field(None, alias="DefineHRUGroups")
 
     hydrologic_processes: Sequence[
-        Union[rc.Process, rc.Conditional, rc.ProcessGroup]
+        Union[rc.Process, rp.Conditional, rp.ProcessGroup]
     ] = Field(None, alias="HydrologicProcesses")
     evaluation_metrics: Sequence[o.EvaluationMetrics] = Field(
         None, alias="EvaluationMetrics"
