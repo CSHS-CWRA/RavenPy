@@ -1,6 +1,7 @@
 import os
 from typing import List, Optional, Union
 
+import cf_xarray
 import numpy as np
 import xarray as xr
 
