@@ -5,6 +5,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+import warnings
 from pathlib import Path
 from typing import List, Optional, Union
 from warnings import warn
@@ -21,7 +22,7 @@ class Emulator:
     def __init__(
         self,
         config: Config,
-        workdir: Union[str, os.PathLike] = None,
+        workdir: Optional[Union[str, os.PathLike]] = None,
         modelname: Optional[str] = None,
         overwrite: bool = False,
     ):
@@ -43,6 +44,7 @@ class Emulator:
         self._modelname = modelname
         self.overwrite = overwrite
         self._output = None  # Model output path
+        self._output_path = None
 
         # Write model config files
         self._rv = self._config.write_rv(
@@ -60,6 +62,7 @@ class Emulator:
             If True, overwrite existing files.
         """
         if not (self.workdir / f"{self.modelname}.rvi").exists():
+            # FIXME: No attribute 'write_rv' on Emulator [attribute-error]
             self.write_rv(overwrite=overwrite)
 
         self._output_path = run(
@@ -79,9 +82,11 @@ class Emulator:
         return self._workdir
 
     @property
-    def output_path(self) -> Path:
+    def output_path(self) -> Optional[Path]:
         """Path to model outputs."""
-        return self._output_path
+        if self._output_path is not None:
+            return self._output_path
+        warnings.warn("`output_path` not set. Model must be run first")
 
     @property
     def modelname(self) -> str:
@@ -106,7 +111,9 @@ class Emulator:
 
 
 class OutputReader:
-    def __init__(self, run_name: str = None, path: Path = None):
+    def __init__(
+        self, run_name: Optional[str] = None, path: Optional[Union[str, Path]] = None
+    ):
         """Class facilitating access to Raven model output.
 
         Parameters
@@ -129,14 +136,14 @@ class OutputReader:
         return self._files
 
     @property
-    def solution(self) -> dict:
+    def solution(self) -> Optional[dict]:
         """Return solution file content."""
         solution = self.files.get("solution")
         if solution:
             return parsers.parse_solution(solution)
 
     @property
-    def diagnostics(self) -> dict:
+    def diagnostics(self) -> Optional[dict]:
         """Return model diagnostics."""
         diag = self.files.get("diagnostics")
         if diag:
@@ -156,7 +163,7 @@ class OutputReader:
             return parsers.parse_nc(s)
 
     @property
-    def messages(self) -> str:
+    def messages(self) -> Optional[str]:
         msg = self.files.get("messages")
         if msg:
             return msg.read_text()
@@ -170,9 +177,10 @@ class OutputReader:
 class EnsembleReader:
     def __init__(
         self,
+        *,
         run_name: Optional[str] = None,
         paths: Optional[List[Union[str, os.PathLike]]] = None,
-        runs: List[OutputReader] = None,
+        runs: List[OutputReader],
         dim: str = "member",
     ):
         """
@@ -235,7 +243,7 @@ class EnsembleReader:
 def run(
     modelname: str,
     configdir: Union[str, Path],
-    outputdir: Union[str, Path] = None,
+    outputdir: Optional[Union[str, Path]] = None,
     overwrite: bool = True,
 ) -> Path:
     """Run Raven given the path to an existing model configuration.
@@ -246,8 +254,9 @@ def run(
         Configuration files stem, i.e. the file name without extension.
     configdir : Path or str
         Path to configuration files directory.
-    outputdir : Path or str
-        Path to model simulation output. If None, will write to configdir/output.
+    outputdir : Path or str, optional
+        Path to model simulation output.
+        If None, will write to configdir/output.
     overwrite : bool
         If True, overwrite existing files.
 
