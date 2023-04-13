@@ -10,7 +10,7 @@ dependencies:
   - ipython
   - jupyter_client
   - matplotlib
-  - myst_nb
+  - myst-nb
   - jupytext
   - nbsphinx
 #  - netCDF4  # mocked
