@@ -14,6 +14,7 @@ alt_names = {
 }
 
 
+# @pytest.mark.xfail()
 def test_enkf(salmon_meteo, salmon_hru, tmp_path):
     """Test one run of Ensemble Kalman Filter data assimilation."""
     cls = GR4JCN
