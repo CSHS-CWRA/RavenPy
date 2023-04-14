@@ -113,7 +113,7 @@ def _get(
         local_md5 = file_md5_checksum(local_file)
         try:
             url = "/".join((github_url, "raw", branch, md5_name.as_posix()))
-            LOGGER.info(f"Attempting to fetch remote file md5: {md5_name.as_posix()}")
+            LOGGER.debug(f"Attempting to fetch remote file md5: {md5_name.as_posix()}")
             urlretrieve(url, md5_file)  # nosec
             with open(md5_file) as f:
                 remote_md5 = f.read()

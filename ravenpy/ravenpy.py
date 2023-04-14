@@ -303,9 +303,6 @@ def run(
     stdout, stderr = process.communicate(input="\n")
     returncode = process.wait()
 
-    if returncode != 0:
-        raise OSError(f"Raven segfaulted : \n{stdout}")
-
     # Deal with errors and warnings
     messages = parsers.parse_raven_messages(outputdir / "Raven_errors.txt")
 
@@ -317,6 +314,9 @@ def run(
         raise RavenError(
             "\n".join([f"Config directory: {configdir}"] + messages["ERROR"])
         )
+
+    if returncode != 0:
+        raise OSError(f"Raven segfaulted : \n{stdout}")
 
     return outputdir
 
