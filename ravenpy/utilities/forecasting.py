@@ -35,7 +35,7 @@ def climatology_esp(
 
     Parameters
     ----------
-    config : Config
+    config : ravenpy.config.rvs.Config
         Model configuration.
     years : List[int]
         Years from which forcing time series will be drawn.
@@ -155,7 +155,7 @@ def warm_up(
 
     Parameters
     ----------
-    config : Config
+    config : ravenpy.config.rvs.Config
         Model configuration.
     duration : int
         Number of days the warm-up simulation should last *before* the start date.
@@ -166,7 +166,7 @@ def warm_up(
 
     Returns
     -------
-    Config
+    ravenpy.config.rvs.Config
         Model configuration with initial state set by running the model prior to the start date.
     """
     wup = config.copy(deep=True)
@@ -195,7 +195,7 @@ def hindcast_climatology_esp(
 
     Parameters
     ----------
-    config : Config
+    config : ravenpy.config.rvs.Config
         Model configuration. Initial states will be overwritten.
     warm_up_duration : int
         Number of days to run the model prior to the starting date to initialize the state variables.
@@ -339,7 +339,7 @@ def ensemble_prediction(
 
     Parameters
     ----------
-    config : Config
+    config : ravenpy.config.rvs.Config
         Model configuration.
     forecast : str or Path
         Forecast subsetted to the catchment location (.nc).

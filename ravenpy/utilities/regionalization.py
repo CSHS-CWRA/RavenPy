@@ -39,7 +39,7 @@ def regionalize(
 
     Parameters
     ----------
-    config : Config
+    config : ravenpy.config.rvs.Config
         Symbolic emulator configuration. Only GR4JCN, HMETS and Mohyse are supported.
     method : {'MLR', 'SP', 'PS', 'SP_IDW', 'PS_IDW', 'SP_IDW_RA', 'PS_IDW_RA'}
         Name of the regionalization method to use.
