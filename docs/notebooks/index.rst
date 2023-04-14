@@ -27,20 +27,28 @@ Getting started - Tutorial
    12_Performing_hindcasting_experiments
 
 
-More complex workflows making use of the RavenWPS server on the PAVICS platform
-===============================================================================
+Advanced workflows
+==================
 
 .. toctree::
    :maxdepth: 1
 
    Assess_probabilistic_flood_risk
-   Comparing_hindcasts_and_ESP_forecasts
    Distributed_hydrological_modelling
+   Comparing_hindcasts_and_ESP_forecasts
    Hydrological_realtime_forecasting
    HydroShare_integration
    Perform_Regionalization
    Running_HMETS_with_CANOPEX_dataset
    time_series_analysis
+
+Climatological Ensemble Streamflow Prediction (ESP)
+Comparing hindcasts to a climatological ensemble streamflow prediction (ESP)
+Distributed hydrological modelling
+
+
+
+
 
 
 .. _OWSLib: https://geopython.github.io/OWSLib/
