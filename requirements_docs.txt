@@ -10,6 +10,7 @@ ipykernel
 jupyter_client
 sphinx-click
 numpydoc
+pymetalink
 autodoc_pydantic
 owslib<0.29
 birdhouse-birdy
