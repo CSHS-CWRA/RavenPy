@@ -32,9 +32,7 @@ Welcome to RavenPy's documentation!
    :maxdepth: 2
    :caption: All Modules
 
-.. ::
-
-    apidoc/modules
+   apidoc/modules
 
 Indices and tables
 ==================

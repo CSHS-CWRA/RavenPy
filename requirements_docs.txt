@@ -28,3 +28,4 @@ jupytext
 jupyter-cache
 myst_nb
 cartopy
+xesmf
