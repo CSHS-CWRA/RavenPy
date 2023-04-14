@@ -6,7 +6,10 @@ The following graphs can be plotted:
     - mean_annual_hydrograph
     - spaghetti_annual_hydrograph
 """
+from pathlib import Path
+from typing import Sequence, Union
 
+import matplotlib.pyplot
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -19,14 +22,13 @@ from ravenpy.utilities.mk_test import mk_test_calc
 # TODO: Review docstrings, ensure numpydoc convention compliance
 
 
-def hydrograph(file_list):
-    """
-    annual_hydrograph
+def hydrograph(file_list: Sequence[Union[str, Path]]):
+    """Create a graphic of the hydrograph for each model simulation.
 
-    INPUTS:
-        file_list -- Raven output files containing simulated streamflows
-
-    Create a graphic of the hydrograph for each model simulation.
+    Parameters
+    ----------
+    file_list: Sequence of str or Path
+        Raven output files containing simulated streamflows.
     """
 
     ds = [xr.open_dataset(file) for file in file_list]
@@ -68,14 +70,13 @@ def hydrograph(file_list):
     return fig
 
 
-def mean_annual_hydrograph(file_list):
-    """
-    mean_annual_hydrograph
+def mean_annual_hydrograph(file_list: Sequence[Union[str, Path]]):
+    """Create a graphic of the mean hydrological cycle for each model simulation.
 
-    INPUTS:
-        file_list -- Raven output files containing simulated streamflows
-
-    Create a graphic of the mean hydrological cycle for each model simulation.
+    Parameters
+    ----------
+    file_list: Sequence of str or Path
+        Raven output files containing simulated streamflows.
     """
 
     # Time series for the plot
@@ -139,15 +140,15 @@ def mean_annual_hydrograph(file_list):
     return fig
 
 
-def spaghetti_annual_hydrograph(file):
-    """
-    spaghetti_annual_hydrograph
+def spaghetti_annual_hydrograph(file: Union[str, Path]):
+    """Create a spaghetti plot of the mean hydrological cycle for one model simulations.
 
-    INPUTS:
-        file -- Raven output file containing simulated streamflows of one model
+    The mean simulation is also displayed.
 
-    Create a spaghetti plot of the mean hydrological cycle for one model
-    simulations. The mean simulation is also displayed.
+    Parameters
+    ----------
+    file: str or Path
+        Raven output files containing simulated streamflows of one model.
     """
 
     # Time series for the plot
@@ -236,13 +237,14 @@ def spaghetti_annual_hydrograph(file):
 
 
 def ts_graphs(file, trend=True, alpha=0.05):
-    """
-    graphs for time series statistics
+    """Create a figure with the statistics so one can see a trend in the data.
 
-    INPUTS:
-        file -- xclim file containing streamflow statistics for one run
+    Graphs for time series statistics.
 
-    Create a figure with the statistics so one can see a trend in the data
+    Parameters
+    ----------
+    file: str or Path
+        xarray-compatible file containing streamflow statistics for one run.
     """
 
     # Time series for the plot
@@ -305,22 +307,22 @@ def ts_graphs(file, trend=True, alpha=0.05):
     return fig
 
 
-def ts_fit_graph(ts, params):
-    """Create graphic showing an histogram of the data and the distribution fitted to it.
+def ts_fit_graph(ts: xr.DataArray, params: xr.DataArray) -> matplotlib.pyplot.Figure:
+    """Create graphic showing a histogram of the data and the distribution fitted to it.
 
     The graphic contains one panel per watershed.
 
     Parameters
     ----------
     ts : xr.DataArray
-      Stream flow time series with dimensions (time, nbasins).
+        Stream flow time series with dimensions (time, nbasins).
     params : xr.DataArray
-      Fitted distribution parameters returned by `xclim.land.fit` indicator.
+        Fitted distribution parameters returned by `xclim.land.fit` indicator.
 
     Returns
     -------
-    fig
-      Figure showing a histogram and the parameterized pdf.
+    matplotlib.pyplot.Figure
+        Figure showing a histogram and the parameterized pdf.
     """
     from xclim.indices.stats import get_dist
 
@@ -372,16 +374,21 @@ def ts_fit_graph(ts, params):
     return fig
 
 
-def forecast(file, fcst_var="q_sim"):
-    """Return forecast graphic.
-    Create a graphic of the hydrograph for each member
+def forecast(
+    file: Union[str, Path], fcst_var: str = "q_sim"
+) -> matplotlib.pyplot.Figure:
+    """Create a graphic of the hydrograph for each forecast member.
 
     Parameters
     ----------
-    file : str, Path
-      Raven output file containing simulated streamflows.
+    file : str or Path
+        Raven output file containing simulated streamflows.
     fcst_var : str
-      Name of the streamflow variable.
+        Name of the streamflow variable.
+
+    Returns
+    -------
+    matplotlib.pyplot.Figure
     """
 
     ds = xr.open_dataset(file)
@@ -408,20 +415,25 @@ def forecast(file, fcst_var="q_sim"):
     return fig
 
 
-def hindcast(file, fcst_var, qobs, qobs_var):
-    """Return forecast graphic.
-    Create a graphic of the hydrograph for each member
+def hindcast(
+    file: Union[str, Path], fcst_var: str, qobs: Union[str, Path], qobs_var: str
+) -> matplotlib.pyplot.Figure:
+    """Create a graphic of the hydrograph for each hindcast member.
 
     Parameters
     ----------
-    file : str, Path
-      Raven output file containing simulated streamflows.
+    file : str or Path
+        Raven output file containing simulated streamflows.
     fcst_var : str
-      Name of the streamflow variable.
-    qobs : str, Path
-      Streamflow observation file, with times matching the hindcast
+        Name of the streamflow variable.
+    qobs : str or Path
+        Streamflow observation file, with times matching the hindcast.
     qobs_var : str
-      Nname of the streamflow observation variable.
+        Name of the streamflow observation variable.
+
+    Returns
+    -------
+    matplotlib.pyplot.Figure
     """
 
     ds = xr.open_dataset(file)

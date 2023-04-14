@@ -2,7 +2,7 @@
 Created on Wed Jul 29 09:16:06 2015
 @author: Michael Schramm
 """
-from typing import Tuple
+from typing import Optional, Tuple, Union
 
 import numpy as np
 from scipy.stats import norm
@@ -10,8 +10,10 @@ from scipy.stats import norm
 # TODO: This utility is written in python2 and will fail in python3 (e.g. no xrange)
 
 
-def mk_test_calc(x: np.array, alpha: float = 0.05) -> Tuple[str, float, float, float]:
-    """make test calculation.
+def mk_test_calc(
+    x: np.ndarray, alpha: float = 0.05
+) -> Optional[Tuple[str, float, float, float]]:
+    """Make test calculation.
 
     This function is derived from code originally posted by Sat Kumar Tomer
     (satkumartomer@gmail.com)
@@ -33,14 +35,14 @@ def mk_test_calc(x: np.array, alpha: float = 0.05) -> Tuple[str, float, float, f
 
     Parameters
     ----------
-    x: np.array
-      a vector of data.
-    alpha: float
-      significance level (0.05 default)
+    x : np.array
+        a vector of data.
+    alpha : float
+        significance level (0.05 default)
 
     Returns
     -------
-    Tuple[str, float, float, float]
+    str, float, float, float
 
     Notes
     -----
@@ -106,7 +108,7 @@ def check_num_samples(
     tol: float = 1e-6,
     num_cycles: int = 10000,
     m: int = 5,
-) -> int:
+) -> Union[int, float]:
     """Check number of samples.
 
     This function is an implementation of the "Calculation of Number of Samples
@@ -125,28 +127,29 @@ def check_num_samples(
 
     Parameters
     ----------
-    beta: float
-      probability of falsely accepting the null hypothesis
-    delta: float
-      change per sample period, i.e., the change that occurs between two adjacent sampling times
-    std_dev: float
-      standard deviation of the sample points.
-    alpha: float
-      significance level (0.05 default)
-    n: int
-      initial number of sample points (4 default).
-    num_iter: int
-      number of iterations of the Monte-Carlo simulation (1000 default).
-    tol: float
-      tolerance level to decide if the predicted probability is close enough to the required
-      statistical power value (1e-6 default).
-    num_cycles: int
-      Total number of cycles of the simulation. This is to ensure that the simulation does finish
-      regardless of convergence or not (10000 default).
-    m: int
-      if the tolerance is too small then the simulation could continue to cycle through the same sample
-      numbers over and over. This parameter determines how many cycles to look back. If the same number of
-      samples was been determined m cycles ago then the simulation will stop.
+    beta : float
+       Probability of falsely accepting the null hypothesis
+    delta : float
+        Change per sample period, i.e., the change that occurs between two adjacent sampling times
+    std_dev : float
+        Standard deviation of the sample points.
+    alpha : float
+        Significance level (0.05 default)
+    n : int
+        Initial number of sample points (4 default).
+    num_iter : int
+        Number of iterations of the Monte-Carlo simulation (1000 default).
+    tol : float
+        Tolerance level to decide if the predicted probability is close enough to the required
+        statistical power value (1e-6 default).
+    num_cycles : int
+        Total number of cycles of the simulation.
+        This is to ensure that the simulation does finish regardless of convergence or not (10000 default).
+    m : int
+      If the tolerance is too small then the simulation could continue to cycle through the same sample
+      numbers over and over.
+      This parameter determines how many cycles to look back.
+      If the same number of samples has been determined m cycles ago then the simulation will stop.
 
     Examples
     --------

@@ -28,17 +28,6 @@ RavenPy can then be installed directly via its `conda-forge` package by running:
 This approach installs both the `Raven <http://raven.uwaterloo.ca>`_ binary directly to your environment `PATH`,
 as well as installs all the necessary Python and C libraries supporting GIS functionalities.
 
-.. warning::
-
-   `OSTRICH <http://www.civil.uwaterloo.ca/envmodelling/Ostrich.html>`_ is another dependency needed for some key functions
-   in RavenPy but is not currently available for Windows conda users. We suggest performing either a manual installation of OSTRICH
-   or compiling it from source code: https://github.com/usbr/ostrich
-
-For Unix/Linux users, OSTRICH can be installed from conda by running:
-
-.. code-block:: console
-
-   (ravenpy) $ conda install -c conda-forge ostrich
 
 Custom Installation (Python/Pip)
 --------------------------------
@@ -46,7 +35,7 @@ Custom Installation (Python/Pip)
 .. warning::
    The following instructions will only work on POSIX-like systems (Unix/Linux; not supported on Windows).
 
-If you wish to install RavenPy and its C-libraries manually, compiling the `Raven` and `Ostrich binaries for your system,
+If you wish to install RavenPy and its C-libraries manually, compiling the `Raven` binaries for your system,
 you can install the entire system directly, placing them in the `bin` folder of your environment.
 In order to perform this from Ubuntu/Debian:
 
@@ -92,8 +81,8 @@ If for any reason you prefer to install without the binaries, from a fresh pytho
 
    (ravenpy-env) $ pip install ravenpy[gis]
 
-But then you will be in charge of providing either ``raven`` and ``ostrich`` binaries on your PATH, or setting values for
-``RAVENPY_RAVEN_BINARY_PATH`` and ``RAVENPY_OSTRICH_BINARY_PATH`` environment variables (both as absolute paths) in the
+But then you will be in charge of providing ``raven``  binaries on your PATH, or setting values for the
+``RAVENPY_RAVEN_BINARY_PATH`` environment variable (as an absolute path) in the
 terminal/command prompt/shell used at runtime.
 
 .. note::
@@ -133,7 +122,7 @@ You can then install RavenPy with:
 
 .. code-block:: console
 
-   # for the Raven and OSTRICH binaries
+   # for the Raven binaries
    (ravenpy) $ pip install --editable "." --install-option="--with-binaries"
 
 Install the pre-commit hook (to make sure that any code you contribute is properly formatted):

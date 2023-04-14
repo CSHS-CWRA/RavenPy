@@ -1,1029 +1,468 @@
-import collections
 import datetime as dt
-from abc import ABC, abstractmethod
-from copy import deepcopy
-from dataclasses import replace
+from dataclasses import asdict
 from pathlib import Path
-from textwrap import dedent
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, Sequence, Union
 
-import cf_xarray
 import cftime
-import numpy as np
-import xarray as xr
-from numpy.distutils.misc_util import is_sequence
+from pydantic import Field, root_validator, validator
 
-from ravenpy import __version__
-from ravenpy.config import options
-from ravenpy.config.commands import (
-    HRU,
-    BaseDataCommand,
-    BasinIndexCommand,
-    BasinStateVariablesCommand,
-    ChannelProfileCommand,
-    DataCommand,
-    GaugeCommand,
-    GriddedForcingCommand,
-    GridWeightsCommand,
-    HRUsCommand,
-    HRUState,
-    HRUStateVariableTableCommand,
-    LandUseClassesCommand,
-    ObservationDataCommand,
-    RedirectToFileCommand,
-    ReservoirCommand,
-    SBGroupPropertyMultiplierCommand,
-    SoilClassesCommand,
-    SoilProfilesCommand,
-    StationForcingCommand,
-    Sub,
-    SubBasinGroupCommand,
-    SubBasinsCommand,
-    VegetationClassesCommand,
-)
+from ravenpy.config import commands as rc
+from ravenpy.config import options as o
+from ravenpy.config import processes as rp
 
+from .base import RV, Sym, parse_symbolic
 
-class RV(ABC):
-    # This header will be prepended to all RV files when they are rendered
-    tmpl_header = """
-    ###########################################################################################################
-    :FileType          {rv_type} ASCII Raven {raven_version}
-    :WrittenBy         PAVICS RavenPy {ravenpy_version} based on setups provided by James Craig and Juliane Mai
-    :CreationDate      {date}{model_and_description}
-    #----------------------------------------------------------------------------------------------------------
-    """
+"""
+Generic Raven model configuration
 
-    def __init__(self, config, **kwds):
-        # Each RV has a reference to their parent object in order to access sibling RVs.
-        self._config = config
-
-        self.is_ostrich_tmpl = False
-
-        # This variable contains the RV file content when it was set from a file; if still
-        # None at the moment Raven is called, it means the corresponding RV must be rendered
-        # with the `to_rv` method.
-        self.content = None
-
-        # This contains extra attributes that might be used with a customized template
-        # (currently used with HBVEC and MOHYSE emulators, for values in their RVH)
-        self._extra_attributes = {}
-
-    def update(self, key, value):
-        if hasattr(self, key):
-            setattr(self, key, value)
-            return True
-        return False
-
-    def set_extra_attributes(self, **kwargs):
-        for k, v in kwargs.items():
-            self._extra_attributes[k] = v
-
-    def get_extra_attribute(self, k):
-        return self._extra_attributes[k]
-
-    def set_tmpl(self, tmpl=None, is_ostrich=False):
-        self.tmpl = tmpl or self.tmpl  # type: ignore
-        self.is_ostrich_tmpl = is_ostrich
-
-    @property
-    @abstractmethod
-    def tmpl(self):
-        pass
-
-    @abstractmethod
-    def to_rv(self, s: str, rv_type: str) -> str:
-        """Add header to templated RV file.
-
-        Parameters
-        ----------
-        s : str
-          Templated content.
-        rv_type : str
-          RV extension.
-
-        Returns
-        -------
-        RV template with header.
-        """
-        if not self._config:
-            # In the case where the RV file has been created outside the context of a
-            # Config object, don't include the header
-            return s
-        d = {
-            "rv_type": rv_type,
-            "raven_version": self._config.model.raven_version,
-            "ravenpy_version": __version__,
-            "date": dt.datetime.now().isoformat(),
-            "model_and_description": "",
-        }
-        model = ""
-        description = self._config.model.description or ""
-        if self._config.model.__class__.__name__ not in ["Raven", "Ostrich"]:
-            model = f"Emulation of {self._config.model.__class__.__name__}"
-        model_and_description = list(filter(None, [model, description]))
-        if model_and_description:
-            model_and_description = ": ".join(model_and_description)
-            d["model_and_description"] = f"\n#\n# {model_and_description}"
-        return dedent(self.tmpl_header.lstrip("\n")).format(**d) + s
-
-
-#########
-# R V C #
-#########
-
-
-class RVC(RV):
-    tmpl = """
-    {hru_states}
-
-    {basin_states}
-    """
-
-    def __init__(self, config):
-        super().__init__(config)
-        self.hru_states: Dict[int, HRUState] = {}
-        self.basin_states: Dict[int, BasinIndexCommand] = {}
-
-    def reset(self, **kwargs):
-        self.hru_states = {}
-        self.basin_states = {}
-
-    def set_hru_state(self, hru_state: HRUState):
-        self.hru_states[hru_state.index] = hru_state
-
-    def set_basin_state(self, basin_state: BasinIndexCommand):
-        self.basin_states[basin_state.index] = basin_state
-
-    @classmethod
-    def create_solution(cls, solution_str):
-        rvc = RVC(None)
-        rvc.parse_solution(solution_str)
-        return rvc
-
-    def parse_solution(self, solution_str):
-        self.hru_states = HRUStateVariableTableCommand.parse(solution_str).hru_states
-        self.basin_states = BasinStateVariablesCommand.parse(solution_str).basin_states
-
-    def to_rv(self):
-        d = {
-            "hru_states": HRUStateVariableTableCommand(self.hru_states),
-            "basin_states": BasinStateVariablesCommand(self.basin_states),
-        }
-
-        d.update(self._extra_attributes)
-
-        return super().to_rv(dedent(self.tmpl.lstrip("\n")).format(**d), "RVC")
-
-
-#########
-# R V H #
-#########
-
-
-class RVH(RV):
-    tmpl = """
-    {subbasins}
-
-    {hrus}
-
-    {land_subbasin_group}
-
-    {land_subbasin_property_multiplier}
-
-    {lake_subbasin_group}
-
-    {lake_subbasin_property_multiplier}
-
-    {reservoirs}
-    """
-
-    def __init__(self, config):
-        super().__init__(config)
-        self.hrus: Tuple[HRU, ...] = ()
-        self.subbasins: Tuple[Sub, ...] = ()
-        self.land_subbasin_ids: Tuple[int, ...] = ()
-        self.land_subbasin_property_multiplier: Optional[
-            SBGroupPropertyMultiplierCommand
-        ] = None
-        self.lake_subbasin_ids: Tuple[int, ...] = ()
-        self.lake_subbasin_property_multiplier: Optional[
-            SBGroupPropertyMultiplierCommand
-        ] = None
-        self.reservoirs: Tuple[ReservoirCommand, ...] = ()
-
-    def to_rv(self):
-        d = {
-            "subbasins": SubBasinsCommand(self.subbasins),
-            "hrus": HRUsCommand(self.hrus),
-            "land_subbasin_group": SubBasinGroupCommand("Land", self.land_subbasin_ids),
-            "land_subbasin_property_multiplier": self.land_subbasin_property_multiplier
-            or "",
-            "lake_subbasin_group": SubBasinGroupCommand(
-                "Lakes", self.lake_subbasin_ids
-            ),
-            "lake_subbasin_property_multiplier": self.lake_subbasin_property_multiplier
-            or "",
-            "reservoirs": "\n\n".join(map(str, self.reservoirs)),
-        }
-
-        d.update(self._extra_attributes)
-
-        return super().to_rv(dedent(self.tmpl.lstrip("\n")).format(**d), "RVH")
-
-
-#########
-# R V I #
-#########
+Note that alias are set to identify class attributes as Raven commands.
+"""
+date = Union[dt.date, dt.datetime, cftime.datetime]
 
 
 class RVI(RV):
-    _pre_tmpl = """
-    :Calendar              {calendar}
-    :RunName               {run_name}-{run_index}
-    :StartDate             {start_date}
-    :EndDate               {end_date}
-    :TimeStep              {time_step}
-    :Method                ORDERED_SERIES
-    """
-
-    tmpl = """
-    """
-
-    # This part must be at the end of the file in particular because `:EvaluationMetrics` must
-    # come after `:SoilModel`
-    _post_tmpl = """
-    :EvaluationMetrics     {evaluation_metrics}
-    {evaluation_periods}
-    :WriteNetcdfFormat     yes
-    :SilentMode
-    :PavicsMode
-    {suppress_output}{write_forcing_functions}{custom_output}
-
-    :NetCDFAttribute title Simulated river discharge
-    :NetCDFAttribute history Created on {now} by Raven
-    :NetCDFAttribute references  Craig, J.R., and the Raven Development Team, Raven user's and developer's manual (Version 2.8), URL: http://raven.uwaterloo.ca/ (2018).
-    :NetCDFAttribute comment Raven Hydrological Framework version {raven_version}
-    :NetCDFAttribute model_id {identifier}
-    :NetCDFAttribute time_frequency day
-    :NetCDFAttribute time_coverage_start {start_date}
-    :NetCDFAttribute time_coverage_end {end_date}
-    """
-    # For backward compatibility
-    EvaporationOptions = options.Evaporation
-    CalendarOptions = options.Calendar
-    EvaluationMetrics = options.EvaluationMetrics
-    RainSnowFractionOptions = options.RainSnowFraction
-    RoutingOptions = options.Routing
-    #
-
-    def __init__(self, config):
-        super().__init__(config)
-
-        # These are attributes that can be modified/set directly
-        self.run_name: Optional[str] = "run"
-        self.run_index = 0
-        self.time_step = 1.0
-
-        # These correspond to properties whose setters will pass their value through
-        # an Enum cast (triggering a ValueError at runtime for unknown values) and
-        # getters will be used when rendering the template in the `to_rv` method
-        self._calendar = options.Calendar.STANDARD
-        self._routing = options.Routing.NONE
-        self._start_date = None
-        self._end_date = None
-        self._rain_snow_fraction = options.RainSnowFraction.DATA
-        self._evaporation = None
-        self._ow_evaporation = None
-        self._duration = 1
-        self._evaluation_metrics = [
-            options.EvaluationMetrics.NASH_SUTCLIFFE,
-            options.EvaluationMetrics.RMSE,
-        ]
-        self._evaluation_periods = []
-        self._suppress_output = False
-        self._write_forcing_functions = False
-        self._custom_output = []
-
-    def configure_from_nc_data(self, fns):
-        with xr.open_mfdataset(fns, combine="by_coords") as ds:
-            start, end = ds.indexes["time"][0], ds.indexes["time"][-1]
-            cal = ds.time.encoding.get("calendar", "standard")
-
-        if self.start_date in [None, dt.datetime(1, 1, 1)]:
-            self.start_date = start
-
-        if self.end_date in [None, dt.datetime(1, 1, 1)]:
-            self.end_date = end
-
-        self.calendar = options.Calendar(cal.upper())
-
-    @property
-    def raven_version(self):
-        return self._config.model.raven_version
-
-    @property
-    def start_date(self):
-        return self._start_date
-
-    @start_date.setter
-    def start_date(self, x):
-        if isinstance(x, dt.datetime):
-            self._start_date = self._dt2cf(x)
-        else:
-            raise ValueError("Must be datetime")
-
-        if x == dt.datetime(1, 1, 1):
-            return
-
-        if self._duration is None:
-            self._update_duration()
-        else:
-            self._update_end_date()
-
-    @property
-    def end_date(self):
-        return self._end_date
-
-    @end_date.setter
-    def end_date(self, x):
-        if isinstance(x, dt.datetime):
-            self._end_date = self._dt2cf(x)
-        else:
-            raise ValueError("Must be datetime")
-
-        if x != dt.datetime(1, 1, 1):
-            self._update_duration()
-
-    @property
-    def duration(self):
-        return self._duration
-
-    @duration.setter
-    def duration(self, x):
-        if isinstance(x, int):
-            if x > 0:
-                self._duration = x
-        else:
-            raise ValueError("Must be int")
-
-        if x > 0:
-            self._update_end_date()
-
-    @property
-    def evaluation_metrics(self):
-        if self._evaluation_metrics:
-            return ",".join(m.value for m in self._evaluation_metrics)
-        return None
-
-    @evaluation_metrics.setter
-    def evaluation_metrics(self, values):
-        if not is_sequence(values):
-            values = [values]
-        ms = []
-        for v in values:
-            v = v.upper() if isinstance(v, str) else v.value
-            ms.append(options.EvaluationMetrics(v))
-        self._evaluation_metrics = ms
-
-    @property
-    def evaluation_periods(self):
-        """:EvaluationPeriod option. Instantiate with list of EvaluationPeriod commands."""
-        return "\n".join([str(p) for p in self._evaluation_periods])
-
-    @evaluation_periods.setter
-    def evaluation_periods(self, values):
-        if not isinstance(values, (list, set, tuple)):
-            values = [values]
-        self._evaluation_periods = values
-
-    @property
-    def custom_output(self):
-        return "\n".join([str(o) for o in self._custom_output])
-
-    @custom_output.setter
-    def custom_output(self, values):
-        if not isinstance(values, (list, set, tuple)):
-            values = [values]
-        self._custom_output = values
-
-    def _update_duration(self):
-        if self.end_date is not None and self.start_date is not None:
-            self._duration = (self.end_date - self.start_date).days
-
-    def _update_end_date(self):
-        if self.start_date is not None and self.duration is not None:
-            self._end_date = self.start_date + dt.timedelta(days=self.duration)
-
-    @property
-    def suppress_output(self):
-        tag = ":SuppressOutput\n:DontWriteWatershedStorage\n"
-        return tag if self._suppress_output else ""
-
-    @suppress_output.setter
-    def suppress_output(self, value):
-        if not isinstance(value, bool):
-            raise ValueError
-        self._suppress_output = value
-
-    @property
-    def write_forcing_functions(self):
-        tag = ":WriteForcingFunctions\n"
-        return tag if self._write_forcing_functions else ""
-
-    @write_forcing_functions.setter
-    def write_forcing_functions(self, value):
-        if not isinstance(value, bool):
-            raise ValueError
-        self._write_forcing_functions = value
-
-    @property
-    def routing(self):
-        return self._routing.value
-
-    @routing.setter
-    def routing(self, value):
-        v = value.upper() if isinstance(value, str) else value.value
-        self._routing = options.Routing(v)
-
-    @property
-    def rain_snow_fraction(self):
-        """Rain snow partitioning."""
-        return self._rain_snow_fraction.value
-
-    @rain_snow_fraction.setter
-    def rain_snow_fraction(self, value):
-        v = value.upper() if isinstance(value, str) else value.value
-        self._rain_snow_fraction = options.RainSnowFraction(v)
-
-    @property
-    def evaporation(self):
-        """Evaporation scheme"""
-        return self._evaporation.value if self._evaporation else None
-
-    @evaporation.setter
-    def evaporation(self, value):
-        v = value.upper() if isinstance(value, str) else value.value
-        self._evaporation = options.Evaporation(v)
-
-    @property
-    def ow_evaporation(self):
-        """Open-water evaporation scheme"""
-        return self._ow_evaporation.value if self._ow_evaporation else None
-
-    @ow_evaporation.setter
-    def ow_evaporation(self, value):
-        v = value.upper() if isinstance(value, str) else value.value
-        self._ow_evaporation = options.Evaporation(v)
-
-    @property
-    def calendar(self):
-        """Calendar"""
-        return self._calendar.value
-
-    @calendar.setter
-    def calendar(self, value):
-        v = value.upper() if isinstance(value, str) else value.value
-        self._calendar = options.Calendar(v)
-
-    def _dt2cf(self, date):
-        """Convert datetime to cftime datetime."""
-        return cftime._cftime.DATE_TYPES[self.calendar.lower()](*date.timetuple()[:6])
-
-    def to_rv(self):
-        # Attributes (not starting with "_")
-        a = list(filter(lambda x: not x.startswith("_"), self.__dict__))
-
-        # Properties (computing values corresponding to attributes starting with "_')
-        p = list(
-            filter(
-                lambda x: isinstance(getattr(self.__class__, x, None), property),
-                dir(self),
-            )
-        )
-
-        d = {attr: getattr(self, attr) for attr in a + p}
-
-        d["identifier"] = self._config.model.identifier
-        d["now"] = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-        d.update(self._extra_attributes)
-
-        t = (
-            dedent(self._pre_tmpl.lstrip("\n"))
-            + dedent(self.tmpl.lstrip("\n"))
-            + dedent(self._post_tmpl.lstrip("\n"))
-        )
-
-        return super().to_rv(t.format(**d), "RVI")
-
-
-##########
-# R V P  #
-##########
-
-
-class RVP(RV):
-    # This is expected to be defined by the emulators.
-    tmpl = """
-    """
-
-    def __init__(self, config):
-        super().__init__(config)
-
-        # Model specific params
-        self.params = None
-
-        self.soil_classes: Tuple[SoilClassesCommand.Record, ...] = ()
-        self.soil_profiles: Tuple[SoilProfilesCommand.Record, ...] = ()
-        self.vegetation_classes: Tuple[VegetationClassesCommand.Record, ...] = ()
-        self.land_use_classes: Tuple[LandUseClassesCommand.Record, ...] = ()
-        self.channel_profiles: Tuple[ChannelProfileCommand, ...] = ()
-        self.avg_annual_runoff: Optional[float] = None
-
-    def update(self, key, value):
-        if key == "params":
-            if is_sequence(value):
-                self.params = self._config.model.Params(*value)
-            else:
-                assert isinstance(value, self._config.model.Params)
-                self.params = value
-            return True
-        else:
-            return super().update(key, value)
-
-    def to_rv(self):
-        d = {
-            "params": self.params,
-            "soil_classes": SoilClassesCommand(self.soil_classes),
-            "soil_profiles": SoilProfilesCommand(self.soil_profiles),
-            "vegetation_classes": VegetationClassesCommand(self.vegetation_classes),
-            "land_use_classes": LandUseClassesCommand(self.land_use_classes),
-            "channel_profiles": "\n\n".join(map(str, self.channel_profiles)),
-            "avg_annual_runoff": f":AvgAnnualRunoff {self.avg_annual_runoff}"
-            if self.avg_annual_runoff
-            else "",
-        }
-
-        d.update(self._extra_attributes)
-
-        return super().to_rv(dedent(self.tmpl.lstrip("\n")).format(**d), "RVP")
-
-
-#########
-# R V T #
-#########
+    # Run parameters
+    silent_mode: bool = Field(None, alias="SilentMode")
+    noisy_mode: bool = Field(None, alias="NoisyMode")
+
+    run_name: str = Field(None, alias="RunName")
+    calendar: o.Calendar = Field(None, alias="Calendar")
+    start_date: date = Field(None, alias="StartDate")
+    assimilation_start_time: date = Field(None, alias="AssimilationStartTime")
+    end_date: date = Field(None, alias="EndDate")
+    duration: float = Field(None, alias="Duration")
+    time_step: Union[float, str] = Field(None, alias="TimeStep")
+
+    # Model description
+    routing: o.Routing = Field(None, alias="Routing")
+    # method: rc.Method = None
+    # interpolation: rc.Interpolation = None
+    catchment_route: o.CatchmentRoute = Field(None, alias="CatchmentRoute")
+    evaporation: o.Evaporation = Field(None, alias="Evaporation")
+    ow_evaporation: o.Evaporation = Field(None, alias="OW_Evaporation")
+    sw_radiation_method: o.SWRadiationMethod = Field(None, alias="SWRadiationMethod")
+    sw_cloud_correct: o.SWCloudCorrect = Field(None, alias="SWCloudCorrect")
+    sw_canopy_correct: o.SWCanopyCorrect = Field(None, alias="SWCanopyCorrect")
+    lw_radiation_method: o.LWRadiationMethod = Field(None, alias="LWRadiationMethod")
+    windspeed_method: o.WindspeedMethod = Field(None, alias="WindspeedMethod")
+    rain_snow_fraction: o.RainSnowFraction = Field(None, alias="RainSnowFraction")
+    potential_melt_method: o.PotentialMeltMethod = Field(
+        None, alias="PotentialMeltMethod"
+    )
+    oro_temp_correct: o.OroTempCorrect = Field(None, alias="OroTempCorrect")
+    oro_precip_correct: o.OroPrecipCorrect = Field(None, alias="OroPrecipCorrect")
+    oro_pet_correct: o.OroPETCorrect = Field(None, alias="OroPETCorrect")
+    cloud_cover_method: o.CloudCoverMethod = Field(None, alias="CloudCoverMethod")
+    precip_icept_frac: o.PrecipIceptFract = Field(None, alias="PrecipIceptFract")
+    subdaily_method: o.SubdailyMethod = Field(None, alias="SubdailyMethod")
+    monthly_interpolation_method: o.MonthlyInterpolationMethod = Field(
+        None, alias="MonthlyInterpolationMethod"
+    )
+    soil_model: rc.SoilModel = Field(None, alias="SoilModel")
+    lake_storage: o.StateVariables = Field(None, alias="LakeStorage")
+    # alias: Dict[str, str] = Field(None, alias="Alias")
+
+    define_hru_groups: Sequence[str] = Field(None, alias="DefineHRUGroups")
+
+    hydrologic_processes: Sequence[
+        Union[rc.Process, rp.Conditional, rp.ProcessGroup]
+    ] = Field(None, alias="HydrologicProcesses")
+    evaluation_metrics: Sequence[o.EvaluationMetrics] = Field(
+        None, alias="EvaluationMetrics"
+    )
+    evaluation_period: Sequence[rc.EvaluationPeriod] = Field(
+        None, alias="EvaluationPeriod"
+    )
+    ensemble_mode: rc.EnsembleMode = Field(None, alias="EnsembleMode")
+
+    # Options
+    write_netcdf_format: bool = Field(None, alias="WriteNetcdfFormat")
+    netcdf_attribute: Dict[str, str] = Field(None, alias="NetCDFAttribute")
+
+    custom_output: Sequence[rc.CustomOutput] = Field(None, alias="CustomOutput")
+    direct_evaporation: bool = Field(
+        None,
+        alias="DirectEvaporation",
+        description="Rainfall is automatically reduced through evapotranspiration up to the limit of the calculated PET.",
+    )
+    deltares_fews_mode: bool = Field(None, alias="DeltaresFEWSMode")
+    debug_mode: bool = Field(None, alias="DebugMode")
+    dont_write_watershed_storage: bool = Field(
+        None,
+        alias="DontWriteWatershedStorage",
+        description="Do not write watershed storage variables to disk.",
+    )
+    pavics_mode: bool = Field(None, alias="PavicsMode")
+
+    suppress_output: bool = Field(
+        None,
+        alias="SuppressOutput",
+        description="Write minimal output to disk when enabled.",
+    )
+    write_forcing_functions: bool = Field(
+        None,
+        alias="WriteForcingFunctions",
+        description="Write watershed averaged forcing functions (e.g. rainfall, radiation, PET, etc).",
+    )
+    write_subbasin_file: bool = Field(None, alias="WriteSubbasinFile")  # Undocumented
+
+    @validator("soil_model", pre=True)
+    def init_soil_model(cls, v):
+        if isinstance(v, int):
+            return rc.SoilModel.parse_obj(v)
+        return v
+
+    @validator("start_date", "end_date", "assimilation_start_time")
+    def dates2cf(cls, val, values):
+        """Convert dates to cftime dates."""
+        if val is not None:
+            calendar = (
+                values.get("calendar") or o.Calendar.PROLEPTIC_GREGORIAN
+            ).value.lower()
+            return cftime._cftime.DATE_TYPES[calendar](*val.timetuple()[:6])
+
+    class Config:
+        arbitrary_types_allowed = True
 
 
 class RVT(RV):
-    tmpl = """
-    {gauge}
-
-    {forcing_list}
-
-    {observed_data}
-    """
-
-    # Keys are standard names
-    NC_VARS = {
-        "tasmin": {"raven": "TEMP_MIN", "alts": ["tmin"]},
-        "tasmax": {"raven": "TEMP_MAX", "alts": ["tmax"]},
-        "tas": {"raven": "TEMP_AVE", "alts": ["t2m"]},
-        "rainfall": {"raven": "RAINFALL", "alts": ["rain"]},
-        "pr": {
-            "raven": "PRECIP",
-            "alts": ["precip", "prec", "precipitation", "tp"],
-        },
-        "prsn": {
-            "raven": "SNOWFALL",
-            "alts": ["snow", "snowfall", "solid_precip"],
-        },
-        "evspsbl": {"raven": "PET", "alts": ["pet", "evap", "evapotranspiration"]},
-        "water_volume_transport_in_river_channel": {
-            "raven": "HYDROGRAPH",
-            "alts": [
-                "qobs",
-                "discharge",
-                "streamflow",
-                "dis",
-            ],
-        },
-    }
-
-    def __init__(self, config):
-        super().__init__(config)
-
-        # These are customized variable attributes specified by the user
-        self._var_specs: Dict[str, Dict[str, Any]] = {k: {} for k in RVT.NC_VARS.keys()}
-
-        # These are the actual variable as `commands.BaseDataCommand` objects
-        self._var_cmds: Dict[str, Optional[BaseDataCommand]] = {
-            k: None for k in RVT.NC_VARS.keys()
-        }
-
-        # Specifies whether the variables must be configured using file NC data
-        self._auto_nc_configure = True
-
-        self.nc_index = self.meteo_idx = 0  # For meteo forcing files
-
-        self.hydro_idx: Tuple = (0,)  # Streamflow observation file station index
-        self.gauged_sb_ids: Tuple = (
-            None,
-        )  # Corresponding sub-basin ID. If (None,), will try to guess.
-
-        self.grid_weights: Union[GridWeightsCommand, RedirectToFileCommand, None] = None
-        self.rain_correction = None
-        self.snow_correction = None
-        self.monthly_ave_evaporation = None
-        self.monthly_ave_temperature = None
-
-        self._nc_latitude: Optional[xr.DataArray] = None
-        self._nc_longitude: Optional[xr.DataArray] = None
-        self._nc_elevation: Optional[xr.DataArray] = None
-        self._station_id: Optional[xr.DataArray] = None
-        self._number_grid_cells = 0
-
-    def _add_nc_variable(self, **kwargs):
-        std_name = kwargs.get("name", kwargs["var_name_nc"])
-        # If the name is not the standard one, search for it
-        # TODO: reorganize NC_VARS so that the keys are the Raven names
-        if std_name not in RVT.NC_VARS:
-            for sn, rec in RVT.NC_VARS.items():
-                if rec["raven"] == kwargs["data_type"] or std_name in rec["alts"]:
-                    std_name = sn
-                    break
-            else:
-                assert False, f"{std_name} not found in the list of standard names"
-        is_obs_var = kwargs.pop("is_observation", False)
-        cmd: BaseDataCommand
-        if len(kwargs["dim_names_nc"]) == 1:
-            if std_name == "water_volume_transport_in_river_channel" or is_obs_var:
-                cmd = ObservationDataCommand(**kwargs)
-            else:
-                cmd = DataCommand(**kwargs)
-        elif len(kwargs["dim_names_nc"]) == 2:
-            if std_name == "water_volume_transport_in_river_channel" or is_obs_var:
-                cmd = ObservationDataCommand(**kwargs)
-            elif self.grid_weights is not None:
-                cmd = StationForcingCommand(**kwargs)
-            else:
-                cmd = DataCommand(**kwargs)
-        else:
-            if std_name == "water_volume_transport_in_river_channel" or is_obs_var:
-                cmd = ObservationDataCommand(**kwargs)
-            else:
-                cmd = GriddedForcingCommand(**kwargs)
-
-        spec = self._var_specs[std_name]
-        self._var_cmds[std_name] = replace(cmd, **spec)
-
-    def set_nc_variables(self, nc_variables):
-        """
-        This is meant for manually setting the variables, and should prevent
-        automatic configuration from an nc file.
-        """
-        for nc_var in nc_variables:
-            self._add_nc_variable(**nc_var)
-        self._auto_nc_configure = False
-
-    def configure_from_nc_data(self, fns):
-        from ravenpy.utilities.coords import infer_scale_and_offset
-
-        assert self._auto_nc_configure is True
-
-        self._var_cmds = {k: None for k in RVT.NC_VARS.keys()}
-
-        for fn in fns:
-            if isinstance(fn, str) and not fn.startswith("http"):
-                fn = Path(fn)
-            with xr.open_dataset(fn) as ds:
-                try:
-                    self._nc_latitude = ds.cf["latitude"]
-                    self._nc_longitude = ds.cf["longitude"]
-                    latitude_var_name_nc = self._nc_latitude.name
-                    longitude_var_name_nc = self._nc_longitude.name
-                except KeyError:
-                    # Will try to compute values later from first HRU (in self.to_rv)
-                    latitude_var_name_nc = ""
-                    longitude_var_name_nc = ""
-
-                try:
-                    self._nc_elevation = ds.cf["vertical"]
-                    elevation_var_name_nc = self._nc_elevation.name
-                except KeyError:
-                    if "elevation" in ds:
-                        self._nc_elevation = ds["elevation"]
-                        elevation_var_name_nc = "elevation"
-                    else:
-                        elevation_var_name_nc = ""
-
-                if "station_id" in ds:
-                    self._station_id = ds["station_id"]
-
-                # Check if any alternate variable name is in the file.
-                for std_name in RVT.NC_VARS:
-                    for var_name in [std_name] + RVT.NC_VARS[std_name]["alts"]:  # type: ignore
-                        if var_name not in ds.data_vars:
-                            continue
-                        nc_var = ds[var_name]
-                        data_type = RVT.NC_VARS[std_name]["raven"]
-                        specs = dict(
-                            name=std_name,
-                            file_name_nc=fn,
-                            data_type=data_type,
-                            var_name_nc=var_name,
-                            latitude_var_name_nc=latitude_var_name_nc,
-                            longitude_var_name_nc=longitude_var_name_nc,
-                            elevation_var_name_nc=elevation_var_name_nc,
-                            dim_names_nc=nc_var.dims,
-                            units=nc_var.attrs.get("units"),
-                        )
-                        # Infer scale and offset parameters for unit conversion.
-                        if specs["units"] is not None:
-                            specs["scale"], specs["offset"] = infer_scale_and_offset(
-                                nc_var, data_type
-                            )
-
-                        self._add_nc_variable(**specs)
-                        self._number_grid_cells = int(nc_var.size / len(ds["time"]))
-                        break
-
-    def update(self, key, value):
-        if key in self._var_specs:
-            self._var_specs[key].update(value)
-            return True
-        # For backward compatibility
-        if key == "nc_index":
-            key = "meteo_idx"
-        return super().update(key, value)
-
-    def to_rv(self):
-        """
-        IMPORTANT NOTE: as this method is called at the last moment in the model lifecycle,
-        we can take the occasion to inject in the data structure some values that are guaranteed
-        to be there (for instance we can assume that the RVH data is fully specified).
-        """
-
-        d = {
-            "gauge": "",
-            "forcing_list": "",
-            "observed_data": "",
-        }
-
-        use_gauge = any(type(cmd) is DataCommand for cmd in self._var_cmds.values())
-        if use_gauge:
-            gauges = []
-            for idx in np.atleast_1d(self.meteo_idx):
-                data_cmds = []
-                for var, cmd in self._var_cmds.items():
-                    if cmd and not isinstance(cmd, ObservationDataCommand):
-                        cmd = deepcopy(cast(DataCommand, cmd))
-                        cmd.index = idx + 1  # Python index to Raven index
-                        data_cmds.append(cmd)
-
-                if (
-                    self._nc_latitude is not None
-                    and self._nc_latitude.shape
-                    and len(self._nc_latitude) > idx
-                ):
-                    lat = self._nc_latitude.values[idx]
-                else:
-                    lat = self._config.rvh.hrus[0].latitude
-
-                if (
-                    self._nc_longitude is not None
-                    and self._nc_longitude.shape
-                    and len(self._nc_longitude) > idx
-                ):
-                    lon = self._nc_longitude.values[idx]
-                else:
-                    lon = self._config.rvh.hrus[0].longitude
-
-                if (
-                    self._nc_elevation is not None
-                    and self._nc_elevation.shape
-                    and len(self._nc_elevation) > idx
-                ):
-                    elev = self._nc_elevation.values[idx]
-                else:
-                    elev = self._config.rvh.hrus[0].elevation
-
-                if (
-                    self._station_id is not None
-                    and self._station_id.shape
-                    and len(self._station_id) > idx
-                ):
-                    name = str(self._station_id.values[idx])
-                else:
-                    name = f"default_{idx + 1}"
-
-                gauges.append(
-                    GaugeCommand(
-                        name=name,
-                        latitude=lat,
-                        longitude=lon,
-                        elevation=elev,
-                        rain_correction=self.rain_correction,
-                        snow_correction=self.snow_correction,
-                        monthly_ave_evaporation=self.monthly_ave_evaporation,
-                        monthly_ave_temperature=self.monthly_ave_temperature,
-                        data_cmds=tuple(data_cmds),
-                    ),
-                )  # type: ignore
-            d["gauge"] = "\n".join([str(g) for g in gauges])
-        else:
-            # Construct default grid weights applying equally to all HRUs
-            data = [(hru.hru_id, self.meteo_idx, 1.0) for hru in self._config.rvh.hrus]
-            gw = self.grid_weights or GridWeightsCommand(
-                number_hrus=len(data),
-                number_grid_cells=self._number_grid_cells,
-                data=tuple(data),
-            )
-            cmds = []
-            for var, cmd in self._var_cmds.items():
-                if cmd and not isinstance(cmd, ObservationDataCommand):
-                    cmd = cast(Union[GriddedForcingCommand, StationForcingCommand], cmd)
-                    if len(cmd.grid_weights.data) == 1:
-                        cmd.grid_weights = gw
-                    cmds.append(cmd)
-            d["forcing_list"] = "\n".join(map(str, cmds))
-
-        for cmd in self._var_cmds.values():
-            observed_data = []
-            if isinstance(cmd, ObservationDataCommand) and self._config is not None:
-                if self.gauged_sb_ids == (None,):
-                    # Search for single gauged sub-basin
-                    for sb in self._config.rvh.subbasins:
-                        if sb.gauged:
-                            self.gauged_sb_ids = (sb.subbasin_id,)
-                            break
-                    else:
-                        raise Exception(
-                            "Could not find an outlet subbasin for observation data"
-                        )
-
-                if len(self.gauged_sb_ids) != len(self.hydro_idx):
-                    raise ValueError(
-                        "`gauged_sb_ids` and `hydro_idx` must have the same number of entries."
-                    )
-
-                for idx, sb_id in zip(self.hydro_idx, self.gauged_sb_ids):
-                    cmd = deepcopy(cast(ObservationDataCommand, cmd))
-                    cmd.index = idx + 1  # Python index to Raven index
-                    cmd.subbasin_id = sb_id
-                    observed_data.append(cmd)
-
-                d["observed_data"] = "\n".join(map(str, observed_data))  # type: ignore
-
-        return super().to_rv(dedent(self.tmpl.lstrip("\n")).format(**d), "RVT")
-
-
-#########
-# O s t #
-#########
-
-
-class OST(RV):
-    tmpl = """
-    """
-
-    # Multiplier applied to metric before passing to minimization algorithm.
-    _evaluation_metrics_multiplier = dict(
-        NASH_SUTCLIFFE=-1,
-        LOG_NASH=-1,
-        RMSE=1,
-        PCT_BIAS="Not Supported",
-        ABSERR=1,
-        ABSMAX=1,
-        PDIFF=1,
-        TMVOL=1,
-        RCOEFF=1,
-        NSC=-1,
-        KLING_GUPTA=-1,
+    gauge: Sequence[rc.Gauge] = Field(None, alias="Gauge", flat=True)
+    station_forcing: Sequence[rc.StationForcing] = Field(None, alias="StationForcing")
+    gridded_forcing: Sequence[rc.GriddedForcing] = Field(None, alias="GriddedForcing")
+    observation_data: Sequence[rc.ObservationData] = Field(
+        None, alias="ObservationData"
     )
 
-    def __init__(self, config):
-        super().__init__(config)
 
-        self._max_iterations = None
-        self._random_seed = None
-        self.lowerBounds = None
-        self.upperBounds = None
-        self.algorithm = None
-        # If there's an OstRandomNumbers.txt file this is its path
-        self.random_numbers_path = None
+class RVP(RV):
+    params: Any
+    soil_classes: rc.SoilClasses = Field(None, alias="SoilClasses")
+    soil_profiles: rc.SoilProfiles = Field(None, alias="SoilProfiles")
+    vegetation_classes: rc.VegetationClasses = Field(None, alias="VegetationClasses")
+    land_use_classes: rc.LandUseClasses = Field(None, alias="LandUseClasses")
+    terrain_classes: rc.TerrainClasses = Field(None, alias="TerrainClasses")
+    soil_parameter_list: rc.SoilParameterList = Field(None, alias="SoilParameterList")
+    land_use_parameter_list: rc.LandUseParameterList = Field(
+        None, alias="LandUseParameterList"
+    )
+    vegetation_parameter_list: rc.VegetationParameterList = Field(
+        None, alias="VegetationParameterList"
+    )
 
-    def update(self, key, value):
-        if key in ["lowerBounds", "upperBounds"]:
-            if is_sequence(value):
-                setattr(self, key, self._config.model.Params(*value))
-            else:
-                assert isinstance(value, self._config.model.Params)
-                setattr(self, key, value)
-            return True
-        else:
-            return super().update(key, value)
+    channel_profile: Sequence[rc.ChannelProfile] = Field(None, alias="ChannelProfile")
 
-    @property
-    def max_iterations(self):
-        return self._max_iterations
+    # TODO: create list of all available parameters to constrain key
+    global_parameter: Dict[str, Sym] = Field({}, alias="GlobalParameter")
+    rain_snow_transition: rc.RainSnowTransition = Field(
+        None, alias="RainSnowTransition"
+    )
+    seasonal_relative_lai: rc.SeasonalRelativeLAI = Field(
+        None, alias="SeasonalRelativeLAI"
+    )
+    seasonal_relative_height: rc.SeasonalRelativeHeight = Field(
+        None, alias="SeasonalRelativeHeight"
+    )
 
-    @max_iterations.setter
-    def max_iterations(self, x):
-        if x < 1:
-            raise ValueError(f"Max iteration should be a positive integer: {x}")
-        else:
-            self._max_iterations = x
 
-    @property
-    def random_seed(self):
-        if self._random_seed is not None:
-            return f"RandomSeed {self._random_seed}"
-        return ""
+class RVC(RV):
+    hru_state_variable_table: rc.HRUStateVariableTable = Field(
+        None, alias="HRUStateVariableTable"
+    )
+    basin_state_variables: rc.BasinStateVariables = Field(
+        None, alias="BasinStateVariables"
+    )
+    uniform_initial_conditions: Union[Dict[str, Sym], None] = Field(
+        None, alias="UniformInitialConditions"
+    )
 
-    @random_seed.setter
-    def random_seed(self, value):
-        if value >= 0:
-            self._random_seed = value
-        else:
-            self._random_seed = None
 
-    @property
-    def evaluation_metric_multiplier(self):
-        """For Ostrich."""
-        m = self._config.rvi._evaluation_metrics[0]
-        if m.name == "PCT_BIAS":
-            raise ValueError(
-                "PCT_BIAS cannot be properly minimized. Select another evaluation metric."
-            )
-        return self._evaluation_metrics_multiplier[m.value]
+class RVH(RV):
+    sub_basins: rc.SubBasins = Field(None, alias="SubBasins")
+    sub_basin_group: Sequence[rc.SubBasinGroup] = Field(None, alias="SubBasinGroup")
+    sub_basin_properties: rc.SubBasinProperties = Field(
+        None, alias="SubBasinProperties"
+    )
+    sb_group_property_multiplier: Sequence[rc.SBGroupPropertyMultiplier] = Field(
+        None, alias="SBGroupPropertyMultiplier"
+    )
+    hrus: rc.HRUs = Field(None, alias="HRUs")
+    hru_group: Sequence[rc.HRUGroup] = Field(None, alias="HRUGroup")
+    reservoirs: Sequence[rc.Reservoir] = Field(None, alias="Reservoirs")
 
-    @property
-    def identifier(self):
-        return self._config.model.identifier
 
-    def to_rv(self):
-        # Get those from RVI (there's probably a better way to do this!)
-        self.run_name = self._config.rvi.run_name
-        self.run_index = self._config.rvi.run_index
+class RVE(RV):
+    """Ensemble Kalman filter configuration"""
 
-        # Attributes
-        a = list(filter(lambda x: not x.startswith("_"), self.__dict__))
+    enkf_mode: o.EnKFMode = Field(None, alias="EnKFMode")
+    window_size: int = Field(None, alias="WindowSize")
+    solution_run_name: str = Field(None, alias="SolutionRunName")
+    extra_rvt_filename: str = Field(None, alias="ExtraRVTFilename")
 
-        # Properties
-        p = list(
-            filter(
-                lambda x: isinstance(getattr(self.__class__, x, None), property),
-                dir(self),
-            )
+    output_directory_format: Union[str, Path] = Field(
+        None, alias="OutputDirectoryFormat"
+    )
+
+    forecast_rvt_filename: str = Field(None, alias="ForecastRVTFilename")
+    truncate_hindcasts: bool = Field(None, alias="TruncateHindcasts")
+    forcing_perturbation: Sequence[rc.ForcingPerturbation] = Field(
+        None, alias="ForcingPerturbation"
+    )
+    assimilated_state: Sequence[rc.AssimilatedState] = Field(
+        None, alias="AssimilatedState"
+    )
+    assimilate_streamflow: Sequence[rc.AssimilateStreamflow] = Field(
+        None, alias="AssimilateStreamflow"
+    )
+    observation_error_model: Sequence[rc.ObservationErrorModel] = Field(
+        None, alias="ObservationErrorModel"
+    )
+
+
+class Config(RVI, RVC, RVH, RVT, RVP, RVE):
+    def header(self, rv):
+        """Return the header to print at the top of each RV file."""
+        import datetime as dt
+        from textwrap import dedent
+
+        import ravenpy
+
+        # TODO: Better mechanism to fetch version
+        version = "3.7"
+
+        return dedent(
+            f"""
+        ###########################################################################################################
+        :FileType          {rv.upper()} Raven {version}
+        :WrittenBy         RavenPy {ravenpy.__version__} based on setups provided by James Craig and Juliane Mai
+        :CreationDate      {dt.datetime.now().isoformat(timespec="seconds")}
+        #----------------------------------------------------------------------------------------------------------
+        \n\n
+        """
         )
 
-        d = {attr: getattr(self, attr) for attr in a + p}
+    @root_validator
+    def _assign_symbolic(cls, values):
+        """If params is numerical, convert symbolic expressions from other fields.
 
-        d.update(self._extra_attributes)
+        Note that this is called for attribute assignment as well.
+        """
 
-        return super().to_rv(dedent(self.tmpl.lstrip("\n")).format(**d), "OST")
+        if values.get("params") is not None:
+            p = asdict(values["params"])
+
+            if not is_symbolic(p):
+                return parse_symbolic(values, **p)
+
+        return values
+
+    @validator("global_parameter", pre=True)
+    def _update_defaults(cls, v, values, config, field):
+        """Some configuration parameters should be updated with user given arguments, not overwritten."""
+        return {**cls.__fields__[field.name].default, **v}
+
+    def set_params(self, params) -> "Config":
+        """Return a new instance of Config with params set to their numerical values."""
+        # Create params with numerical values
+        if not self.is_symbolic:
+            raise ValueError(
+                "Setting `params` on a configuration without symbolic expressions has no effect."
+                "Leave `params` to its default value when instantiating the emulator configuration."
+            )
+        # out = self.duplicate()
+        # out.params = params
+        # return out
+
+        dc = self.__dict__.copy()
+        sym_p = dc.pop("params")
+        num_p = sym_p.__class__(*params)
+
+        # Parse symbolic expressions using numerical params values
+        out = parse_symbolic(dc, **asdict(num_p))
+
+        # Instantiate config class
+        # Note: `construct` skips validation. benchmark to see if it speeds things up.
+        return self.__class__.construct(params=num_p, **out)
+
+    def set_solution(self, fn: Path, timestamp: bool = True) -> "Config":
+        """Return a new instance of Config with hru, basin states
+        and start date set from an existing solution.
+
+        Parameters
+        ----------
+        fn : Path
+          Path to solution file.
+        timestamp: bool
+          If False, ignore time stamp information in the solution. If True, the solution
+          will set StartDate to the solution's timestamp.
+
+        Returns
+        -------
+        Config
+          Config with internal state set from the solution file.
+
+        """
+        from .defaults import CALENDAR
+        from .parsers import parse_solution
+
+        try:
+            calendar = self.calendar.value
+        except AttributeError:
+            calendar = CALENDAR
+
+        out = self.__dict__.copy()
+        sol = parse_solution(fn, calendar=calendar)
+        if timestamp is False:
+            sol.pop("start_date")
+
+        out.update(**sol, uniform_initial_conditions={})
+
+        return self.__class__(**out)
+
+    def duplicate(self, **kwds):
+        """Duplicate this model, changing the values given in the keywords."""
+        out = self.copy(deep=True)
+        for key, val in self.validate(kwds).dict(exclude_unset=True).items():
+            setattr(out, key, val)
+        return out
+
+    def _rv(self, rv: str):
+        """Return RV configuration."""
+
+        if self.is_symbolic:
+            raise ValueError(
+                "Cannot write RV files if `params` has symbolic variables. Use `set_params` method to set numerical "
+                "values for `params`."
+            )
+
+        # Get RV class
+        rvs = {b.__name__: b for b in Config.__bases__}
+        cls = rvs[rv.upper()]
+
+        # Instantiate RV class
+        attrs = dict(self)
+        p = {f: attrs[f] for f in cls.__fields__}
+        rv = cls(**p)
+        return rv.to_rv()
+
+    @property
+    def is_symbolic(self):
+        """Return True if configuration contains symbolic expressions."""
+        if self.params is not None:
+            p = asdict(self.params)
+            return is_symbolic(p)
+
+        return False
+
+    @property
+    def rvi(self):
+        return self._rv("rvi")
+
+    @property
+    def rvt(self):
+        return self._rv("rvt")
+
+    @property
+    def rvp(self):
+        return self._rv("rvp")
+
+    @property
+    def rvc(self):
+        return self._rv("rvc")
+
+    @property
+    def rvh(self):
+        return self._rv("rvh")
+
+    @property
+    def rve(self):
+        return self._rv("rve")
+
+    def write_rv(
+        self, workdir: Union[str, Path], modelname=None, overwrite=False, header=True
+    ):
+        """Write configuration files to disk.
+
+        Parameters
+        ----------
+        workdir: str, Path
+          A directory where rv files will be written to disk.
+        modelname: str
+          File name stem for rv files. If not given, defaults to `RunName` if set, otherwise `raven`.
+        overwrite: bool
+          If True, overwrite existing configuration files.
+        header: bool
+          If True, write a header at the top of each RV file.
+        """
+        workdir = Path(workdir)
+        if not workdir.exists():
+            workdir.mkdir(parents=True)
+
+        mandatory = ["rvi", "rvp", "rvc", "rvh", "rvt"]
+        optional = ["rve"]
+
+        if modelname is None:
+            modelname = self.run_name or "raven"
+
+        out = {}
+        for rv in mandatory + optional:
+            fn = workdir / f"{modelname}.{rv}"
+            if fn.exists() and not overwrite:
+                raise OSError(f"{fn} already exists and would be overwritten.")
+
+            # RV header
+            text = self.header(rv) if header else ""
+
+            # RV content
+            text += self._rv(rv)
+
+            # Write to disk
+            if rv in mandatory or text.strip():
+                fn.write_text(text)
+                out[rv] = fn
+
+        return out
+
+    def zip(self, workdir: Union[str, Path], modelname=None, overwrite=False):
+        """Write configuration to zip file.
+
+        Parameters
+        ----------
+        workdir: Path, str
+          Path to zip archive storing RV files.
+        modelname: str
+          File name stem for rv files. If not given, defaults to `RunName` if set, otherwise `raven`.
+        overwrite: bool
+          If True, overwrite existing configuration zip file.
+        """
+        import zipfile
+
+        workdir = Path(workdir)
+        if not workdir.exists():
+            workdir.mkdir(parents=True)
+
+        if modelname is None:
+            modelname = self.run_name or "raven"
+
+        fn = workdir / f"{modelname}.zip"
+        if fn.exists() and not overwrite:
+            raise OSError(f"{fn} already exists and would be overwritten.")
+
+        with zipfile.ZipFile(fn, "w") as fh:
+            for rv in ["rvi", "rvp", "rvc", "rvh", "rvt", "rve"]:
+                f = f"{modelname}.{rv}"
+                txt = self._rv(rv)
+                if txt.strip():
+                    fh.writestr(f, txt)
+        return zip
 
 
-class Config:
-    def __init__(self, model, **kwargs):
-        self.model = model
-        self.rvc = RVC(self)
-        self.rvh = RVH(self)
-        self.rvi = RVI(self)
-        self.rvp = RVP(self)
-        self.rvt = RVT(self)
-        self.ost = OST(self)
-        self.update(**kwargs)
+def is_symbolic(params: Dict) -> bool:
+    """Return True if parameters include a symbolic variable."""
+    from dataclasses import is_dataclass
 
-    def update(self, key=None, value=None, **kwargs):
-        def _update_single(key, value):
-            updated = False
-            for rv in [self.rvc, self.rvi, self.rvh, self.rvp, self.rvt, self.ost]:
-                # Note that in certain cases we might need to update a key
-                # for more than one rv object.
-                if rv.update(key, value):
-                    updated = True
-            if not updated:
-                raise AttributeError(
-                    f"No field named `{key}` found in any RV* conf class"
-                )
+    from pymbolic.primitives import Variable
 
-        if key is None and value is None:
-            for k, v in kwargs.items():
-                _update_single(k, v)
-        else:
-            _update_single(key, value)
+    if is_dataclass(params):
+        params = asdict(params)
 
-    def set_rv_file(self, fn):
-        fn = Path(fn)
-        if fn.name == "OstRandomNumbers.txt":
-            self.ost.random_numbers_path = fn
-        else:
-            rvx = fn.suffixes[0][1:]  # get first suffix: eg.g. .rvt[.tpl]
-            rvo = getattr(self, rvx, None) or self.ost
-            rvo.content = fn.read_text()
-            rvo.is_ostrich_tmpl = fn.suffixes[-1] == ".tpl"
-            # This is a sorry hack: I want to have rvi.run_name have a default of "run"
-            # because I don't want to burden the user with setting it.. but the problem
-            # is that externally supplied rv files might not have it (to be discussed)
-            self.rvi.run_name = None
+    return any([isinstance(v, Variable) for v in params.values()])

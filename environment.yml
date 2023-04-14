@@ -4,9 +4,9 @@ channels:
   - defaults
 dependencies:
   - raven-hydro ==3.6
-  - ostrich ==21.03.16  # Not available on Windows
   - python >=3.8
   - affine
+  - cftime
   - cf_xarray
   - click
   - climpred >=2.1.0
@@ -21,12 +21,13 @@ dependencies:
   - matplotlib
   - netCDF4
   - numpy < 1.24
-  - owslib >=0.24.1
-  - pandas
+  - owslib >=0.24.1,<0.29
+  - pandas < 2.0
   - pint >=0.20
   - pip
   - pre-commit
   - pydantic
+  - pymbolic
   - pyproj >=3.0
   - rasterio
   - requests

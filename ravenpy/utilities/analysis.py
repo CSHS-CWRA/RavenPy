@@ -30,13 +30,13 @@ def geom_prop(geom: Union[Polygon, MultiPolygon, GeometryCollection]) -> dict:
 
     Parameters
     ----------
-    geom : Union[Polygon, MultiPolygon, GeometryCollection]
-      Geometry to analyze.
+    geom : Polygon or MultiPolygon or GeometryCollection
+        Geometry to analyze.
 
     Returns
     -------
     dict
-      Dictionary storing polygon area, centroid location, perimeter and gravelius shape index.
+        Dictionary storing polygon area, centroid location, perimeter and gravelius shape index.
 
     Notes
     -----
@@ -70,17 +70,17 @@ def dem_prop(
 
     Parameters
     ----------
-    dem : Union[str, Path]
-      DEM raster in reprojected coordinates.
-    geom : Union[Polygon, MultiPolygon, List[Union[Polygon, MultiPolygon]]]
-      Geometry over which aggregate properties will be computed. If None compute properties over entire raster.
-    directory : Union[str, Path]
-      Folder to save the GDAL terrain analysis outputs.
+    dem : str or Path
+        DEM raster in reprojected coordinates.
+    geom : Polygon or MultiPolygon or List[Polygon or MultiPolygon]
+        Geometry over which aggregate properties will be computed. If None compute properties over entire raster.
+    directory : str or Path
+        Folder to save the GDAL terrain analysis outputs.
 
     Returns
     -------
     dict
-      Dictionary storing mean elevation [m], slope [deg] and aspect [deg].
+        Dictionary storing mean elevation [m], slope [deg] and aspect [deg].
     """
 
     fns = dict()
@@ -126,23 +126,22 @@ def gdal_slope_analysis(
 
     Parameters
     ----------
-    dem : Union[str, Path]
-      Path to file storing DEM.
-    set_output : Union[str, Path]
-      If set to a valid filepath, will write to this path, otherwise will use an in-memory gdal.Dataset.
+    dem : str or Path
+        Path to file storing DEM.
+    set_output : str or Path, optional
+        If set to a valid filepath, will write to this path, otherwise will use an in-memory gdal.Dataset.
     units : str
-      Slope units. Default: 'degree'.
+        Slope units. Default: 'degree'.
 
     Returns
     -------
     np.ndarray
-      Slope array.
+        Slope array.
 
     Notes
     -----
     Ensure that the DEM is in a *projected coordinate*, not a geographic coordinate system, so that the
     horizontal scale is the same as the vertical scale (m).
-
     """
     if isinstance(dem, Path):
         dem = str(dem)
@@ -185,17 +184,17 @@ def gdal_aspect_analysis(
 
     Parameters
     ----------
-    dem : Union[str, Path]
-      Path to file storing DEM.
-    set_output : Union[str, Path, bool]
-      If set to a valid filepath, will write to this path, otherwise will use an in-memory gdal.Dataset.
-    flat_values_are_zero: bool
-      Designate flat values with value zero. Default: -9999.
+    dem : str or Path
+        Path to file storing DEM.
+    set_output : str or Path or bool
+        If set to a valid filepath, will write to this path, otherwise will use an in-memory gdal.Dataset.
+    flat_values_are_zero : bool
+        Designate flat values with value zero. Default: -9999.
 
     Returns
     -------
     np.ndarray
-      Aspect array.
+        Aspect array.
 
     Notes
     -----
@@ -234,17 +233,17 @@ def gdal_aspect_analysis(
 
 
 def circular_mean_aspect(angles: np.ndarray) -> np.ndarray:
-    """Return the mean angular aspect based on circular arithmetic approach
+    """Return the mean angular aspect based on circular arithmetic approach.
 
     Parameters
     ----------
     angles: np.ndarray
-      Array of aspect angles
+        Array of aspect angles
 
     Returns
     -------
     np.ndarray
-      Circular mean of aspect array.
+        Circular mean of aspect array.
     """
     # Circular statistics needed for mean angular aspect
     # Example from: https://gis.stackexchange.com/a/147135/65343

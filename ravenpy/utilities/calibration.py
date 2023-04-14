@@ -1,66 +1,123 @@
-#!/usr/bin/env python3
-"""
-Created on Sat Apr 30 16:18:54 2022
+import tempfile
+import warnings
+from dataclasses import astuple
+from pathlib import Path
+from typing import Sequence, Union
 
-@author: ets
-"""
-
-import numpy as np
 from spotpy.parameter import Uniform, generate
 
+from ravenpy import Emulator
+from ravenpy.config.base import Params
+from ravenpy.config.options import evaluation_metrics_multiplier
+from ravenpy.config.rvs import Config
 
-class SpotpySetup:
-    def __init__(self, model, ts, obj_func=None):
-        """
+
+class SpotSetup:
+    def __init__(
+        self,
+        config: Config,
+        low: Union[Params, Sequence],
+        high: [Params, Sequence],
+        workdir: Union[Path, str] = None,
+    ):
+        """Class to configure spotpy with Raven emulators.
 
         Parameters
         ----------
-        model: Raven emulator subclass instance
-          Raven emulator.
-        ts: list
-          Forcing files.
-        obj_func: func
-          Objective function.
+        config : Config
+            Emulator Config instance with symbolic expressions.
+        low : Union[Params, Sequence]
+            Lower boundary for parameters.
+        high : Union[Params, Sequence]
+            Upper boundary for parameters.
+        workdir : Union[str, Path]
+            Work directory. If None, a temporary directory will be created.
         """
-        self.model = model
+        if not config.is_symbolic:
+            raise ValueError(
+                "config should be a symbolic configuration, where params are not set to their numerical "
+                "values."
+            )
 
-        # Make sure no output is written to disk
-        self.model.config.rvi.suppress_output = True
+        self.config = config
+        self.path = Path(workdir or tempfile.mkdtemp())
+        self.diagnostics = None
 
-        self.ts = ts
+        if config.suppress_output is not True:
+            warnings.warn(
+                "Add the `SuppressOutput` command to the configuration to reduce IO."
+            )
 
-        # Just a way to keep this example flexible and applicable to various examples
-        self.obj_func = obj_func
+        if config.evaluation_metrics is None:
+            raise AttributeError(":EvaluationMetrics is undefined.")
 
-        # Initialize parameters
-        self.params = []
-        for i in range(0, len(model.low)):
-            self.params.append(Uniform(str(i), low=model.low[i], high=model.high[i]))
+        # Get evaluation metrics and their multiplier (spotpy maximizes the obj function)
+        self.metrics = [m.value for m in config.evaluation_metrics]
+        self._multipliers = {m: evaluation_metrics_multiplier[m] for m in self.metrics}
 
-    def evaluation(self):
-        """In theory this method should return the true value. Since Raven computes the objective function,
-        we simply return a placeholder."""
-        return 1
+        p = config.params
+
+        self.pnames = list(p.__dataclass_fields__.keys())
+        self.pdist = self.init_params(low, high)
+        self._iteration = 0
+
+    def init_params(self, low: Union[Params, Sequence], high: [Params, Sequence]):
+        # Validate parameters
+        low = astuple(self._to_dataclass(low))
+        high = astuple(self._to_dataclass(high))
+
+        pdist = []
+        for i in range(len(low)):
+            pdist.append(Uniform(self.pnames[i], low=low[i], high=high[i]))
+        return pdist
+
+    def _to_dataclass(self, p):
+        """Validate parameters against Params dataclass from model configuration."""
+        kls = self.config.params.__class__
+        if isinstance(p, kls):
+            return p
+        return kls(*p)
 
     def parameters(self):
         """Return a random parameter combination."""
-        return generate(self.params)
+        return generate(self.pdist)
 
-    def simulation(self, x):
-        """Run the model, but return a placeholder value."""
+    def evaluation(self):
+        """Return the observation.
 
-        # Update parameters
-        self.model.config.update("params", np.array(x))
-
-        # Run the model
-        self.model._execute(self.ts)
+        Since Raven computes the objective function itself, we simply return a placeholder.
+        """
         return 1
 
-    def objectivefunction(self, evaluation, simulation, params=None):
+    def simulation(self, x):
+        """Run the model, but return a placeholder value instead of the model output."""
+        self._iteration += 1
+
+        # Update parameters
+        c = self.config.set_params(list(x))
+
+        # Create emulator instance
+        emulator = Emulator(config=c, workdir=self.path / f"c{self._iteration:03}")
+
+        # Run the model
+        output = emulator.run()
+
+        self.diagnostics = output.diagnostics
+
+        self._iteration += 1
+
+        return 1
+
+    def objectivefunction(self, evaluation, simulation):
         """Return the objective function.
 
         Note that we short-circuit the evaluation and simulation entries, since the objective function has already
         been computed by Raven.
         """
-        d = self.model.diagnostics
-        return d["DIAG_NASH_SUTCLIFFE"][0]
+
+        out = [
+            self.diagnostics[f"DIAG_{m}"][0] * self._multipliers[m]
+            for m in self.metrics
+        ]
+
+        return out

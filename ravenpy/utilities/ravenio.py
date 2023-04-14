@@ -2,15 +2,17 @@
 Tools for reading outputs and writing inputs for the Raven executable.
 """
 
+import re
 from collections import OrderedDict
+from typing import Any, Dict
 
 
 # TODO: Implement section parser
-def parse_configuration(fn):
+def parse_configuration(fn) -> Dict[str, Any]:
     """Parse Raven configuration file.
 
-    Returns a dictionary keyed by parameter name."""
-    import re
+    Returns a dictionary keyed by parameter name.
+    """
 
     main_param = re.compile(r"^:(\w+)\s+([^#]*)")
     # sub_param = re.compile(r"^  :(\w+)\s+([^#]*)")

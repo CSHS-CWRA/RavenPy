@@ -17,7 +17,6 @@ from setuptools.command.develop import develop
 from setuptools.command.install import install
 
 RAVEN_VERSION = "3.6"
-OSTRICH_GIT_VERSION = "21.03.16"
 
 with open("README.rst") as readme_file:
     readme = readme_file.read()
@@ -26,6 +25,7 @@ with open("HISTORY.rst") as history_file:
     history = history_file.read()
 
 requirements = [
+    "cftime",
     "cf-xarray",
     "click",
     "climpred>=2.1",
@@ -34,9 +34,11 @@ requirements = [
     "matplotlib",
     "netCDF4",
     "numpy",
-    "pandas",
+    "owslib<0.29",
+    "pandas<2.0",
     "pint>=0.20",
     "pydantic",
+    "pymbolic",
     "requests",
     "scipy",
     "spotpy",
@@ -103,7 +105,7 @@ def create_external_deps_install_class(command_cls):
     class InstallExternalDeps(command_cls):
         """
         Custom handler for the 'install' and 'develop' commands, to download, extract and compile
-        the source code of Raven and OSTRICH and copy the resulting binaries in a location
+        the source code of Raven and copy the resulting binaries in a location
         available on the PATH.
         """
 
@@ -115,7 +117,7 @@ def create_external_deps_install_class(command_cls):
             (
                 "with-binaries",
                 None,
-                "Download Raven and OSTRICH sources and compile them.",
+                "Download Raven sources and compile them.",
             ),
         ]
 
@@ -221,16 +223,6 @@ def create_external_deps_install_class(command_cls):
                     remove_line="CXXFLAGS += -c++11",
                 )
 
-                url = "https://github.com/usbr/ostrich/archive/refs/tags/"
-                self.install_binary_dep(
-                    url,
-                    "ostrich",
-                    version=OSTRICH_GIT_VERSION,
-                    binary_name="Ostrich",
-                    make_target="GCC",
-                    src_folder=Path(f"ostrich-{OSTRICH_GIT_VERSION}/make"),
-                )
-
             # This works with python setup.py install, but produces this error with pip install:
             # ERROR: ravenpy==0.1.0 did not indicate that it installed an .egg-info directory.
             # Only setup.py projects generating .egg-info directories are supported.
@@ -247,7 +239,7 @@ def create_external_deps_install_class(command_cls):
 setup(
     author="David Huard",
     author_email="huard.david@ouranos.ca",
-    python_requires=">=3.8",
+    python_requires=">=3.9",
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
@@ -256,7 +248,6 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Natural Language :: English",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python",

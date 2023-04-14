@@ -2,7 +2,8 @@ from pathlib import Path
 
 import click
 
-from ravenpy.extractors.routing_product import RoutingProductGridWeightExtractor
+from ravenpy.config.commands import GridWeights
+from ravenpy.extractors import GridWeightExtractor
 
 
 @click.command()
@@ -13,7 +14,7 @@ from ravenpy.extractors.routing_product import RoutingProductGridWeightExtractor
     "--dim-names",
     nargs=2,
     type=click.Tuple([str, str]),
-    default=RoutingProductGridWeightExtractor.DIM_NAMES,
+    default=GridWeightExtractor.DIM_NAMES,
     show_default=True,
     help="Ordered dimension names of longitude (x) and latitude (y) in the NetCDF INPUT_FILE.",
 )
@@ -22,7 +23,7 @@ from ravenpy.extractors.routing_product import RoutingProductGridWeightExtractor
     "--var-names",
     nargs=2,
     type=click.Tuple([str, str]),
-    default=RoutingProductGridWeightExtractor.VAR_NAMES,
+    default=GridWeightExtractor.VAR_NAMES,
     show_default=True,
     help="Variable name of 1D or 2D longitude and latitude variables in the NetCDF INPUT_FILE (in this order).",
 )
@@ -30,7 +31,7 @@ from ravenpy.extractors.routing_product import RoutingProductGridWeightExtractor
     "-c",  # legacy script short option
     "--routing-id-field",
     type=str,
-    default=RoutingProductGridWeightExtractor.ROUTING_ID_FIELD,
+    default=GridWeightExtractor.ROUTING_ID_FIELD,
     show_default=True,
     help="Name of column in routing information shapefile (ROUTING_FILE) containing a unique key for each dataset.",
 )
@@ -38,7 +39,7 @@ from ravenpy.extractors.routing_product import RoutingProductGridWeightExtractor
     "-f",  # legacy script short option
     "--netcdf-input-field",
     type=str,
-    default=RoutingProductGridWeightExtractor.NETCDF_INPUT_FIELD,
+    default=GridWeightExtractor.NETCDF_INPUT_FIELD,
     show_default=True,
     help="Attribute name in INPUT_FILE shapefile that defines the index of the shape in NetCDF model output file (numbering needs to be [0 ... N-1]).",
 )
@@ -64,7 +65,7 @@ from ravenpy.extractors.routing_product import RoutingProductGridWeightExtractor
     "-e",  # legacy script short option
     "--area-error-threshold",
     type=float,
-    default=RoutingProductGridWeightExtractor.AREA_ERROR_THRESHOLD,
+    default=GridWeightExtractor.AREA_ERROR_THRESHOLD,
     show_default=True,
     help="Threshold (as fraction) of allowed mismatch in areas between subbasins from routing information (ROUTING_FILE) and overlay with grid-cells or subbasins (INPUT_FILE). If error is smaller than this threshold the weights will be adjusted such that they sum up to exactly 1. Raven will exit gracefully in case weights do not sum up to at least 0.95.",
 )
@@ -107,9 +108,8 @@ def generate_grid_weights(
     is then free to embed or reference, in her own config context).
     """
     # NOTE: This is in order to make sphinx-click happy. Magic. Do not touch.
-    from ravenpy.extractors import RoutingProductGridWeightExtractor
 
-    extractor = RoutingProductGridWeightExtractor(
+    extractor = GridWeightExtractor(
         input_file,
         routing_file,
         dim_names,
@@ -120,7 +120,8 @@ def generate_grid_weights(
         sub_ids,
         area_error_threshold,
     )
-    gw_cmd = extractor.extract()
+    attrs = extractor.extract()
+    gw_cmd = GridWeights(**attrs)
 
     if not output:
         input_file_path = Path(input_file)

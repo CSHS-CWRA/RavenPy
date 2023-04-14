@@ -28,3 +28,9 @@ def test_infer_scale_and_offset():
     with open_dataset(fn) as ds:
         p = infer_scale_and_offset(ds.Streaminputs, "PRECIP")
         assert p == (4, 0)
+
+    # GEPS dataset in cumulative m fails
+    # fn = "caspar_eccc_hindcasts/geps_watershed.nc"
+    # with open_dataset(fn) as ds:
+    #     p = infer_scale_and_offset(ds.pr, "PRECIP")
+    #     assert p == (1000, 0)

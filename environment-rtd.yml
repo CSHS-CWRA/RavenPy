@@ -10,6 +10,8 @@ dependencies:
   - ipython
   - jupyter_client
   - matplotlib
+  - myst-nb
+  - jupytext
   - nbsphinx
 #  - netCDF4  # mocked
   - pandoc

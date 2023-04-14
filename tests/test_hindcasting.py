@@ -1,6 +1,15 @@
 import datetime as dt
 
-from ravenpy.models import GR4JCN
+import xarray as xr
+
+from ravenpy import Emulator, EnsembleReader
+from ravenpy.config import commands as rc
+from ravenpy.config.emulators import GR4JCN
+from ravenpy.utilities.forecasting import (
+    hindcast_climatology_esp,
+    to_climpred_hindcast_ensemble,
+    warm_up,
+)
 
 """
 Test to perform a hindcast using Caspar data on THREDDS.
@@ -11,59 +20,167 @@ but this is a good proof of concept.
 
 
 class TestHindcasting:
-    def test_hindcasting_GEPS(self, get_file):
-        # Prepare a RAVEN model run using historical data, GR4JCN in this case.
-        # This is a dummy run to get initial states. In a real forecast situation,
-        # this run would end on the day before the forecast, but process is the same.
-        ts = get_file(
-            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
-        )
-        hrus = (
-            GR4JCN.LandHRU(
-                area=4250.6, elevation=843.0, latitude=54.4848, longitude=-123.3659
-            ),
-        )
-        model = GR4JCN()
-        model(
-            ts,
-            start_date=dt.datetime(2000, 1, 1),
-            end_date=dt.datetime(2002, 6, 1),
-            hrus=hrus,
-            params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
-        )
+    def test_hindcasting_GEPS(self, get_local_testdata, salmon_hru, tmp_path):
+        ts20 = get_local_testdata("caspar_eccc_hindcasts/geps_watershed.nc")
 
-        # Extract the final states that will be used as the next initial states
-        rvc = model.outputs["solution"]
-
-        ts20 = get_file("caspar_eccc_hindcasts/geps_watershed.nc")
-        nm = 20
-
-        # It is necessary to clean the model state because the input variables of the previous
-        # model are not the same as the ones provided in the forecast model. therefore, if we
-        # do not clean, the model will simply add the hindcast file to the list of available
-        # data provided in the testdata above. Then the dates will not work, and the model errors.
-        model = GR4JCN()
-
-        model.config.rvc.parse_solution(rvc.read_text())
-
-        # And run the model with the forecast data.
-        model(
-            ts=ts20,
-            start_date=dt.datetime(2018, 6, 1),
-            end_date=dt.datetime(2018, 6, 10),
-            hrus=hrus,
-            params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
-            overwrite=True,
-            pr={
-                "time_shift": -0.25,
-                "deaccumulate": True,
+        hru = salmon_hru["land"]
+        data_kwds = {
+            "ALL": {"Latitude": hru["latitude"], "Longitude": hru["longitude"]},
+            "PRECIP": {
+                "Deaccumulate": True,
+                "TimeShift": -0.25,
+                "LinearTransform": {"scale": 1000},
             },
-            tas={"time_shift": -0.25},
-            parallel=dict(meteo_idx=range(nm)),
+        }
+
+        pre_conf = GR4JCN(
+            StartDate=dt.datetime(2018, 6, 10),
+            EndDate=dt.datetime(2018, 6, 14),
+            HRUs=[
+                hru,
+            ],
+            params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
+            GlobalParameter={"AVG_ANNUAL_RUNOFF": 208.480},
+            Gauge=[
+                rc.Gauge.from_nc(
+                    ts20, data_type=["PRECIP", "TEMP_AVE"], data_kwds=data_kwds
+                ),
+            ],
         )
 
-        # The model now has the forecast data generated and it has 10 days of forecasts.
-        assert len(model.q_sim.values) == 10
+        init_conf = warm_up(pre_conf, duration=8, workdir=tmp_path / "wup")
 
-        # Also see if GEPS has 20 members produced.
-        assert model.q_sim.values.shape[1] == nm
+        # Create gauges for each member and run the model
+        nm = 3
+        ens = []
+        for i in range(nm):
+            g = rc.Gauge.from_nc(
+                ts20,
+                station_idx=i + 1,
+                data_type=["PRECIP", "TEMP_AVE"],
+                data_kwds=data_kwds,
+            )
+            assert g.data[0].read_from_netcdf.station_idx == i + 1
+            for d in g.data:
+                if d.data_type == "PRECIP":
+                    assert d.read_from_netcdf.linear_transform.scale == 1000
+
+            mem_conf = init_conf.copy(
+                update=dict(
+                    gauge=[g],
+                ),
+            )
+
+            # This segfaults
+            e = Emulator(
+                config=mem_conf,
+                workdir=tmp_path / f"m{i:02}",
+            )
+            ens.append(e.run())
+
+        out = EnsembleReader(runs=ens)
+
+        # The model now has the forecast data generated and it has 5 days of forecasts.
+        assert len(out.hydrograph.member) == 3
+        assert len(out.hydrograph.time) == 5
+
+    def test_climpred_hindcast_verif(self, get_local_testdata, salmon_hru, tmp_path):
+        ts = get_local_testdata(
+            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
+        )
+
+        # This is the forecast start date, on which the forecasts will be launched.
+        start_date = dt.datetime(1980, 6, 1)
+
+        # Provide the length of the forecast, in days:
+        forecast_duration = 100
+
+        # Define HRU to build the hydrological model
+        hru = salmon_hru["land"]
+
+        # Set alternative names for netCDF variables
+        alt_names = {
+            "TEMP_MIN": "tmin",
+            "TEMP_MAX": "tmax",
+            "RAINFALL": "rain",
+            "SNOWFALL": "snow",
+        }
+
+        # Data types to extract from netCDF
+        data_type = ["TEMP_MAX", "TEMP_MIN", "RAINFALL", "SNOWFALL"]
+        data_kwds = {
+            "ALL": {
+                "elevation": hru[
+                    "elevation"
+                ],  # No need for lat/lon as they are included in the netcdf file already
+            }
+        }
+
+        # Model configuration
+        model_config = GR4JCN(
+            params=[0.529, -3.396, 407.29, 1.072, 16.9, 0.947],
+            Gauge=[
+                rc.Gauge.from_nc(
+                    ts, data_type=data_type, alt_names=alt_names, data_kwds=data_kwds
+                )
+            ],
+            HRUs=[hru],
+            StartDate=start_date,
+            Duration=forecast_duration,
+            GlobalParameter={"AVG_ANNUAL_RUNOFF": 208.480},
+        )
+
+        hindcasts = hindcast_climatology_esp(
+            config=model_config,  # Note that the forecast duration is already set-up in the model_config above.
+            warm_up_duration=365,  # number of days for the warm-up
+            years=[1985, 1986, 1987, 1988, 1989, 1990],
+            hindcast_years=[2001, 2002, 2003, 2004, 2005, 2006, 2007],
+        )
+
+        q_obs = xr.open_dataset(ts)
+
+        # However, our simulated streamflow is named "q_sim" and climpred requires the observation to be named the same thing
+        # so let's rename it. While we're at it, we need to make sure that the identifier is the same. In our observation
+        # dataset, it is called "nstations" but in our simulated streamflow it's called "nbasins". Here we standardize.
+        q_obs = q_obs.rename({"qobs": "q_sim", "nstations": "nbasins"})
+
+        # Make the hindcasting object we can use to compute statistics and metrics
+        hindcast_object = to_climpred_hindcast_ensemble(hindcasts, q_obs)
+
+        # This function is used to convert to binary to see if yes/no forecast is larger than observations
+        def pos(x):
+            return x > 0  # Check for binary outcome
+
+        # Rank histogram verification metric
+        rank_histo_verif = hindcast_object.verify(
+            metric="rank_histogram",
+            comparison="m2o",
+            dim=["member", "init"],
+            alignment="same_inits",
+        )
+        assert "q_sim" in rank_histo_verif
+        assert rank_histo_verif.q_sim.shape[0] - 1 == forecast_duration
+
+        # CRPS verification metric
+        crps_verif = hindcast_object.verify(
+            metric="crps",
+            comparison="m2o",
+            dim=["member", "init"],
+            alignment="same_inits",
+        )
+        assert "q_sim" in crps_verif
+        assert crps_verif.q_sim.shape[0] - 1 == forecast_duration
+
+        # TODO: Fix this part
+        """
+        reliability_verif = hindcast_object.verify(
+            metric="reliability",
+            comparison="m2o",
+            dim=["member", "init"],
+            alignment="same_inits",
+            logical=pos,
+        )
+
+        assert "flow" in reliability_verif
+        assert reliability_verif.flow.shape[0] == forecast_duration
+        """
