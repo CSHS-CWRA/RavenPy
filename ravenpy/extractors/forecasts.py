@@ -3,7 +3,7 @@ import logging
 import re
 from typing import Any, List, Tuple, Union
 
-import fiona.collection
+import fiona
 import pandas as pd
 import xarray as xr
 from pandas import DatetimeIndex, Series, Timestamp
@@ -12,9 +12,7 @@ from xarray import Dataset
 LOGGER = logging.getLogger("PYWPS")
 
 
-def get_hindcast_day(
-    region_coll: fiona.collection.Collection, date, climate_model="GEPS"
-):
+def get_hindcast_day(region_coll: fiona.Collection, date, climate_model="GEPS"):
     """Generate a forecast dataset that can be used to run raven.
 
     Data comes from the CASPAR archive and must be aggregated such that each file
@@ -99,7 +97,7 @@ def get_recent_ECCC_forecast(
 
     Parameters
     ----------
-    region_coll : fiona.collection.Collection
+    region_coll : fiona.Collection
         The region vectors.
     climate_model : str
         Type of climate model, for now only "GEPS" is supported.
@@ -119,7 +117,7 @@ def get_recent_ECCC_forecast(
 
 
 def get_subsetted_forecast(
-    region_coll: fiona.collection.Collection,
+    region_coll: fiona.Collection,
     ds: xr.Dataset,
     times: Union[dt.datetime, xr.DataArray],
     is_caspar: bool,
@@ -130,7 +128,7 @@ def get_subsetted_forecast(
 
     Parameters
     ----------
-    region_coll : fiona.collection.Collection
+    region_coll : fiona.Collection
         The region vectors.
     ds : xr.Dataset
         The dataset containing the raw, worldwide forecast data

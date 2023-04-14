@@ -94,6 +94,6 @@ def test_enkf(salmon_meteo, salmon_hru, tmp_path):
     paths.sort()
     assert len(paths) == 7
 
-    ens = EnsembleReader(conf_cast.run_name, paths=paths)
+    ens = EnsembleReader(run_name=conf_cast.run_name, paths=paths)
     assert conf_cast.run_name == "forecast"
     assert len(ens.files["hydrograph"]) == 7

@@ -107,7 +107,7 @@ def climatology_esp(
             )
         ensemble.append(out)
 
-    return EnsembleReader(config.run_name, runs=ensemble)
+    return EnsembleReader(run_name=config.run_name, runs=ensemble)
 
 
 def to_climpred_hindcast_ensemble(
@@ -384,7 +384,7 @@ def ensemble_prediction(
         # Append to the ensemble.
         ensemble.append(out)
 
-    return EnsembleReader(config.run_name, runs=ensemble, dim=ens_dim)
+    return EnsembleReader(run_name=config.run_name, runs=ensemble, dim=ens_dim)
 
 
 # Alias
