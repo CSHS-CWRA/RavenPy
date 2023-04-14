@@ -245,6 +245,7 @@ def run(
     configdir: Union[str, Path],
     outputdir: Optional[Union[str, Path]] = None,
     overwrite: bool = True,
+    verbose: bool = False,
 ) -> Path:
     """Run Raven given the path to an existing model configuration.
 
@@ -259,6 +260,8 @@ def run(
         If None, will write to configdir/output.
     overwrite : bool
         If True, overwrite existing files.
+    verbose : bool
+        If True, always display Raven warnings. If False, warnings will only be printed if an error occurs.
 
     Return
     ------
@@ -306,8 +309,9 @@ def run(
     # Deal with errors and warnings
     messages = parsers.parse_raven_messages(outputdir / "Raven_errors.txt")
 
-    for msg in messages["WARNING"] + messages["ADVISORY"]:
-        warn(msg, category=RavenWarning)
+    if messages["ERROR"] or verbose:
+        for msg in messages["WARNING"] + messages["ADVISORY"]:
+            warn(msg, category=RavenWarning)
 
     if messages["ERROR"]:
         raise RavenError(
