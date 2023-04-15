@@ -34,7 +34,7 @@ keywords = ["ravenpy", "raven", "hydrologic", "model", "gis"]
 # xarray pinned due to incompatibility with climpred @ 2.2.0
 dependencies = [
   "cf-xarray",
-  "click",
+  "Click",
   "climpred>=2.1",
   "dask",
   "haversine",
@@ -77,18 +77,35 @@ dev = [
 ]
 docs = [
   "autodoc_pydantic",
+  "birdhouse-birdy",
+  "cartopy",
+  "clisops",
+  "gcsfs",
+  "hs_restclient",
+  "intake",
+  "intake-esm",
+  "intake-xarray",
   "ipykernel",
+  "ipyleaflet",
   "ipython",
+  "ipywidgets",
+  "jupyter",
+  "jupyter-cache",
   "jupyter_client",
+  "jupytext",
+  "myst_nb",
   "nbsphinx",
   "numpydoc",
+  "owslib<0.29",
   "pandoc",
+  "pymetalink",
+  "s3fs",
   "sphinx",
-  "sphinx-click",
   "sphinx-click",
   "sphinx-codeautolink",
   "sphinx-copybutton",
-  "sphinx-rtd-theme >=1.0"
+  "sphinx-rtd-theme>=1.0",
+  "xesmf"
 ]
 gis = [
   "affine",
