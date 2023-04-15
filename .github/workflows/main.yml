@@ -164,7 +164,7 @@ jobs:
           raven -v
       - name: Test RavenPy
         run: |
-          python -m pytest --cov --numprocesses=logical ravenpy
+          python -m pytest --cov --numprocesses=logical
       - name: Report coverage
         run: |
           python -m coveralls
