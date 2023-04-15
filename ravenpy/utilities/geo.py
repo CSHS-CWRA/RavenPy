@@ -1,11 +1,12 @@
-"""
-Tools for performing geospatial translations and transformations.
-"""
+"""Tools for performing geospatial translations and transformations."""
 
 import collections
 import logging
 from pathlib import Path
-from typing import List, Union
+from typing import List, Optional, Union
+
+import geopandas
+import pandas as pd
 
 from . import gis_import_error_message
 
@@ -19,6 +20,7 @@ try:
     from shapely.geometry import (
         GeometryCollection,
         MultiPolygon,
+        Point,
         Polygon,
         mapping,
         shape,
@@ -45,16 +47,16 @@ def geom_transform(
     Parameters
     ----------
     geom : Union[GeometryCollection, shape]
-      Source geometry.
+        Source geometry.
     source_crs : Union[str, int, CRS]
-      Projection identifier (proj4) for the source geometry, e.g. '+proj=longlat +datum=WGS84 +no_defs'.
+        Projection identifier (proj4) for the source geometry, e.g. '+proj=longlat +datum=WGS84 +no_defs'.
     target_crs : Union[str, int, CRS]
-      Projection identifier (proj4) for the target geometry.
+        Projection identifier (proj4) for the target geometry.
 
     Returns
     -------
     GeometryCollection
-      Reprojected geometry.
+        Reprojected geometry.
     """
     try:
         from functools import partial
@@ -90,25 +92,24 @@ def generic_raster_clip(
     padded: bool = True,
     raster_compression: str = RASTERIO_TIFF_COMPRESSION,
 ) -> None:
-    """
-    Crop a raster file to a given geometry.
+    """Crop a raster file to a given geometry.
 
     Parameters
     ----------
     raster : Union[str, Path]
-      Path to input raster.
+        Path to input raster.
     output : Union[str, Path]
-      Path to output raster.
+        Path to output raster.
     geometry : Union[Polygon, MultiPolygon, List[Union[Polygon, MultiPolygon]]
-      Geometry defining the region to crop.
+        Geometry defining the region to crop.
     touches : bool
-      Whether to include cells that intersect the geometry or not. Default: True.
+        Whether to include cells that intersect the geometry or not. Default: True.
     fill_with_nodata: bool
-      Whether to keep pixel values for regions outside of shape or set as nodata or not. Default: True.
+        Whether to keep pixel values for regions outside of shape or set as nodata or not. Default: True.
     padded: bool
-      Whether to add a half-pixel buffer to shape before masking or not. Default: True.
+        Whether to add a half-pixel buffer to shape before masking or not. Default: True.
     raster_compression : str
-      Level of data compression. Default: 'lzw'.
+        Level of data compression. Default: 'lzw'.
 
     Returns
     -------
@@ -148,19 +149,18 @@ def generic_raster_warp(
     target_crs: Union[str, dict, CRS],
     raster_compression: str = RASTERIO_TIFF_COMPRESSION,
 ) -> None:
-    """
-    Reproject a raster file.
+    """Reproject a raster file.
 
     Parameters
     ----------
     raster : Union[str, Path]
-      Path to input raster.
+        Path to input raster.
     output : Union[str, Path]
-      Path to output raster.
+        Path to output raster.
     target_crs : str or dict
-      Target projection identifier.
+        Target projection identifier.
     raster_compression: str
-      Level of data compression. Default: 'lzw'.
+        Level of data compression. Default: 'lzw'.
 
     Returns
     -------
@@ -243,3 +243,92 @@ def generic_vector_reproject(
                             f"{err}: Unable to reproject feature {feature}"
                         )
                         raise
+
+
+def determine_upstream_ids(
+    fid: str,
+    df: Union[pd.DataFrame, geopandas.GeoDataFrame],
+    basin_field: str = None,
+    downstream_field: str = None,
+    basin_family: Optional[str] = None,
+) -> Union[pd.DataFrame, geopandas.GeoDataFrame]:
+    """Return a list of upstream features by evaluating the downstream networks.
+
+    Parameters
+    ----------
+    fid : str
+        feature ID of the downstream feature of interest.
+    df : pd.DataFrame
+        A Dataframe comprising the watershed attributes.
+    basin_field : str
+        The field used to determine the id of the basin according to hydro project.
+    downstream_field : str
+        The field identifying the downstream sub-basin for the hydro project.
+    basin_family : str, optional
+        Regional watershed code (For HydroBASINS dataset).
+
+    Returns
+    -------
+    pd.DataFrame
+        Basins ids including `fid` and its upstream contributors.
+    """
+
+    def upstream_ids(bdf, bid):
+        return bdf[bdf[downstream_field] == bid][basin_field]
+
+    # Note: Hydro Routing `SubId` is a float for some reason and Python float != GeoServer double. Cast them to int.
+    if isinstance(fid, float):
+        fid = int(fid)
+        df[basin_field] = df[basin_field].astype(int)
+        df[downstream_field] = df[downstream_field].astype(int)
+
+    # Locate the downstream feature
+    ds = df.set_index(basin_field).loc[fid]
+    if basin_family is not None:
+        # Do a first selection on the main basin ID of the downstream feature.
+        sub = df[df[basin_family] == ds[basin_family]]
+    else:
+        sub = None
+
+    # Find upstream basins
+    up = [fid]
+    for b in up:
+        tmp = upstream_ids(sub if sub is not None else df, b)
+        if len(tmp):
+            up.extend(tmp)
+
+    return (
+        sub[sub[basin_field].isin(up)]
+        if sub is not None
+        else df[df[basin_field].isin(up)]
+    )
+
+
+def find_geometry_from_coord(
+    lon: float, lat: float, df: geopandas.GeoDataFrame
+) -> geopandas.GeoDataFrame:
+    """Return the geometry containing the given coordinates.
+
+    lon : float
+        Longitude.
+    lat : float
+        Latitude.
+    df : GeoDataFrame
+        Data.
+
+    Returns
+    -------
+    GeoDataFrame
+        Record whose geometry contains the point.
+    """
+
+    p = Point(lon, lat)
+
+    c = df.contains(p)
+    n = c.sum()
+    if n == 0:
+        raise ValueError(f"Point {p} not in any geometry.")
+    elif n > 1:
+        raise ValueError(f"Point {p} found in multiple geometries.")
+
+    return df[c]

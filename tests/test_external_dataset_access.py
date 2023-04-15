@@ -3,7 +3,7 @@ import datetime as dt
 import numpy as np
 import pytest
 
-from ravenpy.utilities.forecasting import get_CASPAR_dataset, get_ECCC_dataset
+from ravenpy.extractors.forecasts import get_CASPAR_dataset, get_ECCC_dataset
 
 
 class TestGet:

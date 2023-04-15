@@ -2,25 +2,7 @@
 RavenPy
 =======
 
-.. image:: https://img.shields.io/pypi/v/ravenpy.svg
-    :target: https://pypi.python.org/pypi/ravenpy
-    :alt: PyPI
-
-.. image:: https://anaconda.org/conda-forge/ravenpy/badges/version.svg
-    :target: https://anaconda.org/conda-forge/ravenpy
-    :alt: Conda-Forge
-
-.. image:: https://github.com/CSHS-CWRA/RavenPy/actions/workflows/main.yml/badge.svg
-    :target: https://github.com/CSHS-CWRA/RavenPy/actions/workflows/main.yml
-    :alt: Build status
-
-.. image:: https://readthedocs.org/projects/ravenpy/badge/?version=latest
-    :target: https://ravenpy.readthedocs.io/en/latest/?version=latest
-    :alt: Documentation Status
-
-.. image:: https://coveralls.io/repos/github/CSHS-CWRA/RavenPy/badge.svg?branch=master
-    :target: https://coveralls.io/github/CSHS-CWRA/RavenPy?branch=master
-    :alt: Coveralls
+|pypi| |conda| |license| |build| |docs| |coveralls|
 
 A Python wrapper to setup and run the hydrologic modelling framework Raven_.
 
@@ -33,14 +15,14 @@ Raven_ is an hydrological modeling framework that lets hydrologists build hydrol
 
 `RavenPy` provides a Python interface to Raven_, automating the creation of configuration files and allowing the model to be launched from Python. Results, or errors, are automatically parsed and exposed within the programming environment. This facilitates the launch of parallel simulations, multi-model prediction ensembles, sensitivity analyses and other experiments involving a large number of model runs.
 
-The code is currently undergoing a number of changes to support semi-distributed watersheds, so expect some API changes over the next versions.
+Note that version 0.20 includes major changes compared to the previous 0.12 release, and breaks backward compatibility. The benefits of these changes are a much more intuitive interface for configuring and running the model.
+
 
 Features
 --------
 
 * Download and compile Raven with `pip`
 * Configure, run and parse Raven outputs from Python
-* Parallel simulations over parameters, models or watersheds
 * Utility command to create grid weight files
 * Extract physiographic information about watersheds
 * Algorithms to estimate model parameters from ungauged watersheds
@@ -65,3 +47,28 @@ This package was created with Cookiecutter_ and the `Ouranosinc/cookiecutter-pyp
 .. _`Ouranosinc/cookiecutter-pypackage`: https://github.com/Ouranosinc/cookiecutter-pypackage
 .. _`docs`: https://www.civil.uwaterloo.ca/raven/files/v3.5/RavenManual_v3.5.pdf
 .. _`installation docs`: https://ravenpy.readthedocs.io/en/latest/installation.html
+
+
+.. |pypi| image:: https://img.shields.io/pypi/v/ravenpy.svg
+        :target: https://pypi.python.org/pypi/ravenpy
+        :alt: PyPI
+
+.. |conda| image:: https://img.shields.io/conda/vn/conda-forge/ravenpy
+        :target: https://anaconda.org/conda-forge/ravenpy
+        :alt: Conda-Forge
+
+.. |license| image:: https://img.shields.io/github/license/CSHS-CWRA/RavenPy.svg
+        :target: https://github.com/CSHS-CWRA/RavenPy/blob/master/LICENSE
+        :alt: License
+
+.. |build| image:: https://github.com/CSHS-CWRA/RavenPy/actions/workflows/main.yml/badge.svg
+        :target: https://github.com/CSHS-CWRA/RavenPy/actions/workflows/main.yml
+        :alt: Build status
+
+.. |docs| image:: https://readthedocs.org/projects/ravenpy/badge/?version=latest
+        :target: https://ravenpy.readthedocs.io
+        :alt: Documentation Status
+
+.. |coveralls| image:: https://coveralls.io/repos/github/CSHS-CWRA/RavenPy/badge.svg?branch=master
+        :target: https://coveralls.io/github/CSHS-CWRA/RavenPy?branch=master
+        :alt: Coveralls

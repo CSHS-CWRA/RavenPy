@@ -1,197 +1,294 @@
 import re
 from textwrap import dedent
+from typing import Sequence, Union
 
 import pytest
+import xarray as xr
+from pydantic import Field
 
-from ravenpy.config import options
-from ravenpy.config.commands import (
-    LU,
-    PL,
-    SOIL,
-    AdiabaticLapseRate,
-    EvaluationMetrics,
-    HRUState,
-    HRUStateVariableTableCommand,
-    LandUseClassesCommand,
-    LandUseParameterListCommand,
-    LinearTransform,
-    PotentialMeltMethod,
-    RunName,
-    SoilClassesCommand,
-    SoilParameterListCommand,
-    SoilProfilesCommand,
-    SuppressOutput,
-    VegetationClassesCommand,
-    VegetationParameterListCommand,
+from ravenpy.config import commands as rc
+from ravenpy.config import options as o
+from ravenpy.config.base import RV
+
+salmon_land_hru_1 = dict(
+    area=4250.6, elevation=843.0, latitude=54.4848, longitude=-123.3659, hru_type="land"
 )
 
 
-def test_adiabatic_lapse_rate_coefficient():
-    alr = AdiabaticLapseRate(0.2)
-    assert alr.to_rv() == ":AdiabaticLapseRate   0.2\n"
+def test_evaluation_metrics():
+    class Test(RV):
+        em: Sequence[o.EvaluationMetrics] = Field(
+            ["RMSE", "NASH_SUTCLIFFE"], alias="EvaluationMetrics"
+        )
+
+    assert Test().to_rv().strip() == ":EvaluationMetrics    RMSE NASH_SUTCLIFFE"
 
 
-def test_potential_melt_method_option():
-    expected = ":PotentialMeltMethod  POTMELT_EB\n"
-    assert PotentialMeltMethod("POTMELT_EB").to_rv() == expected
-    assert PotentialMeltMethod(options.PotentialMeltMethod.EB).to_rv() == expected
-
-
-def test_run_name():
-    assert RunName("test").to_rv() == ":RunName              test\n"
-
-
-def test_suppress_output():
-    assert SuppressOutput(True).to_rv() == ":SuppressOutput\n"
-    assert SuppressOutput(False).to_rv() == ""
+def test_hrus():
+    hrus = rc.HRUs.parse_obj([salmon_land_hru_1])
+    hrus.to_rv()
+    assert hrus[0].subbasin_id == 1
 
 
 def test_hru_state():
-    s = HRUState(index=1, data={"SOIL[0]": 1, "SOIL[1]": 2.0})
-    assert s.to_rv() == "1,1.0,2.0"
-
-
-def test_evaluation_metrics():
-    em = EvaluationMetrics(["RMSE", "NASH_SUTCLIFFE"])
-    assert em.to_rv() == ":EvaluationMetrics    RMSE, NASH_SUTCLIFFE\n"
+    s = rc.HRUState(hru_id=1, data={"SOIL[0]": 1, "SOIL[1]": 2.0})
+    assert str(s) == "1,1.0,2.0"
 
 
 def test_linear_transform():
-    assert LinearTransform(1, 0).to_rv() == ""
+    assert rc.LinearTransform(scale=1, offset=0).to_rv() == ""
+
+
+def test_global_parameter():
+    class Test(RV):
+        gp: dict = Field({"A": 1}, alias="GlobalParameter")
+
+    s = Test().to_rv().strip()
+
+    assert s == ":GlobalParameter A 1"
+
+
+def test_vegetation_classes():
+    class Test(RV):
+        vegetation_classes: rc.VegetationClasses = Field(
+            rc.VegetationClasses.parse_obj(
+                [{"name": "VEG_ALL"}, {"name": "VEG_WATER"}]
+            ),
+            alias="VegetationClasses",
+        )
+
+    s = dedent(Test().to_rv().strip())
+    assert (
+        s
+        == dedent(
+            """
+    :VegetationClasses
+      :Attributes     ,            MAX_HT,           MAX_LAI,     MAX_LEAF_COND
+      :Units          ,                 m,              none,          mm_per_s
+      VEG_ALL         ,               0.0,               0.0,               0.0
+      VEG_WATER       ,               0.0,               0.0,               0.0
+    :EndVegetationClasses"""
+        ).strip()
+    )
+
+
+def test_land_use_class():
+    class Test(RV):
+        lu_classes: rc.LandUseClasses = Field(None, alias="LandUseClasses")
+
+    t = Test(
+        LandUseClasses=[
+            {"name": "Lake"},
+            {"name": "Land", "impermeable_frac": 0.1, "forest_coverage": 0.8},
+        ]
+    )
+    s = dedent(t.to_rv()).strip()
+    assert (
+        s
+        == dedent(
+            """
+        :LandUseClasses
+          :Attributes     ,  IMPERMEABLE_FRAC,   FOREST_COVERAGE
+          :Units          ,             fract,             fract
+          Lake            ,               0.0,               0.0
+          Land            ,               0.1,               0.8
+        :EndLandUseClasses
+        """
+        ).strip()
+    )
 
 
 def test_soil_classes():
-    c = SoilClassesCommand(
-        soil_classes=[
-            SoilClassesCommand.Record(n) for n in ["TOPSOIL", "FAST_RES", "SLOW_RES"]
+    from ravenpy.config.commands import SoilClasses
+
+    c = SoilClasses.parse_obj(
+        [{"name": "TOPSOIL"}, {"name": "FAST_RES"}, {"name": "SLOW_RES"}]
+    )
+    assert dedent(c.to_rv()) == dedent(
+        """
+    :SoilClasses
+      :Attributes     ,             %SAND,             %CLAY,             %SILT,          %ORGANIC
+      :Units          ,              none,              none,              none,              none
+      TOPSOIL
+      FAST_RES
+      SLOW_RES
+    :EndSoilClasses
+    """
+    )
+
+    c = SoilClasses.parse_obj(
+        [
+            {"name": "TOPSOIL", "mineral": (0.1, 0.7, 0.2), "organic": 0.1},
         ]
     )
     assert dedent(c.to_rv()) == dedent(
         """
     :SoilClasses
-        TOPSOIL
-        FAST_RES
-        SLOW_RES
+      :Attributes     ,             %SAND,             %CLAY,             %SILT,          %ORGANIC
+      :Units          ,              none,              none,              none,              none
+      TOPSOIL         ,               0.1,               0.7,               0.2,               0.1
     :EndSoilClasses
     """
     )
 
 
-def test_vegetation_classes():
-    c = VegetationClassesCommand(
-        vegetation_classes=[VegetationClassesCommand.Record("VEG_ALL", 25, 6.0, 5.3)]
-    )
-    assert dedent(c.to_rv()) == dedent(
-        """
-    :VegetationClasses
-        :Attributes     ,        MAX_HT,       MAX_LAI, MAX_LEAF_COND
-        :Units          ,             m,          none,      mm_per_s
-        VEG_ALL         ,          25.0,           6.0,           5.3
-    :EndVegetationClasses
-    """
-    )
+def test_soil_model():
+    class Test(RV):
+        soil_model: rc.SoilModel = Field(None, alias="SoilModel")
+
+    t = Test(soil_model=3)
+    assert t.to_rv().strip() == ":SoilModel            SOIL_MULTILAYER 3"
 
 
-def test_land_use_classe():
-    c = LandUseClassesCommand(land_use_classes=[LU("LU_ALL", 0, 1)])
-    assert dedent(c.to_rv()) == dedent(
-        """
-    :LandUseClasses
-        :Attributes     ,IMPERMEABLE_FRAC, FOREST_COVERAGE
-        :Units          ,           fract,           fract
-        LU_ALL          ,             0.0,             1.0
-    :EndLandUseClasses
-    """
-    )
-
-
-def test_soil_profiles(x=42):
-    c = SoilProfilesCommand(
-        soil_profiles=[
-            SOIL("DEFAULT_P", ["TOPSOIL", "FAST_RES", "SLOW_RES"], [x, 100.0, 100.0])
+def test_soil_profiles(x=42.0):
+    c = rc.SoilProfiles.parse_obj(
+        [
+            {
+                "name": "DEFAULT_P",
+                "soil_classes": ["TOPSOIL", "FAST_RES", "SLOW_RES"],
+                "thicknesses": [x, 100.0, 100.0],
+            },
         ]
     )
 
     pat = r"DEFAULT_P\s*,\s*3,\s*TOPSOIL,\s*(.+),\s*FAST_RES,\s*100.0,\s*SLOW_RES,\s*100.0"
 
-    m = re.findall(pat, c.to_rv())[0]
+    m = re.findall(pat, str(c))[0]
     assert m == "42.0"
 
 
+def test_hydrologic_processes():
+    from ravenpy.config.processes import Precipitation, SnowTempEvolve
+
+    hp = [
+        Precipitation(algo="PRECIP_RAVEN", source="ATMOS_PRECIP", to="MULTIPLE"),
+        SnowTempEvolve(algo="SNOTEMP_NEWTONS", source="SNOW_TEMP"),
+    ]
+
+    class Test(RV):
+        hydrologic_processes: Sequence[rc.Process] = Field(
+            hp, alias="HydrologicProcesses"
+        )
+
+    out = dedent(Test().to_rv().strip())
+    assert (
+        out
+        == dedent(
+            """
+        :HydrologicProcesses
+          :Precipitation        PRECIP_RAVEN        ATMOS_PRECIP        MULTIPLE
+          :SnowTempEvolve       SNOTEMP_NEWTONS     SNOW_TEMP
+        :EndHydrologicProcesses
+        """
+        ).strip()
+    )
+
+
+def test_process_group():
+    from ravenpy.config.processes import Precipitation, ProcessGroup, SnowTempEvolve
+
+    hp = [
+        Precipitation(algo="PRECIP_RAVEN", source="ATMOS_PRECIP", to="MULTIPLE"),
+        SnowTempEvolve(algo="SNOTEMP_NEWTONS", source="SNOW_TEMP"),
+    ]
+    c = ProcessGroup(p=hp, params=(0, 1))
+    out = dedent(c.to_rv().strip())
+
+    assert (
+        out
+        == dedent(
+            """
+    :ProcessGroup
+        :Precipitation        PRECIP_RAVEN        ATMOS_PRECIP        MULTIPLE
+        :SnowTempEvolve       SNOTEMP_NEWTONS     SNOW_TEMP
+    :EndProcessGroup CALCULATE_WTS 0.0 1.0
+        """
+        ).strip()
+    )
+
+
 def test_soil_parameter_list():
-    c = SoilParameterListCommand(
-        names=["POROSITY", "FIELD_CAPACITY"],
-        records=[
-            PL(name="[DEFAULT]", vals=[1, 0]),
-            PL(name="FAST_RES", vals=[None, None]),
+    c = rc.SoilParameterList(
+        parameters=["POROSITY", "FIELD_CAPACITY"],
+        pl=[
+            rc.PL(name="[DEFAULT]", values=[1, 0]),
+            rc.PL(name="FAST_RES", values=[None, None]),
         ],
     )
 
     assert dedent(c.to_rv()) == dedent(
         """
     :SoilParameterList
-        :Parameters     ,          POROSITY,    FIELD_CAPACITY
-        :Units          ,              none,              none
-        [DEFAULT]       ,               1.0,               0.0
-        FAST_RES        ,          _DEFAULT,          _DEFAULT
+      :Parameters     ,          POROSITY,    FIELD_CAPACITY
+      :Units          ,              none,              none
+      [DEFAULT]       ,               1.0,               0.0
+      FAST_RES        ,          _DEFAULT,          _DEFAULT
     :EndSoilParameterList
     """
     )
 
 
 def test_vegetation_parameter_list():
-    c = VegetationParameterListCommand(
-        names=["MAX_CAPACITY", "MAX_SNOW_CAPACITY", "RAIN_ICEPT_PCT", "SNOW_ICEPT_PCT"],
-        records=[PL(name="VEG_ALL", vals=[10000, 10000, 0.88, 0.88])],
+    c = rc.VegetationParameterList(
+        parameters=[
+            "MAX_CAPACITY",
+            "MAX_SNOW_CAPACITY",
+            "RAIN_ICEPT_PCT",
+            "SNOW_ICEPT_PCT",
+        ],
+        pl=[rc.PL(name="VEG_ALL", values=[10000, 10000, 0.88, 0.88])],
     )
 
     assert dedent(c.to_rv()) == dedent(
         """
     :VegetationParameterList
-        :Parameters     ,      MAX_CAPACITY, MAX_SNOW_CAPACITY,    RAIN_ICEPT_PCT,    SNOW_ICEPT_PCT
-        :Units          ,              none,              none,              none,              none
-        VEG_ALL         ,           10000.0,           10000.0,              0.88,              0.88
+      :Parameters     ,      MAX_CAPACITY, MAX_SNOW_CAPACITY,    RAIN_ICEPT_PCT,    SNOW_ICEPT_PCT
+      :Units          ,              none,              none,              none,              none
+      VEG_ALL         ,           10000.0,           10000.0,              0.88,              0.88
     :EndVegetationParameterList
     """
     )
 
 
 def test_land_use_parameter_list():
-    c = LandUseParameterListCommand(
-        names=["MELT_FACTOR", "MIN_MELT_FACTOR"],
-        records=[PL(name="[DEFAULT]", vals=[1, 2.2])],
+    c = rc.LandUseParameterList(
+        parameters=["MELT_FACTOR", "MIN_MELT_FACTOR"],
+        pl=[rc.PL(name="[DEFAULT]", values=[1, 2.2])],
     )
     assert dedent(c.to_rv()) == dedent(
         """
     :LandUseParameterList
-        :Parameters     ,       MELT_FACTOR,   MIN_MELT_FACTOR
-        :Units          ,              none,              none
-        [DEFAULT]       ,               1.0,               2.2
+      :Parameters     ,       MELT_FACTOR,   MIN_MELT_FACTOR
+      :Units          ,              none,              none
+      [DEFAULT]       ,               1.0,               2.2
     :EndLandUseParameterList
     """
     )
 
     with pytest.raises(ValueError):
-        LandUseParameterListCommand(
+        rc.LandUseParameterList(
             names=["MELT_FACTOR", "MIN_MELT_FACTOR"],
-            records=[PL(name="[DEFAULT]", vals=[None, 2.2])],
+            pl=[rc.PL(name="[DEFAULT]", values=[None, 2.2])],
         )
 
 
-class TestHRUStateVariableTableCommand:
+class TestHRUStateVariableTable:
     def test_to_rv(self):
-        s1 = HRUState(index=1, data={"SOIL[0]": 0.1, "SOIL[1]": 1.0})
-        s2 = HRUState(index=2, data={"SOIL[3]": 3, "SOIL[2]": 2.0})
-        t = HRUStateVariableTableCommand(hru_states={1: s1, 2: s2})
+        s1 = rc.HRUState(hru_id=1, data={"SOIL[0]": 0.1, "SOIL[1]": 1.0})
+        s2 = rc.HRUState(hru_id=2, data={"SOIL[3]": 3, "SOIL[2]": 2.0})
+        t = rc.HRUStateVariableTable(__root__=[s1, s2])
         assert dedent(t.to_rv()) == dedent(
             """
             :HRUStateVariableTable
-                :Attributes,SOIL[0],SOIL[1],SOIL[2],SOIL[3]
-                1,0.1,1.0,0.0,0.0
-                2,0.0,0.0,2.0,3.0
+              :Attributes     ,           SOIL[0],           SOIL[1],           SOIL[2],           SOIL[3]
+              1,0.1,1.0,0.0,0.0
+              2,0.0,0.0,2.0,3.0
             :EndHRUStateVariableTable
             """
         )
+
+        s1 = dict(hru_id=1, data={"SOIL[0]": 0.1, "SOIL[1]": 1.0})
+        rc.HRUStateVariableTable(__root__=[s1])
 
     def test_parse(self):
         solution = """
@@ -201,7 +298,165 @@ class TestHRUStateVariableTableCommand:
   1,0.00000,0.00000,-0.16005,0.00000,144.54883,455.15708,0.16005,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000
 :EndHRUStateVariableTable
         """
-        sv = HRUStateVariableTableCommand.parse(solution)
-        assert len(sv.hru_states) == 1
-        assert sv.hru_states[1].index == 1
-        assert sv.hru_states[1].data["ATMOS_PRECIP"] == -0.16005
+        sv = rc.HRUStateVariableTable.parse(solution).__root__
+        assert len(sv) == 1
+        assert sv[0].hru_id == 1
+        assert sv[0].data["ATMOS_PRECIP"] == -0.16005
+
+
+def test_read_from_netcdf(get_local_testdata):
+    from ravenpy.config.commands import ReadFromNetCDF
+
+    f = get_local_testdata(
+        "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
+    )
+    c = ReadFromNetCDF.from_nc(f, "PRECIP", station_idx=1, alt_names=("rain",))
+    s = dedent(c.to_rv())
+
+    pat = re.compile(
+        r"""
+    :ReadFromNetCDF\s+
+      :FileNameNC\s+.+/raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc\s+
+      :VarNameNC\s+rain\s+
+      :DimNamesNC\s+time\s+
+      :StationIdx\s+1\s+
+      :LatitudeVarNameNC\s+lat\s+
+      :LongitudeVarNameNC\s+lon\s+
+    :EndReadFromNetCDF
+    """,
+        re.VERBOSE + re.MULTILINE,
+    )
+    assert pat.search(s) is not None
+    assert isinstance(c.da, xr.DataArray)
+
+
+def test_station_forcing(get_local_testdata):
+    f = get_local_testdata(
+        "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_2d.nc"
+    )
+    c = rc.StationForcing.from_nc(f, "PRECIP", station_idx=1, alt_names="rain")
+    dedent(c.to_rv())
+
+
+def test_gridded_forcing(get_local_testdata):
+    """TODO: Make sure dimensions are in the order x, y, t."""
+    fn = get_local_testdata("raven-routing-sample/VIC_temperatures.nc")
+
+    rc.GriddedForcing.from_nc(fn, data_type="TEMP_AVE", alt_names=("Avg_temp",))
+    # assert gf.dim_names_nc == ("lon", "lat", "time")
+
+    fn = get_local_testdata("raven-routing-sample/VIC_streaminputs.nc")
+    rc.GriddedForcing.from_nc(fn, data_type="PRECIP", alt_names=("Streaminputs",))
+    # assert gf.dim_names_nc == ("lon_dim", "lat_dim", "time")
+
+
+def test_gauge(get_local_testdata):
+    f = get_local_testdata(
+        "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
+    )
+    g = rc.Gauge.from_nc(
+        f,
+        alt_names={"RAINFALL": "rain", "SNOWFALL": "snow"},
+        data_kwds={"ALL": {"Deaccumulate": True}},
+    )
+
+    assert "Data" in g.to_rv()
+    assert isinstance(g.ds, xr.Dataset)
+    assert "RAINFALL" in g.ds
+    assert g.data[0].read_from_netcdf.deaccumulate
+
+    with pytest.raises(ValueError):
+        rc.Gauge.from_nc(
+            f,
+            data_type=[
+                "RAINFALL",
+            ],
+            alt_names={"RAINFALL": "bad_name"},
+        )
+
+
+def test_grid_weights():
+    gw = rc.GridWeights()
+    txt = gw.to_rv()
+
+    parsed = rc.GridWeights.parse(txt)
+    assert parsed.number_hrus == gw.number_hrus
+    assert parsed.number_grid_cells == gw.number_grid_cells
+    assert parsed.data == gw.data
+
+
+def test_redirect_to_file(get_local_testdata):
+    f = get_local_testdata("raven-routing-sample/VIC_test_nodata_weights.rvt")
+    r = rc.RedirectToFile(__root__=f)
+    assert re.match(r"^:RedirectToFile\s+(\S+)$", r.to_rv())
+
+    class Test(RV):
+        gw: Union[rc.GridWeights, rc.RedirectToFile] = Field(
+            None, alias="RedirectToFile"
+        )
+
+    t = Test(gw=f)
+    assert t.gw.__root__ == f
+
+
+def test_subbasin_properties():
+    c = rc.SubBasinProperties(
+        parameters=["GAMMA_SCALE", "GAMMA_SHAPE"],
+        records=[{"sb_id": 1, "values": (0, 1)}],
+    )
+    assert "0, 1" in c.to_rv()
+
+
+def test_subbasins():
+    c = rc.SubBasins.parse_obj([{"name": "SB1"}])
+    c.to_rv()
+    assert c[0].gauged
+
+    class Test(RV):
+        sub_basins: rc.SubBasins = Field([rc.SubBasin()], alias="SubBasins")
+        hrus: rc.HRUs = Field([rc.HRU()], alias="HRUs")
+
+    Test().to_rv()
+
+
+def test_ensemble_mode():
+    c = rc.EnsembleMode(n=10)
+    s = c.to_rv().strip()
+    assert s == ":EnsembleMode ENSEMBLE_ENKF 10"
+
+
+def test_observation_error_model():
+    c = rc.ObservationErrorModel(
+        state="STREAMFLOW", dist="DIST_UNIFORM", p1=1, p2=2, adj="ADDITIVE"
+    )
+
+    assert (
+        c.to_rv().strip()
+        == ":ObservationErrorModel STREAMFLOW DIST_UNIFORM 1.0 2.0 ADDITIVE"
+    )
+
+
+def test_forcing_perturbation():
+    c = rc.ForcingPerturbation(
+        forcing="TEMP_AVE", dist="DIST_UNIFORM", p1=1, p2=2, adj="ADDITIVE"
+    )
+
+    assert (
+        c.to_rv().strip()
+        == ":ForcingPerturbation TEMP_AVE DIST_UNIFORM 1.0 2.0 ADDITIVE"
+    )
+
+
+def test_hru_group():
+    c = rc.HRUGroup(name="ForestedHRUs", groups=["1", "3-5"])
+    s = dedent(c.to_rv()).strip()
+    assert (
+        s
+        == dedent(
+            """
+            :HRUGroup ForestedHRUs
+              1,3-5
+            :EndHRUGroup
+                """
+        ).strip()
+    )

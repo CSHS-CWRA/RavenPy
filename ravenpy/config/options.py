@@ -1,6 +1,46 @@
 from enum import Enum
 from typing import Literal
 
+Forcings = Literal[
+    "PRECIP",
+    "PRECIP_DAILY_AVE",
+    "PRECIP_5DAY",
+    "SNOW_FRAC",
+    "SNOWFALL",
+    "RAINFALL",
+    "RECHARGE",
+    "TEMP_AVE",
+    "TEMP_DAILY_AVE",
+    "TEMP_MIN",
+    "TEMP_DAILY_MIN",
+    "TEMP_MAX",
+    "TEMP_DAILY_MAX",
+    "TEMP_MONTH_MAX",
+    "TEMP_MONTH_MIN",
+    "TEMP_MONTH_AVE",
+    "TEMP_AVE_UNC",
+    "TEMP_MAX_UNC",
+    "TEMP_MIN_UNC",
+    "AIR_DENS",
+    "AIR_PRES",
+    "REL_HUMIDITY",
+    "ET_RADIA",
+    "SHORTWAVE",
+    "SW_RADIA",
+    "SW_RADIA_NET",
+    "LW_RADIA_NET",
+    "LW_INCOMING",
+    "CLOUD_COVER",
+    "DAY_LENGTH",
+    "DAY_ANGLE",
+    "WIND_VEL",
+    "PET",
+    "OW_PET",
+    "PET_MONTH_AVE",
+    "POTENTIAL_MELT",
+    "SUBDAILY_CORR",
+]
+
 # Allowed soil parameters
 SoilParameters = Literal[
     "SAND_CON",
@@ -31,13 +71,16 @@ SoilParameters = Literal[
     "VIC_EVAP_GAMMA",
     "MAX_PERC_RATE",
     "PERC_N",
+    "PERC_COEFF",
     "SAC_PERC_ALPHA",
     "SAC_PERC_EXPON",
+    "SAC_PERC_PFREE",
+    "UNAVAIL_FRAC",
     "HBV_BETA",
     "MAX_BASEFLOW_RATE",
     "BASEFLOW_N",
     "BASEFLOW_COEFF",
-    "BASEFLOW_COEF2",
+    "BASEFLOW_COEFF2",
     "BASEFLOW_THRESH",
     "BF_LOSS_FRACTION",
     "STORAGE_THRESHOLD",
@@ -48,6 +91,8 @@ SoilParameters = Literal[
     "UBC_INFIL_SOIL_DEF",
     "GR4J_X2",
     "GR4J_X3",
+    "B_EXP",
+    "PET_CORRECTION",  # Not in Raven Docs Table A.3
 ]
 
 StateVariables = Literal[
@@ -56,6 +101,9 @@ StateVariables = Literal[
     "ATMOS_PRECIP",
     "PONDED_WATER",
     "SOIL",
+    "SOIL[0]",
+    "SOIL[1]",
+    "SOIL[2]",
     "GROUNDWATER",
     "CANOPY",
     "CANOPY_SNOW",
@@ -88,6 +136,7 @@ StateVariables = Literal[
     "CONSTITUENT_SRC",
     "CONSTITUENT_SW",
     "CONSTITUENT_SINK",
+    "MULTIPLE",
 ]
 
 LandUseParameters = Literal[
@@ -101,6 +150,7 @@ LandUseParameters = Literal[
     "MELT_FACTOR",
     "DD_REFREEZE_TEMP",
     "MIN_MELT_FACTOR",
+    "MAX_MELT_FACTOR",
     "REFREEZE_FACTOR",
     "REFREEZE_EXP",
     "DD_AGGRADATION",
@@ -131,10 +181,14 @@ LandUseParameters = Literal[
     "FOREST_PET_CORR",
     "GAMMA_SCALE",
     "GAMMA_SHAPE",
+    "GAMMA_SCALE2",
+    "GAMMA_SHAPE2",
     "HMETS_RUNOFF_COEFF",
     "AET_COEFF",
     "GR4J_X4",
     "UBC_ICEPT_FACTOR",
+    "STREAM_FRACTION",
+    "BF_LOSS_FRACTION",
 ]
 
 VegetationParameters = Literal[
@@ -162,7 +216,13 @@ VegetationParameters = Literal[
     "DRIP_PROPORTION",
     "MAX_INTERCEPT_RATE",
     "CHU_MATURITY",
-    "PET_VEG_CORR",
+    "VEG_DIAM",
+    "VEG_MBETA",
+    "VEG_DENS" "PET_VEG_CORR",
+    "TFRAIN",
+    "TFSNOW",
+    "RELATIVE_HT",
+    "RELATIVE_LAI",
 ]
 
 
@@ -190,8 +250,12 @@ class CatchmentRoute(Enum):
     DUMP = "ROUTE_DUMP"
     GAMMA = "ROUTE_GAMMA_CONVOLUTION"
     TRI = "ROUTE_TRI_CONVOLUTION"
+    TRI_CONVOLUTION = "TRI_CONVOLUTION"
+    TRIANGULAR_UH = "TRIANGULAR_UH"
     RESERVOIR = "ROUTE_RESERVOIR_SERIES"
     EXP = "ROUTE_EXPONENTIAL"
+    DELAYED_FIRST_ORDER = "ROUTE_DELAYED_FIRST_ORDER"
+    EXPONENTIAL_UH = "EXPONENTIAL_UH"
 
 
 class CloudCoverMethod(Enum):
@@ -214,21 +278,36 @@ class EvaluationMetrics(Enum):
     KLING_GUPTA = "KLING_GUPTA"
 
 
+evaluation_metrics_multiplier = dict(
+    NASH_SUTCLIFFE=1,
+    LOG_NASH=1,
+    RMSE=-1,
+    PCT_BIAS="Not Supported",
+    ABSERR=-1,
+    ABSMAX=-1,
+    PDIFF=-1,
+    TMVOL=-1,
+    RCOEFF=-1,
+    NSC=1,
+    KLING_GUPTA=1,
+)
+
+
 class Evaporation(Enum):
-    PET_CONSTANT = "PET_CONSTANT"
-    PET_PENMAN_MONTEITH = "PET_PENMAN_MONTEITH"
-    PET_PENMAN_COMBINATION = "PET_PENMAN_COMBINATION"
-    PET_PRIESTLEY_TAYLOR = "PET_PRIESTLEY_TAYLOR"
-    PET_HARGREAVES = "PET_HARGREAVES"
-    PET_HARGREAVES_1985 = "PET_HARGREAVES_1985"
-    PET_FROMMONTHLY = "PET_FROMMONTHLY"
-    PET_DATA = "PET_DATA"
-    PET_HAMON_1961 = "PET_HAMON_1961"
-    PET_TURC_1961 = "PET_TURC_1961"
-    PET_MAKKINK_1957 = "PET_MAKKINK_1957"
-    PET_MONTHLY_FACTOR = "PET_MONTHLY_FACTOR"
-    PET_MOHYSE = "PET_MOHYSE"
-    PET_OUDIN = "PET_OUDIN"
+    CONSTANT = "PET_CONSTANT"
+    PENMAN_MONTEITH = "PET_PENMAN_MONTEITH"
+    PENMAN_COMBINATION = "PET_PENMAN_COMBINATION"
+    PRIESTLEY_TAYLOR = "PET_PRIESTLEY_TAYLOR"
+    HARGREAVES = "PET_HARGREAVES"
+    HARGREAVES_1985 = "PET_HARGREAVES_1985"
+    FROMMONTHLY = "PET_FROMMONTHLY"
+    DATA = "PET_DATA"
+    HAMON_1961 = "PET_HAMON_1961"
+    TURC_1961 = "PET_TURC_1961"
+    MAKKINK_1957 = "PET_MAKKINK_1957"
+    MONTHLY_FACTOR = "PET_MONTHLY_FACTOR"
+    MOHYSE = "PET_MOHYSE"
+    OUDIN = "PET_OUDIN"
 
 
 class LWRadiationMethod(Enum):
@@ -257,10 +336,19 @@ class OroPrecipCorrect(Enum):
     SIMPLELAPSE = "OROCORR_SIMPLELAPSE"
 
 
+class OroTempCorrect(Enum):
+    NONE = "OROCORR_NONE"
+    HBV = "OROCORR_HBV"
+    UBC = "OROCORR_UBC"
+    UBC2 = "OROCORR_UBC_2"
+    SIMPLELAPSE = "OROCORR_SIMPLELAPSE"
+
+
 class PotentialMeltMethod(Enum):
     """:PotentialMelt algorithms"""
 
     DEGREE_DAY = "POTMELT_DEGREE_DAY"
+    NONE = "POTMELT_NONE"
     RESTRICTED = "POTMELT_RESTRICTED"
     DATA = "POTMELT_DATA"
     EB = "POTMELT_EB"
@@ -268,6 +356,10 @@ class PotentialMeltMethod(Enum):
     HMETS = "POTMELT_HMETS"
     HBV = "POTMELT_HBV"
     UBC = "POTMELT_UBC"
+
+
+class Precipitation(Enum):
+    DEFAULT = "PRECIP_RAVEN"
 
 
 class PrecipIceptFract(Enum):
@@ -310,6 +402,24 @@ class SoilModel(Enum):
     MULTILAYER = "SOIL_MULTILAYER"
 
 
+SubBasinProperties = Literal[
+    "TIME_TO_PEAK",
+    "TIME_CONC",
+    "TIME_LAG",
+    "NUM_RESERVOIRS",
+    "RES_CONSTANT",
+    "GAMMA_SHAPE",
+    "GAMMA_SCALE",
+    "Q_REFERENCE",
+    "MANNINGS_N",
+    "SLOPE",
+    "DIFFUSIVITY",
+    "CELERITY",
+    "RAIN_CORR",
+    "SNOW_CORR",
+]
+
+
 class SubdailyMethod(Enum):
     NONE = "SUBDAILY_NONE"
     SIMPLE = "SUBDAILY_SIMPLE"
@@ -324,9 +434,10 @@ class SWCanopyCorrect(Enum):
 
 
 class SWCloudCorrect(Enum):
-    NONE = "SW_CLOUDCOV_CORR_NONE"  # Default
-    DINGMAN = "SW_CLOUDCOV_CORR_DINGMAN"
-    UBC = "SW_CLOUDCOV_CORR_UBC"
+    NONE = "SW_CLOUD_CORR_NONE"  # Default
+    DINGMAN = "SW_CLOUD_CORR_DINGMAN"
+    UBC = "SW_CLOUD_CORR_UBCWM"
+    ANNANDALE = "SW_CLOUD_CORR_ANNANDALE"
 
 
 class SWRadiationMethod(Enum):
@@ -339,3 +450,11 @@ class WindspeedMethod(Enum):
     CONSTANT = "WINDVEL_CONSTANT"
     DATA = "WINDVEL_DATA"
     UBC = "WINDVEL_UBC"
+
+
+class EnKFMode(Enum):
+    SPINUP = "ENKF_SPINUP"
+    CLOSED_LOOP = "ENKF_CLOSED_LOOP"
+    FORECAST = "ENKF_FORECAST"
+    OPEN_LOOP = "ENKF_OPEN_LOOP"
+    OPEN_FORECAST = "ENKF_OPEN_FORECAST"

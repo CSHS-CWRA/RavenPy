@@ -1,6 +1,4 @@
-"""
-Checks for various geospatial and IO conditions.
-"""
+"""Checks for various geospatial and IO conditions."""
 
 import collections
 import logging
@@ -25,12 +23,12 @@ import ravenpy.utilities.io as io
 LOGGER = logging.getLogger("RavenPy")
 
 
-def single_file_check(file_list: List[Union[str, Path]]) -> Any:
+def single_file_check(file_list: Sequence[Union[str, Path]]) -> Any:
     """Return the first element of a file list. Raise an error if the list is empty or contains more than one element.
 
     Parameters
     ----------
-    file_list : List[Union[str, Path]]
+    file_list : Sequence of str or Path
     """
     if isinstance(file_list, (str, Path)):
         return file_list
@@ -57,11 +55,11 @@ def boundary_check(
 
     Parameters
     ----------
-    args : Union[str, Path]
+    *args : Sequence of str or Path
       str or Path to file(s)
-    max_y : Union[int, float]
+    max_y : int or float
       Maximum value allowed for latitude. Default: 60.
-    min_y : Union[int, float]
+    min_y : int or float
       Minimum value allowed for latitude. Default: -60.
     """
     vectors = (".gml", ".shp", ".geojson", ".gpkg", ".json")
@@ -134,15 +132,15 @@ def feature_contains(
 
     Parameters
     ----------
-    point : Union[Tuple[Union[int, float, str], Union[str, float, int]], Point]
-      Geographic coordinates of a point (lon, lat) or a shapely Point.
-    shp : Union[str, Path, List[str, Path]]
-      Path to the file storing the geometries.
+    point : tuple[Union[int, float, str], Union[str, float, int]], Point]
+        Geographic coordinates of a point (lon, lat) or a shapely Point.
+    shp : str or Path or list of str or Path
+        The path to the file storing the geometries.
 
     Returns
     -------
-    Union[dict, bool]
-      The feature found.
+    dict or bool
+        The feature found.
 
     Notes
     -----

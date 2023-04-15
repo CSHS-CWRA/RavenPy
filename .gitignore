@@ -70,6 +70,8 @@ instance/
 
 # Sphinx documentation
 docs/_build/
+docs/.jupyter_cache
+docs/jupyter_execute
 
 # PyBuilder
 target/
@@ -111,5 +113,5 @@ ENV/
 .vscode/
 .idea/
 
-# Fetch and build folder for RavenC binary
+# Download and compile site for Raven binaries
 external_deps

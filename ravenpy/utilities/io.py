@@ -1,6 +1,4 @@
-"""
-Tools for reading and writing geospatial data formats.
-"""
+"""Tools for reading and writing geospatial data formats."""
 import logging
 import os
 import tarfile
@@ -9,7 +7,7 @@ import warnings
 import zipfile
 from pathlib import Path
 from re import search
-from typing import Iterable, List, Optional, Sequence, Union
+from typing import Iterable, List, Optional, Sequence, Tuple, Union
 
 from . import gis_import_error_message
 
@@ -27,7 +25,9 @@ WGS84 = 4326
 
 
 # Function addressing exploit CVE-2007-4559
-def is_within_directory(directory, target):
+def is_within_directory(
+    directory: Union[str, os.PathLike], target: Union[str, os.PathLike]
+) -> bool:
     abs_directory = os.path.abspath(directory)
     abs_target = os.path.abspath(target)
 
@@ -37,7 +37,9 @@ def is_within_directory(directory, target):
 
 
 # Function addressing exploit CVE-2007-4559
-def safe_extract(tar, path=".", members=None, *, numeric_owner=False):
+def safe_extract(
+    tar: tarfile.TarFile, path: str = ".", members=None, *, numeric_owner=False
+) -> None:
     for member in tar.getmembers():
         member_path = os.path.join(path, member.name)
         if not is_within_directory(path, member_path):
@@ -47,18 +49,17 @@ def safe_extract(tar, path=".", members=None, *, numeric_owner=False):
 
 
 def address_append(address: Union[str, Path]) -> str:
-    """
-    Formats a URL/URI to be more easily read with libraries such as "rasterstats"
+    """Format a URL/URI to be more easily read with libraries such as "rasterstats".
 
     Parameters
     ----------
-    address: Union[str, Path]
-      URL/URI to a potential zip or tar file
+    address : Union[str, Path]
+        URL/URI to a potential zip or tar file
 
     Returns
     -------
     str
-      URL/URI prefixed for archive type
+        URL/URI prefixed for archive type
     """
     zipped = search(r"(\.zip)", str(address))
     tarred = search(r"(\.tar)", str(address))
@@ -84,15 +85,15 @@ def generic_extract_archive(
 
     Parameters
     ----------
-    resources: Union[str, Path, List[Union[bytes, str, Path]]]
-      list of archive files (if netCDF files are in list, they are passed and returned as well in the return).
-    output_dir: Optional[Union[str, Path]]
-      string or Path to a working location (default: temporary folder).
+    resources : str or Path or list of bytes or str or Path
+        List of archive files (if netCDF files are in list, they are passed and returned as well in the return).
+    output_dir : str or Path, optional
+        String or Path to a working location (default: temporary folder).
 
     Returns
     -------
     list
-      List of original or of extracted files
+        List of original or of extracted files.
     """
 
     archive_types = [".tar", ".zip", ".7z"]
@@ -143,23 +144,23 @@ def generic_extract_archive(
 def archive_sniffer(
     archives: Union[str, Path, List[Union[str, Path]]],
     working_dir: Optional[Union[str, Path]] = None,
-    extensions: Optional[Iterable[str]] = None,
+    extensions: Optional[Sequence[str]] = None,
 ) -> List[Union[str, Path]]:
     """Return a list of locally unarchived files that match the desired extensions.
 
     Parameters
     ----------
-    archives : Union[str, Path, List[Union[str, Path]]]
-      archive location or list of archive locations
-    working_dir : Union[str, path]
-      string or Path to a working location
-    extensions : List[str]
-      list of accepted extensions
+    archives : str or Path or list of str or Path
+        Archive location or list of archive locations.
+    working_dir : str or Path, optional
+        String or Path to a working location.
+    extensions : Sequence of str, optional
+        List of accepted extensions.
 
     Returns
     -------
-    List[Union[str, Path]]
-      List of files with matching accepted extensions
+    list of str or Path
+        List of files with matching accepted extensions.
     """
     potential_files = list()
 
@@ -262,21 +263,22 @@ def raster_datatype_sniffer(file: Union[str, Path]) -> str:
         raise ValueError(msg)
 
 
-def get_bbox(vector: Union[str, Path], all_features: bool = True) -> tuple:
+def get_bbox(
+    vector: Union[str, Path], all_features: bool = True
+) -> Tuple[float, float, float, float]:
     """Return bounding box of all features or the first feature in file.
 
     Parameters
     ----------
-    vector : str
-      Path to file storing vector features.
+    vector : str or Path
+        A path to file storing vector features.
     all_features : bool
-      Return the bounding box for all features. Default: True.
+        Return the bounding box for all features. Default: True.
 
     Returns
     -------
-    tuple
+    float, float, float, float
       Geographic coordinates of the bounding box (lon0, lat0, lon1, lat1).
-
     """
 
     if not all_features:

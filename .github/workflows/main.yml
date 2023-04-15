@@ -24,7 +24,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
-          python-version: "3.8"
+          python-version: "3.9"
       - name: Install tox and setuptools
         run: |
           pip install tox
@@ -43,10 +43,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - tox-env: py38
-            python-version: "3.8"
-            os: ubuntu-latest
-          - tox-env: py39
+          - tox-env: py39-numpy
             python-version: "3.9"
             os: ubuntu-latest
           - tox-env: py310

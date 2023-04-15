@@ -1,9 +1,10 @@
 from dataclasses import fields
+from typing import Tuple
 
 import numpy as np
 import xarray as xr
 
-import ravenpy.models as models
+from ravenpy.config.emulators import get_model
 
 
 def realization(n):
@@ -12,13 +13,13 @@ def realization(n):
     Parameters
     ----------
     n : int
-      Size of the ensemble.
+        Size of the ensemble.
     """
     return xr.IndexVariable(
-        "realization",
+        "members",
         data=range(n),
         attrs={
-            "standard_name": "realization",
+            "standard_name": "members",
             "axis": "E",
             "units": "1",
             "long_name": "Label identifying the ensemble member",
@@ -32,12 +33,13 @@ def param(model):
     Parameters
     ----------
     model : str
-      Model name.
+        Model name.
     """
-    model_cls = models.get_model(model)
+    cls = get_model(model)
+    P = cls.__fields__["params"].type_
     return xr.IndexVariable(
         "param",
-        data=np.array([f.name for f in fields(model_cls.Params)]),
+        data=np.array([f.name for f in fields(P)]),
         attrs={
             "standard_name": "parameter",
             "long_name": f"{model} model parameter name",
@@ -45,7 +47,9 @@ def param(model):
     )
 
 
-def infer_scale_and_offset(da: xr.DataArray, data_type: str) -> (float, float):
+def infer_scale_and_offset(
+    da: xr.DataArray, data_type: str, cumulative: bool = False
+) -> Tuple[float, float]:
     """Return scale and offset parameters from data.
 
     Infer scale and offset parameters describing the linear transformation from the units in file to Raven
@@ -54,14 +58,20 @@ def infer_scale_and_offset(da: xr.DataArray, data_type: str) -> (float, float):
     Parameters
     ----------
     da : xr.DataArray
-      Input data.
+        Input data.
     data_type : str
-      Raven data type, e.g. 'PRECIP', 'TEMP_AVE', etc.
+        Raven data type, e.g. 'PRECIP', 'TEMP_AVE', etc.
+    cumulative : bool
+        Default: False.
 
     Returns
     -------
     float, float
-      Scale and offset parameters.
+        Scale and offset parameters.
+
+    Notes
+    -----
+    Does not work with accumulated variables.
     """
     import pint
     from xclim.core.units import FREQ_UNITS, parse_offset, units, units2pint
@@ -89,6 +99,8 @@ def infer_scale_and_offset(da: xr.DataArray, data_type: str) -> (float, float):
                 raise ValueError(f"Irregular time frequency for input data {da}")
             real_source = source / multi / units(FREQ_UNITS[base])
             scale, offset = units_transform(real_source, target)
+        else:
+            raise NotImplementedError(f"data_type: {data_type}")
 
     return scale, offset
 
