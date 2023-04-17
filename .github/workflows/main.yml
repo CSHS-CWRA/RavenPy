@@ -36,7 +36,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - tox-env: py39-numpy
+          - tox-env: py38
             python-version: "3.8"
           - tox-env: py39-numpy
             python-version: "3.9"
