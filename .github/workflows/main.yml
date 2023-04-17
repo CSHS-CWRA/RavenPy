@@ -80,7 +80,8 @@ jobs:
           environment-file: environment.yml
           extra-specs: |
             mamba
-            python="3.9"
+            pip<23.1
+            python=3.9
       - name: Conda and Mamba versions
         run: |
           mamba --version

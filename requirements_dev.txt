@@ -1,4 +1,4 @@
-pip
+pip>=21.0,<23.1
 bump2version
 wheel
 watchdog
@@ -13,7 +13,7 @@ pytest
 pytest-cov
 pytest-xdist>=3.2.0
 filelock
-black>=23.1.0
+black>=23.3.0
 isort
 pre-commit
 holoviews
