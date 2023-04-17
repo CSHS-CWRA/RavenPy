@@ -306,6 +306,7 @@ def _shift_esp_time(nc, year, dim="member"):
     )
 
     # Write to disk
+    # FIXME: pathlib.Path().with_stem() was introduced in Python3.9
     fn = nc.with_stem(nc.stem + "_shifted")
     out.to_netcdf(fn, mode="w")
     return fn
