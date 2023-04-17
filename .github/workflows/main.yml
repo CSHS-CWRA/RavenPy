@@ -36,6 +36,8 @@ jobs:
     strategy:
       matrix:
         include:
+          - tox-env: py38
+            python-version: "3.8"
           - tox-env: py39-numpy
             python-version: "3.9"
           - tox-env: py310
@@ -78,7 +80,8 @@ jobs:
           environment-file: environment.yml
           extra-specs: |
             mamba
-            python="3.9"
+            pip<23.1
+            python=3.9
       - name: Conda and Mamba versions
         run: |
           mamba --version

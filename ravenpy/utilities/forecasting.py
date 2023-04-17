@@ -306,7 +306,7 @@ def _shift_esp_time(nc, year, dim="member"):
     )
 
     # Write to disk
-    fn = nc.with_stem(nc.stem + "_shifted")
+    fn = nc.parent.joinpath(f"{nc.stem}_shifted{nc.suffix}")
     out.to_netcdf(fn, mode="w")
     return fn
 
