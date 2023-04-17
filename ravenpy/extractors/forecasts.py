@@ -1,13 +1,21 @@
 import datetime as dt
 import logging
 import re
+from pathlib import Path
 from typing import Any, List, Tuple, Union
 
-import fiona
 import pandas as pd
 import xarray as xr
 from pandas import DatetimeIndex, Series, Timestamp
 from xarray import Dataset
+
+from . import gis_import_error_message
+
+try:
+    import fiona
+except (ImportError, ModuleNotFoundError) as e:
+    msg = gis_import_error_message.format(Path(__file__).stem)
+    raise ImportError(msg) from e
 
 LOGGER = logging.getLogger("PYWPS")
 
@@ -32,7 +40,7 @@ def get_hindcast_day(region_coll: fiona.Collection, date, climate_model="GEPS"):
 def get_CASPAR_dataset(
     climate_model: str, date: dt.datetime
 ) -> Tuple[
-    xr.Dataset, list[Union[Union[DatetimeIndex, Series, Timestamp, Timestamp], Any]]
+    xr.Dataset, List[Union[Union[DatetimeIndex, Series, Timestamp, Timestamp], Any]]
 ]:
     """Return CASPAR dataset."""
 
@@ -58,8 +66,8 @@ def get_CASPAR_dataset(
 
 def get_ECCC_dataset(
     climate_model: str,
-) -> tuple[
-    Dataset, list[Union[Union[DatetimeIndex, Series, Timestamp, Timestamp], Any]]
+) -> Tuple[
+    Dataset, List[Union[Union[DatetimeIndex, Series, Timestamp, Timestamp], Any]]
 ]:
     """Return latest GEPS forecast dataset."""
     if climate_model == "GEPS":

@@ -239,7 +239,7 @@ def create_external_deps_install_class(command_cls):
 setup(
     author="David Huard",
     author_email="huard.david@ouranos.ca",
-    python_requires=">=3.9",
+    python_requires=">=3.8",
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
@@ -248,6 +248,7 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Natural Language :: English",
         "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python",

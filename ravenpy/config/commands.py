@@ -629,9 +629,9 @@ class Gauge(FlatCommand):
         alt_names: Optional[Dict[str, str]] = None,
         mon_ave: bool = False,
         data_kwds: Optional[
-            dict[
+            Dict[
                 str,
-                Union[dict[str, Union[bool, dict[str, int], float]], dict[str, Any]],
+                Union[Dict[str, Union[bool, Dict[str, int], float]], Dict[str, Any]],
             ]
         ] = None,
         **kwds,
