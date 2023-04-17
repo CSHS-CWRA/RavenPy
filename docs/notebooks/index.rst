@@ -38,6 +38,7 @@ Advanced workflows
    Assess_probabilistic_flood_risk
    Distributed_hydrological_modelling
    HydroShare_integration
+   Managing_Jupyter_Environments
    Perform_Regionalization
    Running_HMETS_with_CANOPEX_dataset
    time_series_analysis
