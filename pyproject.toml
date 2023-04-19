@@ -1,0 +1,222 @@
+[build-system]
+requires = ["flit_core >=3.8,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "ravenpy"
+authors = [
+  {name = "David Huard", email = "huard.david@ouranos.ca"}
+]
+maintainers = [
+  {name = "Trevor James Smith", email = "smith.trevorj@ouranos.ca"}
+]
+readme = {file = "README.rst", content-type = "text/x-rst"}
+requires-python = ">=3.8.0"
+keywords = ["raven", "raven-hydro", "hydrology", "gis", "analysis", "modelling"]
+license = {file = "LICENSE"}
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Education",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Natural Language :: English",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python",
+  "Topic :: Scientific/Engineering :: Atmospheric Science",
+  "Topic :: Scientific/Engineering :: GIS",
+  "Topic :: Scientific/Engineering :: Hydrology"
+]
+dynamic = ["description", "version"]
+dependencies = [
+  "cftime",
+  "cf-xarray",
+  "click",
+  "climpred>=2.1",
+  "dask",
+  "haversine",
+  "matplotlib",
+  "netCDF4",
+  "numpy",
+  "owslib<0.29",
+  "pandas<2.0",
+  "pint>=0.20",
+  "pydantic",
+  "pymbolic",
+  "requests",
+  "scipy",
+  "spotpy",
+  "statsmodels",
+  "wheel",
+  "xarray<2022.11.0", # Pinned due to incompatibility with climpred @ 2.2.0
+  "xclim>=0.40.0",
+  "xskillscore"
+]
+
+[project.optional-dependencies]
+dev = [
+  "Click",
+  "black>=23.3.0",
+  "bump2version",
+  "coverage",
+  "coveralls",
+  "filelock",
+  "flake8",
+  "holoviews",
+  "hvplot",
+  "isort",
+  "pre-commit",
+  "pytest",
+  "pytest-cov",
+  "pytest-xdist>=3.2.0",
+  "tox",
+  "watchdog",
+  "wheel",
+  # GIS Dependencies
+  "affine",
+  "fiona>=1.9",
+  "geopandas>=0.9.0",
+  "gdal",
+  "lxml",
+  "owslib>=0.24.1,<0.29",
+  "pyproj>=3.0.0",
+  "rasterio",
+  "rioxarray",
+  "shapely"
+]
+docs = [
+  "autodoc_pydantic",
+  "birdhouse-birdy",
+  "cartopy",
+  "clisops",
+  "gcsfs",
+  "hs_restclient",
+  "intake",
+  "intake-esm",
+  "intake-xarray",
+  "ipykernel",
+  "ipyleaflet",
+  "ipython",
+  "ipywidgets",
+  "jupyter-cache",
+  "jupyter_client",
+  "jupytext",
+  "myst_nb",
+  "nbsphinx",
+  "numpydoc",
+  "owslib>=0.24.1,<0.29",
+  "pandoc",
+  "pymetalink",
+  "s3fs",
+  "sphinx",
+  "sphinx-click",
+  "sphinx-codeautolink",
+  "sphinx-copybutton",
+  "sphinx-rtd-theme>=1.0",
+  "xesmf",
+  # GIS Dependencies
+  "affine",
+  "fiona>=1.9",
+  "geopandas>=0.9.0",
+  "gdal",
+  "lxml",
+  "owslib>=0.24.1,<0.29",
+  "pyproj>=3.0.0",
+  "rasterio",
+  "rioxarray",
+  "shapely"
+]
+gis = [
+  "affine",
+  "fiona>=1.9",
+  "geopandas>=0.9.0",
+  "gdal",
+  "lxml",
+  "owslib>=0.24.1,<0.29",
+  "pyproj>=3.0.0",
+  "rasterio",
+  "rioxarray",
+  "shapely"
+]
+
+[project.scripts]
+raven = "ravenpy.cli:main"
+
+[project.urls]
+"Homepage" = "https://ravenpy.readthedocs.io"
+"Source" = "https://github.com/CSHS-CWRA/RavenPy"
+"Changelog" = "https://ravenpy.readthedocs.io/en/latest/history.html"
+"Issue tracker" = "https://github.com/CSHS-CWRA/RavenPy/issues"
+"About Ouranos" = "https://www.ouranos.ca/en/"
+"About CSHS-CWRA" = "https://cwra.org/en/"
+
+[tool]
+
+[tool.black]
+target-version = [
+  "py38",
+  "py39",
+  "py310"
+]
+
+[tool.coverage.run]
+relative_files = true
+omit = ["tests/*.py"]
+
+[tool.flit.sdist]
+include = [
+  "AUTHORS.rst",
+  "HISTORY.rst",
+  "CONTRIBUTING.rst",
+  "LICENSE",
+  "Makefile",
+  "README.rst",
+  "docs/**/*.ipynb",
+  "docs/**/*.md",
+  "docs/**/*.rst",
+  "docs/Makefile",
+  "docs/make.bat",
+  "docs/conf.py",
+  "environment*.yml",
+  "ravenpy/**/*.py",
+  "ravenpy/data/**/*.csv",
+  "ravenpy/data/**/*.zip",
+  "setup.cfg",
+  "tests/*.py",
+  "tests/test.cfg",
+  "tox.ini"
+]
+exclude = [
+  "**/*.py[co]",
+  "**/__pycache__",
+  ".*",
+  "docs/_build",
+  "docs/apidoc/modules.rst",
+  "docs/source/**/.ipynb_checkpoints",
+  "docs/apidoc/ravenpy*.rst"
+]
+
+[tool.isort]
+profile = "black"
+py_version = 38
+append_only = true
+
+[tool.pytest.ini_options]
+addopts = [
+  "--verbose",
+  "--color=yes",
+  "--strict-markers",
+  "--tb=native",
+  "--numprocesses=0",
+  "--maxprocesses=8",
+  "--dist=worksteal"
+]
+python_files = "test_*.py"
+norecursedirs = ["src", ".git", "bin"]
+filterwarnings = ["ignore::UserWarning"]
+testpaths = "tests"
