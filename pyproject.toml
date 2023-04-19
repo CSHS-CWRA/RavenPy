@@ -220,3 +220,7 @@ python_files = "test_*.py"
 norecursedirs = ["src", ".git", "bin"]
 filterwarnings = ["ignore::UserWarning"]
 testpaths = "tests"
+markers = [
+  "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+  "online: mark tests that require external services (deselect with '-m \"not online\"')"
+]
