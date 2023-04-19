@@ -1,9 +1,0 @@
-affine
-fiona>=1.9
-geopandas>=0.9.0
-lxml
-owslib>=0.24.1
-pyproj>=3.0.0
-rasterio
-rioxarray
-shapely
