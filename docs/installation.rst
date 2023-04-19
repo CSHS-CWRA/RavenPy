@@ -33,9 +33,9 @@ Custom Installation (Python/Pip)
 --------------------------------
 
 .. warning::
-   The following instructions will only work on POSIX-like systems (Unix/Linux; not supported on Windows).
+   As of April 2023, this installation method does not install the `raven-hydro` hydrological model. You must install the `raven-hydro` model and add it to your `bin` or append it to your `$PATH` manually. This may change in the future
 
-If you wish to install RavenPy and its C-libraries manually, compiling the `Raven` binaries for your system,
+If you wish to install RavenPy and its C-libraries manually, compiling the `Raven` binary for your system,
 you can install the entire system directly, placing them in the `bin` folder of your environment.
 In order to perform this from Ubuntu/Debian:
 
@@ -48,50 +48,24 @@ Then, from your python environment, run:
 .. code-block:: console
 
    $ pip install ravenpy[gis]
-   $ pip install ravenpy[gis] --verbose --install-option="--with-binaries"
-
-.. warning::
-
-  It is imperative that the Python dependencies are pre-installed before running the `--with-binaries`
-  option; This install step will fail otherwise.
 
 If desired, the core functions of `RavenPy` can be installed without its GIS functionalities as well.
 This implementation of RavenPy is much lighter on dependencies and can be installed easily with `pip`,
 without the need for `conda` or `virtualenv`.
 
-The only libraries required for RavenPy in this approach are a C++ compiler and the NetCDF4 development libraries.
-
-.. code-block:: console
-
-   $ sudo apt-get install gcc libnetcdf-dev
-
 .. code-block:: console
 
    $ pip install ravenpy
-   $ pip install ravenpy --verbose --install-option="--with-binaries"
-
-.. warning::
-
-  It is imperative that the Python dependencies are pre-installed before running the `--with-binaries`
-  option; This install step will fail otherwise.
-
-If for any reason you prefer to install without the binaries, from a fresh python environment, run the following:
-
-.. code-block:: console
-
-   (ravenpy-env) $ pip install ravenpy[gis]
 
 But then you will be in charge of providing ``raven``  binaries on your PATH, or setting values for the
 ``RAVENPY_RAVEN_BINARY_PATH`` environment variable (as an absolute path) in the
 terminal/command prompt/shell used at runtime.
 
-.. note::
-
-  The `virtualenv <https://virtualenv.pypa.io/en/latest/>`_ implementation also works well, but the
-  GIS system libraries it depends on (specifically `GDAL` and `GEOS`) can be more difficult to configure.
-
 Development Installation (from sources)
 ---------------------------------------
+
+.. warning::
+   As of April 2023, this installation method does not install the `raven-hydro` hydrological model. You must install the `raven-hydro` model and add it to your `bin` or append it to your `$PATH` manually. This may change in the future
 
 The sources for RavenPy can be obtained from the GitHub repo:
 
@@ -115,15 +89,6 @@ You can then install RavenPy with:
 
    # for the python dependencies
    (ravenpy) $ pip install --editable ".[dev]"
-
-.. warning::
-
-   The following command will only work on POSIX-like systems (Unix/Linux; not supported on Windows).
-
-.. code-block:: console
-
-   # for the Raven binaries
-   (ravenpy) $ pip install --editable "." --install-option="--with-binaries"
 
 Install the pre-commit hook (to make sure that any code you contribute is properly formatted):
 

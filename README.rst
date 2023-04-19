@@ -17,7 +17,6 @@ Raven_ is an hydrological modeling framework that lets hydrologists build hydrol
 
 Note that version 0.20 includes major changes compared to the previous 0.12 release, and breaks backward compatibility. The benefits of these changes are a much more intuitive interface for configuring and running the model.
 
-
 Features
 --------
 
