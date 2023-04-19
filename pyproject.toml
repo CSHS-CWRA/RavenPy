@@ -145,7 +145,7 @@ gis = [
 ]
 
 [project.scripts]
-raven = "ravenpy.cli:main"
+ravenpy = "ravenpy.cli:main"
 
 [project.urls]
 "Homepage" = "https://ravenpy.readthedocs.io"
