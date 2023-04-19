@@ -6,6 +6,7 @@ dependencies:
   - python >=3.8,<3.11
   - autodoc-pydantic
   - click
+#  - clisops  # mocked
   - ipykernel
   - ipython
   - jupyter_client
