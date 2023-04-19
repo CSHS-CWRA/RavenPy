@@ -6,10 +6,9 @@ from typing import Any, Dict, Sequence, Union
 import cftime
 from pydantic import Field, root_validator, validator
 
-from ravenpy.config import commands as rc
-from ravenpy.config import options as o
-from ravenpy.config import processes as rp
-
+from ..config import commands as rc
+from ..config import options as o
+from ..config import processes as rp
 from .base import RV, Sym, parse_symbolic
 
 """

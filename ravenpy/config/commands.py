@@ -29,8 +29,7 @@ from pydantic import (
     validator,
 )
 
-from ravenpy.config import options
-
+from ..config import options
 from .base import (
     Command,
     FlatCommand,
