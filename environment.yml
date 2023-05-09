@@ -20,9 +20,9 @@ dependencies:
   - lxml
   - matplotlib
   - netCDF4
-  - numpy < 1.24
-  - owslib >=0.24.1,<0.29
-  - pandas < 2.0
+  - numpy
+  - owslib >=0.29.1
+  - pandas <2.0
   - pint >=0.20
   - pip
   - pre-commit
@@ -39,6 +39,6 @@ dependencies:
   - spotpy
   - statsmodels
   - xarray <2022.11.0  # Pinned due to incompatibility with climpred @ 2.2.0
-  - xclim >=0.40
+  - xclim >=0.41
   - xskillscore
   - wheel

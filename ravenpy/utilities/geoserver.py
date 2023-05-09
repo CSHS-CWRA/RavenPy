@@ -52,11 +52,11 @@ GEO_URL = os.getenv("GEO_URL", "https://pavics.ouranos.ca/geoserver/")
 
 # We store the contour of different hydrobasins domains
 hybas_dir = Path(__file__).parent.parent / "data" / "hydrobasins_domains"
-hybas_pat = "hybas_lake_{}_lev01_v1c.zip"
+hybas_pat = "hybas_lake_{domain}_lev01_v1c.zip"
 
 # This could be inferred from existing files in hybas_dir
 hybas_regions = ["na", "ar"]
-hybas_domains = {dom: hybas_dir / hybas_pat.format(dom) for dom in hybas_regions}
+hybas_domains = {dom: hybas_dir / hybas_pat.format(domain=dom) for dom in hybas_regions}
 
 
 def _get_location_wfs(

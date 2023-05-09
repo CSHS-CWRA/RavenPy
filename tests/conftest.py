@@ -7,7 +7,7 @@ from typing import Optional, Union
 import pytest
 import xarray as xr
 from filelock import FileLock
-from xclim.indicators.land import fit, stats
+from xclim.indicators.generic import fit, stats
 
 from ravenpy.config import commands as rc
 from ravenpy.config.emulators import (
