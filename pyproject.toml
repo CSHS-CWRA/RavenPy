@@ -6,7 +6,7 @@ build-backend = "flit_core.buildapi"
 name = "ravenpy"
 authors = [
   {name = "David Huard", email = "huard.david@ouranos.ca"},
-  {name = "Richard Arsenault", email = "Richard.Arsenault@etsmtl.ca"} 
+  {name = "Richard Arsenault", email = "Richard.Arsenault@etsmtl.ca"}
 ]
 maintainers = [
   {name = "Trevor James Smith", email = "smith.trevorj@ouranos.ca"}
