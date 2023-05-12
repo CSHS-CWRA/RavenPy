@@ -71,6 +71,7 @@ dev = [
   "holoviews",
   "hvplot",
   "isort",
+  "pooch", # Needed for cf_xarray>=0.8.1: https://github.com/xarray-contrib/cf-xarray/issues/440
   "pre-commit",
   "pytest",
   "pytest-cov",
