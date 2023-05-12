@@ -9,7 +9,7 @@ dependencies:
   - cftime
   - cf_xarray
   - click
-  - climpred >=2.1.0
+  - climpred >=2.2.0
   - dask
   - fiona >=1.9
   - gdal >=3.1
@@ -38,7 +38,7 @@ dependencies:
   - shapely
   - spotpy
   - statsmodels
-  - xarray <2022.11.0  # Pinned due to incompatibility with climpred @ 2.2.0
+  - xarray
   - xclim >=0.41
   - xskillscore
   - wheel

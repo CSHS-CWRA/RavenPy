@@ -38,7 +38,7 @@ dependencies = [
   "cftime",
   "cf-xarray",
   "click",
-  "climpred>=2.1",
+  "climpred>=2.2",
   "dask",
   "haversine",
   "matplotlib",
@@ -54,7 +54,7 @@ dependencies = [
   "spotpy",
   "statsmodels",
   "wheel",
-  "xarray<2022.11.0", # Pinned due to incompatibility with climpred @ 2.2.0
+  "xarray",
   "xclim>=0.41.0",
   "xskillscore"
 ]
