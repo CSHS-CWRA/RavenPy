@@ -67,7 +67,7 @@ jobs:
       with:
         tools: gdal
         cache: yes
-    - name: Set GDAL_VERSION (Linux)
+    - name: Set GDAL_VERSION (Ubuntu)
       if: matrix.os == 'ubuntu-latest'
       run: |
         echo "GDAL_VERSION=$(gdal-config --version)" >> $GITHUB_ENV
@@ -94,7 +94,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ['ubuntu-latest', 'windows-latest']
+        include:
+          - os: ubuntu-latest
+            num_processes: logical
+          - os: windows-latest
+            num_processes: 0
     defaults:
       run:
         shell: bash -l {0}
@@ -123,7 +127,7 @@ jobs:
           conda list
       - name: Test RavenPy
         run: |
-          pytest --cov --numprocesses=0
+          pytest --cov --numprocesses=${{ matrix.num_processes }}
       - name: Report coverage
         run: coveralls --service=github
         env:
