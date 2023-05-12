@@ -44,8 +44,9 @@ dependencies = [
   "matplotlib",
   "netCDF4",
   "numpy",
-  "owslib<0.29",
-  "pandas<2.0",
+  "owslib>=0.29.1",
+  "pandas<2.0; python_version == '3.8'",
+  "pandas; python_version >= '3.9'",
   "pint>=0.20",
   "pydantic",
   "pymbolic",
@@ -55,7 +56,7 @@ dependencies = [
   "statsmodels",
   "wheel",
   "xarray",
-  "xclim>=0.41.0",
+  "xclim>=0.43.0",
   "xskillscore"
 ]
 
