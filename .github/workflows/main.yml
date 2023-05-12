@@ -34,6 +34,7 @@ jobs:
     needs: black
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         include:
           - tox-env: py38
@@ -122,7 +123,7 @@ jobs:
           conda list
       - name: Test RavenPy
         run: |
-          pytest --cov --numprocesses=logical
+          pytest --cov --numprocesses=0
       - name: Report coverage
         run: coveralls --service=github
         env:
