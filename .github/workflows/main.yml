@@ -67,7 +67,10 @@ jobs:
   conda:
     name: Conda
     needs: black
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: ['ubuntu-latest', 'windows-latest']
     defaults:
       run:
         shell: bash -l {0}
@@ -80,7 +83,6 @@ jobs:
           environment-file: environment.yml
           extra-specs: |
             mamba
-            pip<23.1
             python=3.9
       - name: Conda and Mamba versions
         run: |
