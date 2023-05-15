@@ -13,7 +13,7 @@ dependencies:
   - dask
   - fiona >=1.9
   - gdal >=3.1
-  - geopandas >=0.9
+  - geopandas >=0.13.0
   - haversine
   - holoviews
   - hvplot

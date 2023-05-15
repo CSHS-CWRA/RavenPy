@@ -1,4 +1,5 @@
 import tempfile
+import urllib.request
 
 import numpy as np
 import pytest
@@ -49,7 +50,8 @@ class TestHydroBASINS:
         region_url = self.geoserver.filter_hydrobasins_attributes_wfs(
             attribute="MAIN_BAS", value=main_bas, domain="na"
         )
-        gdf = self.gpd.read_file(region_url)
+        with urllib.request.urlopen(url=region_url) as req:
+            gdf = self.gpd.read_file(filename=req, engine="pyogrio")
 
         assert len(gdf) == 18
         assert gdf.crs.to_epsg() == 4326
@@ -106,7 +108,9 @@ class TestHydroRouting:
         region_url = self.geoserver.filter_hydro_routing_attributes_wfs(
             attribute="IsLake", value="1.0", lakes="1km", level="07"
         )
-        gdf = self.gpd.read_file(region_url)
+        with urllib.request.urlopen(url=region_url) as req:
+            gdf = self.gpd.read_file(filename=req, engine="pyogrio")
+
         assert len(gdf) == 11415
 
     @pytest.mark.slow

@@ -15,8 +15,8 @@ We could have a function that returns the layer name, and then other functions e
 import inspect
 import json
 import os
+import urllib.request
 import warnings
-from io import BytesIO
 from pathlib import Path
 from typing import Iterable, Optional, Sequence, Tuple, Union
 from urllib.parse import urljoin
@@ -362,10 +362,11 @@ def hydrobasins_upstream(feature: dict, domain: str) -> pd.DataFrame:
     # filter = PropertyIsEqualTo(propertyname=basin_family, literal=feature[basin_family])
 
     # Fetch all features in the same basin
-    req = filter_hydrobasins_attributes_wfs(
+    request_url = filter_hydrobasins_attributes_wfs(
         attribute=basin_family, value=feature[basin_family], domain=domain
     )
-    df = gpd.read_file(req)
+    with urllib.request.urlopen(url=request_url) as req:
+        df = gpd.read_file(filename=req, engine="pyogrio")
 
     # Filter upstream watersheds
     return _determine_upstream_ids(

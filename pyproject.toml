@@ -82,7 +82,7 @@ dev = [
   # GIS Dependencies
   "affine",
   "fiona>=1.9",
-  "geopandas>=0.9.0",
+  "geopandas>=0.13.0",
   "gdal",
   "lxml",
   "pyproj>=3.0.0",
