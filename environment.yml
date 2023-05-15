@@ -28,6 +28,7 @@ dependencies:
   - pre-commit
   - pydantic
   - pymbolic
+  - pyogrio
   - pyproj >=3.0
   - rasterio
   - requests
