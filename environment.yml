@@ -12,6 +12,7 @@ dependencies:
   - climpred >=2.2.0
   - dask
   - fiona >=1.9
+  - flit
   - gdal >=3.1
   - geopandas >=0.13.0
   - haversine
@@ -41,4 +42,3 @@ dependencies:
   - xarray
   - xclim >=0.43
   - xskillscore
-  - wheel

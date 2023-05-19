@@ -6,7 +6,8 @@ Full Installation (Anaconda)
 ----------------------------
 
 For many reasons, we recommend using a `Conda environment <https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_
-to work with the full RavenPy installation. This implementation is able to manage the harder-to-install GIS dependencies,like `GDAL`.
+to work with the full RavenPy installation. This implementation is able to manage the harder-to-install GIS dependencies, like `GDAL`.
+
 Begin by creating an environment:
 
 .. code-block:: console
@@ -32,6 +33,8 @@ as well as installs all the necessary Python and C libraries supporting GIS func
 Custom Installation (Python/Pip)
 --------------------------------
 
+# FIXME: Remove this warning and update docs once Ouranosinc/raven-hydro is finalized
+
 .. warning::
    As of April 2023, this installation method does not install the `raven-hydro` hydrological model. You must install the `raven-hydro` model and add it to your `bin` or append it to your `$PATH` manually. This may change in the future
 
@@ -41,7 +44,7 @@ In order to perform this from Ubuntu/Debian:
 
 .. code-block:: console
 
-   $ sudo apt-get install gcc libnetcdf-dev gdal proj geos geopandas
+   $ sudo apt-get install gcc libnetcdf-dev gdal proj geos
 
 Then, from your python environment, run:
 
@@ -63,6 +66,8 @@ terminal/command prompt/shell used at runtime.
 
 Development Installation (from sources)
 ---------------------------------------
+
+# FIXME: Remove this warning and update docs once Ouranosinc/raven-hydro is finalized
 
 .. warning::
    As of April 2023, this installation method does not install the `raven-hydro` hydrological model. You must install the `raven-hydro` model and add it to your `bin` or append it to your `$PATH` manually. This may change in the future
@@ -88,7 +93,7 @@ You can then install RavenPy with:
 .. code-block:: console
 
    # for the python dependencies
-   (ravenpy) $ pip install --editable ".[dev]"
+   (ravenpy) $ pip install --editable ".[dev,gis]"
 
 Install the pre-commit hook (to make sure that any code you contribute is properly formatted):
 
