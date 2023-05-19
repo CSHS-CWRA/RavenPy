@@ -206,10 +206,10 @@ def generic_vector_reproject(
         Path to a file containing a valid vector layer.
     projected: Union[str, Path]
         Path to a file to be written.
-    source_crs : Union[str, dict, CRS]
-        Projection identifier (proj4) for the source geometry, Default: '+proj=longlat +datum=WGS84 +no_defs'.
-    target_crs : Union[str, dict, CRS]
-        Projection identifier (proj4) for the target geometry.
+    source_crs : Union[str, pyproj.crs.CRS]
+        CRS for the source geometry. Default: 4326.
+    target_crs : Union[str, pyproj.crs.CRS]
+        CRS for the target geometry.
 
     Returns
     -------
@@ -218,6 +218,8 @@ def generic_vector_reproject(
 
     if target_crs is None:
         raise ValueError("No target CRS is defined.")
+    if isinstance(target_crs, CRS):
+        target_crs = target_crs.to_dict()
 
     if isinstance(vector, Path):
         vector = vector.as_posix()
