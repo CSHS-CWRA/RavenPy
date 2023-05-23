@@ -38,8 +38,8 @@ Custom Installation (Python/Pip)
 .. warning::
    As of April 2023, this installation method does not install the `raven-hydro` hydrological model. You must install the `raven-hydro` model and add it to your `bin` or append it to your `$PATH` manually. This may change in the future
 
-If you wish to install RavenPy and its C-libraries manually, compiling the `Raven` binary for your system,
-you can install the entire system directly, placing them in the `bin` folder of your environment.
+If you wish to install RavenPy and its supporting system libraries manually, either compiling the `Raven` binary for your system or installing the pre-built binary, we encourage you to consult the `Raven` documentation (`Raven Downloads <https://www.civil.uwaterloo.ca/raven/Downloads.html>`_).
+
 In order to perform this from Ubuntu/Debian:
 
 .. code-block:: console
@@ -52,17 +52,13 @@ Then, from your python environment, run:
 
    $ pip install ravenpy[gis]
 
-If desired, the core functions of `RavenPy` can be installed without its GIS functionalities as well.
-This implementation of RavenPy is much lighter on dependencies and can be installed easily with `pip`,
-without the need for `conda` or `virtualenv`.
+If desired, the core functions of `RavenPy` can be installed without its GIS functionalities as well. This implementation of RavenPy is much lighter on dependencies and can be installed easily with `pip`, without the need for `conda` or `virtualenv`.
 
 .. code-block:: console
 
    $ pip install ravenpy
 
-But then you will be in charge of providing ``raven``  binaries on your PATH, or setting values for the
-``RAVENPY_RAVEN_BINARY_PATH`` environment variable (as an absolute path) in the
-terminal/command prompt/shell used at runtime.
+Once downloaded/compiled, ensure that the binary is placed in the `bin` folder of your environment and/or accessible on `$PATH` (Unix/Linux). The binary can also be pointed to manually (as an absolute path) by setting the environment variable ``RAVENPY_RAVEN_BINARY_PATH`` in the terminal/command prompt/shell used at runtime.
 
 Development Installation (from sources)
 ---------------------------------------
