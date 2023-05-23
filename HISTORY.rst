@@ -2,6 +2,22 @@
 History
 =======
 
+0.12 (unreleased)
+-----------------
+This release includes major breaking changes. It completely overhauls how models are defined, and how to run
+simulations, and any code relying on the previous release will most likely break. Please check the documentation
+to see how to use the new improved interface.
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+- The entire model configuration and simulation interface (see PR #269);
+- Update RavenC executable to v3.7;
+- Add support for Ensemble Kalman Filter using RavenC;
+- Use SpotPy for model calibration instead of Ostrich;
+- RavenPy now relies on the `raven-hydro` pip package for installing the C++ executable;
+- BasinMaker importer assumes SubBasin=HRU in order to work with files downloaded from the BasinMaker web site;
+
+
 0.11.0 (2023-02-16)
 -------------------
 
