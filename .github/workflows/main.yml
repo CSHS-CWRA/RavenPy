@@ -37,14 +37,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - tox-env: py38
-            python-version: "3.8"
-            os: ubuntu-latest
           - tox-env: py39
             python-version: "3.9"
             os: ubuntu-latest
           - tox-env: py310
             python-version: "3.10"
+            os: ubuntu-latest
+          - tox-env: py311
+            python-version: "3.11"
             os: ubuntu-latest
           - tox-env: py310
             python-version: "3.10"
@@ -120,6 +120,9 @@ jobs:
       - name: Conda and Mamba versions
         run: |
           mamba --version
+      - name: Install raven-hydro (sdist)
+        run: |
+          pip install --upgrade --force-reinstall --no-deps --no-cache-dir raven-hydro=0.2.0 --no-binary raven-hydro
       - name: Install RavenPy
         run: |
           pip install -e ".[dev]"
