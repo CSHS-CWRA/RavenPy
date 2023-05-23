@@ -37,6 +37,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - tox-env: py38
+            python-version: "3.8"
+            os: ubuntu-latest
           - tox-env: py39
             python-version: "3.9"
             os: ubuntu-latest
