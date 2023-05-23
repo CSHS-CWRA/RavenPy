@@ -122,7 +122,7 @@ jobs:
           mamba --version
       - name: Install raven-hydro (sdist)
         run: |
-          pip install --upgrade --force-reinstall --no-deps --no-cache-dir raven-hydro=0.2.0 --no-binary raven-hydro
+          pip install --upgrade --force-reinstall --no-deps --no-cache-dir raven-hydro==0.2.0 --no-binary raven-hydro
       - name: Install RavenPy
         run: |
           pip install -e ".[dev]"
