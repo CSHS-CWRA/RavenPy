@@ -50,6 +50,7 @@ dependencies = [
   "pint>=0.20",
   "pydantic",
   "pymbolic",
+  "raven-hydro==0.2.0",
   "requests",
   "scipy",
   "spotpy",
