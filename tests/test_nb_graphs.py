@@ -21,7 +21,7 @@ class TestNBGraphs:
         )
 
     def test_ts_fit_graph(self, get_local_testdata):
-        from xclim.indicators.land import fit, stats
+        from xclim.indicators.generic import fit, stats
 
         ds = xr.open_dataset(get_local_testdata(self.hydrographs))
 
