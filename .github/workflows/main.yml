@@ -116,10 +116,11 @@ jobs:
       - name: Setup Conda (Micromamba) with Python${{ matrix.python-version }}
         uses: mamba-org/setup-micromamba@v1
         with:
-          cache-downloads: true
-          cache-environment: true
+#          cache-downloads: true
+#          cache-environment: true
           environment-file: environment.yml
           create-args: >-
+            conda
             python=${{ matrix.python-version }}
       - name: Conda and Mamba versions
         run: |
