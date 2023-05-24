@@ -4,7 +4,7 @@ channels:
   - defaults
 dependencies:
   - raven-hydro ==0.2.0
-  - python >=3.8
+  - python >=3.8,<3.12
   - affine
   - cftime
   - cf_xarray
@@ -20,7 +20,7 @@ dependencies:
   - hvplot
   - lxml
   - matplotlib
-  - netcdf4 >=1.6.0,<1.6.3
+  - netcdf4
   - numpy
   - owslib <0.29.0  # see: https://github.com/geopython/OWSLib/issues/871
   - pandas
