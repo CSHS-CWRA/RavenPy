@@ -20,7 +20,7 @@ dependencies:
   - hvplot
   - lxml
   - matplotlib
-  - netcdf4 <=1.6.0
+  - netcdf4 >=1.6.0,<1.6.3
   - numpy
   - owslib <0.29.0  # see: https://github.com/geopython/OWSLib/issues/871
   - pandas
