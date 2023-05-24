@@ -91,7 +91,7 @@ jobs:
         COVERALLS_PARALLEL: true
 
   conda:
-    name: Python3.9 (${{ matrix.os }}) (Conda)
+    name: Python${{ matrix.python-version }} (${{ matrix.os }}) (Conda)
     needs: black
     runs-on: ${{ matrix.os }}
     strategy:
@@ -100,8 +100,10 @@ jobs:
         include:
           - os: ubuntu-latest
             num_processes: logical
+            python-version: "3.9"
           - os: windows-latest
             num_processes: 0
+            python-version: "3.9"
     defaults:
       run:
         shell: bash -l {0}
@@ -111,18 +113,18 @@ jobs:
         if: matrix.os == 'windows-latest'
         run: |
           sed -i 's/climpred >=2.2.0/xesmf/' environment.yml
-      - name: Setup Conda (Micromamba) with Python3.9
-        uses: mamba-org/provision-with-micromamba@main
+      - name: Setup Conda (Micromamba) with Python${{ matrix.python-version }}
+        uses: mamba-org/setup-micromamba@v1
         with:
           cache-downloads: true
-          cache-env: true
+          cache-environment: true
           environment-file: environment.yml
-          extra-specs: |
-            mamba
-            python=3.9
+          create-args: >-
+            python=${{ matrix.python-version }}
       - name: Conda and Mamba versions
         run: |
-          mamba --version
+          conda --version
+          echo "micromamba: $(micromamba --version)"
       - name: Install RavenPy
         run: |
           pip install -e ".[dev]"
