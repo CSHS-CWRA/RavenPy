@@ -100,10 +100,13 @@ jobs:
         include:
           - os: ubuntu-latest
             num_processes: logical
-            python-version: "3.10"
+            python-version: "3.8"
+          - os: macos-latest
+            num_processes: logical
+            python-version: "3.9"
           - os: windows-latest
             num_processes: 0
-            python-version: "3.9"
+            python-version: "3.10"
     defaults:
       run:
         shell: bash -l {0}
