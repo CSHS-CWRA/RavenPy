@@ -3,7 +3,7 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - raven-hydro ==3.6
+  - raven-hydro ==0.2.0
   - python >=3.8
   - affine
   - cftime
