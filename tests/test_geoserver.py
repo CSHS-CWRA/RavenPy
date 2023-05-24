@@ -16,14 +16,14 @@ class TestHydroBASINS:
     gpd = pytest.importorskip("geopandas")
     sgeo = pytest.importorskip("shapely.geometry")
 
-    def test_select_hybas_na_domain(self):
+    def test_select_hybas_na_domain_bbox(self):
         bbox = (-68.0, 50.0) * 2
-        dom = self.geoserver.select_hybas_domain(bbox)
+        dom = self.geoserver.select_hybas_domain(bbox=bbox)
         assert dom == "na"
 
-    def test_select_hybas_ar_domain(self):
-        bbox = (-114.65, 61.35) * 2
-        dom = self.geoserver.select_hybas_domain(bbox)
+    def test_select_hybas_ar_domain_point(self):
+        point = -114.65, 61.35
+        dom = self.geoserver.select_hybas_domain(point=point)
         assert dom == "ar"
 
     def test_get_hydrobasins_location_wfs(self, tmp_path):
