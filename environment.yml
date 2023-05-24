@@ -9,7 +9,7 @@ dependencies:
   - cftime
   - cf_xarray
   - click
-  - climpred >=2.2.0
+#  - climpred >=2.2.0
   - dask
   - fiona >=1.9
   - flit
@@ -25,7 +25,6 @@ dependencies:
   - owslib <0.29.0  # see: https://github.com/geopython/OWSLib/issues/871
   - pandas
   - pint >=0.20
-  - pip
   - pre-commit
   - pydantic
   - pymbolic
@@ -40,4 +39,5 @@ dependencies:
   - statsmodels
   - xarray
   - xclim >=0.43
+  - xesmf
   - xskillscore
