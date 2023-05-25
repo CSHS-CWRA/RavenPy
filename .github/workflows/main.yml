@@ -40,18 +40,23 @@ jobs:
           - tox-env: py38
             python-version: "3.8"
             os: ubuntu-latest
+            allow-errors: false
           - tox-env: py39
             python-version: "3.9"
             os: ubuntu-latest
+            allow-errors: false
           - tox-env: py310
             python-version: "3.10"
             os: ubuntu-latest
+            allow-errors: false
           - tox-env: py311
             python-version: "3.11"
             os: ubuntu-latest
+            allow-errors: false
           - tox-env: py310
             python-version: "3.10"
             os: macos-latest
+            allow-errors: true
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
@@ -85,6 +90,7 @@ jobs:
     - name: Test with tox and report coverage
       run: |
         python3 -m tox -e ${{ matrix.tox-env }}
+      continue-on-error: ${{ matrix.allow-errors }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         COVERALLS_FLAG_NAME: run-${{ matrix.tox-env }}
@@ -100,16 +106,12 @@ jobs:
         include:
           - os: ubuntu-latest
             python-version: "3.9"
-            allow-errors: false
           - os: ubuntu-latest
             python-version: "3.10"
-            allow-errors: false
           - os: ubuntu-latest
             python-version: "3.11"
-            allow-errors: false
           - os: macos-latest
             python-version: "3.9"
-            allow-errors: true
     defaults:
       run:
         shell: bash -l {0}
@@ -141,7 +143,6 @@ jobs:
       - name: Test RavenPy
         run: |
           pytest --cov --numprocesses=logical
-        continue-on-error: ${{ matrix.allow-errors }}
       - name: Report coverage
         run: coveralls --service=github
         env:
