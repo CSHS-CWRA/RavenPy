@@ -5,8 +5,7 @@ from pathlib import Path
 import cftime
 from xarray import open_dataset
 
-from ravenpy.config import commands as rc
-
+from ..config import commands as rc
 from .conventions import RAVEN_OUTPUT_FMT
 
 

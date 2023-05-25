@@ -75,7 +75,7 @@ Ready to contribute? Here's how to set up `ravenpy` for local development.
     $ pre-commit install
 
    Special style and formatting checks will be run when you commit your changes. You
-   can always run the hooks on their own with:
+   can always run the hooks on their own with::
 
     $ pre-commit run -a
 
@@ -119,7 +119,7 @@ Before you submit a pull request, check that it meets these guidelines:
 2. If the pull request adds functionality, the docs should be updated. Put
    your new functionality into a function with a docstring, and add the
    feature to the list in README.rst.
-3. The pull request should work for Python 3.8, 3.9, and 3.10. Check
+3. The pull request should work for Python 3.8, 3.9, 3.10, and 3.11. Check
    https://github.com/CSHS-CWRA/RavenPy/actions/workflows/main.yml
    and make sure that the tests pass for all supported Python versions.
 
@@ -128,7 +128,7 @@ Tips
 
 To run a subset of tests::
 
-$ pytest tests.test_ravenpy
+    $ pytest tests.test_ravenpy
 
 
 Versioning/Tagging
@@ -138,9 +138,9 @@ A reminder for the maintainers on how to deploy.
 Make sure all your changes are committed (including an entry in HISTORY.rst).
 Then run::
 
-$ bumpversion patch # possible: major / minor / patch
-$ git push
-$ git push --tags
+    $ bumpversion patch # possible: major / minor / patch
+    $ git push
+    $ git push --tags
 
 Packaging
 ---------
@@ -148,21 +148,33 @@ Packaging
 When a new version has been minted (features have been successfully integrated test coverage and stability is adequate),
 maintainers should update the pip-installable package (wheel and source release) on PyPI as well as the binary on conda-forge.
 
-The simple approach
+The Automated Approach
+~~~~~~~~~~~~~~~~~~~~~~
+
+The simplest way to package `ravenpy` is to "publish" a version on GitHuh. GitHub CI Actions are presently configured to build the library and publish the packages on PyPI automatically.
+
+Tagged versions will trigger a GitHub Workflow (`tag-testpypi.yml`) that will attempt to build and publish the release on `TestPyPI <https://test.pypi.org>`_.
+
+.. note::
+    Should this step fail, changes may be needed in the package; Be sure to remove this tag on GitHub and locally, address any existing problems, and recreate the tag.
+
+To upload a new version to `PyPI <https://pypi.org/>`_, simply create a new "Published" release version on GitHub to trigger the upload workflow (`publish-pypi.yml`). When publishing on GitHub, the maintainer can either set the release notes manually (based on the `HISTORY.rst`), or set GitHub to generate release notes automatically. The choice of method is up to the maintainer.
+
+.. warning::
+    A published version on TestPyPI/PyPI can never be overwritten. Be sure to verify that the package published at https://test.pypi.org/project/ravenpy/ matches expectations before publishing a release version on GitHub.
+
+The Manual Approach
 ~~~~~~~~~~~~~~~~~~~
 
-The simplest approach to packaging for general support (pip wheels) requires the following packages installed:
- * setuptools
- * wheel
- * twine
+The manual approach to library packaging for general support (pip wheels) requires that the `flit <https://flit.pypa.io/en/stable/index.html>`_ library is installed.
 
 From the command line on your Linux distribution, simply run the following from the clone's main dev branch::
 
     # To build the packages (sources and wheel)
-    $ python setup.py sdist bdist_wheel
+    $ flit build
 
     # To upload to PyPI
-    $ twine upload dist/*
+    $ flit publish
 
 The new version based off of the version checked out will now be available via `pip` (`$ pip install ravenpy`).
 
@@ -177,8 +189,23 @@ In order to prepare an initial release on conda-forge, we *strongly* suggest con
  * https://github.com/conda-forge/staged-recipes
 
 Before updating the main conda-forge recipe, we echo the conda-forge documentation and *strongly* suggest performing the following checks:
- * Ensure that dependencies and dependency versions correspond with those of the tagged version, with open or pinned versions for the `host` requirements.
- * If possible, configure tests within the conda-forge build CI (e.g. `imports: ravenpy`, `commands: pytest ravenpy`)
+ * Ensure that dependencies and dependency versions correspond with those of the PyPI published version, with open or pinned versions for the `host` requirements.
+ * If possible, configure tests within the conda-forge build CI, e.g.:
+
+.. code-block:: yaml
+
+  test:
+    source_files:
+      - tests
+    requires:
+      - pip
+      - pytest
+      - pytest-xdist
+    imports:
+      - ravenpy
+    commands:
+      - pip check
+      - pytest
 
 Subsequent releases
 ^^^^^^^^^^^^^^^^^^^

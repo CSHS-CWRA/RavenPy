@@ -8,23 +8,22 @@ class TestNBGraphs:
     nbg = pytest.importorskip("ravenpy.utilities.nb_graphs")
 
     def test_hydrograph(self, get_local_testdata):
-        self.nbg.hydrographs(xr.open_dataset(get_local_testdata(self.hydrographs)))
+        with xr.open_dataset(get_local_testdata(self.hydrographs)) as ds:
+            self.nbg.hydrographs(ds)
 
     def test_mean_annual_hydrograph(self, get_local_testdata):
-        self.nbg.mean_annual_hydrograph(
-            xr.open_dataset(get_local_testdata(self.hydrographs))
-        )
+        with xr.open_dataset(get_local_testdata(self.hydrographs)) as ds:
+            self.nbg.mean_annual_hydrograph(ds)
 
     def test_spaghetti_annual_hydrograph(self, get_local_testdata):
-        self.nbg.spaghetti_annual_hydrograph(
-            xr.open_dataset(get_local_testdata(self.hydrographs))
-        )
+        with xr.open_dataset(get_local_testdata(self.hydrographs)) as ds:
+            self.nbg.spaghetti_annual_hydrograph(ds)
 
     def test_ts_fit_graph(self, get_local_testdata):
-        from xclim.indicators.land import fit, stats
+        from xclim.indicators.generic import fit, stats
 
-        ds = xr.open_dataset(get_local_testdata(self.hydrographs))
+        with xr.open_dataset(get_local_testdata(self.hydrographs)) as ds:
+            ts = stats(ds.q_sim.load(), op="max", freq="M")
 
-        ts = stats(ds.q_sim, op="max", freq="M")
         params = fit(ts, dist="gamma")
         self.nbg.ts_fit_graph(ts, params)

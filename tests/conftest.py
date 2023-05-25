@@ -7,7 +7,7 @@ from typing import Optional, Union
 import pytest
 import xarray as xr
 from filelock import FileLock
-from xclim.indicators.land import fit, stats
+from xclim.indicators.generic import fit, stats
 
 from ravenpy.config import commands as rc
 from ravenpy.config.emulators import (
@@ -529,13 +529,13 @@ def symbolic_config(salmon_meteo, salmon_hru, request):
     gextras = {"ALL": {"elevation": salmon_hru["land"]["elevation"]}}
 
     if name in ["HBVEC", "HYPR"]:
-        ds = xr.open_dataset(salmon_meteo)
-        gextras["ALL"]["monthly_ave_temperature"] = (
-            ((ds.tmin + ds.tmax) / 2).groupby("time.month").mean().values.tolist()
-        )
-        gextras["ALL"]["monthly_ave_evaporation"] = (
-            ds.pet.groupby("time.month").mean().values.tolist()
-        )
+        with xr.open_dataset(salmon_meteo) as ds:
+            gextras["ALL"]["monthly_ave_temperature"] = (
+                ((ds.tmin + ds.tmax) / 2).groupby("time.month").mean().values.tolist()
+            )
+            gextras["ALL"]["monthly_ave_evaporation"] = (
+                ds.pet.groupby("time.month").mean().values.tolist()
+            )
 
     # Extra attributes for emulator
     extras = {}

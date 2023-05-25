@@ -1,0 +1,225 @@
+[build-system]
+requires = ["flit_core >=3.8,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "ravenpy"
+authors = [
+  {name = "David Huard", email = "huard.david@ouranos.ca"},
+  {name = "Richard Arsenault", email = "Richard.Arsenault@etsmtl.ca"}
+]
+maintainers = [
+  {name = "Trevor James Smith", email = "smith.trevorj@ouranos.ca"}
+]
+readme = {file = "README.rst", content-type = "text/x-rst"}
+requires-python = ">=3.8.0"
+keywords = ["raven", "raven-hydro", "hydrology", "gis", "analysis", "modelling"]
+license = {file = "LICENSE"}
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Education",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Natural Language :: English",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python",
+  "Topic :: Scientific/Engineering :: Atmospheric Science",
+  "Topic :: Scientific/Engineering :: GIS",
+  "Topic :: Scientific/Engineering :: Hydrology"
+]
+dynamic = ["description", "version"]
+dependencies = [
+  "cftime",
+  "cf-xarray[all]",
+  "click",
+  "climpred>=2.2",
+  "dask",
+  "haversine",
+  "matplotlib",
+  "netCDF4",
+  "numpy",
+  "owslib>=0.24.1,<0.29", # see: https://github.com/geopython/OWSLib/issues/871
+  "pandas<2.0; python_version == '3.8'",
+  "pandas; python_version >= '3.9'",
+  "pint>=0.20",
+  "pydantic>=1.10.8",
+  "pymbolic",
+  "raven-hydro==0.2.1",
+  "requests",
+  "scipy",
+  "spotpy",
+  "statsmodels",
+  "xarray",
+  "xclim>=0.43.0",
+  "xskillscore"
+]
+
+[project.optional-dependencies]
+dev = [
+  "black>=23.3.0",
+  "bump2version",
+  "coverage",
+  "coveralls",
+  "filelock",
+  "flake8",
+  "flit",
+  "holoviews",
+  "hvplot",
+  "isort",
+  "mypy",
+  "pre-commit",
+  "pytest",
+  "pytest-cov",
+  "pytest-xdist>=3.2.0",
+  "tox",
+  "watchdog"
+]
+docs = [
+  "autodoc_pydantic",
+  "birdhouse-birdy",
+  "cartopy",
+  "clisops",
+  "gcsfs",
+  "hs_restclient",
+  "intake",
+  "intake-esm",
+  "intake-xarray",
+  "ipykernel",
+  "ipyleaflet",
+  "ipython",
+  "ipywidgets",
+  "jupyter-cache",
+  "jupyter_client",
+  "jupytext",
+  "myst_nb",
+  "nbsphinx",
+  "numpydoc",
+  "pandoc",
+  "pymetalink",
+  "s3fs",
+  "sphinx",
+  "sphinx-click",
+  "sphinx-codeautolink",
+  "sphinx-copybutton",
+  "sphinx-rtd-theme>=1.0",
+  "xesmf"
+]
+gis = [
+  "affine",
+  "fiona>=1.9",
+  "geopandas>=0.9.0",
+  "gdal",
+  "lxml",
+  "pyogrio",
+  "pyproj>=3.0.0",
+  "rasterio",
+  "rioxarray",
+  "shapely"
+]
+
+[project.scripts]
+ravenpy = "ravenpy.cli:main"
+
+[project.urls]
+"Homepage" = "https://ravenpy.readthedocs.io"
+"Source" = "https://github.com/CSHS-CWRA/RavenPy"
+"Changelog" = "https://ravenpy.readthedocs.io/en/latest/history.html"
+"Issue tracker" = "https://github.com/CSHS-CWRA/RavenPy/issues"
+"About Ouranos" = "https://www.ouranos.ca/en/"
+"About CSHS-CWRA" = "https://cwra.org/en/"
+
+[tool]
+
+[tool.black]
+target-version = [
+  "py38",
+  "py39",
+  "py310"
+]
+
+[tool.coverage.run]
+relative_files = true
+omit = ["tests/*.py"]
+
+[tool.flit.sdist]
+include = [
+  "AUTHORS.rst",
+  "HISTORY.rst",
+  "CONTRIBUTING.rst",
+  "LICENSE",
+  "Makefile",
+  "README.rst",
+  "docs/**/*.ipynb",
+  "docs/**/*.md",
+  "docs/**/*.rst",
+  "docs/Makefile",
+  "docs/make.bat",
+  "docs/conf.py",
+  "environment*.yml",
+  "ravenpy/**/*.py",
+  "ravenpy/data/**/*.csv",
+  "ravenpy/data/**/*.zip",
+  "setup.cfg",
+  "tests/*.py",
+  "tests/test.cfg",
+  "tox.ini"
+]
+exclude = [
+  "**/*.py[co]",
+  "**/__pycache__",
+  ".*",
+  "docs/_build",
+  "docs/apidoc/modules.rst",
+  "docs/source/**/.ipynb_checkpoints",
+  "docs/apidoc/ravenpy*.rst"
+]
+
+[tool.isort]
+profile = "black"
+py_version = 38
+append_only = true
+
+[tool.mypy]
+plugins = [
+  "pydantic.mypy"
+]
+follow_imports = "silent"
+warn_redundant_casts = true
+warn_unused_ignores = true
+disallow_any_generics = true
+check_untyped_defs = true
+no_implicit_reexport = false
+ignore_missing_imports = true
+# for strict mypy: (this is the tricky one :-))
+disallow_untyped_defs = false
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+warn_untyped_fields = true
+
+[tool.pytest.ini_options]
+addopts = [
+  "--verbose",
+  "--color=yes",
+  "--strict-markers",
+  "--tb=native",
+  "--numprocesses=0",
+  "--maxprocesses=8",
+  "--dist=worksteal"
+]
+python_files = "test_*.py"
+norecursedirs = ["src", ".git", "bin"]
+filterwarnings = ["ignore::UserWarning"]
+testpaths = "tests"
+markers = [
+  "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+  "online: mark tests that require external services (deselect with '-m \"not online\"')"
+]

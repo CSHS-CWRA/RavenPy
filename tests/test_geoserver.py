@@ -1,4 +1,5 @@
 import tempfile
+import urllib.request
 
 import numpy as np
 import pytest
@@ -15,14 +16,14 @@ class TestHydroBASINS:
     gpd = pytest.importorskip("geopandas")
     sgeo = pytest.importorskip("shapely.geometry")
 
-    def test_select_hybas_na_domain(self):
+    def test_select_hybas_na_domain_bbox(self):
         bbox = (-68.0, 50.0) * 2
-        dom = self.geoserver.select_hybas_domain(bbox)
+        dom = self.geoserver.select_hybas_domain(bbox=bbox)
         assert dom == "na"
 
-    def test_select_hybas_ar_domain(self):
-        bbox = (-114.65, 61.35) * 2
-        dom = self.geoserver.select_hybas_domain(bbox)
+    def test_select_hybas_ar_domain_point(self):
+        point = -114.65, 61.35
+        dom = self.geoserver.select_hybas_domain(point=point)
         assert dom == "ar"
 
     def test_get_hydrobasins_location_wfs(self, tmp_path):
@@ -49,7 +50,8 @@ class TestHydroBASINS:
         region_url = self.geoserver.filter_hydrobasins_attributes_wfs(
             attribute="MAIN_BAS", value=main_bas, domain="na"
         )
-        gdf = self.gpd.read_file(region_url)
+        with urllib.request.urlopen(url=region_url) as req:
+            gdf = self.gpd.read_file(filename=req, engine="pyogrio")
 
         assert len(gdf) == 18
         assert gdf.crs.to_epsg() == 4326
@@ -106,7 +108,9 @@ class TestHydroRouting:
         region_url = self.geoserver.filter_hydro_routing_attributes_wfs(
             attribute="IsLake", value="1.0", lakes="1km", level="07"
         )
-        gdf = self.gpd.read_file(region_url)
+        with urllib.request.urlopen(url=region_url) as req:
+            gdf = self.gpd.read_file(filename=req, engine="pyogrio")
+
         assert len(gdf) == 11415
 
     @pytest.mark.slow

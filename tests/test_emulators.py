@@ -612,6 +612,7 @@ def test_routing_lievre_tutorial(get_local_testdata, tmp_path):
         assert out.hydrograph.q_sim[d].item() == pytest.approx(q_sim)
 
 
+@pytest.mark.online
 def test_canopex():
     CANOPEX_DAP = (
         "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/birdhouse/ets"

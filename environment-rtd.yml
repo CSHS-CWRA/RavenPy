@@ -3,9 +3,11 @@ channels:
 - conda-forge
 - defaults
 dependencies:
-  - python >=3.8,<3.11
+  - python >=3.8,<3.12
   - autodoc-pydantic
   - click
+#  - clisops  # mocked
+  - gdal
   - ipykernel
   - ipython
   - jupyter_client
