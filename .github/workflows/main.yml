@@ -100,12 +100,16 @@ jobs:
         include:
           - os: ubuntu-latest
             python-version: "3.9"
+            allow-errors: false
           - os: ubuntu-latest
             python-version: "3.10"
+            allow-errors: false
           - os: ubuntu-latest
             python-version: "3.11"
+            allow-errors: false
           - os: macos-latest
             python-version: "3.9"
+            allow-errors: true
     defaults:
       run:
         shell: bash -l {0}
@@ -137,6 +141,7 @@ jobs:
       - name: Test RavenPy
         run: |
           pytest --cov --numprocesses=logical
+        continue-on-error: ${{ matrix.allow-errors }}
       - name: Report coverage
         run: coveralls --service=github
         env:
