@@ -30,61 +30,110 @@ jobs:
         run: tox -e black
 
   pip:
-    name: Pip with Python${{ matrix.python-version }}
+    name: Python${{ matrix.python-version }} (${{ matrix.os }})
     needs: black
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         include:
           - tox-env: py38
             python-version: "3.8"
-          - tox-env: py39-numpy
+            os: ubuntu-latest
+            allow-errors: false
+          - tox-env: py39
             python-version: "3.9"
+            os: ubuntu-latest
+            allow-errors: false
           - tox-env: py310
             python-version: "3.10"
+            os: ubuntu-latest
+            allow-errors: false
+          - tox-env: py311
+            python-version: "3.11"
+            os: ubuntu-latest
+            allow-errors: false
+          - tox-env: py310
+            python-version: "3.10"
+            os: macos-latest
+            allow-errors: true
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install GDAL
+
+    - name: Install GDAL (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
         sudo apt-get install libgdal-dev
-    - name: Install tox and setuptools
+    - name: Install GDAL (macOS)
+      if: matrix.os == 'macos-latest'
+      uses: tecolicom/actions-use-homebrew-tools@v1
+      with:
+        tools: gdal
+        cache: yes
+    - name: Set GDAL_VERSION (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        echo "GDAL_VERSION=$(gdal-config --version)" >> $GITHUB_ENV
+    - name: Set GDAL_VERSION (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        echo "GDAL_VERSION=$(gdalinfo --version | awk  '{print $2}' | sed s'/.$//')" >> $GITHUB_ENV
+
+    - name: Install tox
       run: |
         pip install tox~=4.0
-        pip install --upgrade "setuptools<65.6"
     - name: Test with tox and report coverage
-      run: env GDAL_VERSION="$(gdal-config --version)" tox -e ${{ matrix.tox-env }}
+      run: |
+        python3 -m tox -e ${{ matrix.tox-env }}
+      continue-on-error: ${{ matrix.allow-errors }}
       env:
-        LD_PRELOAD: /lib/x86_64-linux-gnu/libstdc++.so.6  # :"$LD_PRELOAD"
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         COVERALLS_FLAG_NAME: run-${{ matrix.tox-env }}
         COVERALLS_PARALLEL: true
 
   conda:
-    name: Conda
+    name: Python${{ matrix.python-version }} (${{ matrix.os }}) (Conda)
     needs: black
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            python-version: "3.9"
+          - os: ubuntu-latest
+            python-version: "3.10"
+          - os: ubuntu-latest
+            python-version: "3.11"
+          - os: macos-latest
+            python-version: "3.9"
     defaults:
       run:
         shell: bash -l {0}
     steps:
       - uses: actions/checkout@v3
-      - name: Setup Conda (Micromamba) with Python3.9
-        uses: mamba-org/provision-with-micromamba@main
+      - name: Patch Environment File
+        if: matrix.os == 'windows-latest'
+        run: |
+          sed -i 's/climpred >=2.2.0/xesmf/' environment.yml
+      - name: Setup Conda (Micromamba) with Python${{ matrix.python-version }}
+        uses: mamba-org/setup-micromamba@v1
         with:
           cache-downloads: true
+          cache-environment: true
           environment-file: environment.yml
-          extra-specs: |
-            mamba
-            pip<23.1
-            python=3.9
+          create-args: >-
+            conda
+            python=${{ matrix.python-version }}
       - name: Conda and Mamba versions
         run: |
-          mamba --version
+          conda --version
+          echo "micromamba: $(micromamba --version)"
       - name: Install RavenPy
         run: |
           pip install -e ".[dev]"

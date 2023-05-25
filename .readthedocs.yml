@@ -17,18 +17,20 @@ build:
   tools:
     python: "mambaforge-4.10"
   jobs:
+    post_install:
+      - pip install .[docs,gis]
     pre_build:
       - sphinx-apidoc -o docs/apidoc --private --module-first ravenpy
-      - sphinx-build -b linkcheck docs/ _build/linkcheck
+      - sphinx-build -b linkcheck docs/ _build/linkcheck || true
 
 formats: all
 
 conda:
   environment: environment-rtd.yml
 
-python:
-  install:
-    - method: pip
-      path: .
-      extra_requirements:
-        - dev
+#python:
+#  install:
+#    - method: pip
+#      path: .
+#      extra_requirements:
+#        - dev

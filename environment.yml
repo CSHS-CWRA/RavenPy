@@ -3,42 +3,41 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - raven-hydro ==3.6
-  - python >=3.8
+  - raven-hydro ==0.2.1
+  - python >=3.8,<3.12
   - affine
   - cftime
   - cf_xarray
   - click
-  - climpred >=2.1.0
+#  - climpred >=2.2.0  # conda package is incompatible with latest raven-hydro
   - dask
   - fiona >=1.9
+  - flit
   - gdal >=3.1
-  - geopandas >=0.9
+  - geopandas >=0.13.0
   - haversine
   - holoviews
   - hvplot
   - lxml
   - matplotlib
-  - netCDF4
-  - numpy < 1.24
-  - owslib >=0.24.1,<0.29
-  - pandas < 2.0
+  - netcdf4
+  - numpy
+  - owslib <0.29.0  # see: https://github.com/geopython/OWSLib/issues/871
+  - pandas
   - pint >=0.20
-  - pip
   - pre-commit
   - pydantic
   - pymbolic
+  - pyogrio
   - pyproj >=3.0
   - rasterio
   - requests
   - rioxarray
-  - scikit-learn ==0.24.2
   - scipy
-  - setuptools <=65.6
   - shapely
   - spotpy
   - statsmodels
-  - xarray <2022.11.0  # Pinned due to incompatibility with climpred @ 2.2.0
-  - xclim >=0.40
+  - xarray
+  - xclim >=0.43
+  - xesmf
   - xskillscore
-  - wheel

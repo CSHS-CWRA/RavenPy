@@ -17,11 +17,9 @@ Raven_ is an hydrological modeling framework that lets hydrologists build hydrol
 
 Note that version 0.12 includes major changes compared to the previous 0.11 release, and breaks backward compatibility. The benefits of these changes are a much more intuitive interface for configuring and running the model.
 
-
 Features
 --------
 
-* Download and compile Raven with `pip`
 * Configure, run and parse Raven outputs from Python
 * Utility command to create grid weight files
 * Extract physiographic information about watersheds
@@ -40,13 +38,14 @@ RavenPy's development has been funded by CANARIE_ and Ouranos_ and would be not 
 
 This package was created with Cookiecutter_ and the `Ouranosinc/cookiecutter-pypackage`_ project template.
 
+.. _CANARIE: https://www.canarie.ca
 .. _Cookiecutter: https://github.com/audreyfeldroy/cookiecutter-pypackage
+.. _Ouranos: https://www.ouranos.ca
+.. _Ouranosinc/cookiecutter-pypackage: https://github.com/Ouranosinc/cookiecutter-pypackage
 .. _Raven: http://raven.uwaterloo.ca
-.. _`CANARIE`: https://www.canarie.ca
-.. _`Ouranos`: https://www.ouranos.ca
-.. _`Ouranosinc/cookiecutter-pypackage`: https://github.com/Ouranosinc/cookiecutter-pypackage
-.. _`docs`: https://www.civil.uwaterloo.ca/raven/files/v3.5/RavenManual_v3.5.pdf
-.. _`installation docs`: https://ravenpy.readthedocs.io/en/latest/installation.html
+.. _docs: https://www.civil.uwaterloo.ca/raven/files/v3.7/RavenManual_v3.7.pdf
+.. _installation docs: https://ravenpy.readthedocs.io/en/latest/installation.html
+.. _raven-hydro: https://github.com/Ouranosinc/raven-hydro
 
 
 .. |pypi| image:: https://img.shields.io/pypi/v/ravenpy.svg

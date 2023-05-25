@@ -2,21 +2,25 @@
 History
 =======
 
-0.12 (unreleased)
------------------
+0.12.0 (2023-05-25)
+-------------------
 This release includes major breaking changes. It completely overhauls how models are defined, and how to run
 simulations, and any code relying on the previous release will most likely break. Please check the documentation
 to see how to use the new improved interface.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
-- The entire model configuration and simulation interface (see PR #269);
-- Update RavenC executable to v3.7;
-- Add support for Ensemble Kalman Filter using RavenC;
-- Use SpotPy for model calibration instead of Ostrich;
-- RavenPy now relies on the `raven-hydro` pip package for installing the C++ executable;
-- BasinMaker importer assumes SubBasin=HRU in order to work with files downloaded from the BasinMaker web site;
-
+* The entire model configuration and simulation interface (see PR #269).
+* The Raven model executable is now updated to v3.7.
+* Added support for Ensemble Kalman Filter using RavenC.
+* Now employing the `spotpy` package for model calibration instead of `ostrich`.
+* BasinMaker importer assumes `SubBasin=HRU` in order to work with files downloaded from the BasinMaker web site.
+* Ravenpy now employs a new method for installing the Raven model using the `raven-hydro <https://github.com/Ouranosinc/raven-hydro>`_ python package  (based on `scikit-build-core`) (see PR #278).
+* Replaced `setup.py`, `requirements.txt`, and `Manifest.in` for `PEP 517 <https://peps.python.org/pep-0517>`_ compliance (`pyproject.toml`) using the flit backend (see PR #278).
+* Dealt with an import-based error that occurred due to the sequence in which modules are loaded at import (attempting to call ravenpy before it is installed).
+* Updated pre-commit hooks to include formatters and checkers for TOML files.
+* The build recipes no longer build on each other, so when installing the `dev` or `docs` recipe, you must also install the gis recipe.
+* Updated the GeoServer API calls to work with the GeoPandas v0.13.0.
 
 0.11.0 (2023-02-16)
 -------------------

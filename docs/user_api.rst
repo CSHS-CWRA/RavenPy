@@ -2,14 +2,12 @@
 User API
 ========
 
-
 Execution
 =========
 
 .. automodule:: ravenpy.ravenpy
    :members:
    :noindex:
-
 
 Configuration
 =============
@@ -22,16 +20,12 @@ Configuration
    :members:
    :noindex:
 
-
-
 Emulators
 =========
 
 .. automodule::  ravenpy.config.emulators
    :members:
    :noindex:
-
-
 
 Extractors
 ==========
@@ -43,7 +37,6 @@ Extractors
 .. automodule::  ravenpy.extractors.forecasts
    :members:
    :noindex:
-
 
 Utilities
 =========

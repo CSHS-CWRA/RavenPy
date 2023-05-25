@@ -2,11 +2,12 @@
 Installation
 ============
 
-Full Installation (Anaconda)
+Anaconda Python Installation
 ----------------------------
 
 For many reasons, we recommend using a `Conda environment <https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_
-to work with the full RavenPy installation. This implementation is able to manage the harder-to-install GIS dependencies,like `GDAL`.
+to work with the full RavenPy installation. This implementation is able to manage the harder-to-install GIS dependencies, like `GDAL`.
+
 Begin by creating an environment:
 
 .. code-block:: console
@@ -25,70 +26,48 @@ RavenPy can then be installed directly via its `conda-forge` package by running:
 
    (ravenpy) $ conda install -c conda-forge ravenpy
 
-This approach installs both the `Raven <http://raven.uwaterloo.ca>`_ binary directly to your environment `PATH`,
+This approach installs the `Raven <http://raven.uwaterloo.ca>`_ binary directly to your environment `PATH`,
 as well as installs all the necessary Python and C libraries supporting GIS functionalities.
 
-
-Custom Installation (Python/Pip)
---------------------------------
+Python Installation (pip)
+-------------------------
 
 .. warning::
-   The following instructions will only work on POSIX-like systems (Unix/Linux; not supported on Windows).
+   In order to compile the Raven model (provided by the `raven-hydro` package, a C++ compiler (`GCC`, `Clang`, `MSVC`, etc.) and either `GNU Make` (Linux/macOS) or `Ninja` (Windows) must be exposed on the `$PATH`.
 
-If you wish to install RavenPy and its C-libraries manually, compiling the `Raven` binaries for your system,
-you can install the entire system directly, placing them in the `bin` folder of your environment.
+.. warning::
+   The Raven model also requires that NetCDF4 libraries are installed on the system, exposed on the `$PATH`, and discoverable using the `FindNetCDF.cmake` helper script bundled with `raven-hydro`.
+
+   On Linux, this can be provided by the `libnetcdf-dev` system library; On macOS by the `netcdf` homebrew package; And on Windows by using UNIDATA's [pre-built binaries](https://docs.unidata.ucar.edu/netcdf-c/current/winbin.html).
+
 In order to perform this from Ubuntu/Debian:
 
 .. code-block:: console
 
-   $ sudo apt-get install gcc libnetcdf-dev gdal proj geos geopandas
+   $ sudo apt-get install gcc libnetcdf-dev gdal proj geos
 
 Then, from your python environment, run:
 
 .. code-block:: console
 
    $ pip install ravenpy[gis]
-   $ pip install ravenpy[gis] --verbose --install-option="--with-binaries"
 
-.. warning::
-
-  It is imperative that the Python dependencies are pre-installed before running the `--with-binaries`
-  option; This install step will fail otherwise.
-
-If desired, the core functions of `RavenPy` can be installed without its GIS functionalities as well.
-This implementation of RavenPy is much lighter on dependencies and can be installed easily with `pip`,
-without the need for `conda` or `virtualenv`.
-
-The only libraries required for RavenPy in this approach are a C++ compiler and the NetCDF4 development libraries.
-
-.. code-block:: console
-
-   $ sudo apt-get install gcc libnetcdf-dev
+If desired, the core functions of `RavenPy` can be installed without its GIS functionalities as well. This implementation of RavenPy is much lighter on dependencies and can be installed easily with `pip`, without the need for `conda` or `virtualenv`.
 
 .. code-block:: console
 
    $ pip install ravenpy
-   $ pip install ravenpy --verbose --install-option="--with-binaries"
 
-.. warning::
+Using A Custom Raven Model Binary
+---------------------------------
 
-  It is imperative that the Python dependencies are pre-installed before running the `--with-binaries`
-  option; This install step will fail otherwise.
+If you wish to install the `Raven` model, either compiling the `Raven` binary from sources for your system or installing the pre-built binary offered by UWaterloo, we encourage you to consult the `Raven` documentation (`Raven Downloads <https://www.civil.uwaterloo.ca/raven/Downloads.html>`_).
 
-If for any reason you prefer to install without the binaries, from a fresh python environment, run the following:
+Once downloaded/compiled, the binary can be pointed to manually (as an absolute path) by setting the environment variable ``RAVENPY_RAVEN_BINARY_PATH`` in the terminal/command prompt/shell used at runtime.
 
 .. code-block:: console
 
-   (ravenpy-env) $ pip install ravenpy[gis]
-
-But then you will be in charge of providing ``raven``  binaries on your PATH, or setting values for the
-``RAVENPY_RAVEN_BINARY_PATH`` environment variable (as an absolute path) in the
-terminal/command prompt/shell used at runtime.
-
-.. note::
-
-  The `virtualenv <https://virtualenv.pypa.io/en/latest/>`_ implementation also works well, but the
-  GIS system libraries it depends on (specifically `GDAL` and `GEOS`) can be more difficult to configure.
+   $ export RAVENPY_RAVEN_BINARY_PATH=/path/to/my/custom/raven
 
 Development Installation (from sources)
 ---------------------------------------
@@ -114,16 +93,7 @@ You can then install RavenPy with:
 .. code-block:: console
 
    # for the python dependencies
-   (ravenpy) $ pip install --editable ".[dev]"
-
-.. warning::
-
-   The following command will only work on POSIX-like systems (Unix/Linux; not supported on Windows).
-
-.. code-block:: console
-
-   # for the Raven binaries
-   (ravenpy) $ pip install --editable "." --install-option="--with-binaries"
+   (ravenpy) $ pip install --editable ".[dev,gis]"
 
 Install the pre-commit hook (to make sure that any code you contribute is properly formatted):
 
