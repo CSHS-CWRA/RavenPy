@@ -437,8 +437,9 @@ def select_hybas_domain(
         with open(fn, "rb") as f:
             zf = fiona.io.ZipMemoryFile(f)
             coll = zf.open(fn.stem + ".shp")
-            for _ in coll.filter(bbox=bbox):
-                return dom
+            for feat in coll.filter(bbox=bbox):
+                if isinstance(feat, fiona.Feature):
+                    return dom
 
     raise LookupError(f"Could not find feature containing bbox: {bbox}.")
 
