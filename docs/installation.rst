@@ -2,7 +2,7 @@
 Installation
 ============
 
-Full Installation (Anaconda)
+Anaconda Python Installation
 ----------------------------
 
 For many reasons, we recommend using a `Conda environment <https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_
@@ -26,19 +26,19 @@ RavenPy can then be installed directly via its `conda-forge` package by running:
 
    (ravenpy) $ conda install -c conda-forge ravenpy
 
-This approach installs both the `Raven <http://raven.uwaterloo.ca>`_ binary directly to your environment `PATH`,
+This approach installs the `Raven <http://raven.uwaterloo.ca>`_ binary directly to your environment `PATH`,
 as well as installs all the necessary Python and C libraries supporting GIS functionalities.
 
-
-Custom Installation (Python/Pip)
---------------------------------
-
-# FIXME: Remove this warning and update docs once Ouranosinc/raven-hydro is finalized
+Python Installation (pip)
+-------------------------
 
 .. warning::
-   As of April 2023, this installation method does not install the `raven-hydro` hydrological model. You must install the `raven-hydro` model and add it to your `bin` or append it to your `$PATH` manually. This may change in the future
+   In order to compile the Raven model (provided by the `raven-hydro` package, a C++ compiler (`GCC`, `Clang`, `MSVC`, etc.) and either `GNU Make` (Linux/macOS) or `Ninja` (Windows) must be exposed on the `$PATH`.
 
-If you wish to install RavenPy and its supporting system libraries manually, either compiling the `Raven` binary for your system or installing the pre-built binary, we encourage you to consult the `Raven` documentation (`Raven Downloads <https://www.civil.uwaterloo.ca/raven/Downloads.html>`_).
+.. warning::
+   The Raven model also requires that NetCDF4 libraries are installed on the system, exposed on the `$PATH`, and discoverable using the `FindNetCDF.cmake` helper script bundled with `raven-hydro`.
+
+   On Linux, this can be provided by the `libnetcdf-dev` system library; On macOS by the `netcdf` homebrew package; And on Windows by using UNIDATA's [pre-built binaries](https://docs.unidata.ucar.edu/netcdf-c/current/winbin.html).
 
 In order to perform this from Ubuntu/Debian:
 
@@ -58,15 +58,19 @@ If desired, the core functions of `RavenPy` can be installed without its GIS fun
 
    $ pip install ravenpy
 
-Once downloaded/compiled, ensure that the binary is placed in the `bin` folder of your environment and/or accessible on `$PATH` (Unix/Linux). The binary can also be pointed to manually (as an absolute path) by setting the environment variable ``RAVENPY_RAVEN_BINARY_PATH`` in the terminal/command prompt/shell used at runtime.
+Using A Custom Raven Model Binary
+---------------------------------
+
+If you wish to install the `Raven` model, either compiling the `Raven` binary from sources for your system or installing the pre-built binary offered by UWaterloo, we encourage you to consult the `Raven` documentation (`Raven Downloads <https://www.civil.uwaterloo.ca/raven/Downloads.html>`_).
+
+Once downloaded/compiled, the binary can be pointed to manually (as an absolute path) by setting the environment variable ``RAVENPY_RAVEN_BINARY_PATH`` in the terminal/command prompt/shell used at runtime.
+
+.. code-block:: console
+
+   $ export RAVENPY_RAVEN_BINARY_PATH=/path/to/my/custom/raven
 
 Development Installation (from sources)
 ---------------------------------------
-
-# FIXME: Remove this warning and update docs once Ouranosinc/raven-hydro is finalized
-
-.. warning::
-   As of April 2023, this installation method does not install the `raven-hydro` hydrological model. You must install the `raven-hydro` model and add it to your `bin` or append it to your `$PATH` manually. This may change in the future
 
 The sources for RavenPy can be obtained from the GitHub repo:
 

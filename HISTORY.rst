@@ -2,6 +2,16 @@
 History
 =======
 
+0.12.0 (2023-05-25)
+-------------------
+
+* Ravenpy now employs a new method for installing the Raven model using the `raven-hydro <https://github.com/Ouranosinc/raven-hydro>`_ python package  (based on `scikit-build-core`).
+* Replaced `setup.py`, `requirements.txt`, and `Manifest.in` for `PEP 517 <https://peps.python.org/pep-0517>`_ compliance (`pyproject.toml`) using the flit backend.
+* Dealt with an import-based error that occurred due to the sequence in which modules are loaded at import (attempting to call ravenpy before it is installed).
+* Updated pre-commit hooks to include formatters and checkers for TOML files.
+* The build recipes no longer build on each other, so when installing the dev or docs recipe, you must also install the gis recipe.
+* Updated the GeoServer API calls to work with the GeoPandas v0.13.0.
+
 0.11.0 (2023-02-16)
 -------------------
 
