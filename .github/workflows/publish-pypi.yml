@@ -2,33 +2,28 @@ name: Publish Python 🐍 distributions 📦 to PyPI
 
 on:
   release:
-    types: [ published ]
+    types:
+      - published
 
 jobs:
   build-n-publish-pypi:
     name: Build and publish Python 🐍 distributions 📦 to PyPI
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.8"]
     steps:
-    - uses: actions/checkout@master
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.x"
-    - name: Install GDAL
-      run: |
-        sudo apt-get update
-        sudo apt-get install libgdal-dev
-    - name: Set GDAL version
-      run: |
-        echo "GDAL_VERSION=$(gdal-config --version)"  >> $GITHUB_ENV
-    - name: Install packaging libraries
-      run: pip install wheel
-    - name: Build a binary wheel and a source tarball
-      run: |
-        export LD_PRELOAD=/lib/x86_64-linux-gnu/libstdc++.so.6:$LD_PRELOAD
-        python setup.py sdist bdist_wheel
-    - name: Publish distribution 📦 to PyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        user: __token__
-        password: ${{ secrets.PYPI_API_TOKEN }}
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install packaging libraries
+        run: pip install flit
+      - name: Build a binary wheel and a source tarball
+        run: flit build
+      - name: Publish distribution 📦 to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_API_TOKEN }}
