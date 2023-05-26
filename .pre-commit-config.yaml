@@ -25,7 +25,7 @@ repos:
       - id: python-check-blanket-noqa
       - id: rst-inline-touching-normal
   - repo: https://github.com/pappasam/toml-sort
-    rev: v0.23.0
+    rev: v0.23.1
     hooks:
       - id: toml-sort-fix
   - repo: https://github.com/psf/black

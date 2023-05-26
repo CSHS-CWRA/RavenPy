@@ -15,7 +15,7 @@ Raven_ is an hydrological modeling framework that lets hydrologists build hydrol
 
 `RavenPy` provides a Python interface to Raven_, automating the creation of configuration files and allowing the model to be launched from Python. Results, or errors, are automatically parsed and exposed within the programming environment. This facilitates the launch of parallel simulations, multi-model prediction ensembles, sensitivity analyses and other experiments involving a large number of model runs.
 
-Note that version 0.20.0 includes many major changes compared to the previous 0.12 release, and breaks backward compatibility, notably, the Raven model is now compiled/installed/managed via a dedicated pip/conda package `raven-hydro`_. The other benefits of these changes are a much more intuitive interface for configuring and running the model.
+Note that version 0.12 includes major changes compared to the previous 0.11 release, and breaks backward compatibility. The benefits of these changes are a much more intuitive interface for configuring and running the model.
 
 Features
 --------
