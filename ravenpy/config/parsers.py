@@ -105,10 +105,10 @@ def parse_outputs(run_name: str = None, outputdir: [str, Path] = None):
 
     Parameters
     ----------
-    run_name: str
-      RunName value identifying model outputs.
-    outputdir: str, Path
-      Path to model output directory. Current directory if None.
+    run_name : str
+        RunName value identifying model outputs.
+    outputdir : str or Path
+        Path to model output directory. Current directory if None.
 
     Returns
     -------
@@ -118,7 +118,11 @@ def parse_outputs(run_name: str = None, outputdir: [str, Path] = None):
         - storage: xarray.Dataset
         - solution: Dict[str, Command]
         - diagnostics: Dict[str, list]
-      Values are set to None if no file is found.
+
+    Notes
+    -----
+    Values are set to None if no file is found.
+
 
     """
     if outputdir is None:

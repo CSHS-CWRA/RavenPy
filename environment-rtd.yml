@@ -3,15 +3,15 @@ channels:
 - conda-forge
 - defaults
 dependencies:
-  - python >=3.8,<3.12
+  - python ==3.9  # fixed to reduce solver time
   - autodoc-pydantic
   - click
 #  - clisops  # mocked
-  - gdal
+#  - gdal  # not needed for installation steps
   - ipykernel
   - ipython
   - jupyter_client
-  - matplotlib
+  - matplotlib-base
   - myst-nb
   - jupytext
   - nbsphinx
