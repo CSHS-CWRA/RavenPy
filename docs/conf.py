@@ -154,7 +154,7 @@ pygments_style = "sphinx"
 todo_include_todos = False
 
 # Suppress "WARNING: unknown mimetype for ..." when building EPUB.
-suppress_warnings = ["epub.unknown_project_files"]
+suppress_warnings = ["epub.unknown_project_files", "mystnb.unknown_mime_type"]
 
 # -- Options for HTML output -------------------------------------------
 
