@@ -370,9 +370,15 @@ def test_gauge(get_local_testdata, tmp_path):
     assert "RAINFALL" in g.ds
     assert g.data[0].read_from_netcdf.deaccumulate
 
+
+def test_gauge_raises(get_local_testdata):
+    f = get_local_testdata(
+        "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
+    )
+
     with pytest.raises(ValueError):
         rc.Gauge.from_nc(
-            f_tmp,
+            f,
             data_type=[
                 "RAINFALL",
             ],
