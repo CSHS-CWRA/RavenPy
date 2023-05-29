@@ -1,4 +1,5 @@
 import re
+from shutil import copyfile
 from textwrap import dedent
 from typing import Sequence, Union
 
@@ -350,12 +351,16 @@ def test_gridded_forcing(get_local_testdata):
     # assert gf.dim_names_nc == ("lon_dim", "lat_dim", "time")
 
 
-def test_gauge(get_local_testdata):
+def test_gauge(get_local_testdata, tmp_path):
     f = get_local_testdata(
         "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
     )
+    f_tmp = copyfile(
+        f, tmp_path.joinpath("Salmon-River-Near-Prince-George_meteo_daily.nc")
+    )
+
     g = rc.Gauge.from_nc(
-        f,
+        f_tmp,
         alt_names={"RAINFALL": "rain", "SNOWFALL": "snow"},
         data_kwds={"ALL": {"Deaccumulate": True}},
     )
@@ -367,7 +372,7 @@ def test_gauge(get_local_testdata):
 
     with pytest.raises(ValueError):
         rc.Gauge.from_nc(
-            f,
+            f_tmp,
             data_type=[
                 "RAINFALL",
             ],
