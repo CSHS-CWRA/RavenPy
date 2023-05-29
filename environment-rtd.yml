@@ -8,7 +8,7 @@ dependencies:
   - autodoc-pydantic
   - click
 #  - clisops  # mocked
-#  - gdal  # not needed for installation steps
+  - gdal
   - ipykernel
   - ipython
   - jupyter_client
