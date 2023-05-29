@@ -18,7 +18,7 @@ build:
     python: "mambaforge-4.10"
   jobs:
     post_install:
-      - pip install .[docs,gis]
+      - pip install .[docs]
     pre_build:
       - sphinx-apidoc -o docs/apidoc --private --module-first ravenpy
       - sphinx-build -b linkcheck docs/ _build/linkcheck || true
