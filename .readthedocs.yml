@@ -23,7 +23,8 @@ build:
       - sphinx-apidoc -o docs/apidoc --private --module-first ravenpy
       - sphinx-build -b linkcheck docs/ _build/linkcheck || true
 
-formats: all
+formats:
+  - pdf
 
 conda:
   environment: environment-rtd.yml
