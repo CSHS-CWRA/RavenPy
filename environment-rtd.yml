@@ -4,6 +4,7 @@ channels:
 - defaults
 dependencies:
   - python ==3.9  # fixed to reduce solver time
+  - raven-hydro ==0.2.1
   - autodoc-pydantic
   - click
 #  - clisops  # mocked
