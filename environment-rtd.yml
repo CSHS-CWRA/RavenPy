@@ -16,6 +16,7 @@ dependencies:
   - jupytext
   - nbsphinx
 #  - netCDF4  # mocked
+  - notebook
   - pandoc
   - pydantic
   - sphinx
