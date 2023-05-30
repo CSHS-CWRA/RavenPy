@@ -33,12 +33,14 @@ Python Installation (pip)
 -------------------------
 
 .. warning::
+
    In order to compile the Raven model (provided by the `raven-hydro` package, a C++ compiler (`GCC`, `Clang`, `MSVC`, etc.) and either `GNU Make` (Linux/macOS) or `Ninja` (Windows) must be exposed on the `$PATH`.
 
 .. warning::
+
    The Raven model also requires that NetCDF4 libraries are installed on the system, exposed on the `$PATH`, and discoverable using the `FindNetCDF.cmake` helper script bundled with `raven-hydro`.
 
-   On Linux, this can be provided by the `libnetcdf-dev` system library; On macOS by the `netcdf` homebrew package; And on Windows by using UNIDATA's [pre-built binaries](https://docs.unidata.ucar.edu/netcdf-c/current/winbin.html).
+   On Linux, this can be provided by the `libnetcdf-dev` system library; On macOS by the `netcdf` homebrew package; And on Windows by using UNIDATA's `pre-built binaries <https://docs.unidata.ucar.edu/netcdf-c/current/winbin.html>`_.
 
 In order to perform this from Ubuntu/Debian:
 

@@ -41,12 +41,12 @@ extensions = [
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
     "IPython.sphinxext.ipython_console_highlighting",
-    #"nbsphinx",
+    # "nbsphinx",
     "myst_nb",
     "sphinx_click",
     "sphinx_codeautolink",
     "sphinx_copybutton",
-    #"sphinxcontrib.autodoc_pydantic",
+    # "sphinxcontrib.autodoc_pydantic",
 ]
 
 linkcheck_ignore = [
