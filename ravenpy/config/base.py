@@ -37,7 +37,7 @@ class Params:
 
 
 def encoder(v: dict) -> dict:
-    """Return string representation of objects in dictionary.
+    r"""Return string representation of objects in dictionary.
 
     This is meant to be applied to BaseModel attributes that either have an `alias` defined,
     or have a `__root__` attribute. The objective is to avoid creating `Command` objects for every
