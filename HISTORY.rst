@@ -2,6 +2,17 @@
 History
 =======
 
+0.12.1 (2023-06-01)
+-------------------
+This release is largely a bugfix to better stabilize  performance and enhance the documentation.
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Hyperlinks to documented functions now points to entries in the `User API` section.
+* Docstrings are now more conformant to numpy-docstring conventions and formatting errors raised from badly-formatted pydantic-style docstrings have been addressed.
+* In order to prevent timeout and excessive memory usage, Jupyter notebooks have been adjusted to no longer run on ReadTheDocs. All notebooks have been updated to the latest RavenPu and remain tested against RavenPy externally.
+* Documentation built on ReadTheDocs is now set to `fail_on_warning`.
+
 0.12.0 (2023-05-25)
 -------------------
 This release includes major breaking changes. It completely overhauls how models are defined, and how to run
