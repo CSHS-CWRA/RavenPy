@@ -11,6 +11,7 @@ repos:
     rev: v4.4.0
     hooks:
       - id: trailing-whitespace
+        exclude: setup.cfg
       - id: end-of-file-fixer
       - id: check-json
       - id: check-toml
