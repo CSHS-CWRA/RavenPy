@@ -2,6 +2,11 @@
 History
 =======
 
+0.12.1 (2023-06-01)
+-------------------
+
+* Avoid repeatedly calling `xr.open_dataset` in `OutputReader`'s `hydrograph` and `storage` properties. This seems to cause kernel failures in Jupyter notebooks.
+
 0.12.0 (2023-05-25)
 -------------------
 This release includes major breaking changes. It completely overhauls how models are defined, and how to run

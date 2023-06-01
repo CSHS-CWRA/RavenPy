@@ -126,6 +126,8 @@ class OutputReader:
         self._run_name = run_name
         self._path = Path(path) if path else Path.cwd()
         self._files = parsers.output_files(self._run_name, self._path)
+        self._nc_hydrograph = None
+        self._nc_storage = None
 
         # TODO: Check if no files are found. Otherwise we get cryptic errors.
         # if self._files["hydrograph"]
@@ -152,15 +154,22 @@ class OutputReader:
     @property
     def hydrograph(self) -> xr.Dataset:
         """Return the hydrograph."""
-        h = self.files.get("hydrograph")
-        if h:
-            return parsers.parse_nc(h)
+        if self._nc_hydrograph is None:
+            h = self.files.get("hydrograph")
+            if h:
+                self._nc_hydrograph = parsers.parse_nc(h)
+
+        return self._nc_hydrograph
 
     @property
     def storage(self) -> xr.Dataset:
-        s = self.files.get("storage")
-        if s:
-            return parsers.parse_nc(s)
+        """Return the storage variables."""
+        if self._nc_storage is None:
+            s = self.files.get("storage")
+            if s:
+                self._nc_storage = parsers.parse_nc(s)
+
+        return self._nc_storage
 
     @property
     def messages(self) -> Optional[str]:
