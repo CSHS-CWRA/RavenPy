@@ -3,7 +3,8 @@ channels:
 - conda-forge
 - defaults
 dependencies:
-  - python >=3.8,<3.12
+  - python >=3.9,<3.10  # fixed to reduce solver time
+  - raven-hydro ==0.2.1
   - autodoc-pydantic
   - click
 #  - clisops  # mocked
@@ -11,13 +12,15 @@ dependencies:
   - ipykernel
   - ipython
   - jupyter_client
-  - matplotlib
+  - matplotlib-base
   - myst-nb
   - jupytext
   - nbsphinx
 #  - netCDF4  # mocked
+  - notebook
   - pandoc
   - pydantic
+  - seaborn
   - sphinx
   - sphinx-autoapi
   - sphinx-click

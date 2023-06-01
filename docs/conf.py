@@ -41,12 +41,12 @@ extensions = [
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
     "IPython.sphinxext.ipython_console_highlighting",
-    #"nbsphinx",
+    # "nbsphinx",
     "myst_nb",
     "sphinx_click",
     "sphinx_codeautolink",
     "sphinx_copybutton",
-    #"sphinxcontrib.autodoc_pydantic",
+    # "sphinxcontrib.autodoc_pydantic",
 ]
 
 linkcheck_ignore = [
@@ -64,7 +64,8 @@ autosectionlabel_maxdepth = 2
 autosummary_generate = True
 
 nb_execution_mode = "cache"
-nb_execution_allow_errors = True
+nb_execution_allow_errors = False
+nb_execution_excludepatterns = ["notebooks/*.ipynb", "notebooks/paper/*.ipynb"]
 
 # nbsphinx_execute = "auto"
 # nbsphinx_timeout = 1
@@ -145,7 +146,7 @@ language = "en"
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", ".jupyter_cache", "jupyter_execute"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", ".jupyter_cache", "jupyter_execute", "notebooks/paper"]
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "sphinx"
@@ -154,7 +155,10 @@ pygments_style = "sphinx"
 todo_include_todos = False
 
 # Suppress "WARNING: unknown mimetype for ..." when building EPUB.
-suppress_warnings = ["epub.unknown_project_files"]
+suppress_warnings = [
+    "epub.unknown_project_files",
+    "mystnb.unknown_mime_type"
+]
 
 # -- Options for HTML output -------------------------------------------
 

@@ -42,14 +42,16 @@ from .base import (
 from .utils import filter_for, nc_specs
 
 """
-Notes
------
+Raven commands
+==============
 
-TODO: Strip command outputs of white space to facilitate testing.
-TODO: Add docstrings
-TODO: Create tests in tests/config/test_commands.py
-
+The syntax of those commands match as closely as possible the Raven documentation.
 """
+
+
+# TODO: Strip command outputs of white space to facilitate testing.
+# TODO: Add docstrings
+# TODO: Create tests in tests/config/test_commands.py
 
 
 INDENT = " " * 4
@@ -139,18 +141,12 @@ class LinearTransform(Command):
 
 
 class RainSnowTransition(Command):
-    """Specify the range of temperatures over which there will be a rain/snow mix when partitioning total precipitation into rain and snow components.
-
-    Attributes
-    ----------
-    temp : float
-      Midpoint of the temperature range [C].
-    delta : float
-      Range [C].
-    """
+    """Specify the range of temperatures over which there will be a rain/snow mix when partitioning total precipitation into rain and snow components."""
 
     temp: Sym
+    """Midpoint of the temperature range [C]."""
     delta: Sym
+    """Range [C]."""
 
     def to_rv(self):
         cmd = "RainSnowTransition"
@@ -177,15 +173,16 @@ class CustomOutput(FlatCommand):
     Parameters
     ----------
     time_per : {'DAILY', 'MONTHLY', 'YEARLY', 'WATER_YEARLY', 'CONTINUOUS'}
-      Time period.
+        Time period.
     stat : {'AVERAGE', 'MAXIMUM', 'MINIMUM', 'RANGE', 'MEDIAN', 'QUARTILES', 'HISTOGRAM [min] [max] [# bins]'
-      Statistic reported for each time inverval.
-    variable: str
-      Variable or parameter name. Consult the Raven documentation for the list of allowed names.
+        Statistic reported for each time interval.
+    variable : str
+        Variable or parameter name. Consult the Raven documentation for the list of allowed names.
     space_agg : {'BY_BASIN', 'BY_HRU', 'BY_HRU_GROUP', 'BY_SB_GROUP', 'ENTIRE_WATERSHED'}
-      Spatial evaluation domain.
+        Spatial evaluation domain.
     filename : str
-      Output file name. Defaults to something approximately like `<run name>_<variable>_<time_per>_<stat>_<space_agg>.nc
+        Output file name. Defaults to something approximately like
+        `<run name>_<variable>_<time_per>_<stat>_<space_agg>.nc`
     """
 
     time_per: Literal["DAILY", "MONTHLY", "YEARLY", "WATER_YEARLY", "CONTINUOUS"]
@@ -400,8 +397,9 @@ class ChannelProfile(FlatCommand):
 class GridWeights(Command):
     """GridWeights command.
 
-    Important note: this command can be embedded in both a `GriddedForcing`
-    or a `StationForcing`.
+    Notes
+    -----
+    command can be embedded in both a `GriddedForcing` or a `StationForcing`.
 
     The default is to have a single cell that covers an entire single HRU, with a
     weight of 1.
@@ -445,6 +443,8 @@ class GridWeights(Command):
 class RedirectToFile(Command):
     """RedirectToFile command (RVT).
 
+    Notes
+    -----
     For the moment, this command can only be used in the context of a `GriddedForcingCommand`
     or a `StationForcingCommand`, as a `grid_weights` field replacement when inlining is not
     desired.
@@ -640,27 +640,27 @@ class Gauge(FlatCommand):
         Parameters
         ----------
         fn : Union[Path, Sequence[Path]],
-          NetCDF file path or paths.
-        data_type: Sequence[str], None
-          Raven data types to extract from netCDF files, e.g. 'PRECIP', 'AVE_TEMP'. The algorithm tries to find all
-          forcings in each file until one is found, then it stops searching for it in the following files.
-        station_idx: int
-          Index along station dimension. Starts at 1. Should be the same for all netCDF files.
-        alt_names: dict
-          Alternative variable names keyed by data type.
-          Use this if variables do not correspond to CF standard defaults.
-        mon_ave: bool
-          If True, compute the monthly average.
-        data_kwds: Dict[options.Forcings, Dict[str, str]]]
-          Additional `:Data` parameters keyed by forcing type and station id. Overrides inferred parameters.
-          Use keyword "ALL" to pass parameters to all variables.
+            NetCDF file path or paths.
+        data_type : Sequence[str], None
+            Raven data types to extract from netCDF files, e.g. 'PRECIP', 'AVE_TEMP'. The algorithm tries to find all
+            forcings in each file until one is found, then it stops searching for it in the following files.
+        station_idx : int
+            Index along station dimension. Starts at 1. Should be the same for all netCDF files.
+        alt_names : dict
+            Alternative variable names keyed by data type.
+            Use this if variables do not correspond to CF standard defaults.
+        mon_ave : bool
+            If True, compute the monthly average.
+        data_kwds : Dict[options.Forcings, Dict[str, str]]]
+            Additional `:Data` parameters keyed by forcing type and station id. Overrides inferred parameters.
+            Use keyword "ALL" to pass parameters to all variables.
         **kwds
-          Additional arguments for Gauge.
+            Additional arguments for Gauge.
 
         Returns
         -------
         Gauge
-          Gauge instance.
+            Gauge instance.
         """
         if alt_names is None:
             alt_names = {}
@@ -1032,6 +1032,8 @@ class AssimilatedState(FlatCommand):
 
 
 class AssimilateStreamflow(FlatCommand):
+    """Subbasin ID to assimilate streamflow for."""
+
     sb_id: str
 
     _template = ":{_cmd} {sb_id}\n"
