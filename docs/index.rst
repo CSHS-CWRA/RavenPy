@@ -28,11 +28,6 @@ Welcome to RavenPy's documentation!
 
    user_api
 
-.. toctree::
-   :maxdepth: 2
-   :caption: All Modules
-
-   apidoc/modules
 
 Indices and tables
 ==================

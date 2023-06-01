@@ -94,6 +94,8 @@ Config(
 Of course, setting an option with an invalid value will raise a `ValidationError`. For example, the error message below suggests there is a typo in the routing method, it should read `ROUTE_DIFFUSIVE_WAVE`:
 
 ```{code-cell} ipython3
+:tags: ["raises-exception"]
+
 Config(Routing="ROUTE_DIFFUSIVE")
 ```
 

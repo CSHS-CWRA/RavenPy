@@ -42,14 +42,16 @@ from .base import (
 from .utils import filter_for, nc_specs
 
 """
-Notes
------
+Raven commands
+==============
 
-TODO: Strip command outputs of white space to facilitate testing.
-TODO: Add docstrings
-TODO: Create tests in tests/config/test_commands.py
-
+The syntax of those commands match as closely as possible the Raven documentation.
 """
+
+
+# TODO: Strip command outputs of white space to facilitate testing.
+# TODO: Add docstrings
+# TODO: Create tests in tests/config/test_commands.py
 
 
 INDENT = " " * 4
@@ -179,13 +181,14 @@ class CustomOutput(FlatCommand):
     time_per : {'DAILY', 'MONTHLY', 'YEARLY', 'WATER_YEARLY', 'CONTINUOUS'}
         Time period.
     stat : {'AVERAGE', 'MAXIMUM', 'MINIMUM', 'RANGE', 'MEDIAN', 'QUARTILES', 'HISTOGRAM [min] [max] [# bins]'
-        Statistic reported for each time inverval.
+        Statistic reported for each time interval.
     variable : str
         Variable or parameter name. Consult the Raven documentation for the list of allowed names.
     space_agg : {'BY_BASIN', 'BY_HRU', 'BY_HRU_GROUP', 'BY_SB_GROUP', 'ENTIRE_WATERSHED'}
         Spatial evaluation domain.
     filename : str
-        Output file name. Defaults to something approximately like `<run name>_<variable>_<time_per>_<stat>_<space_agg>.nc
+        Output file name. Defaults to something approximately like
+        `<run name>_<variable>_<time_per>_<stat>_<space_agg>.nc`
     """
 
     time_per: Literal["DAILY", "MONTHLY", "YEARLY", "WATER_YEARLY", "CONTINUOUS"]
@@ -1035,6 +1038,8 @@ class AssimilatedState(FlatCommand):
 
 
 class AssimilateStreamflow(FlatCommand):
+    """Subbasin ID to assimilate streamflow for."""
+
     sb_id: str
 
     _template = ":{_cmd} {sb_id}\n"
