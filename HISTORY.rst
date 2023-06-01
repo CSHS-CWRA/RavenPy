@@ -6,6 +6,8 @@ History
 -------------------
 This release is largely a bugfix to better stabilize  performance and enhance the documentation.
 
+* Avoid repeatedly calling `xr.open_dataset` in `OutputReader`'s `hydrograph` and `storage` properties. This seems to cause kernel failures in Jupyter notebooks.
+
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Hyperlinks to documented functions now points to entries in the `User API` section.
