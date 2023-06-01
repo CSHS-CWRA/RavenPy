@@ -141,18 +141,12 @@ class LinearTransform(Command):
 
 
 class RainSnowTransition(Command):
-    """Specify the range of temperatures over which there will be a rain/snow mix when partitioning total precipitation into rain and snow components.
-
-    Attributes
-    ----------
-    temp : float
-        Midpoint of the temperature range [C].
-    delta : float
-        Range [C].
-    """
+    """Specify the range of temperatures over which there will be a rain/snow mix when partitioning total precipitation into rain and snow components."""
 
     temp: Sym
+    """Midpoint of the temperature range [C]."""
     delta: Sym
+    """Range [C]."""
 
     def to_rv(self):
         cmd = "RainSnowTransition"
