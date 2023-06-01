@@ -65,6 +65,7 @@ autosummary_generate = True
 
 nb_execution_mode = "cache"
 nb_execution_allow_errors = True
+nb_execution_excludepatterns = ["notebooks/*.ipynb"]
 
 # nbsphinx_execute = "auto"
 # nbsphinx_timeout = 1
