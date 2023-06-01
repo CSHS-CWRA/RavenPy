@@ -12,7 +12,7 @@ Internal changes
 ^^^^^^^^^^^^^^^^
 * Hyperlinks to documented functions now points to entries in the `User API` section.
 * Docstrings are now more conformant to numpy-docstring conventions and formatting errors raised from badly-formatted pydantic-style docstrings have been addressed.
-* In order to prevent timeout and excessive memory usage, Jupyter notebooks have been adjusted to no longer run on ReadTheDocs. All notebooks have been updated to the latest RavenPu and remain tested against RavenPy externally.
+* In order to prevent timeout and excessive memory usage, Jupyter notebooks have been adjusted to no longer run on ReadTheDocs. All notebooks have been updated to the latest RavenPy and remain tested against RavenPy externally.
 * Documentation built on ReadTheDocs is now set to `fail_on_warning`.
 
 0.12.0 (2023-05-25)
