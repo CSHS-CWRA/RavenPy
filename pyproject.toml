@@ -86,7 +86,7 @@ docs = [
   "cartopy",
   "clisops",
   "gcsfs",
-  "hs_restclient",
+  "hsclient",
   "intake",
   "intake-esm",
   "intake-xarray",

@@ -160,6 +160,7 @@ def test_evaluation_periods(gr4jcn_config, tmp_path):
 
 @pytest.mark.slow
 @pytest.mark.online
+@pytest.mark.xfail(error=OSError, reason="Network may be unreliable")
 def test_run_with_dap_link(minimal_emulator, tmp_path):
     """Test Raven with DAP link instead of local netCDF file."""
     # Link to THREDDS Data Server netCDF testdata

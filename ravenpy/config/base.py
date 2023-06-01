@@ -10,12 +10,12 @@ Notes
 -----
 In pydantic, BaseModel and dataclasses behave slightly differently.
 A dataclass object can be instantiated using positional arguments, while BaseModels cannot.
-This is why Params is defined as a dataclass
+This is why Params is defined as a dataclass::
 
-Two cases
-RV
-    Command, alias="A1"
-    Sequence[Command], alias="A2"
+    Two cases
+    RV
+        Command, alias="A1"
+        Sequence[Command], alias="A2"
 
 Sometimes, we want A2 to be printed as a command (HydrologicProcesses)
 Sometime, we don't (Gauges)
@@ -37,20 +37,18 @@ class Params:
 
 
 def encoder(v: dict) -> dict:
-    """
-    Return string representation of objects in dictionary.
+    r"""Return string representation of objects in dictionary.
 
     This is meant to be applied to BaseModel attributes that either have an `alias` defined,
     or have a `__root__` attribute. The objective is to avoid creating `Command` objects for every
-    configuration option.
+    configuration option:
 
-    - bool: ':{cmd}\n' if obj else ''
-    - dict: ':{cmd} {key} {value}'
-    - enum: ':{cmd} {obj.value}'
-    - Command: obj.to_rv()
-    - Sequence: complicated
-    - Any other: ':{cmd} {obj}'
-
+        - bool: ':{cmd}\n' if obj else ''
+        - dict: ':{cmd} {key} {value}'
+        - enum: ':{cmd} {obj.value}'
+        - Command: obj.to_rv()
+        - Sequence: complicated
+        - Any other: ':{cmd} {obj}'
     """
     import warnings
 

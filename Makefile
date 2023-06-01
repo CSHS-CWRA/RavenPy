@@ -73,10 +73,13 @@ coverage: ## check code coverage quickly with the default Python
 autodoc: clean-docs ## create sphinx-apidoc files:
 	sphinx-apidoc -o docs/apidoc --private --module-first ravenpy
 
+autodoc-custom-index: clean-docs ## create sphinx-apidoc files but with special index handling for indices and indicators
+	env SPHINX_APIDOC_OPTIONS="members,undoc-members,show-inheritance,noindex" sphinx-apidoc -o docs/apidoc --private --module-first ravenpy
+
 linkcheck: autodoc ## run checks over all external links found throughout the documentation
 	$(MAKE) -C docs linkcheck
 
-docs: linkcheck ## generate Sphinx HTML documentation, including API docs
+docs: autodoc-custom-index ## generate Sphinx HTML documentation, including API docs
 	$(MAKE) -C docs html
 ifndef READTHEDOCS
 	$(BROWSER) docs/_build/html/index.html
