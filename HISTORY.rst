@@ -11,6 +11,10 @@ Breaking changes
 * `raven-hydro` version has been bumped from v0.2.1 to v0.2.3. This version provides better support for builds on Windows and MacOS.
 * Due to major breaking changes, `pydantic` has been pinned below v2.0 until changes can be made to adapt to their new API.
 
+Internal changes
+^^^^^^^^^^^^^^^^
+* ``test_geoserver::test_select_hybas_ar_domain_point`` is now temporarily skipped when testing on MacOS due to a mysterious domain identification error.
+
 0.12.1 (2023-06-01)
 -------------------
 This release is largely a bugfix to better stabilize performance and enhance the documentation.
