@@ -40,23 +40,21 @@ jobs:
           - tox-env: py38
             python-version: "3.8"
             os: ubuntu-latest
-            allow-errors: false
+          - tox-env: py38
+            python-version: "3.8"
+            os: macos-latest
           - tox-env: py39
             python-version: "3.9"
             os: ubuntu-latest
-            allow-errors: false
           - tox-env: py310
             python-version: "3.10"
             os: ubuntu-latest
-            allow-errors: false
           - tox-env: py311
             python-version: "3.11"
             os: ubuntu-latest
-            allow-errors: false
-          - tox-env: py310
-            python-version: "3.10"
+          - tox-env: py311
+            python-version: "3.11"
             os: macos-latest
-            allow-errors: true
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
@@ -90,7 +88,6 @@ jobs:
     - name: Test with tox and report coverage
       run: |
         python3 -m tox -e ${{ matrix.tox-env }}
-      continue-on-error: ${{ matrix.allow-errors }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         COVERALLS_FLAG_NAME: run-${{ matrix.tox-env }}
