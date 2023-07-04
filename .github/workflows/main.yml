@@ -36,7 +36,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-#        allow_errors: [false]
+        allow_errors: [false]
         include:
           - tox-env: py38
             python-version: "3.8"
@@ -89,7 +89,7 @@ jobs:
     - name: Test with tox and report coverage
       run: |
         python3 -m tox -e ${{ matrix.tox-env }}
-#      continue-on-error: ${{ matrix.allow-errors }}
+      continue-on-error: ${{ matrix.allow-errors }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         COVERALLS_FLAG_NAME: run-${{ matrix.tox-env }}
