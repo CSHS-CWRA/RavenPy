@@ -10,6 +10,7 @@ Breaking changes
 ^^^^^^^^^^^^^^^^
 * `raven-hydro` version has been bumped from v0.2.1 to v0.2.3. This version provides better support for builds on Windows and MacOS.
 * Due to major breaking changes, `pydantic` has been pinned below v2.0 until changes can be made to adapt to their new API.
+* `numpy` has been pinned below v1.25.0 to ensure compatibility with `numba`.
 
 Internal changes
 ^^^^^^^^^^^^^^^^
