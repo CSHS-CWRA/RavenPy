@@ -21,7 +21,7 @@ dependencies:
   - lxml
   - matplotlib
   - netcdf4
-  - numpy
+  - numpy <1.25
   - owslib <0.29.0  # see: https://github.com/geopython/OWSLib/issues/871
   - pandas
   - pint >=0.20
