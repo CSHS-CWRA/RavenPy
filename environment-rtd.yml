@@ -4,7 +4,7 @@ channels:
 - defaults
 dependencies:
   - python >=3.9,<3.10  # fixed to reduce solver time
-  - raven-hydro ==0.2.1
+  - raven-hydro ==0.2.3
   - autodoc-pydantic
   - click
 #  - clisops  # mocked
@@ -19,7 +19,7 @@ dependencies:
 #  - netCDF4  # mocked
   - notebook
   - pandoc
-  - pydantic
+  - pydantic >=1.10.8,<2.0
   - seaborn
   - sphinx
   - sphinx-autoapi
