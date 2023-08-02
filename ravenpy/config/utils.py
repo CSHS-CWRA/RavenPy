@@ -149,7 +149,7 @@ def filter_for(kls, attrs, **kwds):
                 out[field.alias] = attrs[field.alias]
             elif key in attrs:
                 out[key] = attrs[key]
-            elif type(field.type_) == ModelMetaclass and issubclass(
+            elif isinstance(field.type_, ModelMetaclass) and issubclass(
                 field.type_, Command
             ):
                 out[key] = filter_for(field.type_, attrs)
