@@ -127,7 +127,7 @@ def parse_outputs(run_name: str = None, outputdir: [str, Path] = None):
     """
     if outputdir is None:
         outputdir = Path.cwd()
-    elif type(outputdir) == str:
+    elif isinstance(type(outputdir), str):
         outputdir = Path(outputdir)
 
     parser = RAVEN_OUTPUT_PARSERS
