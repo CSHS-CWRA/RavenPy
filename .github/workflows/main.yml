@@ -7,7 +7,7 @@ on:
   pull_request:
 
 env:
-  RAVENPY_TESTDATA_BRANCH: master
+  RAVEN_TESTING_DATA_BRANCH: master
 
 jobs:
   black:

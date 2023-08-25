@@ -25,6 +25,7 @@ dependencies:
   - owslib <0.29.0  # see: https://github.com/geopython/OWSLib/issues/871
   - pandas
   - pint >=0.20
+  - platformdirs
   - pre-commit
   - pydantic >=1.10.8,<2.0
   - pymbolic

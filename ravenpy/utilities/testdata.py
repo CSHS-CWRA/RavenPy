@@ -12,10 +12,11 @@ from urllib.parse import urljoin
 from urllib.request import urlretrieve
 
 import requests
+from platformdirs import user_cache_dir
 from xarray import Dataset
 from xarray import open_dataset as _open_dataset
 
-_default_cache_dir = Path.home() / ".raven_testing_data"
+_default_cache_dir = user_cache_dir("raven_testing_data")
 
 LOGGER = logging.getLogger("RAVEN")
 
