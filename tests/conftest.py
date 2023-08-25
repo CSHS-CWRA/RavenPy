@@ -26,7 +26,7 @@ from ravenpy.utilities.testdata import get_local_testdata as _get_local_testdata
 
 from .common import _convert_2d, _convert_3d
 
-RAVEN_TESTING_DATA_BRANCH = os.getenv("RAVEN_TESTING_DATA_BRANCH", "master")
+RAVEN_TESTING_DATA_BRANCH = Path(os.getenv("RAVEN_TESTING_DATA_BRANCH", "master"))
 SKIP_TEST_DATA = os.getenv("RAVENPY_SKIP_TEST_DATA")
 
 
