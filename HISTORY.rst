@@ -7,6 +7,7 @@ History
 
 * `RavenPy` now uses `platformdirs` to write `raven_testing` to the user's cache directory. Dynamic paths are now used to cache data dependent on the user's operating system. Developers can now safely delete the `.raven_testing_data` folder in their home directory without affecting the functionality of `RavenPy`.
 * Updated `raven-hydro` to v0.2.4 to address CMake build issues.
+* Added a workflow to remove obsolete GitHub Workflow cache files.
 
 0.12.2 (2023-07-04)
 -------------------
