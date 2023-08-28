@@ -28,12 +28,13 @@ from .common import _convert_2d, _convert_3d
 
 RAVEN_TESTING_DATA_BRANCH = Path(os.getenv("RAVEN_TESTING_DATA_BRANCH", "master"))
 SKIP_TEST_DATA = os.getenv("RAVENPY_SKIP_TEST_DATA")
+DEFAULT_CACHE = Path(_default_cache_dir)
 
 
 def populate_testing_data(
     temp_folder: Optional[Path] = None,
     branch: str = RAVEN_TESTING_DATA_BRANCH,
-    _local_cache: Path = _default_cache_dir,
+    _local_cache: Path = DEFAULT_CACHE,
 ) -> None:
     if _local_cache.joinpath(".data_written").exists():
         # This flag prevents multiple calls from re-attempting to download testing data in the same pytest run
@@ -142,7 +143,7 @@ def get_local_testdata(threadsafe_data_dir):
             file,
             temp_folder=threadsafe_data_dir,
             branch=RAVEN_TESTING_DATA_BRANCH,
-            _local_cache=_default_cache_dir,
+            _local_cache=DEFAULT_CACHE,
         )
 
     return _get_session_scoped_local_testdata
@@ -152,7 +153,7 @@ def get_local_testdata(threadsafe_data_dir):
 def gather_session_data(threadsafe_data_dir, worker_id):
     """Gather testing data on pytest run.
 
-    When running pytest with multiple workers, one worker will copy data remotely to _default_cache_dir while
+    When running pytest with multiple workers, one worker will copy data remotely to DEFAULT_CACHE while
     other workers wait using lockfile. Once the lock is released, all workers will copy data to their local
     threadsafe_data_dir."""
     if worker_id == "master":
@@ -160,14 +161,14 @@ def gather_session_data(threadsafe_data_dir, worker_id):
             populate_testing_data(branch=RAVEN_TESTING_DATA_BRANCH)
     else:
         if not SKIP_TEST_DATA:
-            _default_cache_dir.mkdir(exist_ok=True)
-            test_data_being_written = FileLock(_default_cache_dir.joinpath(".lock"))
+            DEFAULT_CACHE.mkdir(exist_ok=True)
+            test_data_being_written = FileLock(DEFAULT_CACHE.joinpath(".lock"))
             with test_data_being_written as fl:
                 # This flag prevents multiple calls from re-attempting to download testing data in the same pytest run
                 populate_testing_data(branch=RAVEN_TESTING_DATA_BRANCH)
-                _default_cache_dir.joinpath(".data_written").touch()
+                DEFAULT_CACHE.joinpath(".data_written").touch()
             fl.acquire()
-        shutil.copytree(_default_cache_dir, threadsafe_data_dir)
+        shutil.copytree(DEFAULT_CACHE, threadsafe_data_dir)
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -178,7 +179,7 @@ def cleanup(request):
     """
 
     def remove_data_written_flag():
-        flag = _default_cache_dir.joinpath(".data_written")
+        flag = DEFAULT_CACHE.joinpath(".data_written")
         if flag.exists():
             flag.unlink()
 
