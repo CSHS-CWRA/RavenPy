@@ -4,7 +4,7 @@ channels:
   - defaults
 dependencies:
   - python >=3.8,<3.12
-  - raven-hydro ==0.2.3
+  - raven-hydro ==0.2.4
   - affine
   - cftime
   - cf_xarray
