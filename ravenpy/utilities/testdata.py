@@ -12,10 +12,11 @@ from urllib.parse import urljoin
 from urllib.request import urlretrieve
 
 import requests
+from platformdirs import user_cache_dir
 from xarray import Dataset
 from xarray import open_dataset as _open_dataset
 
-_default_cache_dir = Path.home() / ".raven_testing_data"
+_default_cache_dir = user_cache_dir("raven_testing_data")
 
 LOGGER = logging.getLogger("RAVEN")
 
@@ -36,9 +37,9 @@ def file_md5_checksum(fname):
 
 def get_local_testdata(
     patterns: Union[str, Sequence[str]],
-    temp_folder: Union[str, os.PathLike],
+    temp_folder: Union[str, Path],
     branch: str = "master",
-    _local_cache: Union[str, os.PathLike] = _default_cache_dir,
+    _local_cache: Union[str, Path] = _default_cache_dir,
 ) -> Union[Path, List[Path]]:
     """Copy specific testdata from a default cache to a temporary folder.
 
@@ -48,11 +49,11 @@ def get_local_testdata(
     ----------
     patterns : str or Sequence of str
         Glob patterns, which must include the folder.
-    temp_folder : str or os.PathLike
+    temp_folder : str or Path
         Target folder to copy files and filetree to.
-    branch : str, optional
-        For GitHub-hosted files, the branch to download from.
-    _local_cache : str or os.PathLike
+    branch : str
+        For GitHub-hosted files, the branch to download from. Default: "master".
+    _local_cache : str or Path
         Local cache of testing data.
 
     Returns
@@ -170,10 +171,10 @@ def _get(
 
 # idea copied from xclim that borrowed it from xarray that was borrowed from Seaborn
 def get_file(
-    name: Union[str, os.PathLike, Sequence[Union[str, os.PathLike]]],
+    name: Union[str, Path, Sequence[Union[str, Path]]],
     github_url: str = "https://github.com/Ouranosinc/raven-testdata",
     branch: str = "master",
-    cache_dir: Path = _default_cache_dir,
+    cache_dir: Union[str, Path] = _default_cache_dir,
 ) -> Union[Path, List[Path]]:
     """
     Return a file from an online GitHub-like repository.
@@ -181,13 +182,13 @@ def get_file(
 
     Parameters
     ----------
-    name : str or os.PathLike or Sequence of str or os.PathLike
+    name : str or Path or Sequence of str or Path
         Name of the file or list/tuple of names of files containing the dataset(s) including suffixes.
     github_url : str
         URL to GitHub repository where the data is stored.
-    branch : str, optional
-        For GitHub-hosted files, the branch to download from.
-    cache_dir : Path
+    branch : str
+        For GitHub-hosted files, the branch to download from. Default: "master".
+    cache_dir : str or Path
         The directory in which to search for and write cached data.
 
     Returns
@@ -196,6 +197,8 @@ def get_file(
     """
     if isinstance(name, (str, Path)):
         name = [name]
+
+    cache_dir = Path(cache_dir)
 
     files = list()
     for n in name:
@@ -234,8 +237,8 @@ def query_folder(
         Regex pattern to identify a file.
     github_url : str
         URL to GitHub repository where the data is stored.
-    branch : str, optional
-        For GitHub-hosted files, the branch to download from.
+    branch : str
+        For GitHub-hosted files, the branch to download from. Default: "master".
 
     Returns
     -------
@@ -274,10 +277,10 @@ def open_dataset(
     github_url: str = "https://github.com/Ouranosinc/raven-testdata",
     branch: str = "master",
     cache: bool = True,
-    cache_dir: Path = _default_cache_dir,
+    cache_dir: Union[str, Path] = _default_cache_dir,
     **kwds,
 ) -> Dataset:
-    """Open a dataset from the online GitHub-like repository.
+    r"""Open a dataset from the online GitHub-like repository.
 
     If a local copy is found then always use that to avoid network traffic.
 
@@ -293,11 +296,11 @@ def open_dataset(
         URL to GitHub repository where the data is stored.
     branch : str, optional
         For GitHub-hosted files, the branch to download from.
-    cache_dir : Path
-        The directory in which to search for and write cached data.
     cache : bool
         If True, then cache data locally for use on subsequent calls.
-    **kwds
+    cache_dir : str or Path
+        The directory in which to search for and write cached data.
+    \*\*kwds
         For NetCDF files, keywords passed to xarray.open_dataset.
 
     Returns
@@ -309,6 +312,7 @@ def open_dataset(
     xarray.open_dataset
     """
     name = Path(name)
+    cache_dir = Path(cache_dir)
     if suffix is None:
         suffix = ".nc"
     fullname = name.with_suffix(suffix)

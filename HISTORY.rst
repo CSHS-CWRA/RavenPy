@@ -2,6 +2,12 @@
 History
 =======
 
+0.12.3 (2023-08-25)
+-------------------
+
+* `RavenPy` now uses `platformdirs` to write `raven_testing` to the user's cache directory. Dynamic paths are now used to cache data dependent on the user's operating system. Developers can now safely delete the `.raven_testing_data` folder in their home directory without affecting the functionality of `RavenPy`.
+* Updated `raven-hydro` to v0.2.4 to address CMake build issues.
+
 0.12.2 (2023-07-04)
 -------------------
 This release is primarily a bugfix to address issues arising from dependencies.

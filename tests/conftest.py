@@ -26,14 +26,15 @@ from ravenpy.utilities.testdata import get_local_testdata as _get_local_testdata
 
 from .common import _convert_2d, _convert_3d
 
-TESTDATA_BRANCH = os.getenv("RAVENPY_TESTDATA_BRANCH", "master")
+RAVEN_TESTING_DATA_BRANCH = os.getenv("RAVEN_TESTING_DATA_BRANCH", "master")
 SKIP_TEST_DATA = os.getenv("RAVENPY_SKIP_TEST_DATA")
+DEFAULT_CACHE = Path(_default_cache_dir)
 
 
 def populate_testing_data(
     temp_folder: Optional[Path] = None,
-    branch: str = TESTDATA_BRANCH,
-    _local_cache: Path = _default_cache_dir,
+    branch: str = RAVEN_TESTING_DATA_BRANCH,
+    _local_cache: Path = DEFAULT_CACHE,
 ) -> None:
     if _local_cache.joinpath(".data_written").exists():
         # This flag prevents multiple calls from re-attempting to download testing data in the same pytest run
@@ -128,7 +129,9 @@ def threadsafe_data_dir(tmp_path_factory) -> Path:
 @pytest.fixture(scope="session")
 def get_file(threadsafe_data_dir):
     def _get_session_scoped_file(file: Union[str, Path]):
-        return _get_file(file, cache_dir=threadsafe_data_dir, branch=TESTDATA_BRANCH)
+        return _get_file(
+            file, cache_dir=threadsafe_data_dir, branch=RAVEN_TESTING_DATA_BRANCH
+        )
 
     return _get_session_scoped_file
 
@@ -139,8 +142,8 @@ def get_local_testdata(threadsafe_data_dir):
         return _get_local_testdata(
             file,
             temp_folder=threadsafe_data_dir,
-            branch=TESTDATA_BRANCH,
-            _local_cache=_default_cache_dir,
+            branch=RAVEN_TESTING_DATA_BRANCH,
+            _local_cache=DEFAULT_CACHE,
         )
 
     return _get_session_scoped_local_testdata
@@ -150,22 +153,22 @@ def get_local_testdata(threadsafe_data_dir):
 def gather_session_data(threadsafe_data_dir, worker_id):
     """Gather testing data on pytest run.
 
-    When running pytest with multiple workers, one worker will copy data remotely to _default_cache_dir while
+    When running pytest with multiple workers, one worker will copy data remotely to DEFAULT_CACHE while
     other workers wait using lockfile. Once the lock is released, all workers will copy data to their local
     threadsafe_data_dir."""
     if worker_id == "master":
         if not SKIP_TEST_DATA:
-            populate_testing_data(branch=TESTDATA_BRANCH)
+            populate_testing_data(branch=RAVEN_TESTING_DATA_BRANCH)
     else:
         if not SKIP_TEST_DATA:
-            _default_cache_dir.mkdir(exist_ok=True)
-            test_data_being_written = FileLock(_default_cache_dir.joinpath(".lock"))
+            DEFAULT_CACHE.mkdir(exist_ok=True)
+            test_data_being_written = FileLock(DEFAULT_CACHE.joinpath(".lock"))
             with test_data_being_written as fl:
                 # This flag prevents multiple calls from re-attempting to download testing data in the same pytest run
-                populate_testing_data(branch=TESTDATA_BRANCH)
-                _default_cache_dir.joinpath(".data_written").touch()
+                populate_testing_data(branch=RAVEN_TESTING_DATA_BRANCH)
+                DEFAULT_CACHE.joinpath(".data_written").touch()
             fl.acquire()
-        shutil.copytree(_default_cache_dir, threadsafe_data_dir)
+        shutil.copytree(DEFAULT_CACHE, threadsafe_data_dir)
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -176,7 +179,7 @@ def cleanup(request):
     """
 
     def remove_data_written_flag():
-        flag = _default_cache_dir.joinpath(".data_written")
+        flag = DEFAULT_CACHE.joinpath(".data_written")
         if flag.exists():
             flag.unlink()
 
@@ -189,7 +192,7 @@ def q_sim_1(threadsafe_data_dir):
     return _get_file(
         "hydro_simulations/raven-gr4j-cemaneige-sim_hmets-0_Hydrographs.nc",
         cache_dir=threadsafe_data_dir,
-        branch=TESTDATA_BRANCH,
+        branch=RAVEN_TESTING_DATA_BRANCH,
     )
 
 
@@ -242,7 +245,7 @@ def salmon(threadsafe_data_dir):
     return _get_file(
         "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
         cache_dir=threadsafe_data_dir,
-        branch=TESTDATA_BRANCH,
+        branch=RAVEN_TESTING_DATA_BRANCH,
     )
 
 
@@ -639,4 +642,4 @@ def dummy_config():
 
 #
 if __name__ == "__main__":
-    populate_testing_data(branch=TESTDATA_BRANCH)
+    populate_testing_data(branch=RAVEN_TESTING_DATA_BRANCH)

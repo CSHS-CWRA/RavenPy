@@ -36,6 +36,7 @@ classifiers = [
 dynamic = ["description", "version"]
 dependencies = [
   "cftime",
+  # cf-xarray is differently named on conda-forge
   "cf-xarray[all]",
   "click",
   "climpred>=2.2",
@@ -50,7 +51,7 @@ dependencies = [
   "pint>=0.20",
   "pydantic>=1.10.8,<2.0",
   "pymbolic",
-  "raven-hydro==0.2.3",
+  "raven-hydro==0.2.4",
   "requests",
   "scipy",
   "spotpy",
@@ -73,6 +74,7 @@ dev = [
   "hvplot",
   "isort",
   "mypy",
+  "platformdirs",
   "pre-commit",
   "pytest",
   "pytest-cov",
