@@ -2,9 +2,12 @@
 History
 =======
 
+0.12.4 (unreleased)
+-------------------
+* In tests, set xclim' missing value option to ``skip``. As of xclim 0.45, missing value checks are applied to ``fit`` indicator, meaning that parameters will be set to None if missing values are found in the fitted time series. Wrap calls to ``fit`` with ``xclim.set_options(check_missing="skip")`` to reproduce the previous behavior of xclim.
+
 0.12.3 (2023-08-25)
 -------------------
-
 * `RavenPy` now uses `platformdirs` to write `raven_testing` to the user's cache directory. Dynamic paths are now used to cache data dependent on the user's operating system. Developers can now safely delete the `.raven_testing_data` folder in their home directory without affecting the functionality of `RavenPy`.
 * Updated `raven-hydro` to v0.2.4 to address CMake build issues.
 * Added a workflow to remove obsolete GitHub Workflow cache files.

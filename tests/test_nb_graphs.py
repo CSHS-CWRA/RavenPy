@@ -1,5 +1,6 @@
 import pytest
 import xarray as xr
+from xclim import set_options
 
 
 class TestNBGraphs:
@@ -24,6 +25,6 @@ class TestNBGraphs:
 
         with xr.open_dataset(get_local_testdata(self.hydrographs)) as ds:
             ts = stats(ds.q_sim.load(), op="max", freq="M")
-
-        params = fit(ts, dist="gamma")
+        with set_options(check_missing="skip"):
+            params = fit(ts, dist="gamma")
         self.nbg.ts_fit_graph(ts, params)
