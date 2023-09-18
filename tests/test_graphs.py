@@ -1,5 +1,6 @@
 import numpy as np
 import xarray as xr
+from xclim import set_options
 from xclim.indicators.generic import fit, stats
 
 from ravenpy.utilities import graphs
@@ -12,7 +13,8 @@ class TestGraph:
         )
         with xr.open_dataset(f) as ds:
             ts = stats(ds.q_sim, op="max", freq="M")
-            p = fit(ts)
+            with set_options(check_missing="skip"):
+                p = fit(ts)
             np.testing.assert_array_equal(p.isnull(), False)
 
             fig = graphs.ts_fit_graph(ts, p)
