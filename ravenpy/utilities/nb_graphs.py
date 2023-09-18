@@ -133,6 +133,8 @@ def ts_fit_graph(ts: xr.DataArray, params: xr.DataArray) -> matplotlib.pyplot.Fi
 
     ts = ts.isel(nbasins=0)
     params = params.isel(nbasins=0)
+    if params.isnull().any():
+        raise ValueError("Null values in `params`.")
 
     # Using matplotlib's default binning strategy
     hist, bins, mh = plt.hist(ts, bins="auto", density=True)

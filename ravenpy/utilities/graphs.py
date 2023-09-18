@@ -330,6 +330,8 @@ def ts_fit_graph(ts: xr.DataArray, params: xr.DataArray) -> matplotlib.pyplot.Fi
     dist = params.attrs["scipy_dist"]
 
     fig, axes = plt.subplots(n, figsize=(10, 6), squeeze=False)
+    if params.isnull().any():
+        raise ValueError("Null values in `params`.")
 
     for i in range(n):
         ax = axes.flat[i]
