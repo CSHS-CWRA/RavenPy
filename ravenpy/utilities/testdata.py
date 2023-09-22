@@ -1,7 +1,6 @@
 """Tools for searching for and acquiring test data."""
 import hashlib
 import logging
-import os
 import re
 import warnings
 from pathlib import Path

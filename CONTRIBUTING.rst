@@ -4,8 +4,7 @@
 Contributing
 ============
 
-Contributions are welcome, and they are greatly appreciated! Every little bit
-helps, and credit will always be given.
+Contributions are welcome, and they are greatly appreciated! Every little bit helps, and credit will always be given.
 
 You can contribute in many ways:
 
@@ -26,21 +25,17 @@ If you are reporting a bug, please include:
 Fix Bugs
 ~~~~~~~~
 
-Look through the GitHub issues for bugs. Anything tagged with "bug" and "help
-wanted" is open to whoever wants to implement it.
+Look through the GitHub issues for bugs. Anything tagged with "bug" and "help wanted" is open to whoever wants to implement it.
 
 Implement Features
 ~~~~~~~~~~~~~~~~~~
 
-Look through the GitHub issues for features. Anything tagged with "enhancement"
-and "help wanted" is open to whoever wants to implement it.
+Look through the GitHub issues for features. Anything tagged with "enhancement" and "help wanted" is open to whoever wants to implement it.
 
 Write Documentation
 ~~~~~~~~~~~~~~~~~~~
 
-RavenPy could always use more documentation, whether as part of the
-official RavenPy docs, in docstrings, or even on the web in blog posts,
-articles, and such.
+RavenPy could always use more documentation, whether as part of the official RavenPy docs, in docstrings, or even on the web in blog posts, articles, and such.
 
 Submit Feedback
 ~~~~~~~~~~~~~~~
@@ -90,7 +85,7 @@ Ready to contribute? Here's how to set up `ravenpy` for local development.
 
     $ flake8 ravenpy tests
     $ black --check ravenpy tests
-    $ python setup.py test  # or `pytest`
+    $ pytest tests
     $ tox
 
    To get flake8, black, and tox, just pip install them into your virtualenv.

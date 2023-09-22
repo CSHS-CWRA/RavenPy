@@ -4,7 +4,15 @@ History
 
 0.12.4 (unreleased)
 -------------------
-* In tests, set xclim' missing value option to ``skip``. As of xclim 0.45, missing value checks are applied to ``fit`` indicator, meaning that parameters will be set to None if missing values are found in the fitted time series. Wrap calls to ``fit`` with ``xclim.set_options(check_missing="skip")`` to reproduce the previous behavior of xclim.
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* In tests, set `xclim`'s missing value option to ``skip``. As of `xclim` v0.45, missing value checks are applied to the ``fit`` indicator, meaning that parameters will be set to `None` if missing values are found in the fitted time series. Wrap calls to ``fit`` with ``xclim.set_options(check_missing="skip")`` to reproduce the previous behavior of xclim.
+* `RavenPy` processes and tests that depend on remote THREDDS/GeoServer now allow for optional server URL and file location targets. These can be set with the following environment variables:
+    * `RAVENPY_THREDDS_URL`: URL to the THREDDS-hosted climate data service. Defaults to `https://pavics.ouranos.ca/twitcher/ows/proxy/thredds`.
+    * `RAVENPY_GEOSERVER_URL`: URL to the GeoServer-hosted vector/raster data. Defaults to `https://pavics.ouranos.ca/geoserver`.
+         * This environment variable was previously called `GEO_URL` and was renamed to narrow its scope to RavenPy.
+* The `_determine_upstream_ids` function under `ravenpy.utilities.geoserver` has been removed as it was a duplicate of `ravenpy.utilities.geo.determine_upstream_ids`. The latter function is now used in its place.
 
 0.12.3 (2023-08-25)
 -------------------
