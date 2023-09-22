@@ -49,7 +49,7 @@ def get_CASPAR_dataset(
     climate_model: str,
     date: dt.datetime,
     thredds: str = THREDDS_URL,
-    directory: str = "dodsC/birdhouse/disk2/caspar/daily",
+    directory: str = "dodsC/birdhouse/disk2/caspar/daily/",
 ) -> Tuple[
     xr.Dataset, List[Union[Union[DatetimeIndex, Series, Timestamp, Timestamp], Any]]
 ]:
@@ -62,9 +62,9 @@ def get_CASPAR_dataset(
     date : dt.datetime
         The date of the forecast.
     thredds : str
-        The thredds server url. Default: "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds"
+        The thredds server url. Default: "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/"
     directory : str
-        The directory on the thredds server where the data is stored. Default: "dodsC/birdhouse/disk2/caspar/daily"
+        The directory on the thredds server where the data is stored. Default: "dodsC/birdhouse/disk2/caspar/daily/"
 
     Returns
     -------
@@ -96,7 +96,7 @@ def get_CASPAR_dataset(
 def get_ECCC_dataset(
     climate_model: str,
     thredds: str = THREDDS_URL,
-    directory: str = "dodsC/datasets/forecasts/eccc_geps",
+    directory: str = "dodsC/datasets/forecasts/eccc_geps/",
 ) -> Tuple[
     Dataset, List[Union[Union[DatetimeIndex, Series, Timestamp, Timestamp], Any]]
 ]:
@@ -107,9 +107,9 @@ def get_ECCC_dataset(
     climate_model : str
         Type of climate model, for now only "GEPS" is supported.
     thredds : str
-        The thredds server url. Default: "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds"
+        The thredds server url. Default: "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/"
     directory : str
-        The directory on the thredds server where the data is stored. Default: "dodsC/datasets/forecasts/eccc_geps"
+        The directory on the thredds server where the data is stored. Default: "dodsC/datasets/forecasts/eccc_geps/"
 
     Returns
     -------
