@@ -6,7 +6,7 @@ Working assumptions for this module:
 * BBox coordinates are passed as (lon1, lat1, lon2, lat2).
 * Shapes (polygons) are passed as shapely.geometry.shape parsable objects.
 * All functions that require a CRS have a CRS argument with a default set to WGS84.
-* GEO_URL points to the GeoServer instance hosting all files.
+* GEOSERVER_URL points to the GeoServer instance hosting all files.
 
 TODO: Refactor to remove functions that are just 2-lines of code.
 For example, many function's logic essentially consists in creating the layer name.
