@@ -6,11 +6,11 @@ Created on Fri Jul 17 09:11:58 2020
 """
 import datetime as dt
 import logging
-import tempfile
 import os
+import tempfile
 from pathlib import Path
-from urllib.parse import urlparse
 from typing import List, Union
+from urllib.parse import urlparse
 
 import climpred
 import xarray as xr
@@ -22,8 +22,10 @@ from ravenpy.config.rvs import Config
 
 LOGGER = logging.getLogger("PYWPS")
 
+# Do not remove the trailing / otherwise `urljoin` will remove the geoserver path.
+# Can be set at runtime with `$ env RAVENPY_THREDDS_URL=https://xx.yy.zz/thredds/ ...`.
 THREDDS_URL = os.environ.get(
-    "RAVENPY_THREDDS_URL", "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds"
+    "RAVENPY_THREDDS_URL", "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/"
 )
 
 

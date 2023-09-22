@@ -2,9 +2,9 @@ import datetime as dt
 import logging
 import os
 import re
-from urllib.parse import urljoin
 from pathlib import Path
 from typing import Any, List, Tuple, Union
+from urllib.parse import urljoin
 
 import pandas as pd
 import xarray as xr
@@ -20,8 +20,11 @@ except (ImportError, ModuleNotFoundError) as e:
     raise ImportError(msg) from e
 
 LOGGER = logging.getLogger("PYWPS")
+
+# Do not remove the trailing / otherwise `urljoin` will remove the geoserver path.
+# Can be set at runtime with `$ env RAVENPY_THREDDS_URL=https://xx.yy.zz/geoserver/ ...`.
 THREDDS_URL = os.environ.get(
-    "RAVENPY_THREDDS_URL", "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds"
+    "RAVENPY_THREDDS_URL", "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/"
 )
 
 

@@ -48,14 +48,13 @@ except (ImportError, ModuleNotFoundError):
 
 from .geo import determine_upstream_ids
 
-
 # Do not remove the trailing / otherwise `urljoin` will remove the geoserver path.
-# Can be set at runtime with `$ env GEO_URL=https://xx.yy.zz/geoserver/ ...`.
+# Can be set at runtime with `$ env RAVENPY_GEOSERVER_URL=https://xx.yy.zz/geoserver/ ...`.
 GEOSERVER_URL = os.getenv(
     "RAVENPY_GEOSERVER_URL", "https://pavics.ouranos.ca/geoserver/"
 )
 
-# We store the contour of different hydrobasins domains
+# We store the contour of different HydroBASINS domains
 hybas_dir = Path(__file__).parent.parent / "data" / "hydrobasins_domains"
 hybas_pat = "hybas_lake_{domain}_lev01_v1c.zip"
 
