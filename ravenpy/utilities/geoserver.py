@@ -66,6 +66,15 @@ hybas_regions = ["na", "ar"]
 hybas_domains = {dom: hybas_dir / hybas_pat.format(domain=dom) for dom in hybas_regions}
 
 
+def _fix_server_url(server_url: str) -> str:
+    if not server_url.endswith("/"):
+        warnings.warn(
+            "The GeoServer url should end with a slash. Appending it to the url."
+        )
+        return f"{server_url}/"
+    return server_url
+
+
 def _get_location_wfs(
     bbox: Optional[
         Tuple[
@@ -105,11 +114,7 @@ def _get_location_wfs(
     dict
         A GeoJSON-derived dictionary of vector features (FeatureCollection).
     """
-    if not geoserver.endswith("/"):
-        warnings.warn(
-            "The GeoServer url should end with a slash. Appending it to the url."
-        )
-        geoserver = f"{geoserver}/"
+    geoserver = _fix_server_url(geoserver)
 
     wfs = WebFeatureService(url=urljoin(geoserver, "wfs"), version="2.0.0", timeout=30)
 
@@ -170,11 +175,7 @@ def _get_feature_attributes_wfs(
     -----
     Non-existent attributes will raise a cryptic DriverError from fiona.
     """
-    if not geoserver.endswith("/"):
-        warnings.warn(
-            "The GeoServer url should end with a slash. Appending it to the url."
-        )
-        geoserver = f"{geoserver}/"
+    geoserver = _fix_server_url(geoserver)
 
     params = dict(
         service="WFS",
@@ -212,11 +213,7 @@ def _filter_feature_attributes_wfs(
     str
       WFS request URL.
     """
-    if not geoserver.endswith("/"):
-        warnings.warn(
-            "The GeoServer url should end with a slash. Appending it to the url."
-        )
-        geoserver = f"{geoserver}/"
+    geoserver = _fix_server_url(geoserver)
 
     try:
         attribute = str(attribute)
@@ -266,11 +263,7 @@ def get_raster_wcs(
     bytes
         A GeoTIFF array.
     """
-    if not geoserver.endswith("/"):
-        warnings.warn(
-            "The GeoServer url should end with a slash. Appending it to the url."
-        )
-        geoserver = f"{geoserver}/"
+    geoserver = _fix_server_url(geoserver)
 
     (left, down, right, up) = coordinates
 
@@ -441,11 +434,7 @@ def filter_hydrobasins_attributes_wfs(
     str
         URL to the GeoJSON-encoded WFS response.
     """
-    if not geoserver.endswith("/"):
-        warnings.warn(
-            "The GeoServer url should end with a slash. Appending it to the url."
-        )
-        geoserver = f"{geoserver}/"
+    geoserver = _fix_server_url(geoserver)
 
     lakes = True
     level = 12
@@ -485,11 +474,7 @@ def get_hydrobasins_location_wfs(
     dict
         A GeoJSON-encoded vector feature.
     """
-    if not geoserver.endswith("/"):
-        warnings.warn(
-            "The GeoServer url should end with a slash. Appending it to the url."
-        )
-        geoserver = f"{geoserver}/"
+    geoserver = _fix_server_url(geoserver)
 
     lakes = True
     level = 12
@@ -529,11 +514,7 @@ def hydro_routing_upstream(
     pd.Series
         Basins ids including `fid` and its upstream contributors.
     """
-    if not geoserver.endswith("/"):
-        warnings.warn(
-            "The GeoServer url should end with a slash. Appending it to the url."
-        )
-        geoserver = f"{geoserver}/"
+    geoserver = _fix_server_url(geoserver)
 
     wfs = WebFeatureService(url=urljoin(geoserver, "wfs"), version="2.0.0", timeout=30)
     layer = f"public:routing_{lakes}Lakes_{str(level).zfill(2)}"
@@ -591,11 +572,7 @@ def get_hydro_routing_attributes_wfs(
     str
         URL to the GeoJSON-encoded WFS response.
     """
-    if not geoserver.endswith("/"):
-        warnings.warn(
-            "The GeoServer url should end with a slash. Appending it to the url."
-        )
-        geoserver = f"{geoserver}/"
+    geoserver = _fix_server_url(geoserver)
 
     layer = f"public:routing_{lakes}Lakes_{str(level).zfill(2)}"
     return _get_feature_attributes_wfs(
@@ -633,11 +610,7 @@ def filter_hydro_routing_attributes_wfs(
     str
         URL to the GeoJSON-encoded WFS response.
     """
-    if not geoserver.endswith("/"):
-        warnings.warn(
-            "The GeoServer url should end with a slash. Appending it to the url."
-        )
-        geoserver = f"{geoserver}/"
+    geoserver = _fix_server_url(geoserver)
 
     layer = f"public:routing_{lakes}Lakes_{str(level).zfill(2)}"
     return _filter_feature_attributes_wfs(
@@ -675,11 +648,7 @@ def get_hydro_routing_location_wfs(
     dict
         A GeoJSON-derived dictionary of vector features (FeatureCollection).
     """
-    if not geoserver.endswith("/"):
-        warnings.warn(
-            "The GeoServer url should end with a slash. Appending it to the url."
-        )
-        geoserver = f"{geoserver}/"
+    geoserver = _fix_server_url(geoserver)
 
     layer = f"public:routing_{lakes}Lakes_{str(level).zfill(2)}"
 
