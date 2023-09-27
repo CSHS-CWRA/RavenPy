@@ -8,6 +8,7 @@ import datetime as dt
 import logging
 import os
 import tempfile
+import warnings
 from pathlib import Path
 from typing import List, Union
 from urllib.parse import urlparse
@@ -22,11 +23,12 @@ from ravenpy.config.rvs import Config
 
 LOGGER = logging.getLogger("PYWPS")
 
-# Do not remove the trailing / otherwise `urljoin` will remove the geoserver path.
 # Can be set at runtime with `$ env RAVENPY_THREDDS_URL=https://xx.yy.zz/thredds/ ...`.
 THREDDS_URL = os.environ.get(
     "RAVENPY_THREDDS_URL", "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/"
 )
+if not THREDDS_URL.endswith("/"):
+    THREDDS_URL = f"{THREDDS_URL}/"
 
 
 def climatology_esp(
@@ -412,13 +414,18 @@ def compute_forecast_flood_risk(
         Flood level threshold. Will be used to determine if forecasts exceed
         this specified flood threshold. Should be in the same units as the forecasted streamflow.
     thredds : str
-        The thredds server url. Default: "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds"
+        The thredds server url. Default: "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/"
 
     Returns
     -------
     xr.Dataset
         Time series of probabilities of flood level exceedance.
     """
+    if thredds[-1] != "/":
+        warnings.warn(
+            "The thredds url should end with a slash. Appending it to the url."
+        )
+        thredds = f"{thredds}/"
 
     # ---- Calculations ---- #
     # Ensemble: for each day, calculate the percentage of members that are above the threshold

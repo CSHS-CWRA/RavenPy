@@ -2,6 +2,7 @@ import datetime as dt
 import logging
 import os
 import re
+import warnings
 from pathlib import Path
 from typing import Any, List, Tuple, Union
 from urllib.parse import urljoin
@@ -21,11 +22,12 @@ except (ImportError, ModuleNotFoundError) as e:
 
 LOGGER = logging.getLogger("PYWPS")
 
-# Do not remove the trailing / otherwise `urljoin` will remove the geoserver path.
 # Can be set at runtime with `$ env RAVENPY_THREDDS_URL=https://xx.yy.zz/geoserver/ ...`.
 THREDDS_URL = os.environ.get(
     "RAVENPY_THREDDS_URL", "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/"
 )
+if not THREDDS_URL.endswith("/"):
+    THREDDS_URL = f"{THREDDS_URL}/"
 
 
 def get_hindcast_day(region_coll: fiona.Collection, date, climate_model="GEPS"):
@@ -71,6 +73,11 @@ def get_CASPAR_dataset(
     xr.Dataset
         The forecast dataset.
     """
+    if thredds[-1] != "/":
+        warnings.warn(
+            "The thredds url should end with a slash. Appending it to the url."
+        )
+        thredds = f"{thredds}/"
 
     if climate_model == "GEPS":
         d = dt.datetime.strftime(date, "%Y%m%d")
@@ -116,6 +123,12 @@ def get_ECCC_dataset(
     xr.Dataset
         The forecast dataset.
     """
+    if thredds[-1] != "/":
+        warnings.warn(
+            "The thredds url should end with a slash. Appending it to the url."
+        )
+        thredds = f"{thredds}/"
+
     if climate_model == "GEPS":
         # Eventually the file will find a permanent home, until then let's use the test folder.
         file_location = urljoin(directory, "GEPS_latest.ncml")

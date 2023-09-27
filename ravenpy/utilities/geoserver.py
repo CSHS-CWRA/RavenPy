@@ -7,6 +7,7 @@ Working assumptions for this module:
 * Shapes (polygons) are passed as shapely.geometry.shape parsable objects.
 * All functions that require a CRS have a CRS argument with a default set to WGS84.
 * GEOSERVER_URL points to the GeoServer instance hosting all files.
+    * For legacy reasons, we also accept the `GEO_URL` environment variable.
 
 TODO: Refactor to remove functions that are just 2-lines of code.
 For example, many function's logic essentially consists in creating the layer name.
@@ -18,7 +19,7 @@ import os
 import urllib.request
 import warnings
 from pathlib import Path
-from typing import Iterable, Optional, Sequence, Tuple, Union
+from typing import Dict, Iterable, Optional, Sequence, Tuple, Union
 from urllib.parse import urljoin
 
 from requests import Request
@@ -50,9 +51,13 @@ from .geo import determine_upstream_ids
 
 # Do not remove the trailing / otherwise `urljoin` will remove the geoserver path.
 # Can be set at runtime with `$ env RAVENPY_GEOSERVER_URL=https://xx.yy.zz/geoserver/ ...`.
+# For legacy reasons, we also accept the `GEO_URL` environment variable.
 GEOSERVER_URL = os.getenv(
-    "RAVENPY_GEOSERVER_URL", "https://pavics.ouranos.ca/geoserver/"
+    "RAVENPY_GEOSERVER_URL",
+    os.getenv("GEO_URL", "https://pavics.ouranos.ca/geoserver/"),
 )
+if not GEOSERVER_URL.endswith("/"):
+    GEOSERVER_URL = f"{GEOSERVER_URL}/"
 
 # We store the contour of different HydroBASINS domains
 hybas_dir = Path(__file__).parent.parent / "data" / "hydrobasins_domains"
@@ -102,6 +107,12 @@ def _get_location_wfs(
     dict
         A GeoJSON-derived dictionary of vector features (FeatureCollection).
     """
+    if not geoserver.endswith("/"):
+        warnings.warn(
+            "The GeoServer url should end with a slash. Appending it to the url."
+        )
+        geoserver = f"{geoserver}/"
+
     wfs = WebFeatureService(url=urljoin(geoserver, "wfs"), version="2.0.0", timeout=30)
 
     if bbox and point:
@@ -161,6 +172,12 @@ def _get_feature_attributes_wfs(
     -----
     Non-existent attributes will raise a cryptic DriverError from fiona.
     """
+    if not geoserver.endswith("/"):
+        warnings.warn(
+            "The GeoServer url should end with a slash. Appending it to the url."
+        )
+        geoserver = f"{geoserver}/"
+
     params = dict(
         service="WFS",
         version="2.0.0",
@@ -197,6 +214,11 @@ def _filter_feature_attributes_wfs(
     str
       WFS request URL.
     """
+    if not geoserver.endswith("/"):
+        warnings.warn(
+            "The GeoServer url should end with a slash. Appending it to the url."
+        )
+        geoserver = f"{geoserver}/"
 
     try:
         attribute = str(attribute)
@@ -246,6 +268,12 @@ def get_raster_wcs(
     bytes
         A GeoTIFF array.
     """
+    if not geoserver.endswith("/"):
+        warnings.warn(
+            "The GeoServer url should end with a slash. Appending it to the url."
+        )
+        geoserver = f"{geoserver}/"
+
     (left, down, right, up) = coordinates
 
     if geographic:
@@ -415,6 +443,12 @@ def filter_hydrobasins_attributes_wfs(
     str
         URL to the GeoJSON-encoded WFS response.
     """
+    if not geoserver.endswith("/"):
+        warnings.warn(
+            "The GeoServer url should end with a slash. Appending it to the url."
+        )
+        geoserver = f"{geoserver}/"
+
     lakes = True
     level = 12
 
@@ -433,7 +467,7 @@ def get_hydrobasins_location_wfs(
     ],
     domain: str = None,
     geoserver: str = GEOSERVER_URL,
-) -> str:
+) -> Dict[str, Union[str, int, float]]:
     """Return features from the USGS HydroBASINS data set using bounding box coordinates.
 
     For geographic raster grids, subsetting is based on WGS84 (Long, Lat) boundaries.
@@ -450,9 +484,15 @@ def get_hydrobasins_location_wfs(
 
     Returns
     -------
-    str
+    dict
         A GeoJSON-encoded vector feature.
     """
+    if not geoserver.endswith("/"):
+        warnings.warn(
+            "The GeoServer url should end with a slash. Appending it to the url."
+        )
+        geoserver = f"{geoserver}/"
+
     lakes = True
     level = 12
     layer = f"public:USGS_HydroBASINS_{'lake_' if lakes else ''}{domain}_lev{str(level).zfill(2)}"
@@ -491,6 +531,12 @@ def hydro_routing_upstream(
     pd.Series
         Basins ids including `fid` and its upstream contributors.
     """
+    if not geoserver.endswith("/"):
+        warnings.warn(
+            "The GeoServer url should end with a slash. Appending it to the url."
+        )
+        geoserver = f"{geoserver}/"
+
     wfs = WebFeatureService(url=urljoin(geoserver, "wfs"), version="2.0.0", timeout=30)
     layer = f"public:routing_{lakes}Lakes_{str(level).zfill(2)}"
 
@@ -547,6 +593,12 @@ def get_hydro_routing_attributes_wfs(
     str
         URL to the GeoJSON-encoded WFS response.
     """
+    if not geoserver.endswith("/"):
+        warnings.warn(
+            "The GeoServer url should end with a slash. Appending it to the url."
+        )
+        geoserver = f"{geoserver}/"
+
     layer = f"public:routing_{lakes}Lakes_{str(level).zfill(2)}"
     return _get_feature_attributes_wfs(
         attribute=attribute, layer=layer, geoserver=geoserver
@@ -583,6 +635,12 @@ def filter_hydro_routing_attributes_wfs(
     str
         URL to the GeoJSON-encoded WFS response.
     """
+    if not geoserver.endswith("/"):
+        warnings.warn(
+            "The GeoServer url should end with a slash. Appending it to the url."
+        )
+        geoserver = f"{geoserver}/"
+
     layer = f"public:routing_{lakes}Lakes_{str(level).zfill(2)}"
     return _filter_feature_attributes_wfs(
         attribute=attribute, value=value, layer=layer, geoserver=geoserver
@@ -619,6 +677,12 @@ def get_hydro_routing_location_wfs(
     dict
         A GeoJSON-derived dictionary of vector features (FeatureCollection).
     """
+    if not geoserver.endswith("/"):
+        warnings.warn(
+            "The GeoServer url should end with a slash. Appending it to the url."
+        )
+        geoserver = f"{geoserver}/"
+
     layer = f"public:routing_{lakes}Lakes_{str(level).zfill(2)}"
 
     if not wfs_Point and not Intersects:
