@@ -49,7 +49,6 @@ except (ImportError, ModuleNotFoundError):
 
 from .geo import determine_upstream_ids
 
-# Do not remove the trailing / otherwise `urljoin` will remove the geoserver path.
 # Can be set at runtime with `$ env RAVENPY_GEOSERVER_URL=https://xx.yy.zz/geoserver/ ...`.
 # For legacy reasons, we also accept the `GEO_URL` environment variable.
 GEOSERVER_URL = os.getenv(
