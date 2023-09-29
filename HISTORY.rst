@@ -15,7 +15,7 @@ Breaking changes
 Internal changes
 ^^^^^^^^^^^^^^^^
 * `RavenPy` now accepts a `RAVENPY_THREDDS_URL` for setting the URL globally to the THREDDS-hosted climate data service. Defaults to `https://pavics.ouranos.ca/twitcher/ows/proxy/thredds`.
-* `RavenPy` has temporarily pinned `xarray` below v2023.9.0 due to incompatibilities with `xclim`<=0.45.0.
+* `RavenPy` has temporarily pinned `xarray` below v2023.9.0 due to incompatibilities with `xclim` v0.45.0`.
 
 0.12.3 (2023-08-25)
 -------------------
