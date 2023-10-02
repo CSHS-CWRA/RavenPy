@@ -13,6 +13,7 @@ repos:
       - id: trailing-whitespace
         exclude: setup.cfg
       - id: end-of-file-fixer
+        exclude: setup.cfg
       - id: check-json
       - id: check-toml
       - id: check-yaml
@@ -48,7 +49,7 @@ repos:
     rev: 1.7.0
     hooks:
       - id: nbqa-pyupgrade
-        args: [ --py38-plus ]
+        args: [ '--py38-plus' ]
         additional_dependencies: [ 'pyupgrade==3.10.1' ]
       - id: nbqa-black
         additional_dependencies: [ 'black==23.9.1' ]

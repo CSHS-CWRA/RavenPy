@@ -2,8 +2,10 @@
 History
 =======
 
-0.12.4 (unreleased)
+0.12.3 (2023-10-02)
 -------------------
+* `RavenPy` now uses `platformdirs` to write `raven_testing` to the user's cache directory. Dynamic paths are now used to cache data dependent on the user's operating system. Developers can now safely delete the `.raven_testing_data` folder in their home directory without affecting the functionality of `RavenPy`.
+* Updated `raven-hydro` to v0.2.4 to address CMake build issues.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -12,17 +14,12 @@ Breaking changes
 
 Internal changes
 ^^^^^^^^^^^^^^^^
+* Added a GitHub Actions workflow to remove obsolete GitHub Workflow cache files.
 * `RavenPy` now accepts a `RAVENPY_THREDDS_URL` for setting the URL globally to the THREDDS-hosted climate data service. Defaults to `https://pavics.ouranos.ca/twitcher/ows/proxy/thredds`.
 * `RavenPy` processes and tests that depend on remote GeoServer calls now allow for optional server URL and file location targets. The server URL can be set globally with the following environment variable:
     * `RAVENPY_GEOSERVER_URL`: URL to the GeoServer-hosted vector/raster data. Defaults to `https://pavics.ouranos.ca/geoserver`. This environment variable was previously called `GEO_URL` but was renamed to narrow its scope to `RavenPy`.
         * `GEO_URL` is still supported for backward compatibility but may eventually be removed in a future release.
 * `RavenPy` has temporarily pinned `xarray` below v2023.9.0 due to incompatibilities with `xclim` v0.45.0`.
-
-0.12.3 (2023-08-25)
--------------------
-* `RavenPy` now uses `platformdirs` to write `raven_testing` to the user's cache directory. Dynamic paths are now used to cache data dependent on the user's operating system. Developers can now safely delete the `.raven_testing_data` folder in their home directory without affecting the functionality of `RavenPy`.
-* Updated `raven-hydro` to v0.2.4 to address CMake build issues.
-* Added a workflow to remove obsolete GitHub Workflow cache files.
 
 0.12.2 (2023-07-04)
 -------------------
