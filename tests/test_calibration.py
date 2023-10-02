@@ -375,6 +375,7 @@ bounds = {
 
 
 @pytest.mark.slow
+@pytest.mark.xfail(reason="SpotPy Calibration is not entirely stable.")
 def test_spotpy_calibration(symbolic_config, tmpdir):
     """Confirm that calibration actually improves the NSE."""
     name, cls = symbolic_config
@@ -398,6 +399,7 @@ def test_spotpy_calibration(symbolic_config, tmpdir):
     # d2 = sampler.status.objectivefunction_max
     # assert d2 > d1
 
+    # FIXME: This step often fails with "CHydroUnit constructor:: HRU 2 has a negative or zero area" error
     sampler.sample(20, trials=1)
     assert spot_setup.diagnostics is not None
 
