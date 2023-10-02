@@ -14,7 +14,8 @@ Internal changes
 ^^^^^^^^^^^^^^^^
 * `RavenPy` now accepts a `RAVENPY_THREDDS_URL` for setting the URL globally to the THREDDS-hosted climate data service. Defaults to `https://pavics.ouranos.ca/twitcher/ows/proxy/thredds`.
 * `RavenPy` processes and tests that depend on remote GeoServer calls now allow for optional server URL and file location targets. The server URL can be set globally with the following environment variable:
-    * `RAVENPY_GEOSERVER_URL`: URL to the GeoServer-hosted vector/raster data. Defaults to `https://pavics.ouranos.ca/geoserver`. This environment variable was previously called `GEO_URL` and was renamed to narrow its scope to `RavenPy`. For the being, `GEO_URL` is still supported for backward compatibility.
+    * `RAVENPY_GEOSERVER_URL`: URL to the GeoServer-hosted vector/raster data. Defaults to `https://pavics.ouranos.ca/geoserver`. This environment variable was previously called `GEO_URL` but was renamed to narrow its scope to `RavenPy`.
+        * `GEO_URL` is still supported for backward compatibility but may eventually be removed in a future release.
 * `RavenPy` has temporarily pinned `xarray` below v2023.9.0 due to incompatibilities with `xclim` v0.45.0`.
 
 0.12.3 (2023-08-25)
