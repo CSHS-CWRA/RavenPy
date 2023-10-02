@@ -5,8 +5,7 @@ Installation
 Anaconda Python Installation
 ----------------------------
 
-For many reasons, we recommend using a `Conda environment <https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_
-to work with the full RavenPy installation. This implementation is able to manage the harder-to-install GIS dependencies, like `GDAL`.
+For many reasons, we recommend using a `Conda environment <https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_ to work with the full RavenPy installation. This implementation is able to manage the harder-to-install GIS dependencies, like `GDAL`.
 
 Begin by creating an environment:
 
@@ -26,8 +25,7 @@ RavenPy can then be installed directly via its `conda-forge` package by running:
 
    (ravenpy) $ conda install -c conda-forge ravenpy
 
-This approach installs the `Raven <http://raven.uwaterloo.ca>`_ binary directly to your environment `PATH`,
-as well as installs all the necessary Python and C libraries supporting GIS functionalities.
+This approach installs the `Raven <http://raven.uwaterloo.ca>`_ binary directly to your environment `PATH`, as well as installs all the necessary Python and C libraries supporting GIS functionalities.
 
 Python Installation (pip)
 -------------------------
@@ -71,10 +69,22 @@ Once downloaded/compiled, the binary can be pointed to manually (as an absolute 
 
    $ export RAVENPY_RAVEN_BINARY_PATH=/path/to/my/custom/raven
 
+Customizing remote service datasets
+-----------------------------------
+
+A number of functions and tests within `RavenPy` are dependent on remote services (THREDDS, GeoServer) for providing climate datasets, hydrological boundaries, and other data. These services are provided by `Ouranos <https://www.ouranos.ca>`_ through the `PAVICS <https://pavics.ouranos.ca>`_ project and may be subject to change in the future.
+
+If for some reason you wish to use alternate services, you can set the following environment variables to point to your own instances of THREDDS and GeoServer:
+
+.. code-block:: console
+
+   $ export RAVENPY_THREDDS_URL=https://my.domain.org/thredds
+   $ export RAVENPY_GEOSERVER_URL=https://my.domain.org/geoserver
+
 Development Installation (from sources)
 ---------------------------------------
 
-The sources for RavenPy can be obtained from the GitHub repo:
+The sources for `RavenPy` can be obtained from the GitHub repo:
 
 .. code-block:: console
 

@@ -6,9 +6,12 @@ Created on Fri Jul 17 09:11:58 2020
 """
 import datetime as dt
 import logging
+import os
 import tempfile
+import warnings
 from pathlib import Path
 from typing import List, Union
+from urllib.parse import urlparse
 
 import climpred
 import xarray as xr
@@ -19,6 +22,13 @@ from ravenpy.config import commands as rc
 from ravenpy.config.rvs import Config
 
 LOGGER = logging.getLogger("PYWPS")
+
+# Can be set at runtime with `$ env RAVENPY_THREDDS_URL=https://xx.yy.zz/thredds/ ...`.
+THREDDS_URL = os.environ.get(
+    "RAVENPY_THREDDS_URL", "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/"
+)
+if not THREDDS_URL.endswith("/"):
+    THREDDS_URL = f"{THREDDS_URL}/"
 
 
 def climatology_esp(
@@ -391,9 +401,10 @@ def ensemble_prediction(
 hindcast_from_meteo_forecast = ensemble_prediction
 
 
-def compute_forecast_flood_risk(forecast: xr.Dataset, flood_level: float):
-    """Returns the empirical exceedance probability for each forecast day based
-    on a flood level threshold.
+def compute_forecast_flood_risk(
+    forecast: xr.Dataset, flood_level: float, thredds: str = THREDDS_URL
+) -> xr.Dataset:
+    """Returns the empirical exceedance probability for each forecast day based on a flood level threshold.
 
     Parameters
     ----------
@@ -402,12 +413,19 @@ def compute_forecast_flood_risk(forecast: xr.Dataset, flood_level: float):
     flood_level : float
         Flood level threshold. Will be used to determine if forecasts exceed
         this specified flood threshold. Should be in the same units as the forecasted streamflow.
+    thredds : str
+        The thredds server url. Default: "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/"
 
     Returns
     -------
     xr.Dataset
         Time series of probabilities of flood level exceedance.
     """
+    if thredds[-1] != "/":
+        warnings.warn(
+            "The thredds url should end with a slash. Appending it to the url."
+        )
+        thredds = f"{thredds}/"
 
     # ---- Calculations ---- #
     # Ensemble: for each day, calculate the percentage of members that are above the threshold
@@ -429,12 +447,13 @@ def compute_forecast_flood_risk(forecast: xr.Dataset, flood_level: float):
             forecast.where(forecast > flood_level).notnull() / 1.0
         )  # This is needed to return values instead of floats
 
+    domain = urlparse(thredds).netloc
+
     out = pct.to_dataset(name="exceedance_probability")
-    out.attrs["source"] = "PAVICS-Hydro flood risk forecasting tool, pavics.ouranos.ca"
+    out.attrs["source"] = f"PAVICS-Hydro flood risk forecasting tool, {domain}"
     out.attrs["history"] = (
-        "File created on "
-        + dt.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-        + "UTC on the PAVICS-Hydro service available at pavics.ouranos.ca"
+        f"File created on {dt.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} "
+        f"UTC on the PAVICS-Hydro service available at {domain}."
     )
     out.attrs[
         "title"

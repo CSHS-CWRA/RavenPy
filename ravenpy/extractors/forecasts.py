@@ -1,8 +1,11 @@
 import datetime as dt
 import logging
+import os
 import re
+import warnings
 from pathlib import Path
 from typing import Any, List, Tuple, Union
+from urllib.parse import urljoin
 
 import pandas as pd
 import xarray as xr
@@ -18,6 +21,13 @@ except (ImportError, ModuleNotFoundError) as e:
     raise ImportError(msg) from e
 
 LOGGER = logging.getLogger("PYWPS")
+
+# Can be set at runtime with `$ env RAVENPY_THREDDS_URL=https://xx.yy.zz/geoserver/ ...`.
+THREDDS_URL = os.environ.get(
+    "RAVENPY_THREDDS_URL", "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/"
+)
+if not THREDDS_URL.endswith("/"):
+    THREDDS_URL = f"{THREDDS_URL}/"
 
 
 def get_hindcast_day(region_coll: fiona.Collection, date, climate_model="GEPS"):
@@ -38,15 +48,41 @@ def get_hindcast_day(region_coll: fiona.Collection, date, climate_model="GEPS"):
 
 
 def get_CASPAR_dataset(
-    climate_model: str, date: dt.datetime
+    climate_model: str,
+    date: dt.datetime,
+    thredds: str = THREDDS_URL,
+    directory: str = "dodsC/birdhouse/disk2/caspar/daily/",
 ) -> Tuple[
     xr.Dataset, List[Union[Union[DatetimeIndex, Series, Timestamp, Timestamp], Any]]
 ]:
-    """Return CASPAR dataset."""
+    """Return CASPAR dataset.
+
+    Parameters
+    ----------
+    climate_model : str
+        Type of climate model, for now only "GEPS" is supported.
+    date : dt.datetime
+        The date of the forecast.
+    thredds : str
+        The thredds server url. Default: "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/"
+    directory : str
+        The directory on the thredds server where the data is stored. Default: "dodsC/birdhouse/disk2/caspar/daily/"
+
+    Returns
+    -------
+    xr.Dataset
+        The forecast dataset.
+    """
+    if thredds[-1] != "/":
+        warnings.warn(
+            "The thredds url should end with a slash. Appending it to the url."
+        )
+        thredds = f"{thredds}/"
 
     if climate_model == "GEPS":
         d = dt.datetime.strftime(date, "%Y%m%d")
-        file_url = f"https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/birdhouse/disk2/caspar/daily/GEPS_{d}.nc"
+        file_location = urljoin(directory, f"GEPS_{d}.nc")
+        file_url = urljoin(thredds, file_location)
         ds = xr.open_dataset(file_url)
         # Here we also extract the times at 6-hour intervals as Raven must have
         # constant timesteps and GEPS goes to 6 hours
@@ -66,14 +102,37 @@ def get_CASPAR_dataset(
 
 def get_ECCC_dataset(
     climate_model: str,
+    thredds: str = THREDDS_URL,
+    directory: str = "dodsC/datasets/forecasts/eccc_geps/",
 ) -> Tuple[
     Dataset, List[Union[Union[DatetimeIndex, Series, Timestamp, Timestamp], Any]]
 ]:
-    """Return latest GEPS forecast dataset."""
+    """Return latest GEPS forecast dataset.
+
+    Parameters
+    ----------
+    climate_model : str
+        Type of climate model, for now only "GEPS" is supported.
+    thredds : str
+        The thredds server url. Default: "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/"
+    directory : str
+        The directory on the thredds server where the data is stored. Default: "dodsC/datasets/forecasts/eccc_geps/"
+
+    Returns
+    -------
+    xr.Dataset
+        The forecast dataset.
+    """
+    if thredds[-1] != "/":
+        warnings.warn(
+            "The thredds url should end with a slash. Appending it to the url."
+        )
+        thredds = f"{thredds}/"
+
     if climate_model == "GEPS":
         # Eventually the file will find a permanent home, until then let's use the test folder.
-        file_url = "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/datasets/forecasts/eccc_geps/GEPS_latest.ncml"
-
+        file_location = urljoin(directory, "GEPS_latest.ncml")
+        file_url = urljoin(thredds, file_location)
         ds = xr.open_dataset(file_url)
         # Here we also extract the times at 6-hour intervals as Raven must have
         # constant timesteps and GEPS goes to 6 hours
@@ -130,9 +189,10 @@ def get_subsetted_forecast(
     times: Union[dt.datetime, xr.DataArray],
     is_caspar: bool,
 ) -> xr.Dataset:
-    """
+    """Get Subsetted Forecast.
+
     This function takes a dataset, a region and the time sampling array and returns
-    the subsetted values for the given region and times
+    the subsetted values for the given region and times.
 
     Parameters
     ----------
@@ -143,14 +203,12 @@ def get_subsetted_forecast(
     times : dt.datetime or xr.DataArray
         The array of times required to do the forecast.
     is_caspar : bool
-        True if the data comes from Caspar, false otherwise.
-        Used to define lat/lon on rotated grid.
+        True if the data comes from Caspar, false otherwise. Used to define lat/lon on rotated grid.
 
     Returns
     -------
     xr.Dataset
         The forecast dataset.
-
     """
     # Extract the bounding box to subset the entire forecast grid to something
     # more manageable
