@@ -13,6 +13,7 @@ repos:
       - id: trailing-whitespace
         exclude: setup.cfg
       - id: end-of-file-fixer
+        exclude: setup.cfg
       - id: check-json
       - id: check-toml
       - id: check-yaml
