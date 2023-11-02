@@ -2,7 +2,7 @@ from enum import Enum
 from textwrap import dedent, indent
 from typing import Dict, Sequence, Tuple, Union
 
-from pydantic import BaseModel, Extra, Field, root_validator, validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator, validator
 from pymbolic.primitives import Expression, Variable
 
 """
@@ -101,10 +101,9 @@ def encoder(v: dict) -> dict:
 
 
 class Record(BaseModel):
-    class Config:
-        extra = Extra.forbid
-        arbitrary_types_allowed = True
-        allow_population_by_field_name = True
+    model_config = ConfigDict(
+        extra="forbid", arbitrary_types_allowed=True, populate_by_name=True
+    )
 
 
 class Command(BaseModel):
@@ -174,10 +173,9 @@ class Command(BaseModel):
         d["_records"] = recs
         return dedent(self._template).format(**d)
 
-    class Config:
-        extra = Extra.forbid
-        arbitrary_types_allowed = True
-        allow_population_by_field_name = True
+    model_config = ConfigDict(
+        extra="forbid", arbitrary_types_allowed=True, populate_by_name=True
+    )
 
 
 class FlatCommand(Command):
@@ -201,6 +199,8 @@ class ParameterList(Record):
     name: str = ""
     values: Sequence[Union[Sym, str, None]] = ()
 
+    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
     @validator("values", pre=True)
     def no_none_in_default(cls, v, values):
         """Make sure that no values are None for the [DEFAULT] record."""
@@ -225,7 +225,8 @@ class GenericParameterList(Command):
     units: Sequence[str] = Field(None, alias="Units")
     pl: Sequence[ParameterList] = Field(None)
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
+    @classmethod
     def num_values_equal_num_names(cls, values):
         n = len(values["parameters"])
         pl = values["pl"]
@@ -244,11 +245,9 @@ class RV(Command):
 
     _template: str = "{_commands}\n"
     _indent: str = ""
-
-    class Config:
-        allow_population_by_field_name = True
-        validate_all = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True, validate_default=True, validate_assignment=True
+    )
 
 
 def parse_symbolic(value, **kwds):

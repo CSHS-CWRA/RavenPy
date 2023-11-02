@@ -1,7 +1,7 @@
 from dataclasses import field, make_dataclass
 from typing import Dict, Sequence, Tuple, Union
 
-from pydantic import Field, validator
+from pydantic import Field, field_validator, validator
 from pydantic.dataclasses import dataclass
 from pymbolic.primitives import Variable
 
@@ -252,7 +252,8 @@ class CanadianShield(Config):
         alias="HRUStateVariableTable",
     )
 
-    @validator("hrus")
+    @field_validator("hrus")
+    @classmethod
     def equal_area(cls, v):
         hrus = v.__root__
 

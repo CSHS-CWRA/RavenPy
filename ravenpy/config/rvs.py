@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any, Dict, Sequence, Union
 
 import cftime
-from pydantic import Field, root_validator, validator
+from pydantic import ConfigDict, Field, field_validator, root_validator, validator
 
 from ..config import commands as rc
 from ..config import options as o
@@ -105,12 +105,15 @@ class RVI(RV):
     )
     write_subbasin_file: bool = Field(None, alias="WriteSubbasinFile")  # Undocumented
 
-    @validator("soil_model", pre=True)
+    @field_validator("soil_model", mode="before")
+    @classmethod
     def init_soil_model(cls, v):
         if isinstance(v, int):
             return rc.SoilModel.parse_obj(v)
         return v
 
+    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
     @validator("start_date", "end_date", "assimilation_start_time")
     def dates2cf(cls, val, values):
         """Convert dates to cftime dates."""
@@ -120,8 +123,7 @@ class RVI(RV):
             ).value.lower()
             return cftime._cftime.DATE_TYPES[calendar](*val.timetuple()[:6])
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class RVT(RV):
@@ -134,7 +136,7 @@ class RVT(RV):
 
 
 class RVP(RV):
-    params: Any
+    params: Any = None
     soil_classes: rc.SoilClasses = Field(None, alias="SoilClasses")
     soil_profiles: rc.SoilProfiles = Field(None, alias="SoilProfiles")
     vegetation_classes: rc.VegetationClasses = Field(None, alias="VegetationClasses")
@@ -254,6 +256,8 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
 
         return values
 
+    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
     @validator("global_parameter", pre=True)
     def _update_defaults(cls, v, values, config, field):
         """Some configuration parameters should be updated with user given arguments, not overwritten."""

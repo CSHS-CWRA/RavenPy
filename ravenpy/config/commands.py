@@ -25,9 +25,10 @@ from pydantic import (
     PositiveInt,
     PrivateAttr,
     ValidationError,
-    confloat,
+    field_validator,
     validator,
 )
+from typing_extensions import Annotated
 
 from ..config import options
 from .base import (
@@ -99,7 +100,8 @@ class Process(Command):
 
     _sub = ""
 
-    @validator("to", pre=True)
+    @field_validator("to", mode="before")
+    @classmethod
     def is_list(cls, v):
         if isinstance(v, str):
             return [
@@ -107,6 +109,8 @@ class Process(Command):
             ]
         return v
 
+    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
     @validator("source", "to", each_item=True)
     def is_state_variable(cls, v):
         if re.split(r"\[", v)[0] not in get_args(options.StateVariables):
@@ -263,7 +267,7 @@ class HRU(Record):
     aquifer_profile: str = "[NONE]"
     terrain_class: str = "[NONE]"
     slope: NonNegativeFloat = 0.0
-    aspect: confloat(ge=0, le=360) = 0.0
+    aspect: Annotated[float, Field(ge=0, le=360)] = 0.0
     # This field is not part of the Raven config, it is needed for serialization,
     # to specify which HRU subclass to use when necessary
     hru_type: Optional[str] = None
@@ -522,7 +526,8 @@ class GriddedForcing(ReadFromNetCDF):
     :End{_cmd}
     """
 
-    @validator("dim_names_nc")
+    @field_validator("dim_names_nc")
+    @classmethod
     def check_dims(cls, v):
         if len(v) != 3:
             raise ValueError(
@@ -534,7 +539,8 @@ class GriddedForcing(ReadFromNetCDF):
 class StationForcing(GriddedForcing):
     """StationForcing command (RVT)."""
 
-    @validator("dim_names_nc")
+    @field_validator("dim_names_nc")
+    @classmethod
     def check_dims(cls, v):
         if len(v) != 2:
             raise ValueError(
@@ -613,7 +619,8 @@ class Gauge(FlatCommand):
 
     _nested: bool = False
 
-    @validator("monthly_ave_evaporation", "monthly_ave_temperature")
+    @field_validator("monthly_ave_evaporation", "monthly_ave_temperature")
+    @classmethod
     def confirm_monthly(cls, v):
         if v is not None and len(v) != 12:
             raise ValidationError("One value per month needed.")
@@ -864,7 +871,8 @@ class SoilClasses(ListCommand):
         mineral: Tuple[float, float, float] = None
         organic: float = None
 
-        @validator("mineral")
+        @field_validator("mineral")
+        @classmethod
         def validate_mineral(cls, v):
             """Assert sum of mineral fraction is 1."""
             if v is not None:
@@ -872,6 +880,8 @@ class SoilClasses(ListCommand):
                 assert sum(v) == 1, "Mineral fraction should sum to 1."
             return v
 
+        # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+        # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
         @validator("mineral", "organic", each_item=True)
         def validate_pct(cls, v):
             if v is not None:
