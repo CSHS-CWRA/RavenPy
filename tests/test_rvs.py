@@ -8,7 +8,15 @@ from pydantic.dataclasses import dataclass
 from pymbolic.primitives import Variable
 
 from ravenpy.config import commands as rc
-from ravenpy.config.rvs import RVI, Config
+from ravenpy.config.rvs import RV, RVI, Config, optfield
+
+
+def test_optfield():
+    class Test(RV):
+        a: bool = optfield("a")
+
+    t = Test()
+    assert not t.model_fields["a"].is_required()
 
 
 def test_rvi_datetime():

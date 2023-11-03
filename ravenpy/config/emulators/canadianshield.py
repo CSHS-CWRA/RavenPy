@@ -54,7 +54,7 @@ class BedRockHRU(HRU):
 class HRUs(rc.HRUs):
     """HRUs command for CanadianShield."""
 
-    __root__: Tuple[OrganicHRU, BedRockHRU]
+    root: Tuple[OrganicHRU, BedRockHRU]
 
 
 class CanadianShield(Config):

@@ -53,7 +53,7 @@ class HRUs(rc.HRUs):
     Pydantic is able to automatically detect if an HRU is Land or Lake if `hru_type` is provided.
     """
 
-    __root__: Sequence[ForestHRU]
+    root: Sequence[ForestHRU]
 
 
 class HMETS(Config):

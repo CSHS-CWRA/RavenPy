@@ -1,8 +1,9 @@
 from enum import Enum
 from textwrap import dedent, indent
-from typing import Dict, Sequence, Tuple, Union
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator, validator
+from pydantic import BaseModel, ConfigDict, Field, RootModel, model_validator, validator
+from pydantic._internal._model_construction import ModelMetaclass
 from pymbolic.primitives import Expression, Variable
 
 """
@@ -40,7 +41,7 @@ def encoder(v: dict) -> dict:
     r"""Return string representation of objects in dictionary.
 
     This is meant to be applied to BaseModel attributes that either have an `alias` defined,
-    or have a `__root__` attribute. The objective is to avoid creating `Command` objects for every
+    or have a `root` attribute. The objective is to avoid creating `Command` objects for every
     configuration option:
 
         - bool: ':{cmd}\n' if obj else ''
@@ -71,20 +72,20 @@ def encoder(v: dict) -> dict:
         elif hasattr(obj, "to_rv"):
             # Custom
             out = obj.to_rv()
-        elif issubclass(obj.__class__, Record):
+        elif issubclass(obj.__class__, _Record):
             out = str(obj)
         elif isinstance(obj, (list, tuple)):
             s = map(str, obj)
             o0 = obj[0]
-            if cmd == "__root__" or issubclass(o0.__class__, FlatCommand):
+            if cmd == "root" or issubclass(o0.__class__, FlatCommand):
                 out = "".join(s)
             # elif cmd == "Attributes":
             #     out = f":{cmd}," + ",".join(s) + "\n"
             elif cmd in ["Parameters", "Attributes", "Units"]:
                 fmt = ":{cmd:<15}" + len(obj) * ",{:>18}" + "\n"
                 out = fmt.format(cmd=cmd, *obj)
-            elif issubclass(o0.__class__, (Command, Record)):
-                rec = indent("\n".join(s), Command._indent)
+            elif issubclass(o0.__class__, (_Command, _Record)):
+                rec = indent("\n".join(s), o0._indent)
                 out = f":{cmd}\n{rec}\n:End{cmd}\n"
             elif isinstance(o0, Enum):
                 seq = " ".join([o.value for o in obj])
@@ -100,21 +101,36 @@ def encoder(v: dict) -> dict:
     return v
 
 
-class Record(BaseModel):
+class _Record(BaseModel):
+    """A Record has no nested Command or Record objects."""
+
+    pass
+
+
+class Record(_Record):
     model_config = ConfigDict(
         extra="forbid", arbitrary_types_allowed=True, populate_by_name=True
     )
 
 
-class Command(BaseModel):
+class RootRecord(RootModel, _Record):
+    model_config = ConfigDict(arbitrary_types_allowed=True, populate_by_name=True)
+
+
+class _Command(BaseModel):
     """Base class for Raven commands."""
 
-    _template: str = """
-            :{_cmd}
-            {_commands}{_records}
-            :End{_cmd}
-            """
-    _indent: str = "  "
+    @property
+    def _indent(self):
+        return "  "
+
+    @property
+    def _template(self):
+        return """
+               :{_cmd}
+               {_commands}{_records}
+               :End{_cmd}
+               """
 
     def __str__(self):
         return self.to_rv()
@@ -123,22 +139,24 @@ class Command(BaseModel):
         """Return dictionary of class attributes that are Raven models."""
         cmds = {}
         recs = []
-        for key, field in self.__fields__.items():
+        for key, field in self.model_fields.items():
             obj = self.__dict__[key]
             if obj is not None:
-                if issubclass(obj.__class__, Record):
+                if issubclass(obj.__class__, _Record):
                     recs = [obj]
-                elif issubclass(obj.__class__, Command):
+                elif issubclass(obj.__class__, _Command):
                     cmds[field.alias] = self.__dict__[key]
                 else:
                     try:
                         o = obj[0]
                     except (TypeError, IndexError, KeyError):
                         o = None
-                    if issubclass(o.__class__, Record):
+                    if issubclass(o.__class__, _Record):
                         recs = obj
-                    elif field.has_alias or field.alias == "__root__":
+                    elif field.alias is not None:
                         cmds[field.alias] = self.__dict__[key]
+                    elif key == "root":
+                        cmds[key] = self.__dict__[key]
                 # elif (
                 #     getattr(field.annotation, "_name", "") == "Sequence"
                 #     and len(obj)
@@ -155,8 +173,11 @@ class Command(BaseModel):
 
     def to_rv(self):
         """Return Raven configuration string."""
-        d = self.dict()
         cmds, recs = self.__subcommands__()
+
+        d = self.model_dump()
+        if not isinstance(d, dict):
+            d = dict(root=d)
 
         # Write command strings
         d.update(encoder(cmds))
@@ -173,40 +194,66 @@ class Command(BaseModel):
         d["_records"] = recs
         return dedent(self._template).format(**d)
 
+
+class Command(_Command):
     model_config = ConfigDict(
         extra="forbid", arbitrary_types_allowed=True, populate_by_name=True
     )
+
+
+class RootCommand(RootModel, _Command):
+    """Generic Command for root models."""
+
+    root: Any
+    model_config = ConfigDict(arbitrary_types_allowed=True, populate_by_name=True)
+
+
+class LineCommand(Command):
+    """A non-nested Command on a single line.
+
+    :CommandName {field_1} {field_2} ... {field_n}\n
+    """
+
+    def to_rv(self):
+        out = [f":{self.__class__.__name__:<20}"]
+        for field in self.model_fields.keys():
+            out.append(str(getattr(self, field)))
+
+        return " ".join(out) + "\n"
 
 
 class FlatCommand(Command):
     """Only used to discriminate Commands that should not be nested."""
 
 
-class ListCommand(Command):
+class ListCommand(RootModel, _Command):
     """Use so that commands with __root__: Sequence[Command] behave like a list."""
 
+    root: Sequence[Any]
+
     def __iter__(self):
-        return iter(self.__root__)
+        return iter(self.root)
 
     def __getitem__(self, item):
-        return self.__root__[item]
+        return self.root[item]
 
     def __len__(self):
-        return len(self.__root__)
+        return len(self.root)
+
+    model_config = ConfigDict(arbitrary_types_allowed=True, populate_by_name=True)
 
 
 class ParameterList(Record):
     name: str = ""
     values: Sequence[Union[Sym, str, None]] = ()
 
-    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
-    @validator("values", pre=True)
-    def no_none_in_default(cls, v, values):
+    @model_validator(mode="before")
+    @classmethod
+    def no_none_in_default(cls, data):
         """Make sure that no values are None for the [DEFAULT] record."""
-        if values["name"] == "[DEFAULT]" and None in v:
+        if data["name"] == "[DEFAULT]" and None in data["values"]:
             raise ValueError("Default record can not contain None.")
-        return v
+        return data
 
     def __str__(self):
         fmt = "{name:<16}" + len(self.values) * ",{:>18}"
@@ -240,11 +287,29 @@ class GenericParameterList(Command):
         return values
 
 
-class RV(Command):
+class AllOptional(ModelMetaclass):
+    def __new__(cls, name, bases, namespaces, **kwargs):
+        annotations = namespaces.get("__annotations__", {})
+        for base in bases:
+            annotations.update(base.__annotations__)
+        for field in annotations:
+            if not field.startswith("__"):
+                annotations[field] = Optional[annotations[field]]
+        namespaces["__annotations__"] = annotations
+        return super().__new__(cls, name, bases, namespaces, **kwargs)
+
+
+class RV(Command, metaclass=AllOptional):
     """Base class for RV configuration objects."""
 
-    _template: str = "{_commands}\n"
-    _indent: str = ""
+    @property
+    def _template(self):
+        return "{_commands}\n"
+
+    @property
+    def _indent(self):
+        return ""
+
     model_config = ConfigDict(
         populate_by_name=True, validate_default=True, validate_assignment=True
     )

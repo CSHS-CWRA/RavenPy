@@ -1,10 +1,10 @@
 import datetime as dt
 from dataclasses import asdict
 from pathlib import Path
-from typing import Any, Dict, Sequence, Union
+from typing import Any, Dict, Optional, Sequence, Union
 
 import cftime
-from pydantic import ConfigDict, Field, field_validator, root_validator, validator
+from pydantic import ConfigDict, Field, ValidationInfo, field_validator, model_validator
 
 from ..config import commands as rc
 from ..config import options as o
@@ -17,6 +17,11 @@ Generic Raven model configuration
 Note that alias are set to identify class attributes as Raven commands.
 """
 date = Union[dt.date, dt.datetime, cftime.datetime]
+
+
+def optfield(alias):
+    """Shortcut to create an optional field with an alias."""
+    return Field(alias=alias, default_factory=lambda: None)
 
 
 class RVI(RV):
@@ -109,19 +114,21 @@ class RVI(RV):
     @classmethod
     def init_soil_model(cls, v):
         if isinstance(v, int):
-            return rc.SoilModel.parse_obj(v)
+            return rc.SoilModel(v)
         return v
 
-    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
-    @validator("start_date", "end_date", "assimilation_start_time")
-    def dates2cf(cls, val, values):
+    @model_validator(mode="after")
+    @classmethod
+    def dates2cf(cls, data):
         """Convert dates to cftime dates."""
-        if val is not None:
-            calendar = (
-                values.get("calendar") or o.Calendar.PROLEPTIC_GREGORIAN
-            ).value.lower()
-            return cftime._cftime.DATE_TYPES[calendar](*val.timetuple()[:6])
+        calendar = (
+            data.get("calendar") or o.Calendar.PROLEPTIC_GREGORIAN
+        ).value.lower()
+        obj = cftime._cftime.DATE_TYPES[calendar]
+
+        for key in ["start_date", "end_date", "assimilation_start_time"]:
+            if key in data and data[key] is not None:
+                data[key] = obj(*data[key].timetuple()[:6])
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
@@ -241,27 +248,26 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
         """
         )
 
-    @root_validator
-    def _assign_symbolic(cls, values):
+    @model_validator(mode="before")
+    def _assign_symbolic(cls, data):
         """If params is numerical, convert symbolic expressions from other fields.
 
         Note that this is called for attribute assignment as well.
         """
 
-        if values.get("params") is not None:
-            p = asdict(values["params"])
+        if data.get("params") is not None:
+            p = asdict(data["params"])
 
             if not is_symbolic(p):
-                return parse_symbolic(values, **p)
+                return parse_symbolic(data, **p)
 
-        return values
+        return data
 
-    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
-    @validator("global_parameter", pre=True)
-    def _update_defaults(cls, v, values, config, field):
+    @field_validator("global_parameter")
+    @classmethod
+    def _update_defaults(cls, v, info: ValidationInfo):
         """Some configuration parameters should be updated with user given arguments, not overwritten."""
-        return {**cls.__fields__[field.name].default, **v}
+        return {**cls.model_fields[info.field_name].default, **v}
 
     def set_params(self, params) -> "Config":
         """Return a new instance of Config with params set to their numerical values."""
@@ -284,7 +290,7 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
 
         # Instantiate config class
         # Note: `construct` skips validation. benchmark to see if it speeds things up.
-        return self.__class__.construct(params=num_p, **out)
+        return self.__class__.model_construct(params=num_p, **out)
 
     def set_solution(self, fn: Path, timestamp: bool = True) -> "Config":
         """Return a new instance of Config with hru, basin states
@@ -323,8 +329,10 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
 
     def duplicate(self, **kwds):
         """Duplicate this model, changing the values given in the keywords."""
-        out = self.copy(deep=True)
-        for key, val in self.validate(kwds).dict(exclude_unset=True).items():
+        out = self.model_copy(deep=True)
+        for key, val in (
+            self.model_validate(kwds).model_dump(exclude_unset=True).items()
+        ):
             setattr(out, key, val)
         return out
 
