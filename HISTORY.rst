@@ -2,6 +2,10 @@
 History
 =======
 
+0.13 (unreleased)
+-----------------
+* Update to Pydantic v2
+
 0.12.3 (2023-10-02)
 -------------------
 * `RavenPy` now uses `platformdirs` to write `raven_testing` to the user's cache directory. Dynamic paths are now used to cache data dependent on the user's operating system. Developers can now safely delete the `.raven_testing_data` folder in their home directory without affecting the functionality of `RavenPy`.
