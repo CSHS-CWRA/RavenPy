@@ -26,7 +26,7 @@ def test_evaluation_metrics():
 
 
 def test_hrus():
-    hrus = rc.HRUs.parse_obj([salmon_land_hru_1])
+    hrus = rc.HRUs([salmon_land_hru_1])
     hrus.to_rv()
     assert hrus[0].subbasin_id == 1
 
@@ -100,9 +100,7 @@ def test_land_use_class():
 def test_soil_classes():
     from ravenpy.config.commands import SoilClasses
 
-    c = SoilClasses.parse_obj(
-        [{"name": "TOPSOIL"}, {"name": "FAST_RES"}, {"name": "SLOW_RES"}]
-    )
+    c = SoilClasses([{"name": "TOPSOIL"}, {"name": "FAST_RES"}, {"name": "SLOW_RES"}])
     assert dedent(c.to_rv()) == dedent(
         """
     :SoilClasses
@@ -115,7 +113,7 @@ def test_soil_classes():
     """
     )
 
-    c = SoilClasses.parse_obj(
+    c = SoilClasses(
         [
             {"name": "TOPSOIL", "mineral": (0.1, 0.7, 0.2), "organic": 0.1},
         ]
@@ -140,7 +138,7 @@ def test_soil_model():
 
 
 def test_soil_profiles(x=42.0):
-    c = rc.SoilProfiles.parse_obj(
+    c = rc.SoilProfiles(
         [
             {
                 "name": "DEFAULT_P",

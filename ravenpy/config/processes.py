@@ -199,7 +199,7 @@ class Flush(Process):
     """"""
 
     algo: Literal["RAVEN_DEFAULT"] = "RAVEN_DEFAULT"
-    p: float = None
+    p: float | None = None
 
 
 class Overflow(Process):

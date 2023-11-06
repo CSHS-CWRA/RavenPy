@@ -2,7 +2,15 @@ from enum import Enum
 from textwrap import dedent, indent
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
-from pydantic import BaseModel, ConfigDict, Field, RootModel, model_validator, validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    RootModel,
+    ValidationInfo,
+    field_validator,
+    model_validator,
+)
 from pydantic._internal._model_construction import ModelMetaclass
 from pymbolic.primitives import Expression, Variable
 
@@ -31,6 +39,11 @@ class SymConfig:
 
 
 Sym = Union[Variable, Expression, float, None]
+
+
+def optfield(**kwds):
+    """Shortcut to create an optional field with an alias."""
+    return Field(**kwds, default_factory=lambda: None, validate_default=False)
 
 
 class Params:
@@ -266,40 +279,30 @@ class ParameterList(Record):
 
 
 class GenericParameterList(Command):
-    parameters: Sequence[str] = Field(
-        None, alias="Parameters", description="Parameter names"
-    )
-    units: Sequence[str] = Field(None, alias="Units")
-    pl: Sequence[ParameterList] = Field(None)
+    parameters: Sequence[str] = Field(alias="Parameters", description="Parameter names")
+    units: Sequence[str] | None = Field(None, alias="Units")
+    pl: Sequence[ParameterList]
 
-    @model_validator(mode="before")
-    @classmethod
-    def num_values_equal_num_names(cls, values):
-        n = len(values["parameters"])
-        pl = values["pl"]
-        for v in pl:
-            # FIXME: assertions should not be found outside of testing code. Replace with conditional logic.
-            assert (
-                len(v.values) == n
-            ), "Number of values should match number of parameters."
+    @model_validator(mode="after")
+    def num_values_equal_num_names(self):
+        """Check that the length of the parameter list equals the number of given parameter names."""
+        n = len(self.parameters)
 
-        values["units"] = ("none",) * n
-        return values
+        for pl in self.pl:
+            if len(pl.values) != n:
+                raise ValueError("Number of values should match number of parameters.")
 
+        return self
 
-class AllOptional(ModelMetaclass):
-    def __new__(cls, name, bases, namespaces, **kwargs):
-        annotations = namespaces.get("__annotations__", {})
-        for base in bases:
-            annotations.update(base.__annotations__)
-        for field in annotations:
-            if not field.startswith("__"):
-                annotations[field] = Optional[annotations[field]]
-        namespaces["__annotations__"] = annotations
-        return super().__new__(cls, name, bases, namespaces, **kwargs)
+    @model_validator(mode="after")
+    def set_default_units(self):
+        n = len(self.parameters)
+        if self.units is None:
+            self.units = ("none",) * n
+        return self
 
 
-class RV(Command, metaclass=AllOptional):
+class RV(Command):
     """Base class for RV configuration objects."""
 
     @property
@@ -326,9 +329,9 @@ def parse_symbolic(value, **kwds):
     elif isinstance(value, (list, tuple)):
         return type(value)(parse_symbolic(v, **kwds) for v in value)
 
-    elif isinstance(value, (Command, Record)):
-        attrs = value.__dict__
-        return value.__class__(**parse_symbolic(attrs, **kwds))
+    elif isinstance(value, (_Command, _Record)):
+        attrs = value.model_dump()
+        return value.model_validate(parse_symbolic(attrs, **kwds))
 
     elif isinstance(value, (Variable, Expression)):
         # Inject numerical values numerical value

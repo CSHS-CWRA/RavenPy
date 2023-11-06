@@ -255,18 +255,18 @@ class CanadianShield(Config):
     @field_validator("hrus")
     @classmethod
     def equal_area(cls, v):
-        hrus = v.__root__
+        hrus = v.root
 
         assert len(hrus) == 2, "CanadianShield must have two HRUs"
         assert hrus[0].area == hrus[1].area, "HRUs must have equal areas"
         return v
 
-    _nc_attrs = validator("netcdf_attribute", allow_reuse=True)(nc_attrs)
+    _nc_attrs = field_validator("netcdf_attribute")(nc_attrs)
 
     def __init__(self, **data):
         super().__init__(**data)
 
-        hrus = self.hrus.__root__
+        hrus = self.hrus.root
         hrus[0].area *= self.params.X34
         hrus[1].area *= 1 - self.params.X34
 

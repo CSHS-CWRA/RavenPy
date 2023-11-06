@@ -179,7 +179,7 @@ def warm_up(
     ravenpy.config.rvs.Config
         Model configuration with initial state set by running the model prior to the start date.
     """
-    wup = config.copy(deep=True)
+    wup = config.model_copy(deep=True)
     wup.start_date = config.start_date - dt.timedelta(days=duration)
     wup.duration = duration
     wup.end_date = None
@@ -377,7 +377,7 @@ def ensemble_prediction(
         # Prepare model instance
 
         out = Emulator(
-            config=config.copy(
+            config=config.model_copy(
                 update={
                     "gauge": [
                         rc.Gauge.from_nc(

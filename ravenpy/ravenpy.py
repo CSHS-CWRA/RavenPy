@@ -39,7 +39,7 @@ class Emulator:
         overwrite : bool
             If True, overwrite existing files.
         """
-        self._config = config.copy(deep=True)
+        self._config = config.model_copy(deep=True)
         self._workdir = Path(workdir or tempfile.mkdtemp())
         self._modelname = modelname
         self.overwrite = overwrite

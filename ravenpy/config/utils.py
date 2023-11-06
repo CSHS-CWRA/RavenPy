@@ -144,7 +144,7 @@ def filter_for(kls, attrs, **kwds):
         }
     else:
         out = {}
-        for key, field in kls.__fields__.items():
+        for key, field in kls.model_fields.items():
             if field.alias in attrs:
                 out[field.alias] = attrs[field.alias]
             elif key in attrs:

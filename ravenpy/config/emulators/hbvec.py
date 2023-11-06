@@ -1,6 +1,6 @@
 from typing import Dict, Literal, Sequence, Union
 
-from pydantic import Field, validator
+from pydantic import Field, field_validator
 from pydantic.dataclasses import dataclass
 from pymbolic.primitives import Variable
 
@@ -270,7 +270,7 @@ class HBVEC(Config):
     hru_state_variable_table: rc.HRUStateVariableTable = Field(
         [{"hru_id": 1, "data": {"SOIL[2]": 0.50657}}]
     )
-    _nc_attrs = validator("netcdf_attribute", allow_reuse=True)(nc_attrs)
+    _nc_attrs = field_validator("netcdf_attribute")(nc_attrs)
 
     def __init__(self, **data):
         super().__init__(**data)

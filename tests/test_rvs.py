@@ -13,7 +13,7 @@ from ravenpy.config.rvs import RV, RVI, Config, optfield
 
 def test_optfield():
     class Test(RV):
-        a: bool = optfield("a")
+        a: bool = optfield(alias="a")
 
     t = Test()
     assert not t.model_fields["a"].is_required()
@@ -33,6 +33,9 @@ def test_rvi_datetime():
 
     rvi = RVI(end_date=cftime.datetime(1990, 1, 1))
     assert rvi.end_date == exp
+
+    rvi = RVI(start_date=dt.datetime(1990, 1, 1), calendar="NOLEAP")
+    assert rvi.start_date == cftime.datetime(1990, 1, 1, calendar="NOLEAP")
 
     with pytest.raises(ValidationError):
         rvi = RVI(start_date=(dt.datetime(1990, 1, 1),))
@@ -62,6 +65,8 @@ def test_set_params():
         )
 
     exp = MySymbolicEmulator(params=[0.5])
+    assert exp.rain_snow_transition.temp == 0.5
+
     s = MySymbolicEmulator()
     assert s.set_params([0.5]) == exp
     s.params = [0.5]
@@ -99,8 +104,6 @@ def test_config(dummy_config):
     cls, P = dummy_config
     conf = cls(Calendar="NOLEAP")
 
-    assert conf.__config__.allow_mutation
-
     with pytest.raises(ValueError):
         assert conf.rvi
 
@@ -112,5 +115,6 @@ def test_config(dummy_config):
         num.set_params([0.6])
 
     # Instantiate with numerical params
+    assert conf.model_config["populate_by_name"]
     nt = cls(params=[0.5], Calendar="NOLEAP")
     assert nt.air_snow_coeff == 0.5
