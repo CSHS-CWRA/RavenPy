@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from textwrap import dedent, indent
 from typing import Literal, Sequence, Tuple
 
@@ -212,7 +214,7 @@ class Split(Process):
     """"""
 
     p: float = None
-    to: Tuple[str, str]
+    to: tuple[str, str]
 
 
 class Convolve(Process):

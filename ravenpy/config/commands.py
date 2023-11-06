@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime as dt
 import itertools
 import re
@@ -223,7 +225,7 @@ class SubBasin(Record):
     profile: str = "NONE"
     reach_length: float = 0
     gauged: bool = True
-    gauge_id: Optional[str] = ""  # This attribute is not rendered to RVH
+    gauge_id: str | None = ""  # This attribute is not rendered to RVH
 
     def __str__(self):
         d = self.model_dump()
@@ -263,7 +265,7 @@ class HRU(Record):
     aspect: Annotated[float, Field(ge=0, le=360)] = 0.0
     # This field is not part of the Raven config, it is needed for serialization,
     # to specify which HRU subclass to use when necessary
-    hru_type: Optional[str] = None
+    hru_type: str | None = None
 
     def __str__(self):
         import numpy as np
@@ -396,8 +398,8 @@ class ChannelProfile(FlatCommand):
 
     name: str = "chn_XXX"
     bed_slope: float = 0
-    survey_points: Tuple[Tuple[float, float], ...] = ()
-    roughness_zones: Tuple[Tuple[float, float], ...] = ()
+    survey_points: tuple[tuple[float, float], ...] = ()
+    roughness_zones: tuple[tuple[float, float], ...] = ()
 
     def to_rv(self):
         template = """
@@ -436,7 +438,7 @@ class GridWeights(Command):
     number_grid_cells: int = Field(1, alias="NumberGridCells")
 
     class GWRecord(RootRecord):
-        root: Tuple[int, int, float] = (1, 0, 1.0)
+        root: tuple[int, int, float] = (1, 0, 1.0)
 
         def __iter__(self):
             return iter(self.root)
@@ -489,7 +491,7 @@ class RedirectToFile(RootCommand):
 class ReadFromNetCDF(FlatCommand):
     # TODO: When encoding Path, return only path.name
     # Order of HttpUrl, Path is important to avoid casting strings to Path.
-    file_name_nc: Union[HttpUrl, Path] = Field(
+    file_name_nc: HttpUrl | Path = Field(
         ..., alias="FileNameNC", description="NetCDF file name."
     )
     var_name_nc: str = Field(
@@ -552,7 +554,7 @@ class GriddedForcing(ReadFromNetCDF):
 
     name: str = ""
     forcing_type: options.Forcings | None = Field(None, alias="ForcingType")
-    grid_weights: Union[GridWeights, RedirectToFile] = Field(
+    grid_weights: GridWeights | RedirectToFile = Field(
         GridWeights(), alias="GridWeights"
     )
     # StationIdx is not relevant to GriddedForcing
@@ -681,19 +683,20 @@ class Gauge(FlatCommand):
     @classmethod
     def from_nc(
         cls,
-        fn: Union[Path, Sequence[Path]],
+        fn: Path | Sequence[Path],
         data_type: Sequence[str] = None,
         station_idx: int = 1,
-        alt_names: Optional[Dict[str, str]] = None,
+        alt_names: dict[str, str] | None = None,
         mon_ave: bool = False,
-        data_kwds: Optional[
-            Dict[
+        data_kwds: None
+        | (
+            dict[
                 str,
-                Union[Dict[str, Union[bool, Dict[str, int], float]], Dict[str, Any]],
+                dict[str, bool | dict[str, int] | float] | dict[str, Any],
             ]
-        ] = None,
+        ) = None,
         **kwds,
-    ) -> "Gauge":
+    ) -> Gauge:
         """Return Gauge instance with configuration options inferred from the netCDF itself.
 
         Parameters
@@ -795,7 +798,7 @@ class ObservationData(Data, coerce_numbers_to_str=True):
 
 class HRUState(Record):
     hru_id: int = 1
-    data: Dict[str, Sym] = Field(default_factory=dict)
+    data: dict[str, Sym] = Field(default_factory=dict)
 
     def __str__(self):
         return ",".join(map(str, (self.hru_id,) + tuple(self.data.values())))
@@ -924,7 +927,7 @@ class BasinStateVariables(ListCommand):
 class SoilClasses(ListCommand):
     class SoilClass(Record):
         name: str
-        mineral: Tuple[float, float, float] | None = None
+        mineral: tuple[float, float, float] | None = None
         organic: float | None = None
 
         @field_validator("mineral")
@@ -1101,7 +1104,7 @@ class ForcingPerturbation(LineCommand):
 
 
 class AssimilatedState(LineCommand):
-    state: Union[options.StateVariables, Literal["STREAMFLOW"]]
+    state: options.StateVariables | Literal["STREAMFLOW"]
     group: str
 
 

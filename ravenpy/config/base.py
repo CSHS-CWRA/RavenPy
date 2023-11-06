@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from enum import Enum
 from textwrap import dedent, indent
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
@@ -148,7 +150,7 @@ class _Command(BaseModel):
     def __str__(self):
         return self.to_rv()
 
-    def __subcommands__(self) -> Tuple[Dict[str, str], list]:
+    def __subcommands__(self) -> tuple[dict[str, str], list]:
         """Return dictionary of class attributes that are Raven models."""
         cmds = {}
         recs = []
@@ -258,7 +260,7 @@ class ListCommand(RootModel, _Command):
 
 class ParameterList(Record):
     name: str = ""
-    values: Sequence[Union[Sym, str, None]] = ()
+    values: Sequence[Sym | str | None] = ()
 
     @model_validator(mode="before")
     @classmethod
