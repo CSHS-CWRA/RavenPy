@@ -258,42 +258,33 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
 
     @field_validator("params", mode="before")
     @classmethod
-    def cast_to_dataclass(cls, data):
+    def _cast_to_dataclass(cls, data):
         """Cast params to a dataclass."""
         # Needed because pydantic v2 does not cast tuples automatically.
         if data is not None and not is_dataclass(data):
             return cls.model_fields["params"].annotation(*data)
         return data
 
-    @model_validator(mode="before")
-    def _assign_symbolic(cls, data):
-        """If params is numerical, convert symbolic expressions from other fields.
-
-        Note that this is called for attribute assignment as well.
-        """
-
-        if data.get("params") is not None:
-            if not is_dataclass(data["params"]):
-                # Cast tuples to dataclass (pydantic v2 does not do it automatically)
-                data["params"] = cls.model_fields["params"].annotation(*data["params"])
-
-            p = asdict(data["params"])
-
-            if not is_symbolic(p):
-                # Add default values to data
-                for key, val in cls.model_fields.items():
-                    if not ((val.alias in data) or (key in data)):
-                        data[key] = val.default
-
-                return parse_symbolic(data, **p)
-
-        return data
-
-    @field_validator("global_parameter")
+    @field_validator("global_parameter", mode="before")
     @classmethod
     def _update_defaults(cls, v, info: ValidationInfo):
         """Some configuration parameters should be updated with user given arguments, not overwritten."""
         return {**cls.model_fields[info.field_name].default, **v}
+
+    # @model_validator(mode="after")
+    # def _parse_symbolic(self):
+    #     """If params is numerical, convert symbolic expressions from other fields.
+    #     """
+    #
+    #     if self.params is not None:
+    #         p = asdict(self.params)
+    #
+    #         if not is_symbolic(p):
+    #             for key in self.model_fields.keys():
+    #                 if key != "params":
+    #                     setattr(self, key, parse_symbolic(getattr(self, key), **p))
+    #
+    #     return self
 
     def set_params(self, params) -> Config:
         """Return a new instance of Config with params set to their numerical values."""
@@ -303,20 +294,16 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
                 "Setting `params` on a configuration without symbolic expressions has no effect."
                 "Leave `params` to its default value when instantiating the emulator configuration."
             )
-        # out = self.duplicate()
-        # out.params = params
-        # return out
 
-        dc = self.__dict__.copy()
-        sym_p = dc.pop("params")
-        num_p = sym_p.__class__(*params)
+        num_p = self.model_fields["params"].annotation(*params)
 
         # Parse symbolic expressions using numerical params values
-        out = parse_symbolic(dc, **asdict(num_p))
+        out = parse_symbolic(self.__dict__, **asdict(num_p))
+        out["params"] = num_p
 
         # Instantiate config class
         # Note: `construct` skips validation. benchmark to see if it speeds things up.
-        return self.__class__.model_construct(params=num_p, **out)
+        return self.__class__.model_construct(**out)
 
     def set_solution(self, fn: Path, timestamp: bool = True) -> Config:
         """Return a new instance of Config with hru, basin states
@@ -365,11 +352,11 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
     def _rv(self, rv: str):
         """Return RV configuration."""
 
-        if self.is_symbolic:
-            raise ValueError(
-                "Cannot write RV files if `params` has symbolic variables. Use `set_params` method to set numerical "
-                "values for `params`."
-            )
+        # if self.is_symbolic:
+        #     raise ValueError(
+        #         "Cannot write RV files if `params` has symbolic variables. Use `set_params` method to set numerical "
+        #         "values for `params`."
+        #     )
 
         # Get RV class
         rvs = {b.__name__: b for b in Config.__bases__}
@@ -377,8 +364,14 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
 
         # Instantiate RV class
         attrs = dict(self)
-        p = {f: attrs[f] for f in cls.model_fields}
-        rv = cls(**p)
+        rv_attrs = {f: attrs[f] for f in cls.model_fields}
+
+        # Get model parameters and convert symbolic expressions.
+        if self.params is not None:
+            p = asdict(self.params)
+            rv_attrs = parse_symbolic(rv_attrs, **p)
+
+        rv = cls.model_validate(rv_attrs)
         return rv.to_rv()
 
     @property

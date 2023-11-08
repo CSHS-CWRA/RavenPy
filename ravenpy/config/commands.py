@@ -387,10 +387,6 @@ class SBGroupPropertyMultiplier(LineCommand):
     parameter_name: str
     mult: float
 
-    # @property
-    # def _template(self):
-    #     return "\n:SBGroupPropertyMultiplier {group_name} {parameter_name} {mult}"
-
 
 # TODO: Convert to new config
 class ChannelProfile(FlatCommand):

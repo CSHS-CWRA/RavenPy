@@ -223,7 +223,11 @@ class RootCommand(RootModel, _Command):
     model_config = ConfigDict(arbitrary_types_allowed=True, populate_by_name=True)
 
 
-class LineCommand(Command):
+class FlatCommand(Command):
+    """Only used to discriminate Commands that should not be nested."""
+
+
+class LineCommand(FlatCommand):
     """A non-nested Command on a single line.
 
     :CommandName {field_1} {field_2} ... {field_n}\n
@@ -235,10 +239,6 @@ class LineCommand(Command):
             out.append(str(getattr(self, field)))
 
         return " ".join(out) + "\n"
-
-
-class FlatCommand(Command):
-    """Only used to discriminate Commands that should not be nested."""
 
 
 class ListCommand(RootModel, _Command):
@@ -321,7 +321,11 @@ class RV(Command):
 
 
 def parse_symbolic(value, **kwds):
-    """Inject values of symbolic variables into object and return object."""
+    """Inject values of symbolic variables into object and return object.
+
+    Note that parsing the output of `model_dump` can cause problems because there is not always enough information in the
+    dictionary to recreate the correct model.
+    """
     from pymbolic.mapper.evaluator import EvaluationMapper as EM
     from pymbolic.primitives import Expression, Variable
 
@@ -331,7 +335,7 @@ def parse_symbolic(value, **kwds):
     elif isinstance(value, (list, tuple)):
         return type(value)(parse_symbolic(v, **kwds) for v in value)
 
-    elif isinstance(value, (_Command, _Record)):
+    elif isinstance(value, (_Record, _Command)):
         attrs = value.model_dump()
         return value.model_validate(parse_symbolic(attrs, **kwds))
 

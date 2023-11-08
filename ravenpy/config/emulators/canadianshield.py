@@ -1,7 +1,7 @@
 from dataclasses import field, make_dataclass
 from typing import Dict, Sequence, Tuple, Union
 
-from pydantic import Field, field_validator, validator
+from pydantic import Field, field_validator, model_validator
 from pydantic.dataclasses import dataclass
 from pymbolic.primitives import Variable
 
@@ -252,25 +252,41 @@ class CanadianShield(Config):
         alias="HRUStateVariableTable",
     )
 
-    @field_validator("hrus")
+    @field_validator("hrus", mode="before")
     @classmethod
-    def equal_area(cls, v):
-        hrus = v.root
+    def equal_area(cls, hrus):
+        if len(hrus) != 2:
+            raise ValueError(
+                f"CanadianShield must have two HRUs, one organic and one bedrock, has {len(hrus)}."
+            )
 
-        assert len(hrus) == 2, "CanadianShield must have two HRUs"
-        assert hrus[0].area == hrus[1].area, "HRUs must have equal areas"
-        return v
+        areas = []
+        for hru in hrus:
+            if isinstance(hru, dict):
+                areas.append(hru["area"])
+            else:
+                areas.append(hru.area)
+
+        if len(set(areas)) > 1:
+            raise ValueError(f"HRUs must have equal areas: {areas}")
+
+        return hrus
 
     _nc_attrs = field_validator("netcdf_attribute")(nc_attrs)
+    _initialized: bool = False
 
-    def __init__(self, **data):
-        super().__init__(**data)
+    @model_validator(mode="after")
+    def _init(self):
+        if not self._initialized:
+            hrus = self.hrus.root
+            hrus[0].area *= self.params.X34
+            hrus[1].area *= 1 - self.params.X34
 
-        hrus = self.hrus.root
-        hrus[0].area *= self.params.X34
-        hrus[1].area *= 1 - self.params.X34
+            if self.gauge:
+                for gauge in self.gauge:
+                    gauge.rain_correction = self.params.X32
+                    gauge.snow_correction = self.params.X33
 
-        if self.gauge:
-            for gauge in self.gauge:
-                gauge.rain_correction = self.params.X32
-                gauge.snow_correction = self.params.X33
+            self._initialized = True
+
+        return self
