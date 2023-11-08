@@ -37,8 +37,6 @@ class RVI(RV):
 
     # Model description
     routing: o.Routing | None = optfield(alias="Routing")
-    # method: rc.Method = None
-    # interpolation: rc.Interpolation = None
     catchment_route: o.CatchmentRoute | None = optfield(alias="CatchmentRoute")
     evaporation: o.Evaporation | None = optfield(alias="Evaporation")
     ow_evaporation: o.Evaporation | None = optfield(alias="OW_Evaporation")
@@ -66,7 +64,6 @@ class RVI(RV):
     )
     soil_model: rc.SoilModel | None = optfield(alias="SoilModel")
     lake_storage: o.StateVariables | None = optfield(alias="LakeStorage")
-    # alias: Dict[str, str] = optfield(alias="Alias")
 
     define_hru_groups: Sequence[str] | None = optfield(alias="DefineHRUGroups")
 
@@ -99,8 +96,7 @@ class RVI(RV):
     pavics_mode: bool | None = optfield(alias="PavicsMode")
 
     suppress_output: bool | None = optfield(
-        alias="SuppressOutput",
-        description="Write minimal output to disk when enabled.",
+        alias="SuppressOutput", description="Write minimal output to disk when enabled."
     )
     write_forcing_functions: bool | None = optfield(
         alias="WriteForcingFunctions",
@@ -147,7 +143,7 @@ class RVT(RV):
 
 
 class RVP(RV):
-    params: Any | None = None
+    params: Any = None
     soil_classes: rc.SoilClasses | None = optfield(alias="SoilClasses")
     soil_profiles: rc.SoilProfiles | None = optfield(alias="SoilProfiles")
     vegetation_classes: rc.VegetationClasses | None = optfield(
@@ -209,15 +205,11 @@ class RVH(RV):
 
 
 class RVE(RV):
-    """Ensemble Kalman filter configuration"""
-
     enkf_mode: o.EnKFMode | None = optfield(alias="EnKFMode")
     window_size: int | None = optfield(alias="WindowSize")
     solution_run_name: str | None = optfield(alias="SolutionRunName")
     extra_rvt_filename: str | None = optfield(alias="ExtraRVTFilename")
-
     output_directory_format: str | Path | None = optfield(alias="OutputDirectoryFormat")
-
     forecast_rvt_filename: str | None = optfield(alias="ForecastRVTFilename")
     truncate_hindcasts: bool | None = optfield(alias="TruncateHindcasts")
     forcing_perturbation: Sequence[rc.ForcingPerturbation] | None = optfield(

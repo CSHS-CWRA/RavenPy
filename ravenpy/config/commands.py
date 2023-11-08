@@ -1104,7 +1104,7 @@ class AssimilatedState(LineCommand):
     group: str
 
 
-class AssimilateStreamflow(FlatCommand, coerce_numbers_to_str=True):
+class AssimilateStreamflow(LineCommand, coerce_numbers_to_str=True):
     """Subbasin ID to assimilate streamflow for."""
 
     sb_id: str

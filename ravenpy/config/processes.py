@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from textwrap import dedent, indent
-from typing import Literal, Sequence, Tuple
+from typing import Literal, Optional, Sequence, Tuple
 
 from .base import Sym
 from .commands import Command, Process
