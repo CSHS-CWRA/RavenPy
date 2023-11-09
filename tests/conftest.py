@@ -296,7 +296,6 @@ names = [
     "SACSMA",
     "Blended",
 ]
-names = ["CanadianShield"]
 
 # Mapping of emulator names to configuration classes
 configs = {
