@@ -325,7 +325,9 @@ def parse_symbolic(value, **kwds):
         return type(value)(parse_symbolic(v, **kwds) for v in value)
 
     elif isinstance(value, (_Record, _Command)):
-        attrs = value.model_dump()
+        attrs = value.__dict__
+        if isinstance(value, RootModel):
+            attrs = attrs["root"]
         return value.model_validate(parse_symbolic(attrs, **kwds))
 
     elif isinstance(value, (Variable, Expression)):

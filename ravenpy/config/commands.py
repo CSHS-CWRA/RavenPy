@@ -266,10 +266,15 @@ class HRU(Record):
         del d["hru_type"]
 
         # Adjust horizontal spacing to match attributes names
-        attrs = HRUs._Attributes.default
+        attrs = ["HRU_ID"] + HRUs._Attributes.default
         ns = np.array(list(map(len, attrs)))
         ns[1:] += 1
 
+        # In Py3.10 zip(strict=True) can be used instead.
+        if len(d) != len(attrs):
+            raise ValueError(
+                f"HRU record has {len(d)} attributes, but {len(attrs)} are expected."
+            )
         return " ".join(f"{v:<{n}}" for v, n in zip(d.values(), ns))
 
 
