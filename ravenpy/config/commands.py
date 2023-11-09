@@ -25,7 +25,6 @@ from pydantic import (
     NonNegativeFloat,
     PositiveInt,
     PrivateAttr,
-    RootModel,
     ValidationError,
     field_validator,
     model_validator,
@@ -44,7 +43,6 @@ from .base import (
     RootCommand,
     RootRecord,
     Sym,
-    optfield,
 )
 from .utils import filter_for, nc_specs
 
@@ -100,9 +98,7 @@ class Process(Command):
             ]
         return v
 
-    @field_validator(
-        "source",
-    )
+    @field_validator("source")
     @classmethod
     def is_source_state_variable(cls, v: str):
         if v is not None:
@@ -110,9 +106,7 @@ class Process(Command):
                 raise ValueError(f"{v} not recognized as a state variable.")
         return v
 
-    @field_validator(
-        "to",
-    )
+    @field_validator("to")
     @classmethod
     def is_to_state_variable(cls, v: Sequence):
         for x in v:
@@ -1052,7 +1046,7 @@ class SubBasinProperties(Command):
 
 
 class SoilParameterList(GenericParameterList):
-    parameters: Optional[Sequence[options.SoilParameters]]  = Field(
+    parameters: Optional[Sequence[options.SoilParameters]] = Field(
         None, alias="Parameters"
     )
 

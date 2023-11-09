@@ -37,28 +37,48 @@ class RVI(RV):
     catchment_route: Optional[o.CatchmentRoute] = optfield(alias="CatchmentRoute")
     evaporation: Optional[o.Evaporation] = optfield(alias="Evaporation")
     ow_evaporation: Optional[o.Evaporation] = optfield(alias="OW_Evaporation")
-    sw_radiation_method: Optional[o.SWRadiationMethod] = optfield(alias="SWRadiationMethod")
+    sw_radiation_method: Optional[o.SWRadiationMethod] = optfield(
+        alias="SWRadiationMethod"
+    )
     sw_cloud_correct: Optional[o.SWCloudCorrect] = optfield(alias="SWCloudCorrect")
     sw_canopy_correct: Optional[o.SWCanopyCorrect] = optfield(alias="SWCanopyCorrect")
-    lw_radiation_method: Optional[o.LWRadiationMethod] = optfield(alias="LWRadiationMethod")
+    lw_radiation_method: Optional[o.LWRadiationMethod] = optfield(
+        alias="LWRadiationMethod"
+    )
     windspeed_method: Optional[o.WindspeedMethod] = optfield(alias="WindspeedMethod")
-    rain_snow_fraction: Optional[o.RainSnowFraction] = optfield(alias="RainSnowFraction")
-    potential_melt_method: Optional[o.PotentialMeltMethod] = optfield(alias="PotentialMeltMethod")
+    rain_snow_fraction: Optional[o.RainSnowFraction] = optfield(
+        alias="RainSnowFraction"
+    )
+    potential_melt_method: Optional[o.PotentialMeltMethod] = optfield(
+        alias="PotentialMeltMethod"
+    )
     oro_temp_correct: Optional[o.OroTempCorrect] = optfield(alias="OroTempCorrect")
-    oro_precip_correct: Optional[o.OroPrecipCorrect] = optfield(alias="OroPrecipCorrect")
+    oro_precip_correct: Optional[o.OroPrecipCorrect] = optfield(
+        alias="OroPrecipCorrect"
+    )
     oro_pet_correct: Optional[o.OroPETCorrect] = optfield(alias="OroPETCorrect")
-    cloud_cover_method: Optional[o.CloudCoverMethod] = optfield(alias="CloudCoverMethod")
+    cloud_cover_method: Optional[o.CloudCoverMethod] = optfield(
+        alias="CloudCoverMethod"
+    )
     precip_icept_frac: Optional[o.PrecipIceptFract] = optfield(alias="PrecipIceptFract")
     subdaily_method: Optional[o.SubdailyMethod] = optfield(alias="SubdailyMethod")
-    monthly_interpolation_method: Optional[o.MonthlyInterpolationMethod] = optfield(alias="MonthlyInterpolationMethod")
+    monthly_interpolation_method: Optional[o.MonthlyInterpolationMethod] = optfield(
+        alias="MonthlyInterpolationMethod"
+    )
     soil_model: Optional[rc.SoilModel] = optfield(alias="SoilModel")
     lake_storage: Optional[o.StateVariables] = optfield(alias="LakeStorage")
 
     define_hru_groups: Optional[Sequence[str]] = optfield(alias="DefineHRUGroups")
 
-    hydrologic_processes: Optional[Sequence[Union[rc.Process, rp.Conditional, rp.ProcessGroup]]] = optfield(alias="HydrologicProcesses")
-    evaluation_metrics: Optional[Sequence[o.EvaluationMetrics]] = optfield(alias="EvaluationMetrics")
-    evaluation_period: Optional[Sequence[rc.EvaluationPeriod]] = optfield(alias="EvaluationPeriod")
+    hydrologic_processes: Optional[
+        Sequence[Union[rc.Process, rp.Conditional, rp.ProcessGroup]]
+    ] = optfield(alias="HydrologicProcesses")
+    evaluation_metrics: Optional[Sequence[o.EvaluationMetrics]] = optfield(
+        alias="EvaluationMetrics"
+    )
+    evaluation_period: Optional[Sequence[rc.EvaluationPeriod]] = optfield(
+        alias="EvaluationPeriod"
+    )
     ensemble_mode: Optional[rc.EnsembleMode] = optfield(alias="EnsembleMode")
 
     # Options
@@ -66,15 +86,28 @@ class RVI(RV):
     netcdf_attribute: Optional[Dict[str, str]] = optfield(alias="NetCDFAttribute")
 
     custom_output: Optional[Sequence[rc.CustomOutput]] = optfield(alias="CustomOutput")
-    direct_evaporation: Optional[bool] = optfield(alias="DirectEvaporation", description="Rainfall is automatically reduced through evapotranspiration up to the limit of the calculated PET.")
+    direct_evaporation: Optional[bool] = optfield(
+        alias="DirectEvaporation",
+        description="Rainfall is automatically reduced through evapotranspiration up to the limit of the calculated PET.",
+    )
     deltares_fews_mode: Optional[bool] = optfield(alias="DeltaresFEWSMode")
     debug_mode: Optional[bool] = optfield(alias="DebugMode")
-    dont_write_watershed_storage: Optional[bool] = optfield(alias="DontWriteWatershedStorage", description="Do not write watershed storage variables to disk.")
+    dont_write_watershed_storage: Optional[bool] = optfield(
+        alias="DontWriteWatershedStorage",
+        description="Do not write watershed storage variables to disk.",
+    )
     pavics_mode: Optional[bool] = optfield(alias="PavicsMode")
 
-    suppress_output: Optional[bool] = optfield(alias="SuppressOutput", description="Write minimal output to disk when enabled.")
-    write_forcing_functions: Optional[bool] = optfield(alias="WriteForcingFunctions", description="Write watershed averaged forcing functions (e.g. rainfall, radiation, PET, etc).")
-    write_subbasin_file: Optional[bool] = optfield(alias="WriteSubbasinFile")  # Undocumented
+    suppress_output: Optional[bool] = optfield(
+        alias="SuppressOutput", description="Write minimal output to disk when enabled."
+    )
+    write_forcing_functions: Optional[bool] = optfield(
+        alias="WriteForcingFunctions",
+        description="Write watershed averaged forcing functions (e.g. rainfall, radiation, PET, etc).",
+    )
+    write_subbasin_file: Optional[bool] = optfield(
+        alias="WriteSubbasinFile"
+    )  # Undocumented
 
     @field_validator("soil_model", mode="before")
     @classmethod
@@ -101,29 +134,51 @@ class RVI(RV):
 
 class RVT(RV):
     gauge: Optional[Sequence[rc.Gauge]] = optfield(alias="Gauge")
-    station_forcing: Optional[Sequence[rc.StationForcing]] = optfield(alias="StationForcing")
-    gridded_forcing: Optional[Sequence[rc.GriddedForcing]] = optfield(alias="GriddedForcing")
-    observation_data: Optional[Sequence[rc.ObservationData]] = optfield(alias="ObservationData")
+    station_forcing: Optional[Sequence[rc.StationForcing]] = optfield(
+        alias="StationForcing"
+    )
+    gridded_forcing: Optional[Sequence[rc.GriddedForcing]] = optfield(
+        alias="GriddedForcing"
+    )
+    observation_data: Optional[Sequence[rc.ObservationData]] = optfield(
+        alias="ObservationData"
+    )
 
 
 class RVP(RV):
     params: Any = None
     soil_classes: Optional[rc.SoilClasses] = optfield(alias="SoilClasses")
     soil_profiles: Optional[rc.SoilProfiles] = optfield(alias="SoilProfiles")
-    vegetation_classes: Optional[rc.VegetationClasses] = optfield(alias="VegetationClasses")
+    vegetation_classes: Optional[rc.VegetationClasses] = optfield(
+        alias="VegetationClasses"
+    )
     land_use_classes: Optional[rc.LandUseClasses] = optfield(alias="LandUseClasses")
     terrain_classes: Optional[rc.TerrainClasses] = optfield(alias="TerrainClasses")
-    soil_parameter_list: Optional[rc.SoilParameterList] = optfield(alias="SoilParameterList")
-    land_use_parameter_list: Optional[rc.LandUseParameterList] = optfield(alias="LandUseParameterList")
-    vegetation_parameter_list: Optional[rc.VegetationParameterList] = optfield(alias="VegetationParameterList")
+    soil_parameter_list: Optional[rc.SoilParameterList] = optfield(
+        alias="SoilParameterList"
+    )
+    land_use_parameter_list: Optional[rc.LandUseParameterList] = optfield(
+        alias="LandUseParameterList"
+    )
+    vegetation_parameter_list: Optional[rc.VegetationParameterList] = optfield(
+        alias="VegetationParameterList"
+    )
 
-    channel_profile: Optional[Sequence[rc.ChannelProfile]] = optfield(alias="ChannelProfile")
+    channel_profile: Optional[Sequence[rc.ChannelProfile]] = optfield(
+        alias="ChannelProfile"
+    )
 
     # TODO: create list of all available parameters to constrain key
     global_parameter: Optional[Dict[str, Sym]] = Field({}, alias="GlobalParameter")
-    rain_snow_transition: Optional[rc.RainSnowTransition] = optfield(alias="RainSnowTransition")
-    seasonal_relative_lai: Optional[rc.SeasonalRelativeLAI] = optfield(alias="SeasonalRelativeLAI")
-    seasonal_relative_height: Optional[rc.SeasonalRelativeHeight] = optfield(alias="SeasonalRelativeHeight")
+    rain_snow_transition: Optional[rc.RainSnowTransition] = optfield(
+        alias="RainSnowTransition"
+    )
+    seasonal_relative_lai: Optional[rc.SeasonalRelativeLAI] = optfield(
+        alias="SeasonalRelativeLAI"
+    )
+    seasonal_relative_height: Optional[rc.SeasonalRelativeHeight] = optfield(
+        alias="SeasonalRelativeHeight"
+    )
 
 
 class RVC(RV):
@@ -140,11 +195,15 @@ class RVC(RV):
 
 class RVH(RV):
     sub_basins: Optional[rc.SubBasins] = optfield(alias="SubBasins")
-    sub_basin_group: Optional[Sequence[rc.SubBasinGroup]] = optfield(alias="SubBasinGroup")
+    sub_basin_group: Optional[Sequence[rc.SubBasinGroup]] = optfield(
+        alias="SubBasinGroup"
+    )
     sub_basin_properties: Optional[rc.SubBasinProperties] = optfield(
         alias="SubBasinProperties"
     )
-    sb_group_property_multiplier: Optional[Sequence[rc.SBGroupPropertyMultiplier]] = optfield(alias="SBGroupPropertyMultiplier")
+    sb_group_property_multiplier: Optional[
+        Sequence[rc.SBGroupPropertyMultiplier]
+    ] = optfield(alias="SBGroupPropertyMultiplier")
     hrus: Optional[rc.HRUs] = optfield(alias="HRUs")
     hru_group: Optional[Sequence[rc.HRUGroup]] = optfield(alias="HRUGroup")
     reservoirs: Optional[Sequence[rc.Reservoir]] = optfield(alias="Reservoirs")
@@ -155,7 +214,9 @@ class RVE(RV):
     window_size: Optional[int] = optfield(alias="WindowSize")
     solution_run_name: Optional[str] = optfield(alias="SolutionRunName")
     extra_rvt_filename: Optional[str] = optfield(alias="ExtraRVTFilename")
-    output_directory_format: Optional[Union[str, Path]] = optfield(alias="OutputDirectoryFormat")
+    output_directory_format: Optional[Union[str, Path]] = optfield(
+        alias="OutputDirectoryFormat"
+    )
     forecast_rvt_filename: Optional[str] = optfield(alias="ForecastRVTFilename")
     truncate_hindcasts: Optional[bool] = optfield(alias="TruncateHindcasts")
     forcing_perturbation: Optional[Sequence[rc.ForcingPerturbation]] = optfield(
