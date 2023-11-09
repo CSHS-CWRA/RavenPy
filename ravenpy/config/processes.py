@@ -1,7 +1,5 @@
-from __future__ import annotations
-
 from textwrap import dedent, indent
-from typing import Literal, Optional, Sequence, Tuple
+from typing import Literal, Sequence, Tuple, Optional
 
 from .base import Sym
 from .commands import Command, Process
@@ -201,7 +199,7 @@ class Flush(Process):
     """"""
 
     algo: Literal["RAVEN_DEFAULT"] = "RAVEN_DEFAULT"
-    p: float | None = None
+    p: Optional[float] = None
 
 
 class Overflow(Process):
@@ -214,7 +212,7 @@ class Split(Process):
     """"""
 
     p: float = None
-    to: tuple[str, str]
+    to: Tuple[str, str]
 
 
 class Convolve(Process):

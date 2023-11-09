@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import datetime as dt
 import itertools
 import re
@@ -88,7 +86,7 @@ class Process(Command):
     """
 
     algo: str = "RAVEN_DEFAULT"
-    source: str | None = None
+    source: Optional[str] = None
     to: Sequence[str] = ()
 
     _sub = ""
@@ -225,7 +223,7 @@ class SubBasin(Record):
     profile: str = "NONE"
     reach_length: float = 0
     gauged: bool = True
-    gauge_id: str | None = ""  # This attribute is not rendered to RVH
+    gauge_id: Optional[str] = ""  # This attribute is not rendered to RVH
 
     def __str__(self):
         d = self.model_dump()
@@ -265,7 +263,7 @@ class HRU(Record):
     aspect: Annotated[float, Field(ge=0, le=360)] = 0.0
     # This field is not part of the Raven config, it is needed for serialization,
     # to specify which HRU subclass to use when necessary
-    hru_type: str | None = None
+    hru_type: Optional[str] = None
 
     def __str__(self):
         import numpy as np
@@ -394,8 +392,8 @@ class ChannelProfile(FlatCommand):
 
     name: str = "chn_XXX"
     bed_slope: float = 0
-    survey_points: tuple[tuple[float, float], ...] = ()
-    roughness_zones: tuple[tuple[float, float], ...] = ()
+    survey_points: Tuple[Tuple[float, float], ...] = ()
+    roughness_zones: Tuple[Tuple[float, float], ...] = ()
 
     def to_rv(self):
         template = """
@@ -434,7 +432,7 @@ class GridWeights(Command):
     number_grid_cells: int = Field(1, alias="NumberGridCells")
 
     class GWRecord(RootRecord):
-        root: tuple[int, int, float] = (1, 0, 1.0)
+        root: Tuple[int, int, float] = (1, 0, 1.0)
 
         def __iter__(self):
             return iter(self.root)
@@ -487,7 +485,7 @@ class RedirectToFile(RootCommand):
 class ReadFromNetCDF(FlatCommand):
     # TODO: When encoding Path, return only path.name
     # Order of HttpUrl, Path is important to avoid casting strings to Path.
-    file_name_nc: HttpUrl | Path = Field(
+    file_name_nc: Union[HttpUrl, Path] = Field(
         ..., alias="FileNameNC", description="NetCDF file name."
     )
     var_name_nc: str = Field(
@@ -499,15 +497,15 @@ class ReadFromNetCDF(FlatCommand):
         alias="StationIdx",
         description="NetCDF index along station dimension. Starts at 1.",
     )
-    time_shift: float | None = Field(
+    time_shift: Optional[float] = Field(
         None, alias="TimeShift", description="Time stamp shift in days."
     )
-    linear_transform: LinearTransform | None = Field(None, alias="LinearTransform")
-    deaccumulate: bool | None = Field(None, alias="Deaccumulate")
+    linear_transform: Optional[LinearTransform] = Field(None, alias="LinearTransform")
+    deaccumulate: Optional[bool] = Field(None, alias="Deaccumulate")
 
-    latitude_var_name_nc: str | None = Field(None, alias="LatitudeVarNameNC")
-    longitude_var_name_nc: str | None = Field(None, alias="LongitudeVarNameNC")
-    elevation_var_name_nc: str | None = Field(None, alias="ElevationVarNameNC")
+    latitude_var_name_nc: Optional[str] = Field(None, alias="LatitudeVarNameNC")
+    longitude_var_name_nc: Optional[str] = Field(None, alias="LongitudeVarNameNC")
+    elevation_var_name_nc: Optional[str] = Field(None, alias="ElevationVarNameNC")
 
     @field_validator("dim_names_nc")
     @classmethod
@@ -549,12 +547,12 @@ class GriddedForcing(ReadFromNetCDF):
     """GriddedForcing command (RVT)."""
 
     name: str = ""
-    forcing_type: options.Forcings | None = Field(None, alias="ForcingType")
-    grid_weights: GridWeights | RedirectToFile = Field(
+    forcing_type: Optional[options.Forcings] = Field(None, alias="ForcingType")
+    grid_weights: Union[GridWeights, RedirectToFile] = Field(
         GridWeights(), alias="GridWeights"
     )
     # StationIdx is not relevant to GriddedForcing
-    station_idx: int | None = None
+    station_idx: Optional[int] = None
 
     @property
     def _template(self):
@@ -635,29 +633,29 @@ class Gauge(FlatCommand):
     name: str = "default"
     latitude: float = Field(..., alias="Latitude")
     longitude: float = Field(..., alias="Longitude")
-    elevation: float | None = Field(None, alias="Elevation")
+    elevation: Optional[float] = Field(None, alias="Elevation")
 
-    rain_correction: Sym | None = Field(
+    rain_correction: Optional[Sym] = Field(
         None, alias="RainCorrection", description="Rain correction"
     )
-    snow_correction: Sym | None = Field(
+    snow_correction: Optional[Sym] = Field(
         None, alias="SnowCorrection", description="Snow correction"
     )
 
-    monthly_ave_evaporation: Sequence | None = Field(
+    monthly_ave_evaporation: Optional[Sequence] = Field(
         None, alias="MonthlyAveEvaporation"
     )
-    monthly_ave_temperature: Sequence | None = Field(
+    monthly_ave_temperature: Optional[Sequence] = Field(
         None, alias="MonthlyAveTemperature"
     )
-    monthly_min_temperature: Sequence | None = Field(
+    monthly_min_temperature: Optional[Sequence] = Field(
         None, alias="MonthlyMinTemperature"
     )
-    monthly_max_temperature: Sequence | None = Field(
+    monthly_max_temperature: Optional[Sequence] = Field(
         None, alias="MonthlyMaxTemperature"
     )
 
-    data: Sequence[Data] | None = Field(None, alias="Data")
+    data: Optional[Sequence[Data]] = Field(None, alias="Data")
 
     _nested: bool = False
 
@@ -679,20 +677,14 @@ class Gauge(FlatCommand):
     @classmethod
     def from_nc(
         cls,
-        fn: Path | Sequence[Path],
+        fn: Union[Path, Sequence[Path]],
         data_type: Sequence[str] = None,
         station_idx: int = 1,
-        alt_names: dict[str, str] | None = None,
+        alt_names: Optional[Dict[str, str]] = None,
         mon_ave: bool = False,
-        data_kwds: None
-        | (
-            dict[
-                str,
-                dict[str, bool | dict[str, int] | float] | dict[str, Any],
-            ]
-        ) = None,
+        data_kwds: Optional[Dict[str, Any]] = None,
         **kwds,
-    ) -> Gauge:
+    ) -> "Gauge":
         """Return Gauge instance with configuration options inferred from the netCDF itself.
 
         Parameters
@@ -794,7 +786,7 @@ class ObservationData(Data, coerce_numbers_to_str=True):
 
 class HRUState(Record):
     hru_id: int = 1
-    data: dict[str, Sym] = Field(default_factory=dict)
+    data: Dict[str, Sym] = Field(default_factory=dict)
 
     def __str__(self):
         return ",".join(map(str, (self.hru_id,) + tuple(self.data.values())))
@@ -869,8 +861,8 @@ class BasinIndex(Command, coerce_numbers_to_str=True):
     channel_storage: float = Field(0.0, alias="ChannelStorage")
     rivulet_storage: float = Field(0.0, alias="RivuletStorage")
     qout: Sequence[float] = Field((1.0, 0.0, 0.0), alias="Qout")
-    qlat: Sequence[float] | None = Field(None, alias="Qlat")
-    qin: Sequence[float] | None = Field(None, alias="Qin")
+    qlat: Optional[Sequence[float]] = Field(None, alias="Qlat")
+    qin: Optional[Sequence[float]] = Field(None, alias="Qin")
 
     # model_config = ConfigDict(coerce_numbers_to_str=True)
 
@@ -923,8 +915,8 @@ class BasinStateVariables(ListCommand):
 class SoilClasses(ListCommand):
     class SoilClass(Record):
         name: str
-        mineral: tuple[float, float, float] | None = None
-        organic: float | None = None
+        mineral: Optional[Tuple[float, float, float]] = None
+        organic: Optional[float] = None
 
         @field_validator("mineral")
         @classmethod
@@ -937,7 +929,7 @@ class SoilClasses(ListCommand):
 
         @field_validator("mineral")
         @classmethod
-        def validate_mineral_pct(cls, v: tuple):
+        def validate_mineral_pct(cls, v: Tuple):
             if v is not None:
                 for x in v:
                     assert (x >= 0) and (x <= 1), "Value should be in [0,1]."
@@ -999,7 +991,7 @@ class TerrainClass(Record):
     name: str
     hillslope_length: Sym
     drainage_density: Sym
-    topmodel_lambda: Sym | None = None
+    topmodel_lambda: Optional[Sym] = None
 
     def __str__(self):
         out = f"{self.name:<16},{self.hillslope_length:>18},{self.drainage_density:>18}"
@@ -1053,26 +1045,26 @@ class SubBasinProperty(Record):
 
 
 class SubBasinProperties(Command):
-    parameters: Sequence[options.SubBasinProperties] | None = Field(
+    parameters: Optional[Sequence[options.SubBasinProperties]] = Field(
         None, alias="Parameters"
     )
-    records: Sequence[SubBasinProperty] | None = Field(None)
+    records: Optional[Sequence[SubBasinProperty]] = Field(None)
 
 
 class SoilParameterList(GenericParameterList):
-    parameters: Sequence[options.SoilParameters] | None = Field(
+    parameters: Optional[Sequence[options.SoilParameters]]  = Field(
         None, alias="Parameters"
     )
 
 
 class VegetationParameterList(GenericParameterList):
-    parameters: Sequence[options.VegetationParameters] | None = Field(
+    parameters: Optional[Sequence[options.VegetationParameters]] = Field(
         None, alias="Parameters"
     )
 
 
 class LandUseParameterList(GenericParameterList):
-    parameters: Sequence[options.LandUseParameters] | None = Field(
+    parameters: Optional[Sequence[options.LandUseParameters]] = Field(
         None, alias="Parameters"
     )
 
@@ -1100,7 +1092,7 @@ class ForcingPerturbation(LineCommand):
 
 
 class AssimilatedState(LineCommand):
-    state: options.StateVariables | Literal["STREAMFLOW"]
+    state: Union[options.StateVariables, Literal["STREAMFLOW"]]
     group: str
 
 
