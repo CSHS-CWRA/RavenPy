@@ -4,7 +4,7 @@ import xarray as xr
 from ravenpy.config.utils import nc_specs
 
 
-def test_nc_specs(get_local_testdata, tmp_path):
+def test_nc_specs(get_local_testdata):
     f = get_local_testdata(
         "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
     )
