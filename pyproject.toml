@@ -37,8 +37,8 @@ dynamic = ["description", "version"]
 dependencies = [
   "cftime",
   # cf-xarray is differently named on conda-forge
-  "cf-xarray[all]",
-  "click",
+  "cf-xarray[all]<0.8.5; python_version == '3.8'",
+  "cf-xarray[all]; python_version >= '3.9'",
   "climpred>=2.2",
   "dask",
   "haversine",
