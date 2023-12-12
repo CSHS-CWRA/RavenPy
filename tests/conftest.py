@@ -220,6 +220,20 @@ def fit_params(ts_stats, tmp_path):
 
 
 @pytest.fixture(scope="session")
+def bad_netcdf(salmon_meteo):
+    fn = salmon_meteo.parent / "bad_netcdf.nc"
+
+    if not fn.exists():
+        # Test with scalar elevation. Should normally have a station dimension, but not always the case.
+        ds = xr.open_dataset(salmon_meteo)
+        ds["station_name"] = ds["station_name"].astype("str")
+        ds["elevation"] = 1.0
+        ds.to_netcdf(fn)
+
+    return fn
+
+
+@pytest.fixture(scope="session")
 def salmon_hru():
     out = {}
     out["land"] = dict(
