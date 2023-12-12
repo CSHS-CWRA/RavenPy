@@ -41,6 +41,7 @@ Advanced workflows
    Managing_Jupyter_Environments
    Perform_Regionalization
    Running_HMETS_with_CANOPEX_dataset
+   Sensitivity_analysis
    time_series_analysis
 
 

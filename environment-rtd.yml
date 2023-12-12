@@ -20,6 +20,7 @@ dependencies:
   - notebook
   - pandoc
   - pydantic >=1.10.8,<2.0
+  - salib
   - seaborn
   - sphinx
   - sphinx-autoapi
