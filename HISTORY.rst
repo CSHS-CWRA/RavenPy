@@ -5,6 +5,8 @@ History
 0.13 (unreleased)
 -----------------
 * Update to Pydantic v2
+* Fixed problem with scalar elevation in netCDF files parsed with `nc_specs` (issue #279)
+* Add notebook on sensitivity analysis.
 
 0.12.3 (2023-10-02)
 -------------------

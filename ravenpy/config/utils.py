@@ -108,13 +108,17 @@ def nc_specs(
 
             try:
                 nc_elev = ds.cf["vertical"].name
-                attrs["elevation"] = ds.cf["vertical"][i]
             except KeyError:
                 nc_elev = "elevation" if "elevation" in ds else None
+
             finally:
                 if nc_elev is not None:
                     attrs["elevation_var_name_nc"] = nc_elev
-                    attrs["elevation"] = ds["elevation"][i]
+                    try:
+                        attrs["elevation"] = ds[nc_elev][i]
+                    except IndexError:
+                        # Elevation is a scalar
+                        attrs["elevation"] = ds[nc_elev].item(0)
 
             if "station_id" in ds:
                 if ds["station_id"].shape and len(ds["station_id"]) > i:

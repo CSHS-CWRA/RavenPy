@@ -17,7 +17,7 @@ jobs:
       group: ${{ github.workflow }}-${{ github.ref }}
       cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         with:
           python-version: "3.9"
@@ -55,7 +55,7 @@ jobs:
             python-version: "3.11"
             os: macos-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
@@ -95,6 +95,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         COVERALLS_FLAG_NAME: run-${{ matrix.tox-env }}
         COVERALLS_PARALLEL: true
+        COVERALLS_SERVICE_NAME: github
 
   conda:
     name: Python${{ matrix.python-version }} (${{ matrix.os }}) (Conda)
@@ -116,7 +117,7 @@ jobs:
       run:
         shell: bash -l {0}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Patch Environment File
         if: matrix.os == 'windows-latest'
         run: |
@@ -147,8 +148,9 @@ jobs:
         run: coveralls --service=github
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_FLAG_NAME: run-conda
+          COVERALLS_FLAG_NAME: run-conda_${{ matrix.python-version }}_${{ matrix.os }}
           COVERALLS_PARALLEL: true
+          COVERALLS_SERVICE_NAME: github
 
   finish:
     needs:
@@ -160,6 +162,7 @@ jobs:
     - name: Coveralls Finished
       run: |
         pip install --upgrade coveralls
-        coveralls --service=github --finish
+        coveralls --finish
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        COVERALLS_SERVICE_NAME: github
