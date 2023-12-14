@@ -39,7 +39,7 @@ dependencies = [
   # cf-xarray is differently named on conda-forge
   "cf-xarray[all]<0.8.5; python_version == '3.8'",
   "cf-xarray[all]; python_version >= '3.9'",
-  "climpred>=2.2",
+  "climpred>=2.4.0",
   "dask",
   "haversine",
   "matplotlib",
