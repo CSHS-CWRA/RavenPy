@@ -17,8 +17,6 @@ build:
   tools:
     python: "mambaforge-4.10"
   jobs:
-    post_install:
-      - pip install .[docs]
     pre_build:
       - env SPHINX_APIDOC_OPTIONS="members,undoc-members,show-inheritance,noindex" sphinx-apidoc -o docs/apidoc --private --module-first ravenpy
       - sphinx-build -b linkcheck docs/ _build/linkcheck || true
@@ -29,9 +27,10 @@ formats:
 conda:
   environment: environment-rtd.yml
 
-#python:
-#  install:
-#    - method: pip
-#      path: .
-#      extra_requirements:
-#        - dev
+python:
+  install:
+    - method: pip
+      path: .
+      extra_requirements:
+        - dev
+        - docs
