@@ -88,6 +88,8 @@ docs = [
   "cartopy",
   "clisops",
   "gcsfs",
+  # Needed for notebooks/HydroShare_integration.ipynb
+  # See: https://github.com/CSHS-CWRA/RavenPy/pull/326
   # "hsclient",
   "intake",
   "intake-esm",
