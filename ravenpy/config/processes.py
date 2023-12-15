@@ -1,5 +1,5 @@
 from textwrap import dedent, indent
-from typing import Literal, Sequence, Tuple
+from typing import Literal, Optional, Sequence, Tuple
 
 from .base import Sym
 from .commands import Command, Process
@@ -199,7 +199,7 @@ class Flush(Process):
     """"""
 
     algo: Literal["RAVEN_DEFAULT"] = "RAVEN_DEFAULT"
-    p: float = None
+    p: Optional[float] = None
 
 
 class Overflow(Process):
@@ -253,12 +253,17 @@ class ProcessGroup(Command):
     p: Sequence[Process]
     params: Sequence[Sym]
 
-    _template: str = """
-                :{_cmd}
-                {_processes}
-                :End{_cmd} CALCULATE_WTS {_params}
-                """
-    _indent: str = "    "
+    @property
+    def _template(self):
+        return """
+           :{_cmd}
+           {_processes}
+           :End{_cmd} CALCULATE_WTS {_params}
+           """
+
+    @property
+    def _indent(self):
+        return "    "
 
     def to_rv(self):
         d = {

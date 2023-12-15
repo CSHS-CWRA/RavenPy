@@ -57,6 +57,7 @@ def default_nc_attrs():
     import datetime as dt
 
     now = dt.datetime.now().isoformat(timespec="seconds")
+    # TODO: get version from shared library
     version = "3.7"
 
     return {

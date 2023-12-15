@@ -65,7 +65,11 @@ autosummary_generate = True
 
 nb_execution_mode = "cache"
 nb_execution_allow_errors = False
-nb_execution_excludepatterns = ["notebooks/*.ipynb", "notebooks/paper/*.ipynb"]
+nb_execution_excludepatterns = [
+    "configuration.md",
+    "notebooks/*.ipynb",
+    "notebooks/paper/*.ipynb"
+]
 
 # nbsphinx_execute = "auto"
 # nbsphinx_timeout = 1
@@ -146,7 +150,8 @@ language = "en"
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", ".jupyter_cache", "jupyter_execute", "notebooks/paper"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", ".jupyter_cache", "jupyter_execute", "notebooks/paper",
+                    "notebooks/HydroShare_integration.ipynb", ]
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "sphinx"

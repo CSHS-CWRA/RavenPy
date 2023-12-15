@@ -26,7 +26,7 @@ def test_evaluation_metrics():
 
 
 def test_hrus():
-    hrus = rc.HRUs.parse_obj([salmon_land_hru_1])
+    hrus = rc.HRUs([salmon_land_hru_1])
     hrus.to_rv()
     assert hrus[0].subbasin_id == 1
 
@@ -52,9 +52,7 @@ def test_global_parameter():
 def test_vegetation_classes():
     class Test(RV):
         vegetation_classes: rc.VegetationClasses = Field(
-            rc.VegetationClasses.parse_obj(
-                [{"name": "VEG_ALL"}, {"name": "VEG_WATER"}]
-            ),
+            rc.VegetationClasses([{"name": "VEG_ALL"}, {"name": "VEG_WATER"}]),
             alias="VegetationClasses",
         )
 
@@ -102,9 +100,7 @@ def test_land_use_class():
 def test_soil_classes():
     from ravenpy.config.commands import SoilClasses
 
-    c = SoilClasses.parse_obj(
-        [{"name": "TOPSOIL"}, {"name": "FAST_RES"}, {"name": "SLOW_RES"}]
-    )
+    c = SoilClasses([{"name": "TOPSOIL"}, {"name": "FAST_RES"}, {"name": "SLOW_RES"}])
     assert dedent(c.to_rv()) == dedent(
         """
     :SoilClasses
@@ -117,7 +113,7 @@ def test_soil_classes():
     """
     )
 
-    c = SoilClasses.parse_obj(
+    c = SoilClasses(
         [
             {"name": "TOPSOIL", "mineral": (0.1, 0.7, 0.2), "organic": 0.1},
         ]
@@ -142,7 +138,7 @@ def test_soil_model():
 
 
 def test_soil_profiles(x=42.0):
-    c = rc.SoilProfiles.parse_obj(
+    c = rc.SoilProfiles(
         [
             {
                 "name": "DEFAULT_P",
@@ -277,7 +273,7 @@ class TestHRUStateVariableTable:
     def test_to_rv(self):
         s1 = rc.HRUState(hru_id=1, data={"SOIL[0]": 0.1, "SOIL[1]": 1.0})
         s2 = rc.HRUState(hru_id=2, data={"SOIL[3]": 3, "SOIL[2]": 2.0})
-        t = rc.HRUStateVariableTable(__root__=[s1, s2])
+        t = rc.HRUStateVariableTable([s1, s2])
         assert dedent(t.to_rv()) == dedent(
             """
             :HRUStateVariableTable
@@ -289,7 +285,7 @@ class TestHRUStateVariableTable:
         )
 
         s1 = dict(hru_id=1, data={"SOIL[0]": 0.1, "SOIL[1]": 1.0})
-        rc.HRUStateVariableTable(__root__=[s1])
+        rc.HRUStateVariableTable([s1])
 
     def test_parse(self):
         solution = """
@@ -299,7 +295,7 @@ class TestHRUStateVariableTable:
   1,0.00000,0.00000,-0.16005,0.00000,144.54883,455.15708,0.16005,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000
 :EndHRUStateVariableTable
         """
-        sv = rc.HRUStateVariableTable.parse(solution).__root__
+        sv = rc.HRUStateVariableTable.parse(solution).root
         assert len(sv) == 1
         assert sv[0].hru_id == 1
         assert sv[0].data["ATMOS_PRECIP"] == -0.16005
@@ -389,6 +385,7 @@ def test_gauge_raises(get_local_testdata):
 def test_grid_weights():
     gw = rc.GridWeights()
     txt = gw.to_rv()
+    assert len(txt.splitlines()) == 6
 
     parsed = rc.GridWeights.parse(txt)
     assert parsed.number_hrus == gw.number_hrus
@@ -398,7 +395,7 @@ def test_grid_weights():
 
 def test_redirect_to_file(get_local_testdata):
     f = get_local_testdata("raven-routing-sample/VIC_test_nodata_weights.rvt")
-    r = rc.RedirectToFile(__root__=f)
+    r = rc.RedirectToFile(f)
     assert re.match(r"^:RedirectToFile\s+(\S+)$", r.to_rv())
 
     class Test(RV):
@@ -407,7 +404,7 @@ def test_redirect_to_file(get_local_testdata):
         )
 
     t = Test(gw=f)
-    assert t.gw.__root__ == f
+    assert t.gw.root == f
 
 
 def test_subbasin_properties():
@@ -419,7 +416,7 @@ def test_subbasin_properties():
 
 
 def test_subbasins():
-    c = rc.SubBasins.parse_obj([{"name": "SB1"}])
+    c = rc.SubBasins([{"name": "SB1"}])
     c.to_rv()
     assert c[0].gauged
 
@@ -433,7 +430,7 @@ def test_subbasins():
 def test_ensemble_mode():
     c = rc.EnsembleMode(n=10)
     s = c.to_rv().strip()
-    assert s == ":EnsembleMode ENSEMBLE_ENKF 10"
+    assert s == ":EnsembleMode         ENSEMBLE_ENKF 10"
 
 
 def test_observation_error_model():
@@ -454,7 +451,7 @@ def test_forcing_perturbation():
 
     assert (
         c.to_rv().strip()
-        == ":ForcingPerturbation TEMP_AVE DIST_UNIFORM 1.0 2.0 ADDITIVE"
+        == ":ForcingPerturbation  TEMP_AVE DIST_UNIFORM 1.0 2.0 ADDITIVE"
     )
 
 

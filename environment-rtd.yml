@@ -9,6 +9,9 @@ dependencies:
   - click
 #  - clisops  # mocked
   - gdal
+# Needed for notebooks/HydroShare_integration.ipynb
+# See: https://github.com/CSHS-CWRA/RavenPy/pull/326
+#  - "hsclient",
   - ipykernel
   - ipython
   - jupyter_client

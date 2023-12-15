@@ -1,7 +1,7 @@
 from dataclasses import field, make_dataclass
 from typing import Dict, Sequence, Union
 
-from pydantic import Field, validator
+from pydantic import Field, field_validator
 from pydantic.dataclasses import dataclass
 from pymbolic.primitives import Variable
 
@@ -48,7 +48,7 @@ class HRUs(rc.HRUs):
     Pydantic is able to automatically detect if an HRU is Land or Lake if `hru_type` is provided.
     """
 
-    __root__: Sequence[LandHRU]
+    root: Sequence[LandHRU]
 
 
 class Blended(Config):
@@ -332,7 +332,7 @@ class Blended(Config):
         ],
         alias="HRUStateVariableTable",
     )
-    _nc_attrs = validator("netcdf_attribute", allow_reuse=True)(nc_attrs)
+    _nc_attrs = field_validator("netcdf_attribute")(nc_attrs)
 
     def __init__(self, **data):
         super().__init__(**data)

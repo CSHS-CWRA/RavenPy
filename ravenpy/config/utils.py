@@ -136,7 +136,7 @@ def filter_for(kls, attrs, **kwds):
     the latter will have priority.
 
     """
-    from pydantic.main import ModelMetaclass
+    from pydantic._internal._model_construction import ModelMetaclass
 
     from .commands import Command
 
@@ -148,15 +148,15 @@ def filter_for(kls, attrs, **kwds):
         }
     else:
         out = {}
-        for key, field in kls.__fields__.items():
+        for key, field in kls.model_fields.items():
             if field.alias in attrs:
                 out[field.alias] = attrs[field.alias]
             elif key in attrs:
                 out[key] = attrs[key]
-            elif isinstance(field.type_, ModelMetaclass) and issubclass(
-                field.type_, Command
+            elif isinstance(field.annotation, ModelMetaclass) and issubclass(
+                field.annotation, Command
             ):
-                out[key] = filter_for(field.type_, attrs)
+                out[key] = filter_for(field.annotation, attrs)
         return out
         # return {k: v for (k, v) in attrs.items() if k in kls.__fields__.keys()}
 

@@ -36,7 +36,7 @@ def param(model):
         Model name.
     """
     cls = get_model(model)
-    P = cls.__fields__["params"].type_
+    P = cls.model_fields["params"].annotation
     return xr.IndexVariable(
         "param",
         data=np.array([f.name for f in fields(P)]),

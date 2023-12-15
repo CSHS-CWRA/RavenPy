@@ -18,6 +18,7 @@ from typing import (
 import cftime  # noqa: F401
 import xarray as xr
 from pydantic import (
+    ConfigDict,
     Field,
     FilePath,
     HttpUrl,
@@ -25,18 +26,22 @@ from pydantic import (
     PositiveInt,
     PrivateAttr,
     ValidationError,
-    confloat,
-    validator,
+    field_validator,
+    model_validator,
 )
+from typing_extensions import Annotated
 
 from ..config import options
 from .base import (
     Command,
     FlatCommand,
     GenericParameterList,
+    LineCommand,
     ListCommand,
     ParameterList,
     Record,
+    RootCommand,
+    RootRecord,
     Sym,
 )
 from .utils import filter_for, nc_specs
@@ -72,21 +77,6 @@ T12 = Tuple[
 ]
 
 
-# Validators
-def reorder_time(cls, v):
-    """TODO: Return dimensions as x, y, t. Currently only puts time at the end."""
-    dims = list(v)
-    for time_dim in ("t", "time"):
-        if time_dim in dims:
-            dims.remove(time_dim)
-            dims.append(time_dim)
-            break
-    else:
-        raise ValidationError("No time dimension found in dim_names_nc tuple.")
-
-    return tuple(dims)
-
-
 class Process(Command):
     """Process type embedded in HydrologicProcesses command.
 
@@ -94,12 +84,13 @@ class Process(Command):
     """
 
     algo: str = "RAVEN_DEFAULT"
-    source: str = None
+    source: Optional[str] = None
     to: Sequence[str] = ()
 
     _sub = ""
 
-    @validator("to", pre=True)
+    @field_validator("to", mode="before")
+    @classmethod
     def is_list(cls, v):
         if isinstance(v, str):
             return [
@@ -107,10 +98,20 @@ class Process(Command):
             ]
         return v
 
-    @validator("source", "to", each_item=True)
-    def is_state_variable(cls, v):
-        if re.split(r"\[", v)[0] not in get_args(options.StateVariables):
-            raise ValueError(f"{v} not recognized as a state variable.")
+    @field_validator("source")
+    @classmethod
+    def is_source_state_variable(cls, v: str):
+        if v is not None:
+            if re.split(r"\[", v)[0] not in get_args(options.StateVariables):
+                raise ValueError(f"{v} not recognized as a state variable.")
+        return v
+
+    @field_validator("to")
+    @classmethod
+    def is_to_state_variable(cls, v: Sequence):
+        for x in v:
+            if re.split(r"\[", x)[0] not in get_args(options.StateVariables):
+                raise ValueError(f"{x} not recognized as a state variable.")
         return v
 
     def to_rv(self):
@@ -121,12 +122,12 @@ class Process(Command):
         return f":{cmd:<20} {self.algo:<19} {self.source:<19} {t} {p}".strip()
 
 
-class SoilModel(Command):
-    __root__: int = None
+class SoilModel(RootCommand):
+    root: int
 
     def to_rv(self):
         cmd = "SoilModel"
-        return f":{cmd:<20} SOIL_MULTILAYER {self.__root__}\n"
+        return f":{cmd:<20} SOIL_MULTILAYER {self.root}\n"
 
 
 class LinearTransform(Command):
@@ -153,16 +154,12 @@ class RainSnowTransition(Command):
         return f":{cmd:<20} {self.temp} {self.delta}\n"
 
 
-class EvaluationPeriod(FlatCommand):
+class EvaluationPeriod(LineCommand):
     """:EvaluationPeriod [period_name] [start yyyy-mm-dd] [end yyyy-mm-dd]"""
 
     name: str
     start: dt.date
     end: dt.date
-
-    def to_rv(self):
-        cmd = "EvaluationPeriod"
-        return f":{cmd:<20} {self.name} {self.start} {self.end}\n"
 
 
 class CustomOutput(FlatCommand):
@@ -193,10 +190,6 @@ class CustomOutput(FlatCommand):
     ]
     filename: str = ""
 
-    def to_rv(self):
-        cmd = "CustomOutput"
-        return f":{cmd:<20} {self.time_per} {self.stat} {self.variable} {self.space_agg} {self.filename}\n"
-
 
 class SoilProfile(Record):
     name: str = ""
@@ -212,7 +205,7 @@ class SoilProfile(Record):
 
 
 class SoilProfiles(ListCommand):
-    __root__: Sequence[SoilProfile]
+    root: Sequence[SoilProfile]
 
 
 class SubBasin(Record):
@@ -227,25 +220,23 @@ class SubBasin(Record):
     gauge_id: Optional[str] = ""  # This attribute is not rendered to RVH
 
     def __str__(self):
-        d = self.dict()
+        d = self.model_dump()
         d["reach_length"] = d["reach_length"]  # if d["reach_length"] else "ZERO-"
         d["gauged"] = int(d["gauged"])
         del d["gauge_id"]
         return " ".join(f"{v: <{VALUE_PADDING}}" for v in d.values())
 
+    model_config = ConfigDict(coerce_numbers_to_str=True)
+
 
 class SubBasins(ListCommand):
     """SubBasins command (RVH)."""
 
-    __root__: Sequence[SubBasin]
-
-    _template = """
-        :SubBasins
-          :Attributes   ID NAME DOWNSTREAM_ID PROFILE REACH_LENGTH  GAUGED
-          :Units      none none          none    none           km    none
-        {_records}
-        :EndSubBasins
-    """
+    root: Sequence[SubBasin]
+    _Attributes: Sequence[str] = PrivateAttr(
+        ["ID", "NAME", "DOWNSTREAM_ID", "PROFILE", "REACH_LENGTH", "GAUGED"]
+    )
+    _Units: Sequence[str] = PrivateAttr(["none", "none", "none", "none", "km", "none"])
 
 
 class HRU(Record):
@@ -263,7 +254,7 @@ class HRU(Record):
     aquifer_profile: str = "[NONE]"
     terrain_class: str = "[NONE]"
     slope: NonNegativeFloat = 0.0
-    aspect: confloat(ge=0, le=360) = 0.0
+    aspect: Annotated[float, Field(ge=0, le=360)] = 0.0
     # This field is not part of the Raven config, it is needed for serialization,
     # to specify which HRU subclass to use when necessary
     hru_type: Optional[str] = None
@@ -271,42 +262,73 @@ class HRU(Record):
     def __str__(self):
         import numpy as np
 
-        d = self.dict()
+        d = self.model_dump()
         del d["hru_type"]
 
         # Adjust horizontal spacing to match attributes names
-        attrs = HRUs._template.splitlines()[2].strip()
-        ns = np.array(list(map(len, re.split(r"\s[\w\:]", attrs))))
+        attrs = ["HRU_ID"] + HRUs._Attributes.default
+        ns = np.array(list(map(len, attrs)))
         ns[1:] += 1
 
+        # In Py3.10 zip(strict=True) can be used instead.
+        if len(d) != len(attrs):
+            raise ValueError(
+                f"HRU record has {len(d)} attributes, but {len(attrs)} are expected."
+            )
         return " ".join(f"{v:<{n}}" for v, n in zip(d.values(), ns))
 
 
 class HRUs(ListCommand):
     """HRUs command (RVH)."""
 
-    __root__: Sequence[HRU]
-
-    _template = """
-        :HRUs
-          :Attributes    AREA      ELEVATION       LATITUDE      LONGITUDE BASIN_ID       LAND_USE_CLASS         VEG_CLASS      SOIL_PROFILE  AQUIFER_PROFILE TERRAIN_CLASS      SLOPE     ASPECT
-          :Units          km2              m            deg            deg     none                 none              none              none             none          none        deg       degN
-        {_records}
-        :EndHRUs
-        """
+    root: Sequence[HRU]
+    _Attributes: Sequence[str] = PrivateAttr(
+        [
+            "AREA",
+            "ELEVATION",
+            "LATITUDE",
+            "LONGITUDE",
+            "BASIN_ID",
+            "LAND_USE_CLASS",
+            "VEG_CLASS",
+            "SOIL_PROFILE",
+            "AQUIFER_PROFILE",
+            "TERRAIN_CLASS",
+            "SLOPE",
+            "ASPECT",
+        ]
+    )
+    _Units: Sequence[str] = PrivateAttr(
+        [
+            "km2",
+            "m",
+            "deg",
+            "deg",
+            "none",
+            "none",
+            "none",
+            "none",
+            "none",
+            "none",
+            "deg",
+            "degN",
+        ]
+    )
 
 
 class HRUGroup(FlatCommand):
-    class _Rec(Record):
-        __root__: Sequence[str]
+    class _Rec(RootRecord):
+        root: Sequence[str]
 
         def __str__(self):
-            return ",".join(self.__root__)
+            return ",".join(self.root)
 
     name: str
     groups: _Rec
 
-    _template = """
+    @property
+    def _template(self):
+        return """
         :{_cmd} {name}
         {_records}
         :End{_cmd}
@@ -325,7 +347,9 @@ class Reservoir(FlatCommand):
     max_depth: float = Field(0, alias="MaxDepth")
     lake_area: float = Field(0, alias="LakeArea", description="Lake area in m2")
 
-    _template = """
+    @property
+    def _template(self):
+        return """
             :Reservoir {name}
             {_commands}
             :EndReservoir
@@ -344,7 +368,7 @@ class SubBasinGroup(FlatCommand):
               {sb_ids}
             :EndSubBasinGroup
             """
-        d = self.dict()
+        d = self.model_dump()
         n_per_line = 10
         sbids = sorted(self.sb_ids)
         sbids_lines = [
@@ -355,12 +379,10 @@ class SubBasinGroup(FlatCommand):
         return dedent(template).format(**d)
 
 
-class SBGroupPropertyMultiplier(FlatCommand):
+class SBGroupPropertyMultiplier(LineCommand):
     group_name: str
     parameter_name: str
     mult: float
-
-    _template = "\n:SBGroupPropertyMultiplier {group_name} {parameter_name} {mult}"
 
 
 # TODO: Convert to new config
@@ -384,7 +406,7 @@ class ChannelProfile(FlatCommand):
               :EndRoughnessZones
             :EndChannelProfile
             """
-        d = self.dict()
+        d = self.model_dump()
         d["survey_points"] = "\n".join(
             f"{INDENT * 2}{p[0]} {p[1]}" for p in d["survey_points"]
         )
@@ -408,17 +430,19 @@ class GridWeights(Command):
     number_hrus: int = Field(1, alias="NumberHRUs")
     number_grid_cells: int = Field(1, alias="NumberGridCells")
 
-    class GWRecord(Record):
-        __root__: Tuple[int, int, float] = (1, 0, 1.0)
+    class GWRecord(RootRecord):
+        root: Tuple[int, int, float] = (1, 0, 1.0)
 
         def __iter__(self):
-            return iter(self.__root__)
+            return iter(self.root)
 
         def __getitem__(self, item):
-            return self.__root__[item]
+            return self.root[item]
 
         def __str__(self):
-            return " ".join(map(str, self.__root__))
+            return " ".join(map(str, self.root))
+
+        model_config = ConfigDict(arbitrary_types_allowed=True, populate_by_name=True)
 
     data: Sequence[GWRecord] = Field((GWRecord(),))
 
@@ -440,7 +464,7 @@ class GridWeights(Command):
         )
 
 
-class RedirectToFile(Command):
+class RedirectToFile(RootCommand):
     """RedirectToFile command (RVT).
 
     Notes
@@ -450,11 +474,11 @@ class RedirectToFile(Command):
     desired.
     """
 
-    __root__: FilePath
+    root: FilePath
 
     def to_rv(self):
         cmd = "RedirectToFile"
-        return f":{cmd:<20} {self.__root__}\n"
+        return f":{cmd:<20} {self.root}\n"
 
 
 class ReadFromNetCDF(FlatCommand):
@@ -472,17 +496,30 @@ class ReadFromNetCDF(FlatCommand):
         alias="StationIdx",
         description="NetCDF index along station dimension. Starts at 1.",
     )
-    time_shift: float = Field(
+    time_shift: Optional[float] = Field(
         None, alias="TimeShift", description="Time stamp shift in days."
     )
-    linear_transform: LinearTransform = Field(None, alias="LinearTransform")
-    deaccumulate: bool = Field(None, alias="Deaccumulate")
+    linear_transform: Optional[LinearTransform] = Field(None, alias="LinearTransform")
+    deaccumulate: Optional[bool] = Field(None, alias="Deaccumulate")
 
-    latitude_var_name_nc: str = Field(None, alias="LatitudeVarNameNC")
-    longitude_var_name_nc: str = Field(None, alias="LongitudeVarNameNC")
-    elevation_var_name_nc: str = Field(None, alias="ElevationVarNameNC")
+    latitude_var_name_nc: Optional[str] = Field(None, alias="LatitudeVarNameNC")
+    longitude_var_name_nc: Optional[str] = Field(None, alias="LongitudeVarNameNC")
+    elevation_var_name_nc: Optional[str] = Field(None, alias="ElevationVarNameNC")
 
-    _reorder_time = validator("dim_names_nc", allow_reuse=True)(reorder_time)
+    @field_validator("dim_names_nc")
+    @classmethod
+    def reorder_time(cls, v):
+        """TODO: Return dimensions as x, y, t. Currently only puts time at the end."""
+        dims = list(v)
+        for time_dim in ("t", "time"):
+            if time_dim in dims:
+                dims.remove(time_dim)
+                dims.append(time_dim)
+                break
+        else:
+            raise ValidationError("No time dimension found in dim_names_nc tuple.")
+
+        return tuple(dims)
 
     @classmethod
     def from_nc(cls, fn, data_type, station_idx=1, alt_names=(), **kwds):
@@ -509,20 +546,23 @@ class GriddedForcing(ReadFromNetCDF):
     """GriddedForcing command (RVT)."""
 
     name: str = ""
-    forcing_type: options.Forcings = Field(None, alias="ForcingType")
+    forcing_type: Optional[options.Forcings] = Field(None, alias="ForcingType")
     grid_weights: Union[GridWeights, RedirectToFile] = Field(
         GridWeights(), alias="GridWeights"
     )
     # StationIdx is not relevant to GriddedForcing
-    station_idx: int = None
+    station_idx: Optional[int] = None
 
-    _template = """
-    :{_cmd} {name}
-    {_commands}
-    :End{_cmd}
-    """
+    @property
+    def _template(self):
+        return """
+        :{_cmd} {name}
+        {_commands}
+        :End{_cmd}
+        """
 
-    @validator("dim_names_nc")
+    @field_validator("dim_names_nc")
+    @classmethod
     def check_dims(cls, v):
         if len(v) != 3:
             raise ValueError(
@@ -534,7 +574,8 @@ class GriddedForcing(ReadFromNetCDF):
 class StationForcing(GriddedForcing):
     """StationForcing command (RVT)."""
 
-    @validator("dim_names_nc")
+    @field_validator("dim_names_nc")
+    @classmethod
     def check_dims(cls, v):
         if len(v) != 2:
             raise ValueError(
@@ -569,11 +610,13 @@ class Data(FlatCommand):
     units: str = ""
     read_from_netcdf: ReadFromNetCDF = Field(..., alias="ReadFromNetCDF")
 
-    _template: str = """
-                :{_cmd} {data_type} {units}
-                {_commands}
-                :End{_cmd}
-                """
+    @property
+    def _template(self):
+        return """
+               :{_cmd} {data_type} {units}
+               {_commands}
+               :End{_cmd}
+               """
 
     _nested: bool = False
 
@@ -589,31 +632,42 @@ class Gauge(FlatCommand):
     name: str = "default"
     latitude: float = Field(..., alias="Latitude")
     longitude: float = Field(..., alias="Longitude")
-    elevation: float = Field(None, alias="Elevation")
+    elevation: Optional[float] = Field(None, alias="Elevation")
 
-    rain_correction: Sym = Field(
+    rain_correction: Optional[Sym] = Field(
         None, alias="RainCorrection", description="Rain correction"
     )
-    snow_correction: Sym = Field(
+    snow_correction: Optional[Sym] = Field(
         None, alias="SnowCorrection", description="Snow correction"
     )
 
-    monthly_ave_evaporation: Sequence = Field(None, alias="MonthlyAveEvaporation")
-    monthly_ave_temperature: Sequence = Field(None, alias="MonthlyAveTemperature")
-    monthly_min_temperature: Sequence = Field(None, alias="MonthlyMinTemperature")
-    monthly_max_temperature: Sequence = Field(None, alias="MonthlyMaxTemperature")
+    monthly_ave_evaporation: Optional[Sequence] = Field(
+        None, alias="MonthlyAveEvaporation"
+    )
+    monthly_ave_temperature: Optional[Sequence] = Field(
+        None, alias="MonthlyAveTemperature"
+    )
+    monthly_min_temperature: Optional[Sequence] = Field(
+        None, alias="MonthlyMinTemperature"
+    )
+    monthly_max_temperature: Optional[Sequence] = Field(
+        None, alias="MonthlyMaxTemperature"
+    )
 
-    data: Sequence[Data] = Field(None, alias="Data")
+    data: Optional[Sequence[Data]] = Field(None, alias="Data")
 
-    _template = """
+    _nested: bool = False
+
+    @property
+    def _template(self):
+        return """
         :Gauge {name}
         {_commands}
         :EndGauge
         """
 
-    _nested: bool = False
-
-    @validator("monthly_ave_evaporation", "monthly_ave_temperature")
+    @field_validator("monthly_ave_evaporation", "monthly_ave_temperature")
+    @classmethod
     def confirm_monthly(cls, v):
         if v is not None and len(v) != 12:
             raise ValidationError("One value per month needed.")
@@ -627,12 +681,7 @@ class Gauge(FlatCommand):
         station_idx: int = 1,
         alt_names: Optional[Dict[str, str]] = None,
         mon_ave: bool = False,
-        data_kwds: Optional[
-            Dict[
-                str,
-                Union[Dict[str, Union[bool, Dict[str, int], float]], Dict[str, Any]],
-            ]
-        ] = None,
+        data_kwds: Optional[Dict[str, Any]] = None,
         **kwds,
     ) -> "Gauge":
         """Return Gauge instance with configuration options inferred from the netCDF itself.
@@ -715,11 +764,13 @@ class Gauge(FlatCommand):
         return xr.Dataset(ds)
 
 
-class ObservationData(Data):
+class ObservationData(Data, coerce_numbers_to_str=True):
     uid: str = "1"  # Basin ID or HRU ID
     data_type: Literal["HYDROGRAPH"] = "HYDROGRAPH"
 
-    _template = """
+    @property
+    def _template(self):
+        return """
         :ObservationData {data_type} {uid} {units}
         {_commands}
         :EndObservationData
@@ -753,28 +804,26 @@ class HRUStateVariableTable(ListCommand):
     If the HRUState include different attributes, the states will be modified to include all attributes.
     """
 
-    __root__: Sequence[HRUState]
-
+    root: Sequence[HRUState]
     _Attributes: Sequence[str] = PrivateAttr(None)
 
-    def __init__(self, **data):
+    @model_validator(mode="after")
+    def set_attributes(self):
         from itertools import chain
-
-        super().__init__(**data)
 
         # Get all attribute names from HRUStates
         names = (
-            sorted(list(set(chain(*[tuple(s.data.keys()) for s in self.__root__]))))
-            or None
+            sorted(list(set(chain(*[tuple(s.data.keys()) for s in self.root])))) or None
         )
 
-        self.__root__ = [
+        self.root = [
             HRUState(hru_id=s.hru_id, data={n: s.data.get(n, 0.0) for n in names})
-            for s in self.__root__
+            for s in self.root
         ]
 
         # Store names in private class attribute
         self._Attributes = names
+        return self
 
     @classmethod
     def parse(cls, sol: str):
@@ -799,10 +848,10 @@ class HRUStateVariableTable(ListCommand):
         out = []
         for idx, data in d.items():
             out.append(HRUState(hru_id=idx, data=data))
-        return cls(__root__=out)
+        return cls(out)
 
 
-class BasinIndex(Command):
+class BasinIndex(Command, coerce_numbers_to_str=True):
     """Initial conditions for a flow segment."""
 
     # TODO: Check that qout and cie can be written with separating commas.
@@ -811,10 +860,14 @@ class BasinIndex(Command):
     channel_storage: float = Field(0.0, alias="ChannelStorage")
     rivulet_storage: float = Field(0.0, alias="RivuletStorage")
     qout: Sequence[float] = Field((1.0, 0.0, 0.0), alias="Qout")
-    qlat: Sequence[float] = Field(None, alias="Qlat")
-    qin: Sequence[float] = Field(None, alias="Qin")
+    qlat: Optional[Sequence[float]] = Field(None, alias="Qlat")
+    qin: Optional[Sequence[float]] = Field(None, alias="Qin")
 
-    _template = """
+    # model_config = ConfigDict(coerce_numbers_to_str=True)
+
+    @property
+    def _template(self):
+        return """
          :BasinIndex {sb_id} {name}
          {_commands}
           """
@@ -842,7 +895,7 @@ class BasinIndex(Command):
 
 
 class BasinStateVariables(ListCommand):
-    __root__: Sequence[BasinIndex]
+    root: Sequence[BasinIndex]
 
     @classmethod
     @no_type_check
@@ -855,16 +908,17 @@ class BasinStateVariables(ListCommand):
         m = re.search(dedent(pat).strip(), sol, re.DOTALL)
         bis = filter(None, m.group(1).strip().split(":BasinIndex"))
         bs = [BasinIndex.parse(f":BasinIndex {bi}") for bi in bis]
-        return cls.parse_obj(bs)
+        return cls(bs)
 
 
 class SoilClasses(ListCommand):
     class SoilClass(Record):
         name: str
-        mineral: Tuple[float, float, float] = None
-        organic: float = None
+        mineral: Optional[Tuple[float, float, float]] = None
+        organic: Optional[float] = None
 
-        @validator("mineral")
+        @field_validator("mineral")
+        @classmethod
         def validate_mineral(cls, v):
             """Assert sum of mineral fraction is 1."""
             if v is not None:
@@ -872,10 +926,18 @@ class SoilClasses(ListCommand):
                 assert sum(v) == 1, "Mineral fraction should sum to 1."
             return v
 
-        @validator("mineral", "organic", each_item=True)
-        def validate_pct(cls, v):
+        @field_validator("mineral")
+        @classmethod
+        def validate_mineral_pct(cls, v: Tuple):
             if v is not None:
-                # FIXME: assertions should not be found outside of testing code. Replace with conditional logic.
+                for x in v:
+                    assert (x >= 0) and (x <= 1), "Value should be in [0,1]."
+            return v
+
+        @field_validator("organic")
+        @classmethod
+        def validate_organic_pct(cls, v: float):
+            if v is not None:
                 assert (v >= 0) and (v <= 1), "Value should be in [0,1]."
             return v
 
@@ -884,9 +946,9 @@ class SoilClasses(ListCommand):
                 return self.name
             else:
                 fmt = "{name:<16},{mineral[0]:>18},{mineral[1]:>18},{mineral[2]:>18},{organic:>18}"
-                return fmt.format(**self.dict())
+                return fmt.format(**self.model_dump())
 
-    __root__: Sequence[SoilClass] = ()
+    root: Sequence[SoilClass] = ()
     _Attributes: Sequence[str] = PrivateAttr(["%SAND", "%CLAY", "%SILT", "%ORGANIC"])
     _Units: Sequence[str] = PrivateAttr(["none", "none", "none", "none"])
 
@@ -899,11 +961,11 @@ class VegetationClass(Record):
 
     def __str__(self):
         template = "{name:<16},{max_ht:>18},{max_lai:>18},{max_leaf_cond:>18}"
-        return template.format(**self.dict())
+        return template.format(**self.model_dump())
 
 
 class VegetationClasses(ListCommand):
-    __root__: Sequence[VegetationClass]
+    root: Sequence[VegetationClass]
     _Attributes: Sequence[str] = PrivateAttr(["MAX_HT", "MAX_LAI", "MAX_LEAF_COND"])
     _Units: Sequence[str] = PrivateAttr(["m", "none", "mm_per_s"])
 
@@ -915,11 +977,11 @@ class LandUseClass(Record):
 
     def __str__(self):
         template = "{name:<16},{impermeable_frac:>18},{forest_coverage:>18}"
-        return template.format(**self.dict())
+        return template.format(**self.model_dump())
 
 
 class LandUseClasses(ListCommand):
-    __root__: Sequence[LandUseClass]
+    root: Sequence[LandUseClass]
     _Attributes: Sequence[str] = PrivateAttr(["IMPERMEABLE_FRAC", "FOREST_COVERAGE"])
     _Units: Sequence[str] = PrivateAttr(["fract", "fract"])
 
@@ -928,7 +990,7 @@ class TerrainClass(Record):
     name: str
     hillslope_length: Sym
     drainage_density: Sym
-    topmodel_lambda: Sym = None
+    topmodel_lambda: Optional[Sym] = None
 
     def __str__(self):
         out = f"{self.name:<16},{self.hillslope_length:>18},{self.drainage_density:>18}"
@@ -938,7 +1000,7 @@ class TerrainClass(Record):
 
 
 class TerrainClasses(ListCommand):
-    __root__: Sequence[TerrainClass]
+    root: Sequence[TerrainClass]
     _Attributes: Sequence[str] = PrivateAttr(
         ["HILLSLOPE_LENGTH", "DRAINAGE_DENSITY", "TOPMODEL_LAMBDA"]
     )
@@ -956,11 +1018,11 @@ class _MonthlyRecord:
 
 
 class SeasonalRelativeLAI(ListCommand):
-    __root__: Sequence[_MonthlyRecord] = (_MonthlyRecord(),)
+    root: Sequence[_MonthlyRecord] = (_MonthlyRecord(),)
 
 
 class SeasonalRelativeHeight(ListCommand):
-    __root__: Sequence[_MonthlyRecord] = (_MonthlyRecord(),)
+    root: Sequence[_MonthlyRecord] = (_MonthlyRecord(),)
 
 
 class SubBasinProperty(Record):
@@ -975,45 +1037,51 @@ class SubBasinProperty(Record):
                 ]
                 + list(map(str, self.values))
             ),
-            Command._indent,
+            "  ",
         )
+
+    model_config = ConfigDict(coerce_numbers_to_str=True)
 
 
 class SubBasinProperties(Command):
-    parameters: Sequence[options.SubBasinProperties] = Field(None, alias="Parameters")
-    records: Sequence[SubBasinProperty] = Field(None)
+    parameters: Optional[Sequence[options.SubBasinProperties]] = Field(
+        None, alias="Parameters"
+    )
+    records: Optional[Sequence[SubBasinProperty]] = Field(None)
 
 
 class SoilParameterList(GenericParameterList):
-    parameters: Sequence[options.SoilParameters] = Field(None, alias="Parameters")
+    parameters: Optional[Sequence[options.SoilParameters]] = Field(
+        None, alias="Parameters"
+    )
 
 
 class VegetationParameterList(GenericParameterList):
-    parameters: Sequence[options.VegetationParameters] = Field(None, alias="Parameters")
+    parameters: Optional[Sequence[options.VegetationParameters]] = Field(
+        None, alias="Parameters"
+    )
 
 
 class LandUseParameterList(GenericParameterList):
-    parameters: Sequence[options.LandUseParameters] = Field(None, alias="Parameters")
+    parameters: Optional[Sequence[options.LandUseParameters]] = Field(
+        None, alias="Parameters"
+    )
 
 
-class EnsembleMode(Command):
-    n: int = Field(..., description="Number of members")
+class EnsembleMode(LineCommand):
     mode: Literal["ENSEMBLE_ENKF"] = "ENSEMBLE_ENKF"
+    n: int = Field(..., description="Number of members")
 
-    _template = ":{_cmd} {mode} {n}\n"
 
-
-class ObservationErrorModel(FlatCommand):
+class ObservationErrorModel(LineCommand):
     state: Literal["STREAMFLOW"]
     dist: Literal["DIST_UNIFORM", "DIST_NORMAL", "DIST_GAMMA"]
     p1: float
     p2: float
     adj: Literal["ADDITIVE", "MULTIPLICATIVE"]
 
-    _template = ":{_cmd} {state} {dist} {p1} {p2} {adj}\n"
 
-
-class ForcingPerturbation(FlatCommand):
+class ForcingPerturbation(LineCommand):
     forcing: options.Forcings
     dist: Literal["DIST_UNIFORM", "DIST_NORMAL", "DIST_GAMMA"]
     p1: float
@@ -1021,22 +1089,16 @@ class ForcingPerturbation(FlatCommand):
     adj: Literal["ADDITIVE", "MULTIPLICATIVE"]
     hru_grp: str = ""
 
-    _template = ":{_cmd} {forcing} {dist} {p1} {p2} {adj} {hru_grp}\n"
 
-
-class AssimilatedState(FlatCommand):
+class AssimilatedState(LineCommand):
     state: Union[options.StateVariables, Literal["STREAMFLOW"]]
     group: str
 
-    _template = ":{_cmd} {state} {group}\n"
 
-
-class AssimilateStreamflow(FlatCommand):
+class AssimilateStreamflow(LineCommand, coerce_numbers_to_str=True):
     """Subbasin ID to assimilate streamflow for."""
 
     sb_id: str
-
-    _template = ":{_cmd} {sb_id}\n"
 
 
 # TODO: Harmonize this...

@@ -1,15 +1,15 @@
 import datetime as dt
-from dataclasses import asdict
+from dataclasses import asdict, is_dataclass
 from pathlib import Path
-from typing import Any, Dict, Sequence, Union
+from typing import Any, Dict, Optional, Sequence, Union
 
 import cftime
-from pydantic import Field, root_validator, validator
+from pydantic import ConfigDict, Field, ValidationInfo, field_validator, model_validator
 
 from ..config import commands as rc
 from ..config import options as o
 from ..config import processes as rp
-from .base import RV, Sym, parse_symbolic
+from .base import RV, Sym, optfield, parse_symbolic
 
 """
 Generic Raven model configuration
@@ -21,199 +21,215 @@ date = Union[dt.date, dt.datetime, cftime.datetime]
 
 class RVI(RV):
     # Run parameters
-    silent_mode: bool = Field(None, alias="SilentMode")
-    noisy_mode: bool = Field(None, alias="NoisyMode")
+    silent_mode: Optional[bool] = optfield(alias="SilentMode")
+    noisy_mode: Optional[bool] = optfield(alias="NoisyMode")
 
-    run_name: str = Field(None, alias="RunName")
-    calendar: o.Calendar = Field(None, alias="Calendar")
-    start_date: date = Field(None, alias="StartDate")
-    assimilation_start_time: date = Field(None, alias="AssimilationStartTime")
-    end_date: date = Field(None, alias="EndDate")
-    duration: float = Field(None, alias="Duration")
-    time_step: Union[float, str] = Field(None, alias="TimeStep")
+    run_name: Optional[str] = optfield(alias="RunName")
+    calendar: Optional[o.Calendar] = optfield(alias="Calendar")
+    start_date: Optional[date] = optfield(alias="StartDate")
+    assimilation_start_time: Optional[date] = optfield(alias="AssimilationStartTime")
+    end_date: Optional[date] = optfield(alias="EndDate")
+    duration: Optional[float] = optfield(alias="Duration")
+    time_step: Optional[Union[float, str]] = optfield(alias="TimeStep")
 
     # Model description
-    routing: o.Routing = Field(None, alias="Routing")
-    # method: rc.Method = None
-    # interpolation: rc.Interpolation = None
-    catchment_route: o.CatchmentRoute = Field(None, alias="CatchmentRoute")
-    evaporation: o.Evaporation = Field(None, alias="Evaporation")
-    ow_evaporation: o.Evaporation = Field(None, alias="OW_Evaporation")
-    sw_radiation_method: o.SWRadiationMethod = Field(None, alias="SWRadiationMethod")
-    sw_cloud_correct: o.SWCloudCorrect = Field(None, alias="SWCloudCorrect")
-    sw_canopy_correct: o.SWCanopyCorrect = Field(None, alias="SWCanopyCorrect")
-    lw_radiation_method: o.LWRadiationMethod = Field(None, alias="LWRadiationMethod")
-    windspeed_method: o.WindspeedMethod = Field(None, alias="WindspeedMethod")
-    rain_snow_fraction: o.RainSnowFraction = Field(None, alias="RainSnowFraction")
-    potential_melt_method: o.PotentialMeltMethod = Field(
-        None, alias="PotentialMeltMethod"
+    routing: Optional[o.Routing] = optfield(alias="Routing")
+    catchment_route: Optional[o.CatchmentRoute] = optfield(alias="CatchmentRoute")
+    evaporation: Optional[o.Evaporation] = optfield(alias="Evaporation")
+    ow_evaporation: Optional[o.Evaporation] = optfield(alias="OW_Evaporation")
+    sw_radiation_method: Optional[o.SWRadiationMethod] = optfield(
+        alias="SWRadiationMethod"
     )
-    oro_temp_correct: o.OroTempCorrect = Field(None, alias="OroTempCorrect")
-    oro_precip_correct: o.OroPrecipCorrect = Field(None, alias="OroPrecipCorrect")
-    oro_pet_correct: o.OroPETCorrect = Field(None, alias="OroPETCorrect")
-    cloud_cover_method: o.CloudCoverMethod = Field(None, alias="CloudCoverMethod")
-    precip_icept_frac: o.PrecipIceptFract = Field(None, alias="PrecipIceptFract")
-    subdaily_method: o.SubdailyMethod = Field(None, alias="SubdailyMethod")
-    monthly_interpolation_method: o.MonthlyInterpolationMethod = Field(
-        None, alias="MonthlyInterpolationMethod"
+    sw_cloud_correct: Optional[o.SWCloudCorrect] = optfield(alias="SWCloudCorrect")
+    sw_canopy_correct: Optional[o.SWCanopyCorrect] = optfield(alias="SWCanopyCorrect")
+    lw_radiation_method: Optional[o.LWRadiationMethod] = optfield(
+        alias="LWRadiationMethod"
     )
-    soil_model: rc.SoilModel = Field(None, alias="SoilModel")
-    lake_storage: o.StateVariables = Field(None, alias="LakeStorage")
-    # alias: Dict[str, str] = Field(None, alias="Alias")
+    windspeed_method: Optional[o.WindspeedMethod] = optfield(alias="WindspeedMethod")
+    rain_snow_fraction: Optional[o.RainSnowFraction] = optfield(
+        alias="RainSnowFraction"
+    )
+    potential_melt_method: Optional[o.PotentialMeltMethod] = optfield(
+        alias="PotentialMeltMethod"
+    )
+    oro_temp_correct: Optional[o.OroTempCorrect] = optfield(alias="OroTempCorrect")
+    oro_precip_correct: Optional[o.OroPrecipCorrect] = optfield(
+        alias="OroPrecipCorrect"
+    )
+    oro_pet_correct: Optional[o.OroPETCorrect] = optfield(alias="OroPETCorrect")
+    cloud_cover_method: Optional[o.CloudCoverMethod] = optfield(
+        alias="CloudCoverMethod"
+    )
+    precip_icept_frac: Optional[o.PrecipIceptFract] = optfield(alias="PrecipIceptFract")
+    subdaily_method: Optional[o.SubdailyMethod] = optfield(alias="SubdailyMethod")
+    monthly_interpolation_method: Optional[o.MonthlyInterpolationMethod] = optfield(
+        alias="MonthlyInterpolationMethod"
+    )
+    soil_model: Optional[rc.SoilModel] = optfield(alias="SoilModel")
+    lake_storage: Optional[o.StateVariables] = optfield(alias="LakeStorage")
 
-    define_hru_groups: Sequence[str] = Field(None, alias="DefineHRUGroups")
+    define_hru_groups: Optional[Sequence[str]] = optfield(alias="DefineHRUGroups")
 
-    hydrologic_processes: Sequence[
-        Union[rc.Process, rp.Conditional, rp.ProcessGroup]
-    ] = Field(None, alias="HydrologicProcesses")
-    evaluation_metrics: Sequence[o.EvaluationMetrics] = Field(
-        None, alias="EvaluationMetrics"
+    hydrologic_processes: Optional[
+        Sequence[Union[rc.Process, rp.Conditional, rp.ProcessGroup]]
+    ] = optfield(alias="HydrologicProcesses")
+    evaluation_metrics: Optional[Sequence[o.EvaluationMetrics]] = optfield(
+        alias="EvaluationMetrics"
     )
-    evaluation_period: Sequence[rc.EvaluationPeriod] = Field(
-        None, alias="EvaluationPeriod"
+    evaluation_period: Optional[Sequence[rc.EvaluationPeriod]] = optfield(
+        alias="EvaluationPeriod"
     )
-    ensemble_mode: rc.EnsembleMode = Field(None, alias="EnsembleMode")
+    ensemble_mode: Optional[rc.EnsembleMode] = optfield(alias="EnsembleMode")
 
     # Options
-    write_netcdf_format: bool = Field(None, alias="WriteNetcdfFormat")
-    netcdf_attribute: Dict[str, str] = Field(None, alias="NetCDFAttribute")
+    write_netcdf_format: Optional[bool] = optfield(alias="WriteNetcdfFormat")
+    netcdf_attribute: Optional[Dict[str, str]] = optfield(alias="NetCDFAttribute")
 
-    custom_output: Sequence[rc.CustomOutput] = Field(None, alias="CustomOutput")
-    direct_evaporation: bool = Field(
-        None,
+    custom_output: Optional[Sequence[rc.CustomOutput]] = optfield(alias="CustomOutput")
+    direct_evaporation: Optional[bool] = optfield(
         alias="DirectEvaporation",
         description="Rainfall is automatically reduced through evapotranspiration up to the limit of the calculated PET.",
     )
-    deltares_fews_mode: bool = Field(None, alias="DeltaresFEWSMode")
-    debug_mode: bool = Field(None, alias="DebugMode")
-    dont_write_watershed_storage: bool = Field(
-        None,
+    deltares_fews_mode: Optional[bool] = optfield(alias="DeltaresFEWSMode")
+    debug_mode: Optional[bool] = optfield(alias="DebugMode")
+    dont_write_watershed_storage: Optional[bool] = optfield(
         alias="DontWriteWatershedStorage",
         description="Do not write watershed storage variables to disk.",
     )
-    pavics_mode: bool = Field(None, alias="PavicsMode")
+    pavics_mode: Optional[bool] = optfield(alias="PavicsMode")
 
-    suppress_output: bool = Field(
-        None,
-        alias="SuppressOutput",
-        description="Write minimal output to disk when enabled.",
+    suppress_output: Optional[bool] = optfield(
+        alias="SuppressOutput", description="Write minimal output to disk when enabled."
     )
-    write_forcing_functions: bool = Field(
-        None,
+    write_forcing_functions: Optional[bool] = optfield(
         alias="WriteForcingFunctions",
         description="Write watershed averaged forcing functions (e.g. rainfall, radiation, PET, etc).",
     )
-    write_subbasin_file: bool = Field(None, alias="WriteSubbasinFile")  # Undocumented
+    write_subbasin_file: Optional[bool] = optfield(
+        alias="WriteSubbasinFile"
+    )  # Undocumented
 
-    @validator("soil_model", pre=True)
+    @field_validator("soil_model", mode="before")
+    @classmethod
     def init_soil_model(cls, v):
         if isinstance(v, int):
-            return rc.SoilModel.parse_obj(v)
+            return rc.SoilModel(v)
         return v
 
-    @validator("start_date", "end_date", "assimilation_start_time")
-    def dates2cf(cls, val, values):
+    @field_validator("start_date", "end_date", "assimilation_start_time")
+    @classmethod
+    def dates2cf(cls, v, info):
         """Convert dates to cftime dates."""
-        if val is not None:
+        if v is not None:
             calendar = (
-                values.get("calendar") or o.Calendar.PROLEPTIC_GREGORIAN
+                info.data.get("calendar") or o.Calendar.PROLEPTIC_GREGORIAN
             ).value.lower()
-            return cftime._cftime.DATE_TYPES[calendar](*val.timetuple()[:6])
 
-    class Config:
-        arbitrary_types_allowed = True
+            obj = cftime._cftime.DATE_TYPES[calendar]
+
+            return obj(*v.timetuple()[:6])
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class RVT(RV):
-    gauge: Sequence[rc.Gauge] = Field(None, alias="Gauge", flat=True)
-    station_forcing: Sequence[rc.StationForcing] = Field(None, alias="StationForcing")
-    gridded_forcing: Sequence[rc.GriddedForcing] = Field(None, alias="GriddedForcing")
-    observation_data: Sequence[rc.ObservationData] = Field(
-        None, alias="ObservationData"
+    gauge: Optional[Sequence[rc.Gauge]] = optfield(alias="Gauge")
+    station_forcing: Optional[Sequence[rc.StationForcing]] = optfield(
+        alias="StationForcing"
+    )
+    gridded_forcing: Optional[Sequence[rc.GriddedForcing]] = optfield(
+        alias="GriddedForcing"
+    )
+    observation_data: Optional[Sequence[rc.ObservationData]] = optfield(
+        alias="ObservationData"
     )
 
 
 class RVP(RV):
-    params: Any
-    soil_classes: rc.SoilClasses = Field(None, alias="SoilClasses")
-    soil_profiles: rc.SoilProfiles = Field(None, alias="SoilProfiles")
-    vegetation_classes: rc.VegetationClasses = Field(None, alias="VegetationClasses")
-    land_use_classes: rc.LandUseClasses = Field(None, alias="LandUseClasses")
-    terrain_classes: rc.TerrainClasses = Field(None, alias="TerrainClasses")
-    soil_parameter_list: rc.SoilParameterList = Field(None, alias="SoilParameterList")
-    land_use_parameter_list: rc.LandUseParameterList = Field(
-        None, alias="LandUseParameterList"
+    params: Any = None
+    soil_classes: Optional[rc.SoilClasses] = optfield(alias="SoilClasses")
+    soil_profiles: Optional[rc.SoilProfiles] = optfield(alias="SoilProfiles")
+    vegetation_classes: Optional[rc.VegetationClasses] = optfield(
+        alias="VegetationClasses"
     )
-    vegetation_parameter_list: rc.VegetationParameterList = Field(
-        None, alias="VegetationParameterList"
+    land_use_classes: Optional[rc.LandUseClasses] = optfield(alias="LandUseClasses")
+    terrain_classes: Optional[rc.TerrainClasses] = optfield(alias="TerrainClasses")
+    soil_parameter_list: Optional[rc.SoilParameterList] = optfield(
+        alias="SoilParameterList"
+    )
+    land_use_parameter_list: Optional[rc.LandUseParameterList] = optfield(
+        alias="LandUseParameterList"
+    )
+    vegetation_parameter_list: Optional[rc.VegetationParameterList] = optfield(
+        alias="VegetationParameterList"
     )
 
-    channel_profile: Sequence[rc.ChannelProfile] = Field(None, alias="ChannelProfile")
+    channel_profile: Optional[Sequence[rc.ChannelProfile]] = optfield(
+        alias="ChannelProfile"
+    )
 
     # TODO: create list of all available parameters to constrain key
-    global_parameter: Dict[str, Sym] = Field({}, alias="GlobalParameter")
-    rain_snow_transition: rc.RainSnowTransition = Field(
-        None, alias="RainSnowTransition"
+    global_parameter: Optional[Dict[str, Sym]] = Field({}, alias="GlobalParameter")
+    rain_snow_transition: Optional[rc.RainSnowTransition] = optfield(
+        alias="RainSnowTransition"
     )
-    seasonal_relative_lai: rc.SeasonalRelativeLAI = Field(
-        None, alias="SeasonalRelativeLAI"
+    seasonal_relative_lai: Optional[rc.SeasonalRelativeLAI] = optfield(
+        alias="SeasonalRelativeLAI"
     )
-    seasonal_relative_height: rc.SeasonalRelativeHeight = Field(
-        None, alias="SeasonalRelativeHeight"
+    seasonal_relative_height: Optional[rc.SeasonalRelativeHeight] = optfield(
+        alias="SeasonalRelativeHeight"
     )
 
 
 class RVC(RV):
-    hru_state_variable_table: rc.HRUStateVariableTable = Field(
-        None, alias="HRUStateVariableTable"
+    hru_state_variable_table: Optional[rc.HRUStateVariableTable] = optfield(
+        alias="HRUStateVariableTable"
     )
-    basin_state_variables: rc.BasinStateVariables = Field(
-        None, alias="BasinStateVariables"
+    basin_state_variables: Optional[rc.BasinStateVariables] = optfield(
+        alias="BasinStateVariables"
     )
-    uniform_initial_conditions: Union[Dict[str, Sym], None] = Field(
-        None, alias="UniformInitialConditions"
+    uniform_initial_conditions: Optional[Dict[str, Sym]] = optfield(
+        alias="UniformInitialConditions"
     )
 
 
 class RVH(RV):
-    sub_basins: rc.SubBasins = Field(None, alias="SubBasins")
-    sub_basin_group: Sequence[rc.SubBasinGroup] = Field(None, alias="SubBasinGroup")
-    sub_basin_properties: rc.SubBasinProperties = Field(
-        None, alias="SubBasinProperties"
+    sub_basins: Optional[rc.SubBasins] = optfield(alias="SubBasins")
+    sub_basin_group: Optional[Sequence[rc.SubBasinGroup]] = optfield(
+        alias="SubBasinGroup"
     )
-    sb_group_property_multiplier: Sequence[rc.SBGroupPropertyMultiplier] = Field(
-        None, alias="SBGroupPropertyMultiplier"
+    sub_basin_properties: Optional[rc.SubBasinProperties] = optfield(
+        alias="SubBasinProperties"
     )
-    hrus: rc.HRUs = Field(None, alias="HRUs")
-    hru_group: Sequence[rc.HRUGroup] = Field(None, alias="HRUGroup")
-    reservoirs: Sequence[rc.Reservoir] = Field(None, alias="Reservoirs")
+    sb_group_property_multiplier: Optional[
+        Sequence[rc.SBGroupPropertyMultiplier]
+    ] = optfield(alias="SBGroupPropertyMultiplier")
+    hrus: Optional[rc.HRUs] = optfield(alias="HRUs")
+    hru_group: Optional[Sequence[rc.HRUGroup]] = optfield(alias="HRUGroup")
+    reservoirs: Optional[Sequence[rc.Reservoir]] = optfield(alias="Reservoirs")
 
 
 class RVE(RV):
-    """Ensemble Kalman filter configuration"""
-
-    enkf_mode: o.EnKFMode = Field(None, alias="EnKFMode")
-    window_size: int = Field(None, alias="WindowSize")
-    solution_run_name: str = Field(None, alias="SolutionRunName")
-    extra_rvt_filename: str = Field(None, alias="ExtraRVTFilename")
-
-    output_directory_format: Union[str, Path] = Field(
-        None, alias="OutputDirectoryFormat"
+    enkf_mode: Optional[o.EnKFMode] = optfield(alias="EnKFMode")
+    window_size: Optional[int] = optfield(alias="WindowSize")
+    solution_run_name: Optional[str] = optfield(alias="SolutionRunName")
+    extra_rvt_filename: Optional[str] = optfield(alias="ExtraRVTFilename")
+    output_directory_format: Optional[Union[str, Path]] = optfield(
+        alias="OutputDirectoryFormat"
     )
-
-    forecast_rvt_filename: str = Field(None, alias="ForecastRVTFilename")
-    truncate_hindcasts: bool = Field(None, alias="TruncateHindcasts")
-    forcing_perturbation: Sequence[rc.ForcingPerturbation] = Field(
-        None, alias="ForcingPerturbation"
+    forecast_rvt_filename: Optional[str] = optfield(alias="ForecastRVTFilename")
+    truncate_hindcasts: Optional[bool] = optfield(alias="TruncateHindcasts")
+    forcing_perturbation: Optional[Sequence[rc.ForcingPerturbation]] = optfield(
+        alias="ForcingPerturbation"
     )
-    assimilated_state: Sequence[rc.AssimilatedState] = Field(
-        None, alias="AssimilatedState"
+    assimilated_state: Optional[Sequence[rc.AssimilatedState]] = optfield(
+        alias="AssimilatedState"
     )
-    assimilate_streamflow: Sequence[rc.AssimilateStreamflow] = Field(
-        None, alias="AssimilateStreamflow"
+    assimilate_streamflow: Optional[Sequence[rc.AssimilateStreamflow]] = optfield(
+        alias="AssimilateStreamflow"
     )
-    observation_error_model: Sequence[rc.ObservationErrorModel] = Field(
-        None, alias="ObservationErrorModel"
+    observation_error_model: Optional[Sequence[rc.ObservationErrorModel]] = optfield(
+        alias="ObservationErrorModel"
     )
 
 
@@ -239,25 +255,35 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
         """
         )
 
-    @root_validator
-    def _assign_symbolic(cls, values):
-        """If params is numerical, convert symbolic expressions from other fields.
+    @field_validator("params", mode="before")
+    @classmethod
+    def _cast_to_dataclass(cls, data):
+        """Cast params to a dataclass."""
+        # Needed because pydantic v2 does not cast tuples automatically.
+        if data is not None and not is_dataclass(data):
+            return cls.model_fields["params"].annotation(*data)
+        return data
 
-        Note that this is called for attribute assignment as well.
-        """
-
-        if values.get("params") is not None:
-            p = asdict(values["params"])
-
-            if not is_symbolic(p):
-                return parse_symbolic(values, **p)
-
-        return values
-
-    @validator("global_parameter", pre=True)
-    def _update_defaults(cls, v, values, config, field):
+    @field_validator("global_parameter", mode="before")
+    @classmethod
+    def _update_defaults(cls, v, info: ValidationInfo):
         """Some configuration parameters should be updated with user given arguments, not overwritten."""
-        return {**cls.__fields__[field.name].default, **v}
+        return {**cls.model_fields[info.field_name].default, **v}
+
+    # @model_validator(mode="after")
+    # def _parse_symbolic(self):
+    #     """If params is numerical, convert symbolic expressions from other fields.
+    #     """
+    #
+    #     if self.params is not None:
+    #         p = asdict(self.params)
+    #
+    #         if not is_symbolic(p):
+    #             for key in self.model_fields.keys():
+    #                 if key != "params":
+    #                     setattr(self, key, parse_symbolic(getattr(self, key), **p))
+    #
+    #     return self
 
     def set_params(self, params) -> "Config":
         """Return a new instance of Config with params set to their numerical values."""
@@ -267,20 +293,16 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
                 "Setting `params` on a configuration without symbolic expressions has no effect."
                 "Leave `params` to its default value when instantiating the emulator configuration."
             )
-        # out = self.duplicate()
-        # out.params = params
-        # return out
 
-        dc = self.__dict__.copy()
-        sym_p = dc.pop("params")
-        num_p = sym_p.__class__(*params)
+        num_p = self.model_fields["params"].annotation(*params)
 
         # Parse symbolic expressions using numerical params values
-        out = parse_symbolic(dc, **asdict(num_p))
+        out = parse_symbolic(self.__dict__, **asdict(num_p))
+        out["params"] = num_p
 
         # Instantiate config class
         # Note: `construct` skips validation. benchmark to see if it speeds things up.
-        return self.__class__.construct(params=num_p, **out)
+        return self.__class__.model_construct(**out)
 
     def set_solution(self, fn: Path, timestamp: bool = True) -> "Config":
         """Return a new instance of Config with hru, basin states
@@ -319,19 +341,21 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
 
     def duplicate(self, **kwds):
         """Duplicate this model, changing the values given in the keywords."""
-        out = self.copy(deep=True)
-        for key, val in self.validate(kwds).dict(exclude_unset=True).items():
+        out = self.model_copy(deep=True)
+        for key, val in (
+            self.model_validate(kwds).model_dump(exclude_unset=True).items()
+        ):
             setattr(out, key, val)
         return out
 
     def _rv(self, rv: str):
         """Return RV configuration."""
 
-        if self.is_symbolic:
-            raise ValueError(
-                "Cannot write RV files if `params` has symbolic variables. Use `set_params` method to set numerical "
-                "values for `params`."
-            )
+        # if self.is_symbolic:
+        #     raise ValueError(
+        #         "Cannot write RV files if `params` has symbolic variables. Use `set_params` method to set numerical "
+        #         "values for `params`."
+        #     )
 
         # Get RV class
         rvs = {b.__name__: b for b in Config.__bases__}
@@ -339,8 +363,14 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
 
         # Instantiate RV class
         attrs = dict(self)
-        p = {f: attrs[f] for f in cls.__fields__}
-        rv = cls(**p)
+        rv_attrs = {f: attrs[f] for f in cls.model_fields}
+
+        # Get model parameters and convert symbolic expressions.
+        if self.params is not None:
+            p = asdict(self.params)
+            rv_attrs = parse_symbolic(rv_attrs, **p)
+
+        rv = cls.model_validate(rv_attrs)
         return rv.to_rv()
 
     @property
@@ -455,7 +485,7 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
         return zip
 
 
-def is_symbolic(params: Dict) -> bool:
+def is_symbolic(params: dict) -> bool:
     """Return True if parameters include a symbolic variable."""
     from dataclasses import is_dataclass
 

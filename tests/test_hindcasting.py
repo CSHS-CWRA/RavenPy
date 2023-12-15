@@ -65,7 +65,7 @@ class TestHindcasting:
                 if d.data_type == "PRECIP":
                     assert d.read_from_netcdf.linear_transform.scale == 1000
 
-            mem_conf = init_conf.copy(
+            mem_conf = init_conf.model_copy(
                 update=dict(
                     gauge=[g],
                 ),

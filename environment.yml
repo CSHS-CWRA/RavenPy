@@ -10,7 +10,7 @@ dependencies:
   - cftime
   - cf_xarray
   - click
-#  - climpred >=2.2.0  # conda package is incompatible with latest raven-hydro
+  - climpred >=2.4.0
   - dask
   - fiona >=1.9
   - flit

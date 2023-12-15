@@ -9,6 +9,7 @@ import logging
 import os
 import tempfile
 import warnings
+from copy import deepcopy
 from pathlib import Path
 from typing import List, Union
 from urllib.parse import urlparse
@@ -92,7 +93,7 @@ def climatology_esp(
         start = start.replace(day=28)
 
     # Get the start date that is immutable
-    startdate_fixed = start
+    startdate_fixed = deepcopy(start)
 
     # Run the model for each year
     ensemble = []
@@ -179,7 +180,7 @@ def warm_up(
     ravenpy.config.rvs.Config
         Model configuration with initial state set by running the model prior to the start date.
     """
-    wup = config.copy(deep=True)
+    wup = config.model_copy(deep=True)
     wup.start_date = config.start_date - dt.timedelta(days=duration)
     wup.duration = duration
     wup.end_date = None
@@ -330,7 +331,7 @@ def _get_time(config: Config) -> xr.DataArray:
     elif config.gridded_forcing is not None:
         time = config.gridded_forcing[0].da.time
     else:
-        raise NotImplementedError
+        raise NotImplementedError()
     return time
 
 
@@ -342,7 +343,7 @@ def ensemble_prediction(
     overwrite=True,
     **kwds,
 ) -> EnsembleReader:
-    """Ensemble Streamflow Prediction based on historical weather forecasts (CASPAR or other).
+    r"""Ensemble Streamflow Prediction based on historical weather forecasts (CASPAR or other).
 
     Run the model using forcing for different years.
     No model warm-up is performed by this function, make sure the initial states are consistent with the start date.
@@ -359,7 +360,7 @@ def ensemble_prediction(
         The path to rv files and model outputs. If None, create temporary directory.
     overwrite : bool
         Overwrite files when writing to disk.
-    **kwds
+    \*\*kwds
         Keywords for the `Gauge.from_nc` function.
 
     Returns
@@ -377,7 +378,7 @@ def ensemble_prediction(
         # Prepare model instance
 
         out = Emulator(
-            config=config.copy(
+            config=config.model_copy(
                 update={
                     "gauge": [
                         rc.Gauge.from_nc(
