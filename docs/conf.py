@@ -65,7 +65,11 @@ autosummary_generate = True
 
 nb_execution_mode = "cache"
 nb_execution_allow_errors = False
-nb_execution_excludepatterns = ["notebooks/*.ipynb", "notebooks/paper/*.ipynb"]
+nb_execution_excludepatterns = [
+    "configuration.md",
+    "notebooks/*.ipynb",
+    "notebooks/paper/*.ipynb"
+]
 
 # nbsphinx_execute = "auto"
 # nbsphinx_timeout = 1
