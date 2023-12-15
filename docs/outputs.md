@@ -4,9 +4,9 @@ jupytext:
     extension: .md
     format_name: myst
     format_version: 0.13
-    jupytext_version: 1.10.3
+    jupytext_version: 1.14.5
 kernelspec:
-  display_name: Python 3
+  display_name: Python 3 (ipykernel)
   language: python
   name: python3
 ---
@@ -27,8 +27,9 @@ Each Raven simulation creates output files in a directory. These outputs can be 
 - `path`: path to the output directory.
 
 Note that `Emulator.run` returns an `OutputReader` instance, so a typical ravenpy workflow looks like this:
-```{code-cell} python3
-:tags: ["skip-execution"]
+
+```{code-cell} ipython3
+:tags: [skip-execution]
 
 from ravenpy.config.emulators import HMETS
 from ravenpy import Emulator
@@ -42,6 +43,7 @@ out = Emulator(conf).run()
 # Look at the results
 out.hydrograph.q_sim.plot()
 ```
+
 Note also that the `run_name` parameter should reflect the value of the `:RunName` configuration option. If `:RunName` is not configured, then the `run_name` argument should be left to its default `None` value.
 
 (ensemble_reader)=
@@ -49,8 +51,8 @@ Note also that the `run_name` parameter should reflect the value of the `:RunNam
 
 Together, the `Config` and `Emulator` classes makes it fairly simple to create simulation ensembles. For example, to run the same model with different parameters, you could do something like:
 
-```{code-cell} python3
-:tags: ["skip-execution"]
+```{code-cell} ipython3
+:tags: [skip-execution]
 
 # Output directory for all simulations
 from pathlib import Path
@@ -65,18 +67,19 @@ runs = [Emulator(conf.set_params(param), workdir=p / f"m{i}").run() for i, param
 
 Now `runs` stores a list of `OutputReader` instances. The time series stored in `hydrograph` and `storage` can be concatenated together using the `EnsembleReader` class:
 
-```{code-cell} python3
-:tags: ["skip-execution"]
+```{code-cell} ipython3
+:tags: [skip-execution]
 
 from ravenpy import EnsembleReader
 
 ens = EnsembleReader(runs=runs, dim="parameters")
 ens.hydrograph.q_sim
 ```
+
 where `q_sim` is a `xarray.DataArray` with dimensions `('time', 'parameters')`. An `EnsembleReader` can also be created from a list of simulation output paths:
 
-```{code-cell} python3
-:tags: ["skip-execution"]
+```{code-cell} ipython3
+:tags: [skip-execution]
 
 # Create list of output paths using glob
 paths = p.glob("**/output")
