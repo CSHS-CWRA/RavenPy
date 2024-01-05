@@ -16,6 +16,7 @@ dependencies:
   - flit
   - gdal >=3.1
   - geopandas >=0.13.0
+  - h5netcdf
   - haversine
   - holoviews
   - hvplot

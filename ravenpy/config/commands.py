@@ -537,7 +537,7 @@ class ReadFromNetCDF(FlatCommand):
         try:
             da = xr.open_dataset(self.file_name_nc)[self.var_name_nc]
         except ValueError:
-            da = xr.open_dataset(self.file_name_nc, engine="netcdf4")[self.var_name_nc]
+            da = xr.open_dataset(self.file_name_nc, engine="h5netcdf")[self.var_name_nc]
         if len(self.dim_names_nc) == 1:
             return da
         elif len(self.dim_names_nc) == 2:
