@@ -533,7 +533,11 @@ class ReadFromNetCDF(FlatCommand):
     def da(self) -> xr.DataArray:
         """Return DataArray from configuration."""
         # TODO: Apply linear transform and time shift
-        da = xr.open_dataset(self.file_name_nc)[self.var_name_nc]
+        # FIXME: Workaround for macOS bug
+        try:
+            da = xr.open_dataset(self.file_name_nc)[self.var_name_nc]
+        except ValueError:
+            da = xr.open_dataset(self.file_name_nc, engine="netcdf4")[self.var_name_nc]
         if len(self.dim_names_nc) == 1:
             return da
         elif len(self.dim_names_nc) == 2:
