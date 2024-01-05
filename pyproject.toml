@@ -83,7 +83,7 @@ dev = [
   "watchdog"
 ]
 docs = [
-  "autodoc_pydantic",
+  "autodoc-pydantic",
   "birdhouse-birdy",
   "cartopy",
   "clisops",
