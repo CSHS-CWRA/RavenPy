@@ -29,7 +29,7 @@ def test_climatology_esp(minimal_emulator, tmp_path):
     assert len(esp.hydrograph.time) == minimal_emulator.duration + 1
 
 
-def test_hindcast_climatology_esp(minimal_emulator, tmp_path, salmon_meteo):
+def test_hindcast_climatology_esp(minimal_emulator, tmp_path, get_file):
     hc = hindcast_climatology_esp(
         minimal_emulator,
         warm_up_duration=5,
@@ -45,7 +45,11 @@ def test_hindcast_climatology_esp(minimal_emulator, tmp_path, salmon_meteo):
     }
 
     # Construct climpred HindcastEnsemble
-    qobs = xr.open_dataset(salmon_meteo).qobs
+    salmon_file = get_file(
+        "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
+    )
+    qobs = xr.open_dataset(salmon_file).qobs
+
     qobs.name = "q_sim"
     hce = HindcastEnsemble(hc).add_observations(qobs)
 
