@@ -533,7 +533,11 @@ class ReadFromNetCDF(FlatCommand):
     def da(self) -> xr.DataArray:
         """Return DataArray from configuration."""
         # TODO: Apply linear transform and time shift
-        da = xr.open_dataset(self.file_name_nc)[self.var_name_nc]
+        # FIXME: Workaround for macOS bug
+        try:
+            da = xr.open_dataset(self.file_name_nc)[self.var_name_nc]
+        except ValueError:
+            da = xr.open_dataset(self.file_name_nc, engine="h5netcdf")[self.var_name_nc]
         if len(self.dim_names_nc) == 1:
             return da
         elif len(self.dim_names_nc) == 2:
@@ -676,7 +680,7 @@ class Gauge(FlatCommand):
     @classmethod
     def from_nc(
         cls,
-        fn: Union[Path, Sequence[Path]],
+        fn: Union[str, Path, Sequence[Path]],
         data_type: Sequence[str] = None,
         station_idx: int = 1,
         alt_names: Optional[Dict[str, str]] = None,
@@ -688,7 +692,7 @@ class Gauge(FlatCommand):
 
         Parameters
         ----------
-        fn : Union[Path, Sequence[Path]],
+        fn : Union[str, Path, Sequence[Path]],
             NetCDF file path or paths.
         data_type : Sequence[str], None
             Raven data types to extract from netCDF files, e.g. 'PRECIP', 'AVE_TEMP'. The algorithm tries to find all

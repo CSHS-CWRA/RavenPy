@@ -16,7 +16,7 @@ Distributed model workflow
 """
 
 
-def test_simple_workflow(get_local_testdata, minimal_emulator, tmp_path):
+def test_simple_workflow(get_local_testdata, tmp_path):
     shp_path = get_local_testdata(
         "basinmaker/drainage_region_0175_v2-1/finalcat_info_v2-1.zip"
     )

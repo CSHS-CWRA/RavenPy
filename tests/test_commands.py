@@ -348,15 +348,14 @@ def test_gridded_forcing(get_local_testdata):
 
 
 def test_gauge(get_local_testdata, tmp_path):
-    f = get_local_testdata(
+    salmon_file = get_local_testdata(
         "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
     )
-    f_tmp = copyfile(
-        f, tmp_path.joinpath("Salmon-River-Near-Prince-George_meteo_daily.nc")
-    )
+
+    copyfile(salmon_file, tmp_path / "Salmon-River-Near-Prince-George_meteo_daily.nc")
 
     g = rc.Gauge.from_nc(
-        f_tmp,
+        tmp_path / "Salmon-River-Near-Prince-George_meteo_daily.nc",
         alt_names={"RAINFALL": "rain", "SNOWFALL": "snow"},
         data_kwds={"ALL": {"Deaccumulate": True}},
     )

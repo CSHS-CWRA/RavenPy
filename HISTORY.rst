@@ -4,9 +4,19 @@ History
 
 0.13 (unreleased)
 -----------------
-* Update to Pydantic v2
 * Fixed problem with scalar elevation in netCDF files parsed with `nc_specs` (issue #279)
-* Add notebook on sensitivity analysis.
+* Added notebook on sensitivity analysis.
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* Update to Pydantic v2.
+* Added `h5netcdf` as a core dependency to provide a stabler backend for `xarray.open_dataset`.
+* Switched from `autodoc_pydantic` to `autodoc-pydantic` for `pydantic` v2.0+ support in documentation.
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Removed some redundant `pytest` fixtures for running `emulators` tests.
+* `"session"`-scoped `pytest` fixtures used for hindcasting/forecasting are now always yielded and copied to new objects within tests.
 
 0.12.3 (2023-10-02)
 -------------------
