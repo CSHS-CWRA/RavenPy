@@ -42,6 +42,7 @@ dependencies = [
   "climpred>=2.4.0",
   "dask",
   "haversine",
+  "h5netcdf",
   "matplotlib",
   "netCDF4",
   "numpy<1.25",
@@ -83,7 +84,7 @@ dev = [
   "watchdog"
 ]
 docs = [
-  "autodoc_pydantic",
+  "autodoc-pydantic",
   "birdhouse-birdy",
   "cartopy",
   "clisops",

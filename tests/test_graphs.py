@@ -1,3 +1,5 @@
+from shutil import copyfile
+
 import numpy as np
 import xarray as xr
 from xclim import set_options
@@ -7,11 +9,15 @@ from ravenpy.utilities import graphs
 
 
 class TestGraph:
-    def test_ts_fit_graph(self, get_local_testdata):
-        f = get_local_testdata(
+    def test_ts_fit_graph(self, get_local_testdata, tmp_path):
+        raven_hydrograph = get_local_testdata(
             "hydro_simulations/raven-gr4j-cemaneige-sim_hmets-0_Hydrographs.nc",
         )
-        with xr.open_dataset(f) as ds:
+        file = tmp_path / "raven-gr4j-cemaneige-sim_hmets-0_Hydrographs.nc"
+
+        copyfile(raven_hydrograph, file)
+
+        with xr.open_dataset(file) as ds:
             ts = stats(ds.q_sim, op="max", freq="M")
             with set_options(check_missing="skip"):
                 p = fit(ts)
