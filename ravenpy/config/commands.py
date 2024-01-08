@@ -680,7 +680,7 @@ class Gauge(FlatCommand):
     @classmethod
     def from_nc(
         cls,
-        fn: Union[Path, Sequence[Path]],
+        fn: Union[str, Path, Sequence[Path]],
         data_type: Sequence[str] = None,
         station_idx: int = 1,
         alt_names: Optional[Dict[str, str]] = None,
@@ -692,7 +692,7 @@ class Gauge(FlatCommand):
 
         Parameters
         ----------
-        fn : Union[Path, Sequence[Path]],
+        fn : Union[str, Path, Sequence[Path]],
             NetCDF file path or paths.
         data_type : Sequence[str], None
             Raven data types to extract from netCDF files, e.g. 'PRECIP', 'AVE_TEMP'. The algorithm tries to find all

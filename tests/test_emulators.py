@@ -165,8 +165,10 @@ def test_evaluation_periods(gr4jcn_config, tmp_path):
 def test_run_with_dap_link(minimal_emulator, tmp_path):
     """Test Raven with DAP link instead of local netCDF file."""
     # Link to THREDDS Data Server netCDF testdata
-    TDS = "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/birdhouse/testdata/raven"
-    fn = f"{TDS}/raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
+    thredds = "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/birdhouse/testdata/raven"
+    dap_link = (
+        f"{thredds}/raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
+    )
 
     alt_names = {
         "RAINFALL": "rain",
@@ -177,8 +179,9 @@ def test_run_with_dap_link(minimal_emulator, tmp_path):
         "SNOWFALL": "snow",
     }
 
-    conf = minimal_emulator
-    conf.gauge = [rc.Gauge.from_nc(fn, alt_names=alt_names)]
+    # Modifying of a session-scoped pytest fixture will cause problems with other tests.
+    conf = minimal_emulator.copy()
+    conf.gauge = [rc.Gauge.from_nc(dap_link, alt_names=alt_names)]
 
     Emulator(conf, workdir=tmp_path).run()
 
