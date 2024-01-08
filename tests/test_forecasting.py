@@ -24,28 +24,30 @@ def test_warm_up(minimal_emulator, tmp_path):
 
 
 def test_climatology_esp(minimal_emulator, tmp_path):
-    esp = climatology_esp(minimal_emulator, workdir=tmp_path, years=[1955, 1956])
+    config = minimal_emulator.copy()
+    esp = climatology_esp(config, workdir=tmp_path, years=[1955, 1956])
     np.testing.assert_array_equal(esp.storage.member, [1955, 1956])
     assert len(esp.hydrograph.time) == minimal_emulator.duration + 1
 
 
-def test_hindcast_climatology_esp(minimal_emulator, tmp_path, get_file):
+def test_hindcast_climatology_esp(minimal_emulator, tmp_path, get_local_testdata):
+    config = minimal_emulator.copy()
     hc = hindcast_climatology_esp(
-        minimal_emulator,
+        config,
         warm_up_duration=5,
         years=[1955, 1956, 1957],
         hindcast_years=[1990, 1991],
         workdir=tmp_path,
     )
     assert hc.sizes == {
-        "lead": minimal_emulator.duration + 1,
+        "lead": config.duration + 1,
         "init": 2,
         "member": 3,
         "nbasins": 1,
     }
 
     # Construct climpred HindcastEnsemble
-    salmon_file = get_file(
+    salmon_file = get_local_testdata(
         "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
     )
     qobs = xr.open_dataset(salmon_file).qobs
@@ -59,13 +61,11 @@ def test_hindcast_climatology_esp(minimal_emulator, tmp_path, get_file):
         dim=["member", "init"],
         alignment="same_inits",
     )
-    assert rank_histo_verif.q_sim.shape[0] == minimal_emulator.duration + 1
+    assert rank_histo_verif.q_sim.shape[0] == config.duration + 1
 
 
 def test_forecasting_GEPS(numeric_config, get_local_testdata):
-    """
-    Test to perform a forecast using auto-queried ECCC data aggregated on THREDDS.
-    """
+    """Test to perform a forecast using auto-queried ECCC data aggregated on THREDDS."""
     name, wup = numeric_config
     if name != "GR4JCN":
         pytest.skip()
