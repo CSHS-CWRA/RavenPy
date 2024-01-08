@@ -180,7 +180,7 @@ def test_run_with_dap_link(minimal_emulator, tmp_path):
     }
 
     # Modifying of a session-scoped pytest fixture will cause problems with other tests.
-    conf = minimal_emulator.copy()
+    conf = minimal_emulator.model_copy(deep=True)
     conf.gauge = [rc.Gauge.from_nc(dap_link, alt_names=alt_names)]
 
     Emulator(conf, workdir=tmp_path).run()

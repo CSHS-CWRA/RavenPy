@@ -24,14 +24,14 @@ def test_warm_up(minimal_emulator, tmp_path):
 
 
 def test_climatology_esp(minimal_emulator, tmp_path):
-    config = minimal_emulator.copy()
+    config = minimal_emulator.model_copy(deep=True)
     esp = climatology_esp(config, workdir=tmp_path, years=[1955, 1956])
     np.testing.assert_array_equal(esp.storage.member, [1955, 1956])
     assert len(esp.hydrograph.time) == minimal_emulator.duration + 1
 
 
 def test_hindcast_climatology_esp(minimal_emulator, tmp_path, get_local_testdata):
-    config = minimal_emulator.copy()
+    config = minimal_emulator.model_copy(deep=True)
     hc = hindcast_climatology_esp(
         config,
         warm_up_duration=5,
