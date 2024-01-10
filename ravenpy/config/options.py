@@ -223,6 +223,8 @@ VegetationParameters = Literal[
     "TFSNOW",
     "RELATIVE_HT",
     "RELATIVE_LAI",
+    "CAP_LAI_RATIO",
+    "SNOCAP_LAI_RATIO",
 ]
 
 
@@ -276,6 +278,7 @@ class EvaluationMetrics(Enum):
     RCOEFF = "RCOEFF"
     NSC = "NSC"
     KLING_GUPTA = "KLING_GUPTA"
+    DIAG_SPEARMAN = "DIAG_SPEARMAN"
 
 
 evaluation_metrics_multiplier = dict(
@@ -290,6 +293,7 @@ evaluation_metrics_multiplier = dict(
     RCOEFF=-1,
     NSC=1,
     KLING_GUPTA=1,
+    DIAG_SPEARMAN=1,
 )
 
 
@@ -308,6 +312,15 @@ class Evaporation(Enum):
     MONTHLY_FACTOR = "PET_MONTHLY_FACTOR"
     MOHYSE = "PET_MOHYSE"
     OUDIN = "PET_OUDIN"
+    VAP_DEFICIT = "PET_VAPDEFICIT"
+
+
+class LWIncomingMethod(Enum):
+    DATA = "LW_INC_DATA"
+    DEFAULT = "LW_INC_DEFAULT"
+    SICART = "LW_INC_SICART"
+    SKYVIEW = "LW_INC_SKYVIEW"
+    DINGMAN = "LW_INC_DINGMAN"
 
 
 class LWRadiationMethod(Enum):
@@ -379,12 +392,16 @@ class RainSnowFraction(Enum):
     HBV = "RAINSNOW_HBV"
     HARDER = "RAINSNOW_HARDER"
     HSPF = "RAINSNOW_HSPF"
+    WANG = "RAINSNOW_WANG"
+    SNTHERM89 = "RAINSNOW_SNTHERM89"
 
 
 class RelativeHumidityMethod(Enum):
     CONSTANT = "RELHUM_CONSTANT"
     DATA = "RELHUM_DATA"
     MINDEWPT = "RELHUM_MINDEWPT"
+    CORR = "RELHUM_CORR"
+    WINDVEL = "WINDVEL_CORR"
 
 
 class Routing(Enum):

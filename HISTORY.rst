@@ -2,6 +2,10 @@
 History
 =======
 
+0.14 (unreleased)
+-----------------
+* Add support for new processes and methods added in Raven v3.8.
+
 0.13 (2023-01-10)
 -----------------
 * Fixed problem with scalar elevation in netCDF files parsed with `nc_specs` (issue #279, PR #323)
