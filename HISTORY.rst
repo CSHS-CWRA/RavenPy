@@ -2,10 +2,16 @@
 History
 =======
 
-0.13 (unreleased)
+0.13 (2023-01-10)
 -----------------
-* Fixed problem with scalar elevation in netCDF files parsed with `nc_specs` (issue #279)
-* Added notebook on sensitivity analysis.
+* Fixed problem with scalar elevation in netCDF files parsed with `nc_specs` (issue #279, PR #323)
+* Added notebook on sensitivity analysis (PR #320)
+* Updated Notebooks 03 and 04 (PR #319)
+* Upgrade to pydantic v2 (PR #326)
+* Pin cf-xarray for Python3.8 (PR #325)
+* Fix Coveralls Workflows (PR #328)
+* Fix notebook execution (PR #329)
+* Refactor and simplify testing data fetching (PR #332)
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
