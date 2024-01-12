@@ -22,7 +22,7 @@ dependencies:
 #  - netCDF4  # mocked
   - notebook
   - pandoc
-  - pydantic >2.0
+  - pydantic >=2.0
   - salib
   - seaborn
   - sphinx
