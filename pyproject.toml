@@ -50,6 +50,7 @@ dependencies = [
   "pandas<2.0; python_version == '3.8'",
   "pandas; python_version >= '3.9'",
   "pint>=0.20",
+  "platformdirs",
   "pydantic>=2.0",
   "pymbolic",
   "raven-hydro==0.2.4",
@@ -57,6 +58,7 @@ dependencies = [
   "scipy",
   "spotpy",
   "statsmodels",
+  "typing-extensions",
   "xarray>=2022.12.0,<2023.9.0", # xarray v2023.9.0 is incompatible with xclim<=0.45.0
   "xclim>=0.43.0",
   "xskillscore"
@@ -75,7 +77,6 @@ dev = [
   "hvplot",
   "isort",
   "mypy",
-  "platformdirs",
   "pre-commit",
   "pytest",
   "pytest-cov",
@@ -105,7 +106,6 @@ docs = [
   "myst_nb",
   "nbsphinx",
   "numpydoc",
-  "pandoc",
   "pymetalink",
   "salib",
   "s3fs",
@@ -119,7 +119,7 @@ docs = [
 gis = [
   "affine",
   "fiona>=1.9",
-  "geopandas>=0.9.0",
+  "geopandas>=0.13.0",
   "gdal",
   "lxml",
   "pyogrio",

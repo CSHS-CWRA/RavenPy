@@ -40,6 +40,7 @@ dependencies:
   - shapely
   - spotpy
   - statsmodels
+  - typing_extensions
   - xarray >=2022.12.0,<2023.9.0  # xarray v2023.9.0 is incompatible with xclim<=0.45.0
   - xclim >=0.43
   - xesmf
