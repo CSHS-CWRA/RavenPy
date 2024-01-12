@@ -46,7 +46,7 @@ extensions = [
     "sphinx_click",
     "sphinx_codeautolink",
     "sphinx_copybutton",
-    "sphinxcontrib.autodoc_pydantic",
+    # "sphinxcontrib.autodoc_pydantic",  # FIXME: Does not seem to be compatible with RavenPy codebase.
 ]
 
 linkcheck_ignore = [
