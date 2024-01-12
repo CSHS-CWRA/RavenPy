@@ -103,12 +103,16 @@ jobs:
         include:
           - os: ubuntu-latest
             python-version: "3.9"
+            xdist: false
           - os: ubuntu-latest
             python-version: "3.10"
+            xdist: true
           - os: ubuntu-latest
             python-version: "3.11"
+            xdist: true
           - os: macos-latest
             python-version: "3.9"
+            xdist: true
     defaults:
       run:
         shell: bash -l {0}
@@ -138,7 +142,12 @@ jobs:
       - name: List installed packages
         run: |
           conda list
-      - name: Test RavenPy
+      - name: Test RavenPy (single-threaded)
+        if: matrix.xdist == false
+        run: |
+          pytest --cov --numprocesses=0
+      - name: Test RavenPy (multi-threaded)
+        if: matrix.xdist == true
         run: |
           pytest --cov --numprocesses=logical
       - name: Report coverage
