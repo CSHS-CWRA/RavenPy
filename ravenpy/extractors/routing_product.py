@@ -31,7 +31,7 @@ def open_shapefile(path: Union[str, os.PathLike]):
     elif isinstance(path, geopandas.GeoDataFrame):
         df = path
     else:
-        raise NotImplementedError
+        raise NotImplementedError(path)
     return df
 
 
