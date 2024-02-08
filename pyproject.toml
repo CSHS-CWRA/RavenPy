@@ -66,16 +66,16 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-  "black>=23.3.0",
+  "black>=24.1.1",
   "bump2version",
   "coverage",
   "coveralls",
   "filelock",
-  "flake8",
+  "flake8>=7.0.0",
   "flit",
   "holoviews",
   "hvplot",
-  "isort",
+  "isort>=5.13.2",
   "mypy",
   "pre-commit",
   "pytest",
