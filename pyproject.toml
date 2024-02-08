@@ -47,8 +47,8 @@ dependencies = [
   "netCDF4",
   "numpy<1.25",
   "owslib>=0.24.1,<0.29", # see: https://github.com/geopython/OWSLib/issues/871
-  "pandas<2.0; python_version == '3.8'",
-  "pandas; python_version >= '3.9'",
+  "pandas<2.0.0; python_version == '3.8'",
+  "pandas<2.2.0; python_version >= '3.9'",
   "pint>=0.20",
   "platformdirs",
   "pydantic>=2.0",
@@ -60,7 +60,7 @@ dependencies = [
   "statsmodels",
   "typing-extensions",
   "xarray>=2022.12.0,<2023.9.0", # xarray v2023.9.0 is incompatible with xclim<=0.45.0
-  "xclim>=0.43.0",
+  "xclim>=0.43.0,<0.48.0",
   "xskillscore"
 ]
 

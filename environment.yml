@@ -28,7 +28,7 @@ dependencies:
   - netcdf4
   - numpy <1.25
   - owslib <0.29.0  # see: https://github.com/geopython/OWSLib/issues/871
-  - pandas
+  - pandas <2.2.0  # xclim <0.48.0 is incompatible with pandas >=2.2.0
   - pint >=0.20
   - platformdirs
   - pre-commit
@@ -45,6 +45,6 @@ dependencies:
   - statsmodels
   - typing_extensions
   - xarray >=2022.12.0,<2023.9.0  # xarray v2023.9.0 is incompatible with xclim<=0.45.0
-  - xclim >=0.43
+  - xclim >=0.43,<0.48
   - xesmf
   - xskillscore
