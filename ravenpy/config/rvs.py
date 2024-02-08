@@ -201,9 +201,9 @@ class RVH(RV):
     sub_basin_properties: Optional[rc.SubBasinProperties] = optfield(
         alias="SubBasinProperties"
     )
-    sb_group_property_multiplier: Optional[
-        Sequence[rc.SBGroupPropertyMultiplier]
-    ] = optfield(alias="SBGroupPropertyMultiplier")
+    sb_group_property_multiplier: Optional[Sequence[rc.SBGroupPropertyMultiplier]] = (
+        optfield(alias="SBGroupPropertyMultiplier")
+    )
     hrus: Optional[rc.HRUs] = optfield(alias="HRUs")
     hru_group: Optional[Sequence[rc.HRUGroup]] = optfield(alias="HRUGroup")
     reservoirs: Optional[Sequence[rc.Reservoir]] = optfield(alias="Reservoirs")

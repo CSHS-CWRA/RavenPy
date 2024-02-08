@@ -1,4 +1,5 @@
 """Tools for reading and writing geospatial data formats."""
+
 import logging
 import os
 import tarfile
@@ -7,7 +8,7 @@ import warnings
 import zipfile
 from pathlib import Path
 from re import search
-from typing import Iterable, List, Optional, Sequence, Tuple, Union
+from typing import List, Optional, Sequence, Tuple, Union
 
 from . import gis_import_error_message
 
