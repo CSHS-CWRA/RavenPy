@@ -6,6 +6,7 @@ The following graphs can be plotted:
     - mean_annual_hydrograph
     - spaghetti_annual_hydrograph
 """
+
 from pathlib import Path
 from typing import Sequence, Union
 

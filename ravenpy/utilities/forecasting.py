@@ -456,8 +456,8 @@ def compute_forecast_flood_risk(
         f"File created on {dt.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} "
         f"UTC on the PAVICS-Hydro service available at {domain}."
     )
-    out.attrs[
-        "title"
-    ] = "Identification of ensemble members that exceed a certain flow threshold."
+    out.attrs["title"] = (
+        "Identification of ensemble members that exceed a certain flow threshold."
+    )
 
     return out

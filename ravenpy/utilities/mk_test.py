@@ -2,6 +2,7 @@
 Created on Wed Jul 29 09:16:06 2015
 @author: Michael Schramm
 """
+
 from typing import Optional, Tuple, Union
 
 import numpy as np
