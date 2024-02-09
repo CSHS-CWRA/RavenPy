@@ -46,13 +46,13 @@ extensions = [
     "sphinx_click",
     "sphinx_codeautolink",
     "sphinx_copybutton",
-    # "sphinxcontrib.autodoc_pydantic",
+    # "sphinxcontrib.autodoc_pydantic",  # FIXME: Does not seem to be compatible with RavenPy codebase.
 ]
 
 linkcheck_ignore = [
     r"https://www.ouranos.ca",  # bad ssl certificate
     # Added on 2023-03-06: Wiley does not allow linkcheck requests (error 403)
-    r"https://doi.org/10.1029/2020WR029229"
+    r"https://doi.org/10.1029/2020WR029229",
 ]
 
 nbsphinx_custom_formats = {
@@ -68,7 +68,7 @@ nb_execution_allow_errors = False
 nb_execution_excludepatterns = [
     "configuration.md",
     "notebooks/*.ipynb",
-    "notebooks/paper/*.ipynb"
+    "notebooks/paper/*.ipynb",
 ]
 
 # nbsphinx_execute = "auto"
@@ -94,6 +94,7 @@ autodoc_mock_imports = [
     "clisops",
     "fiona",
     "gdal",
+    "h5netcdf",
     "netCDF4",
     "osgeo",
     "geopandas",
@@ -150,8 +151,15 @@ language = "en"
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", ".jupyter_cache", "jupyter_execute", "notebooks/paper",
-                    "notebooks/HydroShare_integration.ipynb", ]
+exclude_patterns = [
+    "_build",
+    "Thumbs.db",
+    ".DS_Store",
+    ".jupyter_cache",
+    "jupyter_execute",
+    "notebooks/paper",
+    "notebooks/HydroShare_integration.ipynb",
+]
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "sphinx"
@@ -160,10 +168,7 @@ pygments_style = "sphinx"
 todo_include_todos = False
 
 # Suppress "WARNING: unknown mimetype for ..." when building EPUB.
-suppress_warnings = [
-    "epub.unknown_project_files",
-    "mystnb.unknown_mime_type"
-]
+suppress_warnings = ["epub.unknown_project_files", "mystnb.unknown_mime_type"]
 
 # -- Options for HTML output -------------------------------------------
 

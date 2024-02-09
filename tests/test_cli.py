@@ -1,4 +1,5 @@
 import re
+from shutil import copyfile
 
 import netCDF4 as nc4
 from click.testing import CliRunner
@@ -13,6 +14,16 @@ class TestGenerateGridWeights:
     ):
         runner = CliRunner()
         output_path = tmp_path / "bla.rvt"
+
+        copyfile(
+            get_local_testdata("raven-routing-sample/VIC_streaminputs.nc"),
+            tmp_path / "VIC_streaminputs.nc",
+        )
+        copyfile(
+            get_local_testdata("raven-routing-sample/finalcat_hru_info.zip"),
+            tmp_path / "finalcat_hru_info.zip",
+        )
+
         params = [
             "-c",
             "HRU_ID",
@@ -21,8 +32,8 @@ class TestGenerateGridWeights:
             "lat",
             "-o",
             output_path,
-            get_local_testdata("raven-routing-sample/VIC_streaminputs.nc"),
-            get_local_testdata("raven-routing-sample/finalcat_hru_info.zip"),
+            tmp_path / "VIC_streaminputs.nc",
+            tmp_path / "finalcat_hru_info.zip",
         ]
         params = list(map(str, params))
 
@@ -48,13 +59,19 @@ class TestGenerateGridWeights:
         # needs a "routing-file-path" with multiple gauges
         runner = CliRunner()
         output_path = tmp_path / "bla.rvt"
+
+        copyfile(
+            get_local_testdata("raven-routing-sample/VIC_streaminputs.nc"),
+            tmp_path / "VIC_streaminputs.nc",
+        )
+        copyfile(
+            get_local_testdata("raven-routing-sample/finalcat_hru_info.zip"),
+            tmp_path / "finalcat_hru_info.zip",
+        )
+
         params = [
-            get_local_testdata(
-                "raven-routing-sample/VIC_streaminputs.nc",
-            ),
-            get_local_testdata(
-                "raven-routing-sample/finalcat_hru_info.zip",
-            ),
+            tmp_path / "VIC_streaminputs.nc",
+            tmp_path / "finalcat_hru_info.zip",
             "-c",
             "HRU_ID",
             "-v",
@@ -89,13 +106,19 @@ class TestGenerateGridWeights:
     ):
         runner = CliRunner()
         output_path = tmp_path / "bla.rvt"
+
+        copyfile(
+            get_local_testdata("raven-routing-sample/era5-test-dataset-crop.nc"),
+            tmp_path / "era5-test-dataset-crop.nc",
+        )
+        copyfile(
+            get_local_testdata("raven-routing-sample/finalcat_hru_info.zip"),
+            tmp_path / "finalcat_hru_info.zip",
+        )
+
         params = [
-            get_local_testdata(
-                "raven-routing-sample/era5-test-dataset-crop.nc",
-            ),
-            get_local_testdata(
-                "raven-routing-sample/finalcat_hru_info.zip",
-            ),
+            tmp_path / "era5-test-dataset-crop.nc",
+            tmp_path / "finalcat_hru_info.zip",
             "--var-names",
             "longitude",
             "latitude",
@@ -124,13 +147,23 @@ class TestGenerateGridWeights:
     def test_generate_grid_weights_with_shp_input(self, tmp_path, get_local_testdata):
         runner = CliRunner()
         output_path = tmp_path / "bla.rvt"
+
+        copyfile(
+            get_local_testdata("raven-routing-sample/OTT_sub.zip"),
+            tmp_path / "OTT_sub.zip",
+        )
+        copyfile(
+            get_local_testdata("raven-routing-sample/finalcat_hru_info.zip"),
+            tmp_path / "finalcat_hru_info.zip",
+        )
+
         params = [
             "-c",
             "HRU_ID",
             "-o",
             output_path,
-            get_local_testdata("raven-routing-sample/OTT_sub.zip"),
-            get_local_testdata("raven-routing-sample/finalcat_hru_info.zip"),
+            tmp_path / "OTT_sub.zip",
+            tmp_path / "finalcat_hru_info.zip",
         ]
         params = map(str, params)
 
@@ -154,6 +187,16 @@ class TestGenerateGridWeights:
     ):
         runner = CliRunner()
         output_path = tmp_path / "bla.rvt"
+
+        copyfile(
+            get_local_testdata("raven-routing-sample/OTT_sub.zip"),
+            tmp_path / "OTT_sub.zip",
+        )
+        copyfile(
+            get_local_testdata("raven-routing-sample/finalcat_hru_info.zip"),
+            tmp_path / "finalcat_hru_info.zip",
+        )
+
         params = [
             "--area-error-threshold",
             "0.42",
@@ -161,10 +204,8 @@ class TestGenerateGridWeights:
             "HRU_ID",
             "-o",
             output_path,
-            get_local_testdata("raven-routing-sample/OTT_sub.zip"),
-            get_local_testdata(
-                "raven-routing-sample/finalcat_hru_info.zip",
-            ),
+            tmp_path / "OTT_sub.zip",
+            tmp_path / "finalcat_hru_info.zip",
         ]
         params = map(str, params)
 
@@ -189,13 +230,23 @@ class TestAggregateForcingsToHRUs:
         runner = CliRunner()
         output_nc_file_path = tmp_path / "aggreg.nc"
         output_weight_file_path = tmp_path / "weight_aggreg.rvt"
-        params = [
+
+        copyfile(
             get_local_testdata(
                 "raven-routing-sample/VIC_streaminputs.nc",
             ),
+            tmp_path / "VIC_streaminputs.nc",
+        )
+        copyfile(
             get_local_testdata(
                 "raven-routing-sample/VIC_streaminputs_weights.rvt",
             ),
+            tmp_path / "VIC_streaminputs_weights.rvt",
+        )
+
+        params = [
+            tmp_path / "VIC_streaminputs.nc",
+            tmp_path / "VIC_streaminputs_weights.rvt",
             "-v",
             "Streaminputs",
             "--output-nc-file",
@@ -243,9 +294,19 @@ class TestAggregateForcingsToHRUs:
         runner = CliRunner()
         output_nc_file_path = tmp_path / "aggreg.nc"
         output_weight_file_path = tmp_path / "weight_aggreg.rvt"
-        params = [
+
+        copyfile(
             get_local_testdata("raven-routing-sample/VIC_test_nodata.nc"),
+            tmp_path / "VIC_test_nodata.nc",
+        )
+        copyfile(
             get_local_testdata("raven-routing-sample/VIC_test_nodata_weights.rvt"),
+            tmp_path / "VIC_test_nodata_weights.rvt",
+        )
+
+        params = [
+            tmp_path / "VIC_test_nodata.nc",
+            tmp_path / "VIC_test_nodata_weights.rvt",
             "-v",
             "et",
             "--dim-names",

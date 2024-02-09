@@ -7,12 +7,14 @@ dependencies:
   - raven-hydro ==0.2.4
   - libgcc  # for mixing raven-hydro from PyPI with conda environments
   - affine
+  - black >=24.1.1
   - cftime
   - cf_xarray
   - click
   - climpred >=2.4.0
   - dask
   - fiona >=1.9
+  - flake8 >=7.0.0
   - flit
   - gdal >=3.1
   - geopandas >=0.13.0
@@ -20,16 +22,17 @@ dependencies:
   - haversine
   - holoviews
   - hvplot
+  - isort >=5.13.2
   - lxml
   - matplotlib
   - netcdf4
   - numpy <1.25
   - owslib <0.29.0  # see: https://github.com/geopython/OWSLib/issues/871
-  - pandas
+  - pandas <2.2.0  # xclim <0.48.0 is incompatible with pandas >=2.2.0
   - pint >=0.20
   - platformdirs
   - pre-commit
-  - pydantic >=1.10.8,<2.0
+  - pydantic >=2.0
   - pymbolic
   - pyogrio
   - pyproj >=3.0
@@ -40,7 +43,8 @@ dependencies:
   - shapely
   - spotpy
   - statsmodels
+  - typing_extensions
   - xarray >=2022.12.0,<2023.9.0  # xarray v2023.9.0 is incompatible with xclim<=0.45.0
-  - xclim >=0.43
+  - xclim >=0.43,<0.48
   - xesmf
   - xskillscore
