@@ -310,6 +310,13 @@ class Evaporation(Enum):
     OUDIN = "PET_OUDIN"
 
 
+class Interpolation(Enum):
+    FROM_FILE = "INTERP_FROM_FILE"
+    AVERAGE_ALL = "INTERP_AVERAGE_ALL"
+    NEAREST_NEIGHBOR = "INTERP_NEAREST_NEIGHBOR"
+    INVERSE_DISTANCE = "INTERP_INVERSE_DISTANCE"
+
+
 class LWRadiationMethod(Enum):
     DATA = "LW_RAD_DATA"
     DEFAULT = "LW_RAD_DEFAULT"

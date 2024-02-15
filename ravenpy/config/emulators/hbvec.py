@@ -15,7 +15,7 @@ from ravenpy.config.rvs import Config
 
 @dataclass(config=SymConfig)
 class P(Params):
-    X01: Sym = Variable("X01")  #
+    X01: Sym = Variable("X01")
     X02: Sym = Variable("X02")
     X03: Sym = Variable("X03")
     X04: Sym = Variable("X04")
