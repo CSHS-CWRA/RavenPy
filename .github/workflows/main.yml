@@ -43,11 +43,11 @@ jobs:
           - tox-env: py310-linux-upstream
             python-version: "3.10"
             os: ubuntu-latest
-            upstream-branch: "from-official-git"
+            upstream-branch: "main"
           - tox-env: py310-macos-upstream
             python-version: "3.10"
             os: macos-latest
-            upstream-branch: "from-official-git"
+            upstream-branch: "main"
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
