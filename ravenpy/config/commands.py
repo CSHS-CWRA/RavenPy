@@ -341,7 +341,7 @@ class HRUs(ListCommand):
 
         allowed.append(None)
 
-        out = [value for value in values if value.hru_type in allowed]
+        out = [value for value in values if getattr(value, "hru_type", None) in allowed]
         if len(out) != len(values):
             warnings.warn(
                 "HRUs with an unrecognized `hru_type` attribute were ignored."
