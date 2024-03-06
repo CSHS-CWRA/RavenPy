@@ -37,9 +37,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
-        python-version: ["3.9", "3.11", "3.12"]
         include:
+          - tox-env: py39-linux
+            python-version: "3.9"
+            os: ubuntu-latest
+          - tox-env: py39-macos
+            python-version: "3.9"
+            os: macos-latest
           - tox-env: py310-linux-upstream
             python-version: "3.10"
             os: ubuntu-latest
@@ -48,6 +52,18 @@ jobs:
             python-version: "3.10"
             os: macos-latest
             upstream-branch: "main"
+          - tox-env: py311-linux
+            python-version: "3.11"
+            os: ubuntu-latest
+          - tox-env: py311-macos
+            python-version: "3.11"
+            os: macos-latest
+          - tox-env: py312-linux
+            python-version: "3.12"
+            os: ubuntu-latest
+          - tox-env: py312-macos
+            python-version: "3.12"
+            os: macos-latest
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
