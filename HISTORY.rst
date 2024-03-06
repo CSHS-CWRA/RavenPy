@@ -2,7 +2,11 @@
 History
 =======
 
-0.13 (2023-01-10)
+0.14 (unreleased)
+----------------
+* Automatically filter HRUs based on the hru_type.
+
+0.13 (2024-01-10)
 -----------------
 * Fixed problem with scalar elevation in netCDF files parsed with `nc_specs` (issue #279, PR #323)
 * Added notebook on sensitivity analysis (PR #320)
