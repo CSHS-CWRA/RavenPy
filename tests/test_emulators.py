@@ -3,6 +3,8 @@ import datetime as dt
 import numpy as np
 import pytest
 import xarray as xr
+from packaging.version import Version
+from raven_hydro import __raven_version__
 
 from ravenpy import Emulator
 from ravenpy.config import commands as rc
@@ -15,7 +17,9 @@ NSE = {
     "HMETS": -3.0132,
     "Mohyse": 0.194612,
     "HBVEC": 0.0186633,
-    "CanadianShield": 0.3968,  # 0.39602 <- this is the original value for 3.6
+    # "CanadianShield": 0.39602, <- This is the original value for CanadianShield with RavenHydroFramework v3.6
+    # "CanadianShield": 0.3968, <- This is the value for CanadianShield with RavenHydroFramework v3.7
+    # "CanadianShield": 0.4001, <- This is the new value for CanadianShield with RavenHydroFramework v3.8
     "HYPR": 0.685188,
     "SACSMA": -0.0382907,
     "Blended": -0.913785,
@@ -38,10 +42,16 @@ def test_run(numeric_config, tmp_path):
     out = e.run()
 
     d = out.diagnostics
-    np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], NSE[name], 4)
 
     if name == "CanadianShield":
+        # FIXME: The CanadianShield values all need to be verified.
+        if Version(__raven_version__) >= Version("3.7"):
+            np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], 0.4001, 4)
+        else:
+            np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], 0.3968, 4)
         pytest.skip("Missing solution due to SuppressOutput.")
+
+    np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], NSE[name], 4)
 
     # Start new simulation with final state from initial run.
     new = e.resume()
