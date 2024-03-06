@@ -97,7 +97,7 @@ def infer_scale_and_offset(
             multi, base, start_anchor, _ = parse_offset(freq)
             if base in ["M", "Q", "A"]:
                 raise ValueError(f"Irregular time frequency for input data {da}")
-            real_source = source / multi / units(FREQ_UNITS[base])
+            real_source = source / multi / units(FREQ_UNITS.get(base, base))
             scale, offset = units_transform(real_source, target)
         else:
             raise NotImplementedError(f"data_type: {data_type}")
