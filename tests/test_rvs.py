@@ -120,3 +120,15 @@ def test_config(dummy_config):
     assert conf.model_config["populate_by_name"]
     # nt = cls(params=[0.5], Calendar="NOLEAP")
     # assert nt.air_snow_coeff == 0.5
+
+
+def test_hru_filter():
+    """Test that unrecognized HRU types are filtered out."""
+    from ravenpy.config.emulators.gr4jcn import LakeHRU
+    from ravenpy.config.emulators.hbvec import HRUs, LandHRU
+
+    with pytest.warns(UserWarning):
+        hrus = HRUs([LandHRU(), LandHRU(), LakeHRU()])
+
+    # The GR4J lake HRU is not part of the HBVEC config.
+    assert len(hrus.root) == 2

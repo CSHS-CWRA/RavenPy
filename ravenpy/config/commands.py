@@ -12,6 +12,7 @@ from typing import (
     Tuple,
     Union,
     get_args,
+    get_origin,
     no_type_check,
 )
 
@@ -44,7 +45,7 @@ from .base import (
     RootRecord,
     Sym,
 )
-from .utils import filter_for, nc_specs
+from .utils import filter_for, get_annotations, nc_specs
 
 """
 Raven commands
@@ -314,6 +315,38 @@ class HRUs(ListCommand):
             "degN",
         ]
     )
+
+    @field_validator("root", mode="before")
+    @classmethod
+    def ignore_unrecognized_hrus(cls, values):
+        """Ignore HRUs with unrecognized hru_type.
+
+        HRUs are ignored only if all allowed HRU classes define `hru_type`, and if the values passed include it.
+        """
+        import collections
+        import warnings
+
+        a = cls.model_fields["root"].annotation
+
+        # Annotation should be a sequence
+        if get_origin(a) != collections.abc.Sequence:
+            return values
+
+        # Extract allowed HRU types
+        allowed = [hru.model_fields["hru_type"].default for hru in get_annotations(a)]
+
+        # If some HRU classes do not define rhu_type, skip filtering
+        if None in allowed:
+            return values
+
+        allowed.append(None)
+
+        out = [value for value in values if value.hru_type in allowed]
+        if len(out) != len(values):
+            warnings.warn(
+                "HRUs with an unrecognized `hru_type` attribute were ignored."
+            )
+        return out
 
 
 class HRUGroup(FlatCommand):
