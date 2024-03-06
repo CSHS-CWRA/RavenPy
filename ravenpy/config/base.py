@@ -296,6 +296,8 @@ class GenericParameterList(Command):
 class RV(Command):
     """Base class for RV configuration objects."""
 
+    __rv__ = ""
+
     @property
     def _template(self):
         return "{_commands}\n"

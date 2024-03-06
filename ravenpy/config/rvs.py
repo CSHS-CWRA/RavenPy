@@ -20,6 +20,8 @@ date = Union[dt.date, dt.datetime, cftime.datetime]
 
 
 class RVI(RV):
+    __rv__ = "RVI"
+
     # Run parameters
     silent_mode: Optional[bool] = optfield(alias="SilentMode")
     noisy_mode: Optional[bool] = optfield(alias="NoisyMode")
@@ -133,6 +135,8 @@ class RVI(RV):
 
 
 class RVT(RV):
+    __rv__ = "RVT"
+
     gauge: Optional[Sequence[rc.Gauge]] = optfield(alias="Gauge")
     station_forcing: Optional[Sequence[rc.StationForcing]] = optfield(
         alias="StationForcing"
@@ -146,6 +150,8 @@ class RVT(RV):
 
 
 class RVP(RV):
+    __rv__ = "RVP"
+
     params: Any = None
     soil_classes: Optional[rc.SoilClasses] = optfield(alias="SoilClasses")
     soil_profiles: Optional[rc.SoilProfiles] = optfield(alias="SoilProfiles")
@@ -182,6 +188,8 @@ class RVP(RV):
 
 
 class RVC(RV):
+    __rv__ = "RVC"
+
     hru_state_variable_table: Optional[rc.HRUStateVariableTable] = optfield(
         alias="HRUStateVariableTable"
     )
@@ -194,6 +202,8 @@ class RVC(RV):
 
 
 class RVH(RV):
+    __rv__ = "RVH"
+
     sub_basins: Optional[rc.SubBasins] = optfield(alias="SubBasins")
     sub_basin_group: Optional[Sequence[rc.SubBasinGroup]] = optfield(
         alias="SubBasinGroup"
@@ -210,6 +220,8 @@ class RVH(RV):
 
 
 class RVE(RV):
+    __rv__ = "RVE"
+
     enkf_mode: Optional[o.EnKFMode] = optfield(alias="EnKFMode")
     window_size: Optional[int] = optfield(alias="WindowSize")
     solution_run_name: Optional[str] = optfield(alias="SolutionRunName")
@@ -350,16 +362,17 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
 
     def _rv(self, rv: str):
         """Return RV configuration."""
+        import inspect
 
         # if self.is_symbolic:
         #     raise ValueError(
         #         "Cannot write RV files if `params` has symbolic variables. Use `set_params` method to set numerical "
         #         "values for `params`."
         #     )
-
         # Get RV class
-        rvs = {b.__name__: b for b in Config.__bases__}
-        cls = rvs[rv.upper()]
+        for cls in inspect.getmro(self.__class__):
+            if getattr(cls, "__rv__") == rv.upper():
+                break
 
         # Instantiate RV class
         attrs = dict(self)

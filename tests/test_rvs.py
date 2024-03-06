@@ -1,5 +1,5 @@
 import datetime as dt
-from typing import Union
+from typing import Sequence, Union
 
 import cftime
 import pytest
@@ -120,3 +120,22 @@ def test_config(dummy_config):
     assert conf.model_config["populate_by_name"]
     # nt = cls(params=[0.5], Calendar="NOLEAP")
     # assert nt.air_snow_coeff == 0.5
+
+
+def test_custom_subclass(dummy_config, tmp_path):
+    """Test that users can subclass RV and Config."""
+    cls, P = dummy_config
+
+    # Custom RVI
+    class myRVI(RVI):
+        run_name: str = Field("myRunName", alias="RunName")
+
+    # Custom config with custom RVI
+    class MyConfig(myRVI, cls):
+        params: P = P()
+
+    # Make sure rv files can be written
+    conf = MyConfig().set_params([0.5])
+    conf.write_rv(workdir=tmp_path)
+    assert conf.run_name == "myRunName"
+    assert "myRunName" in conf._rv("RVI")
