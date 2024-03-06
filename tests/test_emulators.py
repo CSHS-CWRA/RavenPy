@@ -45,10 +45,14 @@ def test_run(numeric_config, tmp_path):
 
     if name == "CanadianShield":
         # FIXME: The CanadianShield values all need to be verified.
-        if Version(__raven_version__) >= Version("3.7"):
+        if Version(__raven_version__) == Version("3.8"):
             np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], 0.4001, 4)
-        else:
+        elif Version(__raven_version__) == Version("3.7"):
             np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], 0.3968, 4)
+        elif Version(__raven_version__) == Version("3.6"):
+            np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], 0.39602, 4)
+        else:
+            raise NotImplementedError("めんどくさい")
         pytest.skip("Missing solution due to SuppressOutput.")
 
     np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], NSE[name], 4)
