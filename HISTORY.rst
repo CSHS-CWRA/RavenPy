@@ -4,14 +4,17 @@ History
 
 0.14.0 (2024--soon)
 -------------------
-* Added support for Python3.12.
+* Added support for Python 3.12 and dropped support for Python3.8.
 * Upgraded `raven-hydro` to v0.3.0 and `RavenHydroFramework` to v3.8.
+* `ravenpy` now requires `xclim` >= v0.48.2, `xarray` >= v2023.11.0, and `pandas` >= 2.2.0.
 
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Updated GitHub publishing workflows to use Trusted Publisher for TestPyPI/PyPI releases.
 * Added Dependabot to keep dependencies up-to-date.
 * Now using step-security/harden-runner action to harden GitHub Actions runners.
+* Adjusted GitHub Workflows to test against Python 3.9, 3.10, 3.11, and 3.12.
+* Updated the build-system requirements when testing with `tox` to use newer `setuptools` and `wheel` versions when building `gdal`.
 
 0.13.0 (2024-01-10)
 -------------------
