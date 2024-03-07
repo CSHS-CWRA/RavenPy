@@ -4,7 +4,7 @@ channels:
   - defaults
 dependencies:
   - python >=3.9,<3.13
-  - raven-hydro ==0.2.4
+  - raven-hydro ==0.2.4  # FIXME: Update when raven-hydro 0.3.0 is available on conda-forge
   - libgcc  # for mixing raven-hydro from PyPI with conda environments
   - affine
   - black >=24.2.0
