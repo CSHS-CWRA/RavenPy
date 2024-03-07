@@ -93,7 +93,7 @@ docs = [
   # Needed for notebooks/HydroShare_integration.ipynb
   # See: https://github.com/CSHS-CWRA/RavenPy/pull/326
   # "hsclient",
-  "intake <2.0.0",
+  "intake <3.0.0",
   "intake-esm",
   "intake-xarray",
   "ipykernel",
