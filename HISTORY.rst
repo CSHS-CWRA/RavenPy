@@ -2,22 +2,36 @@
 History
 =======
 
-0.13 (2023-01-10)
------------------
-* Fixed problem with scalar elevation in netCDF files parsed with `nc_specs` (issue #279, PR #323)
-* Added notebook on sensitivity analysis (PR #320)
-* Updated Notebooks 03 and 04 (PR #319)
-* Upgrade to pydantic v2 (PR #326)
-* Pin cf-xarray for Python3.8 (PR #325)
-* Fix Coveralls Workflows (PR #328)
-* Fix notebook execution (PR #329)
-* Refactor and simplify testing data fetching (PR #332)
+0.14.0 (2024--soon)
+-------------------
+* Added support for Python 3.12 and dropped support for Python3.8.
+* Upgraded `raven-hydro` to v0.3.0 and `RavenHydroFramework` to v3.8.
+* `ravenpy` now requires `xclim` >= v0.48.2, `xarray` >= v2023.11.0, and `pandas` >= 2.2.0.
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Updated GitHub publishing workflows to use Trusted Publisher for TestPyPI/PyPI releases.
+* Added Dependabot to keep dependencies up-to-date.
+* Now using step-security/harden-runner action to harden GitHub Actions runners.
+* Adjusted GitHub Workflows to test against Python 3.9, 3.10, 3.11, and 3.12.
+* Updated the build-system requirements when testing with `tox` to use newer `setuptools` and `wheel` versions when building `gdal`.
+
+0.13.0 (2024-01-10)
+-------------------
+* Fixed problem with scalar elevation in netCDF files parsed with `nc_specs`. (issue #279, PR #323)
+* Added notebook on sensitivity analysis. (PR #320)
+* Updated Notebooks 03 and 04. (PR #319)
+* Upgrade to `pydantic` v2.0. (PR #326)
+* Pin `cf-xarray` for Python3.8. (PR #325)
+* Fix `Coveralls` Workflows. (PR #328)
+* Fix notebook execution. (PR #329)
+* Refactor and simplify testing data fetching. (PR #332)
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
-* Update to Pydantic v2.
-* Added `h5netcdf` as a core dependency to provide a stabler backend for `xarray.open_dataset`.
-* Switched from `autodoc_pydantic` to `autodoc-pydantic` for `pydantic` v2.0+ support in documentation.
+* Update to `pydantic` v2.0. (PR #326)
+* Added `h5netcdf` as a core dependency to provide a stabler backend for `xarray.open_dataset`. (PR #332)
+* Switched from `autodoc_pydantic` to `autodoc-pydantic` for `pydantic` v2.0+ support in documentation. (PR #326)
 
 Internal changes
 ^^^^^^^^^^^^^^^^
