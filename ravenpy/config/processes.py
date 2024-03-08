@@ -50,11 +50,16 @@ class SoilEvaporation(Process):
         "SOILEVAP_ALL",
         "SOILEVAP_LINEAR",
         "SOILEVAP_SACSMA",
+        "SOILEVAP_HYMOD2",
     ]
 
 
 class LakeEvaporation(Process):
     algo: Literal["LAKE_EVAP_BASIC"]
+
+
+class LakeFreeze(Process):
+    algo: Literal["LFREEZE_BASIC", "LFREEZE_THERMAL"]
 
 
 class OpenWaterEvaporation(Process):
