@@ -68,6 +68,10 @@ class RVI(RV):
         alias="MonthlyInterpolationMethod"
     )
     soil_model: Optional[rc.SoilModel] = optfield(alias="SoilModel")
+    temperature_correction: Optional[bool] = optfield(
+        alias="TemperatureCorrection",
+        description="Gridded or gauged temperature bias correction.",
+    )
     lake_storage: Optional[o.StateVariables] = optfield(alias="LakeStorage")
 
     define_hru_groups: Optional[Sequence[str]] = optfield(alias="DefineHRUGroups")
@@ -110,6 +114,10 @@ class RVI(RV):
     write_subbasin_file: Optional[bool] = optfield(
         alias="WriteSubbasinFile"
     )  # Undocumented
+    write_local_flows: Optional[bool] = optfield(
+        alias="WriteLocalFlows",
+        description="Write local contribution to hydrograph in hydrograph.csv",
+    )
 
     @field_validator("soil_model", mode="before")
     @classmethod

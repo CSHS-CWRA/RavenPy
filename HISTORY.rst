@@ -4,6 +4,7 @@ History
 
 0.14.0 (2024--soon)
 -------------------
+* Add support for new processes and methods added in Raven v3.8.
 * Added support for Python 3.12 and dropped support for Python3.8.
 * Upgraded `raven-hydro` to v0.3.0 and `RavenHydroFramework` to v3.8.
 * `ravenpy` now requires `xclim` >= v0.48.2, `xarray` >= v2023.11.0, and `pandas` >= 2.2.0.
@@ -26,6 +27,7 @@ Internal changes
 * Fix `Coveralls` Workflows. (PR #328)
 * Fix notebook execution. (PR #329)
 * Refactor and simplify testing data fetching. (PR #332)
+
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
