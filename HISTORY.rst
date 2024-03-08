@@ -5,6 +5,10 @@ History
 0.14.0 (2024--soon)
 -------------------
 * Add support for new processes and methods added in Raven v3.8.
+* Add Interpolation command options.
+* Let VegetationClass records contain symbolic expressions.
+* Add support for custom RV subclasses;
+* Use HRU_ID instead of SubId in BasinMaker reservoirs extraction logic;
 * Added support for Python 3.12 and dropped support for Python3.8.
 * Upgraded `raven-hydro` to v0.3.0 and `RavenHydroFramework` to v3.8.
 * `ravenpy` now requires `xclim` >= v0.48.2, `xarray` >= v2023.11.0, and `pandas` >= 2.2.0.
