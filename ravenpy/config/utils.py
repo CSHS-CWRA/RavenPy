@@ -1,4 +1,5 @@
 import os
+import typing
 from typing import Optional, Sequence, Union
 
 import cf_xarray  # noqa: F401
@@ -179,3 +180,13 @@ def get_average_annual_runoff(
         q_year = np.mean(q_year)  # [mm/yr] mean over all years in record
 
     return q_year
+
+
+def get_annotations(a):
+    """Return all annotations inside [] or Union[...]."""
+
+    for arg in typing.get_args(a):
+        if typing.get_origin(arg) == Union:
+            yield from get_annotations(arg)
+        else:
+            yield arg

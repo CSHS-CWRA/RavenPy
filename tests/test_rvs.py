@@ -139,3 +139,15 @@ def test_custom_subclass(dummy_config, tmp_path):
     conf.write_rv(workdir=tmp_path)
     assert conf.run_name == "myRunName"
     assert "myRunName" in conf._rv("RVI")
+
+
+def test_hru_filter():
+    """Test that unrecognized HRU types are filtered out."""
+    from ravenpy.config.emulators.gr4jcn import LakeHRU
+    from ravenpy.config.emulators.hbvec import HRUs, LandHRU
+
+    with pytest.warns(UserWarning):
+        hrus = HRUs([LandHRU(), LandHRU(), LakeHRU()])
+
+    # The GR4J lake HRU is not part of the HBVEC config.
+    assert len(hrus.root) == 2
