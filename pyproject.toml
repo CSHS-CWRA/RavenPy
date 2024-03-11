@@ -51,7 +51,7 @@ dependencies = [
   "platformdirs",
   "pydantic >=2.0",
   "pymbolic",
-  "raven-hydro >=0.2.4",
+  "raven-hydro >=0.2.4,<1.0",
   "requests",
   "scipy",
   "spotpy",
