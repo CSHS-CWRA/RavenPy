@@ -6,7 +6,7 @@ History
 -------------------
 * Add support for new processes and methods added in Raven v3.8.
 * Added support for Python 3.12 and dropped support for Python3.8.
-* Upgraded `raven-hydro` to v0.3.0 and `RavenHydroFramework` to v3.8.
+* Added support for `raven-hydro` v0.3.0 and `RavenHydroFramework` to v3.8.
 * `ravenpy` now requires `xclim` >= v0.48.2, `xarray` >= v2023.11.0, and `pandas` >= 2.2.0.
 * Now automatically filters HRUs based on the ``hru_type``.
 
