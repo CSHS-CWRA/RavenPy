@@ -8,6 +8,7 @@ from pydantic.dataclasses import dataclass
 from pymbolic.primitives import Variable
 
 from ravenpy.config import commands as rc
+from ravenpy.config import options
 from ravenpy.config.rvs import RV, RVI, Config, optfield
 
 
@@ -133,12 +134,14 @@ def test_custom_subclass(dummy_config, tmp_path):
     # Custom config with custom RVI
     class MyConfig(myRVI, cls):
         params: P = P()
+        enkf_mode: options.EnKFMode = optfield(alias="EnKFMode")
 
     # Make sure rv files can be written
-    conf = MyConfig().set_params([0.5])
+    conf = MyConfig(EnKFMode="ENKF_SPINUP").set_params([0.5])
     conf.write_rv(workdir=tmp_path)
     assert conf.run_name == "myRunName"
     assert "myRunName" in conf._rv("RVI")
+    assert "EnKFMode" not in conf._rv("RVI")
 
 
 def test_hru_filter():

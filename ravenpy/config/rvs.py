@@ -254,6 +254,8 @@ class RVE(RV):
 
 
 class Config(RVI, RVC, RVH, RVT, RVP, RVE):
+    __rv__ = None
+
     def header(self, rv):
         """Return the header to print at the top of each RV file."""
         import datetime as dt
