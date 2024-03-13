@@ -992,9 +992,9 @@ class SoilClasses(ListCommand):
 
 class VegetationClass(Record):
     name: str = ""
-    max_ht: float = 0.0
-    max_lai: float = 0.0
-    max_leaf_cond: float = 0.0
+    max_ht: Sym = 0.0
+    max_lai: Sym = 0.0
+    max_leaf_cond: Sym = 0.0
 
     def __str__(self):
         template = "{name:<16},{max_ht:>18},{max_lai:>18},{max_leaf_cond:>18}"
