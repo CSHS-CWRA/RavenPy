@@ -17,6 +17,7 @@ from typing import (
 )
 
 import cftime  # noqa: F401
+import validators
 import xarray as xr
 from pydantic import (
     ConfigDict,
@@ -559,7 +560,9 @@ class ReadFromNetCDF(FlatCommand):
         cls, fn, data_type, station_idx=1, alt_names=(), engine="h5netcdf", **kwds
     ):
         """Instantiate class from netCDF dataset."""
-        specs = nc_specs(fn, data_type, station_idx, alt_names)
+        specs = nc_specs(
+            fn, data_type, station_idx=station_idx, alt_names=alt_names, engine=engine
+        )
         specs.update(kwds)
         attrs = filter_for(cls, specs)
         return cls(**attrs)
@@ -568,7 +571,17 @@ class ReadFromNetCDF(FlatCommand):
     def da(self, engine="h5netcdf") -> xr.DataArray:
         """Return DataArray from configuration."""
         # TODO: Apply linear transform and time shift
-        da = xr.open_dataset(self.file_name_nc, engine=engine)[self.var_name_nc]
+        try:
+            da = xr.open_dataset(self.file_name_nc, engine=engine)[self.var_name_nc]
+        except FileNotFoundError:
+            if validators.url(self.file_name_nc):
+                da = xr.open_dataset(self.file_name_nc, engine="pydap")[
+                    self.var_name_nc
+                ]
+            else:
+                da = xr.open_dataset(self.file_name_nc, engine="netcdf4")[
+                    self.var_name_nc
+                ]
         if len(self.dim_names_nc) == 1:
             return da
         elif len(self.dim_names_nc) == 2:

@@ -50,6 +50,7 @@ dependencies = [
   "pint >=0.20",
   "platformdirs",
   "pydantic >=2.0",
+  "pydap",
   "pymbolic",
   "raven-hydro >=0.2.4,<1.0",
   "requests",
