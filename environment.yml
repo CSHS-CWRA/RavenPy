@@ -8,6 +8,7 @@ dependencies:
   - libgcc  # for mixing raven-hydro from PyPI with conda environments
   - affine
   - black >=24.2.0
+  - bump2version >=1.0.1
   - cftime
   - cf_xarray
   - click
@@ -25,6 +26,7 @@ dependencies:
   - isort >=5.13.2
   - lxml
   - matplotlib
+  - mypy
   - netcdf4
   - numpy
   - owslib <0.29.0  # see: https://github.com/geopython/OWSLib/issues/871
@@ -36,6 +38,9 @@ dependencies:
   - pymbolic
   - pyogrio
   - pyproj >=3.0
+  - pytest
+  - pytest-cov
+  - pytest-xdist >=3.2.0
   - rasterio
   - requests
   - rioxarray
@@ -43,7 +48,9 @@ dependencies:
   - shapely
   - spotpy
   - statsmodels
+  - tox >=4.5
   - typing_extensions
+  - watchdog
   - xarray >=2023.11.0  # xarray v2023.9.0 is incompatible with xclim<=0.45.0
   - xclim >=0.48.2
   - xesmf

@@ -23,6 +23,7 @@ dependencies:
   - notebook
   - pandoc
   - pydantic >=2.0
+  - pygments
   - salib
   - seaborn
   - sphinx

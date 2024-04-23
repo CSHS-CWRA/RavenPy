@@ -37,7 +37,7 @@ dynamic = ["description", "version"]
 dependencies = [
   "cftime",
   # cf-xarray is differently named on conda-forge
-  "cf-xarray[all]",
+  "cf-xarray",
   "climpred >=2.4.0",
   "dask",
   "haversine",
@@ -80,7 +80,7 @@ dev = [
   "pytest-cov",
   "pytest-xdist >=3.2.0",
   "setuptools >=68.0",
-  "tox",
+  "tox >=4.5",
   "watchdog",
   "wheel >=0.42.0"
 ]
@@ -106,6 +106,7 @@ docs = [
   "myst_nb",
   "nbsphinx",
   "numpydoc",
+  "pygments",
   "pymetalink",
   "salib",
   "s3fs",
