@@ -555,7 +555,9 @@ class ReadFromNetCDF(FlatCommand):
         return tuple(dims)
 
     @classmethod
-    def from_nc(cls, fn, data_type, station_idx=1, alt_names=(), **kwds):
+    def from_nc(
+        cls, fn, data_type, station_idx=1, alt_names=(), engine="h5netcdf", **kwds
+    ):
         """Instantiate class from netCDF dataset."""
         specs = nc_specs(fn, data_type, station_idx, alt_names)
         specs.update(kwds)
@@ -563,14 +565,10 @@ class ReadFromNetCDF(FlatCommand):
         return cls(**attrs)
 
     @property
-    def da(self) -> xr.DataArray:
+    def da(self, engine="h5netcdf") -> xr.DataArray:
         """Return DataArray from configuration."""
         # TODO: Apply linear transform and time shift
-        # FIXME: Workaround for macOS bug
-        try:
-            da = xr.open_dataset(self.file_name_nc)[self.var_name_nc]
-        except ValueError:
-            da = xr.open_dataset(self.file_name_nc, engine="h5netcdf")[self.var_name_nc]
+        da = xr.open_dataset(self.file_name_nc, engine=engine)[self.var_name_nc]
         if len(self.dim_names_nc) == 1:
             return da
         elif len(self.dim_names_nc) == 2:

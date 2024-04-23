@@ -16,6 +16,7 @@ def nc_specs(
     station_idx: Optional[int] = None,
     alt_names: Union[str, Sequence[str]] = None,
     mon_ave: bool = False,
+    engine: str = "h5netcdf",
     # FIXME: Is this call signature still relevant?
     linear_transform=None,
 ):
@@ -33,6 +34,8 @@ def nc_specs(
         Alternative variable names for data type if not the CF standard default.
     mon_ave : bool
         If True, compute the monthly average.
+    engine : str
+        The engine used to open the dataset. Default is 'h5netcdf'.
 
     Returns
     -------
@@ -70,7 +73,7 @@ def nc_specs(
         "station_idx": station_idx,
     }
 
-    with xr.open_dataset(fn) as ds:
+    with xr.open_dataset(fn, engine=engine) as ds:
         var_names = CF_RAVEN.get(data_type, ()) + tuple(alt_names)
         if len(var_names) == 0:
             raise ValueError(
