@@ -1,6 +1,7 @@
 import datetime as dt
-from pathlib import Path
+import sys
 
+import pytest
 import xarray as xr
 
 from ravenpy import Emulator, EnsembleReader
@@ -85,14 +86,19 @@ class TestHindcasting:
         assert len(out.hydrograph.member) == 3
         assert len(out.hydrograph.time) == 5
 
+    # Skip if using Python3.10
+    @pytest.mark.skipif(
+        (3, 11) > sys.version_info >= (3, 10),
+        reason="climpred is unstable in Python 3.10",
+    )
     def test_climpred_hindcast_verif(self, get_local_testdata, salmon_hru, tmp_path):
         ts = get_local_testdata(
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
         )
-        # Make a local copy to evade double-ownership of file
+        # Make a local copy to evade double-ownership of file - first file
         ts_tmp1 = tmp_path / "salmon_river_near_prince_george-tmp1.nc"
         ts_tmp1.write_bytes(ts.read_bytes())
-        # Make a local copy to evade double-ownership of file
+        # Make a local copy to evade double-ownership of file - second file
         ts_tmp2 = tmp_path / "salmon_river_near_prince_george-tmp2.nc"
         ts_tmp2.write_bytes(ts.read_bytes())
 
