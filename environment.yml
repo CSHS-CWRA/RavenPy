@@ -51,6 +51,7 @@ dependencies:
   - statsmodels
   - tox >=4.5
   - typing_extensions
+  - validators
   - watchdog
   - xarray >=2023.11.0  # xarray v2023.9.0 is incompatible with xclim<=0.45.0
   - xclim >=0.48.2
