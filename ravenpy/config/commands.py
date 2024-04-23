@@ -560,9 +560,31 @@ class ReadFromNetCDF(FlatCommand):
         cls, fn, data_type, station_idx=1, alt_names=(), engine="h5netcdf", **kwds
     ):
         """Instantiate class from netCDF dataset."""
-        specs = nc_specs(
-            fn, data_type, station_idx=station_idx, alt_names=alt_names, engine=engine
-        )
+        try:
+            specs = nc_specs(
+                fn,
+                data_type,
+                station_idx=station_idx,
+                alt_names=alt_names,
+                engine=engine,
+            )
+        except FileNotFoundError:
+            if validators.url(fn):
+                specs = nc_specs(
+                    fn,
+                    data_type,
+                    station_idx=station_idx,
+                    alt_names=alt_names,
+                    engine="pydap",
+                )
+            else:
+                specs = nc_specs(
+                    fn,
+                    data_type,
+                    station_idx=station_idx,
+                    alt_names=alt_names,
+                    engine="netcdf4",
+                )
         specs.update(kwds)
         attrs = filter_for(cls, specs)
         return cls(**attrs)
