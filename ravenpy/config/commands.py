@@ -827,8 +827,14 @@ class ObservationData(Data, coerce_numbers_to_str=True):
         """
 
     @classmethod
-    def from_nc(cls, fn, station_idx: int = 1, alt_names=(), **kwds):
-        specs = nc_specs(fn, "HYDROGRAPH", station_idx, alt_names)
+    def from_nc(cls, fn, station_idx: int = 1, alt_names=(), engine="h5netcdf", **kwds):
+        specs = nc_specs(
+            fn,
+            "HYDROGRAPH",
+            station_idx=station_idx,
+            alt_names=alt_names,
+            engine=engine,
+        )
         attrs = filter_for(cls, specs, **kwds, data_type="HYDROGRAPH")
         return cls(**attrs)
 
