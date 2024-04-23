@@ -48,6 +48,7 @@ def nc_specs(
 
     from ravenpy.utilities.coords import infer_scale_and_offset
 
+    i = 0
     # Convert to NumPy 0-based indexing
     if station_idx is not None:
         i = station_idx - 1
@@ -125,7 +126,7 @@ def nc_specs(
                 if ds["station_id"].shape and len(ds["station_id"]) > i:
                     attrs["name"] = ds["station_id"].values[i]
 
-        return attrs
+    return attrs
 
 
 def filter_for(kls, attrs, **kwds):

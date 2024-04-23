@@ -29,7 +29,7 @@ dependencies:
   - mypy
   - netcdf4
   - numpy
-  - owslib <0.29.0  # see: https://github.com/geopython/OWSLib/issues/871
+  - owslib >=0.29.1
   - pandas >=2.2.0
   - pint >=0.20
   - platformdirs

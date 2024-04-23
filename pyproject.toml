@@ -45,7 +45,7 @@ dependencies = [
   "matplotlib",
   "netCDF4",
   "numpy",
-  "owslib >=0.24.1,<0.29", # see: https://github.com/geopython/OWSLib/issues/871
+  "owslib >=0.29.1",
   "pandas >=2.2.0",
   "pint >=0.20",
   "platformdirs",

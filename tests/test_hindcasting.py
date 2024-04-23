@@ -1,4 +1,5 @@
 import datetime as dt
+from pathlib import Path
 
 import xarray as xr
 
@@ -80,7 +81,7 @@ class TestHindcasting:
 
         out = EnsembleReader(runs=ens)
 
-        # The model now has the forecast data generated and it has 5 days of forecasts.
+        # The model now has the forecast data generated, and it has 5 days of forecasts.
         assert len(out.hydrograph.member) == 3
         assert len(out.hydrograph.time) == 5
 
@@ -88,6 +89,9 @@ class TestHindcasting:
         ts = get_local_testdata(
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
         )
+        # Make a local copy to evade double-ownership of file
+        ts_tmp = tmp_path / "salmon_river_near_prince_george-tmp.nc"
+        ts_tmp.write_bytes(ts.read_bytes())
 
         # This is the forecast start date, on which the forecasts will be launched.
         start_date = dt.datetime(1980, 6, 1)
@@ -121,7 +125,10 @@ class TestHindcasting:
             params=[0.529, -3.396, 407.29, 1.072, 16.9, 0.947],
             Gauge=[
                 rc.Gauge.from_nc(
-                    ts, data_type=data_type, alt_names=alt_names, data_kwds=data_kwds
+                    ts_tmp,
+                    data_type=data_type,
+                    alt_names=alt_names,
+                    data_kwds=data_kwds,
                 )
             ],
             HRUs=[hru],
