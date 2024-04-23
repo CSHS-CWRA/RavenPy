@@ -58,7 +58,6 @@ dependencies = [
   "spotpy",
   "statsmodels",
   "typing-extensions",
-  "validators",
   "xarray >=2023.11.0",
   "xclim >=0.48.2",
   "xskillscore"

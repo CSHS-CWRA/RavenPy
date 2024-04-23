@@ -17,7 +17,6 @@ from typing import (
 )
 
 import cftime  # noqa: F401
-import validators
 import xarray as xr
 from pydantic import (
     ConfigDict,
