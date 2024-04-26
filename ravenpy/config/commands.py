@@ -571,10 +571,10 @@ class ReadFromNetCDF(FlatCommand):
         return cls(**attrs)
 
     @property
-    def da(self, engine="h5netcdf") -> xr.DataArray:
+    def da(self) -> xr.DataArray:
         """Return DataArray from configuration."""
         # TODO: Apply linear transform and time shift
-        da = xr.open_dataset(self.file_name_nc, engine=engine)[self.var_name_nc]
+        da = xr.open_dataset(self.file_name_nc)[self.var_name_nc]
         if len(self.dim_names_nc) == 1:
             return da
         elif len(self.dim_names_nc) == 2:
