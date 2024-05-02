@@ -666,9 +666,7 @@ def test_canopex():
 
     qobs = [
         rc.ObservationData.from_nc(
-            CANOPEX_DAP,
-            alt_names="discharge",
-            station_idx=basin,
+            CANOPEX_DAP, alt_names="discharge", station_idx=basin, engine="netcdf4"
         )
     ]
 
@@ -678,6 +676,7 @@ def test_canopex():
             station_idx=basin,
             data_type=data_type,  # Note that this is the list of all the variables
             alt_names=alt_names,  # Note that all variables here are mapped to their names in the netcdf file.
+            engine="netcdf4",
             data_kwds=data_kwds,
         )
     ]

@@ -37,7 +37,7 @@ dynamic = ["description", "version"]
 dependencies = [
   "cftime",
   # cf-xarray is differently named on conda-forge
-  "cf-xarray[all]",
+  "cf-xarray",
   "climpred >=2.4.0",
   "dask",
   "haversine",
@@ -45,11 +45,12 @@ dependencies = [
   "matplotlib",
   "netCDF4",
   "numpy",
-  "owslib >=0.24.1,<0.29", # see: https://github.com/geopython/OWSLib/issues/871
+  "owslib >=0.29.1",
   "pandas >=2.2.0",
   "pint >=0.20",
   "platformdirs",
   "pydantic >=2.0",
+  "pydap",
   "pymbolic",
   "raven-hydro >=0.2.4,<1.0",
   "requests",
@@ -80,7 +81,7 @@ dev = [
   "pytest-cov",
   "pytest-xdist >=3.2.0",
   "setuptools >=68.0",
-  "tox",
+  "tox >=4.5",
   "watchdog",
   "wheel >=0.42.0"
 ]
@@ -106,6 +107,7 @@ docs = [
   "myst_nb",
   "nbsphinx",
   "numpydoc",
+  "pygments",
   "pymetalink",
   "salib",
   "s3fs",

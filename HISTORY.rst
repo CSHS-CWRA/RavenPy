@@ -2,6 +2,18 @@
 History
 =======
 
+0.15.0 (unreleased)
+-------------------
+* Upgraded `owslib` to `>=0.29.1`. (PR #358)
+* All operations that open NetCDF files or DAP links accept an `engine` argument. The default for all of these is `h5netcdf`. (PR #358)
+* Added `pydap` as an alternate backend for opening DAP links. (PR #358)
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Added some development dependencies that were missing to the `environment.yml`. (PR #358)
+* `test_climpred_hindcast_verif` is now skipped for Python3.10 builds. It seems to only fail on the particular version of Python. When examining the dependencies, other than the Python version (and ABI version), there are no differences in the environments between Python3.10 and Python3.11. My gut feeling points to an issue with `climpred`. (PR #358)
+* Temporarily disabled tests for macOS on GitHub due to architecture changes. (PR #358)
+
 0.14.0 (2024-03-13)
 -------------------
 * Add support for new processes and methods added in Raven v3.8. (PR #335)

@@ -11,11 +11,12 @@ from .defaults import RAVEN_NO_DATA_VALUE
 
 
 def nc_specs(
-    fn: Union[str, os.PathLike],
+    fn: Union[str, os.PathLike[str]],
     data_type: str,
     station_idx: Optional[int] = None,
     alt_names: Union[str, Sequence[str]] = None,
     mon_ave: bool = False,
+    engine: str = "h5netcdf",
     # FIXME: Is this call signature still relevant?
     linear_transform=None,
 ):
@@ -33,6 +34,8 @@ def nc_specs(
         Alternative variable names for data type if not the CF standard default.
     mon_ave : bool
         If True, compute the monthly average.
+    engine : str
+        The engine used to open the dataset. Default is 'h5netcdf'.
 
     Returns
     -------
@@ -44,18 +47,16 @@ def nc_specs(
     elevation_var_name_nc
     latitude, longitude, elevation, name
     """
-    from pathlib import Path
-
     from ravenpy.utilities.coords import infer_scale_and_offset
-
-    # Convert to NumPy 0-based indexing
-    if station_idx is not None:
-        i = station_idx - 1
 
     if isinstance(fn, str) and str(fn)[:4] == "http":
         pass
-    elif Path(fn).exists():
-        fn = Path(fn).resolve(strict=True)
+    elif os.path.exists(fn):
+        # `strict` kwarg is not available in Python 3.9
+        try:
+            fn = os.path.realpath(fn, strict=True)
+        except TypeError:
+            fn = os.path.realpath(fn)
     else:
         raise ValueError("NetCDF file not found.")
 
@@ -69,7 +70,7 @@ def nc_specs(
         "station_idx": station_idx,
     }
 
-    with xr.open_dataset(fn) as ds:
+    with xr.open_dataset(fn, engine=engine) as ds:
         var_names = CF_RAVEN.get(data_type, ()) + tuple(alt_names)
         if len(var_names) == 0:
             raise ValueError(
@@ -97,6 +98,9 @@ def nc_specs(
             raise ValueError(f"No variable found for {data_type}.\n {ds.data_vars}")
 
         if station_idx is not None:
+            # Convert to NumPy 0-based indexing
+            i = station_idx - 1
+
             try:
                 attrs["latitude_var_name_nc"] = ds.cf["latitude"].name
                 attrs["longitude_var_name_nc"] = ds.cf["longitude"].name
@@ -125,7 +129,7 @@ def nc_specs(
                 if ds["station_id"].shape and len(ds["station_id"]) > i:
                     attrs["name"] = ds["station_id"].values[i]
 
-        return attrs
+    return attrs
 
 
 def filter_for(kls, attrs, **kwds):
@@ -163,7 +167,7 @@ def filter_for(kls, attrs, **kwds):
 
 
 def get_average_annual_runoff(
-    nc_file_path: Union[str, os.PathLike],
+    nc_file_path: Union[str, os.PathLike[str]],
     area_in_m2: float,
     time_dim: str = "time",
     obs_var: str = "qobs",
