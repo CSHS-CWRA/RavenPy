@@ -52,7 +52,11 @@ def nc_specs(
     if isinstance(fn, str) and str(fn)[:4] == "http":
         pass
     elif os.path.exists(fn):
-        fn = os.path.realpath(fn, strict=True)
+        # `strict` kwarg is not available in Python 3.9
+        try:
+            fn = os.path.realpath(fn, strict=True)
+        except TypeError:
+            fn = os.path.realpath(fn)
     else:
         raise ValueError("NetCDF file not found.")
 
