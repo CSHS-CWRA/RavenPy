@@ -555,9 +555,17 @@ class ReadFromNetCDF(FlatCommand):
         return tuple(dims)
 
     @classmethod
-    def from_nc(cls, fn, data_type, station_idx=1, alt_names=(), **kwds):
+    def from_nc(
+        cls, fn, data_type, station_idx=1, alt_names=(), engine="h5netcdf", **kwds
+    ):
         """Instantiate class from netCDF dataset."""
-        specs = nc_specs(fn, data_type, station_idx, alt_names)
+        specs = nc_specs(
+            fn,
+            data_type,
+            station_idx=station_idx,
+            alt_names=alt_names,
+            engine=engine,
+        )
         specs.update(kwds)
         attrs = filter_for(cls, specs)
         return cls(**attrs)
@@ -566,11 +574,7 @@ class ReadFromNetCDF(FlatCommand):
     def da(self) -> xr.DataArray:
         """Return DataArray from configuration."""
         # TODO: Apply linear transform and time shift
-        # FIXME: Workaround for macOS bug
-        try:
-            da = xr.open_dataset(self.file_name_nc)[self.var_name_nc]
-        except ValueError:
-            da = xr.open_dataset(self.file_name_nc, engine="h5netcdf")[self.var_name_nc]
+        da = xr.open_dataset(self.file_name_nc)[self.var_name_nc]
         if len(self.dim_names_nc) == 1:
             return da
         elif len(self.dim_names_nc) == 2:
@@ -714,20 +718,21 @@ class Gauge(FlatCommand):
     def from_nc(
         cls,
         fn: Union[str, Path, Sequence[Path]],
-        data_type: Sequence[str] = None,
+        data_type: Optional[Sequence[str]] = None,
         station_idx: int = 1,
         alt_names: Optional[Dict[str, str]] = None,
         mon_ave: bool = False,
         data_kwds: Optional[Dict[str, Any]] = None,
+        engine: str = "h5netcdf",
         **kwds,
     ) -> "Gauge":
         """Return Gauge instance with configuration options inferred from the netCDF itself.
 
         Parameters
         ----------
-        fn : Union[str, Path, Sequence[Path]],
+        fn : str or Path or Sequence[Path]
             NetCDF file path or paths.
-        data_type : Sequence[str], None
+        data_type : Sequence[str], optional
             Raven data types to extract from netCDF files, e.g. 'PRECIP', 'AVE_TEMP'. The algorithm tries to find all
             forcings in each file until one is found, then it stops searching for it in the following files.
         station_idx : int
@@ -737,9 +742,11 @@ class Gauge(FlatCommand):
             Use this if variables do not correspond to CF standard defaults.
         mon_ave : bool
             If True, compute the monthly average.
-        data_kwds : Dict[options.Forcings, Dict[str, str]]]
+        data_kwds : dict[options.Forcings, dict[str, str]]
             Additional `:Data` parameters keyed by forcing type and station id. Overrides inferred parameters.
             Use keyword "ALL" to pass parameters to all variables.
+        engine : {"h5netcdf", "netcdf4", "pydap"}
+            The engine used to open the dataset. Default is 'h5netcdf'.
         **kwds
             Additional arguments for Gauge.
 
@@ -766,7 +773,12 @@ class Gauge(FlatCommand):
             for dtype in forcings:
                 try:
                     specs = nc_specs(
-                        f, dtype, idx, alt_names.get(dtype, ()), mon_ave=mon_ave
+                        f,
+                        dtype,
+                        idx,
+                        alt_names.get(dtype, ()),
+                        mon_ave=mon_ave,
+                        engine=engine,
                     )
                 except ValueError:
                     pass
@@ -814,8 +826,14 @@ class ObservationData(Data, coerce_numbers_to_str=True):
         """
 
     @classmethod
-    def from_nc(cls, fn, station_idx: int = 1, alt_names=(), **kwds):
-        specs = nc_specs(fn, "HYDROGRAPH", station_idx, alt_names)
+    def from_nc(cls, fn, station_idx: int = 1, alt_names=(), engine="h5netcdf", **kwds):
+        specs = nc_specs(
+            fn,
+            "HYDROGRAPH",
+            station_idx=station_idx,
+            alt_names=alt_names,
+            engine=engine,
+        )
         attrs = filter_for(cls, specs, **kwds, data_type="HYDROGRAPH")
         return cls(**attrs)
 

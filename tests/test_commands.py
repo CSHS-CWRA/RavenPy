@@ -351,11 +351,11 @@ def test_gauge(get_local_testdata, tmp_path):
     salmon_file = get_local_testdata(
         "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
     )
-
-    copyfile(salmon_file, tmp_path / "Salmon-River-Near-Prince-George_meteo_daily.nc")
+    salmon_file_tmp = tmp_path / "salmon_river_near_prince_george-tmp.nc"
+    salmon_file_tmp.write_bytes(salmon_file.read_bytes())
 
     g = rc.Gauge.from_nc(
-        tmp_path / "Salmon-River-Near-Prince-George_meteo_daily.nc",
+        salmon_file_tmp,
         alt_names={"RAINFALL": "rain", "SNOWFALL": "snow"},
         data_kwds={"ALL": {"Deaccumulate": True}},
     )

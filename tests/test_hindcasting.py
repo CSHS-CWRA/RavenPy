@@ -1,5 +1,7 @@
 import datetime as dt
+import sys
 
+import pytest
 import xarray as xr
 
 from ravenpy import Emulator, EnsembleReader
@@ -80,14 +82,25 @@ class TestHindcasting:
 
         out = EnsembleReader(runs=ens)
 
-        # The model now has the forecast data generated and it has 5 days of forecasts.
+        # The model now has the forecast data generated, and it has 5 days of forecasts.
         assert len(out.hydrograph.member) == 3
         assert len(out.hydrograph.time) == 5
 
+    # Skip if using Python3.10
+    @pytest.mark.skipif(
+        (3, 11) > sys.version_info >= (3, 10),
+        reason="climpred is unstable in Python 3.10",
+    )
     def test_climpred_hindcast_verif(self, get_local_testdata, salmon_hru, tmp_path):
         ts = get_local_testdata(
             "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
         )
+        # Make a local copy to evade double-ownership of file - first file
+        ts_tmp1 = tmp_path / "salmon_river_near_prince_george-tmp1.nc"
+        ts_tmp1.write_bytes(ts.read_bytes())
+        # Make a local copy to evade double-ownership of file - second file
+        ts_tmp2 = tmp_path / "salmon_river_near_prince_george-tmp2.nc"
+        ts_tmp2.write_bytes(ts.read_bytes())
 
         # This is the forecast start date, on which the forecasts will be launched.
         start_date = dt.datetime(1980, 6, 1)
@@ -121,7 +134,10 @@ class TestHindcasting:
             params=[0.529, -3.396, 407.29, 1.072, 16.9, 0.947],
             Gauge=[
                 rc.Gauge.from_nc(
-                    ts, data_type=data_type, alt_names=alt_names, data_kwds=data_kwds
+                    ts_tmp1,
+                    data_type=data_type,
+                    alt_names=alt_names,
+                    data_kwds=data_kwds,
                 )
             ],
             HRUs=[hru],
@@ -137,7 +153,7 @@ class TestHindcasting:
             hindcast_years=[2001, 2002, 2003, 2004, 2005, 2006, 2007],
         )
 
-        q_obs = xr.open_dataset(ts)
+        q_obs = xr.open_dataset(ts_tmp2)
 
         # However, our simulated streamflow is named "q_sim" and climpred requires the observation to be named the same thing
         # so let's rename it. While we're at it, we need to make sure that the identifier is the same. In our observation

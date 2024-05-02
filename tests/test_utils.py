@@ -1,5 +1,4 @@
 import pytest
-import xarray as xr
 
 from ravenpy.config.utils import nc_specs
 
@@ -24,5 +23,5 @@ def test_dap_specs():
     TDS = "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/birdhouse/testdata/raven"
     fn = f"{TDS}/raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
 
-    attrs = nc_specs(fn, "PRECIP", station_idx=1, alt_names=("rain",))
+    attrs = nc_specs(fn, "PRECIP", station_idx=1, alt_names=("rain",), engine="pydap")
     assert "units" in attrs

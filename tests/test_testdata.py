@@ -1,3 +1,4 @@
+import urllib.error
 from pathlib import Path
 
 import pytest
@@ -13,6 +14,9 @@ class TestRemoteFileAccess:
     branch = "master"
 
     @pytest.mark.online
+    @pytest.mark.xfail(
+        raises=urllib.error.URLError, reason="Get file is API rate limited"
+    )
     def test_get_file_default_cache(self):
         file = get_file(name="ostrich-hbvec/raven-hbvec-salmon.rvi", branch=self.branch)
 
