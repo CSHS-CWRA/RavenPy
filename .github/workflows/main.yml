@@ -42,29 +42,29 @@ jobs:
           - tox-env: py39-linux
             python-version: "3.9"
             os: ubuntu-latest
-          - tox-env: py39-macos
-            python-version: "3.9"
-            os: macos-latest
+#          - tox-env: py39-macos
+#            python-version: "3.9"
+#            os: macos-latest
           - tox-env: py310-linux-upstream
             python-version: "3.10"
             os: ubuntu-latest
             upstream-branch: "main"
-          - tox-env: py310-macos-upstream
-            python-version: "3.10"
-            os: macos-latest
-            upstream-branch: "main"
+#          - tox-env: py310-macos-upstream
+#            python-version: "3.10"
+#            os: macos-latest
+#            upstream-branch: "main"
           - tox-env: py311-linux
             python-version: "3.11"
             os: ubuntu-latest
-          - tox-env: py311-macos
-            python-version: "3.11"
-            os: macos-latest
+#          - tox-env: py311-macos
+#            python-version: "3.11"
+#            os: macos-latest
           - tox-env: py312-linux
             python-version: "3.12"
             os: ubuntu-latest
-          - tox-env: py312-macos
-            python-version: "3.12"
-            os: macos-latest
+#          - tox-env: py312-macos
+#            python-version: "3.12"
+#            os: macos-latest
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
@@ -112,7 +112,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]  # windows-latest  # disabled until xesmf is available
+        os:
+          - ubuntu-latest
+          # - macos-latest  # disabled until a new build of raven-hydro is available
+          # - windows-latest  # disabled until xesmf is available
         python-version: ["3.9", "3.10", "3.11", "3.12"]
     defaults:
       run:

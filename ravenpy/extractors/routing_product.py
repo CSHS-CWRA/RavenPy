@@ -185,7 +185,7 @@ class BasinMakerExtractor:
 
         return dict(
             subbasin_id=int(row["SubId"]),
-            hru_id=int(row["SubId"]),
+            hru_id=int(row.get("HRU_ID", row["SubId"])),
             name=f"Lake_{lake_id}",
             weir_coefficient=BasinMakerExtractor.WEIR_COEFFICIENT,
             crest_width=row["BkfWidth"],

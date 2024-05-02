@@ -2,20 +2,37 @@
 History
 =======
 
-0.14.0 (2024--soon)
+0.15.0 (unreleased)
 -------------------
-* Add support for new processes and methods added in Raven v3.8.
-* Added support for Python 3.12 and dropped support for Python3.8.
-* Upgraded `raven-hydro` to v0.3.0 and `RavenHydroFramework` to v3.8.
-* `ravenpy` now requires `xclim` >= v0.48.2, `xarray` >= v2023.11.0, and `pandas` >= 2.2.0.
+* Upgraded `owslib` to `>=0.29.1`. (PR #358)
+* All operations that open NetCDF files or DAP links accept an `engine` argument. The default for all of these is `h5netcdf`. (PR #358)
+* Added `pydap` as an alternate backend for opening DAP links. (PR #358)
 
 Internal changes
 ^^^^^^^^^^^^^^^^
-* Updated GitHub publishing workflows to use Trusted Publisher for TestPyPI/PyPI releases.
-* Added Dependabot to keep dependencies up-to-date.
-* Now using step-security/harden-runner action to harden GitHub Actions runners.
-* Adjusted GitHub Workflows to test against Python 3.9, 3.10, 3.11, and 3.12.
-* Updated the build-system requirements when testing with `tox` to use newer `setuptools` and `wheel` versions when building `gdal`.
+* Added some development dependencies that were missing to the `environment.yml`. (PR #358)
+* `test_climpred_hindcast_verif` is now skipped for Python3.10 builds. It seems to only fail on the particular version of Python. When examining the dependencies, other than the Python version (and ABI version), there are no differences in the environments between Python3.10 and Python3.11. My gut feeling points to an issue with `climpred`. (PR #358)
+* Temporarily disabled tests for macOS on GitHub due to architecture changes. (PR #358)
+
+0.14.0 (2024-03-13)
+-------------------
+* Add support for new processes and methods added in Raven v3.8. (PR #335)
+* Add Interpolation command options. (PR #338)
+* Let VegetationClass records contain symbolic expressions. (PR #338)
+* Add support for custom RV subclasses. (PR #338)
+* Use HRU_ID (if available) instead of SubId in BasinMaker reservoirs extraction logic. (PR #338)
+* Added support for Python 3.12 and dropped support for Python3.8. (PR #341, PR #343)
+* Added support for `raven-hydro` v0.3.0 and `RavenHydroFramework` to v3.8. (PR #341, PR #351)
+* `ravenpy` now requires `xclim` >= v0.48.2, `xarray` >= v2023.11.0, and `pandas` >= 2.2.0. (PR #341)
+* Now automatically filters HRUs based on the ``hru_type``. (issue #340, PR #334)
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Updated GitHub publishing workflows to use Trusted Publisher for TestPyPI/PyPI releases. (PR #341)
+* Added Dependabot to keep dependencies up-to-date. (PR #342)
+* Now using step-security/harden-runner action to harden GitHub Actions runners. (PR #341)
+* Adjusted GitHub Workflows to test against Python 3.9, 3.10, 3.11, and 3.12. (PR #341, PR #343)
+* Updated the build-system requirements when testing with `tox` to use newer `setuptools` and `wheel` versions when building `gdal`. (PR #341)
 
 0.13.0 (2024-01-10)
 -------------------

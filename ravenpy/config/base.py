@@ -1,3 +1,4 @@
+import typing
 from enum import Enum
 from textwrap import dedent, indent
 from typing import Any, Dict, Optional, Sequence, Tuple, Union
@@ -295,6 +296,8 @@ class GenericParameterList(Command):
 
 class RV(Command):
     """Base class for RV configuration objects."""
+
+    __rv__ = ""
 
     @property
     def _template(self):

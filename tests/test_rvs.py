@@ -1,5 +1,5 @@
 import datetime as dt
-from typing import Union
+from typing import Sequence, Union
 
 import cftime
 import pytest
@@ -8,6 +8,7 @@ from pydantic.dataclasses import dataclass
 from pymbolic.primitives import Variable
 
 from ravenpy.config import commands as rc
+from ravenpy.config import options
 from ravenpy.config.rvs import RV, RVI, Config, optfield
 
 
@@ -120,3 +121,36 @@ def test_config(dummy_config):
     assert conf.model_config["populate_by_name"]
     # nt = cls(params=[0.5], Calendar="NOLEAP")
     # assert nt.air_snow_coeff == 0.5
+
+
+def test_custom_subclass(dummy_config, tmp_path):
+    """Test that users can subclass RV and Config."""
+    cls, P = dummy_config
+
+    # Custom RVI
+    class myRVI(RVI):
+        run_name: str = Field("myRunName", alias="RunName")
+
+    # Custom config with custom RVI
+    class MyConfig(myRVI, cls):
+        params: P = P()
+        enkf_mode: options.EnKFMode = optfield(alias="EnKFMode")
+
+    # Make sure rv files can be written
+    conf = MyConfig(EnKFMode="ENKF_SPINUP").set_params([0.5])
+    conf.write_rv(workdir=tmp_path)
+    assert conf.run_name == "myRunName"
+    assert "myRunName" in conf._rv("RVI")
+    assert "EnKFMode" not in conf._rv("RVI")
+
+
+def test_hru_filter():
+    """Test that unrecognized HRU types are filtered out."""
+    from ravenpy.config.emulators.gr4jcn import LakeHRU
+    from ravenpy.config.emulators.hbvec import HRUs, LandHRU
+
+    with pytest.warns(UserWarning):
+        hrus = HRUs([LandHRU(), LandHRU(), LakeHRU()])
+
+    # The GR4J lake HRU is not part of the HBVEC config.
+    assert len(hrus.root) == 2
