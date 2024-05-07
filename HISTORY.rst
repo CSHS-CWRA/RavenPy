@@ -2,20 +2,22 @@
 History
 =======
 
-0.15.0 (unreleased)
+0.14.1 (2024-05-07)
 -------------------
 * Upgraded `owslib` to `>=0.29.1`. (PR #358)
 * All operations that open NetCDF files or DAP links accept an `engine` argument. The default for all of these is `h5netcdf`. (PR #358)
 * Added `pydap` as an alternate backend for opening DAP links. (PR #358)
-* Make sure config and output paths are absolute
-* Fixed bug in `CustomOutput` command dating from the switch to Pydantic V2 in 0.13
-* Fixed bug in `Config.duplicate` dating from the switch to Pydantic V2 in 0.13
+* Make sure config and output paths are absolute (PR #360)
+* Fixed bug in `CustomOutput` command dating from the switch to Pydantic V2 in 0.13 (PR #360)
+* Fixed bug in `Config.duplicate` dating from the switch to Pydantic V2 in 0.13 (PR #367)
 
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Added some development dependencies that were missing to the `environment.yml`. (PR #358)
-* `test_climpred_hindcast_verif` is now skipped for Python3.10 builds. It seems to only fail on the particular version of Python. When examining the dependencies, other than the Python version (and ABI version), there are no differences in the environments between Python3.10 and Python3.11. My gut feeling points to an issue with `climpred`. (PR #358)
+* `test_climpred_hindcast_verif` is now skipped for Python3.10 builds. It seems to only fail on the particular version of Python. When examining the dependencies, other than the Python version (and ABI version), there are no differences in the environments between Python3.10 and Python3.11. Possibly an issue with `climpred`. (PR #358)
 * Temporarily disabled tests for macOS on GitHub due to architecture changes. (PR #358)
+* Pinned `pyogrio` below v0.8.0 until `geopandas` supports it. (PR #363)
+* Updated linting dependencies to the latest versions. (PR #363)
 
 0.14.0 (2024-03-13)
 -------------------
