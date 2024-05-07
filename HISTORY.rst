@@ -15,6 +15,8 @@ Internal changes
 * Added some development dependencies that were missing to the `environment.yml`. (PR #358)
 * `test_climpred_hindcast_verif` is now skipped for Python3.10 builds. It seems to only fail on the particular version of Python. When examining the dependencies, other than the Python version (and ABI version), there are no differences in the environments between Python3.10 and Python3.11. My gut feeling points to an issue with `climpred`. (PR #358)
 * Temporarily disabled tests for macOS on GitHub due to architecture changes. (PR #358)
+* Pinned `pyogrio` below v0.8.0 until `geopandas` supports it.
+* Updated linting dependencies to the latest versions.
 
 0.14.0 (2024-03-13)
 -------------------
