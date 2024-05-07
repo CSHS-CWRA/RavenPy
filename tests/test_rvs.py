@@ -42,7 +42,7 @@ def test_rvi_datetime():
         rvi = RVI(start_date=(dt.datetime(1990, 1, 1),))
 
 
-def test_duplicate():
+def test_duplicate_simple():
     conf = Config(start_date="1990-01-01")
 
     # Updating values with an alias and an attribute name
@@ -51,6 +51,13 @@ def test_duplicate():
     assert isinstance(out.start_date, cftime.datetime)
     assert out.duration == 10
     assert out.debug_mode
+
+
+def test_duplicate_emulator(gr4jcn_config):
+    conf, params = gr4jcn_config
+    conf.duplicate()
+
+    conf.duplicate(params=params)
 
 
 def test_set_params():
@@ -65,19 +72,14 @@ def test_set_params():
             alias="RainSnowTransition",
         )
 
-    # Assignment through instantiation
-    # exp = MySymbolicEmulator(params=[0.5])
-    #    assert exp.rain_snow_transition.temp == 0.5
-
     # Assignment through set_params -> new instance
     s = MySymbolicEmulator()
     num = s.set_params([0.5])
     assert num.rain_snow_transition.temp == 0.5
 
-    # Attribute assignment
-    # s.params = [0.5]
-    # assert s.rain_snow_transition == exp.rain_snow_transition
-    # assert s.rvp == exp.rvp
+    s = MySymbolicEmulator()
+    num = s.set_params({"X01": 0.5})
+    assert num.rain_snow_transition.temp == 0.5
 
 
 def test_solution(get_local_testdata):
