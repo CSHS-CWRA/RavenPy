@@ -283,14 +283,14 @@ def run(
         )
 
     # Confirm configdir exists
-    configdir = Path(configdir)
+    configdir = Path(configdir).absolute()
     if not configdir.exists():
         raise OSError("Workdir should include configuration files.")
 
     # Create outputdir
     outputdir = Path(outputdir or "output")
     if not outputdir.is_absolute():
-        outputdir = configdir / outputdir
+        outputdir = (configdir / outputdir).absolute()
 
     if overwrite and outputdir.exists():
         shutil.rmtree(str(outputdir))

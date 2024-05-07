@@ -120,7 +120,7 @@ def units_transform(source, target, context="hydro"):
     context : str, optional
         Context of unit conversion. Default: "hydro".
     """
-    from xclim.core.units import convert_units_to, units
+    from xclim.core.units import convert_units_to
 
     b = convert_units_to(0 * source, target, context)
     a = convert_units_to(1 * source, target, context) - b
