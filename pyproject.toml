@@ -121,10 +121,10 @@ docs = [
 gis = [
   "affine",
   "fiona >=1.9",
-  "geopandas >=0.13.0",
+  "geopandas >=0.14.0",
   "gdal",
   "lxml",
-  "pyogrio",
+  "pyogrio <0.8.0", # pyogrio 0.8.0 is not compatible with geopandas
   "pyproj >=3.0.0",
   "rasterio",
   "rioxarray",
