@@ -2,22 +2,27 @@
 History
 =======
 
-0.13 (2023-01-10)
------------------
-* Fixed problem with scalar elevation in netCDF files parsed with `nc_specs` (issue #279, PR #323)
-* Added notebook on sensitivity analysis (PR #320)
-* Updated Notebooks 03 and 04 (PR #319)
-* Upgrade to pydantic v2 (PR #326)
-* Pin cf-xarray for Python3.8 (PR #325)
-* Fix Coveralls Workflows (PR #328)
-* Fix notebook execution (PR #329)
-* Refactor and simplify testing data fetching (PR #332)
+0.13.1 (2024-05-07)
+-------------------
+* Fixed buggy `CustomOutput` command. (PR #360)
+* Make sure config and output paths are absolute. (PR #360)
+
+0.13.0 (2023-01-10)
+-------------------
+* Fixed problem with scalar elevation in netCDF files parsed with `nc_specs`. (issue #279, PR #323)
+* Added notebook on sensitivity analysis. (PR #320)
+* Updated Notebooks 03 and 04. (PR #319)
+* Upgrade to `pydantic` v2.0. (PR #326)
+* Pin `cf-xarray` for Python3.8. (PR #325)
+* Fix `Coveralls` Workflows. (PR #328)
+* Fix notebook execution. (PR #329)
+* Refactor and simplify testing data fetching. (PR #332)
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
-* Update to Pydantic v2.
-* Added `h5netcdf` as a core dependency to provide a stabler backend for `xarray.open_dataset`.
-* Switched from `autodoc_pydantic` to `autodoc-pydantic` for `pydantic` v2.0+ support in documentation.
+* Update to `pydantic` v2.0. (PR #326)
+* Added `h5netcdf` as a core dependency to provide a stabler backend for `xarray.open_dataset`. (PR #332)
+* Switched from `autodoc_pydantic` to `autodoc-pydantic` for `pydantic` v2.0+ support in documentation. (PR #326)
 
 Internal changes
 ^^^^^^^^^^^^^^^^

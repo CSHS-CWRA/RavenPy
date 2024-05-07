@@ -9,11 +9,27 @@ from pydantic import Field
 
 from ravenpy.config import commands as rc
 from ravenpy.config import options as o
-from ravenpy.config.base import RV
+from ravenpy.config.base import RV, optfield
 
 salmon_land_hru_1 = dict(
     area=4250.6, elevation=843.0, latitude=54.4848, longitude=-123.3659, hru_type="land"
 )
+
+
+def test_custom_ouputs():
+    class Test(RV):
+        co: Sequence[rc.CustomOutput] = optfield(alias="CustomOutput")
+
+    co = rc.CustomOutput(
+        time_per="YEARLY",
+        stat="AVERAGE",
+        variable="PRECIP",
+        space_agg="ENTIRE_WATERSHED",
+    )
+    assert (
+        Test(co=[co]).to_rv().strip()
+        == ":CustomOutput         YEARLY AVERAGE PRECIP ENTIRE_WATERSHED"
+    )
 
 
 def test_evaluation_metrics():

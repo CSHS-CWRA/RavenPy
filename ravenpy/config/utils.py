@@ -58,7 +58,9 @@ def nc_specs(
     else:
         raise ValueError("NetCDF file not found.")
 
-    if isinstance(alt_names, str):
+    if alt_names is None:
+        alt_names = ()
+    elif isinstance(alt_names, str):
         alt_names = (alt_names,)
 
     attrs = {

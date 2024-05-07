@@ -162,7 +162,7 @@ class EvaluationPeriod(LineCommand):
     end: dt.date
 
 
-class CustomOutput(FlatCommand):
+class CustomOutput(LineCommand):
     """
     Create custom output file to track a single variable, parameter or forcing function over time at a number of
     basins, HRUs, or across the watershed.
@@ -751,7 +751,10 @@ class Gauge(FlatCommand):
             forcings.difference_update(data)
 
         if len(data) == 0:
-            raise ValueError("No data found in netCDF files.")
+            raise ValueError(
+                "No data found in netCDF files. Check that variable names follow CF conventions, "
+                "or if not, provide `alt_names` mapping Raven data types to variable names."
+            )
 
         # Default Gauge name
         attrs["name"] = attrs.get("name", f"Gauge_{idx}")
