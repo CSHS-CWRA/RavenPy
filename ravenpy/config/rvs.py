@@ -279,7 +279,7 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
 
     @field_validator("params", mode="before")
     @classmethod
-    def _cast_to_dataclass(cls, data: dict | Sequence):
+    def _cast_to_dataclass(cls, data: Union[Dict, Sequence]):
         """Cast params to a dataclass."""
         # Needed because pydantic v2 does not cast tuples automatically.
         if data is not None:
@@ -297,7 +297,7 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
         """Some configuration parameters should be updated with user given arguments, not overwritten."""
         return {**cls.model_fields[info.field_name].default, **v}
 
-    def set_params(self, params: Sequence | dict) -> "Config":
+    def set_params(self, params: Union[Dict, Sequence]) -> "Config":
         """Return a new instance of Config with params frozen to their numerical values."""
         # Create params with numerical values
         if not self.is_symbolic:
