@@ -124,7 +124,7 @@ gis = [
   "geopandas >=0.14.0",
   "gdal",
   "lxml",
-  "pyogrio <0.8.0", # pyogrio 0.8.0 is not compatible with geopandas
+  "pyogrio <0.9.0", # pyogrio 0.8.0 is not compatible with geopandas
   "pyproj >=3.0.0",
   "rasterio",
   "rioxarray",
