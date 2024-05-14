@@ -2,6 +2,10 @@
 History
 =======
 
+0.15.0 (unreleased)
+-------------------
+* Fixed bug in `Config.duplicate` dating from the switch to Pydantic V2 in 0.13 (PR #367)
+
 0.14.1 (2024-05-07)
 -------------------
 * Upgraded `owslib` to `>=0.29.1`. (PR #358)
