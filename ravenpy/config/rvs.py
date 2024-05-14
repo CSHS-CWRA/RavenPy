@@ -279,12 +279,17 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
 
     @field_validator("params", mode="before")
     @classmethod
-    def _cast_to_dataclass(cls, data):
+    def _cast_to_dataclass(cls, data: Union[Dict, Sequence]):
         """Cast params to a dataclass."""
         # Needed because pydantic v2 does not cast tuples automatically.
-        if data is not None and not is_dataclass(data):
+        if data is not None:
+            if is_dataclass(data):
+                return data
+
+            if isinstance(data, dict):
+                return cls.model_fields["params"].annotation(**data)
+
             return cls.model_fields["params"].annotation(*data)
-        return data
 
     @field_validator("global_parameter", mode="before")
     @classmethod
@@ -292,23 +297,8 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
         """Some configuration parameters should be updated with user given arguments, not overwritten."""
         return {**cls.model_fields[info.field_name].default, **v}
 
-    # @model_validator(mode="after")
-    # def _parse_symbolic(self):
-    #     """If params is numerical, convert symbolic expressions from other fields.
-    #     """
-    #
-    #     if self.params is not None:
-    #         p = asdict(self.params)
-    #
-    #         if not is_symbolic(p):
-    #             for key in self.model_fields.keys():
-    #                 if key != "params":
-    #                     setattr(self, key, parse_symbolic(getattr(self, key), **p))
-    #
-    #     return self
-
-    def set_params(self, params) -> "Config":
-        """Return a new instance of Config with params set to their numerical values."""
+    def set_params(self, params: Union[Dict, Sequence]) -> "Config":
+        """Return a new instance of Config with params frozen to their numerical values."""
         # Create params with numerical values
         if not self.is_symbolic:
             raise ValueError(
@@ -316,14 +306,13 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
                 "Leave `params` to its default value when instantiating the emulator configuration."
             )
 
-        num_p = self.model_fields["params"].annotation(*params)
+        p = self.__class__._cast_to_dataclass(params)
 
         # Parse symbolic expressions using numerical params values
-        out = parse_symbolic(self.__dict__, **asdict(num_p))
-        out["params"] = num_p
+        out = parse_symbolic(self.__dict__, **asdict(p))
+        out["params"] = p
 
         # Instantiate config class
-        # Note: `construct` skips validation. benchmark to see if it speeds things up.
         return self.__class__.model_construct(**out)
 
     def set_solution(self, fn: Path, timestamp: bool = True) -> "Config":
