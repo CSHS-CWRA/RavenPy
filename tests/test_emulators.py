@@ -4,7 +4,11 @@ import numpy as np
 import pytest
 import xarray as xr
 from packaging.version import Version
-from raven_hydro import __raven_version__
+
+try:
+    from raven_hydro import __raven_version__
+except ImportError:
+    __raven_version__ = "0"
 
 from ravenpy import Emulator
 from ravenpy.config import commands as rc
