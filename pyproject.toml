@@ -47,7 +47,7 @@ dependencies = [
   "numpy",
   "owslib >=0.29.1",
   "pandas >=2.2.0",
-  "pint >=0.20",
+  "pint >=0.20,<0.24",
   "platformdirs",
   "pydantic >=2.0",
   "pydap",

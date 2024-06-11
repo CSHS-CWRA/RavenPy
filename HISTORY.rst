@@ -5,6 +5,7 @@ History
 0.15.0 (unreleased)
 -------------------
 * Fixed bug in `Config.duplicate` dating from the switch to Pydantic V2 in 0.13 (PR #367)
+* Pinned `pint` below version 0.24 due to a breaking change in their API.
 
 0.14.1 (2024-05-07)
 -------------------
