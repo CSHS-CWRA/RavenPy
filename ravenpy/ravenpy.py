@@ -325,7 +325,7 @@ def run(
         )
 
     if returncode != 0:
-        raise OSError(f"Raven segfaulted : \n{stdout}")
+        raise OSError(f"Raven Error (code: {returncode}): \n{stdout}\n{stderr}")
 
     return outputdir
 
