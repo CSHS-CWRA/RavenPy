@@ -1,5 +1,5 @@
 [build-system]
-requires = ["flit_core >=3.8,<4"]
+requires = ["flit_core >=3.9,<4"]
 build-backend = "flit_core.buildapi"
 
 [project]
@@ -38,13 +38,14 @@ dependencies = [
   "cftime",
   # cf-xarray is differently named on conda-forge
   "cf-xarray",
+  "click >=8.0.0",
   "climpred >=2.4.0",
   "dask",
   "haversine",
   "h5netcdf",
   "matplotlib",
   "netCDF4",
-  "numpy",
+  "numpy <2.0.0",
   "owslib >=0.29.1",
   "pandas >=2.2.0",
   "pint >=0.20,<0.24",
@@ -52,36 +53,36 @@ dependencies = [
   "pydantic >=2.0",
   "pydap",
   "pymbolic",
-  "raven-hydro >=0.2.4,<1.0",
+  "raven-hydro >=0.3.1,<1.0",
   "requests",
   "scipy",
   "spotpy",
   "statsmodels",
   "typing-extensions",
   "xarray >=2023.11.0",
-  "xclim >=0.48.2",
+  "xclim >=0.50.0",
   "xskillscore"
 ]
 
 [project.optional-dependencies]
 dev = [
-  "black >=24.2.0",
+  "black >=24.4.2",
   "bump2version",
-  "coverage",
-  "coveralls",
+  "coverage >=7.5.0",
+  "coveralls >=4.0.0",
   "filelock",
   "flake8 >=7.0.0",
-  "flit",
+  "flit >=3.9.0",
   "holoviews",
   "hvplot",
   "isort >=5.13.2",
   "mypy",
-  "pre-commit",
-  "pytest",
-  "pytest-cov",
+  "pre-commit >=3.5.0",
+  "pytest >=7.0.0",
+  "pytest-cov >=5.0.0",
   "pytest-xdist >=3.2.0",
   "setuptools >=68.0",
-  "tox >=4.5",
+  "tox >=4.15.1",
   "watchdog",
   "wheel >=0.42.0"
 ]
@@ -111,7 +112,7 @@ docs = [
   "pymetalink",
   "salib",
   "s3fs",
-  "sphinx",
+  "sphinx >=7.0.0",
   "sphinx-click",
   "sphinx-codeautolink",
   "sphinx-copybutton",
@@ -122,7 +123,7 @@ gis = [
   "affine",
   "fiona >=1.9",
   "geopandas >=0.14.0",
-  "gdal",
+  "gdal >=3.1",
   "lxml",
   "pyogrio <0.8.0", # pyogrio 0.8.0 is not compatible with geopandas
   "pyproj >=3.0.0",
@@ -146,9 +147,10 @@ ravenpy = "ravenpy.cli:main"
 
 [tool.black]
 target-version = [
-  "py38",
   "py39",
-  "py310"
+  "py310",
+  "py311",
+  "py312"
 ]
 
 [tool.coverage.run]
@@ -190,7 +192,7 @@ exclude = [
 
 [tool.isort]
 profile = "black"
-py_version = 38
+py_version = 39
 append_only = true
 
 [tool.mypy]

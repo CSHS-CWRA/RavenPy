@@ -4,11 +4,11 @@ channels:
 - defaults
 dependencies:
   - python >=3.9,<3.10  # fixed to reduce solver time
-  - raven-hydro >=0.2.4,<1.0
+  - raven-hydro >=0.3.1,<1.0
   - autodoc-pydantic
-  - click
+  - click >=8.0.0
 #  - clisops  # mocked
-  - gdal
+  - gdal >=3.1
 # Needed for notebooks/HydroShare_integration.ipynb
 # See: https://github.com/CSHS-CWRA/RavenPy/pull/326
 #  - "hsclient",
@@ -20,13 +20,14 @@ dependencies:
   - jupytext
   - nbsphinx
 #  - netCDF4  # mocked
+  - numpy <2.0.0
   - notebook
   - pandoc
   - pydantic >=2.0
   - pygments
   - salib
   - seaborn
-  - sphinx
+  - sphinx >=7.0.0
   - sphinx-autoapi
   - sphinx-click
   - sphinx-codeautolink
