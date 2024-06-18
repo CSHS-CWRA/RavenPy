@@ -8,7 +8,10 @@ from packaging.version import Version
 try:
     from raven_hydro import __raven_version__
 except ImportError:
-    warnings.warn(UserWarning, "The `raven-hydro` library is not installed. Setting '__raven_version__' to '0'.")
+    warnings.warn(
+        UserWarning,
+        "The `raven-hydro` library is not installed. Setting '__raven_version__' to '0'.",
+    )
     __raven_version__ = "0"
 
 from ravenpy import Emulator
