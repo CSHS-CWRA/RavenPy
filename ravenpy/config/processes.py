@@ -1,5 +1,6 @@
+from collections.abc import Sequence
 from textwrap import dedent, indent
-from typing import Literal, Optional, Sequence, Tuple
+from typing import Literal, Optional, Tuple
 
 from .base import Sym
 from .commands import Command, Process
@@ -217,7 +218,7 @@ class Split(Process):
     """"""
 
     p: float = None
-    to: Tuple[str, str]
+    to: tuple[str, str]
 
 
 class Convolve(Process):

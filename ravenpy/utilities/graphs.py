@@ -7,8 +7,9 @@ The following graphs can be plotted:
     - spaghetti_annual_hydrograph
 """
 
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence, Union
+from typing import Union
 
 import matplotlib.pyplot
 import numpy as np

@@ -3,7 +3,7 @@ Created on Wed Jul 29 09:16:06 2015
 @author: Michael Schramm
 """
 
-from typing import Optional, Tuple, Union
+from typing import Optional, Union
 
 import numpy as np
 from scipy.stats import norm
@@ -13,7 +13,7 @@ from scipy.stats import norm
 
 def mk_test_calc(
     x: np.ndarray, alpha: float = 0.05
-) -> Optional[Tuple[str, float, float, float]]:
+) -> Optional[tuple[str, float, float, float]]:
     """Make test calculation.
 
     This function is derived from code originally posted by Sat Kumar Tomer

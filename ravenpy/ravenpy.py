@@ -188,8 +188,8 @@ class EnsembleReader:
         self,
         *,
         run_name: Optional[str] = None,
-        paths: Optional[List[Union[str, os.PathLike]]] = None,
-        runs: List[OutputReader] = None,
+        paths: Optional[list[Union[str, os.PathLike]]] = None,
+        runs: list[OutputReader] = None,
         dim: str = "member",
     ):
         """

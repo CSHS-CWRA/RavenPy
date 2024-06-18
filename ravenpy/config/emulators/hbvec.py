@@ -1,4 +1,5 @@
-from typing import Dict, Literal, Sequence, Union
+from collections.abc import Sequence
+from typing import Dict, Literal, Union
 from warnings import warn
 
 from pydantic import Field, field_validator
@@ -75,7 +76,7 @@ class HBVEC(Config):
 
     params: P = P()
     hrus: HRUs = Field([LandHRU()], alias="HRUs")
-    netcdf_attribute: Dict[str, str] = {"model_id": "HBVEC"}
+    netcdf_attribute: dict[str, str] = {"model_id": "HBVEC"}
     sub_basins: rc.SubBasins = Field([rc.SubBasin()], alias="SubBasins")
     write_netcdf_format: bool = Field(True, alias="WriteNetcdfFormat")
     time_step: Union[float, str] = Field(1.0, alias="TimeStep")
@@ -157,7 +158,7 @@ class HBVEC(Config):
     rain_snow_transition: rc.RainSnowTransition = Field(
         {"temp": P.X01, "delta": 2}, alias="RainSnowTransition"
     )
-    global_parameter: Dict = Field(
+    global_parameter: dict = Field(
         {
             "AdiabaticLapse": P.X13,
             "SNOW_SWI": P.X04,

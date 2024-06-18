@@ -1,8 +1,9 @@
 import tempfile
 import warnings
+from collections.abc import Sequence
 from dataclasses import astuple
 from pathlib import Path
-from typing import Sequence, Union
+from typing import Union
 
 from spotpy.parameter import Uniform, generate
 

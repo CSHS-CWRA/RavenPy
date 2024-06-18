@@ -1,5 +1,6 @@
 import datetime as dt
-from typing import Sequence, Union
+from collections.abc import Sequence
+from typing import Union
 
 import cftime
 import pytest

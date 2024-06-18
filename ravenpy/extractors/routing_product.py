@@ -607,7 +607,7 @@ class GridWeightExtractor:
             self._nlat = self._input_data.geometry.count()  # only for consistency
 
     def _compute_grid_cell_polygons(self):
-        grid_cell_geom_gpd_wkt: List[List[List[ogr.Geometry]]] = [
+        grid_cell_geom_gpd_wkt: list[list[list[ogr.Geometry]]] = [
             [[] for ilon in range(self._nlon)] for ilat in range(self._nlat)
         ]
 

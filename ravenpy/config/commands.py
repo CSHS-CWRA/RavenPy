@@ -1,14 +1,15 @@
 import datetime as dt
 import itertools
 import re
+from collections.abc import Sequence
 from pathlib import Path
 from textwrap import dedent, indent
 from typing import (
+    Annotated,
     Any,
     Dict,
     Literal,
     Optional,
-    Sequence,
     Tuple,
     Union,
     get_args,
@@ -30,7 +31,6 @@ from pydantic import (
     field_validator,
     model_validator,
 )
-from typing_extensions import Annotated
 
 from ..config import options
 from .base import (
@@ -62,7 +62,7 @@ The syntax of those commands match as closely as possible the Raven documentatio
 
 INDENT = " " * 4
 VALUE_PADDING = 10
-T12 = Tuple[
+T12 = tuple[
     float,
     float,
     float,
@@ -424,8 +424,8 @@ class ChannelProfile(FlatCommand):
 
     name: str = "chn_XXX"
     bed_slope: float = 0
-    survey_points: Tuple[Tuple[float, float], ...] = ()
-    roughness_zones: Tuple[Tuple[float, float], ...] = ()
+    survey_points: tuple[tuple[float, float], ...] = ()
+    roughness_zones: tuple[tuple[float, float], ...] = ()
 
     def to_rv(self):
         template = """
@@ -464,7 +464,7 @@ class GridWeights(Command):
     number_grid_cells: int = Field(1, alias="NumberGridCells")
 
     class GWRecord(RootRecord):
-        root: Tuple[int, int, float] = (1, 0, 1.0)
+        root: tuple[int, int, float] = (1, 0, 1.0)
 
         def __iter__(self):
             return iter(self.root)
@@ -720,9 +720,9 @@ class Gauge(FlatCommand):
         fn: Union[str, Path, Sequence[Path]],
         data_type: Optional[Sequence[str]] = None,
         station_idx: int = 1,
-        alt_names: Optional[Dict[str, str]] = None,
+        alt_names: Optional[dict[str, str]] = None,
         mon_ave: bool = False,
-        data_kwds: Optional[Dict[str, Any]] = None,
+        data_kwds: Optional[dict[str, Any]] = None,
         engine: str = "h5netcdf",
         **kwds,
     ) -> "Gauge":
@@ -843,7 +843,7 @@ class ObservationData(Data, coerce_numbers_to_str=True):
 
 class HRUState(Record):
     hru_id: int = 1
-    data: Dict[str, Sym] = Field(default_factory=dict)
+    data: dict[str, Sym] = Field(default_factory=dict)
 
     def __str__(self):
         return ",".join(map(str, (self.hru_id,) + tuple(self.data.values())))
@@ -972,7 +972,7 @@ class BasinStateVariables(ListCommand):
 class SoilClasses(ListCommand):
     class SoilClass(Record):
         name: str
-        mineral: Optional[Tuple[float, float, float]] = None
+        mineral: Optional[tuple[float, float, float]] = None
         organic: Optional[float] = None
 
         @field_validator("mineral")
@@ -986,7 +986,7 @@ class SoilClasses(ListCommand):
 
         @field_validator("mineral")
         @classmethod
-        def validate_mineral_pct(cls, v: Tuple):
+        def validate_mineral_pct(cls, v: tuple):
             if v is not None:
                 for x in v:
                     assert (x >= 0) and (x <= 1), "Value should be in [0,1]."

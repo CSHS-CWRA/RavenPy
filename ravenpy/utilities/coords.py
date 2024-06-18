@@ -1,5 +1,4 @@
 from dataclasses import fields
-from typing import Tuple
 
 import numpy as np
 import xarray as xr
@@ -49,7 +48,7 @@ def param(model):
 
 def infer_scale_and_offset(
     da: xr.DataArray, data_type: str, cumulative: bool = False
-) -> Tuple[float, float]:
+) -> tuple[float, float]:
     """Return scale and offset parameters from data.
 
     Infer scale and offset parameters describing the linear transformation from the units in file to Raven

@@ -1,4 +1,5 @@
-from typing import Dict, Literal, Sequence, Union
+from collections.abc import Sequence
+from typing import Dict, Literal, Union
 
 from pydantic import Field, field_validator
 from pydantic.dataclasses import dataclass
@@ -83,12 +84,12 @@ class GR4JCN(Config):
 
     params: P = P()
     hrus: HRUs = Field([LandHRU()], alias="HRUs")
-    netcdf_attribute: Dict[str, str] = {"model_id": "GR4JCN"}
+    netcdf_attribute: dict[str, str] = {"model_id": "GR4JCN"}
     sub_basins: rc.SubBasins = Field([rc.SubBasin()], alias="SubBasins")
     write_netcdf_format: bool = Field(True, alias="WriteNetcdfFormat")
     time_step: Union[float, str] = Field(1.0, alias="TimeStep")
     calendar: o.Calendar = Field("PROLEPTIC_GREGORIAN", alias="Calendar")
-    uniform_initial_conditions: Union[Dict[str, Sym], None] = Field(
+    uniform_initial_conditions: Union[dict[str, Sym], None] = Field(
         {"SOIL[0]": P.GR4J_X1 * 1000 / 2, "SOIL[1]": 15},
         alias="UniformInitialConditions",
     )
@@ -144,7 +145,7 @@ class GR4JCN(Config):
     rain_snow_transition: RainSnowTransition = Field(
         {"temp": 0, "delta": 1}, alias="RainSnowTransition"
     )
-    global_parameter: Dict[str, Sym] = Field(
+    global_parameter: dict[str, Sym] = Field(
         {
             "PRECIP_LAPSE": 0.0004,
             "ADIABATIC_LAPSE": 0.0065,

@@ -3,19 +3,21 @@
 import logging
 import tempfile
 from pathlib import Path
-from typing import Any, List, Tuple, Union
+from typing import Any, Union
 
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 import xarray as xr
 from haversine import haversine_vector
-from statsmodels.regression.linear_model import RegressionResults
 
 from ravenpy.config import Config
 from ravenpy.ravenpy import Emulator, EnsembleReader
 
 from . import coords
+
+# from statsmodels.regression.linear_model import RegressionResults
+
 
 LOGGER = logging.getLogger("PYWPS")
 
@@ -34,7 +36,7 @@ def regionalize(
     workdir: Union[str, Path] = None,
     overwrite: bool = False,
     **kwds,
-) -> Tuple[xr.DataArray, xr.Dataset]:
+) -> tuple[xr.DataArray, xr.Dataset]:
     """Perform regionalization for catchment whose outlet is defined by coordinates.
 
     Parameters
@@ -280,7 +282,7 @@ def regionalization_params(
     ungauged_properties: pd.DataFrame,
     filtered_params: pd.DataFrame,
     filtered_prop: pd.DataFrame,
-) -> List[float]:
+) -> list[float]:
     """Return the model parameters to use for the regionalization.
 
     Parameters
@@ -364,7 +366,7 @@ def IDW(qsims: xr.DataArray, dist: pd.Series) -> xr.DataArray:
 
 def multiple_linear_regression(
     source: pd.DataFrame, params: pd.DataFrame, target: pd.DataFrame
-) -> Tuple[List[Any], List[int]]:
+) -> tuple[list[Any], list[int]]:
     """Multiple Linear Regression for model parameters over catchment properties.
 
     Uses known catchment properties and model parameters to estimate model parameter over an

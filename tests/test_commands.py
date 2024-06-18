@@ -1,7 +1,8 @@
 import re
+from collections.abc import Sequence
 from shutil import copyfile
 from textwrap import dedent
-from typing import Sequence, Union
+from typing import Union
 
 import pytest
 import xarray as xr
