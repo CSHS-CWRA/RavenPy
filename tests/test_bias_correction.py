@@ -1,6 +1,6 @@
 import xarray as xr
 import xclim.sdba as sdba
-from xclim.core.calendar import convert_calendar
+from xarray.coding.calendar_ops import convert_calendar
 
 
 class TestBiasCorrect:

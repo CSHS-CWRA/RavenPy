@@ -18,7 +18,7 @@ class TestGraph:
         copyfile(raven_hydrograph, file)
 
         with xr.open_dataset(file) as ds:
-            ts = stats(ds.q_sim, op="max", freq="M")
+            ts = stats(ds.q_sim, op="max", freq="ME")
             with set_options(check_missing="skip"):
                 p = fit(ts)
             np.testing.assert_array_equal(p.isnull(), False)

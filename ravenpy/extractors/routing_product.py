@@ -859,7 +859,7 @@ def upstream_from_coords(
 
     # Find the outlet sub-basin ID
     out_sb = find_geometry_from_coord(lon, lat, df)
-    out_sb_id = int(out_sb["SubId"])
+    out_sb_id = int(out_sb["SubId"].iloc[0])
 
     # Find upstream sub-basins
     up_ids = upstream_from_id(out_sb_id, df)
