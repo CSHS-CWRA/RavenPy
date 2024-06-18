@@ -24,7 +24,7 @@ class TestNBGraphs:
         from xclim.indicators.generic import fit, stats
 
         with xr.open_dataset(get_local_testdata(self.hydrographs)) as ds:
-            ts = stats(ds.q_sim.load(), op="max", freq="M")
+            ts = stats(ds.q_sim.load(), op="max", freq="ME")
         with set_options(check_missing="skip"):
             params = fit(ts, dist="gamma")
         self.nbg.ts_fit_graph(ts, params)

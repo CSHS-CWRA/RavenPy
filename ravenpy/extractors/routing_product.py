@@ -420,7 +420,11 @@ class GridWeightExtractor:
 
             return row
 
-        # Remove duplicate HRU_IDs while making sure that we keed relevant DowSubId and Obs_NM values
+        # Remove duplicate HRU_IDs while making sure that we keep relevant DowSubId and Obs_NM values
+        # FIXME: DeprecationWarning: DataFrameGroupBy.apply operated on the grouping columns.
+        #  This behavior is deprecated, and in a future version of pandas the grouping columns will be
+        #  excluded from the operation. Either pass `include_groups=False` to exclude the groupings or
+        #  explicitly select the grouping columns after groupby to silence this warning.
         self._routing_data = self._routing_data.groupby(
             self._routing_id_field, group_keys=False
         ).apply(keep_only_valid_downsubid_and_obs_nm)
