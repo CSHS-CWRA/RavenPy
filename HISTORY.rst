@@ -2,7 +2,7 @@
 History
 =======
 
-0.15.0 (unreleased)
+0.15.0 (2024-06-20)
 -------------------
 * Pinned `pint` below version 0.24 due to a breaking change in their API. (PR #375)
 * Pinned `numpy` below v2.0.0 due to a breaking change in their API. (PR #378)
