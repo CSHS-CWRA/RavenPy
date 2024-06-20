@@ -1,7 +1,8 @@
 import datetime as dt
+from collections.abc import Sequence
 from dataclasses import asdict, is_dataclass
 from pathlib import Path
-from typing import Any, Dict, Optional, Sequence, Union
+from typing import Any, Dict, Optional, Union
 
 import cftime
 from pydantic import ConfigDict, Field, ValidationInfo, field_validator, model_validator
@@ -89,7 +90,7 @@ class RVI(RV):
 
     # Options
     write_netcdf_format: Optional[bool] = optfield(alias="WriteNetcdfFormat")
-    netcdf_attribute: Optional[Dict[str, str]] = optfield(alias="NetCDFAttribute")
+    netcdf_attribute: Optional[dict[str, str]] = optfield(alias="NetCDFAttribute")
 
     custom_output: Optional[Sequence[rc.CustomOutput]] = optfield(alias="CustomOutput")
     direct_evaporation: Optional[bool] = optfield(
@@ -183,7 +184,7 @@ class RVP(RV):
     )
 
     # TODO: create list of all available parameters to constrain key
-    global_parameter: Optional[Dict[str, Sym]] = Field({}, alias="GlobalParameter")
+    global_parameter: Optional[dict[str, Sym]] = Field({}, alias="GlobalParameter")
     rain_snow_transition: Optional[rc.RainSnowTransition] = optfield(
         alias="RainSnowTransition"
     )
@@ -204,7 +205,7 @@ class RVC(RV):
     basin_state_variables: Optional[rc.BasinStateVariables] = optfield(
         alias="BasinStateVariables"
     )
-    uniform_initial_conditions: Optional[Dict[str, Sym]] = optfield(
+    uniform_initial_conditions: Optional[dict[str, Sym]] = optfield(
         alias="UniformInitialConditions"
     )
 
@@ -279,7 +280,7 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
 
     @field_validator("params", mode="before")
     @classmethod
-    def _cast_to_dataclass(cls, data: Union[Dict, Sequence]):
+    def _cast_to_dataclass(cls, data: Union[dict, Sequence]):
         """Cast params to a dataclass."""
         # Needed because pydantic v2 does not cast tuples automatically.
         if data is not None:
@@ -297,7 +298,7 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
         """Some configuration parameters should be updated with user given arguments, not overwritten."""
         return {**cls.model_fields[info.field_name].default, **v}
 
-    def set_params(self, params: Union[Dict, Sequence]) -> "Config":
+    def set_params(self, params: Union[dict, Sequence]) -> "Config":
         """Return a new instance of Config with params frozen to their numerical values."""
         # Create params with numerical values
         if not self.is_symbolic:

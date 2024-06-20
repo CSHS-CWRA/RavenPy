@@ -1,4 +1,5 @@
-from typing import Dict, Literal, Sequence, Union
+from collections.abc import Sequence
+from typing import Dict, Literal, Union
 
 from pydantic import Field, field_validator
 from pydantic.dataclasses import dataclass
@@ -68,12 +69,12 @@ class HMETS(Config):
 
     params: P = P()
     hrus: HRUs = Field([ForestHRU()], alias="HRUs")
-    netcdf_attribute: Dict[str, str] = {"model_id": "HMETS"}
+    netcdf_attribute: dict[str, str] = {"model_id": "HMETS"}
     sub_basins: rc.SubBasins = Field([rc.SubBasin()], alias="SubBasins")
     write_netcdf_format: bool = Field(True, alias="WriteNetcdfFormat")
     time_step: Union[float, str] = Field(1.0, alias="TimeStep")
     calendar: o.Calendar = Field("PROLEPTIC_GREGORIAN", alias="Calendar")
-    uniform_initial_conditions: Dict[str, Sym] = Field(
+    uniform_initial_conditions: dict[str, Sym] = Field(
         {"SOIL[0]": P.TOPSOIL / 2, "SOIL[1]": P.PHREATIC / 2},
         alias="UniformInitialConditions",
     )
@@ -129,7 +130,7 @@ class HMETS(Config):
             },
         ]
     )
-    global_parameter: Dict[str, Sym] = Field(
+    global_parameter: dict[str, Sym] = Field(
         {
             "SNOW_SWI_MIN": P.SNOW_SWI_MIN,
             "SNOW_SWI_MAX": P.SNOW_SWI_MAX,

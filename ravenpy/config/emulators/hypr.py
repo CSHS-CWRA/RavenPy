@@ -1,5 +1,6 @@
+from collections.abc import Sequence
 from dataclasses import field, make_dataclass
-from typing import Dict, Sequence, Union
+from typing import Dict, Union
 
 from pydantic import Field, field_validator
 from pydantic.dataclasses import dataclass
@@ -99,7 +100,7 @@ class HYPR(Config):
         ],
         alias="HRUs",
     )
-    netcdf_attribute: Dict[str, str] = {"model_id": "HYPR"}
+    netcdf_attribute: dict[str, str] = {"model_id": "HYPR"}
     sub_basins: rc.SubBasins = Field([rc.SubBasin()], alias="SubBasins")
     write_netcdf_format: bool = Field(True, alias="WriteNetcdfFormat")
     time_step: Union[float, str] = Field(1.0, alias="TimeStep")
@@ -183,7 +184,7 @@ class HYPR(Config):
         alias="SoilProfiles",
     )
 
-    global_parameter: Dict = Field(
+    global_parameter: dict = Field(
         {
             "RAINSNOW_TEMP": P.X02,
             "RAINSNOW_DELTA": 0,

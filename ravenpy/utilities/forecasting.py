@@ -35,7 +35,7 @@ if not THREDDS_URL.endswith("/"):
 def climatology_esp(
     config,
     workdir: Union[str, Path] = None,
-    years: List[int] = None,
+    years: list[int] = None,
     overwrite: bool = False,
 ) -> EnsembleReader:
     """Ensemble Streamflow Prediction based on historical variability.
@@ -192,8 +192,8 @@ def warm_up(
 def hindcast_climatology_esp(
     config: Config,
     warm_up_duration: int,
-    years: List[int] = None,
-    hindcast_years: List[int] = None,
+    years: list[int] = None,
+    hindcast_years: list[int] = None,
     workdir: Union[str, Path] = None,
     overwrite: bool = False,
 ) -> xr.Dataset:

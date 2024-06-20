@@ -80,7 +80,7 @@ def parse_raven_messages(path):
         if m[0] == "SIMULATION COMPLETE":
             messages["SIMULATION COMPLETE"] = True
             continue
-        msg_type = m[0]
+        msg_type = str(m[0]).strip()
         msg = f"{m[1]} {m[2]}".strip()
         if msg == "Errors found in input data. See Raven_errors.txt for details":
             # Skip this one because it's a bit circular

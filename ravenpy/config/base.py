@@ -1,7 +1,8 @@
 import typing
+from collections.abc import Sequence
 from enum import Enum
 from textwrap import dedent, indent
-from typing import Any, Dict, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, Optional, Tuple, Union
 
 from pydantic import BaseModel, ConfigDict, Field, RootModel, model_validator
 from pymbolic.primitives import Expression, Variable
@@ -140,7 +141,7 @@ class _Command(BaseModel):
     def __str__(self):
         return self.to_rv()
 
-    def __subcommands__(self) -> Tuple[Dict[str, str], list]:
+    def __subcommands__(self) -> tuple[dict[str, str], list]:
         """Return dictionary of class attributes that are Raven models."""
         cmds = {}
         recs = []

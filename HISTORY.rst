@@ -4,8 +4,16 @@ History
 
 0.15.0 (unreleased)
 -------------------
+* Pinned `pint` below version 0.24 due to a breaking change in their API. (PR #375)
+* Pinned `numpy` below v2.0.0 due to a breaking change in their API. (PR #378)
+* Update `raven-hydro` to v0.3.1 and `RavenHydroFramework` to v3.8.1. (PR #378)
 * Fixed bug in `Config.duplicate` dating from the switch to Pydantic V2 in 0.13 (PR #367)
-* Pinned `pint` below version 0.24 due to a breaking change in their API.
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Synchronize several dependencies between `pyproject.toml`, `environment*.yml`, and `tox.ini`. (PR #378)
+* Drop the code formatting conventions for Python3.8, extend to Python3.11 and Python3.12. (PR #378)
+* Addresses a bunch of small warnings in the pytest output. (PR #378)
 
 0.14.1 (2024-05-07)
 -------------------

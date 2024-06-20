@@ -1,4 +1,5 @@
-from typing import Dict, Literal, Sequence, Union
+from collections.abc import Sequence
+from typing import Dict, Literal, Union
 
 from pydantic import Field, field_validator
 from pydantic.dataclasses import dataclass
@@ -60,7 +61,7 @@ class Mohyse(Config):
 
     params: P = P()
     hrus: HRUs = Field([LandHRU()], alias="HRUs")
-    netcdf_attribute: Dict[str, str] = {"model_id": "Mohyse"}
+    netcdf_attribute: dict[str, str] = {"model_id": "Mohyse"}
     sub_basins: rc.SubBasins = Field([rc.SubBasin()], alias="SubBasins")
     write_netcdf_format: bool = Field(True, alias="WriteNetcdfFormat")
     time_step: Union[float, str] = Field(1.0, alias="TimeStep")
@@ -87,7 +88,7 @@ class Mohyse(Config):
         ],
         alias="SoilProfiles",
     )
-    global_parameter: Dict = Field(
+    global_parameter: dict = Field(
         {"RAINSNOW_TEMP": -2, "TOC_MULTIPLIER": 1, "MOHYSE_PET_COEFF": P.X01},
         alias="GlobalParameter",
     )

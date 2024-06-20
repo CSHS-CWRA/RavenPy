@@ -52,8 +52,8 @@ def get_CASPAR_dataset(
     date: dt.datetime,
     thredds: str = THREDDS_URL,
     directory: str = "dodsC/birdhouse/disk2/caspar/daily/",
-) -> Tuple[
-    xr.Dataset, List[Union[Union[DatetimeIndex, Series, Timestamp, Timestamp], Any]]
+) -> tuple[
+    xr.Dataset, list[Union[Union[DatetimeIndex, Series, Timestamp, Timestamp], Any]]
 ]:
     """Return CASPAR dataset.
 
@@ -104,8 +104,8 @@ def get_ECCC_dataset(
     climate_model: str,
     thredds: str = THREDDS_URL,
     directory: str = "dodsC/datasets/forecasts/eccc_geps/",
-) -> Tuple[
-    Dataset, List[Union[Union[DatetimeIndex, Series, Timestamp, Timestamp], Any]]
+) -> tuple[
+    Dataset, list[Union[Union[DatetimeIndex, Series, Timestamp, Timestamp], Any]]
 ]:
     """Return latest GEPS forecast dataset.
 

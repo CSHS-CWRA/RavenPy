@@ -1,5 +1,6 @@
+from collections.abc import Sequence
 from dataclasses import field, make_dataclass
-from typing import Dict, Sequence, Tuple, Union
+from typing import Dict, Tuple, Union
 
 from pydantic import Field, field_validator, model_validator
 from pydantic.dataclasses import dataclass
@@ -54,7 +55,7 @@ class BedRockHRU(HRU):
 class HRUs(rc.HRUs):
     """HRUs command for CanadianShield."""
 
-    root: Tuple[OrganicHRU, BedRockHRU]
+    root: tuple[OrganicHRU, BedRockHRU]
 
 
 class CanadianShield(Config):
@@ -66,7 +67,7 @@ class CanadianShield(Config):
 
     params: P = P()
     hrus: HRUs = Field([OrganicHRU(), BedRockHRU()], alias="HRUs")
-    netcdf_attribute: Dict[str, str] = {"model_id": "CanadianShield"}
+    netcdf_attribute: dict[str, str] = {"model_id": "CanadianShield"}
     sub_basins: rc.SubBasins = Field([rc.SubBasin()], alias="SubBasins")
     write_netcdf_format: bool = Field(True, alias="WriteNetcdfFormat")
     time_step: Union[float, str] = Field(1.0, alias="TimeStep")
@@ -159,7 +160,7 @@ class CanadianShield(Config):
         alias="VegetationClasses",
     )
 
-    global_parameter: Dict = Field(
+    global_parameter: dict = Field(
         {
             "SNOW_SWI": P.X15,
             "SNOW_SWI_MIN": P.X16,

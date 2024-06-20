@@ -420,7 +420,11 @@ class GridWeightExtractor:
 
             return row
 
-        # Remove duplicate HRU_IDs while making sure that we keed relevant DowSubId and Obs_NM values
+        # Remove duplicate HRU_IDs while making sure that we keep relevant DowSubId and Obs_NM values
+        # FIXME: DeprecationWarning: DataFrameGroupBy.apply operated on the grouping columns.
+        #  This behavior is deprecated, and in a future version of pandas the grouping columns will be
+        #  excluded from the operation. Either pass `include_groups=False` to exclude the groupings or
+        #  explicitly select the grouping columns after groupby to silence this warning.
         self._routing_data = self._routing_data.groupby(
             self._routing_id_field, group_keys=False
         ).apply(keep_only_valid_downsubid_and_obs_nm)
@@ -607,7 +611,7 @@ class GridWeightExtractor:
             self._nlat = self._input_data.geometry.count()  # only for consistency
 
     def _compute_grid_cell_polygons(self):
-        grid_cell_geom_gpd_wkt: List[List[List[ogr.Geometry]]] = [
+        grid_cell_geom_gpd_wkt: list[list[list[ogr.Geometry]]] = [
             [[] for ilon in range(self._nlon)] for ilat in range(self._nlat)
         ]
 
@@ -859,7 +863,7 @@ def upstream_from_coords(
 
     # Find the outlet sub-basin ID
     out_sb = find_geometry_from_coord(lon, lat, df)
-    out_sb_id = int(out_sb["SubId"])
+    out_sb_id = int(out_sb["SubId"].iloc[0])
 
     # Find upstream sub-basins
     up_ids = upstream_from_id(out_sb_id, df)

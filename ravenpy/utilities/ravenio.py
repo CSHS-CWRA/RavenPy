@@ -4,11 +4,11 @@ Tools for reading outputs and writing inputs for the Raven executable.
 
 import re
 from collections import OrderedDict
-from typing import Any, Dict
+from typing import Any
 
 
 # TODO: Implement section parser
-def parse_configuration(fn) -> Dict[str, Any]:
+def parse_configuration(fn) -> dict[str, Any]:
     """Parse Raven configuration file.
 
     Returns a dictionary keyed by parameter name.

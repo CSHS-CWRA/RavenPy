@@ -1,6 +1,7 @@
 import os
 import typing
-from typing import Optional, Sequence, Union
+from collections.abc import Sequence
+from typing import Optional, Union
 
 import cf_xarray  # noqa: F401
 import numpy as np

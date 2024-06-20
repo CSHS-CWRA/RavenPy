@@ -3,7 +3,7 @@
 import collections
 import logging
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import Optional, Union
 
 import geopandas
 import pandas as pd
@@ -86,7 +86,7 @@ def geom_transform(
 def generic_raster_clip(
     raster: Union[str, Path],
     output: Union[str, Path],
-    geometry: Union[Polygon, MultiPolygon, List[Union[Polygon, MultiPolygon]]],
+    geometry: Union[Polygon, MultiPolygon, list[Union[Polygon, MultiPolygon]]],
     touches: bool = False,
     fill_with_nodata: bool = True,
     padded: bool = True,
@@ -234,10 +234,15 @@ def generic_vector_reproject(
                     try:
                         geom = shape(feature["geometry"])
                         transformed = geom_transform(geom, source_crs, target_crs)
-                        feature["geometry"] = fiona.Geometry().from_dict(
-                            mapping(transformed)
-                        )
-                        sink.write(feature)
+                        transformed_feature = {
+                            "geometry": fiona.Geometry().from_dict(
+                                mapping(transformed)
+                            ),
+                            "properties": feature.__geo_interface__["properties"],
+                            "id": feature.__geo_interface__["id"],
+                            "type": feature.__geo_interface__["type"],
+                        }
+                        sink.write(transformed_feature)
                     except Exception as err:
                         LOGGER.exception(
                             f"{err}: Unable to reproject feature {feature}"

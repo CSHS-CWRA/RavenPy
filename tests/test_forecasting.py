@@ -68,7 +68,7 @@ def test_forecasting_GEPS(numeric_config, get_local_testdata):
     """Test to perform a forecast using auto-queried ECCC data aggregated on THREDDS."""
     name, wup = numeric_config
     if name != "GR4JCN":
-        pytest.skip()
+        pytest.skip("Test only for GR4JCN model.")
 
     geps = get_local_testdata("eccc_forecasts/geps_watershed.nc")
 

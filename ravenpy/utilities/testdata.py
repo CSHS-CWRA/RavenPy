@@ -4,9 +4,10 @@ import hashlib
 import logging
 import re
 import warnings
+from collections.abc import Sequence
 from pathlib import Path
 from shutil import copy
-from typing import List, Optional, Sequence, Union
+from typing import List, Optional, Union
 from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin
 from urllib.request import urlretrieve
@@ -40,7 +41,7 @@ def get_local_testdata(
     temp_folder: Union[str, Path],
     branch: str = "master",
     _local_cache: Union[str, Path] = _default_cache_dir,
-) -> Union[Path, List[Path]]:
+) -> Union[Path, list[Path]]:
     """Copy specific testdata from a default cache to a temporary folder.
 
     Return files matching `pattern` in the default cache dir and move to a local temp folder.
@@ -175,7 +176,7 @@ def get_file(
     github_url: str = "https://github.com/Ouranosinc/raven-testdata",
     branch: str = "master",
     cache_dir: Union[str, Path] = _default_cache_dir,
-) -> Union[Path, List[Path]]:
+) -> Union[Path, list[Path]]:
     """
     Return a file from an online GitHub-like repository.
     If a local copy is found then always use that to avoid network traffic.
@@ -224,7 +225,7 @@ def query_folder(
     pattern: Optional[str] = None,
     github_url: str = "https://github.com/Ouranosinc/raven-testdata",
     branch: str = "master",
-) -> List[str]:
+) -> list[str]:
     """
     Lists the files available for retrieval from a remote git repository with get_file.
     If provided a folder name, will perform a globbing-like filtering operation for parent folders.
