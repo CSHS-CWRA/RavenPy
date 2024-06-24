@@ -44,7 +44,7 @@ dependencies = [
   "haversine",
   "h5netcdf",
   "matplotlib",
-  "netCDF4 <=1.6.5",
+  "netCDF4 <=1.7.1",
   "numpy <2.0.0",
   "owslib >=0.29.1",
   "pandas >=2.2.0",
