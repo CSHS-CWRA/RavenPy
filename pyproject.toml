@@ -45,7 +45,7 @@ dependencies = [
   "h5netcdf",
   "matplotlib",
   "netCDF4 <=1.6.5",
-  "numpy <2.0.0",
+  "numpy <3.0.0",
   "owslib >=0.29.1",
   "pandas >=2.2.0",
   "pint >=0.20,<0.24",
