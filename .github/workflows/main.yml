@@ -157,12 +157,15 @@ jobs:
           disable-sudo: true
           egress-policy: block
           allowed-endpoints: >
+            api.github.com:443
             conda.anaconda.org:443
             files.pythonhosted.org:443
             github.com:443
             objects.githubusercontent.com:443
+            pavics.ouranos.ca:443
             pypi.org:443
             raw.githubusercontent.com:443
+            test.opendap.org:80
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       - name: Patch Environment File
