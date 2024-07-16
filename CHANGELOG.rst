@@ -127,7 +127,7 @@ Internal changes
 * Documentation built on ReadTheDocs is now set to `fail_on_warning`.
 
 v0.12.0 (2023-05-25)
--------------------
+--------------------
 
 This release includes major breaking changes. It completely overhauls how models are defined, and how to run
 simulations, and any code relying on the previous release will most likely break. Please check the documentation
@@ -238,12 +238,12 @@ v0.7.8 (2022-01-14)
 * Circumvented a bug in GitHub CI that was causing tests to fail at collection stage.
 
 v0.7.5 (2021-09-10)
-------------------
+-------------------
 
 * Update test so that it works with xclim 0.29.
 
 v0.7.4 (2021-09-02)
-------------------
+-------------------
 
 * Pinned climpred below v2.1.6.
 
