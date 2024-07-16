@@ -8,7 +8,7 @@ name: "Bump Patch Version"
 on:
   push:
     branches:
-      - main
+      - master
     paths-ignore:
       - .cruft.json
       - .editorconfig
@@ -29,7 +29,7 @@ on:
       - pyproject.toml
       - tests/**.py
       - tox.ini
-      - ravenpy/__init__.py
+      - src/ravenpy/__init__.py
   workflow_dispatch:
 
 permissions:

@@ -3,7 +3,7 @@ name: Publish Python 🐍 distributions 📦 to TestPyPI
 on:
   push:
     tags:
-      - '*'
+      - 'v*'
 
 permissions:
   contents: read
@@ -11,11 +11,11 @@ permissions:
 jobs:
   build-n-publish-testpypi:
     name: Build and publish Python 🐍 distributions 📦 to TestPyPI
-    runs-on: ubuntu-latest
     environment: staging
     permissions:
       # IMPORTANT: this permission is mandatory for trusted publishing
       id-token: write
+    runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
@@ -27,19 +27,20 @@ jobs:
             github.com:443
             pypi.org:443
             test.pypi.org:443
-      - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Checkout Repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - name: Set up Python3
+        uses: actions/setup-python@39cd14951b08e74b54015e9e001cdefcf80e669f # v5.1.1
         with:
           python-version: "3.x"
-      - name: Install packaging libraries
-        run: pip install flit
+      - name: Install CI libraries
+        run: |
+          python -m pip install -r CI/requirements_ci.txt
       - name: Build a binary wheel and a source tarball
-        run: flit build
+        run: |
+          python -m flit build
       - name: Publish distribution 📦 to Test PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@ec4db0b4ddc65acdf4bff5fa45ac92d78b56bdf0 # v1.9.0
         with:
-          user: __token__
-          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
           repository-url: https://test.pypi.org/legacy/
           skip-existing: true
