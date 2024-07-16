@@ -75,15 +75,15 @@ This package was created with Cookiecutter_ and the `Ouranosinc/cookiecutter-pyp
         :alt: Documentation Status
 
 .. |license| image:: https://img.shields.io/github/license/CSHS-CWRA/RavenPy.svg
-        :target: https://github.com/CSHS-CWRA/RavenPy/blob/main/LICENSE
+        :target: https://github.com/CSHS-CWRA/RavenPy/blob/master/LICENSE
         :alt: License
 
 .. |ossf| image:: https://api.securityscorecards.dev/projects/github.com/CSHS-CWRA/RavenPy/badge
         :target: https://securityscorecards.dev/viewer/?uri=github.com/CSHS-CWRA/RavenPy
         :alt: OpenSSF Scorecard
 
-.. |pre-commit| image:: https://results.pre-commit.ci/badge/github/CSHS-CWRA/RavenPy/main.svg
-        :target: https://results.pre-commit.ci/latest/github/CSHS-CWRA/RavenPy/main
+.. |pre-commit| image:: https://results.pre-commit.ci/badge/github/CSHS-CWRA/RavenPy/master.svg
+        :target: https://results.pre-commit.ci/latest/github/CSHS-CWRA/RavenPy/master
         :alt: pre-commit.ci status
 
 .. |pypi| image:: https://img.shields.io/pypi/v/RavenPy.svg
