@@ -52,8 +52,8 @@ This package was created with Cookiecutter_ and the `Ouranosinc/cookiecutter-pyp
 .. _Cookiecutter: https://github.com/cookiecutter/cookiecutter
 .. _Ouranos: https://www.ouranos.ca
 .. _Ouranosinc/cookiecutter-pypackage: https://github.com/Ouranosinc/cookiecutter-pypackage
-.. _Raven: http://raven.uwaterloo.ca
-.. _docs: https://www.civil.uwaterloo.ca/raven/files/v3.7/RavenManual_v3.7.pdf
+.. _Raven: https://raven.uwaterloo.ca
+.. _docs: https://raven.uwaterloo.ca/files/v3.8/RavenManual_v3.8.pdf
 .. _installation docs: https://ravenpy.readthedocs.io/en/latest/installation.html
 .. _raven-hydro: https://github.com/Ouranosinc/raven-hydro
 
@@ -71,7 +71,7 @@ This package was created with Cookiecutter_ and the `Ouranosinc/cookiecutter-pyp
         :alt: Coveralls
 
 .. |docs| image:: https://readthedocs.org/projects/RavenPy/badge/?version=latest
-        :target: https://RavenPy.readthedocs.io/en/latest/?version=latest
+        :target: https://ravenpy.readthedocs.io/en/latest/?version=latest
         :alt: Documentation Status
 
 .. |license| image:: https://img.shields.io/github/license/CSHS-CWRA/RavenPy.svg

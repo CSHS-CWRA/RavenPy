@@ -32,7 +32,7 @@ RavenPy can then be installed directly via its `conda-forge` package by running:
 
         (ravenpy) $ conda install -c conda-forge ravenpy
 
-This approach installs the `Raven <http://raven.uwaterloo.ca>`_ binary directly to your environment `PATH`, as well as installs all the necessary Python and C libraries supporting GIS functionalities.
+This approach installs the `Raven <https://raven.uwaterloo.ca>`_ binary directly to your environment `PATH`, as well as installs all the necessary Python and C libraries supporting GIS functionalities.
 
 Python Installation (pip)
 -------------------------
@@ -101,11 +101,11 @@ The sources for `RavenPy` can be obtained from the GitHub repo:
 
             git clone git://github.com/CSHS-CWRA/ravenpy
 
-    * Download the `tarball <https://github.com/CSHS-CWRA/RavenPy/tarball/main>`_:
+    * Download the `tarball <https://github.com/CSHS-CWRA/RavenPy/tarball/master>`_:
 
         .. code-block:: console
 
-            curl -OJL https://github.com/CSHS-CWRA/RavenPy/tarball/main
+            curl -OJL https://github.com/CSHS-CWRA/RavenPy/tarball/master
 
 #. Once you have a copy of the source, you can install it with:
 
