@@ -14,7 +14,7 @@ Types of Contributions
 Report Bugs
 ~~~~~~~~~~~
 
-Report bugs at https://github.com/CSHS-CWRA/ravenpy/issues.
+Report bugs at https://github.com/CSHS-CWRA/RavenPy/issues.
 
 If you are reporting a bug, please include:
 
@@ -40,170 +40,192 @@ RavenPy could always use more documentation, whether as part of the official Rav
 Submit Feedback
 ~~~~~~~~~~~~~~~
 
-The best way to send feedback is to file an issue at https://github.com/CSHS-CWRA/ravenpy/issues.
+The best way to send feedback is to file an issue at https://github.com/CSHS-CWRA/RavenPy/issues.
 
 If you are proposing a feature:
 
 * Explain in detail how it would work.
 * Keep the scope as narrow as possible, to make it easier to implement.
-* Remember that this is a volunteer-driven project, and that contributions
-  are welcome :)
+* Remember that this is a volunteer-driven project, and that contributions are welcome. :)
 
 Get Started!
 ------------
 
+.. note::
+
+    If you are new to using GitHub and `git`, please read `this guide <https://guides.github.com/activities/hello-world/>`_ first.
+
+.. warning::
+
+    Anaconda Python users: Due to the complexity of some packages, the default dependency solver can take a long time to resolve the environment. Consider running the following commands in order to speed up the process:
+
+        .. code-block:: console
+
+            conda install -n base conda-libmamba-solver
+            conda config --set solver libmamba
+
+        For more information, please see the following link: https://www.anaconda.com/blog/a-faster-conda-for-a-growing-community
+
+    Alternatively, you can use the `mamba <https://mamba.readthedocs.io/en/latest/index.html>`_ package manager, which is a drop-in replacement for ``conda``. If you are already using `mamba`, replace the following commands with ``mamba`` instead of ``conda``.
+
 Ready to contribute? Here's how to set up `ravenpy` for local development.
 
-1. Fork the `ravenpy` repo on GitHub.
-2. Clone your fork locally::
+#. First, clone the ``RavenPy`` repo locally.
 
-    $ git clone git@github.com:your_name_here/ravenpy.git
+    * If you are not a ``RavenPy`` collaborator, first fork the ``RavenPy`` repo on GitHub, then clone your fork locally.
 
-3. Install your local copy into a virtualenv. Assuming you have virtualenvwrapper installed, this is how you set up your fork for local development::
+        .. code-block:: console
 
-    $ mkvirtualenv ravenpy
-    $ cd ravenpy/
-    $ pip install -e ".[dev]"
+            git clone git@github.com:your_name_here/RavenPy.git
 
-4. To ensure a consistent style, please install the pre-commit hooks to your repo::
+    * If you are a ``RavenPy`` collaborator, clone the ``RavenPy`` repo directly.
 
-    $ pre-commit install
+        .. code-block:: console
 
-   Special style and formatting checks will be run when you commit your changes. You
-   can always run the hooks on their own with::
+            git clone git@github.com:CSHS-CWRA/RavenPy.git
 
-    $ pre-commit run -a
+#. Install your local copy into a development environment. You can create a new Anaconda development environment with:
 
-5. Create a branch for local development::
+    .. code-block:: console
 
-    $ git checkout -b name-of-your-bugfix-or-feature
+        conda env create -f environment-dev.yml
+        conda activate ravenpy-dev
+        (ravenpy-dev) make dev
+
+    If you are on Windows, replace the ``make dev`` command with the following:
+
+        .. code-block:: console
+
+            python -m pip install -e .[dev]
+            pre-commit install
+
+    This installs ``ravenpy`` in an "editable" state, meaning that changes to the code are immediately seen by the environment. To ensure a consistent coding style, `make dev` also installs the ``pre-commit`` hooks to your local clone.
+
+    On commit, ``pre-commit`` will check that ``black``, ``blackdoc``, ``isort``, ``flake8``, and ``ruff`` checks are passing, perform automatic fixes if possible, and warn of violations that require intervention. If your commit fails the checks initially, simply fix the errors, re-add the files, and re-commit.
+
+    You can also run the hooks manually with:
+
+        .. code-block:: console
+
+            pre-commit run -a
+
+    If you want to skip the ``pre-commit`` hooks temporarily, you can pass the `--no-verify` flag to `git commit`.
+
+#. Create a branch for local development:
+
+    .. code-block:: console
+
+        git checkout -b name-of-your-bugfix-or-feature
 
    Now you can make your changes locally.
 
-6. When you're done making changes, check that your changes pass flake8, black, and the
-   tests, including testing other Python versions with tox::
++#. When you're done making changes, we **strongly** suggest running the tests in your environment or with the help of ``tox``:
 
-    $ flake8 ravenpy tests
-    $ black --check ravenpy tests
-    $ pytest tests
-    $ tox
 
-   To get flake8, black, and tox, just pip install them into your virtualenv.
+    .. code-block:: console
 
-6. Commit your changes and push your branch to GitHub::
+        make lint
+        python -m pytest
+        # Or, to run multiple build tests
+        python -m tox
 
-    $ git add .
-    $ git commit -m "Your detailed description of your changes."
-    $ git push origin name-of-your-bugfix-or-feature
+#. Commit your changes and push your branch to GitHub:
 
-7. If you are editing the docs, compile and open them with::
+    .. code-block:: console
 
-    $ make docs
-    # or to simply generate the html
-    $ cd docs/
-    $ make html
+        git add .
+        git commit -m "Your detailed description of your changes."
+        git push origin name-of-your-bugfix-or-feature
 
-8. Submit a pull request through the GitHub website.
+    If ``pre-commit`` hooks fail, try fixing the issues, re-staging the files to be committed, and re-committing your changes (or, if need be, you can skip them with `git commit --no-verify`).
+
+#. Submit a `Pull Request <https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request>`_ through the GitHub website.
+
+#. When pushing your changes to your branch on GitHub, the documentation will automatically be tested to reflect the changes in your Pull Request. This build process can take several minutes at times. If you are actively making changes that affect the documentation and wish to save time, you can compile and test your changes beforehand locally with:
+
+    .. code-block:: console
+
+        # To generate the html and open it in your browser
+        make docs
+        # To only generate the html
+        make autodoc
+        make -C docs html
+        # To simply test that the docs pass build checks
+        python -m tox -e docs
+
+#. If changes to your branch are made on GitHub, you can update your local branch with:
+
+    .. code-block:: console
+
+        git checkout name-of-your-bugfix-or-feature
+        git fetch
+        git pull origin name-of-your-bugfix-or-feature
+
+    If you have merge conflicts, you might need to replace `git pull` with `git merge` and resolve the conflicts manually.
+    Resolving conflicts from the command line can be tricky. If you are not comfortable with this, you can ignore the last command and instead use a GUI like PyCharm or Visual Studio Code to merge the remote changes and resolve the conflicts.
+
+#. Before merging, your Pull Request will need to be based on the `main` branch of the ``RavenPy`` repository. If your branch is not up-to-date with the `main` branch, you can perform similar steps as above to update your branch:
+
+    .. code-block:: console
+
+        git checkout name-of-your-bugfix-or-feature
+        git fetch
+        git pull origin main
+
+    See the previous step for more information on resolving conflicts.
+
+#. Once your Pull Request has been accepted and merged to the `main` branch, several automated workflows will be triggered:
+
+    - The ``bump-version.yml`` workflow will automatically bump the patch version when pull requests are pushed to the `main` branch on GitHub. **It is not recommended to manually bump the version in your branch when merging (non-release) pull requests (this will cause the version to be bumped twice).**
+    - `ReadTheDocs` will automatically build the documentation and publish it to the `latest` branch of `ravenpy` documentation website.
+    - If your branch is not a fork (ie: you are a maintainer), your branch will be automatically deleted.
+
+    You will have contributed to ``ravenpy``!
 
 Pull Request Guidelines
 -----------------------
 
 Before you submit a pull request, check that it meets these guidelines:
 
-1. The pull request should include tests.
-2. If the pull request adds functionality, the docs should be updated. Put
-   your new functionality into a function with a docstring, and add the
-   feature to the list in README.rst.
-3. The pull request should work for Python 3.8, 3.9, 3.10, and 3.11. Check
-   https://github.com/CSHS-CWRA/RavenPy/actions/workflows/main.yml
-   and make sure that the tests pass for all supported Python versions.
+#. The pull request should include tests and should aim to provide `code coverage <https://en.wikipedia.org/wiki/Code_coverage>`_ for all new lines of code. You can use the `--cov-report html --cov ravenpy` flags during the call to ``pytest`` to generate an HTML report and analyse the current test coverage.
+
+#. All functions should be documented with `docstrings` following the `numpydoc <https://numpydoc.readthedocs.io/en/latest/format.html>`_ format.
+
+#. If the pull request adds functionality, either update the documentation or create a new notebook that demonstrates the feature. Library-defining features should also be listed in ``README.rst``.
+
+#. The pull request should work for all currently supported Python versions. Check the `pyproject.toml` or `tox.ini` files for the list of supported versions.
 
 Tips
 ----
 
-To run a subset of tests::
+To run a subset of tests:
 
-    $ pytest tests.test_ravenpy
+.. code-block:: console
 
+    python -m pytest tests/test_ravenpy.py
 
-Versioning/Tagging
-------------------
+You can also directly call a specific test class or test function using:
 
-A reminder for the maintainers on how to deploy.
-Make sure all your changes are committed (including an entry in HISTORY.rst).
-Then run::
+.. code-block:: console
 
-    $ bumpversion patch # possible: major / minor / patch
-    $ git push
-    $ git push --tags
+    python -m pytest tests/test_ravenpy.py::TestClassName::test_function_name
 
-Packaging
----------
+For more information on running tests, see the `pytest documentation <https://docs.pytest.org/en/latest/usage.html>`_.
 
-When a new version has been minted (features have been successfully integrated test coverage and stability is adequate),
-maintainers should update the pip-installable package (wheel and source release) on PyPI as well as the binary on conda-forge.
+To run specific code style checks:
 
-The Automated Approach
-~~~~~~~~~~~~~~~~~~~~~~
+.. code-block:: console
 
-The simplest way to package `ravenpy` is to "publish" a version on GitHuh. GitHub CI Actions are presently configured to build the library and publish the packages on PyPI automatically.
+    python -m black --check ravenpy tests
+    python -m isort --check ravenpy tests
+    python -m blackdoc --check ravenpy docs
+    python -m ruff check ravenpy tests
+    python -m flake8 ravenpy tests
 
-Tagged versions will trigger a GitHub Workflow (`tag-testpypi.yml`) that will attempt to build and publish the release on `TestPyPI <https://test.pypi.org>`_.
+To get ``black``, ``isort``, ``blackdoc``, ``ruff``, and ``flake8`` (with the ``flake8-rst-docstrings`` plugin) simply install them with ``pip`` (or ``conda``) into your environment.
 
-.. note::
-    Should this step fail, changes may be needed in the package; Be sure to remove this tag on GitHub and locally, address any existing problems, and recreate the tag.
+Code of Conduct
+---------------
 
-To upload a new version to `PyPI <https://pypi.org/>`_, simply create a new "Published" release version on GitHub to trigger the upload workflow (`publish-pypi.yml`). When publishing on GitHub, the maintainer can either set the release notes manually (based on the `HISTORY.rst`), or set GitHub to generate release notes automatically. The choice of method is up to the maintainer.
-
-.. warning::
-    A published version on TestPyPI/PyPI can never be overwritten. Be sure to verify that the package published at https://test.pypi.org/project/ravenpy/ matches expectations before publishing a release version on GitHub.
-
-The Manual Approach
-~~~~~~~~~~~~~~~~~~~
-
-The manual approach to library packaging for general support (pip wheels) requires that the `flit <https://flit.pypa.io/en/stable/index.html>`_ library is installed.
-
-From the command line on your Linux distribution, simply run the following from the clone's main dev branch::
-
-    # To build the packages (sources and wheel)
-    $ flit build
-
-    # To upload to PyPI
-    $ flit publish
-
-The new version based off of the version checked out will now be available via `pip` (`$ pip install ravenpy`).
-
-Releasing on conda-forge
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-Initial Release
-^^^^^^^^^^^^^^^
-
-In order to prepare an initial release on conda-forge, we *strongly* suggest consulting the following links:
- * https://conda-forge.org/docs/maintainer/adding_pkgs.html
- * https://github.com/conda-forge/staged-recipes
-
-Before updating the main conda-forge recipe, we echo the conda-forge documentation and *strongly* suggest performing the following checks:
- * Ensure that dependencies and dependency versions correspond with those of the PyPI published version, with open or pinned versions for the `host` requirements.
- * If possible, configure tests within the conda-forge build CI, e.g.:
-
-.. code-block:: yaml
-
-  test:
-    source_files:
-      - tests
-    requires:
-      - pip
-      - pytest
-      - pytest-xdist
-    imports:
-      - ravenpy
-    commands:
-      - pip check
-      - pytest
-
-Subsequent releases
-^^^^^^^^^^^^^^^^^^^
-
-If the conda-forge feedstock recipe is built from PyPI, then when a new release is published on PyPI, `regro-cf-autotick-bot` will open Pull Requests automatically on the conda-forge feedstock.
-It is up to the conda-forge feedstock maintainers to verify that the package is building properly before merging the Pull Request to the main branch.
+Please note that this project is released with a `Contributor Code of Conduct <https://github.com/CSHS-CWRA/RavenPy/blob/main/CODE_OF_CONDUCT.md>`_.
+By participating in this project you agree to abide by its terms.

@@ -41,8 +41,8 @@ dependencies = [
   "click >=8.0.0",
   "climpred >=2.4.0",
   "dask",
-  "haversine",
   "h5netcdf",
+  "haversine",
   "matplotlib",
   "netCDF4 <=1.6.5",
   "numpy <2.0.0",
@@ -66,25 +66,29 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-  "black >=24.4.2",
-  "bump2version",
+  "black ==24.4.2",
+  "blackdoc ==0.3.9",
+  "bump-my-version >=0.23.0",
   "coverage >=7.5.0",
   "coveralls >=4.0.0",
   "filelock",
   "flake8 >=7.0.0",
+  "flake8-rst-docstrings >=0.3.0",
   "flit >=3.9.0",
   "holoviews",
   "hvplot",
-  "isort >=5.13.2",
+  "isort ==5.13.2",
   "mypy",
+  "nbval",
+  "pip >=24.0",
   "pre-commit >=3.5.0",
-  "pytest >=7.0.0",
+  "pylint",
+  "pytest >=7.3.1",
   "pytest-cov >=5.0.0",
   "pytest-xdist >=3.2.0",
-  "setuptools >=68.0",
+  "ruff >=0.4.0",
   "tox >=4.15.1",
-  "watchdog",
-  "wheel >=0.42.0"
+  "watchdog >=3.0.0"
 ]
 docs = [
   "autodoc-pydantic",
@@ -131,6 +135,11 @@ gis = [
   "rioxarray",
   "shapely"
 ]
+all = [
+  "ravenpy[dev]",
+  "ravenpy[docs]",
+  "ravenpy[gis]"
+]
 
 [project.scripts]
 ravenpy = "ravenpy.cli:main"
@@ -153,28 +162,72 @@ target-version = [
   "py312"
 ]
 
+[tool.bumpversion]
+current_version = "0.15.0"
+commit = true
+commit_args = "--no-verify"
+tag = false
+tag_name = "v{new_version}"
+allow_dirty = true
+parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)(\\-(?P<release>[a-z]+)(\\.(?P<build>\\d+)))?"
+serialize = [
+  "{major}.{minor}.{patch}-{release}.{build}",
+  "{major}.{minor}.{patch}"
+]
+
+[[tool.bumpversion.files]]
+filename = "src/ravenpy/__init__.py"
+search = "__version__ = \"{current_version}\""
+replace = "__version__ = \"{new_version}\""
+
+[[tool.bumpversion.files]]
+filename = "tests/test_ravenpy.py"
+search = "__version__ = \"{current_version}\""
+replace = "__version__ = \"{new_version}\""
+
+[[tool.bumpversion.files]]
+filename = ".cruft.json"
+search = "\"version\": \"{current_version}\""
+replace = "\"version\": \"{new_version}\""
+
+[tool.bumpversion.parts.build]
+independent = false
+
+[tool.bumpversion.parts.release]
+optional_value = "release"
+values = [
+  "dev",
+  "release"
+]
+
 [tool.coverage.run]
 relative_files = true
 omit = ["tests/*.py"]
 
 [tool.flit.sdist]
 include = [
+  ".zenodo.json",
   "AUTHORS.rst",
-  "HISTORY.rst",
+  "CHANGELOG.rst",
   "CONTRIBUTING.rst",
   "LICENSE",
   "Makefile",
   "README.rst",
+  "environment-dev.yml",
+  "environment-rtd.yml",
+  "docs/_static/_images/*.gif",
+  "docs/_static/_images/*.jpg",
+  "docs/_static/_images/*.png",
+  "docs/_static/_images/*.rst",
   "docs/**/*.ipynb",
   "docs/**/*.md",
   "docs/**/*.rst",
   "docs/Makefile",
-  "docs/make.bat",
   "docs/conf.py",
-  "environment*.yml",
-  "ravenpy/**/*.py",
-  "ravenpy/data/**/*.csv",
-  "ravenpy/data/**/*.zip",
+  "docs/make.bat",
+  "src/ravenpy/**/*.py",
+  "src/ravenpy/data/**/*.csv",
+  "src/ravenpy/data/**/*.zip",
   "setup.cfg",
   "tests/*.py",
   "tests/test.cfg",
@@ -193,21 +246,51 @@ exclude = [
 [tool.isort]
 profile = "black"
 py_version = 39
-append_only = true
 
 [tool.mypy]
 plugins = [
   "pydantic.mypy"
 ]
-follow_imports = "silent"
-warn_redundant_casts = true
-warn_unused_ignores = true
-disallow_any_generics = true
 check_untyped_defs = true
+disallow_any_generics = true
+files = "."
+follow_imports = "silent"
 no_implicit_reexport = false
-ignore_missing_imports = true
+python_version = 3.9
+show_error_codes = true
+warn_no_return = true
+warn_redundant_casts = true
+warn_return_any = true
+warn_unreachable = true
+warn_unused_configs = true
+warn_unused_ignores = true
 # for strict mypy: (this is the tricky one :-))
 disallow_untyped_defs = false
+
+[[tool.mypy.overrides]]
+module = [
+  # Don't require test functions to include types
+  "tests.*"
+]
+allow_untyped_defs = true
+disable_error_code = "attr-defined"
+ignore_missing_imports = true
+
+[tool.numpydoc_validation]
+checks = [
+  "all", # report on all checks, except the below
+  "ES01",
+  "EX01",
+  "GL01",
+  "SA01"
+]
+exclude = [
+  # don't report on objects that match any of these regex
+  '\.undocumented_method$',
+  '\.__repr__$',
+  # any object starting with an underscore is a private object
+  '\._\w+'
+]
 
 [tool.pydantic-mypy]
 init_forbid_extra = true
@@ -233,3 +316,79 @@ markers = [
   "slow: marks tests as slow (deselect with '-m \"not slow\"')",
   "online: mark tests that require external services (deselect with '-m \"not online\"')"
 ]
+
+[tool.ruff]
+src = ["ravenpy"]
+line-length = 150
+target-version = "py39"
+exclude = [
+  ".eggs",
+  ".git",
+  "build",
+  "docs",
+  "tests"
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.ruff.lint]
+extend-select = [
+  "RUF022" # unsorted-dunder-all
+]
+ignore = [
+  "COM", # commas
+  "D100", # Missing docstring in public module
+  "D101", # Missing docstring in public class
+  "D102", # Missing docstring in public method
+  "D103", # Missing docstring in public function
+  "D104", # Missing docstring in public package
+  "D105", # Missing docstring in magic method
+  "D205", # blank-line-after-summary
+  "D400", # First line should end with a period
+  "D401", # First line should be in imperative mood
+  "E722" # do not use bare except, specify exception instead
+]
+preview = true
+select = [
+  "BLE", # blind-except
+  "D", # docstrings
+  "E", # pycodestyle errors
+  "FLY002", # static-join-to-fstring
+  "G", # logging-format
+  "N", # naming conventions
+  "PERF", # iterator performance
+  "PTH", # pathlib
+  "RUF010", # explicit-f-string-type-conversion
+  "RUF013", # implicit-optional
+  "S", # bandit
+  "UP", # python version conventions
+  "W" # pycodestyle warnings
+]
+
+[tool.ruff.lint.flake8-bandit]
+check-typed-exception = true
+
+[tool.ruff.lint.isort]
+known-first-party = ["ravenpy"]
+case-sensitive = true
+detect-same-package = false
+lines-after-imports = 2
+no-lines-before = ["future", "standard-library"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 15
+
+[tool.ruff.lint.per-file-ignores]
+"docs/**" = ["E402"]
+"src/ravenpy/**/__init__.py" = ["F401", "F403"]
+"tests/**/*.py" = ["S101"]
+
+[tool.ruff.lint.pycodestyle]
+max-doc-length = 180
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"

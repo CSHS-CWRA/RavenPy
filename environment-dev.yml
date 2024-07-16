@@ -1,0 +1,66 @@
+name: ravenpy
+channels:
+  - conda-forge
+dependencies:
+  - python >=3.9,<3.13
+  - raven-hydro >=0.3.1,<1.0
+  - libgcc  # for mixing raven-hydro from PyPI with conda environments
+  - affine
+  - cftime
+  - cf_xarray
+  - click >=8.0.0
+  - climpred >=2.4.0
+  - dask
+  - gdal >=3.1
+  - geopandas >=0.14.0
+  - h5netcdf
+  - haversine
+  - isort >=5.13.2
+  - lxml
+  - matplotlib-base
+  - mypy
+  - netcdf4 <=1.6.5
+  - numpy <2.0.0
+  - owslib >=0.29.1
+  - pandas >=2.2.0
+  - pint >=0.20,<0.24
+  - platformdirs
+  - pydantic >=2.0
+  - pydap
+  - pymbolic
+  - pyogrio <0.8.0  # pyogrio 0.8.0 is not yet compatible with geopandas
+  - pyproj >=3.0
+  - rasterio
+  - requests
+  - rioxarray
+  - scipy
+  - shapely
+  - spotpy
+  - statsmodels
+  - typing_extensions
+  - xarray >=2023.11.0
+  - xclim >=0.50.0
+  - xesmf
+  - xskillscore
+  # Dev tools and testing
+  - pip >=24.0
+  - bump-my-version >=0.23.0
+  - watchdog >=3.0.0
+  - filelock
+  - flake8 >=7.0.0
+  - flake8-rst-docstrings >=0.3.0
+  - flit >=3.9.0
+  - tox >=4.15.1
+  - coverage >=7.5.0
+  - coveralls >=4.0.0
+  - click >=8.1.7
+  - holoviews
+  - hvplot
+  - pytest >=7.3.1
+  - pytest-cov >=4.0.0
+  - pytest-xdist >=3.2.0
+  - black ==24.4.2
+  - blackdoc ==0.3.9
+  - isort ==5.13.2
+  - pre-commit >=3.3.2
+  - ruff >=0.4.0

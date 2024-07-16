@@ -11,40 +11,48 @@ repos:
     rev: v4.6.0
     hooks:
       - id: trailing-whitespace
-        exclude: setup.cfg
       - id: end-of-file-fixer
-        exclude: setup.cfg
       - id: check-json
+      - id: pretty-format-json
+        args: [ '--autofix', '--no-ensure-ascii', '--no-sort-keys' ]
+        exclude: .ipynb
       - id: check-toml
       - id: check-yaml
         args: [ '--allow-multiple-documents' ]
       - id: debug-statements
-      - id: pretty-format-json
-        args: [ '--autofix', '--no-ensure-ascii', '--no-sort-keys' ]
-        exclude: .ipynb
-  - repo: https://github.com/pre-commit/pygrep-hooks
-    rev: v1.10.0
-    hooks:
-      - id: python-check-blanket-noqa
-      - id: rst-inline-touching-normal
   - repo: https://github.com/pappasam/toml-sort
     rev: v0.23.1
     hooks:
       - id: toml-sort-fix
+  - repo: https://github.com/pre-commit/pygrep-hooks
+    rev: v1.10.0
+    hooks:
+      - id: python-check-blanket-noqa
+      - id: python-no-eval
+      - id: python-no-log-warn
+      - id: python-use-type-annotations
+      - id: rst-inline-touching-normal
   - repo: https://github.com/psf/black-pre-commit-mirror
     rev: 24.4.2
     hooks:
       - id: black
         exclude: ^docs/
-  - repo: https://github.com/pycqa/flake8
-    rev: 7.1.0
-    hooks:
-      - id: flake8
-        args: [ '--config=setup.cfg' ]
   - repo: https://github.com/PyCQA/isort
     rev: 5.13.2
     hooks:
       - id: isort
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.5.0
+    hooks:
+      - id: ruff
+        args: [ '--fix' ]
+      # - id: ruff-format
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.1.0
+    hooks:
+      - id: flake8
+        additional_dependencies: [ 'flake8-rst-docstrings' ]
+        args: [ '--config=.flake8' ]
   - repo: https://github.com/nbQA-dev/nbQA
     rev: 1.8.5
     hooks:
@@ -61,11 +69,6 @@ repos:
       - id: nbstripout
         files: ".ipynb"
         args: [ '--extra-keys=metadata.kernelspec' ]
-  - repo: https://github.com/pycqa/pydocstyle
-    rev: 6.3.0
-    hooks:
-      - id: pydocstyle
-        args: [ '--convention=numpy', '--match="(?!test_).*\.py"' ]
   - repo: https://github.com/keewis/blackdoc
     rev: v0.3.9
     hooks:
