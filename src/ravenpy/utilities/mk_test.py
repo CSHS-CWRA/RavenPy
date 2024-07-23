@@ -14,9 +14,8 @@ def mk_test_calc(
 ) -> Optional[tuple[str, float, float, float]]:
     """Make test calculation.
 
-    This function is derived from code originally posted by Sat Kumar Tomer
-    (satkumartomer@gmail.com)
-    See also: http://vsp.pnnl.gov/help/Vsample/Design_Trend_Mann_Kendall.htm
+    This function is derived from code originally posted by Sat Kumar Tomer (satkumartomer@gmail.com).
+
     The purpose of the Mann-Kendall (MK) test (Mann 1945, Kendall 1975, Gilbert
     1987) is to statistically assess if there is a monotonic upward or downward
     trend of the variable of interest over time. A monotonic upward (downward)
@@ -37,7 +36,7 @@ def mk_test_calc(
     x : np.array
         a vector of data.
     alpha : float
-        significance level (0.05 default)
+        significance level (0.05 default).
 
     Returns
     -------
@@ -45,6 +44,8 @@ def mk_test_calc(
 
     Notes
     -----
+    http://vsp.pnnl.gov/help/Vsample/Design_Trend_Mann_Kendall.htm
+
     trend: tells the trend (increasing, decreasing or no trend)
     h: True (if trend is present) or False (if trend is absence)
     p: p value of the significance test
@@ -127,26 +128,24 @@ def check_num_samples(
     Parameters
     ----------
     beta : float
-       Probability of falsely accepting the null hypothesis
+       Probability of falsely accepting the null hypothesis.
     delta : float
-        Change per sample period, i.e., the change that occurs between two adjacent sampling times
+        Change per sample period, i.e., the change that occurs between two adjacent sampling times.
     std_dev : float
         Standard deviation of the sample points.
     alpha : float
-        Significance level (0.05 default)
+        Significance level (0.05 default).
     n : int
         Initial number of sample points (4 default).
     num_iter : int
         Number of iterations of the Monte-Carlo simulation (1000 default).
     tol : float
-        Tolerance level to decide if the predicted probability is close enough to the required
-        statistical power value (1e-6 default).
+        Tolerance level to decide if the predicted probability is close enough to the required statistical power value (1e-6 default).
     num_cycles : int
         Total number of cycles of the simulation.
         This is to ensure that the simulation does finish regardless of convergence or not (10000 default).
     m : int
-      If the tolerance is too small then the simulation could continue to cycle through the same sample
-      numbers over and over.
+      If the tolerance is too small then the simulation could continue to cycle through the same sample numbers over and over.
       This parameter determines how many cycles to look back.
       If the same number of samples has been determined m cycles ago then the simulation will stop.
 

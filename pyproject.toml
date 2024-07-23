@@ -282,9 +282,18 @@ ignore_missing_imports = true
 [tool.numpydoc_validation]
 checks = [
   "all", # report on all checks, except the below
+  "ES01",
   "EX01",
+  "GL01",
+  "GL08",
+  "PR01",
+  "PR08",
+  "RT01",
+  "RT03",
   "SA01",
-  "ES01"
+  "SA04",
+  "SS03",
+  "SS06"
 ]
 # remember to use single quotes for regex in TOML
 exclude = [

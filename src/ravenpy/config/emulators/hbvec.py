@@ -59,7 +59,8 @@ class HRUs(rc.HRUs):
 
 
 class HBVEC(Config):
-    """Hydrologiska Byråns Vattenbalansavdelning – Environment Canada (HBV-EC)
+    """
+    Hydrologiska Byråns Vattenbalansavdelning – Environment Canada (HBV-EC).
 
     References
     ----------

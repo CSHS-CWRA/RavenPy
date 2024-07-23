@@ -51,17 +51,18 @@ def safe_extract(
 
 
 def address_append(address: Union[str, Path]) -> str:
-    """Format a URL/URI to be more easily read with libraries such as "rasterstats".
+    """
+    Format a URL/URI to be more easily read with libraries such as "rasterstats".
 
     Parameters
     ----------
     address : Union[str, Path]
-        URL/URI to a potential zip or tar file
+        URL/URI to a potential zip or tar file.
 
     Returns
     -------
     str
-        URL/URI prefixed for archive type
+        URL/URI prefixed for archive type.
     """
     zipped = search(r"(\.zip)", str(address))
     tarred = search(r"(\.tar)", str(address))
@@ -84,7 +85,8 @@ def generic_extract_archive(
     resources: Union[str, Path, list[Union[bytes, str, Path]]],
     output_dir: Optional[Union[str, Path]] = None,
 ) -> list[str]:
-    """Extract archives (tar/zip) to a working directory.
+    """
+    Extract archives (tar/zip) to a working directory.
 
     Parameters
     ----------
@@ -150,7 +152,8 @@ def archive_sniffer(
     working_dir: Optional[Union[str, Path]] = None,
     extensions: Optional[Sequence[str]] = None,
 ) -> list[Union[str, Path]]:
-    """Return a list of locally unarchived files that match the desired extensions.
+    """
+    Return a list of locally unarchived files that match the desired extensions.
 
     Parameters
     ----------
@@ -181,17 +184,18 @@ def archive_sniffer(
 def crs_sniffer(
     *args: Union[str, Path, Sequence[Union[str, Path]]]
 ) -> Union[list[Union[str, int]], str, int]:
-    """Return the list of CRS found in files.
+    r"""
+    Return the list of CRS found in files.
 
     Parameters
     ----------
-    args : Union[str, Path, Sequence[Union[str, Path]]]
-      Path(s) to the file(s) to examine.
+    \*args : Union[str, Path, Sequence[Union[str, Path]]]
+        Path(s) to the file(s) to examine.
 
     Returns
     -------
     Union[List[str], str]
-      Returns either a list of CRSes or a single CRS definition, depending on the number of instances found.
+        Returns either a list of CRSes or a single CRS definition, depending on the number of instances found.
     """
     crs_list = list()
     vectors = (".gml", ".shp", ".geojson", ".gpkg", ".json")
@@ -246,17 +250,18 @@ def crs_sniffer(
 
 
 def raster_datatype_sniffer(file: Union[str, Path]) -> str:
-    """Return the type of the raster stored in the file.
+    """
+    Return the type of the raster stored in the file.
 
     Parameters
     ----------
     file : Union[str, Path]
-      Path to file.
+        Path to file.
 
     Returns
     -------
     str
-      rasterio datatype of array values
+        A rasterio datatype of array values.
     """
     try:
         with rasterio.open(file, "r") as src:
@@ -283,7 +288,7 @@ def get_bbox(
     Returns
     -------
     float, float, float, float
-      Geographic coordinates of the bounding box (lon0, lat0, lon1, lat1).
+        Geographic coordinates of the bounding box (lon0, lat0, lon1, lat1).
     """
     if not all_features:
         with fiona.open(vector, "r") as src:

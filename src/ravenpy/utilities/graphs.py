@@ -29,7 +29,7 @@ def hydrograph(file_list: Sequence[Union[str, Path]]):
 
     Parameters
     ----------
-    file_list: Sequence of str or Path
+    file_list : Sequence of str or Path
         Raven output files containing simulated streamflows.
     """
     ds = [xr.open_dataset(file) for file in file_list]
@@ -70,11 +70,12 @@ def hydrograph(file_list: Sequence[Union[str, Path]]):
 
 
 def mean_annual_hydrograph(file_list: Sequence[Union[str, Path]]):
-    """Create a graphic of the mean hydrological cycle for each model simulation.
+    """
+    Create a graphic of the mean hydrological cycle for each model simulation.
 
     Parameters
     ----------
-    file_list: Sequence of str or Path
+    file_list : Sequence of str or Path
         Raven output files containing simulated streamflows.
     """
     # Time series for the plot
@@ -143,7 +144,7 @@ def spaghetti_annual_hydrograph(file: Union[str, Path]):
 
     Parameters
     ----------
-    file: str or Path
+    file : str or Path
         Raven output files containing simulated streamflows of one model.
     """
     # Time series for the plot
@@ -231,15 +232,19 @@ def spaghetti_annual_hydrograph(file: Union[str, Path]):
     return fig
 
 
-def ts_graphs(file, trend=True, alpha=0.05):
+def ts_graphs(file, trend: bool = True, alpha: float = 0.05):
     """Create a figure with the statistics so one can see a trend in the data.
 
     Graphs for time series statistics.
 
     Parameters
     ----------
-    file: str or Path
+    file : str or Path
         xarray-compatible file containing streamflow statistics for one run.
+    trend : bool
+        If True, the slope will be plotted.
+    alpha : float
+        Significance level for the Mann-Kendall test.
     """
     # Time series for the plot
     ds = xr.open_dataset(file)

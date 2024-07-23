@@ -254,11 +254,11 @@ def get_raster_wcs(
     Parameters
     ----------
     coordinates : Sequence of int or float or str
-        Geographic coordinates of the bounding box (left, down, right, up)
+        Geographic coordinates of the bounding box (left, down, right, up).
     geographic : bool
         If True, uses "Long" and "Lat" in WCS call. Otherwise, uses "E" and "N".
     layer : str
-        Layer name of raster exposed on GeoServer instance, e.g. 'public:CEC_NALCMS_LandUse_2010'
+        Layer name of raster exposed on GeoServer instance, e.g. 'public:CEC_NALCMS_LandUse_2010'.
     geoserver : str
         The address of the geoserver housing the layer to be queried. Default: https://pavics.ouranos.ca/geoserver/.
 
@@ -345,12 +345,13 @@ def hydrobasins_upstream(feature: dict, domain: str) -> pd.DataFrame:
 
 
 def hydrobasins_aggregate(gdf: pd.DataFrame) -> pd.DataFrame:
-    """Aggregate multiple HydroBASINS watersheds into a single geometry.
+    """
+    Aggregate multiple HydroBASINS watersheds into a single geometry.
 
     Parameters
     ----------
     gdf : pd.DataFrame
-        Watershed attributes indexed by HYBAS_ID
+        Watershed attributes indexed by HYBAS_ID.
 
     Returns
     -------
@@ -381,7 +382,8 @@ def select_hybas_domain(
     ] = None,
     point: Optional[tuple[Union[int, float], Union[int, float]]] = None,
 ) -> str:
-    """Provided a given coordinate or boundary box, return the domain name of the geographic region the coordinate is located within.
+    """
+    Provided a given coordinate or boundary box, return the domain name of the geographic region the coordinate is located within.
 
     Parameters
     ----------
@@ -417,7 +419,8 @@ def filter_hydrobasins_attributes_wfs(
     domain: str,
     geoserver: str = GEOSERVER_URL,
 ) -> str:
-    """Return a URL that formats and returns a remote GetFeatures request from the USGS HydroBASINS dataset.
+    """
+    Return a URL that formats and returns a remote GetFeatures request from the USGS HydroBASINS dataset.
 
     For geographic raster grids, subsetting is based on WGS84 (Long, Lat) boundaries.
     If not geographic, subsetting based on projected coordinate system (Easting, Northing) boundaries.
@@ -459,7 +462,8 @@ def get_hydrobasins_location_wfs(
     domain: str,
     geoserver: str = GEOSERVER_URL,
 ) -> dict[str, Union[str, int, float]]:
-    """Return features from the USGS HydroBASINS data set using bounding box coordinates.
+    """
+    Return features from the USGS HydroBASINS data set using bounding box coordinates.
 
     For geographic raster grids, subsetting is based on WGS84 (Long, Lat) boundaries.
     If not geographic, subsetting based on projected coordinate system (Easting, Northing) boundaries.
@@ -500,7 +504,8 @@ def hydro_routing_upstream(
     lakes: str = "1km",
     geoserver: str = GEOSERVER_URL,
 ) -> pd.Series:
-    """Return a list of hydro routing features located upstream.
+    """
+    Return a list of hydro routing features located upstream.
 
     Parameters
     ----------
@@ -555,7 +560,8 @@ def get_hydro_routing_attributes_wfs(
     lakes: str = "1km",
     geoserver: str = GEOSERVER_URL,
 ) -> str:
-    """Return a URL that formats and returns a remote GetFeatures request from hydro routing dataset.
+    """
+    Return a URL that formats and returns a remote GetFeatures request from hydro routing dataset.
 
     For geographic rasters, subsetting is based on WGS84 (Long, Lat) boundaries. If not geographic, subsetting based
     on projected coordinate system (Easting, Northing) boundaries.
@@ -591,7 +597,8 @@ def filter_hydro_routing_attributes_wfs(
     lakes: str = "1km",
     geoserver: str = GEOSERVER_URL,
 ) -> str:
-    """Return a URL that formats and returns a remote GetFeatures request from hydro routing dataset.
+    """
+    Return a URL that formats and returns a remote GetFeatures request from hydro routing dataset.
 
     For geographic rasters, subsetting is based on WGS84 (Long, Lat) boundaries. If not geographic, subsetting based
     on projected coordinate system (Easting, Northing) boundaries.
@@ -631,7 +638,8 @@ def get_hydro_routing_location_wfs(
     level: int = 12,
     geoserver: str = GEOSERVER_URL,
 ) -> dict:
-    """Return features from the hydro routing data set using bounding box coordinates.
+    """
+    Return features from the hydro routing data set using bounding box coordinates.
 
     For geographic rasters, subsetting is based on WGS84 (Long, Lat) boundaries. If not geographic, subsetting based
     on projected coordinate system (Easting, Northing) boundaries.

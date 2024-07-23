@@ -44,7 +44,7 @@ CALENDAR = "PROLEPTIC_GREGORIAN"
 
 
 def nc_attrs(cls, val):
-    """Ensure default netCDF attributes are present"""
+    """Ensure default netCDF attributes are present."""
     # FIXME: assertions should not be found outside of testing code. Replace with conditional logic.
     assert "model_id" in val  # noqa: S101
 

@@ -51,7 +51,7 @@ def climatology_esp(
     workdir : str or Path
         The path to rv files and model outputs. If None, create a temporary directory.
     overwrite : bool
-        Whether to overwrite existing values or not. Default: False
+        Whether to overwrite existing values or not. Default: False.
 
     Returns
     -------
@@ -121,7 +121,8 @@ def climatology_esp(
 def to_climpred_hindcast_ensemble(
     hindcast: xr.Dataset, observations: xr.Dataset
 ) -> climpred.HindcastEnsemble:
-    """Create a hindcasting object that can be used by the `climpred` toolbox for hindcast verification.
+    """
+    Create a hindcasting object that can be used by the `climpred` toolbox for hindcast verification.
 
     Parameters
     ----------
@@ -223,11 +224,11 @@ def hindcast_climatology_esp(
     Returns
     -------
     xarray.DataArray
-        The array containing the (init, member, lead) dimensions ready for using in climpred. (qsim)
+        The array containing the (init, member, lead) dimensions ready for using in climpred (qsim).
 
     Notes
     -----
-    The dataset output dimensions are
+    The dataset output dimensions are:
      - `init`: hindcast issue date,
      - `member`: ESP members of the hindcasting experiment,
      - `lead`: number of lead days of the forecast.
@@ -358,7 +359,7 @@ def ensemble_prediction(
         The path to rv files and model outputs. If None, create temporary directory.
     overwrite : bool
         Overwrite files when writing to disk.
-    \*\*kwds
+    \*\*kwds : dict
         Keywords for the `Gauge.from_nc` function.
 
     Returns
@@ -403,7 +404,7 @@ hindcast_from_meteo_forecast = ensemble_prediction
 def compute_forecast_flood_risk(
     forecast: xr.Dataset, flood_level: float, thredds: str = THREDDS_URL
 ) -> xr.Dataset:
-    """Returns the empirical exceedance probability for each forecast day based on a flood level threshold.
+    """Return the empirical exceedance probability for each forecast day based on a flood level threshold.
 
     Parameters
     ----------
@@ -413,7 +414,7 @@ def compute_forecast_flood_risk(
         Flood level threshold. Will be used to determine if forecasts exceed
         this specified flood threshold. Should be in the same units as the forecasted streamflow.
     thredds : str
-        The thredds server url. Default: "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/"
+        The thredds server url. Default: "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/".
 
     Returns
     -------

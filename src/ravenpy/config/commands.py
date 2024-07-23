@@ -81,7 +81,8 @@ T12 = tuple[
 
 
 class Process(Command):
-    """Process type embedded in HydrologicProcesses command.
+    """
+    Process type embedded in HydrologicProcesses command.
 
     See processes.py for list of processes.
     """
@@ -145,9 +146,7 @@ class LinearTransform(Command):
 
 
 class RainSnowTransition(Command):
-    """Specify the range of temperatures over which there will be a rain/snow mix when
-    partitioning total precipitation into rain and snow components.
-    """
+    """Specify the range of temperatures over which there will be a rain/snow mix when partitioning total precipitation into rain/snow components."""
 
     temp: Sym
     """Midpoint of the temperature range [C]."""
@@ -160,7 +159,11 @@ class RainSnowTransition(Command):
 
 
 class EvaluationPeriod(LineCommand):
-    """:EvaluationPeriod [period_name] [start yyyy-mm-dd] [end yyyy-mm-dd]"""
+    """
+    Evaluation Period.
+
+    :EvaluationPeriod [period_name] [start yyyy-mm-dd] [end yyyy-mm-dd]
+    """
 
     name: str
     start: dt.date
@@ -169,10 +172,9 @@ class EvaluationPeriod(LineCommand):
 
 class CustomOutput(LineCommand):
     """
-    Create custom output file to track a single variable, parameter or forcing function over time at a number of
-    basins, HRUs, or across the watershed.
+    Create custom output file to track a single variable, parameter, or forcing function over time at a number of basins, HRUs, or across watershed.
 
-    Parameters
+    Attributes
     ----------
     time_per : {'DAILY', 'MONTHLY', 'YEARLY', 'WATER_YEARLY', 'CONTINUOUS'}
         Time period.
@@ -753,7 +755,7 @@ class Gauge(FlatCommand):
             Use keyword "ALL" to pass parameters to all variables.
         engine : {"h5netcdf", "netcdf4", "pydap"}
             The engine used to open the dataset. Default is 'h5netcdf'.
-        \*\*kwds
+        \*\*kwds : dict
             Additional arguments for Gauge.
 
         Returns

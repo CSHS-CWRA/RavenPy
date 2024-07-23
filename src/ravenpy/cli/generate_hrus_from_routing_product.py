@@ -82,10 +82,14 @@ VEG_C_LAND = "Veg_Land_HRU"
 )
 def generate_hrus_from_routing_product(input_file, output):
     """
-    Create a new HRU shapefile by splitting every subbasin row of a Routing Product V2.1 shapefile into
-    at least a land HRU and possibly an additional lake HRU.
+    Create a new HRU shapefile by splitting every subbasin row of a Routing Product V2.1 shapefile into at least a land HRU and possibly a lake HRU.
 
-    INPUT_FILE: Routing Product V2.1 shapefile (e.g. "drainage_region_0003_v2-1/finalcat_info_v2-1.shp").
+    Parameters
+    ----------
+    input_file : str
+        Routing Product V2.1 shapefile (e.g. "drainage_region_0003_v2-1/finalcat_info_v2-1.shp").
+    output : str
+        Output shapefile (e.g. "hrus.shp").
     """
 
     def assign_hru_attributes(i_sub, i_hru, hru_id, is_lake_HRU):  # noqa: N803

@@ -49,7 +49,8 @@ class ForestHRU(HRU):
 
 
 class HRUs(rc.HRUs):
-    """HRUs command for HMETS.
+    """
+    HRUs command for HMETS.
 
     Pydantic is able to automatically detect if an HRU is Land or Lake if `hru_type` is provided.
     """
@@ -58,7 +59,8 @@ class HRUs(rc.HRUs):
 
 
 class HMETS(Config):
-    """Hydrology Model - École de technologie supérieure (HMETS)
+    """
+    Hydrology Model - École de technologie supérieure (HMETS).
 
     References
     ----------

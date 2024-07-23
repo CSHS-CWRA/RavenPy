@@ -61,7 +61,7 @@ def regionalize(
         Work directory. If None, a temporary directory will be created.
     overwrite : bool
         If True, existing files will be overwritten.
-    \*\*kwds
+    \*\*kwds : dict
         Model configuration parameters, including the forcing files (ts).
 
     Returns
@@ -254,7 +254,7 @@ def similarity(
     gauged : pd.DataFrame
         Gauged catchment properties.
     ungauged : pd.DataFrame
-        Ungauged catchment properties
+        Ungauged catchment properties.
     kind : {'ptp', 'std', 'iqr'}
         Normalization method: peak to peak (maximum - minimum), standard deviation, inter-quartile range.
 
@@ -284,22 +284,23 @@ def regionalization_params(
     filtered_params: pd.DataFrame,
     filtered_prop: pd.DataFrame,
 ) -> list[float]:
-    """Return the model parameters to use for the regionalization.
+    """
+    Return the model parameters to use for the regionalization.
 
     Parameters
     ----------
     method : {'MLR', 'SP', 'PS', 'SP_IDW', 'PS_IDW', 'SP_IDW_RA', 'PS_IDW_RA'}
       Name of the regionalization method to use.
     gauged_params : pd.DataFrame
-      A DataFrame of parameters for donor catchments (size = number of donors)
+      A DataFrame of parameters for donor catchments (size = number of donors).
     gauged_properties : pd.DataFrame
-      A DataFrame of properties of the donor catchments  (size = number of donors)
+      A DataFrame of properties of the donor catchments  (size = number of donors).
     ungauged_properties : pd.DataFrame
-      A DataFrame of properties of the ungauged catchment (size = 1)
+      A DataFrame of properties of the ungauged catchment (size = 1).
     filtered_params : pd.DataFrame
-      A DataFrame of parameters of all filtered catchments (size = all catchments with NSE > min_NSE)
+      A DataFrame of parameters of all filtered catchments (size = all catchments with NSE > min_NSE).
     filtered_prop : pd.DataFrame
-      A DataFrame of properties of all filtered catchments (size = all catchments with NSE > min_NSE)
+      A DataFrame of properties of all filtered catchments (size = all catchments with NSE > min_NSE).
 
     Returns
     -------

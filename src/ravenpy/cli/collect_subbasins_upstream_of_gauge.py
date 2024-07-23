@@ -17,17 +17,21 @@ except (ImportError, ModuleNotFoundError) as e:
 @click.argument("gauge-id", type=str)
 @click.option("-o", "--output", type=click.Path(), help="Name of the output shapefile.")
 def collect_subbasins_upstream_of_gauge(
-    input_file,
-    gauge_id,
-    output,
+    input_file: str,
+    gauge_id: str,
+    output: str,
 ):
     """
-    Find the subbasins upstream of a gauge from a Routing Product shapefile, and
-    save them in a new shapefile.
+    Find the subbasins upstream of a gauge from a Routing Product shapefile, and save them in a new shapefile.
 
-    INPUT_FILE: Routing Product shapefile (e.g. "drainage_region_0003_v2-1/finalcat_info_v2-1.shp").
-
-    GAUGE_ID: ID of the target gauge, to be found in the "Obs_NM" column (e.g. "02LE024").
+    Parameters
+    ----------
+    input_file : str
+        Routing Product shapefile (e.g. "drainage_region_0003_v2-1/finalcat_info_v2-1.shp").
+    gauge_id : str
+        ID of the target gauge, to be found in the "Obs_NM" column (e.g. "02LE024").
+    output : str
+        Name of the output shapefile.
     """
     if Path(input_file).suffix == ".zip":
         input_file = f"zip://{input_file}"

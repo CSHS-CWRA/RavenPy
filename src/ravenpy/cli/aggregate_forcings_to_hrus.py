@@ -39,7 +39,9 @@ def aggregate_forcings_to_hrus(
     variables_to_aggregate,
 ):
     """
-    Aggregates NetCDF files containing 3-dimensional forcing variables like precipitation and temperature
+    Aggregate forcings to HRUs.
+
+    Aggregate NetCDF files containing 3-dimensional forcing variables like precipitation and temperature
     over (x,y,time) into 2-dimensional forcings for each of the n HRUs of a specific basin over (n,time).
     The 3-dimensional NetCDF files are usually used in ``:GriddedForcing`` commands in Raven while the 2-dimensional
     ones can be used in ``:StationForcing`` commands. The NetCDF files generated with this function will only

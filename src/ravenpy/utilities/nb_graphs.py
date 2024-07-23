@@ -24,7 +24,14 @@ hv.extension("bokeh")
 
 
 def hydrographs(ds: xr.Dataset):
-    """Return a graphic showing the discharge simulations and observations."""
+    """
+    Return a graphic showing the discharge simulations and observations.
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Dataset containing the simulated and observed streamflows.
+    """
     basin_name = ds.basin_name.values[0]  # selected basin name
     g = ds.q_sim.hvplot.line(
         x="time",
@@ -45,7 +52,14 @@ def hydrographs(ds: xr.Dataset):
 
 
 def mean_annual_hydrograph(ds: xr.Dataset):
-    """Return a graphic showing the discharge simulations and observations."""
+    """
+    Return a graphic showing the discharge simulations and observations.
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Dataset containing the simulated and observed streamflows.
+    """
     basin_name = ds.basin_name.values[0]  # selected basin name
     mq_sim = ds.q_sim.groupby("time.dayofyear").mean()
 

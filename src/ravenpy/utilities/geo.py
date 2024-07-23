@@ -40,7 +40,8 @@ def geom_transform(
     source_crs: Union[str, int, CRS] = WGS84,
     target_crs: Union[str, int, CRS] = None,
 ) -> GeometryCollection:
-    """Change the projection of a geometry.
+    """
+    Change the projection of a geometry.
 
     Assuming a geometry's coordinates are in a `source_crs`, compute the new coordinates under the `target_crs`.
 
@@ -92,7 +93,8 @@ def generic_raster_clip(
     padded: bool = True,
     raster_compression: str = RASTERIO_TIFF_COMPRESSION,
 ) -> None:
-    """Crop a raster file to a given geometry.
+    """
+    Crop a raster file to a given geometry.
 
     Parameters
     ----------
@@ -149,7 +151,8 @@ def generic_raster_warp(
     target_crs: Union[str, dict, CRS],
     raster_compression: str = RASTERIO_TIFF_COMPRESSION,
 ) -> None:
-    """Reproject a raster file.
+    """
+    Reproject a raster file.
 
     Parameters
     ----------
@@ -198,7 +201,8 @@ def generic_vector_reproject(
     source_crs: Union[str, CRS] = WGS84,
     target_crs: Union[str, CRS] = None,
 ) -> None:
-    """Reproject all features and layers within a vector file and return a GeoJSON
+    """
+    Reproject all features and layers within a vector file and return a GeoJSON.
 
     Parameters
     ----------
@@ -256,7 +260,8 @@ def determine_upstream_ids(
     downstream_field: str,
     basin_family: Optional[str] = None,
 ) -> Union[pd.DataFrame, geopandas.GeoDataFrame]:
-    """Return a list of upstream features by evaluating the downstream networks.
+    """
+    Return a list of upstream features by evaluating the downstream networks.
 
     Parameters
     ----------
@@ -311,7 +316,8 @@ def determine_upstream_ids(
 def find_geometry_from_coord(
     lon: float, lat: float, df: geopandas.GeoDataFrame
 ) -> geopandas.GeoDataFrame:
-    """Return the geometry containing the given coordinates.
+    """
+    Return the geometry containing the given coordinates.
 
     lon : float
         Longitude.

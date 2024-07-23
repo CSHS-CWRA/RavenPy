@@ -141,9 +141,7 @@ def filter_for(kls, attrs, **kwds):
 
     Notes
     -----
-    If attrs includes an attribute name and its Raven alias, e.g. `linear_transform` and `LinearTransform`,
-    the latter will have priority.
-
+    If attrs includes an attribute name and its Raven alias, e.g. `linear_transform` and `LinearTransform`, the latter will have priority.
     """
     from pydantic._internal._model_construction import ModelMetaclass
 

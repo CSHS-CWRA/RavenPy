@@ -68,8 +68,8 @@ class BasinMakerExtractor:
         self.routing_product_version = routing_product_version
 
     def extract(self, hru_from_sb: bool = False) -> dict:
-        """Extract data from the Routing Product shapefile and return
-        dictionaries that can be parsed into Raven Commands.
+        """
+        Extract data from the Routing Product shapefile and return dictionaries that can be parsed into Raven Commands.
 
         Parameters
         ----------
@@ -90,7 +90,6 @@ class BasinMakerExtractor:
                Sequence of dictionaries with `ChannelProfile` attributes.
             "hrus"
                Sequence of dictionaries with `HRU` attributes.
-
         """
         # As one subbasin can be mapped to many rows (HRUs), we use a dict,
         # keyed by their IDs, which we'll transform into a list in the end

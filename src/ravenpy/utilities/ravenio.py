@@ -7,9 +7,18 @@ from typing import Any
 
 # TODO: Implement section parser
 def parse_configuration(fn) -> dict[str, Any]:
-    """Parse Raven configuration file.
+    """
+    Parse Raven configuration file.
 
-    Returns a dictionary keyed by parameter name.
+    Parameters
+    ----------
+    fn : str or Path
+        Path to the configuration file.
+
+    Returns
+    -------
+    dict
+        A dictionary keyed by parameter name.
     """
     main_param = re.compile(r"^:(\w+)\s+([^#]*)")
     # sub_param = re.compile(r"^  :(\w+)\s+([^#]*)")

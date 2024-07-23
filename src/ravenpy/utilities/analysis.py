@@ -235,8 +235,8 @@ def circular_mean_aspect(angles: np.ndarray) -> np.ndarray:
 
     Parameters
     ----------
-    angles: np.ndarray
-        Array of aspect angles
+    angles : np.ndarray
+        Array of aspect angles.
 
     Returns
     -------

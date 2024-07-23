@@ -8,7 +8,7 @@ from .commands import Command, Process
 
 # --- Processes --- #
 class Precipitation(Process):
-    """Precipitation"""
+    """Precipitation."""
 
     algo: Literal["PRECIP_RAVEN", "RAVEN_DEFAULT"] = "PRECIP_RAVEN"
 
@@ -212,11 +212,11 @@ class Convolve(Process):
 
 
 class LateralFlush(Process):
-    """Lateral flush"""
+    """Lateral flush."""
 
 
 class LateralEquilibrate(Process):
-    """Lateral equilibrate
+    """Lateral equilibrate.
 
     Instantaneously equilibrates groundwater storage in basin HRUs.
     """
@@ -226,7 +226,7 @@ class LateralEquilibrate(Process):
 
 
 class Conditional(Command):
-    """Conditional statement"""
+    """Conditional statement."""
 
     kind: Literal["HRU_TYPE", "LAND_CLASS", "HRU_GROUP"]
     op: Literal["IS", "IS_NOT"]

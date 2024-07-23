@@ -60,7 +60,8 @@ class LakeHRU(HRU):
 
 
 class HRUs(rc.HRUs):
-    """HRUs command for GR4J.
+    """
+    HRUs command for GR4J.
 
     Pydantic is able to automatically detect if an HRU is Land or Lake if `hru_type` is provided.
     """
@@ -69,7 +70,8 @@ class HRUs(rc.HRUs):
 
 
 class GR4JCN(Config):
-    """GR4J + Cemaneige global hydrological model
+    """
+    GR4J + Cemaneige global hydrological model.
 
     References
     ----------

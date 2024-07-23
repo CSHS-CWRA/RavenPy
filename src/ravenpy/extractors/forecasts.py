@@ -54,7 +54,8 @@ def get_CASPAR_dataset(  # noqa: N802
 ) -> tuple[
     xr.Dataset, list[Union[Union[DatetimeIndex, Series, Timestamp, Timestamp], Any]]
 ]:
-    """Return CASPAR dataset.
+    """
+    Return CASPAR dataset.
 
     Parameters
     ----------
@@ -63,9 +64,9 @@ def get_CASPAR_dataset(  # noqa: N802
     date : dt.datetime
         The date of the forecast.
     thredds : str
-        The thredds server url. Default: "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/"
+        The thredds server url. Default: "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/".
     directory : str
-        The directory on the thredds server where the data is stored. Default: "dodsC/birdhouse/disk2/caspar/daily/"
+        The directory on the thredds server where the data is stored. Default: "dodsC/birdhouse/disk2/caspar/daily/".
 
     Returns
     -------
@@ -106,16 +107,17 @@ def get_ECCC_dataset(  # noqa: N802
 ) -> tuple[
     Dataset, list[Union[Union[DatetimeIndex, Series, Timestamp, Timestamp], Any]]
 ]:
-    """Return latest GEPS forecast dataset.
+    """
+    Return latest GEPS forecast dataset.
 
     Parameters
     ----------
     climate_model : str
         Type of climate model, for now only "GEPS" is supported.
     thredds : str
-        The thredds server url. Default: "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/"
+        The thredds server url. Default: "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/".
     directory : str
-        The directory on the thredds server where the data is stored. Default: "dodsC/datasets/forecasts/eccc_geps/"
+        The directory on the thredds server where the data is stored. Default: "dodsC/datasets/forecasts/eccc_geps/".
 
     Returns
     -------
@@ -197,7 +199,7 @@ def get_subsetted_forecast(
     region_coll : fiona.Collection
         The region vectors.
     ds : xr.Dataset
-        The dataset containing the raw, worldwide forecast data
+        The dataset containing the raw, worldwide forecast data.
     times : dt.datetime or xr.DataArray
         The array of times required to do the forecast.
     is_caspar : bool

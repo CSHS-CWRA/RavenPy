@@ -49,7 +49,8 @@ def param(model):
 def infer_scale_and_offset(
     da: xr.DataArray, data_type: str, cumulative: bool = False
 ) -> tuple[float, float]:
-    """Return scale and offset parameters from data.
+    """
+    Return scale and offset parameters from data.
 
     Infer scale and offset parameters describing the linear transformation from the units in file to Raven
     compliant units.

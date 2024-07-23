@@ -26,7 +26,8 @@ class Emulator:
         modelname: Optional[str] = None,
         overwrite: bool = False,
     ):
-        """Convenience class to work with the Raven modeling framework.
+        """
+        Convenience class to work with the Raven modeling framework.
 
         Parameters
         ----------
@@ -54,7 +55,9 @@ class Emulator:
         self._modelname = self._rv["rvi"].stem
 
     def run(self, overwrite: bool = False) -> "OutputReader":
-        """Run the model. This will write RV files if not already done.
+        """Run the model.
+
+        This will write RV files if not already done.
 
         Parameters
         ----------
@@ -86,7 +89,7 @@ class Emulator:
         """Path to model outputs."""
         if self._output_path is not None:
             return self._output_path
-        warnings.warn("`output_path` not set. Model must be run first")
+        warnings.warn("`output_path` not set. Model must be run first.")
 
     @property
     def modelname(self) -> str:
@@ -99,11 +102,14 @@ class Emulator:
         return self._output
 
     def resume(self, timestamp: bool = True) -> Config:
-        """Return new model configuration using state variables from the end of the run.
+        """
+        Return new model configuration using state variables from the end of the run.
 
-        timestamp: bool
-          If False, ignore time stamp information in the solution. If True, the solution
-          will set StartDate to the solution's timestamp.
+        Parameters
+        ----------
+        timestamp : bool
+            If False, ignore time stamp information in the solution.
+            If True, the solution will set StartDate to the solution's timestamp.
         """
         return self.config.set_solution(
             self.output.files["solution"], timestamp=timestamp
@@ -114,7 +120,8 @@ class OutputReader:
     def __init__(
         self, run_name: Optional[str] = None, path: Optional[Union[str, Path]] = None
     ):
-        """Class facilitating access to Raven model output.
+        """
+        Class facilitating access to Raven model output.
 
         Parameters
         ----------
@@ -256,7 +263,8 @@ def run(
     overwrite: bool = True,
     verbose: bool = False,
 ) -> Path:
-    """Run Raven given the path to an existing model configuration.
+    """
+    Run Raven given the path to an existing model configuration.
 
     Parameters
     ----------
@@ -272,8 +280,8 @@ def run(
     verbose : bool
         If True, always display Raven warnings. If False, warnings will only be printed if an error occurs.
 
-    Return
-    ------
+    Returns
+    -------
     Path
       Path to model outputs.
     """
@@ -332,6 +340,8 @@ def run(
 
 class RavenError(Exception):
     """
+    RavenError exception class.
+
     An error that is meant to be raised whenever a message of type "ERROR" is found
     in the Raven_errors.txt file resulting from a Raven (i.e. the C program) run.
     """
@@ -341,6 +351,8 @@ class RavenError(Exception):
 
 class RavenWarning(Warning):
     """
+    RavenWarning warning class.
+
     A warning corresponding to a message of type "WARNING" in the Raven_errors.txt
     file resulting from a Raven (i.e. the C program) run.
     """

@@ -13,9 +13,9 @@ from ..config import processes as rp
 from .base import RV, Sym, optfield, parse_symbolic
 
 """
-Generic Raven model configuration
+Generic Raven model configuration.
 
-Note that alias are set to identify class attributes as Raven commands.
+Note that aliases are set to identify class attributes as Raven commands.
 """
 date = Union[dt.date, dt.datetime, cftime.datetime]
 
@@ -317,22 +317,21 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
         return self.__class__.model_construct(**out)
 
     def set_solution(self, fn: Path, timestamp: bool = True) -> "Config":
-        """Return a new instance of Config with hru, basin states
-        and start date set from an existing solution.
+        """
+        Return a new instance of Config with hru, basin states and start date set from an existing solution.
 
         Parameters
         ----------
         fn : Path
-          Path to solution file.
-        timestamp: bool
-          If False, ignore time stamp information in the solution. If True, the solution
-          will set StartDate to the solution's timestamp.
+           Path to solution file.
+        timestamp : bool
+           If False, ignore time stamp information in the solution. If True, the solution
+           will set StartDate to the solution's timestamp.
 
         Returns
         -------
         Config
-          Config with internal state set from the solution file.
-
+            Config with internal state set from the solution file.
         """
         from .defaults import CALENDAR
         from .parsers import parse_solution
@@ -420,20 +419,25 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
         return self._rv("rve")
 
     def write_rv(
-        self, workdir: Union[str, Path], modelname=None, overwrite=False, header=True
+        self,
+        workdir: Union[str, Path],
+        modelname: Optional[str] = None,
+        overwrite: bool = False,
+        header: bool = True,
     ):
-        """Write configuration files to disk.
+        """
+        Write configuration files to disk.
 
         Parameters
         ----------
-        workdir: str, Path
-          A directory where rv files will be written to disk.
-        modelname: str
-          File name stem for rv files. If not given, defaults to `RunName` if set, otherwise `raven`.
-        overwrite: bool
-          If True, overwrite existing configuration files.
-        header: bool
-          If True, write a header at the top of each RV file.
+        workdir : str, Path
+            A directory where rv files will be written to disk.
+        modelname : str
+            File name stem for rv files. If not given, defaults to `RunName` if set, otherwise `raven`.
+        overwrite : bool
+            If True, overwrite existing configuration files.
+        header : bool
+            If True, write a header at the top of each RV file.
         """
         workdir = Path(workdir)
         if not workdir.exists():
@@ -464,17 +468,23 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
 
         return out
 
-    def zip(self, workdir: Union[str, Path], modelname=None, overwrite=False):
-        """Write configuration to zip file.
+    def zip(
+        self,
+        workdir: Union[str, Path],
+        modelname: Optional[str] = None,
+        overwrite: bool = False,
+    ):
+        """
+        Write configuration to zip file.
 
         Parameters
         ----------
-        workdir: Path, str
-          Path to zip archive storing RV files.
-        modelname: str
-          File name stem for rv files. If not given, defaults to `RunName` if set, otherwise `raven`.
-        overwrite: bool
-          If True, overwrite existing configuration zip file.
+        workdir : Path, str
+            Path to zip archive storing RV files.
+        modelname : str, optional
+            File name stem for rv files. If not given, defaults to `RunName` if set, otherwise `raven`.
+        overwrite : bool
+            If True, overwrite existing configuration zip file.
         """
         import zipfile
 

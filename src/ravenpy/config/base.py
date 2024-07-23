@@ -44,7 +44,8 @@ class Params:
 
 
 def encoder(v: dict) -> dict:
-    r"""Return string representation of objects in dictionary.
+    r"""
+    Return string representation of objects in dictionary.
 
     This is meant to be applied to BaseModel attributes that either have an `alias` defined,
     or have a `root` attribute. The objective is to avoid creating `Command` objects for every
@@ -219,7 +220,8 @@ class FlatCommand(Command):
 
 
 class LineCommand(FlatCommand):
-    r"""A non-nested Command on a single line.
+    r"""
+    A non-nested Command on a single line.
 
     :CommandName {field_1} {field_2} ... {field_n}\n
     """
@@ -314,7 +316,8 @@ class RV(Command):
 
 
 def parse_symbolic(value, **kwds):
-    """Inject values of symbolic variables into object and return object.
+    """
+    Inject values of symbolic variables into object and return object.
 
     Note that parsing the output of `model_dump` can cause problems because there is not always enough information in the
     dictionary to recreate the correct model.

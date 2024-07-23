@@ -42,7 +42,8 @@ def get_local_testdata(
     branch: str = "master",
     _local_cache: Union[str, Path] = _default_cache_dir,
 ) -> Union[Path, list[Path]]:
-    """Copy specific testdata from a default cache to a temporary folder.
+    """
+    Copy specific testdata from a default cache to a temporary folder.
 
     Return files matching `pattern` in the default cache dir and move to a local temp folder.
 
@@ -182,6 +183,7 @@ def get_file(
 ) -> Union[Path, list[Path]]:
     """
     Return a file from an online GitHub-like repository.
+
     If a local copy is found then always use that to avoid network traffic.
 
     Parameters
@@ -230,7 +232,8 @@ def query_folder(
     branch: str = "master",
 ) -> list[str]:
     """
-    Lists the files available for retrieval from a remote git repository with get_file.
+    List the files available for retrieval from a remote git repository with get_file.
+
     If provided a folder name, will perform a globbing-like filtering operation for parent folders.
 
     Parameters
@@ -304,7 +307,7 @@ def open_dataset(
         If True, then cache data locally for use on subsequent calls.
     cache_dir : str or Path
         The directory in which to search for and write cached data.
-    \*\*kwds
+    \*\*kwds : dict
         For NetCDF files, keywords passed to xarray.open_dataset.
 
     Returns
