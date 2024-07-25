@@ -45,24 +45,24 @@ dependencies:
   - xskillscore
   # Dev tools and testing
   - pip >=24.0
+  - black ==24.4.2
+  - blackdoc ==0.3.9
   - bump-my-version >=0.24.3
-  - watchdog >=4.0.0
+  - click >=8.1.7
+  - coverage >=7.5.0
+  - coveralls >=4.0.0
   - filelock
   - flake8 >=7.1.0
   - flake8-rst-docstrings >=0.3.0
   - flit >=3.9.0,<4.0
-  - tox >=4.16.0
-  - coverage >=7.5.0
-  - coveralls >=4.0.0
-  - click >=8.1.7
   - holoviews
   - hvplot
+  - isort ==5.13.2
+  - numpydoc >=1.7.0
+  - pre-commit >=3.5.0
   - pytest >=8.2.2
   - pytest-cov >=5.0.0
   - pytest-xdist >=3.2.0
-  - black ==24.4.2
-  - blackdoc ==0.3.9
-  - isort ==5.13.2
-  - pre-commit >=3.5.0
   - ruff >=0.5.0
-  # - numpydoc >=1.7.0
+  - tox >=4.16.0
+  - watchdog >=4.0.0

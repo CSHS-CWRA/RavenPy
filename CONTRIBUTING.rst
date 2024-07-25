@@ -216,13 +216,14 @@ To run specific code style checks:
 
 .. code-block:: console
 
-    python -m black --check ravenpy tests
-    python -m isort --check ravenpy tests
-    python -m blackdoc --check ravenpy docs
-    python -m ruff check ravenpy tests
-    python -m flake8 ravenpy tests
+    python -m black --check src/ravenpy tests
+    python -m isort --check src/ravenpy tests
+    python -m blackdoc --check src/ravenpy docs
+    python -m ruff check src/ravenpy tests
+    python -m flake8 src/ravenpy tests
+    validate-docstrings src/ravenpy/**.py
 
-To get ``black``, ``isort``, ``blackdoc``, ``ruff``, and ``flake8`` (with the ``flake8-rst-docstrings`` plugin) simply install them with ``pip`` (or ``conda``) into your environment.
+To get ``black``, ``isort``, ``blackdoc``, ``ruff``, ``flake8`` (with the ``flake8-rst-docstrings`` plugin), and ``numpydoc`` (for ``validate-docstrings``), simply install them with ``pip`` (or ``conda``) into your environment.
 
 Translations
 ------------

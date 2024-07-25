@@ -57,7 +57,7 @@ clean-test: ## remove test and coverage artifacts
  lint/flake8: ## check style with flake8
 	python -m ruff check src/ravenpy tests
 	python -m flake8 --config=.flake8 src/ravenpy tests
-	# python -m numpydoc --validate src/ravenpy
+	validate-docstrings src/ravenpy/**.py
 
  lint/black: ## check style with black
 	python -m black --check src/ravenpy tests

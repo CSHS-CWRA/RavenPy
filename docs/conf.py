@@ -155,7 +155,7 @@ release = ravenpy.__version__
 language = "en"
 
 # Sphinx-intl configuration
-locale_dirs = ['locales/']
+locale_dirs = ["locales/"]
 gettext_compact = False  # optional
 
 # List of patterns, relative to source directory, that match files and
@@ -196,7 +196,9 @@ html_theme_options = {"style_external_links": True}
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = list()  # "_static"
+if not os.path.exists("_static"):
+    os.makedirs("_static")
+html_static_path = ["_static"]
 
 # -- Options for HTMLHelp output ---------------------------------------
 
