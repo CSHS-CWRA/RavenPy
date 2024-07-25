@@ -91,7 +91,7 @@ autodoc-custom-index: clean-docs ## create sphinx-apidoc files but with special 
 linkcheck: autodoc ## run checks over all external links found throughout the documentation
 	$(MAKE) -C docs linkcheck
 
-docs: autodoc ## generate Sphinx HTML documentation, including API docs
+docs: autodoc-custom-index ## generate Sphinx HTML documentation, including API docs
 	$(MAKE) -C docs html BUILDDIR="_build/html/en"
 ifneq ("$(wildcard $(LOCALES))","")
 	${MAKE} -C docs gettext

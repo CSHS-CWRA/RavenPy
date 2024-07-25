@@ -171,31 +171,28 @@ class EvaluationPeriod(LineCommand):
 
 
 class CustomOutput(LineCommand):
-    """
-    Create custom output file to track a single variable, parameter, or forcing function over time at a number of basins, HRUs, or across watershed.
-
-    Attributes
-    ----------
-    time_per : {'DAILY', 'MONTHLY', 'YEARLY', 'WATER_YEARLY', 'CONTINUOUS'}
-        Time period.
-    stat : {'AVERAGE', 'MAXIMUM', 'MINIMUM', 'RANGE', 'MEDIAN', 'QUARTILES', 'HISTOGRAM [min] [max] [# bins]'
-        Statistic reported for each time interval.
-    variable : str
-        Variable or parameter name. Consult the Raven documentation for the list of allowed names.
-    space_agg : {'BY_BASIN', 'BY_HRU', 'BY_HRU_GROUP', 'BY_SB_GROUP', 'ENTIRE_WATERSHED'}
-        Spatial evaluation domain.
-    filename : str
-        Output file name. Defaults to something approximately like
-        `<run name>_<variable>_<time_per>_<stat>_<space_agg>.nc`
-    """
+    """Create custom output file to track a single variable, parameter, or forcing function over time at a number of basins, HRUs, or across watershed."""  # noqa: E501
 
     time_per: Literal["DAILY", "MONTHLY", "YEARLY", "WATER_YEARLY", "CONTINUOUS"]
+    """Time period."""
     stat: Literal["AVERAGE", "MAXIMUM", "MINIMUM", "RANGE", "MEDIAN", "QUARTILES"]
+    """Statistic reported for each time interval."""
     variable: str
+    """
+    Variable or parameter name.
+
+    Consult the Raven documentation for the list of allowed names.
+    """
     space_agg: Literal[
         "BY_BASIN", "BY_HRU", "BY_HRU_GROUP", "BY_SB_GROUP", "ENTIRE_WATERSHED"
     ]
+    """Spatial evaluation domain."""
     filename: str = ""
+    """
+    Output file name.
+
+    Defaults to something approximately like: `<run name>_<variable>_<time_per>_<stat>_<space_agg>.nc`.
+    """
 
 
 class SoilProfile(Record):
@@ -979,7 +976,6 @@ class BasinStateVariables(ListCommand):
 
 
 class SoilClasses(ListCommand):
-
     class SoilClass(Record):
         """SoilClass."""
 
