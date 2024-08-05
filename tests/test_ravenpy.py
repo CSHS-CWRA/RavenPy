@@ -1,3 +1,6 @@
+import pathlib
+from importlib.util import find_spec
+
 from ravenpy import Emulator, EnsembleReader
 
 
@@ -28,3 +31,16 @@ def test_ensemble_reader(gr4jcn_config, tmp_path):
 
     ens = EnsembleReader(paths=paths, dim="parameters")
     assert len(ens.hydrograph.parameters) == 2
+
+
+def test_package_metadata():
+    """Test the package metadata."""
+    project = find_spec("ravenpy").submodule_search_locations[0]
+
+    metadata = pathlib.Path(project).resolve().joinpath("__init__.py")
+
+    with metadata.open() as f:
+        contents = f.read()
+        assert """David Huard""" in contents
+        assert '__email__ = "huard.david@ouranos.ca"' in contents
+        assert '__version__ = "0.15.0"' in contents

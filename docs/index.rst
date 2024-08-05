@@ -13,8 +13,9 @@ Welcome to RavenPy's documentation!
    outputs
    notebooks/index
    contributing
+   releasing
    authors
-   history
+   changelog
 
 .. toctree::
    :maxdepth: 2

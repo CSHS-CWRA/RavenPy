@@ -14,3 +14,8 @@ Co-Developers
 * Trevor James Smith <smith.trevorj@ouranos.ca> `@Zeitsperre <https://github.com/Zeitsperre>`_
 * Julie Mai <juliane.mai@uwaterloo.ca> `@julemai <https://github.com/julemai>`_
 * Ming Han <ming.han@uwaterloo.ca> `@dustming <https://github.com/dustming>`_
+
+Contributors
+------------
+
+None yet. Why not be the first?

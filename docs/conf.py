@@ -37,6 +37,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosectionlabel",
     "sphinx.ext.autosummary",
+    "sphinx.ext.extlinks",
     "sphinx.ext.napoleon",
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
@@ -75,6 +76,11 @@ nb_execution_excludepatterns = [
 # nbsphinx_timeout = 1
 # nbsphinx_allow_errors = True
 
+extlinks = {
+    "issue": ("https://github.com/CSHS-CWRA/RavenPy/issues/%s", "GH/%s"),
+    "pull": ("https://github.com/CSHS-CWRA/RavenPy/pull/%s", "PR/%s"),
+    "user": ("https://github.com/%s", "@%s"),
+}
 
 # To ensure that underlined fields (e.g. `_field`) are shown in the docs.
 autodoc_default_options = {
@@ -148,6 +154,10 @@ release = ravenpy.__version__
 # Usually you set "language" from the command line for these cases.
 language = "en"
 
+# Sphinx-intl configuration
+locale_dirs = ["locales/"]
+gettext_compact = False  # optional
+
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
@@ -186,7 +196,9 @@ html_theme_options = {"style_external_links": True}
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = list()  # "_static"
+if not os.path.exists("_static"):
+    os.makedirs("_static")
+html_static_path = ["_static"]
 
 # -- Options for HTMLHelp output ---------------------------------------
 

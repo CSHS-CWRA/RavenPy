@@ -2,7 +2,17 @@
 RavenPy
 =======
 
-|pypi| |conda| |license| |build| |docs| |coveralls|
++----------------------------+-----------------------------------------------------+
+| Versions                   | |pypi| |versions|                                   |
++----------------------------+-----------------------------------------------------+
+| Documentation and Support  | |docs|                                              |
++----------------------------+-----------------------------------------------------+
+| Open Source                | |license| |ossf|                                    |
++----------------------------+-----------------------------------------------------+
+| Coding Standards           | |black| |ruff| |pre-commit|                         |
++----------------------------+-----------------------------------------------------+
+| Development Status         | |status| |build| |coveralls|                        |
++----------------------------+-----------------------------------------------------+
 
 A Python wrapper to setup and run the hydrologic modelling framework Raven_.
 
@@ -39,35 +49,55 @@ RavenPy's development has been funded by CANARIE_ and Ouranos_ and would be not 
 This package was created with Cookiecutter_ and the `Ouranosinc/cookiecutter-pypackage`_ project template.
 
 .. _CANARIE: https://www.canarie.ca
-.. _Cookiecutter: https://github.com/audreyfeldroy/cookiecutter-pypackage
+.. _Cookiecutter: https://github.com/cookiecutter/cookiecutter
 .. _Ouranos: https://www.ouranos.ca
 .. _Ouranosinc/cookiecutter-pypackage: https://github.com/Ouranosinc/cookiecutter-pypackage
-.. _Raven: http://raven.uwaterloo.ca
-.. _docs: https://www.civil.uwaterloo.ca/raven/files/v3.7/RavenManual_v3.7.pdf
+.. _Raven: https://raven.uwaterloo.ca
+.. _docs: https://raven.uwaterloo.ca/files/v3.8/RavenManual_v3.8.pdf
 .. _installation docs: https://ravenpy.readthedocs.io/en/latest/installation.html
 .. _raven-hydro: https://github.com/Ouranosinc/raven-hydro
 
 
-.. |pypi| image:: https://img.shields.io/pypi/v/ravenpy.svg
-        :target: https://pypi.python.org/pypi/ravenpy
-        :alt: PyPI
+.. |black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
+        :target: https://github.com/psf/black
+        :alt: Python Black
 
-.. |conda| image:: https://img.shields.io/conda/vn/conda-forge/ravenpy
-        :target: https://anaconda.org/conda-forge/ravenpy
-        :alt: Conda-Forge
+.. |build| image:: https://github.com/CSHS-CWRA/RavenPy/actions/workflows/main.yml/badge.svg
+        :target: https://github.com/CSHS-CWRA/RavenPy/actions
+        :alt: Build Status
+
+.. |coveralls| image:: https://coveralls.io/repos/github/CSHS-CWRA/RavenPy/badge.svg
+        :target: https://coveralls.io/github/CSHS-CWRA/RavenPy
+        :alt: Coveralls
+
+.. |docs| image:: https://readthedocs.org/projects/RavenPy/badge/?version=latest
+        :target: https://ravenpy.readthedocs.io/en/latest/?version=latest
+        :alt: Documentation Status
 
 .. |license| image:: https://img.shields.io/github/license/CSHS-CWRA/RavenPy.svg
         :target: https://github.com/CSHS-CWRA/RavenPy/blob/master/LICENSE
         :alt: License
 
-.. |build| image:: https://github.com/CSHS-CWRA/RavenPy/actions/workflows/main.yml/badge.svg
-        :target: https://github.com/CSHS-CWRA/RavenPy/actions/workflows/main.yml
-        :alt: Build status
+.. |ossf| image:: https://api.securityscorecards.dev/projects/github.com/CSHS-CWRA/RavenPy/badge
+        :target: https://securityscorecards.dev/viewer/?uri=github.com/CSHS-CWRA/RavenPy
+        :alt: OpenSSF Scorecard
 
-.. |docs| image:: https://readthedocs.org/projects/ravenpy/badge/?version=latest
-        :target: https://ravenpy.readthedocs.io
-        :alt: Documentation Status
+.. |pre-commit| image:: https://results.pre-commit.ci/badge/github/CSHS-CWRA/RavenPy/master.svg
+        :target: https://results.pre-commit.ci/latest/github/CSHS-CWRA/RavenPy/master
+        :alt: pre-commit.ci status
 
-.. |coveralls| image:: https://coveralls.io/repos/github/CSHS-CWRA/RavenPy/badge.svg?branch=master
-        :target: https://coveralls.io/github/CSHS-CWRA/RavenPy?branch=master
-        :alt: Coveralls
+.. |pypi| image:: https://img.shields.io/pypi/v/RavenPy.svg
+        :target: https://pypi.python.org/pypi/RavenPy
+        :alt: PyPI
+
+.. |ruff| image:: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json
+        :target: https://github.com/astral-sh/ruff
+        :alt: Ruff
+
+.. |status| image:: https://www.repostatus.org/badges/latest/active.svg
+        :target: https://www.repostatus.org/#active
+        :alt: Project Status: Active - The project has reached a stable, usable state and is being actively developed.
+
+.. |versions| image:: https://img.shields.io/pypi/pyversions/RavenPy.svg
+        :target: https://pypi.python.org/pypi/RavenPy
+        :alt: Supported Python Versions
