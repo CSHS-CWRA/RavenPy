@@ -33,7 +33,7 @@ repos:
       - id: python-use-type-annotations
       - id: rst-inline-touching-normal
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 24.4.2
+    rev: 24.8.0
     hooks:
       - id: black
         exclude: ^docs/
@@ -85,7 +85,7 @@ repos:
       - id: numpydoc-validation
         exclude: ^docs/|^tests/
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.29.1
+    rev: 0.29.2
     hooks:
       - id: check-github-workflows
       - id: check-readthedocs
