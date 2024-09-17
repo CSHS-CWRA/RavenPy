@@ -71,6 +71,7 @@ jobs:
             files.pythonhosted.org:443
             github.com:443
             motd.ubuntu.com:443
+            objects.githubusercontent.com:443
             packages.microsoft.com:443
             pavics.ouranos.ca:443
             pypi.org:443
