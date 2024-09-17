@@ -28,6 +28,7 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: Implementation :: CPython",
   "Topic :: Scientific/Engineering :: Atmospheric Science",
   "Topic :: Scientific/Engineering :: GIS",
@@ -66,13 +67,14 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-  "black ==24.4.2",
+  # Dev tools and testing
+  "black ==24.8.0",
   "blackdoc ==0.3.9",
-  "bump-my-version >=0.24.3",
+  "bump-my-version >=0.26.0",
   "coverage >=7.5.0",
-  "coveralls >=4.0.0",
+  "coveralls >=4.0.1",
   "filelock",
-  "flake8 >=7.1.0",
+  "flake8 >=7.1.1",
   "flake8-rst-docstrings >=0.3.0",
   "flit >=3.9.0,<4.0",
   "holoviews",
@@ -80,15 +82,15 @@ dev = [
   "isort ==5.13.2",
   "mypy",
   "nbval",
-  "numpydoc >=1.7.0",
-  "pip >=24.0",
+  "numpydoc >=1.8.0",
+  "pip >=24.2.0",
   "pre-commit >=3.5.0",
   "pylint",
-  "pytest >=7.3.1",
+  "pytest >=8.3.2",
   "pytest-cov >=5.0.0",
   "pytest-xdist >=3.2.0",
-  "ruff >=0.5.0",
-  "tox >=4.16.0",
+  "ruff >=0.5.7",
+  "tox >=4.18.0",
   "watchdog >=4.0.0"
 ]
 docs = [
@@ -160,7 +162,8 @@ target-version = [
   "py39",
   "py310",
   "py311",
-  "py312"
+  "py312",
+  "py313"
 ]
 
 [tool.bumpversion]
@@ -200,6 +203,9 @@ values = [
   "dev",
   "release"
 ]
+
+[tool.coverage.paths]
+source = ["src/ravenpy/", "*/site-packages/ravenpy/"]
 
 [tool.coverage.run]
 relative_files = true
@@ -259,7 +265,7 @@ disallow_any_generics = true
 files = "."
 follow_imports = "silent"
 no_implicit_reexport = false
-python_version = 3.9
+python_version = 3.8
 show_error_codes = true
 warn_no_return = true
 warn_redundant_casts = true
