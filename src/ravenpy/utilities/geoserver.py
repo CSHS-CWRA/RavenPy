@@ -51,9 +51,12 @@ from .geo import determine_upstream_ids
 
 # Can be set at runtime with `$ env RAVENPY_GEOSERVER_URL=https://xx.yy.zz/geoserver/ ...`.
 # For legacy reasons, we also accept the `GEO_URL` environment variable.
+HOST_URL = os.getenv(
+    "RAVENPY_HOST_URL", os.getenv("HOST_URL", "https://pavics.ouranos.ca/")
+)
 GEOSERVER_URL = os.getenv(
     "RAVENPY_GEOSERVER_URL",
-    os.getenv("GEO_URL", "https://pavics.ouranos.ca/geoserver/"),
+    os.getenv("GEO_URL", f"{HOST_URL}/geoserver/"),
 )
 if not GEOSERVER_URL.endswith("/"):
     GEOSERVER_URL = f"{GEOSERVER_URL}/"
@@ -69,9 +72,7 @@ hybas_domains = {dom: hybas_dir / hybas_pat.format(domain=dom) for dom in hybas_
 
 def _fix_server_url(server_url: str) -> str:
     if not server_url.endswith("/"):
-        warnings.warn(
-            "The GeoServer url should end with a slash. Appending it to the url."
-        )
+        warnings.warn("The url should end with a slash. Appending it to the url.")
         return f"{server_url}/"
     return server_url
 
@@ -177,6 +178,7 @@ def _get_feature_attributes_wfs(
     -----
     Non-existent attributes will raise a cryptic DriverError from fiona.
     """
+    host = _fix_server_url(HOST_URL)
     geoserver = _fix_server_url(geoserver)
 
     params = dict(
@@ -191,7 +193,7 @@ def _get_feature_attributes_wfs(
     http = urllib3.PoolManager()
     response = http.request("GET", url)
 
-    return response.geturl()
+    return urljoin(host, response.url)
 
 
 def _filter_feature_attributes_wfs(
@@ -218,6 +220,7 @@ def _filter_feature_attributes_wfs(
     str
       WFS request URL.
     """
+    host = _fix_server_url(HOST_URL)
     geoserver = _fix_server_url(geoserver)
 
     try:
@@ -242,7 +245,7 @@ def _filter_feature_attributes_wfs(
     http = urllib3.PoolManager()
     response = http.request("GET", url)
 
-    return response.geturl()
+    return urljoin(host, response.url)
 
 
 def get_raster_wcs(
