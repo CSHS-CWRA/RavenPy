@@ -20,7 +20,7 @@ dependencies:
   - jupytext
   - nbsphinx
 #  - netCDF4  # mocked
-  - numpy <2.0.0
+  - numpy >=1.23.0,<2.0.0
   - notebook
   - pandoc
   - pydantic >=2.0

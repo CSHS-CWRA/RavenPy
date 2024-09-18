@@ -21,7 +21,7 @@ dependencies:
   - matplotlib-base
   - mypy
   - netcdf4 <=1.6.5
-  - numpy <2.0.0
+  - numpy >=1.23.0,<2.0
   - owslib >=0.29.1
   - pandas >=2.2.0
   - pint >=0.20,<0.24
@@ -29,12 +29,12 @@ dependencies:
   - pydantic >=2.0
   - pydap
   - pymbolic
-  - pyogrio <0.8.0  # pyogrio 0.8.0 is not yet compatible with geopandas
+  - pyogrio # <0.8.0  # pyogrio 0.8.0 is not yet compatible with geopandas
   - pyproj >=3.0
   - rasterio
   - requests
   - rioxarray
-  - scipy
+  - scipy >=1.10.0
   - shapely
   - spotpy
   - statsmodels

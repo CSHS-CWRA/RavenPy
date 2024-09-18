@@ -28,7 +28,7 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python :: 3.13",
+  # "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: Implementation :: CPython",
   "Topic :: Scientific/Engineering :: Atmospheric Science",
   "Topic :: Scientific/Engineering :: GIS",
@@ -132,7 +132,7 @@ gis = [
   "geopandas >=0.14.0",
   "gdal >=3.1",
   "lxml",
-  "pyogrio <0.8.0", # pyogrio 0.8.0 is not compatible with geopandas
+  "pyogrio", # pyogrio 0.8.0 is not compatible with geopandas
   "pyproj >=3.0.0",
   "rasterio",
   "rioxarray",
@@ -209,7 +209,6 @@ source = ["src/ravenpy/", "*/site-packages/ravenpy/"]
 
 [tool.coverage.run]
 relative_files = true
-include = ["src/ravenpy/*"]
 omit = ["tests/*.py"]
 source = ["ravenpy"]
 
