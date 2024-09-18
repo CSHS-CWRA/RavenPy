@@ -13,7 +13,7 @@ dependencies:
   - dask
   - fiona
   - gdal >=3.1
-  - geopandas >=0.14.0
+  - geopandas >=1.0
   - h5netcdf
   - haversine
   - isort >=5.13.2
@@ -29,13 +29,11 @@ dependencies:
   - pydantic >=2.0
   - pydap
   - pymbolic
-  - pyogrio # <0.8.0  # pyogrio 0.8.0 is not yet compatible with geopandas
-  - pyproj >=3.0
+  - pyproj >=3.3.0
   - rasterio
-  - requests
   - rioxarray
   - scipy >=1.10.0
-  - shapely
+  - shapely >=2.0.0
   - spotpy
   - statsmodels
   - typing_extensions

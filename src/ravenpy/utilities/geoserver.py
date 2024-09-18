@@ -16,14 +16,13 @@ We could have a function that returns the layer name, and then other functions e
 import inspect
 import json
 import os
-import urllib.request
 import warnings
 from collections.abc import Iterable, Sequence
 from pathlib import Path
 from typing import Optional, Union
-from urllib.parse import urljoin
+from urllib.parse import urlencode, urljoin
 
-from requests import Request
+import urllib3
 
 from . import gis_import_error_message
 
@@ -188,8 +187,11 @@ def _get_feature_attributes_wfs(
         outputFormat="application/json",
         propertyName=",".join(attribute),
     )
+    url = urljoin(geoserver, "wfs") + "?" + urlencode(params)
+    http = urllib3.PoolManager()
+    response = http.request("GET", url)
 
-    return Request("GET", url=urljoin(geoserver, "wfs"), params=params).prepare().url
+    return response.geturl()
 
 
 def _filter_feature_attributes_wfs(
@@ -236,7 +238,11 @@ def _filter_feature_attributes_wfs(
         filter=filterxml,
     )
 
-    return Request("GET", url=urljoin(geoserver, "wfs"), params=params).prepare().url
+    url = urljoin(geoserver, "wfs") + "?" + urlencode(params)
+    http = urllib3.PoolManager()
+    response = http.request("GET", url)
+
+    return response.geturl()
 
 
 def get_raster_wcs(
@@ -332,8 +338,7 @@ def hydrobasins_upstream(feature: dict, domain: str) -> pd.DataFrame:
     request_url = filter_hydrobasins_attributes_wfs(
         attribute=basin_family, value=feature[basin_family], domain=domain
     )
-    with urllib.request.urlopen(url=request_url) as req:  # noqa: S310
-        df = gpd.read_file(filename=req, engine="pyogrio")
+    df = gpd.read_file(filename=request_url, engine="pyogrio")
 
     # Filter upstream watersheds
     return determine_upstream_ids(

@@ -1,8 +1,10 @@
 """Tools for searching for and acquiring test data."""
 
 import hashlib
+import json
 import logging
 import re
+import urllib
 import warnings
 from collections.abc import Sequence
 from pathlib import Path
@@ -12,7 +14,6 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin
 from urllib.request import urlretrieve
 
-import requests
 from platformdirs import user_cache_dir
 from xarray import Dataset
 from xarray import open_dataset as _open_dataset
@@ -254,8 +255,8 @@ def query_folder(
     repo_name = github_url.strip("https://github.com/")
 
     url = f"https://api.github.com/repos/{repo_name}/git/trees/{branch}?recursive=1"
-    r = requests.get(url)  # noqa: S113
-    res = r.json()
+    with urllib.request.urlopen(url) as response:  # noqa: S310
+        res = json.loads(response.read().decode())
 
     try:
         md5_files = [f["path"] for f in res["tree"] if f["path"].endswith(".md5")]

@@ -46,7 +46,7 @@ dependencies = [
   "haversine",
   "matplotlib",
   "netCDF4 <=1.6.5",
-  "numpy <2.0.0",
+  "numpy >=1.23,<2.0.0",
   "owslib >=0.29.1",
   "pandas >=2.2.0",
   "pint >=0.20,<0.24",
@@ -55,7 +55,6 @@ dependencies = [
   "pydap",
   "pymbolic",
   "raven-hydro >=0.3.1,<1.0",
-  "requests",
   "scipy",
   "spotpy",
   "statsmodels",
@@ -129,14 +128,13 @@ docs = [
 gis = [
   "affine",
   "fiona >=1.9",
-  "geopandas >=0.14.0",
+  "geopandas >=1.0",
   "gdal >=3.1",
   "lxml",
-  "pyogrio", # pyogrio 0.8.0 is not compatible with geopandas
-  "pyproj >=3.0.0",
+  "pyproj >=3.3.0",
   "rasterio",
   "rioxarray",
-  "shapely"
+  "shapely >=2.0"
 ]
 all = [
   "ravenpy[dev]",
