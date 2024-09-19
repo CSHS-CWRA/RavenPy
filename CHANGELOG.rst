@@ -5,9 +5,18 @@ Changelog
 v0.16.0 (unreleased)
 --------------------
 
-* Set base required `geopandas` to v1.0.
-* Removed the pin on `pyogrio` (set by `geopandas` now).
-* Removed the `requests` dependency (now using `urllib`/`urllib3`).
+* Set base required `geopandas` to v1.0. (PR #394)
+* Removed the pin on `pyogrio` (set by `geopandas` now). (PR #394)
+* Removed the `requests` dependency (now using `urllib`/`urllib3`). (PR #394)
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* The cookiecutter template has been updated to the latest commit: (PR #386)
+    * `ravenpy` now uses a `src`-layout for the package.
+    * `HISTORY.rst` has been renamed to `CHANGELOG.rst`.
+    * `ruff` checks have replaced most of the `flake8` checks.
+    * `ravenpy` now has a `CODE_OF_CONDUCT.md` file.
+    * Many `numpydoc`-style docstrings have been adjusted for consistency.
 
 v0.15.0 (2024-06-20)
 --------------------
