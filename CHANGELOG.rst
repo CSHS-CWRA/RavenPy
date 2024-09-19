@@ -2,6 +2,13 @@
 Changelog
 =========
 
+v0.16.0 (unreleased)
+--------------------
+
+* Set base required `geopandas` to v1.0.
+* Removed the pin on `pyogrio` (set by `geopandas` now).
+* Removed the `requests` dependency (now using `urllib`/`urllib3`).
+
 v0.15.0 (2024-06-20)
 --------------------
 

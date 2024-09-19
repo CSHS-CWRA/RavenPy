@@ -16,14 +16,13 @@ We could have a function that returns the layer name, and then other functions e
 import inspect
 import json
 import os
-import urllib.request
 import warnings
 from collections.abc import Iterable, Sequence
 from pathlib import Path
 from typing import Optional, Union
-from urllib.parse import urljoin
+from urllib.parse import urlencode, urljoin
 
-from requests import Request
+import urllib3
 
 from . import gis_import_error_message
 
@@ -52,9 +51,12 @@ from .geo import determine_upstream_ids
 
 # Can be set at runtime with `$ env RAVENPY_GEOSERVER_URL=https://xx.yy.zz/geoserver/ ...`.
 # For legacy reasons, we also accept the `GEO_URL` environment variable.
+HOST_URL = os.getenv(
+    "RAVENPY_HOST_URL", os.getenv("HOST_URL", "https://pavics.ouranos.ca/")
+)
 GEOSERVER_URL = os.getenv(
     "RAVENPY_GEOSERVER_URL",
-    os.getenv("GEO_URL", "https://pavics.ouranos.ca/geoserver/"),
+    os.getenv("GEO_URL", f"{HOST_URL}/geoserver/"),
 )
 if not GEOSERVER_URL.endswith("/"):
     GEOSERVER_URL = f"{GEOSERVER_URL}/"
@@ -70,9 +72,7 @@ hybas_domains = {dom: hybas_dir / hybas_pat.format(domain=dom) for dom in hybas_
 
 def _fix_server_url(server_url: str) -> str:
     if not server_url.endswith("/"):
-        warnings.warn(
-            "The GeoServer url should end with a slash. Appending it to the url."
-        )
+        warnings.warn("The url should end with a slash. Appending it to the url.")
         return f"{server_url}/"
     return server_url
 
@@ -178,6 +178,7 @@ def _get_feature_attributes_wfs(
     -----
     Non-existent attributes will raise a cryptic DriverError from fiona.
     """
+    host = _fix_server_url(HOST_URL)
     geoserver = _fix_server_url(geoserver)
 
     params = dict(
@@ -188,8 +189,11 @@ def _get_feature_attributes_wfs(
         outputFormat="application/json",
         propertyName=",".join(attribute),
     )
+    url = urljoin(geoserver, "wfs") + "?" + urlencode(params)
+    http = urllib3.PoolManager()
+    response = http.request("GET", url)
 
-    return Request("GET", url=urljoin(geoserver, "wfs"), params=params).prepare().url
+    return urljoin(host, response.url)
 
 
 def _filter_feature_attributes_wfs(
@@ -216,6 +220,7 @@ def _filter_feature_attributes_wfs(
     str
       WFS request URL.
     """
+    host = _fix_server_url(HOST_URL)
     geoserver = _fix_server_url(geoserver)
 
     try:
@@ -236,7 +241,11 @@ def _filter_feature_attributes_wfs(
         filter=filterxml,
     )
 
-    return Request("GET", url=urljoin(geoserver, "wfs"), params=params).prepare().url
+    url = urljoin(geoserver, "wfs") + "?" + urlencode(params)
+    http = urllib3.PoolManager()
+    response = http.request("GET", url)
+
+    return urljoin(host, response.url)
 
 
 def get_raster_wcs(
@@ -332,8 +341,7 @@ def hydrobasins_upstream(feature: dict, domain: str) -> pd.DataFrame:
     request_url = filter_hydrobasins_attributes_wfs(
         attribute=basin_family, value=feature[basin_family], domain=domain
     )
-    with urllib.request.urlopen(url=request_url) as req:  # noqa: S310
-        df = gpd.read_file(filename=req, engine="pyogrio")
+    df = gpd.read_file(filename=request_url, engine="pyogrio")
 
     # Filter upstream watersheds
     return determine_upstream_ids(

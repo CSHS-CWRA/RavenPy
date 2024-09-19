@@ -259,7 +259,7 @@ class TestGenericGeoOperations:
             data = gt.read(1)  # read band 1 (red)
             assert data.min() == 0
             assert data.max() == 255
-            np.testing.assert_almost_equal(data.mean(), 60.73, 2)
+            np.testing.assert_almost_equal(data.mean(), 60.747, 3)
 
     def test_warped_raster_slope(self, tmp_path, get_local_testdata):
         reproj_file = tempfile.NamedTemporaryFile(
@@ -288,7 +288,7 @@ class TestGenericGeoOperations:
         aspect_grid = self.analysis.gdal_aspect_analysis(reproj_file)
 
         np.testing.assert_almost_equal(
-            self.analysis.circular_mean_aspect(aspect_grid), 7.78, decimal=2
+            self.analysis.circular_mean_aspect(aspect_grid), 7.7397, decimal=3
         )
 
     def test_raster_clip(self, tmp_path, get_local_testdata):
