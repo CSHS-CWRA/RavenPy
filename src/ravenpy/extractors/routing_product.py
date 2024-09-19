@@ -429,7 +429,7 @@ class GridWeightExtractor:
         #  explicitly select the grouping columns after groupby to silence this warning.
         self._routing_data = self._routing_data.groupby(
             self._routing_id_field, group_keys=False
-        ).apply(keep_only_valid_downsubid_and_obs_nm)
+        ).apply(keep_only_valid_downsubid_and_obs_nm, include_groups=True)
 
         # Make sure those are ints
         self._routing_data.SubId = self._routing_data.SubId.astype(int)
