@@ -1,3 +1,5 @@
+"""Distributed model workflow."""
+
 import datetime as dt
 
 from ravenpy import Emulator
@@ -9,11 +11,6 @@ from ravenpy.extractors.routing_product import (
     open_shapefile,
     upstream_from_coords,
 )
-
-"""
-Distributed model workflow
-
-"""
 
 
 def test_simple_workflow(get_local_testdata, tmp_path):

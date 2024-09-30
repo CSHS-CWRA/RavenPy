@@ -21,92 +21,107 @@ jobs:
     name: Code linting
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Harden Runner
+        uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
+        with:
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: >
+            files.pythonhosted.org:443
+            github.com:443
+            pypi.org:443
+      - name: Checkout Repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - name: Set up Python${{ matrix.python-version }}
+        uses: actions/setup-python@39cd14951b08e74b54015e9e001cdefcf80e669f # v5.1.1
         with:
           python-version: "3.x"
-      - name: Install tox and setuptools
+          cache: pip
+      - name: Install CI libraries
         run: |
-          pip install tox
+          python -m pip install --require-hashes -r CI/requirements_ci.txt
       - name: Run linting suite
-        run: tox -e black
+        run: tox -e lint
 
   pip:
-    name: Python${{ matrix.python-version }} (${{ matrix.os }}, upstream=${{ matrix.upstream-branch }})
+    name: Test with Python${{ matrix.python-version }} (tox, ${{ matrix.os }}), upstream=${{ matrix.upstream-branch }})
     needs: lint
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - tox-env: py39-linux
-            python-version: "3.9"
-            os: ubuntu-latest
-#          - tox-env: py39-macos
-#            python-version: "3.9"
-#            os: macos-latest
-          - tox-env: py310-linux-upstream
-            python-version: "3.10"
-            os: ubuntu-latest
-            upstream-branch: "main"
-#          - tox-env: py310-macos-upstream
-#            python-version: "3.10"
-#            os: macos-latest
-#            upstream-branch: "main"
-          - tox-env: py311-linux
-            python-version: "3.11"
-            os: ubuntu-latest
-#          - tox-env: py311-macos
-#            python-version: "3.11"
-#            os: macos-latest
-          - tox-env: py312-linux
-            python-version: "3.12"
-            os: ubuntu-latest
-#          - tox-env: py312-macos
-#            python-version: "3.12"
-#            os: macos-latest
+        os: [ 'ubuntu-latest' ]  # 'macos-latest' disabled until a new build of raven-hydro is available
+        python-version:
+          - "3.9"
+          - "3.10"
+          - "3.11"
+          - "3.12"
+          # - "3.13" # not yet supported by dependencies
+        upstream-branch: [ 'main' ]
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
+      - name: Harden Runner
+        uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            azure.archive.ubuntu.com:80
+            coveralls.io:443
+            esm.ubuntu.com:443
+            files.pythonhosted.org:443
+            github.com:443
+            motd.ubuntu.com:443
+            objects.githubusercontent.com:443
+            packages.microsoft.com:443
+            pavics.ouranos.ca:443
+            pypi.org:443
+            raw.githubusercontent.com:443
+            test.opendap.org:80
 
-    - name: Install GDAL (Ubuntu)
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        sudo apt-get update
-        sudo apt-get install libgdal-dev
-    - name: Install GDAL (macOS)
-      if: matrix.os == 'macos-latest'
-      uses: tecolicom/actions-use-homebrew-tools@v1
-      with:
-        tools: gdal
-        cache: yes
-    - name: Set GDAL_VERSION (Ubuntu)
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        echo "GDAL_VERSION=$(gdal-config --version)" >> $GITHUB_ENV
-    - name: Set GDAL_VERSION (macOS)
-      if: matrix.os == 'macos-latest'
-      run: |
-        echo "GDAL_VERSION=$(gdalinfo --version | awk  '{print $2}' | sed s'/.$//')" >> $GITHUB_ENV
+      - name: Checkout Repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
-    - name: Install tox
-      run: |
-        python3 -m pip install tox~=4.5.0
-    - name: Test with tox and report coverage
-      run: |
-        python3 -m tox -e ${{ matrix.tox-env }}
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        COVERALLS_FLAG_NAME: run-${{ matrix.tox-env }}
-        COVERALLS_PARALLEL: true
-        COVERALLS_SERVICE_NAME: github
-        UPSTREAM_BRANCH: ${{ matrix.upstream-branch }}
+      - name: Set up Python${{ matrix.python-version }}
+        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install GDAL (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install libgdal-dev
+      - name: Install GDAL (macOS)
+        if: matrix.os == 'macos-latest'
+        uses: tecolicom/actions-use-homebrew-tools@v1
+        with:
+          tools: gdal
+          cache: yes
+      - name: Set GDAL_VERSION (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          echo "GDAL_VERSION=$(gdal-config --version)" >> $GITHUB_ENV
+      - name: Set GDAL_VERSION (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          echo "GDAL_VERSION=$(gdalinfo --version | awk  '{print $2}' | sed s'/.$//')" >> $GITHUB_ENV
+
+      - name: Install CI libraries
+        run: |
+          python3 -m pip install --require-hashes -r CI/requirements_ci.txt
+      - name: Test with tox and report coverage
+        run: |
+          python3 -m tox
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COVERALLS_FLAG_NAME: run-Python${{ matrix.python-version }}-${{ matrix.os }}
+          COVERALLS_PARALLEL: true
+          COVERALLS_SERVICE_NAME: github
+          UPSTREAM_BRANCH: ${{ matrix.upstream-branch }}
 
   conda:
-    name: Python${{ matrix.python-version }} (${{ matrix.os }}) (Conda)
+    name: Test with Python${{ matrix.python-version }} (Anaconda, ${{ matrix.os }})
     needs: lint
     runs-on: ${{ matrix.os }}
     strategy:
@@ -116,33 +131,48 @@ jobs:
           - ubuntu-latest
           # - macos-latest  # disabled until a new build of raven-hydro is available
           # - windows-latest  # disabled until xesmf is available
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: [ "3.9", "3.10", "3.11", "3.12" ]
     defaults:
       run:
         shell: bash -l {0}
     steps:
-      - uses: actions/checkout@v4
+      - name: Harden Runner
+        uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
+        with:
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            conda.anaconda.org:443
+            coveralls.io:443
+            files.pythonhosted.org:443
+            github.com:443
+            objects.githubusercontent.com:443
+            pavics.ouranos.ca:443
+            pypi.org:443
+            raw.githubusercontent.com:443
+            test.opendap.org:80
+      - name: Checkout Repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       - name: Patch Environment File
         if: matrix.os == 'windows-latest'
         run: |
           sed -i 's/climpred >=2.4.0/xesmf/' environment.yml
       - name: Setup Conda (Micromamba) with Python${{ matrix.python-version }}
-        uses: mamba-org/setup-micromamba@v1
+        uses: mamba-org/setup-micromamba@f8b8a1e23a26f60a44c853292711bacfd3eac822 # v1.9.0
         with:
           cache-downloads: true
           cache-environment: true
           cache-environment-key: environment-${{ matrix.python-version }}-${{ matrix.os }}-${{ github.head_ref }}
-          environment-file: environment.yml
+          environment-file: environment-dev.yml
           create-args: >-
-            conda
             python=${{ matrix.python-version }}
-      - name: Conda and Mamba versions
+      - name: Micromamba version
         run: |
-          conda --version
           echo "micromamba: $(micromamba --version)"
       - name: Install RavenPy
         run: |
-          python -m pip install -e ".[dev]"
+          python -m pip install -e ".[dev,gis]"
       - name: List installed packages
         run: |
           conda list
@@ -164,12 +194,13 @@ jobs:
       - pip
       - conda
     runs-on: ubuntu-latest
-    container: python:3-slim
     steps:
-    - name: Coveralls Finished
-      run: |
-        python -m pip install --upgrade coveralls
-        python -m coveralls --finish
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        COVERALLS_SERVICE_NAME: github
+      - name: Harden Runner
+        uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
+        with:
+          disable-sudo: true
+          egress-policy: audit
+      - name: Coveralls Finished
+        uses: coverallsapp/github-action@643bc377ffa44ace6394b2b5d0d3950076de9f63 # v2.3.0
+        with:
+          parallel-finished: true

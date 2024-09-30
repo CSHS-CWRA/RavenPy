@@ -11,11 +11,11 @@ permissions:
 jobs:
   build-n-publish-pypi:
     name: Build and publish Python 🐍 distributions 📦 to PyPI
-    runs-on: ubuntu-latest
     environment: production
     permissions:
       # IMPORTANT: this permission is mandatory for trusted publishing
       id-token: write
+    runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
@@ -27,14 +27,17 @@ jobs:
             github.com:443
             pypi.org:443
             upload.pypi.org:443
-      - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Checkout Repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - name: Set up Python3
+        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
         with:
           python-version: "3.x"
-      - name: Install packaging libraries
-        run: pip install flit
+      - name: Install CI libraries
+        run: |
+          python -m pip install --require-hashes -r CI/requirements_ci.txt
       - name: Build a binary wheel and a source tarball
-        run: flit build
+        run: |
+          python -m flit build
       - name: Publish distribution 📦 to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@0ab0b79471669eb3a4d647e625009c62f9f3b241 # v1.10.1
