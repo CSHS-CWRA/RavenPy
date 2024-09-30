@@ -134,6 +134,7 @@ gis = [
   "pyproj >=3.3.0",
   "rasterio",
   "rioxarray",
+  "setuptools >=71.0",
   "shapely >=2.0"
 ]
 all = [
