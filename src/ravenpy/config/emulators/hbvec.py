@@ -17,27 +17,27 @@ from ravenpy.config.rvs import Config
 
 @dataclass(config=SymConfig)
 class P(Params):
-    X01: Sym = Variable("X01")
-    X02: Sym = Variable("X02")
-    X03: Sym = Variable("X03")
-    X04: Sym = Variable("X04")
-    X05: Sym = Variable("X05")
-    X06: Sym = Variable("X06")
-    X07: Sym = Variable("X07")
-    X08: Sym = Variable("X08")
-    X09: Sym = Variable("X09")
-    X10: Sym = Variable("X10")
-    X11: Sym = Variable("X11")
-    X12: Sym = Variable("X12")
-    X13: Sym = Variable("X13")
-    X14: Sym = Variable("X14")
-    X15: Sym = Variable("X15")
-    X16: Sym = Variable("X16")
-    X17: Sym = Variable("X17")
-    X18: Sym = Variable("X18")
-    X19: Sym = Variable("X19")
-    X20: Sym = Variable("X20")
-    X21: Sym = Variable("X21")
+    X01: Sym = Variable("X01")  # RAINSNOW_TEMP      | rain/snow halfway transition temperature [◦C]                  | default=-0.15, min=-3.0, max=3.0
+    X02: Sym = Variable("X02")  # MELT_FACTOR        | maximum snow melt factor used in degree day models [mm/d/◦C]   | default=5.04, min=-9999, max=-9999
+    X03: Sym = Variable("X03")  # REFREEZE_FACTOR    | maximum refreeze factor used in degree day models [mm/d/◦C]    | default=5.04, min=0.0, max=10.0
+    X04: Sym = Variable("X04")  # SNOW_SWI           | water saturation fraction of snow [-]                          | default=0.05, min=0.0, max=0.5
+    X05: Sym = Variable("X05")  # POROSITY           | effective porosity of the soil [-]                             | default=0.4, min=0.0, max=1.0
+    X06: Sym = Variable("X06")  # FIELD_CAPACITY     | field capacity saturation of the soil [-]                      | default=0.0, min=0.0, max=1.0
+    X07: Sym = Variable("X07")  # HBV_BETA           | HBV infiltration exponent [-]                                  | default=1, min=-9999, max=-9999
+    X08: Sym = Variable("X08")  # MAX_PERC_RATE      | VIC/ARNO/GAWSER percolation rate [mm/d]                        | default=-9999, min=-9999, max=-9999
+    X09: Sym = Variable("X09")  # BASEFLOW_COEFF     | linear baseflow storage/routing coeff (FAST_RES) [1/d]         | default=0.1, min=0.0, max=9999
+    X10: Sym = Variable("X10")  # BASEFLOW_COEFF     | linear baseflow storage/routing coeff (SLOW_RES) [1/d]         | default=0.1, min=0.0, max=9999
+    X11: Sym = Variable("X11")  # TIME_CONC          | the time of concentration of the unit hydrograph [d]           | default=1, min=0, max=200
+    X12: Sym = Variable("X12")  # PRECIP_LAPSE       | precipitation lapse rate for orographic correction [mm/d/km]   | default=-9999, min=0.0, max=-9999
+    X13: Sym = Variable("X13")  # ADIABATIC_LAPSE    | adiabatic temperature lapse rate [◦C/km]                       | default=6.4, min=5, max=8
+    X14: Sym = Variable("X14")  # SAT_WILT           | hydroscopic minimum saturation [-]                             | default=0.0, min=0.0, max=1.0
+    X15: Sym = Variable("X15")  # BASEFLOW_N         | VIC/ARNO baseflow exponent [-]                                 | default=5, min=-9999, max=-9999
+    X16: Sym = Variable("X16")  # MAX_CAP_RISE_RATE  | HBV max capillary rise rate [mm/d]                             | default=0, min=-9999, max=-9999
+    X17: Sym = Variable("X17")  # TOPSOIL THICKNESS  | soil layer thickness (TOPSOIL) [m]                             |
+    X18: Sym = Variable("X18")  # HBV_MELT_FOR_CORR  | HBV snowmelt forest correction (MRF in HBV-EC) [-]             | default=1, min=-9999, max=9999
+    X19: Sym = Variable("X19")  # GLAC_STORAGE_COEFF | maximum linear storage coefficient for glacial melt [-]        | default=0.1, min=0, max=1
+    X20: Sym = Variable("X20")  # RAIN_CORR          | rain correction factor for subbasin (multiplier) [-]           | default=1.0, min=0.5, max=2.0
+    X21: Sym = Variable("X21")  # SNOW_CORR          | snow correction factor for subbasin (multiplier) [-]           | default=1.0, min=0.5, max=2.0
 
 
 class LandHRU(HRU):
@@ -161,7 +161,7 @@ class HBVEC(Config):
     )
     global_parameter: dict = Field(
         {
-            "AdiabaticLapse": P.X13,
+            "ADIABATIC_LAPSE": P.X13,
             "SNOW_SWI": P.X04,
             "PRECIP_LAPSE": P.X12,
         },

@@ -19,6 +19,7 @@ Internal changes
     * Many `numpydoc`-style docstrings have been adjusted for consistency.
 * Added `setuptools` to the `gis` build recipe to ensure that the `gdal` bindings are built successfully. (PR #400)
 * Modified the sub-basin and channel profile extraction functions to correctly set the river length to zero and set default values for reach attributes in sub-basins with no channel routing (i.e., sub-basins with lakes or headwater basins). (issue #354, PR #401)
+* Improved the HBV-EC emulator by adding parameter information (name, definition, and Raven default values) and fixed the variable name for the adiabatic temperature lapse rate.
 
 v0.15.0 (2024-06-20)
 --------------------
