@@ -149,12 +149,10 @@ class BasinMakerExtractor:
             "Rivlen" if self.routing_product_version == "1.0" else "RivLength"
         )
         # Correctly setting the river length to zero for sub-basins with no channel routing, such as sub-basins with lakes or headwater basins
-        if row[riv_length_field] > 1.0:
-            river_length_in_kms = round(row[riv_length_field] / 1000, 5)
+        if is_lake or row[riv_length_field] <= 1.0:
+            river_length_in_kms = 0
         else:
-            river_length_in_kms = 0
-        if is_lake:
-            river_length_in_kms = 0
+            river_length_in_kms = round(row[riv_length_field] / 1000, 5)
         # river_slope = max(
         #     row["RivSlope"], RoutingProductShapefileExtractor.MAX_RIVER_SLOPE
         # )
@@ -200,13 +198,13 @@ class BasinMakerExtractor:
         subbasin_id = int(row["SubId"])
 
         # Correctly defining the reach attributes for sub-basins with no channel routing (i.e., lakes or headwater basins)
+        channel_elev = row["MeanElev"]
         if row["RivLength"] > 1.0:
             slope = max(row["RivSlope"], BasinMakerExtractor.MAX_RIVER_SLOPE)
             # SWAT: top width of channel when filled with water; bankfull width W_bnkfull
             channel_width = max(row["BkfWidth"], 1)
             # SWAT: depth of water in channel when filled to top of bank
             channel_depth = max(row["BkfDepth"], 1)
-            channel_elev = row["MeanElev"]
             floodn = row["FloodP_n"]
             channeln = row["Ch_n"]
         else:
@@ -215,7 +213,6 @@ class BasinMakerExtractor:
             floodn = 0.12345
             channel_width = 0.12345
             channel_depth = 0.12345
-            channel_elev = row["MeanElev"]
 
         # channel profile calculations are based on theory SWAT model is based on
         # see: https://swat.tamu.edu/media/99192/swat2009-theory.pdf

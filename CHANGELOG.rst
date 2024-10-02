@@ -17,6 +17,7 @@ Internal changes
     * `ruff` checks have replaced most of the `flake8` checks.
     * `ravenpy` now has a `CODE_OF_CONDUCT.md` file.
     * Many `numpydoc`-style docstrings have been adjusted for consistency.
+* Added `setuptools` to the `gis` build recipe to ensure that the `gdal` bindings are built successfully. (PR #400)
 
 v0.15.0 (2024-06-20)
 --------------------
