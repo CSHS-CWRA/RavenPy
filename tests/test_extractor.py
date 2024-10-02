@@ -17,9 +17,13 @@ def test_basinmaker_extractor(get_local_testdata, tmp_path):
     rvh_config = rvh_extractor.extract(hru_from_sb=True)
 
     # Create lists of values to check
-    bedslope_list = [item['bed_slope'] for item in rvh_config["channel_profile"]]
-    mannings_list = [value for d in rvh_config["channel_profile"] for value in [t[1] for t in d['roughness_zones']]]
-    reach_length_list = [item['reach_length'] for item in rvh_config["sub_basins"]]
+    bedslope_list = [item["bed_slope"] for item in rvh_config["channel_profile"]]
+    mannings_list = [
+        value
+        for d in rvh_config["channel_profile"]
+        for value in [t[1] for t in d["roughness_zones"]]
+    ]
+    reach_length_list = [item["reach_length"] for item in rvh_config["sub_basins"]]
 
     rvh_config.pop("channel_profile")
 
