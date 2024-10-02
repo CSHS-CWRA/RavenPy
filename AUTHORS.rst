@@ -18,4 +18,4 @@ Co-Developers
 Contributors
 ------------
 
-None yet. Why not be the first?
+* Louise Arnal <arnal.louise@ouranos.ca> `@lou-a <https://github.com/lou-a>`_

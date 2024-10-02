@@ -18,6 +18,7 @@ Internal changes
     * `ravenpy` now has a `CODE_OF_CONDUCT.md` file.
     * Many `numpydoc`-style docstrings have been adjusted for consistency.
 * Added `setuptools` to the `gis` build recipe to ensure that the `gdal` bindings are built successfully. (PR #400)
+* Modified the sub-basin and channel profile extraction functions to correctly set the river length to zero and set default values for reach attributes in sub-basins with no channel routing (i.e., sub-basins with lakes or headwater basins). (issue #354, PR #401)
 
 v0.15.0 (2024-06-20)
 --------------------
