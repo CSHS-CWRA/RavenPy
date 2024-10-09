@@ -47,6 +47,7 @@ extensions = [
     "sphinx_click",
     "sphinx_codeautolink",
     "sphinx_copybutton",
+    "sphinxcontrib.cairosvgconverter",
     # "sphinxcontrib.autodoc_pydantic",  # FIXME: Does not seem to be compatible with RavenPy codebase.
 ]
 
@@ -126,7 +127,7 @@ templates_path = ["_templates"]
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a dictionary of suffix: filetype
-source_suffix = {'.rst': 'restructuredtext'}
+source_suffix = {".rst": "restructuredtext"}
 
 # The master toctree document.
 master_doc = "index"
