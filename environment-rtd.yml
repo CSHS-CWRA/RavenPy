@@ -6,6 +6,7 @@ dependencies:
   - python >=3.9,<3.10  # fixed to reduce solver time
   - raven-hydro >=0.3.1,<1.0
   - autodoc-pydantic
+  - cairosvg
   - click >=8.0.0
 #  - clisops  # mocked
   - gdal >=3.1

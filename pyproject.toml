@@ -95,6 +95,7 @@ dev = [
 docs = [
   "autodoc-pydantic",
   "birdhouse-birdy",
+  "cairosvg",
   "cartopy",
   "clisops",
   "gcsfs",
