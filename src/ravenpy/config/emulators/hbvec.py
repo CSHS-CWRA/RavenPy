@@ -140,7 +140,7 @@ class HBVEC(Config):
     lw_radiation_method: o.LWRadiationMethod = Field(
         "LW_RAD_DEFAULT", alias="LWRadiationMethod"
     )
-    rain_snow_fraction: o.RainSnowFraction = Field("RAINSNOW_HBV")
+    rain_snow_fraction: o.RainSnowFraction = Field("RAINSNOW_HBV", alias="RainSnowFraction")
     potential_melt_method: o.PotentialMeltMethod = Field(
         "POTMELT_HBV", alias="PotentialMeltMethod"
     )
