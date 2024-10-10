@@ -29,10 +29,10 @@ import ravenpy  # noqa: E402
 # -- Workarounds ------------------------------------------------------
 
 def rebuild_readme():
-    """Rebuild the readme.rst file from the README.md file.
+    """Rebuild the readme.rst file from the top-level README.rst file.
 
-    This is a workaround to remove the MarkDown table found in the README.rst
-    when building the docs specifically for latex output.
+    This is a workaround to remove the badge table found in the README.rst
+    when building the docs specifically for latex/pdf output.
     """
 
     with Path("../README.rst").open(encoding="utf-8") as f:
@@ -66,7 +66,6 @@ extensions = [
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
     "IPython.sphinxext.ipython_console_highlighting",
-    # "nbsphinx",
     "myst_nb",
     "sphinx_click",
     "sphinx_codeautolink",
