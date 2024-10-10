@@ -20,10 +20,34 @@
 import os
 import sys
 from datetime import date
+from pathlib import Path
 
 sys.path.insert(0, os.path.abspath(".."))
 
 import ravenpy  # noqa: E402
+
+# -- Workarounds ------------------------------------------------------
+
+def rebuild_readme():
+    """Rebuild the readme.rst file from the README.md file.
+
+    This is a workaround to remove the MarkDown table found in the README.rst
+    when building the docs specifically for latex output.
+    """
+
+    with Path("../README.rst").open(encoding="utf-8") as f:
+        readme = f.read()
+
+    # Remove the badge table
+    readme = readme.replace("=======\nRavenPy\n=======", "=======\nRavenPy\n=======\n\n.. only:: not latex")
+    readme = readme.replace("\n+-", "\n    +-")
+    readme = readme.replace("\n|", "\n    |")
+
+    with Path("readme.rst").open("w", encoding="utf-8") as f:
+        f.write(readme)
+
+rebuild_readme()
+
 
 # -- General configuration ---------------------------------------------
 
