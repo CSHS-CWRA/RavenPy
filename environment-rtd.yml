@@ -3,9 +3,10 @@ channels:
 - conda-forge
 - defaults
 dependencies:
-  - python >=3.9,<3.10  # fixed to reduce solver time
+  - python >=3.10,<3.11  # fixed to reduce solver time
   - raven-hydro >=0.3.1,<1.0
   - autodoc-pydantic
+  - cairosvg
   - click >=8.0.0
 #  - clisops  # mocked
   - gdal >=3.1
@@ -33,7 +34,7 @@ dependencies:
   - sphinx-codeautolink
   - sphinx-copybutton
   - sphinx-rtd-theme >=1.0
-  - sphinxcontrib-napoleon
+  - sphinxcontrib-svg2pdfconverter
   - typing_extensions
   - wheel
 #  - xarray  # mocked

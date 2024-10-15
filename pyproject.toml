@@ -95,6 +95,7 @@ dev = [
 docs = [
   "autodoc-pydantic",
   "birdhouse-birdy",
+  "cairosvg",
   "cartopy",
   "clisops",
   "gcsfs",
@@ -123,6 +124,7 @@ docs = [
   "sphinx-codeautolink",
   "sphinx-copybutton",
   "sphinx-rtd-theme >=1.0",
+  "sphinxcontrib-svg2pdfconverter >=1.2.3",
   "xesmf"
 ]
 gis = [

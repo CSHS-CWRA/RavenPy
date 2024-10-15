@@ -20,10 +20,34 @@
 import os
 import sys
 from datetime import date
+from pathlib import Path
 
 sys.path.insert(0, os.path.abspath(".."))
 
 import ravenpy  # noqa: E402
+
+# -- Workarounds ------------------------------------------------------
+
+def rebuild_readme():
+    """Rebuild the readme.rst file from the top-level README.rst file.
+
+    This is a workaround to remove the badge table found in the README.rst
+    when building the docs specifically for latex/pdf output.
+    """
+
+    with Path("../README.rst").open(encoding="utf-8") as f:
+        readme = f.read()
+
+    # Remove the badge table
+    readme = readme.replace("=======\nRavenPy\n=======", "=======\nRavenPy\n=======\n\n.. only:: not latex")
+    readme = readme.replace("\n+-", "\n    +-")
+    readme = readme.replace("\n|", "\n    |")
+
+    with Path("readme.rst").open("w", encoding="utf-8") as f:
+        f.write(readme)
+
+rebuild_readme()
+
 
 # -- General configuration ---------------------------------------------
 
@@ -42,11 +66,11 @@ extensions = [
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
     "IPython.sphinxext.ipython_console_highlighting",
-    # "nbsphinx",
     "myst_nb",
     "sphinx_click",
     "sphinx_codeautolink",
     "sphinx_copybutton",
+    "sphinxcontrib.cairosvgconverter",
     # "sphinxcontrib.autodoc_pydantic",  # FIXME: Does not seem to be compatible with RavenPy codebase.
 ]
 
@@ -126,7 +150,7 @@ templates_path = ["_templates"]
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a dictionary of suffix: filetype
-source_suffix = {'.rst': 'restructuredtext'}
+source_suffix = {".rst": "restructuredtext"}
 
 # The master toctree document.
 master_doc = "index"
@@ -208,16 +232,16 @@ htmlhelp_basename = "ravenpydoc"
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
     #
-    # 'papersize': 'letterpaper',
+    'papersize': 'letterpaper',
     # The font size ('10pt', '11pt' or '12pt').
     #
-    # 'pointsize': '10pt',
+    'pointsize': '10pt',
     # Additional stuff for the LaTeX preamble.
     #
-    # 'preamble': '',
+    'preamble': '',
     # Latex figure (float) alignment
     #
-    # 'figure_align': 'htbp',
+    'figure_align': 'htbp',
 }
 
 # Grouping the document tree into LaTeX files. List of tuples
@@ -245,7 +269,7 @@ texinfo_documents = [
         "RavenPy Documentation",
         author,
         "ravenpy",
-        "One line description of project.",
+        "A Python wrapper to setup and run the hydrologic modelling framework Raven.",
         "Miscellaneous",
     ),
 ]
