@@ -2,7 +2,7 @@
 Changelog
 =========
 
-v0.16.0 (unreleased)
+v0.16.0 (2024-10-17)
 --------------------
 
 * Set base required `geopandas` to v1.0. (PR #394)
