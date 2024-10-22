@@ -17,6 +17,13 @@ from ravenpy.config.rvs import Config
 
 @dataclass(config=SymConfig)
 class P(Params):
+    """Model parameters.
+
+    Default parameters values are mainly taken from the Raven RavenParameters.dat.
+    Min and max values are taken either from the Raven RavenParameters.dat or the manual (v3.7),
+    when both sources differed or when values were missing (value of -9999) in the RavenParameters.dat file.
+    """
+
     X01: Sym = Variable(
         "X01"
     )  # RAINSNOW_TEMP      | rain/snow halfway transition temperature [◦C]                  | default=-0.15, min=-3.0, max=3.0
@@ -28,7 +35,7 @@ class P(Params):
     )  # REFREEZE_FACTOR    | maximum refreeze factor used in degree day models [mm/d/◦C]    | default=5.04, min=0.0, max=10.0
     X04: Sym = Variable(
         "X04"
-    )  # SNOW_SWI           | water saturation fraction of snow [-]                          | default=0.05, min=0.0, max=0.5
+    )  # SNOW_SWI           | water saturation fraction of snow [-]                          | default=0.05, min=0.04, max=0.07
     X05: Sym = Variable(
         "X05"
     )  # POROSITY           | effective porosity of the soil [-]                             | default=0.4, min=0.0, max=1.0
@@ -37,10 +44,10 @@ class P(Params):
     )  # FIELD_CAPACITY     | field capacity saturation of the soil [-]                      | default=0.0, min=0.0, max=1.0
     X07: Sym = Variable(
         "X07"
-    )  # HBV_BETA           | HBV infiltration exponent [-]                                  | default=1, min=-9999, max=-9999
+    )  # HBV_BETA           | HBV infiltration exponent [-]                                  | default=1.0, min=0.0, max=7.0
     X08: Sym = Variable(
         "X08"
-    )  # MAX_PERC_RATE      | VIC/ARNO/GAWSER percolation rate [mm/d]                        | default=-9999, min=-9999, max=-9999
+    )  # MAX_PERC_RATE      | VIC/ARNO/GAWSER percolation rate [mm/d]                        | default=-9999, min=0.01, max=1000
     X09: Sym = Variable(
         "X09"
     )  # BASEFLOW_COEFF     | linear baseflow storage/routing coeff (FAST_RES) [1/d]         | default=0.1, min=0.0, max=9999
@@ -49,31 +56,31 @@ class P(Params):
     )  # BASEFLOW_COEFF     | linear baseflow storage/routing coeff (SLOW_RES) [1/d]         | default=0.1, min=0.0, max=9999
     X11: Sym = Variable(
         "X11"
-    )  # TIME_CONC          | the time of concentration of the unit hydrograph [d]           | default=1, min=0, max=200
+    )  # TIME_CONC          | the time of concentration of the unit hydrograph [d]           | default=1.0, min=0.0, max=200.0
     X12: Sym = Variable(
         "X12"
-    )  # PRECIP_LAPSE       | precipitation lapse rate for orographic correction [mm/d/km]   | default=-9999, min=0.0, max=-9999
+    )  # PRECIP_LAPSE       | precipitation lapse rate for orographic correction [mm/d/km]   | default=-9999, min=0.0, max=100.0
     X13: Sym = Variable(
         "X13"
-    )  # ADIABATIC_LAPSE    | adiabatic temperature lapse rate [◦C/km]                       | default=6.4, min=5, max=8
+    )  # ADIABATIC_LAPSE    | adiabatic temperature lapse rate [◦C/km]                       | default=6.4, min=5.0, max=8.0
     X14: Sym = Variable(
         "X14"
     )  # SAT_WILT           | hydroscopic minimum saturation [-]                             | default=0.0, min=0.0, max=1.0
     X15: Sym = Variable(
         "X15"
-    )  # BASEFLOW_N         | VIC/ARNO baseflow exponent [-]                                 | default=5, min=-9999, max=-9999
+    )  # BASEFLOW_N         | VIC/ARNO baseflow exponent [-]                                 | default=5.0, min=1.0, max=10.0
     X16: Sym = Variable(
         "X16"
-    )  # MAX_CAP_RISE_RATE  | HBV max capillary rise rate [mm/d]                             | default=0, min=-9999, max=-9999
+    )  # MAX_CAP_RISE_RATE  | HBV max capillary rise rate [mm/d]                             | default=0.0, min=-9999, max=-9999
     X17: Sym = Variable(
         "X17"
-    )  # TOPSOIL THICKNESS  | soil layer thickness (TOPSOIL) [m]                             |
+    )  # TOPSOIL THICKNESS  | soil layer thickness (TOPSOIL) [m]                             | default=-9999, min=0.0, max=-9999
     X18: Sym = Variable(
         "X18"
-    )  # HBV_MELT_FOR_CORR  | HBV snowmelt forest correction (MRF in HBV-EC) [-]             | default=1, min=-9999, max=9999
+    )  # HBV_MELT_FOR_CORR  | HBV snowmelt forest correction (MRF in HBV-EC) [-]             | default=1.0, min=0.1, max=1.0
     X19: Sym = Variable(
         "X19"
-    )  # GLAC_STORAGE_COEFF | maximum linear storage coefficient for glacial melt [-]        | default=0.1, min=0, max=1
+    )  # GLAC_STORAGE_COEFF | maximum linear storage coefficient for glacial melt [-]        | default=0.1, min=0.0, max=1.0
     X20: Sym = Variable(
         "X20"
     )  # RAIN_CORR          | rain correction factor for subbasin (multiplier) [-]           | default=1.0, min=0.5, max=2.0
@@ -124,6 +131,9 @@ class HBVEC(Config):
     write_netcdf_format: bool = Field(True, alias="WriteNetcdfFormat")
     time_step: Union[float, str] = Field(1.0, alias="TimeStep")
     calendar: o.Calendar = Field("PROLEPTIC_GREGORIAN", alias="Calendar")
+    interpolation: o.Interpolation = Field(
+        "INTERP_NEAREST_NEIGHBOR", alias="Interpolation"
+    )
     routing: o.Routing = Field("ROUTE_NONE", alias="Routing")
     catchment_route: o.CatchmentRoute = Field("TRIANGULAR_UH", alias="CatchmentRoute")
     evaporation: o.Evaporation = Field("PET_FROMMONTHLY", alias="Evaporation")
@@ -182,7 +192,7 @@ class HBVEC(Config):
             p.Flush(algo="RAVEN_DEFAULT", source="SURFACE_WATER", to="SOIL[1]"),
             p.Conditional(kind="HRU_TYPE", op="IS_NOT", value="GLACIER"),
             p.SoilEvaporation(algo="SOILEVAP_HBV", source="SOIL[0]", to="ATMOSPHERE"),
-            p.CapillaryRise(algo="RISE_HBV", source="SOIL[1]", to="SOIL[0]"),
+            p.CapillaryRise(algo="CRISE_HBV", source="SOIL[1]", to="SOIL[0]"),
             p.LakeEvaporation(
                 algo="LAKE_EVAP_BASIC", source="SOIL[2]", to="ATMOSPHERE"
             ),
@@ -214,8 +224,8 @@ class HBVEC(Config):
     soil_classes: rc.SoilClasses = Field(
         [
             {"name": "TOPSOIL", "mineral": (1, 0, 0), "organic": 0},
-            {"name": "SLOW_RES", "mineral": (1, 0, 0), "organic": 0},
             {"name": "FAST_RES", "mineral": (1, 0, 0), "organic": 0},
+            {"name": "SLOW_RES", "mineral": (1, 0, 0), "organic": 0},
         ],
         alias="SoilClasses",
     )
@@ -234,7 +244,11 @@ class HBVEC(Config):
             "pl": [
                 PL(
                     name="[DEFAULT]",
-                    values=(P.X05, P.X06, P.X14, P.X07, P.X16, 0.0, 0.0, 0.0),
+                    values=(P.X05, P.X06, P.X14, P.X07, P.X16, 0.0, 0.1, 1.0),
+                ),
+                PL(
+                    name="TOPSOIL",
+                    values=(P.X05, P.X06, P.X14, P.X07, P.X16, 0.0, 0.1, 1.0),
                 ),
                 PL(
                     name="FAST_RES",

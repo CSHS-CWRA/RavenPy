@@ -34,6 +34,7 @@ class RVI(RV):
     end_date: Optional[date] = optfield(alias="EndDate")
     duration: Optional[float] = optfield(alias="Duration")
     time_step: Optional[Union[float, str]] = optfield(alias="TimeStep")
+    interpolation: Optional[o.Interpolation] = optfield(alias="Interpolation")
 
     # Model description
     routing: Optional[o.Routing] = optfield(alias="Routing")
