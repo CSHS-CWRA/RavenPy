@@ -786,7 +786,7 @@ class Gauge(FlatCommand):
                         engine=engine,
                     )
                 except ValueError as e:  # noqa: PERF203
-                    LOGGER.error(e)
+                    LOGGER.info(e)
                     pass
 
                 else:
