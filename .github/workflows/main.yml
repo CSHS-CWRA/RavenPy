@@ -53,12 +53,12 @@ jobs:
       matrix:
         os: [ 'ubuntu-latest' ]  # 'macos-latest' disabled until a new build of raven-hydro is available
         python-version: [ "3.9", "3.11", "3.12" ]
+        tox-env: [ 'false' ]
           # - "3.13" # not yet supported by dependencies
         include:
           - os: 'ubuntu-latest'
             python-version: '3.10'
-            upstream: true
-            upstream-branch: 'main'
+            tox-env: 'py3.10-coveralls-upstream'
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
@@ -113,8 +113,8 @@ jobs:
           python3 -m pip install --require-hashes -r CI/requirements_ci.txt
       - name: Test with tox and report coverage
         run: |
-          if [ "${{ matrix.upstream }}" = "true" ]; then
-            python3 -m tox -e py${{ matrix.python-version }}-coveralls-${{ matrix.upstream-branch }}
+          if [ "${{ matrix.tox-env }}" != "false" ]; then
+            python3 -m tox -e ${{ matrix.tox-env }}
           else
             python3 -m tox -e py${{ matrix.python-version }}-coveralls
           fi
