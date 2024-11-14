@@ -304,7 +304,7 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
         # Create params with numerical values
         if not self.is_symbolic:
             raise ValueError(
-                "Setting `params` on a configuration without symbolic expressions has no effect."
+                "Setting `params` on a configuration without symbolic expressions has no effect. "
                 "Leave `params` to its default value when instantiating the emulator configuration."
             )
 
