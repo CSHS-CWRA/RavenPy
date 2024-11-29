@@ -159,7 +159,6 @@ ravenpy = "ravenpy.cli:main"
 
 [tool.black]
 target-version = [
-  "py39",
   "py310",
   "py311",
   "py312",
@@ -253,7 +252,7 @@ exclude = [
 
 [tool.isort]
 profile = "black"
-py_version = 39
+py_version = "310"
 
 [tool.mypy]
 plugins = [
@@ -343,7 +342,7 @@ markers = [
 [tool.ruff]
 src = ["ravenpy"]
 line-length = 150
-target-version = "py39"
+target-version = "py310"
 exclude = [
   ".eggs",
   ".git",
