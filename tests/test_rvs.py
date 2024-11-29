@@ -4,7 +4,7 @@ from typing import Union
 
 import cftime
 import pytest
-from pydantic import Field, ValidationError
+from pydantic import ConfigDict, Field, ValidationError
 from pydantic.dataclasses import dataclass
 from pymbolic.primitives import Variable
 
@@ -62,7 +62,7 @@ def test_duplicate_emulator(gr4jcn_config):
 
 
 def test_set_params():
-    @dataclass(config=dict(arbitrary_types_allowed=True))
+    @dataclass(config=ConfigDict(arbitrary_types_allowed=True))
     class P:
         X01: Union[Variable, float] = Variable("X01")
 
