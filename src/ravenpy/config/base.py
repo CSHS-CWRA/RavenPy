@@ -2,7 +2,7 @@ import typing
 from collections.abc import Sequence
 from enum import Enum
 from textwrap import dedent, indent
-from typing import Any, Optional, TypedDict, Union
+from typing import Any, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field, RootModel, model_validator
 from pymbolic.primitives import ExpressionNode, Variable
