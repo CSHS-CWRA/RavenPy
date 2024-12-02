@@ -58,9 +58,9 @@ repos:
     hooks:
       - id: nbqa-pyupgrade
         args: [ '--py39-plus' ]
-        additional_dependencies: [ 'pyupgrade==3.16.0' ]
+        additional_dependencies: [ 'pyupgrade==3.19.0' ]
       - id: nbqa-black
-        additional_dependencies: [ 'black==24.8.0' ]
+        additional_dependencies: [ 'black==24.10.0' ]
       - id: nbqa-isort
         additional_dependencies: [ 'isort==5.13.2' ]
   - repo: https://github.com/kynan/nbstripout
@@ -84,7 +84,7 @@ repos:
     rev: v1.8.0
     hooks:
       - id: numpydoc-validation
-        exclude: ^docs/|^tests/
+        exclude: "^docs/|^tests/"
   - repo: https://github.com/python-jsonschema/check-jsonschema
     rev: 0.29.4
     hooks:

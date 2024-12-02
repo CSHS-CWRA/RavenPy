@@ -342,7 +342,7 @@ markers = [
 [tool.ruff]
 src = ["ravenpy"]
 line-length = 150
-target-version = "py310"
+target-version = "py39"
 exclude = [
   ".eggs",
   ".git",
