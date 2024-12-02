@@ -1,4 +1,3 @@
-import typing
 from collections.abc import Sequence
 from enum import Enum
 from textwrap import dedent, indent

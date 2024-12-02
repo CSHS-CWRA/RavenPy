@@ -29,7 +29,7 @@ dependencies:
   - pydantic >=2.0
   - pydap >=3.4.0
   - pymetalink >=6.5.2
-  - pymbolic
+  - pymbolic >=2024.2
   - pyproj >=3.3.0
   - rasterio
   - rioxarray

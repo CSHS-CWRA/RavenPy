@@ -1,6 +1,5 @@
 from collections.abc import Sequence
 from typing import Literal, Union
-from warnings import warn
 
 from pydantic import Field, field_validator
 from pydantic.dataclasses import dataclass
