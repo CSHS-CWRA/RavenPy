@@ -1,6 +1,6 @@
 import datetime as dt
 from collections.abc import Sequence
-from dataclasses import asdict, is_dataclass
+from dataclasses import asdict, fields, is_dataclass
 from pathlib import Path
 from typing import Any, Optional, Union
 
@@ -390,7 +390,10 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
     def is_symbolic(self):
         """Return True if configuration contains symbolic expressions."""
         if self.params is not None:
-            p = asdict(self.params)
+            p = {
+                field.name: getattr(self.params, field.name)
+                for field in fields(self.params)
+            }
             return is_symbolic(p)
 
         return False
@@ -511,11 +514,9 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
 
 def is_symbolic(params: dict) -> bool:
     """Return True if parameters include a symbolic variable."""
-    from dataclasses import is_dataclass
-
     from pymbolic.primitives import Variable
 
     if is_dataclass(params):
-        params = asdict(params)
+        params = {field.name: getattr(params, field.name) for field in fields(params)}
 
     return any([isinstance(v, Variable) for v in params.values()])

@@ -1,11 +1,10 @@
-import typing
 from collections.abc import Sequence
 from enum import Enum
 from textwrap import dedent, indent
 from typing import Any, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field, RootModel, model_validator
-from pymbolic.primitives import Expression, Variable
+from pymbolic.primitives import ExpressionNode, Variable
 
 """
 Notes
@@ -27,11 +26,10 @@ children (Data holding multiple Data elements).
 """
 
 
-class SymConfig:
-    arbitrary_types_allowed = True
+SymConfig = ConfigDict(arbitrary_types_allowed=True)
 
 
-Sym = Union[Variable, Expression, float, None]
+Sym = Union[Variable, ExpressionNode, float, None]
 
 
 def optfield(**kwds):
@@ -323,7 +321,7 @@ def parse_symbolic(value, **kwds):
     dictionary to recreate the correct model.
     """
     from pymbolic.mapper.evaluator import EvaluationMapper as EM  # noqa: N817
-    from pymbolic.primitives import Expression, Variable
+    from pymbolic.primitives import ExpressionNode, Variable
 
     if isinstance(value, dict):
         return {k: parse_symbolic(v, **kwds) for k, v in value.items()}
@@ -337,7 +335,7 @@ def parse_symbolic(value, **kwds):
             attrs = attrs["root"]
         return value.model_validate(parse_symbolic(attrs, **kwds))
 
-    elif isinstance(value, (Variable, Expression)):
+    elif isinstance(value, (Variable, ExpressionNode)):
         # Inject numerical values numerical value
         return EM(context=kwds)(value)
 

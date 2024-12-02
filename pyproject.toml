@@ -12,7 +12,7 @@ maintainers = [
   {name = "Trevor James Smith", email = "smith.trevorj@ouranos.ca"}
 ]
 readme = {file = "README.rst", content-type = "text/x-rst"}
-requires-python = ">=3.9.0"
+requires-python = ">=3.10.0"
 keywords = ["raven", "raven-hydro", "hydrology", "gis", "analysis", "modelling"]
 license = {file = "LICENSE"}
 classifiers = [
@@ -24,7 +24,6 @@ classifiers = [
   "Natural Language :: English",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
@@ -53,7 +52,7 @@ dependencies = [
   "platformdirs",
   "pydantic >=2.0",
   "pydap >=3.4.0",
-  "pymbolic <=2022.2", # 2024.1.0 is not supported
+  "pymbolic >=2024.2",
   "raven-hydro >=0.3.1,<1.0",
   "scipy >=1.9.0",
   "spotpy >=1.6.1",
@@ -160,7 +159,6 @@ ravenpy = "ravenpy.cli:main"
 
 [tool.black]
 target-version = [
-  "py39",
   "py310",
   "py311",
   "py312",
@@ -254,7 +252,7 @@ exclude = [
 
 [tool.isort]
 profile = "black"
-py_version = 39
+py_version = "310"
 
 [tool.mypy]
 plugins = [

@@ -52,7 +52,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ 'ubuntu-latest' ]  # 'macos-latest' disabled until a new build of raven-hydro is available
-        python-version: [ "3.9", "3.11", "3.12" ]
+        python-version: [ "3.11", "3.12" ]
         tox-env: [ 'false' ]
           # - "3.13" # not yet supported by dependencies
         include:
@@ -135,7 +135,7 @@ jobs:
         os: [ "ubuntu-latest" ]
           # - macos-latest  # disabled until a new build of raven-hydro is available
           # - windows-latest  # disabled until xesmf is available
-        python-version: [ "3.9", "3.10", "3.11", "3.12" ]
+        python-version: [ "3.10", "3.11", "3.12" ]
     defaults:
       run:
         shell: bash -l {0}

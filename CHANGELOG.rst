@@ -2,6 +2,12 @@
 Changelog
 =========
 
+v0.17.0 (unreleased)
+--------------------
+* Add support for `pymbolic` > 2022.2 (PR #420)
+* Convert `SymConfig` to a dict to silence pydantic deprecation warnings (PR #420)
+* Drop support for Python 3.9 (PR #420)
+
 v0.16.0 (2024-10-18)
 --------------------
 

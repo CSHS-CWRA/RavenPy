@@ -162,11 +162,12 @@ For example:
 
 ```{code-cell} ipython3
 from typing import Union
+from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 from pymbolic.primitives import Variable
 from ravenpy.config import Sym
 
-@dataclass(config=dict(arbitrary_types_allowed=True))
+@dataclass(config=ConfigDict(arbitrary_types_allowed=True))
 class P:
   X01: Union[Variable, float] = Variable("X01")
 
