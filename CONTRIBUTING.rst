@@ -239,5 +239,5 @@ This will create or update the French translation files in the `docs/locales/fr/
 Code of Conduct
 ---------------
 
-Please note that this project is released with a `Contributor Code of Conduct <https://github.com/CSHS-CWRA/RavenPy/blob/main/CODE_OF_CONDUCT.md>`_.
+Please note that this project is released with a `Contributor Code of Conduct <https://github.com/CSHS-CWRA/RavenPy/blob/master/CODE_OF_CONDUCT.md>`_.
 By participating in this project you agree to abide by its terms.
