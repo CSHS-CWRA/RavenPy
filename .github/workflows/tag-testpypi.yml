@@ -3,7 +3,7 @@ name: Publish Python 🐍 distributions 📦 to TestPyPI
 on:
   push:
     tags:
-      - 'v*'
+      - 'v*.*.*'
 
 permissions:
   contents: read
@@ -48,8 +48,10 @@ jobs:
           egress-policy: block
           allowed-endpoints: >
             files.pythonhosted.org:443
+            ghcr.io:443
             github.com:443
             pypi.org:443
+            ruf-repo-cdn.sigstore.dev:443
             test.pypi.org:443
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
