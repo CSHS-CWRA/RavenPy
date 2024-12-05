@@ -2,8 +2,10 @@
 Changelog
 =========
 
-v0.17.0 (unreleased)
+v0.16.1 (2024-12-05)
 --------------------
+
+* Improved the HBV-EC emulator by reformatting some of the content (cosmetic changes), adding the spatial interpolation and the soil parameters for the TOPSOIL explicitly. (PR #410)
 * Add support for `pymbolic` > 2022.2 (PR #420)
 * Convert `SymConfig` to a dict to silence pydantic deprecation warnings (PR #420)
 * Drop support for Python 3.9 (PR #420)
@@ -27,7 +29,6 @@ Internal changes
 * Modified the sub-basin and channel profile extraction functions to correctly set the river length to zero and set default values for reach attributes in sub-basins with no channel routing (i.e., sub-basins with lakes or headwater basins). (issue #354, PR #401)
 * Improved the HBV-EC emulator by adding parameter information (name, definition, and Raven default values), fixed the variable name for the adiabatic temperature lapse rate, and added an alias for rain snow fraction to match other emulators. (PR #404 and #408)
 * Modified the `sphinx` configuration to better support SVG and to remove incompatible elements from the PDF build. (PR #407)
-* Improved the HBV-EC emulator by reformatting some of the content (cosmetic changes), adding the spatial interpolation and the soil parameters for the TOPSOIL explicitly. (PR #410)
 
 v0.15.0 (2024-06-20)
 --------------------
