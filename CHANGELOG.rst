@@ -2,6 +2,11 @@
 Changelog
 =========
 
+v0.17.0 (unreleased)
+--------------------
+
+* Updated the cookiecutter template to the latest commit and synchronized dependencies between PyPI and Anaconda recipes. (PR #427).
+
 v0.16.1 (2024-12-05)
 --------------------
 
