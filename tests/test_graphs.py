@@ -1,7 +1,7 @@
 from shutil import copyfile
 
 import numpy as np
-import xarray as xr
+from xarray import open_dataset
 from xclim import set_options
 from xclim.indicators.generic import fit, stats
 
@@ -17,7 +17,7 @@ class TestGraph:
 
         copyfile(raven_hydrograph, file)
 
-        with xr.open_dataset(file) as ds:
+        with open_dataset(file) as ds:
             ts = stats(ds.q_sim, op="max", freq="ME")
             with set_options(check_missing="skip"):
                 p = fit(ts)
