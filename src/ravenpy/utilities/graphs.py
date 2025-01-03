@@ -351,7 +351,6 @@ def ts_fit_graph(ts: xr.DataArray, params: xr.DataArray) -> matplotlib.pyplot.Fi
             t,
             alpha=0.5,
             bins=bins,
-            facecolor=(1, 1, 1),
             edgecolor="grey",
             linewidth=1,
         )
