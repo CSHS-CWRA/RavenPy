@@ -31,7 +31,7 @@ dependencies:
   - sphinx >=7.0.0
   - sphinx-autoapi
   - sphinx-click
-  - sphinx-codeautolink
+  - sphinx-codeautolink >=0.15.2
   - sphinx-copybutton
   - sphinx-rtd-theme >=1.0
   - sphinxcontrib-svg2pdfconverter
