@@ -25,7 +25,7 @@ dependencies:
   - notebook
   - pandoc
   - pydantic >=2.0
-  - pygments
+  - pygments <2.19 # FIXME: Newest pygments breaks sphinx-codeautolink. See: https://github.com/felix-hilden/sphinx-codeautolink/issues/153
   - salib
   - seaborn
   - sphinx >=7.0.0
