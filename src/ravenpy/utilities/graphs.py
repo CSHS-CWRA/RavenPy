@@ -330,7 +330,7 @@ def ts_fit_graph(ts: xr.DataArray, params: xr.DataArray) -> matplotlib.pyplot.Fi
 
     fig, axes = plt.subplots(n, figsize=(10, 6), squeeze=False)
     if params.isnull().any():
-        raise ValueError("Null values in `params`.")
+        raise ValueError("Null values found in `params`.")
 
     for i in range(n):
         ax = axes.flat[i]
@@ -348,9 +348,9 @@ def ts_fit_graph(ts: xr.DataArray, params: xr.DataArray) -> matplotlib.pyplot.Fi
         )
         ax2.hist(
             t,
+            facecolor="none",
             bins=bins,
-            facecolor=(1, 1, 1, 0.01),
-            edgecolor="gray",
+            edgecolor="grey",
             linewidth=1,
         )
 
@@ -362,7 +362,7 @@ def ts_fit_graph(ts: xr.DataArray, params: xr.DataArray) -> matplotlib.pyplot.Fi
         pdf = dc.pdf(q)
 
         ps = ", ".join([f"{x:.1f}" for x in p.values])
-        ax.plot(q, pdf, "-", label="{}({})".format(params.attrs["scipy_dist"], ps))
+        ax.plot(q, pdf, "-", label=f"{params.attrs['scipy_dist']}({ps})")
 
         # Labels
         ax.set_xlabel(f"{ts.long_name} (${units2pint(ts.units):~P}$)")
