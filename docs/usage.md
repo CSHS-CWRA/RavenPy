@@ -57,11 +57,10 @@ For more info, see {ref}`ensemble_reader`.
 Ravenpy comes packaged with pre-configured emulators, that is, Raven model configurations that can be modified on the fly. These emulators are made out of symbolic expressions, connecting model parameters to properties and coefficients. For example, the code below creates a model configuration for emulated model GR4JCN using the parameters given, as well as a `Gauge` configuration inferred by inspecting the `meteo.nc` file.
 
 ```python
-from ravenpy.config.emulators import GR4JCN
-from ravenpy.config.commands import Gauge
+from ravenpy.config import emulators, commands
 
-gr4jcn = GR4JCN(
-    params=[0.5, -3.0, 400, 1.0, 17, 0.9], Gauge=[Gauge.from_nc("meteo.nc")]
+gr4jcn = emulators.GR4JCN(
+    params=[0.5, -3.0, 400, 1.0, 17, 0.9], Gauge=[commands.Gauge.from_nc("meteo.nc")]
 )
 ```
 

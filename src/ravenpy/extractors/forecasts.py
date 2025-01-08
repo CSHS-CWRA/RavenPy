@@ -29,6 +29,14 @@ THREDDS_URL = os.environ.get(
 if not THREDDS_URL.endswith("/"):
     THREDDS_URL = f"{THREDDS_URL}/"
 
+__all__ = [
+    "get_CASPAR_dataset",
+    "get_ECCC_dataset",
+    "get_hindcast_day",
+    "get_recent_ECCC_forecast",
+    "get_subsetted_forecast",
+]
+
 
 def get_hindcast_day(region_coll: fiona.Collection, date, climate_model="GEPS"):
     """Generate a forecast dataset that can be used to run raven.

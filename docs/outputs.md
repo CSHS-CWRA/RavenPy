@@ -31,11 +31,11 @@ Note that `Emulator.run` returns an `OutputReader` instance, so a typical ravenp
 ```{code-cell} ipython3
 :tags: [skip-execution]
 
-from ravenpy.config.emulators import HMETS
+from ravenpy.config import emulators
 from ravenpy import Emulator
 
 # Configure model simulation
-conf = HMETS(**kwds)
+conf = emulators.HMETS(**kwds)
 
 # Run the model
 out = Emulator(conf).run()
