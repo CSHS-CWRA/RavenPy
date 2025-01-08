@@ -114,7 +114,7 @@ docs = [
   "myst_nb",
   "nbsphinx",
   "numpydoc >=1.8.0",
-  "pygments",
+  "pygments <2.19", # FIXME: Newest pygments breaks sphinx-codeautolink. See: https://github.com/felix-hilden/sphinx-codeautolink/issues/153
   "pymetalink >=6.5.2",
   "salib",
   "s3fs",
@@ -166,7 +166,7 @@ target-version = [
 ]
 
 [tool.bumpversion]
-current_version = "0.16.1"
+current_version = "0.16.2-dev.0"
 commit = true
 commit_args = "--no-verify"
 tag = false
