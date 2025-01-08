@@ -343,13 +343,12 @@ def ts_fit_graph(ts: xr.DataArray, params: xr.DataArray) -> matplotlib.pyplot.Fi
             t,
             alpha=0.5,
             density=True,
-            edgecolor="grey",
             bins="auto",
             label="__nolabel__",
         )
         ax2.hist(
             t,
-            alpha=0.5,
+            facecolor="none",
             bins=bins,
             edgecolor="grey",
             linewidth=1,
@@ -364,7 +363,6 @@ def ts_fit_graph(ts: xr.DataArray, params: xr.DataArray) -> matplotlib.pyplot.Fi
 
         ps = ", ".join([f"{x:.1f}" for x in p.values])
         ax.plot(q, pdf, "-", label=f"{params.attrs['scipy_dist']}({ps})")
-        ax.set_zorder(2.5)
 
         # Labels
         ax.set_xlabel(f"{ts.long_name} (${units2pint(ts.units):~P}$)")
