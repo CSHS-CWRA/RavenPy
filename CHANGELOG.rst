@@ -5,8 +5,9 @@ Changelog
 v0.17.0 (unreleased)
 --------------------
 
-* Updated the cookiecutter template to the latest commit and synchronized dependencies between PyPI and Anaconda recipes. (PR #427).
-* Updated `ts_fit_graph` logic for `matplotlib` >= 3.10.0 compatibility. (PR #434).
+* Updated the cookiecutter template to the latest commit and synchronized dependencies between PyPI and Anaconda recipes. (PR #427)
+* Updated `ts_fit_graph` logic for `matplotlib` >= 3.10.0 compatibility. (PR #434)
+* Temporarily pinned `pygments` below v2.19 due to a breaking change affecting `sphinx-codeautolink`. (PR #434)
 
 v0.16.1 (2024-12-05)
 --------------------
