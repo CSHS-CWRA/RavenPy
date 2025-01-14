@@ -37,6 +37,7 @@ Utilities
 
 Geospatial
 ----------
+
 .. automodule::  ravenpy.utilities.io
    :members:
 
@@ -48,6 +49,7 @@ Geospatial
 
 Graphics
 --------
+
 .. automodule::  ravenpy.utilities.graphs
    :members:
 

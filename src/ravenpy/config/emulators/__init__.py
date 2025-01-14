@@ -8,6 +8,19 @@ from ravenpy.config.emulators.mohyse import Mohyse
 from ravenpy.config.emulators.routing import BasicRoute
 from ravenpy.config.emulators.sacsma import SACSMA
 
+__all__ = [
+    "GR4JCN",
+    "HBVEC",
+    "HMETS",
+    "HYPR",
+    "SACSMA",
+    "BasicRoute",
+    "Blended",
+    "CanadianShield",
+    "Mohyse",
+    "get_model",
+]
+
 
 def get_model(name):
     """Return the corresponding Raven emulator configuration class.

@@ -1,6 +1,6 @@
-=======
-RavenPy
-=======
+==============
+RavenPy |logo|
+==============
 
 +----------------------------+-----------------------------------------------------+
 | Versions                   | |pypi| |versions|                                   |
@@ -71,13 +71,17 @@ This package was created with Cookiecutter_ and the `Ouranosinc/cookiecutter-pyp
         :target: https://coveralls.io/github/CSHS-CWRA/RavenPy
         :alt: Coveralls
 
-.. |docs| image:: https://readthedocs.org/projects/RavenPy/badge/?version=latest
-        :target: https://ravenpy.readthedocs.io/en/latest/?version=latest
+.. |docs| image:: https://readthedocs.org/projects/ravenpy/badge/?version=latest
+        :target: https://ravenpy.readthedocs.io/en/latest
         :alt: Documentation Status
 
 .. |license| image:: https://img.shields.io/github/license/CSHS-CWRA/RavenPy.svg
         :target: https://github.com/CSHS-CWRA/RavenPy/blob/master/LICENSE
         :alt: License
+
+.. |logo| image:: https://raw.githubusercontent.com/CSHS-CWRA/RavenPy/main/docs/_static/_images/ravenpy-logo-small.png
+        :target: https://github.com/CSHS-CWRA/RavenPy
+        :alt: RavenPy Logo
 
 .. |ossf| image:: https://api.securityscorecards.dev/projects/github.com/CSHS-CWRA/RavenPy/badge
         :target: https://securityscorecards.dev/viewer/?uri=github.com/CSHS-CWRA/RavenPy
