@@ -120,7 +120,7 @@ docs = [
   "s3fs",
   "sphinx >=7.0.0",
   "sphinx-click",
-  "sphinx-codeautolink >=0.15.2",
+  "sphinx-codeautolink >=0.15.2,!=0.16.0", # FIXME: temporary fix for sphinx-codeautolink
   "sphinx-copybutton",
   "sphinx-rtd-theme >=1.0",
   "sphinxcontrib-svg2pdfconverter >=1.2.3",
