@@ -79,7 +79,7 @@ This package was created with Cookiecutter_ and the `Ouranosinc/cookiecutter-pyp
         :target: https://github.com/CSHS-CWRA/RavenPy/blob/master/LICENSE
         :alt: License
 
-.. |logo| image:: https://raw.githubusercontent.com/CSHS-CWRA/RavenPy/main/docs/_static/_images/ravenpy-logo-small.png
+.. |logo| image:: https://raw.githubusercontent.com/CSHS-CWRA/RavenPy/master/docs/_static/_images/logos/ravenpy-logo-small.png
         :target: https://github.com/CSHS-CWRA/RavenPy
         :alt: RavenPy Logo
 
