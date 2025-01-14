@@ -12,7 +12,7 @@ import xarray as xr
 from pandas import DatetimeIndex, Series, Timestamp
 from xarray import Dataset
 
-from . import gis_import_error_message
+from ravenpy.utilities import gis_import_error_message
 
 try:
     import fiona
