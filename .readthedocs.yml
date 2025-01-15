@@ -13,9 +13,9 @@ sphinx:
   fail_on_warning: true
 
 build:
-  os: ubuntu-22.04
+  os: ubuntu-lts-latest
   tools:
-    python: "mambaforge-22.9"
+    python: "mambaforge-23.11"
   jobs:
     pre_build:
       - env SPHINX_APIDOC_OPTIONS="members,undoc-members,show-inheritance,noindex" sphinx-apidoc -o docs/apidoc --private --module-first src/ravenpy

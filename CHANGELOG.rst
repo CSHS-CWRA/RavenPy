@@ -9,6 +9,11 @@ v0.17.0 (unreleased)
 * Updated `ts_fit_graph` logic for `matplotlib` >= 3.10.0 compatibility. (PR #434)
 * Temporarily pinned `pygments` below v2.19 due to a breaking change affecting `sphinx-codeautolink`. (PR #434)
 * Adopted a new RavenPy logo for the documentation. (PR #428)
+* Documentation Updates: (PR #436)
+    * Cleaner imports, removed some unneeded library imports.
+    * Typo and grammar fixes.
+    * Updated the Python, Anaconda, and Ubuntu versions used to generate the documentation.
+* Small import fixes and minor code cleanup (`ravenpy.extractors`). (PR #436)
 
 v0.16.1 (2024-12-05)
 --------------------

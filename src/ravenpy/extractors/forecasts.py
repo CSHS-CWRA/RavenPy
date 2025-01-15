@@ -12,7 +12,7 @@ import xarray as xr
 from pandas import DatetimeIndex, Series, Timestamp
 from xarray import Dataset
 
-from . import gis_import_error_message
+from ravenpy.utilities import gis_import_error_message
 
 try:
     import fiona
@@ -28,6 +28,14 @@ THREDDS_URL = os.environ.get(
 )
 if not THREDDS_URL.endswith("/"):
     THREDDS_URL = f"{THREDDS_URL}/"
+
+__all__ = [
+    "get_CASPAR_dataset",
+    "get_ECCC_dataset",
+    "get_hindcast_day",
+    "get_recent_ECCC_forecast",
+    "get_subsetted_forecast",
+]
 
 
 def get_hindcast_day(region_coll: fiona.Collection, date, climate_model="GEPS"):
