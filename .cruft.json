@@ -10,7 +10,7 @@
       "project_slug": "ravenpy",
       "project_short_description": "A Python wrapper to setup and run the hydrologic modelling framework Raven.",
       "pypi_username": "CSHS-CWRA",
-      "version": "0.16.2-dev.2",
+      "version": "0.16.2-dev.3",
       "use_pytest": "y",
       "use_black": "y",
       "use_conda": "y",
