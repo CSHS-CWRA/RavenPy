@@ -9,26 +9,18 @@ from ravenpy.config.emulators.routing import BasicRoute
 from ravenpy.config.emulators.sacsma import SACSMA
 
 __all__ = [
-    "GR4JCN",
-    "HBVEC",
-    "HMETS",
-    "HYPR",
-    "SACSMA",
-    "BasicRoute",
-    "Blended",
-    "CanadianShield",
-    "Mohyse",
     "get_model",
 ]
 
 
 def get_model(name):
-    """Return the corresponding Raven emulator configuration class.
+    """
+    Return the corresponding Raven emulator configuration class.
 
     Parameters
     ----------
     name : str
-      Model class name or model identifier.
+        Model class name or model identifier.
 
     Returns
     -------
