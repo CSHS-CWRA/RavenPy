@@ -16,7 +16,7 @@ dependencies:
 # Needed for notebooks/HydroShare_integration.ipynb
 # See: https://github.com/CSHS-CWRA/RavenPy/pull/326
 #  - "hsclient",
-  - intake <2.0.0
+  - intake
   - intake-esm >=2023.07.07
   - intake-xarray
   - ipykernel
