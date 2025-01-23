@@ -14,6 +14,7 @@ v0.17.0 (unreleased)
     * Typo and grammar fixes.
     * Updated the Python, Anaconda, and Ubuntu versions used to generate the documentation.
 * Small import fixes and minor code cleanup (`ravenpy.extractors`). (PR #436)
+* Adjusted pins for `intake`, `intake-esm` and `zarr` to ensure notebooks run correctly. (PR #440)
 
 v0.16.1 (2024-12-05)
 --------------------
