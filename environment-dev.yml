@@ -39,6 +39,7 @@ dependencies:
   - xclim >=0.50.0
   - xesmf
   - xskillscore
+  - zarr >=2.13,<3.0 # FIXME: zarr v3 does not support FSMap like before: https://github.com/zarr-developers/zarr-python/issues/2706
   # Dev tools and testing
   - pip >=24.3.1
   - black ==24.10.0

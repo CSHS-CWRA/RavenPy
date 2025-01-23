@@ -101,30 +101,32 @@ docs = [
   # Needed for notebooks/HydroShare_integration.ipynb
   # See: https://github.com/CSHS-CWRA/RavenPy/pull/326
   # "hsclient",
-  "intake <2.0.0",
-  "intake-esm",
-  "intake-xarray",
+  "intake <2.0",
+  "intake-esm >=2023.07.07",
+  "intake-xarray <2.0",
   "ipykernel",
   "ipyleaflet",
-  "ipython",
+  "ipython >=8.5.0",
   "ipywidgets",
   "jupyter-cache",
   "jupyter_client",
   "jupytext",
+  "matplotlib >=3.6.0",
   "myst_nb",
   "nbsphinx",
-  "numpydoc >=1.8.0",
-  "pygments <2.19", # FIXME: Newest pygments breaks sphinx-codeautolink. See: https://github.com/felix-hilden/sphinx-codeautolink/issues/153
   "pymetalink >=6.5.2",
-  "salib",
   "s3fs",
-  "sphinx >=7.0.0",
+  "salib",
+  "sphinx >=7.1.0",
+  "sphinx-autoapi",
   "sphinx-click",
-  "sphinx-codeautolink >=0.15.2,!=0.16.0", # FIXME: temporary fix for sphinx-codeautolink
+  "sphinx-codeautolink >=0.16.2",
   "sphinx-copybutton",
   "sphinx-rtd-theme >=1.0",
   "sphinxcontrib-svg2pdfconverter >=1.2.3",
-  "xesmf"
+  "typing-extensions",
+  "xesmf",
+  "zarr >=2.10.0,<3.0" # FIXME: zarr v3 does not support FSMap like before: https://github.com/zarr-developers/zarr-python/issues/2706
 ]
 gis = [
   "affine >=2.4.0",
