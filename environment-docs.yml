@@ -16,9 +16,9 @@ dependencies:
 # Needed for notebooks/HydroShare_integration.ipynb
 # See: https://github.com/CSHS-CWRA/RavenPy/pull/326
 #  - "hsclient",
-  - intake
+  - intake <2.0
   - intake-esm >=2023.07.07
-  - intake-xarray
+  - intake-xarray <2.0
   - ipykernel
   - ipyleaflet
   - ipython >=8.5.0
