@@ -47,3 +47,4 @@ dependencies:
   - typing_extensions
   - xarray >=2023.11.0
 #  - xesmf  # mocked
+  - zarr >=2.13,<3.0 # FIXME: zarr v3 does not support FSMap like before: https://github.com/zarr-developers/zarr-python/issues/2706
