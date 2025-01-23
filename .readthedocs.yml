@@ -22,8 +22,8 @@ build:
       - sphinx-build -M gettext docs docs/_build
       - sphinx-build -b linkcheck docs/ _build/linkcheck || true
 
-formats:
-  - pdf
+# FIXME: PDF builds not working since addition of the RavenPy logo
+formats: [ ]
 
 conda:
   environment: environment-docs.yml
