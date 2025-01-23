@@ -276,10 +276,11 @@ def similarity(
     return pd.Series(data=n.sum(axis=1), index=gauged.index)
 
 
+# FIXME: gauged_properties is not used
 def regionalization_params(
     method: str,
     gauged_params: pd.DataFrame,
-    gauged_properties: pd.DataFrame,
+    gauged_properties: pd.DataFrame,  # noqa: F841
     ungauged_properties: pd.DataFrame,
     filtered_params: pd.DataFrame,
     filtered_prop: pd.DataFrame,

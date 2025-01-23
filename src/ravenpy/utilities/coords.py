@@ -46,8 +46,9 @@ def param(model):
     )
 
 
+# FIXME: cumulative is not used
 def infer_scale_and_offset(
-    da: xr.DataArray, data_type: str, cumulative: bool = False
+    da: xr.DataArray, data_type: str, cumulative: bool = False  # noqa: F841
 ) -> tuple[float, float]:
     """
     Return scale and offset parameters from data.

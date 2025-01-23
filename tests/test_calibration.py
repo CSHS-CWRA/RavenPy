@@ -375,7 +375,7 @@ bounds = {
 
 
 @pytest.mark.slow
-def test_spotpy_calibration(symbolic_config, tmpdir):
+def test_spotpy_calibration(symbolic_config):
     """Confirm that calibration actually improves the NSE."""
     name, cls = symbolic_config
 

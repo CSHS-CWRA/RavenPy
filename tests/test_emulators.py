@@ -5,14 +5,6 @@ import numpy as np
 import pytest
 import xarray as xr
 
-try:
-    from raven_hydro import __raven_version__
-except ImportError:
-    warnings.warn(
-        "The `raven-hydro` library is not installed. Setting '__raven_version__' to '0'.",
-    )
-    __raven_version__ = "0"
-
 from ravenpy import Emulator
 from ravenpy.config import commands as rc
 from ravenpy.config.emulators import GR4JCN, BasicRoute
