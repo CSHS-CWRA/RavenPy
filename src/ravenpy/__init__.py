@@ -30,4 +30,4 @@ __all__ = ["Emulator", "EnsembleReader", "OutputReader", "RavenWarning", "run"]
 
 __author__ = """David Huard"""
 __email__ = "huard.david@ouranos.ca"
-__version__ = "0.16.2-dev.6"
+__version__ = "0.17.0-dev.0"
