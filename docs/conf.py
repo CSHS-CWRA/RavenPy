@@ -21,12 +21,14 @@ import os
 import sys
 from datetime import date
 from pathlib import Path
+from typing import Any
 
 sys.path.insert(0, os.path.abspath(".."))
 
 import ravenpy  # noqa: E402
 
 # -- Workarounds ------------------------------------------------------
+
 
 def rebuild_readme():
     """Rebuild the readme.rst file from the top-level README.rst file.
@@ -39,12 +41,15 @@ def rebuild_readme():
         readme = f.read()
 
     # Remove the badge table
-    readme = readme.replace("=======\nRavenPy\n=======", "=======\nRavenPy\n=======\n\n.. only:: not latex")
+    readme = readme.replace(
+        "=======\nRavenPy\n=======", "=======\nRavenPy\n=======\n\n.. only:: not latex"
+    )
     readme = readme.replace("\n+-", "\n    +-")
     readme = readme.replace("\n|", "\n    |")
 
     with Path("readme.rst").open("w", encoding="utf-8") as f:
         f.write(readme)
+
 
 rebuild_readme()
 
@@ -213,10 +218,7 @@ html_theme = "sphinx_rtd_theme"
 # theme further.  For a list of options available for each theme, see the
 # documentation.
 #
-html_theme_options = {
-    "style_external_links": True,
-    "logo_only": True
-}
+html_theme_options = {"style_external_links": True, "logo_only": True}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -234,19 +236,19 @@ htmlhelp_basename = "ravenpydoc"
 
 # -- Options for LaTeX output ------------------------------------------
 
-latex_elements = {
+latex_elements: dict[str, Any] = {
     # The paper size ('letterpaper' or 'a4paper').
     #
-    'papersize': 'letterpaper',
+    "papersize": "letterpaper",
     # The font size ('10pt', '11pt' or '12pt').
     #
-    'pointsize': '10pt',
+    "pointsize": "10pt",
     # Additional stuff for the LaTeX preamble.
     #
-    'preamble': '',
+    "preamble": "",
     # Latex figure (float) alignment
     #
-    'figure_align': 'htbp',
+    "figure_align": "htbp",
 }
 
 # Grouping the document tree into LaTeX files. List of tuples

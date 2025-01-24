@@ -16,6 +16,10 @@ v0.17.0 (unreleased)
 * Small import fixes and minor code cleanup (`ravenpy.extractors`). (PR #436)
 * Adjusted pins for `intake`, `intake-esm` and `zarr` to ensure notebooks run correctly. (PR #440)
 * Added a Security Policy (`SECURITY.md`) to the repository. (PR #441)
+* Updated the cookiecutter template to the latest commit: (PR #444)
+    * Workflows now use Checkout with `persist-credentials: false`.
+    * CodeQL workflow has been updated.
+    * `pre-commit` hooks for `vulture` (finding dead code) and `zizmor` (finding security vulnerabilities) have been added.
 
 v0.16.1 (2024-12-05)
 --------------------

@@ -31,7 +31,7 @@ try:
     import geopandas as gpd
     import pandas as pd
     from lxml import etree
-    from owslib.fes import PropertyIsEqualTo, PropertyIsLike
+    from owslib.fes import PropertyIsLike
     from owslib.wcs import WebCoverageService
     from owslib.wfs import WebFeatureService
     from shapely.geometry import Point, shape

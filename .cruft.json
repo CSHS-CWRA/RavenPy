@@ -1,6 +1,6 @@
 {
   "template": "https://github.com/Ouranosinc/cookiecutter-pypackage",
-  "commit": "b27c2d5f8126ea1aefae29a6f5ccfdafad96395d",
+  "commit": "36ea29394390254407194bd37315d9e3e9238585",
   "context": {
     "cookiecutter": {
       "full_name": "David Huard",

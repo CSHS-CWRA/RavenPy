@@ -111,7 +111,8 @@ class SpotSetup:
 
         return 1
 
-    def objectivefunction(self, evaluation, simulation):
+    # FIXME: Verify that this function is correct
+    def objectivefunction(self, evaluation, simulation):  # noqa: F841
         """Return the objective function.
 
         Note that we short-circuit the evaluation and simulation entries, since the objective function has already
