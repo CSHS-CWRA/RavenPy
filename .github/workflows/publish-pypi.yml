@@ -36,7 +36,7 @@ jobs:
       - name: Set up Python3
         uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
         with:
-          python-version: "3.x"
+          python-version: "3.12"  # Python 3.13 is not available yet
       - name: Install CI libraries
         run: |
           python -m pip install --require-hashes -r CI/requirements_ci.txt
