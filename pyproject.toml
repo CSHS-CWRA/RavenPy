@@ -103,7 +103,7 @@ docs = [
   # "hsclient",
   "intake <2.0",
   "intake-esm >=2023.07.07",
-  "intake-xarray <2.0",
+  "intake-xarray <3.0",
   "ipykernel",
   "ipyleaflet",
   "ipython >=8.5.0",
