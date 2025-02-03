@@ -33,16 +33,16 @@ repos:
       - id: python-use-type-annotations
       - id: rst-inline-touching-normal
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 24.10.0
+    rev: 25.1.0
     hooks:
       - id: black
         exclude: ^docs/
   - repo: https://github.com/PyCQA/isort
-    rev: 5.13.2
+    rev: 6.0.0
     hooks:
       - id: isort
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.8.6
+    rev: v0.9.4
     hooks:
       - id: ruff
         args: [ '--fix' ]
@@ -54,7 +54,7 @@ repos:
         additional_dependencies: [ 'flake8-rst-docstrings' ]
         args: [ '--config=.flake8' ]
   - repo: https://github.com/jendrikseipp/vulture
-    rev: v2.13
+    rev: v2.14
     hooks:
       - id: vulture
 #  - repo: https://github.com/pre-commit/mirrors-mypy
@@ -94,17 +94,17 @@ repos:
       - id: numpydoc-validation
         exclude: "^docs/|^tests/"
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.30.0
+    rev: 0.31.1
     hooks:
       - id: check-github-workflows
       - id: check-readthedocs
   - repo: https://github.com/woodruffw/zizmor-pre-commit
-    rev: v0.8.0
+    rev: v1.3.0
     hooks:
       - id: zizmor
         args: [ '--config=.zizmor.yml' ]
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.21.2
+    rev: v8.23.3
     hooks:
       - id: gitleaks
   - repo: meta
