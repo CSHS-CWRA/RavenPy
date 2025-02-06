@@ -13,7 +13,7 @@ sphinx:
   fail_on_warning: true
 
 build:
-  os: ubuntu-lts-latest
+  os: ubuntu-24.04
   tools:
     python: "mambaforge-23.11"
   jobs:
