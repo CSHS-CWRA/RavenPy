@@ -205,7 +205,7 @@ values = [
 ]
 
 [tool.codespell]
-ignore-words-list = "astroid,socio-economic"
+ignore-words-list = "astroid,documen,socio-economic"
 
 [tool.coverage.paths]
 source = ["src/ravenpy/", "*/site-packages/ravenpy/"]
