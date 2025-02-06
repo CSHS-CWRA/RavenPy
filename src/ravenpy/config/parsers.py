@@ -23,7 +23,7 @@ def parse_diagnostics(fn: Path):
             for row in reader:
                 for key, val in zip(header, row):
                     if "DIAG" in key:
-                        val = float(val)  # type: ignore
+                        val = float(val)
                     out[key].append(val)
 
             out.pop("")
@@ -84,7 +84,7 @@ def parse_raven_messages(path):
         if msg == "Errors found in input data. See Raven_errors.txt for details":
             # Skip this one because it's a bit circular
             continue
-        messages[msg_type].append(msg)  # type: ignore
+        messages[msg_type].append(msg)
 
     return messages
 

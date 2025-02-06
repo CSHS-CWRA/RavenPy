@@ -95,7 +95,7 @@ def aggregate_forcings_to_hrus(
         weights_data_lon_lat_ids.append(
             tuple([iweights_data[0], ilon, ilat, iweights_data[2]])
         )
-    weights_data_lon_lat_ids = np.asarray(weights_data_lon_lat_ids)  # type: ignore
+    weights_data_lon_lat_ids = np.asarray(weights_data_lon_lat_ids)
 
     # create new NetCDF that will contain aggregated data of listed variables
 
@@ -149,10 +149,10 @@ def aggregate_forcings_to_hrus(
 
         # read in data for bounding box (is faster than reading then every single cell individually)
         # --> this takes most time for large NetCDFs
-        min_lon = int(np.min(weights_data_lon_lat_ids[:, 1]))  # type: ignore
-        max_lon = int(np.max(weights_data_lon_lat_ids[:, 1]))  # type: ignore
-        min_lat = int(np.min(weights_data_lon_lat_ids[:, 2]))  # type: ignore
-        max_lat = int(np.max(weights_data_lon_lat_ids[:, 2]))  # type: ignore
+        min_lon = int(np.min(weights_data_lon_lat_ids[:, 1]))
+        max_lon = int(np.max(weights_data_lon_lat_ids[:, 1]))
+        min_lat = int(np.min(weights_data_lon_lat_ids[:, 2]))
+        max_lat = int(np.max(weights_data_lon_lat_ids[:, 2]))
 
         idx_input = [slice(0, ntime, 1), slice(0, ntime, 1), slice(0, ntime, 1)]
         idx_input[idx_lon_dim] = slice(min_lon, max_lon + 1, 1)
@@ -166,7 +166,7 @@ def aggregate_forcings_to_hrus(
         input_var_bb = input_var[tuple(idx_input)]
 
         # list of HRU IDs
-        hrus = np.unique(weights_data_lon_lat_ids[:, 0])  # type: ignore
+        hrus = np.unique(weights_data_lon_lat_ids[:, 0])
 
         if len(hrus) != nHRU:
             # should really never happen
@@ -181,22 +181,22 @@ def aggregate_forcings_to_hrus(
             hru = int(hru)
 
             # filter all weights for current HRU
-            idx = np.where(weights_data_lon_lat_ids[:, 0] == hru)[0]  # type: ignore
+            idx = np.where(weights_data_lon_lat_ids[:, 0] == hru)[0]
 
             # create an array that contains weights for each time step
             # --> weights need to be rescaled if NODATA values appear
             # --> transpose such that we can broadcast during rescaling later
             # --> shape = (ncells,ntime) with ncells = len(idx)
             weights_nodata = np.transpose(
-                np.tile(weights_data_lon_lat_ids[idx, 3], (ntime, 1))  # type: ignore
+                np.tile(weights_data_lon_lat_ids[idx, 3], (ntime, 1))
             )
 
             # go through all time steps and zero out weights where grid cell is NODATA
             for iii, ii in enumerate(idx):
                 # bring idx for input_var in appropriate order
                 idx_input = [slice(0, ntime, 1), slice(0, ntime, 1), slice(0, ntime, 1)]
-                idx_input[idx_lon_dim] = int(weights_data_lon_lat_ids[ii, 1]) - min_lon  # type: ignore
-                idx_input[idx_lat_dim] = int(weights_data_lon_lat_ids[ii, 2]) - min_lat  # type: ignore
+                idx_input[idx_lon_dim] = int(weights_data_lon_lat_ids[ii, 1]) - min_lon
+                idx_input[idx_lat_dim] = int(weights_data_lon_lat_ids[ii, 2]) - min_lat
 
                 weights_nodata[iii] = np.where(
                     input_var_bb[tuple(idx_input)].mask, 0.0, weights_nodata[iii]
@@ -217,8 +217,8 @@ def aggregate_forcings_to_hrus(
             for iii, ii in enumerate(idx):
                 # bring idx for input_var in appropriate order
                 idx_input = [slice(0, ntime, 1), slice(0, ntime, 1), slice(0, ntime, 1)]
-                idx_input[idx_lon_dim] = int(weights_data_lon_lat_ids[ii, 1]) - min_lon  # type: ignore
-                idx_input[idx_lat_dim] = int(weights_data_lon_lat_ids[ii, 2]) - min_lat  # type: ignore
+                idx_input[idx_lon_dim] = int(weights_data_lon_lat_ids[ii, 1]) - min_lon
+                idx_input[idx_lat_dim] = int(weights_data_lon_lat_ids[ii, 2]) - min_lat
 
                 # this does not work when NODATA values occur
                 # agg_var[:, ihru] += (
