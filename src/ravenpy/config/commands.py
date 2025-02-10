@@ -494,7 +494,7 @@ class GridWeights(Command):
         :EndGridWeights
         """
         m = re.match(dedent(pat).strip(), s.strip(), re.DOTALL)
-        n_hrus, n_grid_cells, data = m.groups()  # type: ignore
+        n_hrus, n_grid_cells, data = m.groups()
         data = [d.strip().split() for d in data.split("\n")]
         data = tuple((int(h), int(c), float(w)) for h, c, w in data)
         return cls(

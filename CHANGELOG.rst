@@ -2,6 +2,15 @@
 Changelog
 =========
 
+v0.18.0 (unreleased)
+--------------------
+
+* Updated the cookiecutter template to the latest commit: (PR #454)
+    * GitHub Actions and Python dependencies have been updated.
+    * New `pre-commit` hooks for `vulture` (find dead code) and `codespell` (spelling errors).
+    * Removed several `type: ignore` statements.
+    * Spelling errors in documentation have been addressed.
+
 v0.17.0 (2025-01-27)
 --------------------
 

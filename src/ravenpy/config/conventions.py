@@ -1,5 +1,5 @@
 # Taken from https://cfconventions.org/Data/cf-standard-names/current/build/cf-standard-name-table.html
-# Agumented with https://pcmdi.llnl.gov/mips/cmip3/variableList.html
+# Augmented with https://pcmdi.llnl.gov/mips/cmip3/variableList.html
 CF_RAVEN = {
     "TEMP_MIN": ("tasmin",),
     "TEMP_DAILY_MIN": ("tasmin",),
