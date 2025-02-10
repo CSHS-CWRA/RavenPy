@@ -1,6 +1,6 @@
 {
   "template": "https://github.com/Ouranosinc/cookiecutter-pypackage",
-  "commit": "36ea29394390254407194bd37315d9e3e9238585",
+  "commit": "2b31b0f76a180ad93e5a49fe5744306fefb48c9c",
   "context": {
     "cookiecutter": {
       "full_name": "David Huard",
@@ -22,7 +22,8 @@
       "open_source_license": "MIT license",
       "generated_with_cruft": "y",
       "__gh_slug": "https://github.com/CSHS-CWRA/RavenPy",
-      "_template": "https://github.com/Ouranosinc/cookiecutter-pypackage"
+      "_template": "https://github.com/Ouranosinc/cookiecutter-pypackage",
+      "_commit": "2b31b0f76a180ad93e5a49fe5744306fefb48c9c"
     }
   },
   "directory": null,
