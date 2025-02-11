@@ -10,6 +10,7 @@ v0.18.0 (unreleased)
     * New `pre-commit` hooks for `vulture` (find dead code) and `codespell` (spelling errors).
     * Removed several `type: ignore` statements.
     * Spelling errors in documentation have been addressed.
+* Fix bug in _MonthlyRecord class definition crashing the pydantic-autodoc serialization. (PR #458)
 
 v0.17.0 (2025-01-27)
 --------------------
