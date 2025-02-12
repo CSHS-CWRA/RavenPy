@@ -10,7 +10,7 @@ dependencies:
   - cf_xarray >=0.9.3
   - click >=8.0.0
   - climpred >=2.4.0
-  - dask >=2024.4.0
+  - dask >=2024.8.1
   - fiona >=1.9.0
   - gdal >=3.1
   - geopandas >=1.0
@@ -21,8 +21,8 @@ dependencies:
   - numpy >=1.23.0,<2.0
   - owslib >=0.29.1
   - pandas >=2.2.0
-  - pint >=0.20,<0.24
-  - platformdirs
+  - pint >=0.24.4
+  - platformdirs >=4.3.6
   - pydantic >=2.0
   - pydap >=3.4.0
   - pymetalink >=6.5.2
@@ -35,8 +35,8 @@ dependencies:
   - spotpy >=1.6.1
   - statsmodels >=0.14.2
   - typing_extensions
-  - xarray >=2023.11.0
-  - xclim >=0.50.0
+  - xarray >=2023.11.0,!=2024.10.0
+  - xclim >=0.54.0
   - xesmf
   - xskillscore
   - zarr >=2.13,<3.0 # FIXME: zarr v3 does not support FSMap like before: https://github.com/zarr-developers/zarr-python/issues/2706
@@ -48,7 +48,7 @@ dependencies:
   - click >=8.1.7
   - coverage >=7.5.0
   - coveralls >=4.0.0
-  - filelock
+  - filelock >=3.14.0
   - flake8 >=7.1.1
   - flake8-rst-docstrings >=0.3.0
   - flit >=3.10.1,<4.0
