@@ -196,6 +196,7 @@ exclude_patterns = [
     "jupyter_execute",
     "notebooks/paper",
     "notebooks/HydroShare_integration.ipynb",
+    "notebooks-notworking",
 ]
 
 # The name of the Pygments (syntax highlighting) style to use.
