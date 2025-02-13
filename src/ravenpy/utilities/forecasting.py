@@ -300,11 +300,13 @@ def _shift_esp_time(nc, year, dim="member"):
     ds = xr.open_dataset(nc)
 
     # Create new time coordinate
-    start = ds.indexes['time'][0]
+    start = ds.indexes["time"][0]
     freq = xr.infer_freq(ds.time)
     ds["time"] = xr.date_range(
-        start.replace(year=year), periods=len(ds.time), freq=freq,
-        calendar=ds.time.dt.calendar
+        start.replace(year=year),
+        periods=len(ds.time),
+        freq=freq,
+        calendar=ds.time.dt.calendar,
     )
 
     # New coordinate dimension to store the original year
