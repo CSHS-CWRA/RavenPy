@@ -91,7 +91,7 @@ dev = [
   "watchdog >=4.0.0"
 ]
 docs = [
-  "autodoc-pydantic >=2.2.0",
+  "autodoc-pydantic >=2.1.0",
   "birdhouse-birdy",
   "cairosvg >=2.6.0",
   "cartopy >=0.23.0",
