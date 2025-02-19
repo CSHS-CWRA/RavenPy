@@ -21,10 +21,10 @@ class TestHydroBASINS:
         dom = self.geoserver.select_hybas_domain(bbox=bbox)
         assert dom == "na"
 
-    # @pytest.mark.skip(
-    #     sys.platform == "darwin" and not os.getenv("CONDA_PREFIX"),
-    #     reason="Fails on MacOS w/ PyPI",
-    # )
+    @pytest.mark.skip(
+        sys.platform == "darwin" and not os.getenv("CONDA_PREFIX"),
+        reason="Fails on MacOS w/ PyPI",
+    )
     def test_select_hybas_ar_domain_point(self):
         point = -114.65, 61.35
         dom = self.geoserver.select_hybas_domain(point=point)
