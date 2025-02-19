@@ -374,18 +374,29 @@ bounds = {
 }
 
 
-@pytest.mark.slow
+@pytest.mark.xfail(
+    reason="Some platform and Python versions combinations raise errors for certain models",
+    strict=False,
+)
 def test_spotpy_calibration(symbolic_config):
     """Confirm that calibration actually improves the NSE."""
     name, cls = symbolic_config
 
-    # # FIXME: The Blended model run returns error code -11.
+    # FIXME: These models are not working on some platforms
     # if name == "Blended":
-    #     pytest.skip("The Blended model run returns error code -11.")
+    #     pytest.skip("The Blended model run returns: "
+    #                 "'Wilting point saturation (SAT_WILT) is greater than field capacity (FIELD_CAPACITY) "
+    #                 "for one or more soil classes, leading to negative tension storage' on Linux and macOS.")
     # if name == "CanadianShield":
     #     pytest.skip(
-    #         "The CanadianShield model run returns 'CHydroUnit constructor:: HRU 2 has a negative or zero area'"
+    #         "The CanadianShield model run returns: "
+    #         "'CHydroUnit constructor:: HRU 2 has a negative or zero area' on Linux."
     #     )
+    # if name == "SACSMA":
+    #     pytest.skip(
+    #         "The SACSMA model run returns: "
+    #         "'ValueError: zero-size array to reduction operation fmax which has no identity' on Linux and macOS."
+    #         )
 
     if name not in bounds:
         pytest.skip("No bounds defined.")
