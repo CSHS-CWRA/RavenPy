@@ -1,7 +1,6 @@
 name: ravenpy-docs
 channels:
-- conda-forge
-- defaults
+  - conda-forge
 dependencies:
   - python >=3.12,<3.13
   - raven-hydro >=0.4.0,<1.0
