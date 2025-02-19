@@ -5,8 +5,6 @@ import tempfile
 import numpy as np
 import pytest
 
-# FIXME: Remove XFAIL marks once OWSLib > 0.24.1 is released.
-
 
 @pytest.mark.online
 class TestHydroBASINS:
