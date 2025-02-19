@@ -21,7 +21,7 @@ class TestHydroBASINS:
         dom = self.geoserver.select_hybas_domain(bbox=bbox)
         assert dom == "na"
 
-    @pytest.mark.skip(
+    @pytest.mark.skipif(
         sys.platform == "darwin" and not os.getenv("CONDA_PREFIX"),
         reason="Fails on MacOS w/ PyPI",
     )
