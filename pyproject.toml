@@ -205,13 +205,9 @@ values = [
 [tool.codespell]
 ignore-words-list = "astroid,documen,socio-economic"
 
-[tool.coverage.paths]
-source = ["src/ravenpy/", "*/site-packages/ravenpy/"]
-
 [tool.coverage.run]
 relative_files = true
 omit = ["tests/*.py"]
-source = ["ravenpy"]
 
 [tool.flit.sdist]
 include = [
@@ -340,6 +336,7 @@ markers = [
   "slow: marks tests as slow (deselect with '-m \"not slow\"')",
   "online: mark tests that require external services (deselect with '-m \"not online\"')"
 ]
+xfail_strict = true
 
 [tool.ruff]
 src = ["ravenpy"]
