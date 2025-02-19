@@ -122,7 +122,7 @@ jobs:
           if [ "${{ matrix.tox-env }}" != "false" ]; then
             python3 -m tox -e ${{ matrix.tox-env }}
           else
-            python3 -m tox -e py${{ matrix.python-version }}-coveralls
+            python3 -m tox
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
