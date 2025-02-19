@@ -60,9 +60,8 @@ jobs:
       fail-fast: false
       matrix:
         os: [ 'ubuntu-latest' ]  # 'macos-latest' disabled until a new build of raven-hydro is available
-        python-version: [ "3.11", "3.12" ]
+        python-version: [ "3.11", "3.12", "3.13" ]
         tox-env: [ 'false' ]
-          # - "3.13" # not yet supported by dependencies
         include:
           - os: 'ubuntu-latest'
             python-version: '3.10'
@@ -98,21 +97,18 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
 
-      - name: Install GDAL (Ubuntu)
+      - name: Install GDAL + Set GDAL_VERSION (Ubuntu)
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
           sudo apt-get install libgdal-dev
+          echo "GDAL_VERSION=$(gdal-config --version)" >> $GITHUB_ENV
       - name: Install GDAL (macOS)
         if: matrix.os == 'macos-latest'
         uses: tecolicom/actions-use-homebrew-tools@b9c066b79607fa3d71e0be05d7003bb75fd9ff34 # v1.3
         with:
           tools: gdal
           cache: "yes"
-      - name: Set GDAL_VERSION (Ubuntu)
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          echo "GDAL_VERSION=$(gdal-config --version)" >> $GITHUB_ENV
       - name: Set GDAL_VERSION (macOS)
         if: matrix.os == 'macos-latest'
         run: |
@@ -142,10 +138,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ "ubuntu-latest" ]
-          # - macos-latest  # disabled until a new build of raven-hydro is available
+        os: [ "ubuntu-latest", "macos-latest" ]
           # - windows-latest  # disabled until xesmf is available
-        python-version: [ "3.10", "3.11", "3.12" ]
+        python-version: [ "3.10", "3.13" ]
     defaults:
       run:
         shell: bash -l {0}
