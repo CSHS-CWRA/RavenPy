@@ -54,12 +54,12 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr htmlcov/
 	rm -fr .pytest_cache
 
- lint/flake8: ## check style with flake8
+lint/flake8: ## check style with flake8
 	python -m ruff check src/ravenpy tests
 	python -m flake8 --config=.flake8 src/ravenpy tests
 	python -m numpydoc lint src/ravenpy/**.py
 
- lint/black: ## check style with black
+lint/black: ## check style with black
 	python -m black --check src/ravenpy tests
 	python -m blackdoc --check src/ravenpy docs
 	python -m isort --check src/ravenpy tests

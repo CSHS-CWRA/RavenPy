@@ -59,10 +59,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ 'ubuntu-latest' ]  # 'macos-latest' disabled until a new build of raven-hydro is available
-        python-version: [ "3.11", "3.12" ]
+        os: [ 'ubuntu-latest', "macos-latest" ]
+        python-version: [ "3.11", "3.12", "3.13" ]
         tox-env: [ 'false' ]
-          # - "3.13" # not yet supported by dependencies
         include:
           - os: 'ubuntu-latest'
             python-version: '3.10'
@@ -98,21 +97,18 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
 
-      - name: Install GDAL (Ubuntu)
+      - name: Install GDAL + Set GDAL_VERSION (Ubuntu)
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
           sudo apt-get install libgdal-dev
+          echo "GDAL_VERSION=$(gdal-config --version)" >> $GITHUB_ENV
       - name: Install GDAL (macOS)
         if: matrix.os == 'macos-latest'
         uses: tecolicom/actions-use-homebrew-tools@b9c066b79607fa3d71e0be05d7003bb75fd9ff34 # v1.3
         with:
           tools: gdal
           cache: "yes"
-      - name: Set GDAL_VERSION (Ubuntu)
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          echo "GDAL_VERSION=$(gdal-config --version)" >> $GITHUB_ENV
       - name: Set GDAL_VERSION (macOS)
         if: matrix.os == 'macos-latest'
         run: |
@@ -125,8 +121,10 @@ jobs:
         run: |
           if [ "${{ matrix.tox-env }}" != "false" ]; then
             python3 -m tox -e ${{ matrix.tox-env }}
-          else
+          elif [ "${{ matrix.python-version }}" != "3.13" ]; then
             python3 -m tox -e py${{ matrix.python-version }}-coveralls
+          else
+            python3 -m tox -e py${{ matrix.python-version }}
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -142,10 +140,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ "ubuntu-latest" ]
-          # - macos-latest  # disabled until a new build of raven-hydro is available
+        os: [ "ubuntu-latest", "macos-latest" ]
           # - windows-latest  # disabled until xesmf is available
-        python-version: [ "3.10", "3.11", "3.12" ]
+        python-version: [ "3.10", "3.13" ]
     defaults:
       run:
         shell: bash -l {0}
@@ -192,15 +189,12 @@ jobs:
           python -m pip check || true
       - name: Test RavenPy
         run: |
-          python -m pytest --cov --numprocesses=logical
-      - name: Report coverage
-        run: |
-          python -m coveralls
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_FLAG_NAME: run-conda_${{ matrix.python-version }}_${{ matrix.os }}
-          COVERALLS_PARALLEL: true
-          COVERALLS_SERVICE_NAME: github
+          python -m pytest --numprocesses=logical --cov=src/ravenpy --cov-report=lcov
+      - name: Report Coverage
+        uses: coverallsapp/github-action@648a8eb78e6d50909eff900e4ec85cab4524a45b # v2.3.6
+        with:
+          flag-name: run-conda_${{ matrix.python-version }}_${{ matrix.os }}
+          parallel: true
 
   finish:
     needs:

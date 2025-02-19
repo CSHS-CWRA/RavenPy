@@ -1,5 +1,3 @@
-import xarray as xr
-
 from ravenpy.utilities.coords import infer_scale_and_offset
 from ravenpy.utilities.testdata import open_dataset
 

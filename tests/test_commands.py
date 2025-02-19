@@ -1,6 +1,5 @@
 import re
 from collections.abc import Sequence
-from shutil import copyfile
 from textwrap import dedent
 from typing import Union
 
