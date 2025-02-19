@@ -1,16 +1,14 @@
 import os
 import sys
 import tempfile
-import urllib.request
 
 import numpy as np
 import pytest
 
-pytestmark = pytest.mark.online
-
 # FIXME: Remove XFAIL marks once OWSLib > 0.24.1 is released.
 
 
+@pytest.mark.online
 class TestHydroBASINS:
     geoserver = pytest.importorskip("ravenpy.utilities.geoserver")
 
@@ -23,13 +21,10 @@ class TestHydroBASINS:
         dom = self.geoserver.select_hybas_domain(bbox=bbox)
         assert dom == "na"
 
-
-if os.getenv("CONDA_DEFAULT_ENV") == "raven-dev":
-    # FIXME: Investigate why this fails for macOS on PyPI.
-    @pytest.mark.skip(
-        sys.platform == "darwin" and not os.getenv("CONDA_PREFIX"),
-        reason="Fails on MacOS w/ PyPI",
-    )
+    # @pytest.mark.skip(
+    #     sys.platform == "darwin" and not os.getenv("CONDA_PREFIX"),
+    #     reason="Fails on MacOS w/ PyPI",
+    # )
     def test_select_hybas_ar_domain_point(self):
         point = -114.65, 61.35
         dom = self.geoserver.select_hybas_domain(point=point)
@@ -90,6 +85,7 @@ if os.getenv("CONDA_DEFAULT_ENV") == "raven-dev":
         )
 
 
+@pytest.mark.online
 class TestHydroRouting:
     geoserver = pytest.importorskip("ravenpy.utilities.geoserver")
 
@@ -135,6 +131,7 @@ class TestHydroRouting:
         assert len(gdf_upstream) == 33  # TODO: Verify this with the model maintainers.
 
 
+@pytest.mark.online
 class TestWFS:
     geoserver = pytest.importorskip("ravenpy.utilities.geoserver")
 
@@ -174,6 +171,7 @@ class TestWFS:
         assert gdf.STATE_NAME.unique() == "Nevada"
 
 
+@pytest.mark.online
 class TestWCS:
     io = pytest.importorskip("ravenpy.utilities.io")
     geoserver = pytest.importorskip("ravenpy.utilities.geoserver")

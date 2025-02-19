@@ -189,7 +189,7 @@ jobs:
           python -m pip check || true
       - name: Test RavenPy
         run: |
-          python -m pytest --cov=ravenpy --numprocesses=logical
+          python -m pytest --numprocesses=logical --cov=src/ravenpy --cov-report=lcov
       - name: Report Coverage
         uses: coverallsapp/github-action@648a8eb78e6d50909eff900e4ec85cab4524a45b # v2.3.6
         with:
