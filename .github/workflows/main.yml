@@ -121,8 +121,10 @@ jobs:
         run: |
           if [ "${{ matrix.tox-env }}" != "false" ]; then
             python3 -m tox -e ${{ matrix.tox-env }}
-          else
+          elseif [ "${{ matrix.python-version }}" != "3.13" ]; then
             python3 -m tox -e py${{ matrix.python-version }}-coveralls
+          else
+            python3 -m tox -e py${{ matrix.python-version }}
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -187,7 +189,7 @@ jobs:
           python -m pip check || true
       - name: Test RavenPy
         run: |
-          python -m pytest --cov --numprocesses=logical
+          python -m pytest --cov=ravenpy --numprocesses=logical
       - name: Report Coverage
         uses: coverallsapp/github-action@648a8eb78e6d50909eff900e4ec85cab4524a45b # v2.3.6
         with:
