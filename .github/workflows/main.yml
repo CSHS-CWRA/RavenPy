@@ -59,7 +59,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ 'ubuntu-latest' ]  # 'macos-latest' disabled until a new build of raven-hydro is available
+        os: [ 'ubuntu-latest', "macos-latest" ]
         python-version: [ "3.11", "3.12", "3.13" ]
         tox-env: [ 'false' ]
         include:
@@ -122,7 +122,7 @@ jobs:
           if [ "${{ matrix.tox-env }}" != "false" ]; then
             python3 -m tox -e ${{ matrix.tox-env }}
           else
-            python3 -m tox
+            python3 -m tox -e py${{ matrix.python-version }}-coveralls
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -188,14 +188,11 @@ jobs:
       - name: Test RavenPy
         run: |
           python -m pytest --cov --numprocesses=logical
-      - name: Report coverage
-        run: |
-          python -m coveralls
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_FLAG_NAME: run-conda_${{ matrix.python-version }}_${{ matrix.os }}
-          COVERALLS_PARALLEL: true
-          COVERALLS_SERVICE_NAME: github
+      - name: Report Coverage
+        uses: coverallsapp/github-action@648a8eb78e6d50909eff900e4ec85cab4524a45b # v2.3.6
+        with:
+          flag-name: run-conda_${{ matrix.python-version }}_${{ matrix.os }}
+          parallel: true
 
   finish:
     needs:
