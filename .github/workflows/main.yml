@@ -121,7 +121,7 @@ jobs:
         run: |
           if [ "${{ matrix.tox-env }}" != "false" ]; then
             python3 -m tox -e ${{ matrix.tox-env }}
-          elseif [ "${{ matrix.python-version }}" != "3.13" ]; then
+          elif [ "${{ matrix.python-version }}" != "3.13" ]; then
             python3 -m tox -e py${{ matrix.python-version }}-coveralls
           else
             python3 -m tox -e py${{ matrix.python-version }}
