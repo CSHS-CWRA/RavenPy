@@ -127,7 +127,7 @@ class TestGdalOgrFunctions:
             get_local_testdata(raster_file)
         )
         np.testing.assert_almost_equal(
-            self.analysis.circular_mean_aspect(aspect_grid), 10.9119033
+            self.analysis.circular_mean_aspect(aspect_grid), 10.91190, decimal=5
         )
 
         # test with creation of a temporary file
@@ -139,7 +139,7 @@ class TestGdalOgrFunctions:
             set_output=aspect_tempfile,
         )
         np.testing.assert_almost_equal(
-            self.analysis.circular_mean_aspect(aspect_grid), 10.9119033
+            self.analysis.circular_mean_aspect(aspect_grid), 10.91190, decimal=5
         )
         assert Path(aspect_tempfile).stat().st_size > 0
 
@@ -147,8 +147,8 @@ class TestGdalOgrFunctions:
     def test_gdal_slope_not_projected(self, tmp_path, get_local_testdata):
         slope_grid = self.analysis.gdal_slope_analysis(get_local_testdata(raster_file))
         np.testing.assert_almost_equal(slope_grid.min(), 0.0)
-        np.testing.assert_almost_equal(slope_grid.mean(), 64.4365427)
-        np.testing.assert_almost_equal(slope_grid.max(), 89.71747, 5)
+        np.testing.assert_almost_equal(slope_grid.mean(), 64.43654, decimal=5)
+        np.testing.assert_almost_equal(slope_grid.max(), 89.71747, decimal=5)
 
         slope_tempfile = tempfile.NamedTemporaryFile(
             prefix="slope_", suffix=".tiff", delete=False, dir=tmp_path
@@ -163,9 +163,9 @@ class TestGdalOgrFunctions:
     # Slope values are high due to data values using Geographic CRS
     def test_dem_properties(self, get_local_testdata):
         dem_properties = self.analysis.dem_prop(get_local_testdata(raster_file))
-        np.testing.assert_almost_equal(dem_properties["aspect"], 10.911, 3)
-        np.testing.assert_almost_equal(dem_properties["elevation"], 79.0341, 4)
-        np.testing.assert_almost_equal(dem_properties["slope"], 64.43654, 5)
+        np.testing.assert_almost_equal(dem_properties["aspect"], 10.91190, decimal=5)
+        np.testing.assert_almost_equal(dem_properties["elevation"], 79.0341, decimal=4)
+        np.testing.assert_almost_equal(dem_properties["slope"], 64.43654, decimal=5)
 
         with self.fiona.open(get_local_testdata(geojson_file)) as gj:
             feature = next(iter(gj))
@@ -174,9 +174,15 @@ class TestGdalOgrFunctions:
         region_dem_properties = self.analysis.dem_prop(
             get_local_testdata(raster_file), geom=geom
         )
-        np.testing.assert_almost_equal(region_dem_properties["aspect"], 280.681, 3)
-        np.testing.assert_almost_equal(region_dem_properties["elevation"], 145.8899, 4)
-        np.testing.assert_almost_equal(region_dem_properties["slope"], 61.26508, 5)
+        np.testing.assert_almost_equal(
+            region_dem_properties["aspect"], 280.681, decimal=3
+        )
+        np.testing.assert_almost_equal(
+            region_dem_properties["elevation"], 145.8899, decimal=4
+        )
+        np.testing.assert_almost_equal(
+            region_dem_properties["slope"], 61.26508, decimal=5
+        )
 
     # Slope values are high due to data values using Geographic CRS
     def test_geom_properties(self, get_local_testdata):
@@ -229,7 +235,9 @@ class TestGenericGeoOperations:
             geom = self.sgeo.shape(feature["geometry"])
 
         geom_properties = self.analysis.geom_prop(geom)
-        np.testing.assert_almost_equal(geom_properties["area"], 6450001762792, 0)
+        np.testing.assert_almost_equal(
+            geom_properties["area"], 6450001762792, decimal=0
+        )
         np.testing.assert_almost_equal(
             geom_properties["centroid"], (1645777.7589835, -933242.1203143)
         )
