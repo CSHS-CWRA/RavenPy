@@ -11,6 +11,10 @@ v0.18.0 (unreleased)
     * Removed several `type: ignore` statements.
     * Spelling errors in documentation have been addressed.
 * Fix bug in _MonthlyRecord class definition crashing the pydantic-autodoc serialization. (PR #458)
+* `ravenpy` now supports Python3.13. (PR #459)
+* Update `raven-hydro` to v0.4.0 (`RavenHydroFramework` v4.0.1). (PR #459)
+* Update `xclim` to v0.54.0, `pint` to v0.24.4, and `numpy` to v1.24.0 (no longer pinned below v2.0). (PR #459)
+* GitHub Workflows now test `ravenpy` using macOS as well as Python3.13. (PR #459)
 
 v0.17.0 (2025-01-27)
 --------------------
