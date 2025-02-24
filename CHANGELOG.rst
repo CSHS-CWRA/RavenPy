@@ -2,7 +2,7 @@
 Changelog
 =========
 
-v0.18.0 (unreleased)
+v0.18.0 (2025-02-25)
 --------------------
 
 * Updated the cookiecutter template to the latest commit: (PR #454)
