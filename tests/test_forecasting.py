@@ -1,4 +1,4 @@
-import datetime as dt
+from datetime import datetime as dt
 
 import numpy as np
 import pytest
@@ -75,7 +75,7 @@ def test_forecasting_GEPS(numeric_config, get_local_testdata):
     # Prepare a RAVEN model run using historical data, GR4JCN in this case.
     # This is a dummy run to get initial states. In a real forecast situation,
     # this run would end on the day before the forecast, but process is the same.
-    wup.start_date = dt.datetime(2000, 1, 1)
+    wup.start_date = dt(2000, 1, 1)
     wup.duration = 30
 
     e = Emulator(wup)

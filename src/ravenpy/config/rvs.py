@@ -29,9 +29,9 @@ class RVI(RV):
 
     run_name: Optional[str] = optfield(alias="RunName")
     calendar: Optional[o.Calendar] = optfield(alias="Calendar")
-    start_date: Optional[date] = optfield(alias="StartDate")
+    start_date: Optional[Union[str, date]] = optfield(alias="StartDate")
     assimilation_start_time: Optional[date] = optfield(alias="AssimilationStartTime")
-    end_date: Optional[date] = optfield(alias="EndDate")
+    end_date: Optional[Union[str, date]] = optfield(alias="EndDate")
     duration: Optional[float] = optfield(alias="Duration")
     time_step: Optional[Union[float, str]] = optfield(alias="TimeStep")
     interpolation: Optional[o.Interpolation] = optfield(alias="Interpolation")
