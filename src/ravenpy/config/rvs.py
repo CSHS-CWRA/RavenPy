@@ -5,7 +5,8 @@ from pathlib import Path
 from typing import Any, Optional, Union
 
 import cftime
-from pydantic import ConfigDict, Field, ValidationInfo, field_validator, model_validator
+from pydantic import ConfigDict, Field, ValidationInfo, field_validator
+from raven_hydro import __raven_version__
 
 from ..config import commands as rc
 from ..config import options as o
@@ -262,13 +263,11 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
 
     def header(self, rv):
         """Return the header to print at the top of each RV file."""
-        import datetime as dt
         from textwrap import dedent
 
         import ravenpy
 
-        # TODO: Better mechanism to fetch version
-        version = "3.7"
+        version = __raven_version__
 
         return dedent(
             f"""
