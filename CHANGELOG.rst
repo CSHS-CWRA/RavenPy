@@ -13,6 +13,7 @@ v0.18.0 (unreleased)
 Bug fixes
 ^^^^^^^^^
 * Fix bug in _MonthlyRecord class definition crashing the pydantic-autodoc serialization. (PR #458)
+* Fixed a small API bug in the `Comparing_hindcasts_and_ESP_forecasts.ipynb` notebook. (PR #463)
 * The `Raven` model previously always reported version "3.7", regardless of the installed `Raven` version. It now uses `raven-hydro`'s `__raven_version__` attribute. (PR #464)
 
 Internal changes
