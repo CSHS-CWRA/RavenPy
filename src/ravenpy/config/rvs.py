@@ -138,6 +138,8 @@ class RVI(RV):
             ).value.lower()
 
             obj = cftime._cftime.DATE_TYPES[calendar]
+            if isinstance(v, str):
+                v = dt.datetime.fromisoformat(v)
 
             return obj(*v.timetuple()[:6])
 
