@@ -5,15 +5,22 @@ Changelog
 v0.18.0 (unreleased)
 --------------------
 
+* `ravenpy` now supports Python3.13. (PR #459)
+* Updated `raven-hydro` to v0.4.0 (`RavenHydroFramework` v4.0.1). (PR #459)
+* Updated `xclim` to v0.54.0, `pint` to v0.24.4, and `numpy` to v1.24.0 (no longer pinned below v2.0). (PR #459)
+
+Bug fixes
+^^^^^^^^^
+* Fix bug in _MonthlyRecord class definition crashing the pydantic-autodoc serialization. (PR #458)
+* Fixed a small API bug in the `Comparing_hindcasts_and_ESP_forecasts.ipynb` notebook. (PR #463)
+
+Internal changes
+^^^^^^^^^^^^^^^^
 * Updated the cookiecutter template to the latest commit: (PR #454)
     * GitHub Actions and Python dependencies have been updated.
     * New `pre-commit` hooks for `vulture` (find dead code) and `codespell` (spelling errors).
     * Removed several `type: ignore` statements.
     * Spelling errors in documentation have been addressed.
-* Fix bug in _MonthlyRecord class definition crashing the pydantic-autodoc serialization. (PR #458)
-* `ravenpy` now supports Python3.13. (PR #459)
-* Update `raven-hydro` to v0.4.0 (`RavenHydroFramework` v4.0.1). (PR #459)
-* Update `xclim` to v0.54.0, `pint` to v0.24.4, and `numpy` to v1.24.0 (no longer pinned below v2.0). (PR #459)
 * GitHub Workflows now test `ravenpy` using macOS as well as Python3.13. (PR #459)
 
 v0.17.0 (2025-01-27)
