@@ -1,6 +1,6 @@
 import datetime as dt
 from collections.abc import Sequence
-from dataclasses import asdict, fields, is_dataclass
+from dataclasses import asdict, dataclass, fields, is_dataclass
 from pathlib import Path
 from typing import Any, Optional, Union
 
@@ -261,7 +261,8 @@ class RVE(RV):
 class Config(RVI, RVC, RVH, RVT, RVP, RVE):
     __rv__ = None
 
-    def header(self, rv):
+    @staticmethod
+    def header(rv):
         """Return the header to print at the top of each RV file."""
         from textwrap import dedent
 
@@ -513,7 +514,7 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
         return zip
 
 
-def is_symbolic(params: dict) -> bool:
+def is_symbolic(params: dict | dataclass) -> bool:
     """Return True if parameters include a symbolic variable."""
     from pymbolic.primitives import Variable
 
