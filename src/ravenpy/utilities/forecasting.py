@@ -374,7 +374,9 @@ def ensemble_prediction(
 
     # Run the model for each year
     ensemble = []
-    forecast_ds = xr.open_dataset(forecast, use_cftime=True)
+
+    time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
+    forecast_ds = xr.open_dataset(forecast, decode_times=time_coder)
 
     for member in range(0, len(forecast_ds[ens_dim])):
         # Prepare model instance

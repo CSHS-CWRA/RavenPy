@@ -76,7 +76,7 @@ class TestHydroBASINS:
         aggregated = self.geoserver.hydrobasins_aggregate(gdf_upstream)
 
         assert len(aggregated) == 1
-        assert float(aggregated.SUB_AREA.values) == 4977.8
+        assert aggregated.SUB_AREA.values[0] == 4977.8
         np.testing.assert_equal(
             aggregated.geometry.bounds.values,
             np.array([[-83.8167, 8.7625, -82.7125, 9.5875]]),

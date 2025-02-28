@@ -10,8 +10,10 @@ from . import gis_import_error_message
 
 try:
     import rasterio
-    from osgeo.gdal import Dataset, DEMProcessing
+    from osgeo.gdal import Dataset, DEMProcessing, UseExceptions
     from shapely.geometry import GeometryCollection, MultiPolygon, Polygon, shape
+
+    UseExceptions()
 except (ImportError, ModuleNotFoundError) as e:
     msg = gis_import_error_message.format(Path(__file__).stem)
     raise ImportError(msg) from e

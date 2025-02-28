@@ -9,7 +9,7 @@ RavenPy |logo|
 +----------------------------+-----------------------------------------------------+
 | Open Source                | |license| |ossf-score|                              |
 +----------------------------+-----------------------------------------------------+
-| Coding Standards           | |black| |isort| |ruff| |pre-commit|                 |
+| Coding Standards           | |black| |isort| |ruff| |ossf-bp| |pre-commit|       |
 +----------------------------+-----------------------------------------------------+
 | Development Status         | |status| |build| |coveralls|                        |
 +----------------------------+-----------------------------------------------------+
@@ -87,10 +87,9 @@ This package was created with Cookiecutter_ and the `Ouranosinc/cookiecutter-pyp
         :target: https://github.com/CSHS-CWRA/RavenPy
         :alt: RavenPy Logo
 
-..
-    .. |ossf-bp| image:: https://bestpractices.coreinfrastructure.org/projects/9945/badge
-            :target: https://bestpractices.coreinfrastructure.org/projects/9945
-            :alt: Open Source Security Foundation Best Practices
+.. |ossf-bp| image:: https://bestpractices.coreinfrastructure.org/projects/10064/badge
+        :target: https://bestpractices.coreinfrastructure.org/projects/10064
+        :alt: Open Source Security Foundation Best Practices
 
 .. |ossf-score| image:: https://api.securityscorecards.dev/projects/github.com/CSHS-CWRA/RavenPy/badge
         :target: https://securityscorecards.dev/viewer/?uri=github.com/CSHS-CWRA/RavenPy

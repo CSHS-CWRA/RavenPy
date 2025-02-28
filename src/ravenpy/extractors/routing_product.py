@@ -14,6 +14,7 @@ try:
     from osgeo import ogr, osr
     from shapely import wkt
 
+    osr.UseExceptions()
 except (ImportError, ModuleNotFoundError) as e:
     msg = gis_import_error_message.format(Path(__file__).stem)
     raise ImportError(msg) from e

@@ -1,3 +1,5 @@
+from raven_hydro import __raven_version__
+
 units = {
     "PRECIP": "mm/d",
     "PRECIP_DAILY_AVE": "mm/d",
@@ -58,11 +60,10 @@ def default_nc_attrs():
     import datetime as dt
 
     now = dt.datetime.now().isoformat(timespec="seconds")
-    # TODO: get version from shared library
-    version = "3.7"
+    version = __raven_version__
 
     return {
         "history": f"Created on {now} by Raven {version}",
         "references": "Craig, J.R., and the Raven Development Team, Raven user's and developer's manual "
-        f"(Version {version}), URL: http://raven.uwaterloo.ca/ (2023).",
+        f"(Version {version}), URL: https://raven.uwaterloo.ca/ (2025).",
     }
