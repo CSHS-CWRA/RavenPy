@@ -122,7 +122,7 @@ docs = [
   "sphinx-rtd-theme >=1.0",
   "sphinxcontrib-svg2pdfconverter >=1.2.3",
   "xesmf",
-  "zarr >=2.10.0,<3.0" # FIXME: zarr v3 does not support FSMap like before: https://github.com/zarr-developers/zarr-python/issues/2706
+  "zarr >=2.10.0,<4.0" # FIXME: zarr v3 does not support FSMap like before: https://github.com/zarr-developers/zarr-python/issues/2706
 ]
 gis = [
   "affine >=2.4.0",
