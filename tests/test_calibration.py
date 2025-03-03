@@ -374,10 +374,6 @@ bounds = {
 }
 
 
-@pytest.mark.xfail(
-    reason="Some platform and Python versions combinations raise errors for certain models",
-    strict=False,
-)
 def test_spotpy_calibration(symbolic_config):
     """Confirm that calibration actually improves the NSE."""
     name, cls = symbolic_config
