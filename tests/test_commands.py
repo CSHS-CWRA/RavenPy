@@ -34,12 +34,34 @@ def test_custom_ouputs():
 
 
 def test_evaluation_metrics():
+
+    evaluation_metrics = [
+        "ABSERR",
+        "ABSERR_RUN",
+        "ABSMAX",
+        "DIAG_SPEARMAN",
+        "FUZZY_NASH",
+        "KGE_PRIME",
+        "KLING_GUPTA",
+        "LOG_NASH",
+        "NASH_SUTCLIFFE",
+        "NSC",
+        "PCT_BIAS",
+        "PDIFF",
+        "RCOEFF",
+        "RMSE",
+        "TMVOL",
+    ]
+
     class Test(RV):
         em: Sequence[o.EvaluationMetrics] = Field(
-            ["RMSE", "NASH_SUTCLIFFE"], alias="EvaluationMetrics"
+            evaluation_metrics, alias="EvaluationMetrics"
         )
 
-    assert Test().to_rv().strip() == ":EvaluationMetrics    RMSE NASH_SUTCLIFFE"
+    assert (
+        Test().to_rv().strip()
+        == f":EvaluationMetrics    {' '.join(evaluation_metrics)}"
+    )
 
 
 def test_hrus():

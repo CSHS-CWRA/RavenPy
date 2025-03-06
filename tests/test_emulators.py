@@ -149,8 +149,10 @@ def test_evaluation_periods(gr4jcn_config, tmp_path):
     """Test multiple evaluation periods are parsed correctly."""
     gr4jcn, params = gr4jcn_config
 
+    evaluation_metrics = ["RMSE", "KLING_GUPTA", "KGE_PRIME"]
+
     conf = gr4jcn.set_params(params)
-    conf.evaluation_metrics = ["RMSE", "KLING_GUPTA"]
+    conf.evaluation_metrics = evaluation_metrics
     conf.evaluation_period = [
         rc.EvaluationPeriod(name="period1", start="2000-01-01", end="2000-01-07"),
         rc.EvaluationPeriod(name="period2", start="2001-01-01", end="2000-01-15"),
@@ -158,9 +160,9 @@ def test_evaluation_periods(gr4jcn_config, tmp_path):
     out = Emulator(conf, workdir=tmp_path).run()
 
     d = out.diagnostics
-    assert "DIAG_RMSE" in d
-    assert "DIAG_KLING_GUPTA" in d
-    assert len(d["DIAG_RMSE"]) == 3  # ALL, period1, period2
+    for name in evaluation_metrics:
+        assert f"DIAG_{name}" in d
+        assert len(d[f"DIAG_{name}"]) == 3  # ALL, period1, period2
 
 
 @pytest.mark.slow
@@ -407,7 +409,7 @@ def test_routing(get_local_testdata):
         GlobalParameter={"AVG_ANNUAL_RUNOFF": avg_annual_runoff},
         WriteForcingFunctions=True,
         UniformInitialConditions=None,
-        EvaluationMetrics=("NASH_SUTCLIFFE",),
+        EvaluationMetrics=("NASH_SUTCLIFFE", "KGE_PRIME"),
     )
 
     #############
@@ -457,6 +459,7 @@ def test_routing(get_local_testdata):
     # - we do routing: so water from subbasin 1 needs some time to arrive at the
     #   outlet of subbasin 2
     d = out.diagnostics
+    np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.0141168, 4)
     np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.0141168, 4)
 
     assert len(list(out.path.glob("*ForcingFunctions.nc"))) == 1
