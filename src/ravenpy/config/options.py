@@ -114,6 +114,7 @@ StateVariables = Literal[
     "LAKE_STORAGE",
     "SNOW",
     "SNOW_LIQ",
+    "TOTAL_SWE",
     "GLACIER",
     "GLACIER_ICE",
     "CONVOLUTION",
@@ -272,13 +273,16 @@ class EvaluationMetrics(Enum):
     RMSE = "RMSE"
     PCT_BIAS = "PCT_BIAS"
     ABSERR = "ABSERR"
+    ABSERR_RUN = "ABSERR_RUN"
     ABSMAX = "ABSMAX"
     PDIFF = "PDIFF"
     TMVOL = "TMVOL"
     RCOEFF = "RCOEFF"
     NSC = "NSC"
     KLING_GUPTA = "KLING_GUPTA"
+    KGE_PRIME = "KGE_PRIME"
     DIAG_SPEARMAN = "DIAG_SPEARMAN"
+    FUZZY_NASH = "FUZZY_NASH"
 
 
 evaluation_metrics_multiplier = dict(
