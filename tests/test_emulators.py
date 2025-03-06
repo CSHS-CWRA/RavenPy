@@ -21,7 +21,8 @@ NSE = {
     "CanadianShield": 0.4001,  # <- This is the new value for CanadianShield with RavenHydroFramework v3.8 and v3.8.1
     "HYPR": 0.685188,
     "SACSMA": -0.0382907,
-    "Blended": -0.913785,
+    # "Blended": -0.913785, <- This is the original value for Blended with RavenHydroFramework v3.8.1
+    "Blended": -1.1507,  # <- This is the new value for Blended with RavenHydroFramework v4.0.1
 }
 
 
@@ -38,12 +39,7 @@ def test_run(numeric_config, tmp_path):
     # assert conf.__config__.allow_mutation
 
     e = Emulator(config=conf, workdir=tmp_path)
-    # FIXME: The Blended model run returns error code -11.
-    if name == "Blended":
-        pytest.skip("The Blended model run returns error code -11.")
-
     out = e.run()
-
     d = out.diagnostics
 
     np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], NSE[name], 4)
