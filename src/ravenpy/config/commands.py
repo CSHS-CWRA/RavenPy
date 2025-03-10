@@ -166,8 +166,8 @@ class EvaluationPeriod(LineCommand):
     """
 
     name: str
-    start: dt.date
-    end: dt.date
+    start: Union[str, dt.date]
+    end: Union[str, dt.date]
 
 
 class CustomOutput(LineCommand):
@@ -427,8 +427,8 @@ class ChannelProfile(FlatCommand):
 
     name: str = "chn_XXX"
     bed_slope: float = 0
-    survey_points: tuple[tuple[float, float], ...] = ()
-    roughness_zones: tuple[tuple[float, float], ...] = ()
+    survey_points: list[tuple[Union[int, float, ...], Union[int, float, ...]]] = ()
+    roughness_zones: list[tuple[Union[int, float, ...], Union[int, float, ...]]] = ()
 
     def to_rv(self):
         template = """

@@ -1,5 +1,4 @@
 import datetime as dt
-import warnings
 
 import numpy as np
 import pytest
@@ -62,7 +61,7 @@ def test_run(numeric_config, tmp_path):
 
 @pytest.mark.skip("Need to find a clean way to freeze emulator config instance.")
 def test_emulator_config_is_read_only(dummy_config, tmp_path):
-    cls, P = dummy_config
+    cls, _ = dummy_config
 
     e = Emulator(config=cls(), workdir=tmp_path)
 
@@ -459,7 +458,6 @@ def test_routing(get_local_testdata):
     # - we do routing: so water from subbasin 1 needs some time to arrive at the
     #   outlet of subbasin 2
     d = out.diagnostics
-    np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.0141168, 4)
     np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], -0.0141168, 4)
 
     assert len(list(out.path.glob("*ForcingFunctions.nc"))) == 1
