@@ -427,8 +427,8 @@ class ChannelProfile(FlatCommand):
 
     name: str = "chn_XXX"
     bed_slope: float = 0
-    survey_points: list[tuple[Union[int, float, ...], Union[int, float, ...]]] = ()
-    roughness_zones: list[tuple[Union[int, float, ...], Union[int, float, ...]]] = ()
+    survey_points: list[tuple[Union[int, float], Union[int, float]]] = ()
+    roughness_zones: list[tuple[Union[int, float], Union[int, float]]] = ()
 
     def to_rv(self):
         template = """
