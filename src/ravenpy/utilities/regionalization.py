@@ -284,7 +284,7 @@ def regionalization_params(
     ungauged_properties: pd.DataFrame,
     filtered_params: pd.DataFrame,
     filtered_prop: pd.DataFrame,
-) -> list[float]:
+) -> Union[list[list[float]], list[np.ndarray]]:
     """
     Return the model parameters to use for the regionalization.
 
@@ -306,7 +306,7 @@ def regionalization_params(
     Returns
     -------
     list
-      List of model parameters to be used for the regionalization.
+      A list of model parameters to be used for the regionalization.
     """
     if method == "MLR" or "RA" in method:
         mlr_params, r2 = multiple_linear_regression(
@@ -318,7 +318,7 @@ def regionalization_params(
                 mlr_params,
             ]
 
-        elif "RA" in method:
+        else:
             gp = gauged_params.copy()
 
             for p, r, col in zip(mlr_params, r2, gauged_params):
@@ -385,12 +385,12 @@ def multiple_linear_regression(
     Returns
     -------
     list of Any, list of int
-      A named tuple of the estimated model parameters and the R2 of the linear regression.
+        A named tuple of the estimated model parameters and the R2 of the linear regression.
     """
     # Add constants to the gauged predictors
     x = sm.add_constant(source)
 
-    # Add the constant 1 for the ungauged catchment predictors
+    # Add the constant '1' for the ungauged catchment predictors
     predictors = sm.add_constant(target, prepend=True, has_constant="add")
 
     # Perform regression for each parameter
@@ -400,6 +400,6 @@ def multiple_linear_regression(
     mlr_parameters = [r.predict(exog=predictors)[0] for r in regression]
 
     # Extract the adjusted r_squared value for each parameter
-    r2 = [r.rsquared_adj for r in regression]
+    r2 = [r.rsquared_adj() for r in regression]
 
     return mlr_parameters, r2
