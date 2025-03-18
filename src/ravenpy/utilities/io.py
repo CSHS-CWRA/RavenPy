@@ -18,9 +18,9 @@ try:
     import rasterio
     from pyproj import CRS
     from shapely.geometry import shape
-except (ImportError, ModuleNotFoundError) as e:
+except (ImportError, ModuleNotFoundError) as err:
     msg = gis_import_error_message.format(Path(__file__).stem)
-    raise ImportError(msg) from e
+    raise ImportError(msg) from err
 
 LOGGER = logging.getLogger("RavenPy")
 WGS84 = 4326
@@ -97,8 +97,8 @@ def generic_extract_archive(
 
     Returns
     -------
-    list
-        List of original or of extracted files.
+    list of str
+        A list of original or of extracted files.
     """
     archive_types = [".tar", ".zip", ".7z"]
     output_dir = output_dir or tempfile.gettempdir()
@@ -167,7 +167,7 @@ def archive_sniffer(
     Returns
     -------
     list of str or Path
-        List of files with matching accepted extensions.
+        A list of files with matching accepted extensions.
     """
     potential_files = list()
 
@@ -189,12 +189,12 @@ def crs_sniffer(
 
     Parameters
     ----------
-    \*args : Union[str, Path, Sequence[Union[str, Path]]]
+    \*args : str or Path or sequence of str or Path
         Path(s) to the file(s) to examine.
 
     Returns
     -------
-    Union[List[str], str]
+    str or list of str
         Returns either a list of CRSes or a single CRS definition, depending on the number of instances found.
     """
     crs_list = list()
@@ -255,7 +255,7 @@ def raster_datatype_sniffer(file: Union[str, Path]) -> str:
 
     Parameters
     ----------
-    file : Union[str, Path]
+    file : str or Path
         Path to file.
 
     Returns

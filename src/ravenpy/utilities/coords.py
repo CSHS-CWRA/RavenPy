@@ -1,6 +1,7 @@
 from dataclasses import fields
 
 import numpy as np
+import pint
 import xarray as xr
 
 from ravenpy.config.emulators import get_model
@@ -106,7 +107,7 @@ def infer_scale_and_offset(
     return scale, offset
 
 
-def units_transform(source, target, context="hydro"):
+def units_transform(source: Union[str, pint.Unit], target: str, context: str = "hydro"):
     """Return linear transform parameters to convert one unit to another.
 
     If the target unit is given by `y = ax + b`, where `x` is the value of the source unit, then this function
@@ -118,7 +119,7 @@ def units_transform(source, target, context="hydro"):
         Source unit string, pint-recognized.
     target : str
         Target unit string, pint-recognized.
-    context : str, optional
+    context : str
         Context of unit conversion. Default: "hydro".
     """
     from xclim.core.units import convert_units_to

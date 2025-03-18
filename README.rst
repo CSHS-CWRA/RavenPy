@@ -15,7 +15,7 @@ RavenPy |logo|
 +----------------------------+-----------------------------------------------------+
 
 
-A Python wrapper to setup and run the hydrologic modelling framework Raven_.
+A Python wrapper for running the hydrologic modelling framework Raven_.
 
 * Free software: MIT license
 * Documentation: https://ravenpy.readthedocs.io

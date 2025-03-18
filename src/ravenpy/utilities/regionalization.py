@@ -35,7 +35,6 @@ def regionalize(
     min_NSE: float = 0.6,  # noqa: N803
     workdir: Optional[Union[str, Path]] = None,
     overwrite: bool = False,
-    **kwds,
 ) -> tuple[xr.DataArray, xr.Dataset]:
     r"""Perform regionalization for catchment whose outlet is defined by coordinates.
 
@@ -50,7 +49,8 @@ def regionalize(
     params : pd.DataFrame
         Model parameters of gauged catchments. Needed for all but MRL method.
     props : pd.DataFrame
-        Properties of gauged catchments to be analyzed for the regionalization. Needed for MLR and RA methods.
+        Properties of gauged catchments to be analyzed for the regionalization.
+        Needed for MLR and RA methods.
     target_props : pd.Series or dict
         Properties of ungauged catchment. Needed for MLR and RA methods.
     size : int
@@ -61,15 +61,13 @@ def regionalize(
         Work directory. If None, a temporary directory will be created.
     overwrite : bool
         If True, existing files will be overwritten.
-    \*\*kwds : dict
-        Model configuration parameters, including the forcing files (ts).
 
     Returns
     -------
     qsim : DataArray (time, )
         Multi-donor averaged predicted streamflow.
     ensemble : Dataset
-        Dataset containing the ensemble of simulations and parameters used:
+        A Dataset containing the ensemble of simulations and parameters used:
 
         - q_sim : DataArray (realization, time)
           Ensemble of members based on number of donors.
@@ -291,22 +289,22 @@ def regionalization_params(
     Parameters
     ----------
     method : {'MLR', 'SP', 'PS', 'SP_IDW', 'PS_IDW', 'SP_IDW_RA', 'PS_IDW_RA'}
-      Name of the regionalization method to use.
+        Name of the regionalization method to use.
     gauged_params : pd.DataFrame
-      A DataFrame of parameters for donor catchments (size = number of donors).
+        A DataFrame of parameters for donor catchments (size = number of donors).
     gauged_properties : pd.DataFrame
-      A DataFrame of properties of the donor catchments  (size = number of donors).
+        A DataFrame of properties of the donor catchments  (size = number of donors).
     ungauged_properties : pd.DataFrame
-      A DataFrame of properties of the ungauged catchment (size = 1).
+        A DataFrame of properties of the ungauged catchment (size = 1).
     filtered_params : pd.DataFrame
-      A DataFrame of parameters of all filtered catchments (size = all catchments with NSE > min_NSE).
+        A DataFrame of parameters of all filtered catchments (size = all catchments with NSE > min_NSE).
     filtered_prop : pd.DataFrame
-      A DataFrame of properties of all filtered catchments (size = all catchments with NSE > min_NSE).
+        A DataFrame of properties of all filtered catchments (size = all catchments with NSE > min_NSE).
 
     Returns
     -------
     list
-      A list of model parameters to be used for the regionalization.
+        A list of model parameters to be used for the regionalization.
     """
     if method == "MLR" or "RA" in method:
         mlr_params, r2 = multiple_linear_regression(

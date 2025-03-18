@@ -1,4 +1,4 @@
-"""A Python wrapper to setup and run the hydrologic modelling framework Raven."""
+"""A Python wrapper for running the hydrologic modelling framework Raven."""
 
 ###################################################################################
 # MIT License

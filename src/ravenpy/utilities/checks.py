@@ -15,9 +15,9 @@ try:
     from pyproj import CRS
     from pyproj.exceptions import CRSError
     from shapely.geometry import GeometryCollection, MultiPolygon, Point, shape
-except (ImportError, ModuleNotFoundError) as e:
+except (ImportError, ModuleNotFoundError) as err:
     msg = gis_import_error_message.format(Path(__file__).stem)
-    raise ImportError(msg) from e
+    raise ImportError(msg) from err
 
 import ravenpy.utilities.io as io
 
