@@ -5,11 +5,26 @@ Changelog
 v0.18.0 (unreleased)
 --------------------
 
+* `ravenpy` now supports Python3.13. (PR #459)
+* Updated `raven-hydro` to v0.4.0 (`RavenHydroFramework` v4.0.1). (PR #459)
+* Updated `xclim` to v0.54.0, `pint` to v0.24.4, and `numpy` to v1.24.0 (no longer pinned below v2.0). (PR #459)
+* `ravenpy` is now registered with the Open Source Security Foundation (OSSF) Best Practices initiative (`RavenPy OpenSSF-BP Status <https://www.bestpractices.dev/en/projects/10064>`_). (PR #464)
+
+Bug fixes
+^^^^^^^^^
+* Fix bug in _MonthlyRecord class definition crashing the pydantic-autodoc serialization. (PR #458)
+* Fixed a small API bug in the `Comparing_hindcasts_and_ESP_forecasts.ipynb` notebook. (PR #463)
+* The `Raven` model previously always reported version "3.7", regardless of the installed `Raven` version. It now uses `raven-hydro`'s `__raven_version__` attribute. (PR #464)
+
+Internal changes
+^^^^^^^^^^^^^^^^
 * Updated the cookiecutter template to the latest commit: (PR #454)
     * GitHub Actions and Python dependencies have been updated.
     * New `pre-commit` hooks for `vulture` (find dead code) and `codespell` (spelling errors).
     * Removed several `type: ignore` statements.
     * Spelling errors in documentation have been addressed.
+* GitHub Workflows now test `ravenpy` using macOS as well as Python3.13. (PR #459)
+* Several small deprecation and usage warnings as well as a few variable typing issues have been addressed. (PR #464)
 
 v0.17.0 (2025-01-27)
 --------------------
