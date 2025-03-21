@@ -66,7 +66,7 @@ def aggregate_forcings_to_hrus(
     command will require.
     """
     # NOTE: This is in order to make sphinx-click happy. Magic. Do not touch.
-    import netCDF4 as nc4  # noqa: N813
+    import netCDF4
     import numpy as np
 
     gws = GridWeights.parse(Path(input_weight_file).read_text())
@@ -76,7 +76,7 @@ def aggregate_forcings_to_hrus(
     weights_data = gws.data
 
     # read NetCDF
-    nc_in = nc4.Dataset(input_nc_file, "r")
+    nc_in = netCDF4.Dataset(input_nc_file, "r")
 
     # length of dimensions
     nlon = nc_in.dimensions[dim_names[0]].size
@@ -107,7 +107,7 @@ def aggregate_forcings_to_hrus(
     else:
         output_nc_file_path = Path(output_nc_file)
 
-    nc_out = nc4.Dataset(output_nc_file_path, "w")
+    nc_out = netCDF4.Dataset(output_nc_file_path, "w")
     _ = nc_out.createDimension("time", ntime)
     _ = nc_out.createDimension("nHRU", nHRU)
 

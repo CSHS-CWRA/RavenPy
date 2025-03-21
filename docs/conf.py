@@ -170,7 +170,7 @@ author = "David Huard"
 # the built documents.
 #
 # The short X.Y version.
-version = ravenpy.__version__
+version = ravenpy.__version__.split("-")[0]
 # The full version, including alpha/beta/rc tags.
 release = ravenpy.__version__
 

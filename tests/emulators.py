@@ -289,19 +289,14 @@ def symbolic_config(get_local_testdata, salmon_hru, request):
             )
 
     # Extra attributes for emulator
-    extras = {}
-
     if name in ["CanadianShield", "HYPR", "SACSMA", "Blended"]:
         salmon_hru["slope"] = 0.01234
 
     hrus = [salmon_hru["land"]]
 
+    extras = {}
     if name in ["GR4JCN"]:
-        extras.update(
-            dict(
-                GlobalParameter={"AVG_ANNUAL_RUNOFF": 208.480},
-            )
-        )
+        extras.update({"GlobalParameter": {"AVG_ANNUAL_RUNOFF": 208.480}})
     if name in ["HMETS"]:
         data_type.extend(["PET"])
 

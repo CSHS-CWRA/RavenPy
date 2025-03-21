@@ -131,7 +131,7 @@ class GR4JCN(Config):
             p.Split(
                 algo="RAVEN_DEFAULT",
                 source="SOIL[2]",
-                to=["CONVOLUTION[0]", "CONVOLUTION[1]"],
+                to=("CONVOLUTION[0]", "CONVOLUTION[1]"),
                 p=0.9,
             ),
             p.Convolve(algo="CONVOL_GR4J_1", source="CONVOLUTION[0]", to="SOIL[1]"),

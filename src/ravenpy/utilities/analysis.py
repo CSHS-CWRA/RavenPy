@@ -73,7 +73,7 @@ def dem_prop(
     ----------
     dem : str or Path
         DEM raster in reprojected coordinates.
-    geom : Polygon or MultiPolygon or List[Polygon or MultiPolygon]
+    geom : Polygon or MultiPolygon or list of Polygon or MultiPolygon
         Geometry over which aggregate properties will be computed. If None compute properties over entire raster.
     directory : str or Path, optional
         Folder to save the GDAL terrain analysis outputs.
@@ -127,7 +127,7 @@ def gdal_slope_analysis(
     Parameters
     ----------
     dem : str or Path
-        Path to file storing DEM.
+        A path to file storing DEM.
     set_output : str or Path, optional
         If set to a valid filepath, will write to this path, otherwise will use an in-memory gdal.Dataset.
     units : str
@@ -185,7 +185,7 @@ def gdal_aspect_analysis(
     Parameters
     ----------
     dem : str or Path
-        Path to file storing DEM.
+        A path to file storing DEM.
     set_output : str or Path or bool
         If set to a valid filepath, will write to this path, otherwise will use an in-memory gdal.Dataset.
     flat_values_are_zero : bool

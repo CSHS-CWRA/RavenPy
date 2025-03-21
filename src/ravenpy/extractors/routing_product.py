@@ -2,7 +2,7 @@ import os
 import warnings
 from collections import defaultdict
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
 
 import pandas
 
@@ -19,7 +19,7 @@ except (ImportError, ModuleNotFoundError) as e:
     msg = gis_import_error_message.format(Path(__file__).stem)
     raise ImportError(msg) from e
 
-import netCDF4 as nc4  # noqa: N813
+import netCDF4
 import numpy as np
 
 
@@ -226,7 +226,8 @@ class BasinMakerExtractor:
         # river bottom width W_btm
         botwd = channel_width - 2 * sidwd
 
-        # if derived bottom width is negative, set bottom width to 0.5*bankfull width and recalculate zch
+        # if derived bottom width is negative, set bottom width to 0.5 * bankfull width and recalculate zch
+        # FIXME: zch recalculation is recalculated but not used. Should this be higher up?
         if botwd < 0:
             botwd = 0.5 * channel_width
             sidwd = 0.5 * 0.5 * channel_width
@@ -282,8 +283,7 @@ class BasinMakerExtractor:
         elif self.hru_aspect_convention == "ArcGIS":
             aspect = 360 - aspect
         else:
-            # FIXME: assertions should not be found outside of testing code. Replace with conditional logic.
-            assert False  # noqa: S101
+            raise ValueError(f"Unknown aspect convention: {self.hru_aspect_convention}")
 
         return dict(
             hru_id=int(row["SubId"]),
@@ -307,8 +307,7 @@ class BasinMakerExtractor:
         elif self.hru_aspect_convention == "ArcGIS":
             aspect = 360 - aspect
         else:
-            # FIXME: assertions should not be found outside of testing code. Replace with conditional logic.
-            assert False  # noqa: S101
+            raise ValueError(f"Unknown aspect convention: {self.hru_aspect_convention}")
 
         return dict(
             hru_id=int(row["HRU_ID"]),
@@ -372,16 +371,14 @@ class GridWeightExtractor:
         self._sub_ids = sub_ids or []
         self._area_error_threshold = area_error_threshold
 
-        # FIXME: assertions should not be found outside of testing code. Replace with conditional logic.
-        assert not (  # noqa: S101
-            self._gauge_ids and self._sub_ids
-        ), "Only one of gauge_ids or sub_ids can be specified"
+        if self._gauge_ids and self._sub_ids:
+            raise ValueError("Only one of gauge_ids or sub_ids can be specified")
 
         input_file_path = Path(input_file_path)
         if input_file_path.suffix == ".nc":
             # Note that we cannot use xarray because it complains about variables and dimensions
             # having the same name.
-            self._input_data = nc4.Dataset(input_file_path)
+            self._input_data = netCDF4.Dataset(input_file_path)
             self._input_is_netcdf = True
         elif input_file_path.suffix in [".zip", ".shp"]:
             self._input_data = open_shapefile(input_file_path)
@@ -628,7 +625,7 @@ class GridWeightExtractor:
 
     def _compute_grid_cell_polygons(self):
         grid_cell_geom_gpd_wkt: list[list[list[ogr.Geometry]]] = [
-            [[] for ilon in range(self._nlon)] for ilat in range(self._nlat)
+            [[] for _ilon in range(self._nlon)] for _ilat in range(self._nlat)
         ]
 
         if self._input_is_netcdf:
@@ -713,7 +710,8 @@ class GridWeightExtractor:
 
         return grid_cell_geom_gpd_wkt
 
-    def _create_gridcells_from_centers(self, lat, lon):
+    @staticmethod
+    def _create_gridcells_from_centers(lat, lon):
         # create array of edges where (x,y) are always center cells
         nlon = np.shape(lon)[1]
         nlat = np.shape(lat)[0]
@@ -756,7 +754,8 @@ class GridWeightExtractor:
 
         return [lath, lonh]
 
-    def _shape_to_geometry(self, shape_from_jsonfile, epsg=None):
+    @staticmethod
+    def _shape_to_geometry(shape_from_jsonfile, epsg=None):
         # converts shape read from shapefile to geometry
         # epsg :: integer EPSG code
 
@@ -834,13 +833,13 @@ class GridWeightExtractor:
 
 
 def upstream_from_id(
-    fid: int, df: Union[pandas.DataFrame, geopandas.GeoDataFrame]
+    fid: Union[str, int, float], df: Union[pandas.DataFrame, geopandas.GeoDataFrame]
 ) -> Union[pandas.DataFrame, geopandas.GeoDataFrame]:
     """Return upstream sub-basins by evaluating the downstream networks.
 
     Parameters
     ----------
-    fid : int
+    fid : str or int or float
         feature ID of the downstream feature of interest.
     df : pandas.DataFrame or geopandas.GeoDataFrame
         A GeoDataframe comprising the watershed attributes.
