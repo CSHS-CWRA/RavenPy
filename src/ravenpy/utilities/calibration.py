@@ -85,7 +85,8 @@ class SpotSetup:
         """Return a random parameter combination."""
         return generate(self.pdist)
 
-    def evaluation(self):
+    @staticmethod
+    def evaluation():
         """Return the observation.
 
         Since Raven computes the objective function itself, we simply return a placeholder.

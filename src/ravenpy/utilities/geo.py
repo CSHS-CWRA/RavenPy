@@ -251,7 +251,7 @@ def generic_vector_reproject(
 
 
 def determine_upstream_ids(
-    fid: str,
+    fid: Union[str, int, float],
     df: Union[pd.DataFrame, geopandas.GeoDataFrame],
     *,
     basin_field: str,
@@ -263,8 +263,8 @@ def determine_upstream_ids(
 
     Parameters
     ----------
-    fid : str
-        feature ID of the downstream feature of interest.
+    fid : str or int or float
+        The feature ID of the downstream feature of interest.
     df : pd.DataFrame
         A Dataframe comprising the watershed attributes.
     basin_field : str

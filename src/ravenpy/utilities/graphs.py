@@ -91,6 +91,7 @@ def mean_annual_hydrograph(file_list: Sequence[Union[str, Path]]):
     fig, ax = plt.subplots()  # initialize figure
 
     # Plot the observed streamflows if available
+    mah_obs = None
     if hasattr(ds[0], "q_obs"):
         q_obs = ds[0].q_obs
         mah_obs = q_obs.groupby("time.dayofyear").mean()
@@ -122,7 +123,8 @@ def mean_annual_hydrograph(file_list: Sequence[Union[str, Path]]):
         ),
     )
 
-    plt.xlim(0, mah_obs.shape[0])
+    if mah_obs is not None:
+        plt.xlim(0, mah_obs.shape[0])
     plt.ylim(bottom=0, top=None)
     ax.set_xlabel("Time")
     ax.set_ylabel(r"$Streamflow [m^3s^{{-1}}]$")
