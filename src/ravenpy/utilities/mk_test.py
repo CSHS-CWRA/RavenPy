@@ -44,7 +44,7 @@ def mk_test_calc(
 
     Notes
     -----
-    http://vsp.pnnl.gov/help/Vsample/Design_Trend_Mann_Kendall.htm
+    https://vsp.pnnl.gov/help/Vsample/Design_Trend_Mann_Kendall.htm
 
     trend: tells the trend (increasing, decreasing or no trend)
     h: True (if trend is present) or False (if trend is absence)
@@ -108,13 +108,13 @@ def check_num_samples(
     tol: float = 1e-6,
     num_cycles: int = 10000,
     m: int = 5,
-) -> Union[int, float]:
+) -> Optional[Union[int]]:
     """Check number of samples.
 
     This function is an implementation of the "Calculation of Number of Samples
     Required to Detect a Trend" section written by Sat Kumar Tomer
     (satkumartomer@gmail.com) which can be found at:
-    http://vsp.pnnl.gov/help/Vsample/Design_Trend_Mann_Kendall.htm
+    https://vsp.pnnl.gov/help/Vsample/Design_Trend_Mann_Kendall.htm
     As stated on the webpage in the URL above the method uses a Monte-Carlo
     simulation to determine the required number of points in time, n, to take a
     measurement in order to detect a linear trend for specified small
@@ -128,7 +128,7 @@ def check_num_samples(
     Parameters
     ----------
     beta : float
-       Probability of falsely accepting the null hypothesis.
+        Probability of falsely accepting the null hypothesis.
     delta : float
         Change per sample period, i.e., the change that occurs between two adjacent sampling times.
     std_dev : float
@@ -145,9 +145,14 @@ def check_num_samples(
         Total number of cycles of the simulation.
         This is to ensure that the simulation does finish regardless of convergence or not (10000 default).
     m : int
-      If the tolerance is too small then the simulation could continue to cycle through the same sample numbers over and over.
-      This parameter determines how many cycles to look back.
-      If the same number of samples has been determined m cycles ago then the simulation will stop.
+        If the tolerance is too small then the simulation could continue to cycle through the same sample numbers over and over.
+        This parameter determines how many cycles to look back.
+        If the same number of samples has been determined m cycles ago then the simulation will stop.
+
+    Returns
+    -------
+    int, optional
+        The number of samples required to detect a trend.
 
     Examples
     --------

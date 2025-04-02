@@ -457,7 +457,7 @@ def compute_forecast_flood_risk(
     out = pct.to_dataset(name="exceedance_probability")
     out.attrs["source"] = f"PAVICS-Hydro flood risk forecasting tool, {domain}"
     out.attrs["history"] = (
-        f"File created on {dt.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} "
+        f"File created on {dt.datetime.now(dt.UTC).strftime('%Y-%m-%d %H:%M:%S')} "
         f"UTC on the PAVICS-Hydro service available at {domain}."
     )
     out.attrs["title"] = (

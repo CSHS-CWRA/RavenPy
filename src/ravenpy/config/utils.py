@@ -19,8 +19,6 @@ def nc_specs(
     alt_names: Optional[Union[str, Sequence[str]]] = None,
     mon_ave: bool = False,
     engine: str = "h5netcdf",
-    # FIXME: Is this call signature still relevant?
-    linear_transform=None,
 ):
     """Extract specifications from netCDF file.
 
