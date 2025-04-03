@@ -167,7 +167,8 @@ def _get_feature_attributes_wfs(
     layer : str
         Name of geographic layer queried.
     geoserver : str
-        The address of the geoserver housing the layer to be queried. Default: https://pavics.ouranos.ca/geoserver/.
+        The address of the geoserver housing the layer to be queried.
+        Default: https://pavics.ouranos.ca/geoserver/.
 
     Returns
     -------
@@ -213,7 +214,8 @@ def _filter_feature_attributes_wfs(
     layer : str
         Name of geographic layer queried.
     geoserver : str
-        The address of the geoserver housing the layer to be queried. Default: https://pavics.ouranos.ca/geoserver/.
+        The address of the geoserver housing the layer to be queried.
+        Default: https://pavics.ouranos.ca/geoserver/.
 
     Returns
     -------
@@ -269,7 +271,8 @@ def get_raster_wcs(
     layer : str
         Layer name of raster exposed on GeoServer instance, e.g. 'public:CEC_NALCMS_LandUse_2010'.
     geoserver : str
-        The address of the geoserver housing the layer to be queried. Default: https://pavics.ouranos.ca/geoserver/.
+        The address of the geoserver housing the layer to be queried.
+        Default: https://pavics.ouranos.ca/geoserver/.
 
     Returns
     -------
@@ -524,7 +527,8 @@ def hydro_routing_upstream(
     lakes : {"1km", "all"}
         Query the version of dataset with lakes under 1km in width removed ("1km") or return all lakes ("all").
     geoserver : str
-        The address of the geoserver housing the layer to be queried. Default: https://pavics.ouranos.ca/geoserver/.
+        The address of the geoserver housing the layer to be queried.
+        Default: https://pavics.ouranos.ca/geoserver/.
 
     Returns
     -------
@@ -571,8 +575,8 @@ def get_hydro_routing_attributes_wfs(
     """
     Return a URL that formats and returns a remote GetFeatures request from hydro routing dataset.
 
-    For geographic rasters, subsetting is based on WGS84 (Long, Lat) boundaries. If not geographic, subsetting based
-    on projected coordinate system (Easting, Northing) boundaries.
+    For geographic rasters, subsetting is based on WGS84 (Long, Lat) boundaries.
+    If not geographic, subsetting based on projected coordinate system (Easting, Northing) boundaries.
 
     Parameters
     ----------
@@ -583,7 +587,8 @@ def get_hydro_routing_attributes_wfs(
     lakes : {"1km", "all"}
         Query the version of dataset with lakes under 1km in width removed ("1km") or return all lakes ("all").
     geoserver : str
-        The address of the geoserver housing the layer to be queried. Default: https://pavics.ouranos.ca/geoserver/.
+        The address of the geoserver housing the layer to be queried.
+        Default: https://pavics.ouranos.ca/geoserver/.
 
     Returns
     -------
@@ -622,7 +627,8 @@ def filter_hydro_routing_attributes_wfs(
     lakes : {"1km", "all"}
         Query the version of dataset with lakes under 1km in width removed ("1km") or return all lakes ("all").
     geoserver : str
-        The address of the geoserver housing the layer to be queried. Default: https://pavics.ouranos.ca/geoserver/.
+        The address of the geoserver housing the layer to be queried.
+        Default: https://pavics.ouranos.ca/geoserver/.
 
     Returns
     -------
@@ -661,7 +667,8 @@ def get_hydro_routing_location_wfs(
     level : int
         Level of granularity requested for the lakes vector (range(7,13)). Default: 12.
     geoserver : str
-        The address of the geoserver housing the layer to be queried. Default: https://pavics.ouranos.ca/geoserver/.
+        The address of the geoserver housing the layer to be queried.
+        Default: https://pavics.ouranos.ca/geoserver/.
 
     Returns
     -------

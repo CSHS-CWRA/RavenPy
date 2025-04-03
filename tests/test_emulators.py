@@ -1,5 +1,4 @@
 import datetime as dt
-import warnings
 
 import numpy as np
 import pytest
@@ -21,7 +20,8 @@ NSE = {
     "CanadianShield": 0.4001,  # <- This is the new value for CanadianShield with RavenHydroFramework v3.8 and v3.8.1
     "HYPR": 0.685188,
     "SACSMA": -0.0382907,
-    "Blended": -0.913785,
+    # "Blended": -0.913785, <- This is the original value for Blended with RavenHydroFramework v3.8.1
+    "Blended": -1.1507,  # <- This is the new value for Blended with RavenHydroFramework v4.0.1
 }
 
 
@@ -38,12 +38,7 @@ def test_run(numeric_config, tmp_path):
     # assert conf.__config__.allow_mutation
 
     e = Emulator(config=conf, workdir=tmp_path)
-    # FIXME: The Blended model run returns error code -11.
-    if name == "Blended":
-        pytest.skip("The Blended model run returns error code -11.")
-
     out = e.run()
-
     d = out.diagnostics
 
     np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], NSE[name], 4)
@@ -66,7 +61,7 @@ def test_run(numeric_config, tmp_path):
 
 @pytest.mark.skip("Need to find a clean way to freeze emulator config instance.")
 def test_emulator_config_is_read_only(dummy_config, tmp_path):
-    cls, P = dummy_config
+    cls, _ = dummy_config
 
     e = Emulator(config=cls(), workdir=tmp_path)
 
@@ -153,8 +148,10 @@ def test_evaluation_periods(gr4jcn_config, tmp_path):
     """Test multiple evaluation periods are parsed correctly."""
     gr4jcn, params = gr4jcn_config
 
+    evaluation_metrics = ["RMSE", "KLING_GUPTA", "KGE_PRIME"]
+
     conf = gr4jcn.set_params(params)
-    conf.evaluation_metrics = ["RMSE", "KLING_GUPTA"]
+    conf.evaluation_metrics = evaluation_metrics
     conf.evaluation_period = [
         rc.EvaluationPeriod(name="period1", start="2000-01-01", end="2000-01-07"),
         rc.EvaluationPeriod(name="period2", start="2001-01-01", end="2000-01-15"),
@@ -162,9 +159,9 @@ def test_evaluation_periods(gr4jcn_config, tmp_path):
     out = Emulator(conf, workdir=tmp_path).run()
 
     d = out.diagnostics
-    assert "DIAG_RMSE" in d
-    assert "DIAG_KLING_GUPTA" in d
-    assert len(d["DIAG_RMSE"]) == 3  # ALL, period1, period2
+    for name in evaluation_metrics:
+        assert f"DIAG_{name}" in d
+        assert len(d[f"DIAG_{name}"]) == 3  # ALL, period1, period2
 
 
 @pytest.mark.slow
@@ -411,7 +408,7 @@ def test_routing(get_local_testdata):
         GlobalParameter={"AVG_ANNUAL_RUNOFF": avg_annual_runoff},
         WriteForcingFunctions=True,
         UniformInitialConditions=None,
-        EvaluationMetrics=("NASH_SUTCLIFFE",),
+        EvaluationMetrics=("NASH_SUTCLIFFE", "KGE_PRIME"),
     )
 
     #############

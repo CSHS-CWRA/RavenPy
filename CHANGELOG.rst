@@ -5,16 +5,32 @@ Changelog
 v0.18.0 (2025-02-25)
 --------------------
 
+New features
+^^^^^^^^^^^^
+* `ravenpy` now supports Python3.13. (PR #459)
+* Updated `raven-hydro` to v0.4.0 (`RavenHydroFramework` v4.0.1). (PR #459)
+* Updated `xclim` to v0.54.0, `pint` to v0.24.4, and `numpy` to v1.24.0 (no longer pinned below v2.0). (PR #459)
+* `ravenpy` is now registered with the Open Source Security Foundation (OSSF) Best Practices initiative (`RavenPy OpenSSF-BP Status <https://www.bestpractices.dev/en/projects/10064>`_). (PR #464)
+* `ravenpy` now enables new EvaluationMetrics commands in the model configuration. Other features from `RavenHydroFramework` will be included in newer releases. (PR #476)
+
+Bug fixes
+^^^^^^^^^
+* Fix bug in _MonthlyRecord class definition crashing the pydantic-autodoc serialization. (PR #458)
+* Fixed a small API bug in the `Comparing_hindcasts_and_ESP_forecasts.ipynb` notebook. (PR #463)
+* The `Raven` model previously always reported version "3.7", regardless of the installed `Raven` version. It now uses `raven-hydro`'s `__raven_version__` attribute. (PR #464)
+
+Internal changes
+^^^^^^^^^^^^^^^^
 * Updated the cookiecutter template to the latest commit: (PR #454)
     * GitHub Actions and Python dependencies have been updated.
     * New `pre-commit` hooks for `vulture` (find dead code) and `codespell` (spelling errors).
     * Removed several `type: ignore` statements.
     * Spelling errors in documentation have been addressed.
-* Fix bug in _MonthlyRecord class definition crashing the pydantic-autodoc serialization. (PR #458)
-* `ravenpy` now supports Python3.13. (PR #459)
-* Update `raven-hydro` to v0.4.0 (`RavenHydroFramework` v4.0.1). (PR #459)
-* Update `xclim` to v0.54.0, `pint` to v0.24.4, and `numpy` to v1.24.0 (no longer pinned below v2.0). (PR #459)
 * GitHub Workflows now test `ravenpy` using macOS as well as Python3.13. (PR #459)
+* Several small deprecation and usage warnings as well as a few variable typing issues have been addressed. (PR #464)
+* Updated the license to reflect current year. (PR #476)
+* Documentation version now supports showing hyphens in the version number. (PR #476)
+* Call signatures and docstrings of functions have been modified to be more precise for the expected variable type. (PR #476)
 
 v0.17.0 (2025-01-27)
 --------------------

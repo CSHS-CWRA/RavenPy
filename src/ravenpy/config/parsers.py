@@ -75,7 +75,7 @@ def parse_raven_messages(path):
 
     # The error message for an unknown command is exceptionally on two lines
     # (the second starts with a triple space)
-    for m in re.findall("^([A-Z ]+) :(.+)(?:\n   (.+))?", path.read_text(), re.M):
+    for m in re.findall("^([A-Z ]+) :(.+)(?:\n {3}(.+))?", path.read_text(), re.M):
         if m[0] == "SIMULATION COMPLETE":
             messages["SIMULATION COMPLETE"] = True
             continue
@@ -142,7 +142,9 @@ def parse_outputs(run_name: str, outputdir: Optional[Union[str, Path]] = None):
     return out
 
 
-def _time_stamp_from_solution(solution: str, calendar: str) -> cftime.datetime:
+def _time_stamp_from_solution(
+    solution: str, calendar: str
+) -> Optional[cftime.datetime]:
     """Return datetime from solution TimeStamp."""
     match = re.search(r":TimeStamp (\S+ \S+)", solution)
     if match:
