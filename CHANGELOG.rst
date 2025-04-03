@@ -2,7 +2,7 @@
 Changelog
 =========
 
-v0.18.0 (unreleased)
+v0.18.0 (2025-04-03)
 --------------------
 
 New features
