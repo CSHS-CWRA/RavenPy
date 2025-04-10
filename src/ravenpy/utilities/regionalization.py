@@ -3,7 +3,7 @@
 import logging
 import tempfile
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any, Callable, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -365,7 +365,7 @@ def IDW(qsims: xr.DataArray, dist: pd.Series) -> xr.DataArray:  # noqa: N802
 
 def multiple_linear_regression(
     source: pd.DataFrame, params: pd.DataFrame, target: pd.DataFrame
-) -> tuple[list[Any], list[int]]:
+) -> tuple[list[Any], list[Callable[[], Any]]]:
     """Multiple Linear Regression for model parameters over catchment properties.
 
     Uses known catchment properties and model parameters to estimate model parameter over an
@@ -382,7 +382,7 @@ def multiple_linear_regression(
 
     Returns
     -------
-    list of Any, list of int
+    list of Any, list of Callable or Any
         A named tuple of the estimated model parameters and the R2 of the linear regression.
     """
     # Add constants to the gauged predictors
@@ -398,6 +398,6 @@ def multiple_linear_regression(
     mlr_parameters = [r.predict(exog=predictors)[0] for r in regression]
 
     # Extract the adjusted r_squared value for each parameter
-    r2 = [r.rsquared_adj() for r in regression]
+    r2 = [r.rsquared_adj for r in regression]
 
     return mlr_parameters, r2
