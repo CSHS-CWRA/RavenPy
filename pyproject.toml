@@ -58,7 +58,7 @@ dependencies = [
   "statsmodels >=0.14.2",
   "typing-extensions",
   "xarray >=2023.11.0,!=2024.10.0",
-  "xclim >=0.54.0",
+  "xclim >=0.55.1",
   "xskillscore"
 ]
 

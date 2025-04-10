@@ -36,7 +36,7 @@ dependencies:
   - statsmodels >=0.14.2
   - typing_extensions
   - xarray >=2023.11.0,!=2024.10.0
-  - xclim >=0.54.0
+  - xclim >=0.55.1
   - xesmf
   - xskillscore
   - zarr >=2.13,<3.0 # FIXME: zarr v3 does not support FSMap like before: https://github.com/zarr-developers/zarr-python/issues/2706
