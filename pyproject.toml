@@ -90,11 +90,12 @@ dev = [
   "watchdog >=4.0.0"
 ]
 docs = [
+  # Requires python >=3.11
   "autodoc-pydantic >=2.1.0",
   "birdhouse-birdy",
   "cairosvg >=2.6.0",
   "cartopy >=0.23.0",
-  "clisops >=0.15.0",
+  "clisops >=0.16.1",
   "gcsfs",
   # Needed for notebooks/HydroShare_integration.ipynb
   # See: https://github.com/CSHS-CWRA/RavenPy/pull/326
@@ -111,13 +112,13 @@ docs = [
   "jupytext",
   "matplotlib >=3.6.0",
   "myst_nb",
-  "nbsphinx >=0.9.5",
+  "nbsphinx >=0.9.7",
   "pymetalink >=6.5.2",
   "s3fs",
   "salib",
-  "sphinx >=7.1.0",
+  "sphinx >=8.2.0",
   "sphinx-click",
-  "sphinx-codeautolink >=0.16.2",
+  "sphinx-codeautolink",
   "sphinx-copybutton",
   "sphinx-rtd-theme >=1.0",
   "sphinxcontrib-svg2pdfconverter >=1.2.3",
