@@ -49,6 +49,7 @@ class TestMissing:
 
         # Force the raven modules to be reloaded
         del sys.modules["ravenpy"]
+        del sys.modules["ravenpy._raven"]
         del sys.modules["ravenpy.config.defaults"]
 
         # Now the tool should be "missing"

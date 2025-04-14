@@ -24,36 +24,8 @@
 # SOFTWARE.
 ###################################################################################
 
-import os
-import shutil
-
+from ._raven import RAVEN_EXEC_PATH, __raven_version__  # noqa: F401
 from .ravenpy import Emulator, EnsembleReader, OutputReader, RavenWarning, run
-
-__all__ = [
-    "RAVEN_EXEC_PATH",
-    "Emulator",
-    "EnsembleReader",
-    "OutputReader",
-    "RavenWarning",
-    "__author__",
-    "__email__",
-    "__raven_version__",
-    "__version__",
-    "run",
-]
-
-
-RAVEN_EXEC_PATH = os.getenv("RAVENPY_RAVEN_BINARY_PATH") or shutil.which("raven")
-
-if not RAVEN_EXEC_PATH:
-    raise RuntimeError(
-        "Could not find raven binary in PATH and RAVENPY_RAVEN_BINARY_PATH env variable is not set."
-    )
-
-try:
-    from raven_hydro import __raven_version__
-except ImportError:
-    __raven_version__ = "0.0.0"
 
 __author__ = """David Huard"""
 __email__ = "huard.david@ouranos.ca"
