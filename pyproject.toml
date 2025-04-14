@@ -52,7 +52,6 @@ dependencies = [
   "pydantic >=2.0",
   "pydap >=3.4.0", # Note: As of 2025-03-18 (v3.5.4) does not support Python 3.13
   "pymbolic >=2024.2",
-  "raven-hydro >=0.4.0,<1.0",
   "scipy >=1.11.0",
   "spotpy >=1.6.1",
   "statsmodels >=0.14.2",
@@ -137,10 +136,14 @@ gis = [
   "setuptools >=71.0",
   "shapely >=2.0"
 ]
+raven-hydro = [
+  "raven-hydro >=0.4.0,<1.0"
+]
 all = [
   "ravenpy[dev]",
   "ravenpy[docs]",
-  "ravenpy[gis]"
+  "ravenpy[gis]",
+  "ravenpy[raven-hydro]"
 ]
 
 [project.scripts]
