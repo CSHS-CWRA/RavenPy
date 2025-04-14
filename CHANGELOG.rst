@@ -2,6 +2,18 @@
 Changelog
 =========
 
+v0.18.1 (unreleased)
+--------------------
+
+Bug fixes
+^^^^^^^^^
+* Fixed a bug in ``ravenpy.utilities.regionalization.multiple_linear_regression`` that was calling a class method incorrectly.
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Updated the documentation dependencies to use the latest versions of `sphinx`, `nbsphinx`, and `sphinx-codeautolink`.
+* Regenerated the notebook outputs using newer version of `xclim`.
+
 v0.18.0 (2025-04-03)
 --------------------
 
