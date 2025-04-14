@@ -7,8 +7,11 @@ v0.18.1 (2025-04-16)
 
 New features
 ^^^^^^^^^^^^
-* RavenPy no longer requires `raven-hydro` to be installed. The Raven model executable can now be provided by explicitly setting the `RAVENPY_RAVEN_BINARY_PATH` environment variable. (PR #482).
+* RavenPy no longer requires `raven-hydro` to be installed. The Raven model executable can now be provided by explicitly setting the `RAVENPY_RAVEN_BINARY_PATH` environment variable. (PR #486).
 
+Internal changes
+^^^^^^^^^^^^^^^^
+* `pydap` has been pinned below v3.5.5 temporarily until `xarray` offers support for it. (PR #486).
 
 v0.18.0 (2025-04-03)
 --------------------
