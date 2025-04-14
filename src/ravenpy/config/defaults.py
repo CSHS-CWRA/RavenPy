@@ -1,4 +1,4 @@
-from raven_hydro import __raven_version__
+from ravenpy import __raven_version__
 
 units = {
     "PRECIP": "mm/d",
@@ -65,5 +65,5 @@ def default_nc_attrs():
     return {
         "history": f"Created on {now} by Raven {version}",
         "references": "Craig, J.R., and the Raven Development Team, Raven user's and developer's manual "
-        f"(Version {version}), URL: https://raven.uwaterloo.ca/ (2025).",
+        f"(Version {version}), URL: https://raven.uwaterloo.ca/ ({dt.datetime.today().year}).",
     }

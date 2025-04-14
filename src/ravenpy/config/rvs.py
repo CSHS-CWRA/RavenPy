@@ -6,12 +6,17 @@ from typing import Any, Optional, Union
 
 import cftime
 from pydantic import ConfigDict, Field, ValidationInfo, field_validator
-from raven_hydro import __raven_version__
 
 from ..config import commands as rc
 from ..config import options as o
 from ..config import processes as rp
 from .base import RV, Sym, optfield, parse_symbolic
+
+try:
+    from raven_hydro import __raven_version__
+except ImportError:
+    __raven_version__ = "0.0.0"
+
 
 """
 Generic Raven model configuration.
@@ -268,12 +273,10 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
 
         import ravenpy
 
-        version = __raven_version__
-
         return dedent(
             f"""
         ###########################################################################################################
-        :FileType          {rv.upper()} Raven {version}
+        :FileType          {rv.upper()} Raven {__raven_version__}
         :WrittenBy         RavenPy {ravenpy.__version__} based on setups provided by James Craig and Juliane Mai
         :CreationDate      {dt.datetime.now().isoformat(timespec="seconds")}
         #----------------------------------------------------------------------------------------------------------
