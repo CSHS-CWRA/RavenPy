@@ -27,7 +27,7 @@ dependencies:
   - jupytext
   - matplotlib-base >=3.6.0
   - myst-nb
-  - nbsphinx >=0.9.7
+  - nbsphinx >=0.9.5
   - netCDF4 >=1.7.2
   - numpy >=1.24.0
   - notebook
@@ -36,7 +36,7 @@ dependencies:
   - s3fs
   - salib
   - seaborn
-  - sphinx >=8.2.0
+  - sphinx >=7.1.0
   - sphinx-click
   - sphinx-codeautolink
   - sphinx-copybutton
