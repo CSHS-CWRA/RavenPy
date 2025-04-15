@@ -57,9 +57,15 @@ Then, from your python environment, run:
 
     .. code-block:: console
 
-        python -m pip install ravenpy[gis]
+        python -m pip install ravenpy[gis,raven-hydro]
 
 If desired, the core functions of `RavenPy` can be installed without its GIS functionalities as well. This implementation of RavenPy is much lighter on dependencies and can be installed easily with `pip`, without the need for `conda` or `virtualenv`.
+
+    .. code-block:: console
+
+        python -m pip install ravenpy[raven-hydro]
+
+Finally, if you wish to provide your own `Raven` binary, you can install `RavenPy` without installing the `raven-hydro` package:
 
     .. code-block:: console
 
