@@ -12,6 +12,7 @@ New features
 Internal changes
 ^^^^^^^^^^^^^^^^
 * `pydap` has been pinned below v3.5.5 temporarily until `xarray` offers support for it. (PR #486).
+* More than 7500 DeprecationWarnings emitted during the testing suite have been addressed. Minimum supported `pydantic` has been raised to v2.11. (PR #487).
 
 v0.18.0 (2025-04-03)
 --------------------
