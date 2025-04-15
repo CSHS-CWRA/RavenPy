@@ -1,7 +1,9 @@
 import datetime as dt
+import zipfile
 from collections.abc import Sequence
 from dataclasses import asdict, fields, is_dataclass
 from pathlib import Path
+from textwrap import dedent
 from typing import Any, Optional, Union
 
 import cftime
@@ -269,8 +271,6 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
     @staticmethod
     def header(rv):
         """Return the header to print at the top of each RV file."""
-        from textwrap import dedent
-
         import ravenpy
 
         return dedent(
@@ -495,8 +495,6 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
         overwrite : bool
             If True, overwrite existing configuration zip file.
         """
-        import zipfile
-
         workdir = Path(workdir)
         if not workdir.exists():
             workdir.mkdir(parents=True)
