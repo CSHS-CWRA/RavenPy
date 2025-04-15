@@ -1,17 +1,24 @@
 import datetime as dt
+import zipfile
 from collections.abc import Sequence
 from dataclasses import asdict, fields, is_dataclass
 from pathlib import Path
+from textwrap import dedent
 from typing import Any, Optional, Union
 
 import cftime
 from pydantic import ConfigDict, Field, ValidationInfo, field_validator
-from raven_hydro import __raven_version__
 
 from ..config import commands as rc
 from ..config import options as o
 from ..config import processes as rp
 from .base import RV, Sym, optfield, parse_symbolic
+
+try:
+    from raven_hydro import __raven_version__
+except ImportError:
+    __raven_version__ = "0.0.0"
+
 
 """
 Generic Raven model configuration.
@@ -264,16 +271,12 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
     @staticmethod
     def header(rv):
         """Return the header to print at the top of each RV file."""
-        from textwrap import dedent
-
         import ravenpy
-
-        version = __raven_version__
 
         return dedent(
             f"""
         ###########################################################################################################
-        :FileType          {rv.upper()} Raven {version}
+        :FileType          {rv.upper()} Raven {__raven_version__}
         :WrittenBy         RavenPy {ravenpy.__version__} based on setups provided by James Craig and Juliane Mai
         :CreationDate      {dt.datetime.now().isoformat(timespec="seconds")}
         #----------------------------------------------------------------------------------------------------------
@@ -492,8 +495,6 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
         overwrite : bool
             If True, overwrite existing configuration zip file.
         """
-        import zipfile
-
         workdir = Path(workdir)
         if not workdir.exists():
             workdir.mkdir(parents=True)

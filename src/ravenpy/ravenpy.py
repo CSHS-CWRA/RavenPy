@@ -12,10 +12,10 @@ from warnings import warn
 
 import xarray as xr
 
+from ravenpy import RAVEN_EXEC_PATH
+
 from .config import parsers
 from .config.rvs import Config
-
-RAVEN_EXEC_PATH = os.getenv("RAVENPY_RAVEN_BINARY_PATH") or shutil.which("raven")
 
 
 class Emulator:
@@ -278,18 +278,14 @@ def run(
     overwrite : bool
         If True, overwrite existing files.
     verbose : bool
-        If True, always display Raven warnings. If False, warnings will only be printed if an error occurs.
+        If True, always display Raven warnings.
+        If False, warnings will only be printed if an error occurs.
 
     Returns
     -------
     Path
-      Path to model outputs.
+        The path to the model outputs.
     """
-    if not RAVEN_EXEC_PATH:
-        raise RuntimeError(
-            "Could not find raven binary in PATH, and RAVENPY_RAVEN_BINARY_PATH env variable is not set"
-        )
-
     # Confirm configdir exists
     configdir = Path(configdir).absolute()
     if not configdir.exists():
@@ -318,7 +314,7 @@ def run(
     )
 
     stdout, stderr = process.communicate(input="\n")
-    returncode = process.wait()
+    return_code = process.wait()
 
     # Deal with errors and warnings
     messages = parsers.parse_raven_messages(outputdir / "Raven_errors.txt")
@@ -332,8 +328,8 @@ def run(
             "\n".join([f"Config directory: {configdir}"] + messages["ERROR"])
         )
 
-    if returncode != 0:
-        raise OSError(f"Raven Error (code: {returncode}): \n{stdout}\n{stderr}")
+    if return_code != 0:
+        raise OSError(f"Raven Error (code: {return_code}): \n{stdout}\n{stderr}")
 
     return outputdir
 
