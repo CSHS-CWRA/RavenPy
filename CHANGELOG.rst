@@ -2,17 +2,22 @@
 Changelog
 =========
 
-v0.18.1 (2025-04-16)
+v0.18.1 (2025-04-15)
 --------------------
 
 New features
 ^^^^^^^^^^^^
-* RavenPy no longer requires `raven-hydro` to be installed. The Raven model executable can now be provided by explicitly setting the `RAVENPY_RAVEN_BINARY_PATH` environment variable. (PR #486).
+* `ravenpy` no longer installs `raven-hydro` by default. The Raven model executable can now be provided by explicitly setting the `RAVENPY_RAVEN_BINARY_PATH` environment variable. (PR #486).
+
+Bug fixes
+^^^^^^^^^
+* Fixed a bug in ``ravenpy.utilities.regionalization.multiple_linear_regression`` that was calling a class method incorrectly. (PR #484).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
 * `pydap` has been pinned below v3.5.5 temporarily until `xarray` offers support for it. (PR #486).
 * More than 7500 DeprecationWarnings emitted during the testing suite have been addressed. Minimum supported `pydantic` has been raised to v2.11. (PR #487).
+* Regenerated the notebook outputs using newer version of `xclim`. (PR #484).
 
 v0.18.0 (2025-04-03)
 --------------------

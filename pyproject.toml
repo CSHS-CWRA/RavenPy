@@ -57,7 +57,7 @@ dependencies = [
   "statsmodels >=0.14.2",
   "typing-extensions",
   "xarray >=2023.11.0,!=2024.10.0",
-  "xclim >=0.54.0",
+  "xclim >=0.55.1",
   "xskillscore"
 ]
 
@@ -89,11 +89,12 @@ dev = [
   "watchdog >=4.0.0"
 ]
 docs = [
+  # Requires python >=3.11
   "autodoc-pydantic >=2.1.0",
   "birdhouse-birdy",
   "cairosvg >=2.6.0",
   "cartopy >=0.23.0",
-  "clisops >=0.15.0",
+  "clisops >=0.16.1",
   "gcsfs",
   # Needed for notebooks/HydroShare_integration.ipynb
   # See: https://github.com/CSHS-CWRA/RavenPy/pull/326
@@ -116,7 +117,7 @@ docs = [
   "salib",
   "sphinx >=7.1.0",
   "sphinx-click",
-  "sphinx-codeautolink >=0.16.2",
+  "sphinx-codeautolink",
   "sphinx-copybutton",
   "sphinx-rtd-theme >=1.0",
   "sphinxcontrib-svg2pdfconverter >=1.2.3",
