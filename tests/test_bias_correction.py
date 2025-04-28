@@ -1,8 +1,11 @@
+import pytest
 import xarray as xr
 import xclim.sdba as sdba
 from xarray.coding.calendar_ops import convert_calendar
 
 
+# FIXME: This doesn't test Raven functionality; Should we move it to xclim?
+@pytest.mark.skip(reason="This test is not testing Raven functionality")
 class TestBiasCorrect:
     def test_bias_correction(self, get_local_testdata):
         ds_fut_sub = xr.open_dataset(

@@ -165,7 +165,8 @@ class _Command(BaseModel):
         """Return dictionary of class attributes that are Raven models."""
         cmds = {}
         recs = []
-        for key, field in self.model_fields.items():
+        cls = self.__class__
+        for key, field in cls.model_fields.items():
             obj = self.__dict__[key]
             if obj is not None:
                 if issubclass(obj.__class__, _Record):
@@ -251,8 +252,9 @@ class LineCommand(FlatCommand):
     """
 
     def to_rv(self):
-        out = [f":{self.__class__.__name__:<20}"]
-        for field in self.model_fields.keys():
+        cls = self.__class__
+        out = [f":{cls.__name__:<20}"]
+        for field in cls.model_fields.keys():
             out.append(str(getattr(self, field)))  # noqa: PERF401
 
         return " ".join(out) + "\n"
@@ -355,7 +357,7 @@ def parse_symbolic(value, **kwds):
     Note that parsing the output of `model_dump` can cause problems because there is not always enough information in the
     dictionary to recreate the correct model.
     """
-    from pymbolic.mapper.evaluator import EvaluationMapper as EM  # noqa: N817
+    from pymbolic.mapper.evaluator import EvaluationMapper
     from pymbolic.primitives import ExpressionNode, Variable
 
     if isinstance(value, dict):
@@ -372,7 +374,7 @@ def parse_symbolic(value, **kwds):
 
     elif isinstance(value, (Variable, ExpressionNode)):
         # Inject numerical values numerical value
-        return EM(context=kwds)(value)
+        return EvaluationMapper(context=kwds)(value)
 
     else:
         return value

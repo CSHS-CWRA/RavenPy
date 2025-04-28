@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@cb605e52c26070c328afc4562f0b4ada7618a84e # v2.10.4
+        uses: step-security/harden-runner@c6295a65d1254861815972266d5933fd6e532bdf # v2.11.1
         with:
           disable-sudo: true
           egress-policy: block
@@ -35,7 +35,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Set up Python${{ matrix.python-version }}
-        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+        uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5.5.0
         with:
           python-version: "3.x"
           cache: pip
@@ -43,7 +43,7 @@ jobs:
         run: |
           python -m pip install --require-hashes -r CI/requirements_ci.txt
       - name: Environment Caching
-        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         with:
           path: |
             .tox
@@ -59,17 +59,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ 'ubuntu-latest' ]  # 'macos-latest' disabled until a new build of raven-hydro is available
-        python-version: [ "3.11", "3.12" ]
+        os: [ 'ubuntu-latest', "macos-latest" ]
+        python-version: [ "3.11", "3.12", "3.13" ]
         tox-env: [ 'false' ]
-          # - "3.13" # not yet supported by dependencies
         include:
           - os: 'ubuntu-latest'
             python-version: '3.10'
-            tox-env: 'py3.10-coveralls-upstream'
+            tox-env: 'py3.10-coverage-upstream'
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@cb605e52c26070c328afc4562f0b4ada7618a84e # v2.10.4
+        uses: step-security/harden-runner@c6295a65d1254861815972266d5933fd6e532bdf # v2.11.1
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -93,26 +92,23 @@ jobs:
           persist-credentials: false
 
       - name: Set up Python${{ matrix.python-version }}
-        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+        uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5.5.0
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
 
-      - name: Install GDAL (Ubuntu)
+      - name: Install GDAL + Set GDAL_VERSION (Ubuntu)
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
           sudo apt-get install libgdal-dev
+          echo "GDAL_VERSION=$(gdal-config --version)" >> $GITHUB_ENV
       - name: Install GDAL (macOS)
         if: matrix.os == 'macos-latest'
         uses: tecolicom/actions-use-homebrew-tools@b9c066b79607fa3d71e0be05d7003bb75fd9ff34 # v1.3
         with:
           tools: gdal
           cache: "yes"
-      - name: Set GDAL_VERSION (Ubuntu)
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          echo "GDAL_VERSION=$(gdal-config --version)" >> $GITHUB_ENV
       - name: Set GDAL_VERSION (macOS)
         if: matrix.os == 'macos-latest'
         run: |
@@ -125,8 +121,10 @@ jobs:
         run: |
           if [ "${{ matrix.tox-env }}" != "false" ]; then
             python3 -m tox -e ${{ matrix.tox-env }}
+          elif [ "${{ matrix.python-version }}" != "3.13" ]; then
+            python3 -m tox -e py${{ matrix.python-version }}-coverage
           else
-            python3 -m tox -e py${{ matrix.python-version }}-coveralls
+            python3 -m tox -e py${{ matrix.python-version }}
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -142,16 +140,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ "ubuntu-latest" ]
-          # - macos-latest  # disabled until a new build of raven-hydro is available
+        os: [ "ubuntu-latest", "macos-latest" ]
           # - windows-latest  # disabled until xesmf is available
-        python-version: [ "3.10", "3.11", "3.12" ]
+        python-version: [ "3.10", "3.13" ]
     defaults:
       run:
         shell: bash -l {0}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@cb605e52c26070c328afc4562f0b4ada7618a84e # v2.10.4
+        uses: step-security/harden-runner@c6295a65d1254861815972266d5933fd6e532bdf # v2.11.1
         with:
           disable-sudo: true
           egress-policy: block
@@ -192,27 +189,29 @@ jobs:
           python -m pip check || true
       - name: Test RavenPy
         run: |
-          python -m pytest --cov --numprocesses=logical
-      - name: Report coverage
-        run: |
-          python -m coveralls
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_FLAG_NAME: run-conda_${{ matrix.python-version }}_${{ matrix.os }}
-          COVERALLS_PARALLEL: true
-          COVERALLS_SERVICE_NAME: github
+          python -m pytest --numprocesses=logical --cov=src/ravenpy --cov-report=lcov
+      - name: Report Coverage
+        uses: coverallsapp/github-action@648a8eb78e6d50909eff900e4ec85cab4524a45b # v2.3.6
+        with:
+          flag-name: run-conda_${{ matrix.python-version }}_${{ matrix.os }}
+          parallel: true
 
   finish:
+    name: Finish
     needs:
       - pip
       - conda
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@cb605e52c26070c328afc4562f0b4ada7618a84e # v2.10.4
+        uses: step-security/harden-runner@c6295a65d1254861815972266d5933fd6e532bdf # v2.11.1
         with:
           disable-sudo: true
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            coveralls.io:443
+            github.com:443
+            objects.githubusercontent.com:443
       - name: Coveralls Finished
         uses: coverallsapp/github-action@648a8eb78e6d50909eff900e4ec85cab4524a45b # v2.3.6
         with:

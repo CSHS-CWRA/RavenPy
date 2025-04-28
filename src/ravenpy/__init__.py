@@ -1,9 +1,9 @@
-"""A Python wrapper to setup and run the hydrologic modelling framework Raven."""
+"""A Python wrapper for configuring and running the hydrologic modelling framework Raven."""
 
 ###################################################################################
 # MIT License
 #
-# Copyright (c) 2020-2024 David Huard, Trevor James Smith, Christian Jauvin, Julie Mai, Ming Han
+# Copyright (c) 2020-2025 David Huard, Trevor James Smith, Christian Jauvin, Julie Mai, Ming Han
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,10 +24,9 @@
 # SOFTWARE.
 ###################################################################################
 
+from ._raven import RAVEN_EXEC_PATH, __raven_version__  # noqa: F401
 from .ravenpy import Emulator, EnsembleReader, OutputReader, RavenWarning, run
-
-__all__ = ["Emulator", "EnsembleReader", "OutputReader", "RavenWarning", "run"]
 
 __author__ = """David Huard"""
 __email__ = "huard.david@ouranos.ca"
-__version__ = "0.17.1-dev.0"
+__version__ = "0.18.1"

@@ -18,7 +18,7 @@ def test_optfield():
         a: bool = optfield(alias="a")
 
     t = Test()
-    assert not t.model_fields["a"].is_required()
+    assert not t.__class__.model_fields["a"].is_required()
 
 
 def test_rvi_datetime():

@@ -3,7 +3,7 @@
 import logging
 import tempfile
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any, Callable, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -35,7 +35,6 @@ def regionalize(
     min_NSE: float = 0.6,  # noqa: N803
     workdir: Optional[Union[str, Path]] = None,
     overwrite: bool = False,
-    **kwds,
 ) -> tuple[xr.DataArray, xr.Dataset]:
     r"""Perform regionalization for catchment whose outlet is defined by coordinates.
 
@@ -50,7 +49,8 @@ def regionalize(
     params : pd.DataFrame
         Model parameters of gauged catchments. Needed for all but MRL method.
     props : pd.DataFrame
-        Properties of gauged catchments to be analyzed for the regionalization. Needed for MLR and RA methods.
+        Properties of gauged catchments to be analyzed for the regionalization.
+        Needed for MLR and RA methods.
     target_props : pd.Series or dict
         Properties of ungauged catchment. Needed for MLR and RA methods.
     size : int
@@ -61,15 +61,13 @@ def regionalize(
         Work directory. If None, a temporary directory will be created.
     overwrite : bool
         If True, existing files will be overwritten.
-    \*\*kwds : dict
-        Model configuration parameters, including the forcing files (ts).
 
     Returns
     -------
     qsim : DataArray (time, )
         Multi-donor averaged predicted streamflow.
     ensemble : Dataset
-        Dataset containing the ensemble of simulations and parameters used:
+        A Dataset containing the ensemble of simulations and parameters used:
 
         - q_sim : DataArray (realization, time)
           Ensemble of members based on number of donors.
@@ -284,29 +282,29 @@ def regionalization_params(
     ungauged_properties: pd.DataFrame,
     filtered_params: pd.DataFrame,
     filtered_prop: pd.DataFrame,
-) -> list[float]:
+) -> Union[list[list[float]], list[np.ndarray]]:
     """
     Return the model parameters to use for the regionalization.
 
     Parameters
     ----------
     method : {'MLR', 'SP', 'PS', 'SP_IDW', 'PS_IDW', 'SP_IDW_RA', 'PS_IDW_RA'}
-      Name of the regionalization method to use.
+        Name of the regionalization method to use.
     gauged_params : pd.DataFrame
-      A DataFrame of parameters for donor catchments (size = number of donors).
+        A DataFrame of parameters for donor catchments (size = number of donors).
     gauged_properties : pd.DataFrame
-      A DataFrame of properties of the donor catchments  (size = number of donors).
+        A DataFrame of properties of the donor catchments  (size = number of donors).
     ungauged_properties : pd.DataFrame
-      A DataFrame of properties of the ungauged catchment (size = 1).
+        A DataFrame of properties of the ungauged catchment (size = 1).
     filtered_params : pd.DataFrame
-      A DataFrame of parameters of all filtered catchments (size = all catchments with NSE > min_NSE).
+        A DataFrame of parameters of all filtered catchments (size = all catchments with NSE > min_NSE).
     filtered_prop : pd.DataFrame
-      A DataFrame of properties of all filtered catchments (size = all catchments with NSE > min_NSE).
+        A DataFrame of properties of all filtered catchments (size = all catchments with NSE > min_NSE).
 
     Returns
     -------
     list
-      List of model parameters to be used for the regionalization.
+        A list of model parameters to be used for the regionalization.
     """
     if method == "MLR" or "RA" in method:
         mlr_params, r2 = multiple_linear_regression(
@@ -318,7 +316,7 @@ def regionalization_params(
                 mlr_params,
             ]
 
-        elif "RA" in method:
+        else:
             gp = gauged_params.copy()
 
             for p, r, col in zip(mlr_params, r2, gauged_params):
@@ -367,7 +365,7 @@ def IDW(qsims: xr.DataArray, dist: pd.Series) -> xr.DataArray:  # noqa: N802
 
 def multiple_linear_regression(
     source: pd.DataFrame, params: pd.DataFrame, target: pd.DataFrame
-) -> tuple[list[Any], list[int]]:
+) -> tuple[list[Any], list[Callable[[], Any]]]:
     """Multiple Linear Regression for model parameters over catchment properties.
 
     Uses known catchment properties and model parameters to estimate model parameter over an
@@ -384,13 +382,13 @@ def multiple_linear_regression(
 
     Returns
     -------
-    list of Any, list of int
-      A named tuple of the estimated model parameters and the R2 of the linear regression.
+    list of Any, list of Callable or Any
+        A named tuple of the estimated model parameters and the R2 of the linear regression.
     """
     # Add constants to the gauged predictors
     x = sm.add_constant(source)
 
-    # Add the constant 1 for the ungauged catchment predictors
+    # Add the constant '1' for the ungauged catchment predictors
     predictors = sm.add_constant(target, prepend=True, has_constant="add")
 
     # Perform regression for each parameter

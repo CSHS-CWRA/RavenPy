@@ -1,16 +1,24 @@
 import datetime as dt
+import zipfile
 from collections.abc import Sequence
 from dataclasses import asdict, fields, is_dataclass
 from pathlib import Path
+from textwrap import dedent
 from typing import Any, Optional, Union
 
 import cftime
-from pydantic import ConfigDict, Field, ValidationInfo, field_validator, model_validator
+from pydantic import ConfigDict, Field, ValidationInfo, field_validator
 
 from ..config import commands as rc
 from ..config import options as o
 from ..config import processes as rp
 from .base import RV, Sym, optfield, parse_symbolic
+
+try:
+    from raven_hydro import __raven_version__
+except ImportError:
+    __raven_version__ = "0.0.0"
+
 
 """
 Generic Raven model configuration.
@@ -29,9 +37,9 @@ class RVI(RV):
 
     run_name: Optional[str] = optfield(alias="RunName")
     calendar: Optional[o.Calendar] = optfield(alias="Calendar")
-    start_date: Optional[date] = optfield(alias="StartDate")
+    start_date: Optional[Union[str, date]] = optfield(alias="StartDate")
     assimilation_start_time: Optional[date] = optfield(alias="AssimilationStartTime")
-    end_date: Optional[date] = optfield(alias="EndDate")
+    end_date: Optional[Union[str, date]] = optfield(alias="EndDate")
     duration: Optional[float] = optfield(alias="Duration")
     time_step: Optional[Union[float, str]] = optfield(alias="TimeStep")
     interpolation: Optional[o.Interpolation] = optfield(alias="Interpolation")
@@ -138,6 +146,8 @@ class RVI(RV):
             ).value.lower()
 
             obj = cftime._cftime.DATE_TYPES[calendar]
+            if isinstance(v, str):
+                v = dt.datetime.fromisoformat(v)
 
             return obj(*v.timetuple()[:6])
 
@@ -258,20 +268,15 @@ class RVE(RV):
 class Config(RVI, RVC, RVH, RVT, RVP, RVE):
     __rv__ = None
 
-    def header(self, rv):
+    @staticmethod
+    def header(rv):
         """Return the header to print at the top of each RV file."""
-        import datetime as dt
-        from textwrap import dedent
-
         import ravenpy
-
-        # TODO: Better mechanism to fetch version
-        version = "3.7"
 
         return dedent(
             f"""
         ###########################################################################################################
-        :FileType          {rv.upper()} Raven {version}
+        :FileType          {rv.upper()} Raven {__raven_version__}
         :WrittenBy         RavenPy {ravenpy.__version__} based on setups provided by James Craig and Juliane Mai
         :CreationDate      {dt.datetime.now().isoformat(timespec="seconds")}
         #----------------------------------------------------------------------------------------------------------
@@ -490,8 +495,6 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
         overwrite : bool
             If True, overwrite existing configuration zip file.
         """
-        import zipfile
-
         workdir = Path(workdir)
         if not workdir.exists():
             workdir.mkdir(parents=True)
@@ -512,11 +515,11 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
         return zip
 
 
-def is_symbolic(params: dict) -> bool:
+def is_symbolic(params: Union[dict, Any]) -> bool:
     """Return True if parameters include a symbolic variable."""
     from pymbolic.primitives import Variable
 
-    if is_dataclass(params):
+    if is_dataclass(params) and not isinstance(params, type):
         params = {field.name: getattr(params, field.name) for field in fields(params)}
 
     return any([isinstance(v, Variable) for v in params.values()])

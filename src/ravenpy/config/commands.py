@@ -1405,11 +1405,9 @@ class TerrainClasses(ListCommand):
     _Units: Sequence[str] = PrivateAttr(["m", "km/km2"])
 
 
-class _MonthlyRecord:
+class _MonthlyRecord(Record):
     name: str = "[DEFAULT]"
-    values: Sequence[float] = 12 * [
-        1.0,
-    ]
+    values: Sequence[float] = 12 * [1.0]
 
     def __str__(self):
         return f"{self.name:<16} " + ", ".join(map(str, self.values))

@@ -54,12 +54,12 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr htmlcov/
 	rm -fr .pytest_cache
 
- lint/flake8: ## check style with flake8
+lint/flake8: ## check style with flake8
 	python -m ruff check src/ravenpy tests
 	python -m flake8 --config=.flake8 src/ravenpy tests
 	python -m numpydoc lint src/ravenpy/**.py
 
- lint/black: ## check style with black
+lint/black: ## check style with black
 	python -m black --check src/ravenpy tests
 	python -m blackdoc --check src/ravenpy docs
 	python -m isort --check src/ravenpy tests
@@ -78,11 +78,7 @@ coverage: ## check code coverage quickly with the default Python
 	python -m coverage html
 	$(BROWSER) htmlcov/index.html
 
-initialize-translations: clean-docs ## initialize translations, ignoring autodoc-generated files
-	${MAKE} -C docs gettext
-	sphinx-intl update -p docs/_build/gettext -d docs/locales -l fr
-
-autodoc: clean-docs ## create sphinx-apidoc files:
+														autodoc: clean-docs ## create sphinx-apidoc files:
 	sphinx-apidoc -o docs/apidoc --private --module-first src/ravenpy
 
 autodoc-custom-index: clean-docs ## create sphinx-apidoc files but with special index handling for indices and indicators
@@ -90,6 +86,11 @@ autodoc-custom-index: clean-docs ## create sphinx-apidoc files but with special 
 
 linkcheck: autodoc ## run checks over all external links found throughout the documentation
 	$(MAKE) -C docs linkcheck
+
+initialize-translations: autodoc-custom-index ## initialize translations, ignoring autodoc-generated files
+	${MAKE} -C docs gettext
+	sphinx-intl update -p docs/_build/gettext -d docs/locales -l fr
+	rm -fr docs/locales/fr/LC_MESSAGES/apidoc
 
 docs: autodoc-custom-index ## generate Sphinx HTML documentation, including API docs
 	$(MAKE) -C docs html BUILDDIR="_build/html/en"

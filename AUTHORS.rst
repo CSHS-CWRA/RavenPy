@@ -19,3 +19,4 @@ Contributors
 ------------
 
 * Louise Arnal <arnal.louise@ouranos.ca> `@lou-a <https://github.com/lou-a>`_
+* Pascal Bourgault <bourgault.pascal@ouranos.ca> `@aulemahal <https://github.com/aulemahal>`_

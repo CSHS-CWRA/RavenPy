@@ -20,8 +20,8 @@ def test_nc_specs_bad(bad_netcdf):
 @pytest.mark.online
 def test_dap_specs():
     # Link to THREDDS Data Server netCDF testdata
-    TDS = "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/birdhouse/testdata/raven"
-    fn = f"{TDS}/raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
+    tds = "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/birdhouse/testdata/raven"
+    fn = f"{tds}/raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
 
     attrs = nc_specs(fn, "PRECIP", station_idx=1, alt_names=("rain",), engine="pydap")
     assert "units" in attrs

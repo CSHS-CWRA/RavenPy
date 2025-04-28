@@ -76,7 +76,7 @@ extensions = [
     "sphinx_codeautolink",
     "sphinx_copybutton",
     "sphinxcontrib.cairosvgconverter",
-    # "sphinxcontrib.autodoc_pydantic",  # FIXME: Does not seem to be compatible with RavenPy codebase.
+    "sphinxcontrib.autodoc_pydantic",
 ]
 
 linkcheck_ignore = [
@@ -170,7 +170,7 @@ author = "David Huard"
 # the built documents.
 #
 # The short X.Y version.
-version = ravenpy.__version__
+version = ravenpy.__version__.split("-")[0]
 # The full version, including alpha/beta/rc tags.
 release = ravenpy.__version__
 
@@ -195,7 +195,7 @@ exclude_patterns = [
     ".jupyter_cache",
     "jupyter_execute",
     "notebooks/paper",
-    "notebooks/HydroShare_integration.ipynb",
+    "notebooks-notworking",
 ]
 
 # The name of the Pygments (syntax highlighting) style to use.

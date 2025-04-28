@@ -297,13 +297,16 @@ def _shift_esp_time(nc, year, dim="member"):
 
     Modify time such that it starts on the given year, and add member dimension with original year as value.
     """
-    ds = xr.open_dataset(nc, use_cftime=True)
+    ds = xr.open_dataset(nc)
 
     # Create new time coordinate
-    start = ds.time.data[0]
+    start = ds.indexes["time"][0]
     freq = xr.infer_freq(ds.time)
-    ds["time"] = xr.cftime_range(
-        start.replace(year=year), periods=len(ds.time), freq=freq
+    ds["time"] = xr.date_range(
+        start.replace(year=year),
+        periods=len(ds.time),
+        freq=freq,
+        calendar=ds.time.dt.calendar,
     )
 
     # New coordinate dimension to store the original year
@@ -371,7 +374,9 @@ def ensemble_prediction(
 
     # Run the model for each year
     ensemble = []
-    forecast_ds = xr.open_dataset(forecast, use_cftime=True)
+
+    time_coder = xr.coders.CFDatetimeCoder(use_cftime=True)
+    forecast_ds = xr.open_dataset(forecast, decode_times=time_coder)
 
     for member in range(0, len(forecast_ds[ens_dim])):
         # Prepare model instance
@@ -452,7 +457,7 @@ def compute_forecast_flood_risk(
     out = pct.to_dataset(name="exceedance_probability")
     out.attrs["source"] = f"PAVICS-Hydro flood risk forecasting tool, {domain}"
     out.attrs["history"] = (
-        f"File created on {dt.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} "
+        f"File created on {dt.datetime.now(dt.UTC).strftime('%Y-%m-%d %H:%M:%S')} "
         f"UTC on the PAVICS-Hydro service available at {domain}."
     )
     out.attrs["title"] = (
