@@ -83,6 +83,9 @@ class RVI(RV):
         description="Gridded or gauged temperature bias correction.",
     )
     lake_storage: Optional[o.StateVariables] = optfield(alias="LakeStorage")
+    relative_humidity_method: Optional[o.RelativeHumidityMethod] = optfield(
+        alias="RelativeHumidityMethod"
+    )
 
     define_hru_groups: Optional[Sequence[str]] = optfield(alias="DefineHRUGroups")
 
