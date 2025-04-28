@@ -17,7 +17,7 @@ salmon_land_hru_1 = dict(
 )
 
 
-def test_custom_ouputs():
+def test_custom_output():
     class Test(RV):
         co: Sequence[rc.CustomOutput] = optfield(alias="CustomOutput")
 
@@ -31,6 +31,9 @@ def test_custom_ouputs():
         Test(co=[co]).to_rv().strip()
         == ":CustomOutput         YEARLY AVERAGE PRECIP ENTIRE_WATERSHED"
     )
+
+    new = rc.CustomOutput.parse(str(co))
+    assert new == co
 
 
 def test_evaluation_metrics():

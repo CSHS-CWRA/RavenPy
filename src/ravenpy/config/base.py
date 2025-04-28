@@ -1,3 +1,4 @@
+import re
 from collections.abc import Sequence
 from enum import Enum
 from textwrap import dedent, indent
@@ -107,19 +108,39 @@ def encoder(v: dict) -> dict:
 
 
 class _Record(BaseModel):
-    """A Record has no nested Command or Record objects."""
-
     pass
 
 
 class Record(_Record):
+    """A Record has no nested Command or Record objects. It is typically a list of named
+    values on a single line.
+
+    For example, SubBasins is a ListCommand, whose root is a list of `SubBasin` Records.
+    """
+
     model_config = ConfigDict(
         extra="forbid", arbitrary_types_allowed=True, populate_by_name=True
     )
 
 
 class RootRecord(RootModel, _Record):
+    """A Record with a root attribute. This is typically used for an unnamed list of
+    values on a single line.
+
+    For example, the list of HRUs in an HRUGroup is a RootRecord, and the weights of a GridWeights
+    command are a sequence of records.
+    """
+
     model_config = ConfigDict(arbitrary_types_allowed=True, populate_by_name=True)
+
+    def __iter__(self):
+        return iter(self.root)
+
+    def __getitem__(self, item):
+        return self.root[item]
+
+    def __str__(self):
+        return " ".join(map(str, self.root))
 
 
 class _Command(BaseModel):
@@ -214,7 +235,10 @@ class RootCommand(RootModel, _Command):
 
 
 class FlatCommand(Command):
-    """Only used to discriminate Commands that should not be nested."""
+    """Only used to discriminate Commands that should not be nested.
+
+    HRUGroup, ReadFromNetCDF, Reservoir are examples of FlatCommand.
+    """
 
 
 class LineCommand(FlatCommand):
@@ -222,6 +246,8 @@ class LineCommand(FlatCommand):
     A non-nested Command on a single line.
 
     :CommandName {field_1} {field_2} ... {field_n}\n
+
+    EvaluationPeriod is a FlatCommand.
     """
 
     def to_rv(self):
@@ -231,9 +257,18 @@ class LineCommand(FlatCommand):
 
         return " ".join(out) + "\n"
 
+    @classmethod
+    def parse(cls, s):
+        """Parse the command and return an instance of LineCommand."""
+        pat = rf":{cls.__name__}\s+(?P<args>.+)"
+        fields = cls.model_fields.keys()
+        if match := re.match(pat, s):
+            args = match.group("args").split()
+            return cls(**dict(zip(fields, args)))
+
 
 class ListCommand(RootModel, _Command):
-    """Use so that commands with __root__: Sequence[Command] behave like a list."""
+    """Use so that commands with __root__: Sequence[Record] behave like a list."""
 
     root: Sequence[Any]
 
