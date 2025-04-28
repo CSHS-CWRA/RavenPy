@@ -2,14 +2,12 @@
 Changelog
 =========
 
-v0.18.2 (unreleased)
+v0.18.2 (2025-04-28)
 --------------------
 
 New features
 ^^^^^^^^^^^^
-* Added RelativeHumidityMethod to RVIs. (PR #490)
-
-
+* Added RelativeHumidityMethod to RVIs. (PR #490).
 
 v0.18.1 (2025-04-15)
 --------------------
