@@ -444,7 +444,7 @@ class HRUs(ListCommand):
                 # Split line into fields
                 values = re.split(r"\s+", line.strip())
                 # Convert to HRU record
-                out.append(HRU(**dict(zip(keys, values))))
+                out.append(dict(zip(keys, values)))
         return cls(root=out)
 
     def rename(self, mapping):
@@ -705,11 +705,11 @@ class SBGroupPropertyMultiplier(LineCommand):
     mult: Sym
 
 
-class ChannelProfile(Command):
+class ChannelProfile(FlatCommand):
     """ChannelProfile command (RVP)."""
 
     name: str = "chn_XXX"
-    bed_slope: float = Field(0, alias="BedSlope")
+    bed_slope: float = Field(0, alias="Bedslope")
 
     class SurveyPoints(ListCommand):
         """SurveyPoints
@@ -740,6 +740,14 @@ class ChannelProfile(Command):
         root: Sequence[RoughnessZone] = Field((RoughnessZone(),))
 
     roughness_zones: RoughnessZones = Field(RoughnessZones(), alias="RoughnessZones")
+
+    @property
+    def _template(self):
+        return """
+               :{_cmd} {name}
+               {_commands}{_records}
+               :End{_cmd}
+               """
 
     @classmethod
     def parse(cls, s) -> list:
@@ -799,6 +807,18 @@ class GridWeights(Command):
         root: tuple[int, int, float] = (1, 0, 1.0)
 
     data: Sequence[GWRecord] = Field((GWRecord(),))
+
+    @field_validator("data")
+    @classmethod
+    def _sum_weights(cls, values):
+        """Check that for each HRU weights sum to 1."""
+        for hru, group in itertools.groupby(values, lambda x: x.root[0]):
+            total = sum([x.root[2] for x in group])
+            if not (0.999 < total < 1.001):
+                raise ValueError(
+                    f"GridWeights for HRU {hru} do not sum to 1.0: {total:.3f}"
+                )
+        return values
 
     @classmethod
     def parse(cls, s):
@@ -919,6 +939,7 @@ class GriddedForcing(ReadFromNetCDF):
     def _template(self):
         return """
         :{_cmd} {name}
+        # HRU GridCell Weight
         {_commands}
         :End{_cmd}
         """

@@ -362,6 +362,11 @@ class GridWeightExtractor:
             NetCDF file or shapefile with the data to be weighted.
         routing_file_path : Path or str
             Sub-basin delineation.
+        dim_names : tuple
+            Names of the dimensions in the NetCDF file.
+        var_names : tuple
+            Names of the variables in the NetCDF file.
+
         """
         self._dim_names = tuple(dim_names)
         self._var_names = tuple(var_names)
@@ -389,6 +394,7 @@ class GridWeightExtractor:
             )
 
         self._routing_data = open_shapefile(routing_file_path)
+        self._routing_data["__INDEX__"] = range(1, len(self._routing_data) + 1)
 
     def extract(self) -> dict:
         """Return dictionary to create a GridWeights command."""
