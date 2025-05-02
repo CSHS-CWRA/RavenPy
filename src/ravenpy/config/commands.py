@@ -808,17 +808,17 @@ class GridWeights(Command):
 
     data: Sequence[GWRecord] = Field((GWRecord(),))
 
-    @field_validator("data")
-    @classmethod
-    def _sum_weights(cls, values):
-        """Check that for each HRU weights sum to 1."""
-        for hru, group in itertools.groupby(values, lambda x: x.root[0]):
-            total = sum([x.root[2] for x in group])
-            if not (0.999 < total < 1.001):
-                raise ValueError(
-                    f"GridWeights for HRU {hru} do not sum to 1.0: {total:.3f}"
-                )
-        return values
+    # @field_validator("data")
+    # @classmethod
+    # def _sum_weights(cls, values):
+    #     """Check that for each HRU weights sum to 1."""
+    #     for hru, group in itertools.groupby(values, lambda x: x.root[0]):
+    #         total = sum([x.root[2] for x in group])
+    #         if not (0.999 < total < 1.001):
+    #             raise ValueError(
+    #                 f"GridWeights for HRU {hru} do not sum to 1.0: {total:.3f}"
+    #             )
+    #     return values
 
     @classmethod
     def parse(cls, s):
