@@ -74,7 +74,7 @@ dev = [
   "flit >=3.10.1,<4.0",
   "holoviews",
   "hvplot",
-  "isort ==6.0.0",
+  "isort ==6.0.1",
   "mypy >=1.14.1",
   "nbval",
   "numpydoc >=1.8.0",
