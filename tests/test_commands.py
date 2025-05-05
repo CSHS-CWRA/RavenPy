@@ -16,7 +16,7 @@ salmon_land_hru_1 = dict(
 )
 
 
-def test_custom_ouputs():
+def test_custom_output():
     class Test(RV):
         co: Sequence[rc.CustomOutput] = optfield(alias="CustomOutput")
 
@@ -30,6 +30,9 @@ def test_custom_ouputs():
         Test(co=[co]).to_rv().strip()
         == ":CustomOutput         YEARLY AVERAGE PRECIP ENTIRE_WATERSHED"
     )
+
+    new = rc.CustomOutput.parse(str(co))
+    assert new == co
 
 
 def test_evaluation_metrics():
@@ -67,6 +70,27 @@ def test_hrus():
     hrus = rc.HRUs([salmon_land_hru_1])
     hrus.to_rv()
     assert hrus[0].subbasin_id == 1
+
+
+def test_hrus_parse(get_local_testdata):
+    f = get_local_testdata("clrh/mattawin/06FB002.rvh")
+    hrus = rc.HRUs.parse(f.read_text())
+    assert len(hrus) == 40
+    hru = hrus[0]
+
+    assert hru.hru_id == 38
+    assert hru.area == 2.1924
+    assert hru.elevation == 1440.5898
+    assert hru.latitude == 46.6007
+    assert hru.longitude == -73.9222
+    assert hru.subbasin_id == 23007946
+    assert hru.land_use_class == "LAKE"
+    assert hru.veg_class == "LAKE"
+    assert hru.soil_profile == "LAKE"
+    assert hru.aquifer_profile == "[NONE]"
+    assert hru.terrain_class == "[NONE]"
+    assert hru.slope == 30.986380
+    assert hru.aspect == 190.30589321792877
 
 
 def test_hru_state():
@@ -464,6 +488,30 @@ def test_subbasins():
     Test().to_rv()
 
 
+def test_subbasins_parse(get_local_testdata):
+    f = get_local_testdata("clrh/mattawin/06FB002.rvh")
+    sb = rc.SubBasins.parse(f.read_text())
+    assert len(sb) == 35
+
+
+def test_reservoir_parse(get_local_testdata):
+    f = get_local_testdata("clrh/mattawin/Lakes.rvh")
+    rs = rc.Reservoir.parse(f.read_text())
+    assert len(rs) == 5
+    r = rs[0]
+
+    assert r.name == "Lake_107056"
+    assert r.subbasin_id == 23007946
+    assert r.hru_id == 38
+    assert r.type == "RESROUTE_STANDARD"
+    assert r.weir_coefficient == 0.6
+    assert r.crest_width == 7.7399
+    assert r.max_depth == 9.6
+    assert r.lake_area == 2192395.4127609455
+    assert r.seepage_parameters.k_seep == 0
+    assert r.seepage_parameters.h_ref == 0
+
+
 def test_ensemble_mode():
     c = rc.EnsembleMode(n=10)
     s = c.to_rv().strip()
@@ -504,4 +552,55 @@ def test_hru_group():
             :EndHRUGroup
                 """
         ).strip()
+    )
+
+
+def test_subbasin_group_parse(get_local_testdata):
+    f = get_local_testdata("clrh/mattawin/06FB002.rvh")
+    sbgs = rc.SubBasinGroup.parse(f.read_text())
+    assert len(sbgs) == 2
+    sbg = sbgs[0]
+    assert sbg.name == "Allsubbasins"
+    assert len(sbg.sb_ids) == 35
+    sbg.sb_ids[0] == 23007946
+
+
+def test_channel_profile_parse(get_local_testdata):
+    f = get_local_testdata("clrh/mattawin/channel_properties.rvp")
+    cps = rc.ChannelProfile.parse(f.read_text())
+    assert len(cps) == 20
+
+    cp = cps[0]
+
+    assert cp.name == "Chn_ZERO_LENGTH"
+    assert cp.bed_slope == 0.1234500000
+    assert len(cp.survey_points) == 8
+    assert cp.survey_points[0].root == (0, 1444.5898)
+    assert cp.survey_points[1].root == (16.0000, 1440.5898)
+    assert len(cp.roughness_zones) == 3
+    assert cp.roughness_zones[0].root == (0, 0.12345000)
+
+    assert str(cp) == dedent(
+        """
+    :ChannelProfile Chn_ZERO_LENGTH
+      :Bedslope             0.12345
+
+      :SurveyPoints
+        0.0 1444.5898
+        16.0 1440.5898
+        16.2469 1440.5898
+        16.2778 1440.4663
+        16.3395 1440.4663
+        16.3703 1440.5898
+        16.6172 1440.5898
+        32.6173 1444.5898
+      :EndSurveyPoints
+
+      :RoughnessZones
+        0.0 0.12345
+        16.2469 0.12345
+        16.37035 0.12345
+      :EndRoughnessZones
+    :EndChannelProfile
+    """
     )

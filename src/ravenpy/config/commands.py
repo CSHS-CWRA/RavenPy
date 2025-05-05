@@ -127,6 +127,8 @@ class Process(Command):
 
 
 class SoilModel(RootCommand):
+    """:SoilModel SOIL_MULTILAYER 6"""
+
     root: int
 
     def to_rv(self):
@@ -135,6 +137,8 @@ class SoilModel(RootCommand):
 
 
 class LinearTransform(Command):
+    """:LinearTransform 1.0 -273.15"""
+
     scale: float = 1
     offset: float = 0
 
@@ -146,7 +150,14 @@ class LinearTransform(Command):
 
 
 class RainSnowTransition(Command):
-    """Specify the range of temperatures over which there will be a rain/snow mix when partitioning total precipitation into rain/snow components."""
+    """Specify the range of temperatures over which there will be a rain/snow mix when partitioning total precipitation into rain/snow components.
+
+    :RainSnowTransition [temp] [delta]
+
+    # equivalent to (the preferred option)
+    :GlobalParameter RAINSNOW_TEMP [rainsnow_temp]
+    :GlobalParameter RAINSNOW_DELTA [rainsnow_delta]
+    """
 
     temp: Sym
     """Midpoint of the temperature range [C]."""
@@ -159,11 +170,7 @@ class RainSnowTransition(Command):
 
 
 class EvaluationPeriod(LineCommand):
-    """
-    Evaluation Period.
-
-    :EvaluationPeriod [period_name] [start yyyy-mm-dd] [end yyyy-mm-dd]
-    """
+    """:EvaluationPeriod [period_name] [start yyyy-mm-dd] [end yyyy-mm-dd]"""
 
     name: str
     start: dt.date
@@ -171,7 +178,10 @@ class EvaluationPeriod(LineCommand):
 
 
 class CustomOutput(LineCommand):
-    """Create custom output file to track a single variable, parameter, or forcing function over time at a number of basins, HRUs, or across watershed."""  # noqa: E501
+    """Create custom output file to track a single variable, parameter, or forcing function over time at a number of basins, HRUs, or across watershed.
+
+    :CustomOutput DAILY AVERAGE AET BY_HRU
+    """  # noqa: E501
 
     time_per: Literal["DAILY", "MONTHLY", "YEARLY", "WATER_YEARLY", "CONTINUOUS"]
     """Time period."""
@@ -209,6 +219,19 @@ class SoilProfile(Record):
 
 
 class SoilProfiles(ListCommand):
+    """SoilProfiles command.
+
+    Example::
+
+        :SoilProfiles
+          # name, #horizons, hor1, th1, hor2, th2
+          LAKE, 0
+          GLACIER, 0
+          LOAM_SEQ, 2, LOAM, 0.5, SAND, 1.5
+          ALL_SAND, 2, SAND, 0.5, SAND, 1.5
+        :EndSoilProfiles
+    """
+
     root: Sequence[SoilProfile]
 
 
@@ -219,13 +242,19 @@ class SubBasin(Record):
     name: str = "sub_001"
     downstream_id: int = -1
     profile: str = "NONE"
-    reach_length: float = 0
+    reach_length: float | str = 0
     gauged: bool = True
     gauge_id: Optional[str] = ""  # This attribute is not rendered to RVH
 
+    @classmethod
+    @field_validator("reach_length")
+    def check_reach_length(cls, v):
+        if v == "ZERO-":
+            return 0
+        return v
+
     def __str__(self):
         d = self.model_dump()
-        d["reach_length"] = d["reach_length"]  # if d["reach_length"] else "ZERO-"
         d["gauged"] = int(d["gauged"])
         del d["gauge_id"]
         return " ".join(f"{v: <{VALUE_PADDING}}" for v in d.values())
@@ -234,13 +263,48 @@ class SubBasin(Record):
 
 
 class SubBasins(ListCommand):
-    """SubBasins command (RVH)."""
+    """SubBasins command (RVH)
+
+    Example::
+
+        :SubBasins
+          :Attributes, NAME, DOWNSTREAM_ID, PROFILE, REACH_LENGTH, GAUGED
+          :Units, none, none, none, km, none
+          1, Downstream, -1, DEFAULT, 3.0, 1
+          2, Upstream, 1, DEFAULT, 3.0, 0
+        :EndSubBasins
+    """
 
     root: Sequence[SubBasin]
     _Attributes: Sequence[str] = PrivateAttr(
         ["ID", "NAME", "DOWNSTREAM_ID", "PROFILE", "REACH_LENGTH", "GAUGED"]
     )
     _Units: Sequence[str] = PrivateAttr(["none", "none", "none", "none", "km", "none"])
+
+    @classmethod
+    def parse(cls, s):
+        """Parse a SubBasins command."""
+        pat = r":SubBasins(.+):EndSubBasins" ""
+        out = []
+        keys = [
+            "subbasin_id",
+            "name",
+            "downstream_id",
+            "profile",
+            "reach_length",
+            "gauged",
+        ]
+
+        # Remove all commented lines (starting with #)
+        s = re.sub(r"^\s*#.*$", "", s, flags=re.MULTILINE)
+        if match := re.search(pat, s.strip(), re.DOTALL):
+            spat = r"^\s*([^:^\s].+)$"
+            for line in re.findall(spat, match.groups()[0], re.MULTILINE):
+                # Split line into fields
+                values = re.split(r"\s+", line.strip())
+                # Convert to SubBasin record
+                out.append(SubBasin(**dict(zip(keys, values))))
+        return cls(root=out)
 
 
 class HRU(Record):
@@ -351,6 +415,55 @@ class HRUs(ListCommand):
             )
         return out
 
+    @classmethod
+    def parse(cls, s):
+        """Parse a HRUs command."""
+        pat = r":HRUs(.+):EndHRUs"
+        out = []
+        keys = [
+            "hru_id",
+            "area",
+            "elevation",
+            "latitude",
+            "longitude",
+            "subbasin_id",
+            "land_use_class",
+            "veg_class",
+            "soil_profile",
+            "aquifer_profile",
+            "terrain_class",
+            "slope",
+            "aspect",
+        ]
+        # Remove all commented lines (starting with #)
+        s = re.sub(r"^\s*#.*$", "", s, flags=re.MULTILINE)
+
+        if match := re.search(pat, s.strip(), re.DOTALL):
+            spat = r"^\s*([^:^\s].+)$"
+            for line in re.findall(spat, match.groups()[0], re.MULTILINE):
+                # Split line into fields
+                values = re.split(r"\s+", line.strip())
+                # Convert to HRU record
+                out.append(dict(zip(keys, values)))
+        return cls(root=out)
+
+    def rename(self, mapping):
+        """Rename HRU attributes.
+
+        Parameters
+        ----------
+        mapping : dict
+            Nested dictionary keyed by HRU attributes, with keys as old names and values as new names.
+        """
+        out = self.copy()
+        for attr, amap in mapping.items():
+            for hru in out.root:
+                cur = getattr(hru, attr)
+                for old, new in amap.items():
+                    if cur == old:
+                        setattr(hru, attr, new)
+        return out
+
 
 class HRUGroup(FlatCommand):
     class _Rec(RootRecord):
@@ -380,8 +493,119 @@ class Reservoir(FlatCommand):
     type: str = Field("RESROUTE_STANDARD", alias="Type")
     weir_coefficient: float = Field(0, alias="WeirCoefficient")
     crest_width: float = Field(0, alias="CrestWidth")
-    max_depth: float = Field(0, alias="MaxDepth")
-    lake_area: float = Field(0, alias="LakeArea", description="Lake area in m2")
+    max_depth: float = Field(0, alias="MaxDepth", description="Max depth (m)")
+    lake_area: float = Field(0, alias="LakeArea", description="Lake area (m2)")
+    absolute_crest_height: Optional[float] = Field(
+        None, alias="AbsoluteCrestHeight", description="Absolute crest height (m)"
+    )
+    max_capacity: Optional[float] = Field(
+        None, alias="MaxCapacity", description="Maximum capacity in m3"
+    )
+
+    class SeepageParameters(LineCommand):
+        """:SeepageParameters [K_seep] [href]"""
+
+        k_seep: float
+        h_ref: float
+
+    seepage_parameters: Optional[SeepageParameters] = Field(
+        None, alias="SeepageParameters"
+    )
+
+    class StageRelations(RootCommand):
+        """Stage relations for the reservoir."""
+
+        class StageRelation(RootRecord):
+            """Stage relation record.
+
+            h, q, v, a, [u]
+            """
+
+            root: (
+                tuple[float, float, float, float]
+                | tuple[float, float, float, float, float]
+            ) = None
+
+            def __str__(self):
+                return ", ".join([f"{x:>12}" for x in self.root])
+
+        root: Sequence[StageRelation] = Field(None)
+
+    stage_relations: Optional[StageRelations] = Field(None, alias="StageRelations")
+
+    class OutflowControlStructure(Command):
+        """Outflow control structure for the reservoir."""
+
+        target_subbasin_id: Optional[int] = Field(None, alias="TargetSubBasin")
+        downstream_reference_elevation: Optional[float] = Field(
+            None, alias="DownstreamReferenceElevation"
+        )
+
+        class StageDischargeTable(RootCommand):
+            """Stage discharge table for the outflow control structure.
+
+            Example::
+
+                :StageDischargeTable C1 #one gate open
+                      N
+                      [h,Q]xN
+                :EndStageDischargeTable
+            """
+
+            _n: Optional[int] = None
+
+            class StageDischargeRecord(RootRecord):
+                """Stage discharge record."""
+
+                root: tuple[float, float] = None
+
+            root: Sequence[StageDischargeRecord] = Field(None)
+
+            @model_validator(mode="after")
+            def _set_n(self):
+                """Set the number of records in the table."""
+                if self.root is not None and self.n is None:
+                    self.n = len(self.root)
+                return self
+
+            @property
+            def _template(self):
+                return """
+                :StageDischargeTable
+                  {n}
+                {_records}
+                :EndStageDischargeTable
+                """
+
+        stage_discharge_table: Optional[Sequence[StageDischargeTable]] = Field(
+            None, alias="StageDischargeTable"
+        )
+
+        class BasicWeir(LineCommand):
+            """Basic weir for the outflow control structure.
+
+            :BasicWeir [curve_name3] [elev] [crestwidth] [coeff]
+            """
+
+            curve_name: str
+            elev: float
+            crest_width: float
+            coeff: float
+
+        basic_weir: BasicWeir = Field(None, alias="BasicWeir")
+
+        class OperatingRegime(Command):
+            """Operating regime for the outflow control structure.
+
+            :OperatingRegime [curve_name] [elev] [coeff]
+            """
+
+            name: str
+            use_curve: str = Field(None, alias="UseCurve")
+            condition: str = Field(None, alias="Condition")
+            constraint: str = Field(None, alias="Constraint")
+
+        operating_regime: OperatingRegime = Field(None, alias="OperatingRegime")
 
     @property
     def _template(self):
@@ -390,6 +614,48 @@ class Reservoir(FlatCommand):
             {_commands}
             :EndReservoir
             """
+
+    @classmethod
+    def parse(cls, s) -> list:
+        """Return a list of Reservoir records parsed from an RV file."""
+        # Remove all commented lines (starting with #)
+        s = re.sub(r"^\s*#.*$", "", s, flags=re.MULTILINE)
+        pat = r":Reservoir\s+(\w+)\s+(.+?):EndReservoir"
+        out = []
+
+        for name, content in re.findall(pat, s.strip(), re.DOTALL):
+            # Extract parameters
+            subbasin_id = re.search(r":SubBasinID\s+(\d+)", content).group(1)
+            hru_id = re.search(r":HRUID\s+(\d+)", content).group(1)
+            type_ = re.search(r":Type\s+(\w+)", content).group(1)
+            weir_coefficient = re.search(
+                r":WeirCoefficient\s+([\d.-]+)", content
+            ).group(1)
+            crest_width = re.search(r":CrestWidth\s+([\d.-]+)", content).group(1)
+            max_depth = re.search(r":MaxDepth\s+([\d.-]+)", content).group(1)
+            lake_area = re.search(r":LakeArea\s+([\d.-]+)", content).group(1)
+            seepage_parameters = re.search(
+                r":SeepageParameters\s+([\d.-]+)\s+([\d.-]+)", content
+            ).groups()
+
+            # Convert to Reservoir record
+            out.append(
+                cls(
+                    name=name,
+                    subbasin_id=subbasin_id,
+                    hru_id=hru_id,
+                    type=type_,
+                    weir_coefficient=weir_coefficient,
+                    crest_width=crest_width,
+                    max_depth=max_depth,
+                    lake_area=lake_area,
+                    seepage_parameters=cls.SeepageParameters(
+                        k_seep=seepage_parameters[0],
+                        h_ref=seepage_parameters[1],
+                    ),
+                )
+            )
+        return out
 
 
 class SubBasinGroup(FlatCommand):
@@ -414,42 +680,111 @@ class SubBasinGroup(FlatCommand):
         d["sb_ids"] = "\n  ".join([", ".join(sbids) for sbids in sbids_lines])
         return dedent(template).format(**d)
 
+    @classmethod
+    def parse(cls, s) -> list:
+        """Parse a SubBasinGroup command and return a list of SubBasinGroup records."""
+        # Remove all commented lines (starting with #)
+        s = re.sub(r"^\s*#.*$", "", s, flags=re.MULTILINE)
+        pat = r":SubBasinGroup\s+(\w+)\s+(.+?):EndSubBasinGroup"
+        out = []
+
+        for name, content in re.findall(pat, s.strip(), re.DOTALL):
+
+            sb_ids = re.split(r"\s+", content.strip())
+
+            # Convert to SubBasinGroup record
+            out.append(SubBasinGroup(name=name, sb_ids=sb_ids))
+        return out
+
 
 class SBGroupPropertyMultiplier(LineCommand):
+    """:SBGroupPropertyMultiplier [group_name] [parameter_name] [mult]"""
+
     group_name: str
     parameter_name: str
-    mult: float
+    mult: Sym
 
 
-# TODO: Convert to new config
 class ChannelProfile(FlatCommand):
     """ChannelProfile command (RVP)."""
 
     name: str = "chn_XXX"
-    bed_slope: float = 0
-    survey_points: tuple[tuple[float, float], ...] = ()
-    roughness_zones: tuple[tuple[float, float], ...] = ()
+    bed_slope: float = Field(0, alias="Bedslope")
 
-    def to_rv(self):
-        template = """
-            :ChannelProfile {name}
-              :Bedslope {bed_slope}
-              :SurveyPoints
-            {survey_points}
-              :EndSurveyPoints
-              :RoughnessZones
-            {roughness_zones}
-              :EndRoughnessZones
-            :EndChannelProfile
-            """
-        d = self.model_dump()
-        d["survey_points"] = "\n".join(
-            f"{INDENT * 2}{p[0]} {p[1]}" for p in d["survey_points"]
-        )
-        d["roughness_zones"] = "\n".join(
-            f"{INDENT * 2}{z[0]} {z[1]}" for z in d["roughness_zones"]
-        )
-        return dedent(template).format(**d)
+    class SurveyPoints(ListCommand):
+        """SurveyPoints
+
+        [x, bed_elevation] x number of survey points.
+        """
+
+        class SurveyPoint(RootRecord):
+            """SurveyPoint record."""
+
+            root: tuple[float, float] = ()
+
+        root: Sequence[SurveyPoint] = Field((SurveyPoint(),))
+
+    survey_points: SurveyPoints = Field(SurveyPoints(), alias="SurveyPoints")
+
+    class RoughnessZones(ListCommand):
+        """RoughnessZones record.
+
+        [x_zone, mannings_n] x number of roughness zones.
+        """
+
+        class RoughnessZone(RootRecord):
+            """RoughnessZone record."""
+
+            root: tuple[float, float] = ()
+
+        root: Sequence[RoughnessZone] = Field((RoughnessZone(),))
+
+    roughness_zones: RoughnessZones = Field(RoughnessZones(), alias="RoughnessZones")
+
+    @property
+    def _template(self):
+        return """
+               :{_cmd} {name}
+               {_commands}{_records}
+               :End{_cmd}
+               """
+
+    @classmethod
+    def parse(cls, s) -> list:
+        """Parse ChannelProfile commands and return a list of ChannelProfile records."""
+        # Remove all commented lines (starting with #)
+        s = re.sub(r"^\s*#.*$", "", s, flags=re.MULTILINE)
+
+        pat = r":ChannelProfile\s+(\w+)\s+(.+?):EndChannelProfile"
+        out = []
+
+        for name, content in re.findall(pat, s.strip(), re.DOTALL):
+            bed_slope = re.search(r":Bedslope\s+([\d.-]+)", content).group(1)
+            survey_points = re.search(
+                r":SurveyPoints(.+):EndSurveyPoints", content, re.DOTALL
+            ).group(1)
+            sp = [
+                line.strip().split()
+                for line in survey_points.splitlines()
+                if line.strip()
+            ]
+
+            roughness_zones = re.search(
+                r":RoughnessZones(.+):EndRoughnessZones", content, re.DOTALL
+            ).group(1)
+            rz = [line.split() for line in roughness_zones.splitlines() if line.strip()]
+            # rz = re.split(r"\s+", roughness_zones.strip())
+
+            # Convert to ChannelProfile record
+            out.append(
+                cls(
+                    name=name,
+                    bed_slope=bed_slope,
+                    survey_points=sp,
+                    roughness_zones=rz,
+                )
+            )
+        return out
 
 
 class GridWeights(Command):
@@ -471,18 +806,19 @@ class GridWeights(Command):
 
         root: tuple[int, int, float] = (1, 0, 1.0)
 
-        def __iter__(self):
-            return iter(self.root)
-
-        def __getitem__(self, item):
-            return self.root[item]
-
-        def __str__(self):
-            return " ".join(map(str, self.root))
-
-        model_config = ConfigDict(arbitrary_types_allowed=True, populate_by_name=True)
-
     data: Sequence[GWRecord] = Field((GWRecord(),))
+
+    # @field_validator("data")
+    # @classmethod
+    # def _sum_weights(cls, values):
+    #     """Check that for each HRU weights sum to 1."""
+    #     for hru, group in itertools.groupby(values, lambda x: x.root[0]):
+    #         total = sum([x.root[2] for x in group])
+    #         if not (0.999 < total < 1.001):
+    #             raise ValueError(
+    #                 f"GridWeights for HRU {hru} do not sum to 1.0: {total:.3f}"
+    #             )
+    #     return values
 
     @classmethod
     def parse(cls, s):
@@ -603,6 +939,7 @@ class GriddedForcing(ReadFromNetCDF):
     def _template(self):
         return """
         :{_cmd} {name}
+        # HRU GridCell Weight
         {_commands}
         :End{_cmd}
         """
@@ -976,6 +1313,18 @@ class BasinStateVariables(ListCommand):
 
 
 class SoilClasses(ListCommand):
+    """SoilClasses command.
+
+    Example::
+
+        :SoilClasses
+          :Attributes, %SAND, %CLAY, %SILT, %ORGANIC
+          :Units, none, none, none, none
+          SAND, 1, 0, 0, 0
+          LOAM, 0.5, 0.1, 0.4, 0.4
+        :EndSoilClasses
+    """
+
     class SoilClass(Record):
         """SoilClass."""
 
