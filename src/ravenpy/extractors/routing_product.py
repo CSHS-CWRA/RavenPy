@@ -331,6 +331,9 @@ class GridWeightExtractor:
 
     Notes
     -----
+    To use this on HRU GeoJONS created from the Canadian River and Lake Hydrofabric database, set `routing_id_field`
+    to `__INDEX__`.
+
     The original version of this algorithm can be found at: https://github.com/julemai/GridWeightsGenerator
     """
 
@@ -362,6 +365,11 @@ class GridWeightExtractor:
             NetCDF file or shapefile with the data to be weighted.
         routing_file_path : Path or str
             Sub-basin delineation.
+        dim_names : tuple
+            Names of the dimensions in the NetCDF file.
+        var_names : tuple
+            Names of the variables in the NetCDF file.
+
         """
         self._dim_names = tuple(dim_names)
         self._var_names = tuple(var_names)
@@ -389,6 +397,10 @@ class GridWeightExtractor:
             )
 
         self._routing_data = open_shapefile(routing_file_path)
+
+        # Add `__INDEX__` column, which is just the index of the dataframe. This is used as the HRUID in
+        # CLRH datasets.
+        self._routing_data["__INDEX__"] = range(1, len(self._routing_data) + 1)
 
     def extract(self) -> dict:
         """Return dictionary to create a GridWeights command."""

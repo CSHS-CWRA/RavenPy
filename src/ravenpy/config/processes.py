@@ -119,6 +119,18 @@ class Interflow(Process):
     algo: Literal["INTERFLOW_PRMS"]
 
 
+class Recharge(Process):
+    algo: Literal[
+        "RECHARGE_FROMFILE",
+        "RECHARGE_CONSTANT",
+        "RECHARGE_DEFAULT",
+        "RECHARGE_CONSTANT_OVERLAP",
+        "RECHARGE_DATA",
+        "RECHARGE_FLUX",
+        "RAVEN_DEFAULT",
+    ]
+
+
 class Seepage(Process):
     algo: Literal["SEEP_LINEAR"]
 

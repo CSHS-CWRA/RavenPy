@@ -406,6 +406,11 @@ class RainSnowFraction(Enum):
     WANG = "RAINSNOW_WANG"
 
 
+class RechargeMethod(Enum):
+    DATA = "RECHARGE_DATA"
+    NONE = "RECHARGE_NONE"
+
+
 class RelativeHumidityMethod(Enum):
     CONSTANT = "RELHUM_CONSTANT"
     CORR = "RELHUM_CORR"

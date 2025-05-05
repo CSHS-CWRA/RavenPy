@@ -7,9 +7,10 @@ v0.18.2 (unreleased)
 
 New features
 ^^^^^^^^^^^^
-* Added RelativeHumidityMethod to RVIs. (PR #490)
-
-
+* Added `RelativeHumidityMethod` to RVIs. (PR #490)
+* Add `parse` methods to `LineCommand`, `SubBasins`, `HRUs`, `Reservoir`, `SubBasinGroup`, `ChannelProfile`. (PR #492)
+* Tweak the `GridWeightExtractor` to support datasets from the Canadian River and Lake Hydrofabric. Allows setting the `routing_id_field` to `__INDEX__` in order to match HRU IDs. (PR #492)
+* Add support for `Recharge` process. (PR #492)
 
 v0.18.1 (2025-04-15)
 --------------------
