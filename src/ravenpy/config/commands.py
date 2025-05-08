@@ -897,7 +897,7 @@ class ReadFromNetCDF(FlatCommand):
 
     @classmethod
     def from_nc(
-        cls, fn, data_type, station_idx=1, alt_names=(), engine="h5netcdf", **kwds
+        cls, fn, data_type, station_idx=None, alt_names=(), engine="h5netcdf", **kwds
     ):
         """Instantiate class from netCDF dataset."""
         specs = nc_specs(
@@ -1115,10 +1115,10 @@ class Gauge(FlatCommand):
             for dtype in forcings:
                 try:
                     specs = nc_specs(
-                        f,
-                        dtype,
-                        idx,
-                        alt_names.get(dtype, ()),
+                        fn=f,
+                        data_type=dtype,
+                        station_idx=idx,
+                        alt_names=alt_names.get(dtype, ()),
                         mon_ave=mon_ave,
                         engine=engine,
                     )

@@ -400,13 +400,18 @@ def test_station_forcing(get_local_testdata):
 def test_gridded_forcing(get_local_testdata):
     """TODO: Make sure dimensions are in the order x, y, t."""
     fn = get_local_testdata("raven-routing-sample/VIC_temperatures.nc")
-
     rc.GriddedForcing.from_nc(fn, data_type="TEMP_AVE", alt_names=("Avg_temp",))
-    # assert gf.dim_names_nc == ("lon", "lat", "time")
+    # assert gf.dim_names_nc == ("lon_dim", "lat_dim", "time")
 
     fn = get_local_testdata("raven-routing-sample/VIC_streaminputs.nc")
     rc.GriddedForcing.from_nc(fn, data_type="PRECIP", alt_names=("Streaminputs",))
     # assert gf.dim_names_nc == ("lon_dim", "lat_dim", "time")
+
+    fn = get_local_testdata(
+        "cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200601-210012_subset.nc"
+    )
+    gf = rc.GriddedForcing.from_nc(fn, data_type="TEMP_AVE", engine="netcdf4")
+    assert gf.latitude_var_name_nc is None
 
 
 def test_gauge(get_local_testdata, tmp_path):
