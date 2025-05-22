@@ -296,8 +296,15 @@ def run(
     if not outputdir.is_absolute():
         outputdir = (configdir / outputdir).absolute()
 
-    if overwrite and outputdir.exists():
-        shutil.rmtree(str(outputdir))
+    results = [f for f in outputdir.rglob(f"{modelname}*.*")]
+    if len(results) > 0:
+        if overwrite:
+            for f in results:
+                Path(f).unlink()
+        else:
+            raise FileExistsError(
+                f"Output files already exist in {outputdir}. Use `overwrite=True` to overwrite."
+            )
 
     if not outputdir.exists():
         Path(str(outputdir)).mkdir(parents=True)
