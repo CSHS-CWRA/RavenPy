@@ -296,7 +296,10 @@ def run(
     if not outputdir.is_absolute():
         outputdir = (configdir / outputdir).absolute()
 
-    results = [f for f in outputdir.rglob(f"{modelname}_*.*")]
+    if modelname is None:
+        results = [f for f in outputdir.rglob(f"*.*") if "_" not in f.stem]
+    else:
+        results = [f for f in outputdir.rglob(f"{modelname}_*.*")]
     if len(results) > 0:
         if overwrite:
             for f in results:
