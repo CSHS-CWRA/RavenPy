@@ -305,9 +305,8 @@ def run(
             for f in results:
                 Path(f).unlink()
         else:
-            raise FileExistsError(
-                f"Output files already exist in {outputdir}. Use `overwrite=True` to overwrite."
-            )
+            msg = f"Output files already exist in {outputdir}. Use `overwrite=True` to overwrite."
+            raise FileExistsError(msg)
 
     if not outputdir.exists():
         Path(str(outputdir)).mkdir(parents=True)
