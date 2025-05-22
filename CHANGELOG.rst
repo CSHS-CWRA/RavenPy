@@ -4,7 +4,8 @@ Changelog
 
 v0.18.3 (unreleased)
 --------------------
-* Fix bug affecting GriddedForcing, where `station_idx` in the call to `nc_specs` was set to ``1`` instead of ``None``. (#PR #501)
+* Fix bug affecting GriddedForcing, where `station_idx` in the call to `nc_specs` was set to ``1`` instead of ``None``. (PR #501)
+* Fix bug in the `run` method, where `overwrite=False` was not being respected. (PR #503)
 
 v0.18.2 (2025-05-05)
 --------------------
