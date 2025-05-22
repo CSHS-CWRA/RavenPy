@@ -296,7 +296,7 @@ def run(
     if not outputdir.is_absolute():
         outputdir = (configdir / outputdir).absolute()
 
-    results = [f for f in outputdir.rglob(f"{modelname}*.*")]
+    results = [f for f in outputdir.rglob(f"{modelname}_.*")]
     if len(results) > 0:
         if overwrite:
             for f in results:
