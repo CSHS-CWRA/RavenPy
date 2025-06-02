@@ -144,6 +144,7 @@ class TestGdalOgrFunctions:
         assert Path(aspect_tempfile).stat().st_size > 0
 
     # Slope values are high due to data values using Geographic CRS
+    @pytest.mark.xfail(reason="Console commands have been modified in GDAL 3.11+")
     def test_gdal_slope_not_projected(self, tmp_path, get_local_testdata):
         slope_grid = self.analysis.gdal_slope_analysis(get_local_testdata(raster_file))
         np.testing.assert_almost_equal(slope_grid.min(), 0.0)
@@ -161,6 +162,7 @@ class TestGdalOgrFunctions:
         assert Path(slope_tempfile).stat().st_size > 0
 
     # Slope values are high due to data values using Geographic CRS
+    @pytest.mark.xfail(reason="Console commands have been modified in GDAL 3.11+")
     def test_dem_properties(self, get_local_testdata):
         dem_properties = self.analysis.dem_prop(get_local_testdata(raster_file))
         np.testing.assert_almost_equal(dem_properties["aspect"], 10.91190, decimal=5)
