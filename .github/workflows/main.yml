@@ -97,22 +97,21 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
 
-      - name: Install GDAL + Set GDAL_VERSION (Ubuntu)
+      - name: Install GDAL (Ubuntu)
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
           sudo apt-get install libgdal-dev
-          echo "GDAL_VERSION=$(gdal-config --version)" >> $GITHUB_ENV
       - name: Install GDAL (macOS)
         if: matrix.os == 'macos-latest'
         uses: tecolicom/actions-use-homebrew-tools@b9c066b79607fa3d71e0be05d7003bb75fd9ff34 # v1.3
         with:
           tools: gdal
           cache: "yes"
-      - name: Set GDAL_VERSION (macOS)
-        if: matrix.os == 'macos-latest'
+      - name: Set GDAL_VERSION
+        if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
         run: |
-          echo "GDAL_VERSION=$(gdalinfo --version | awk  '{print $2}' | sed s'/.$//')" >> $GITHUB_ENV
+          echo "GDAL_VERSION=$(gdalinfo --version | sed -E 's/^GDAL //; s/[^0-9.].*$//')" >> $GITHUB_ENV
 
       - name: Install CI libraries
         run: |
