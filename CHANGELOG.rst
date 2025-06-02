@@ -7,11 +7,11 @@ v0.18.3 (unreleased)
 
 Bug fixes
 ^^^^^^^^^
-* Fix bug affecting `GriddedForcing`, where `station_idx` in the call to `nc_specs` was set to ``1`` instead of ``None``. (#PR #501)
+* Fixed bug affecting `GriddedForcing`, where `station_idx` in the call to ``nc_specs`` was set to ``1`` instead of ``None``. (PR #501)
 
 Internal changes
 ^^^^^^^^^^^^^^^^
-* `ravenpy` now requires `xclim>=0.57.0` and `xsdba` (v0.4.0+).
+* `ravenpy` now requires `xclim>=0.57.0` and `xsdba` (v0.4.0+). (PR #511
 
 v0.18.2 (2025-05-05)
 --------------------
