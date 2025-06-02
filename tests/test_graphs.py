@@ -24,4 +24,4 @@ class TestGraph:
             np.testing.assert_array_equal(p.isnull(), False)
 
             fig = graphs.ts_fit_graph(ts, p)
-            return fig
+            assert fig
