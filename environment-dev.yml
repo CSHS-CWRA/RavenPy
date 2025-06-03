@@ -18,7 +18,7 @@ dependencies:
   - haversine >=2.8.0
   - matplotlib-base >=3.6.0
   - netcdf4 >=1.7.2
-  - numpy >=1.24.0
+  - numpy >=1.25.0
   - owslib >=0.29.1
   - pandas >=2.2.0
   - pint >=0.24.4
@@ -36,8 +36,9 @@ dependencies:
   - statsmodels >=0.14.2
   - typing_extensions
   - xarray >=2023.11.0,!=2024.10.0
-  - xclim >=0.55.1
+  - xclim >=0.57.0
   - xesmf
+  - xsdba >=0.4.0
   - xskillscore
   - zarr >=2.13,<3.0 # FIXME: zarr v3 does not support FSMap like before: https://github.com/zarr-developers/zarr-python/issues/2706
   # Dev tools and testing
