@@ -1,6 +1,6 @@
 import pytest
 import xarray as xr
-import xclim.sdba as sdba
+import xsdba
 from xarray.coding.calendar_ops import convert_calendar
 
 
@@ -24,9 +24,9 @@ class TestBiasCorrect:
             get_local_testdata("nrcan/NRCAN_1971-1972_subset.nc")
         )
         ds_his_sub = convert_calendar(ds_his_sub, "noleap")
-        group = sdba.Grouper("time.month")
+        group = xsdba.Grouper("time.month")
         # Train the model to find the correction factors
-        Adj = sdba.DetrendedQuantileMapping.train(
+        Adj = xsdba.DetrendedQuantileMapping.train(
             ref=ds_ref_sub["pr"],
             hist=ds_his_sub["pr"],
             nquantiles=50,
@@ -38,7 +38,7 @@ class TestBiasCorrect:
         Adj.adjust(ds_fut_sub["pr"], interp="linear")
 
         # Repeat for temperature max
-        Adj = sdba.DetrendedQuantileMapping.train(
+        Adj = xsdba.DetrendedQuantileMapping.train(
             ref=ds_ref_sub["tasmax"],
             hist=ds_his_sub["tasmax"],
             nquantiles=50,
@@ -50,7 +50,7 @@ class TestBiasCorrect:
         Adj.adjust(ds_fut_sub["tasmax"], interp="linear")
 
         # Repeat for tasmin
-        Adj = sdba.DetrendedQuantileMapping.train(
+        Adj = xsdba.DetrendedQuantileMapping.train(
             ref=ds_ref_sub["tasmin"],
             hist=ds_his_sub["tasmin"],
             nquantiles=50,

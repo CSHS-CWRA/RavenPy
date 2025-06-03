@@ -44,7 +44,7 @@ dependencies = [
   "h5netcdf >=1.3.0",
   "haversine >=2.8.0",
   "matplotlib >=3.6.0",
-  "numpy >=1.24.0",
+  "numpy >=1.25.0",
   "owslib >=0.29.1",
   "pandas >=2.2.0",
   "pint >=0.24.4",
@@ -57,7 +57,8 @@ dependencies = [
   "statsmodels >=0.14.2",
   "typing-extensions",
   "xarray >=2023.11.0,!=2024.10.0",
-  "xclim >=0.55.1",
+  "xclim >=0.57.0",
+  "xsdba >=0.4.0",
   "xskillscore"
 ]
 
@@ -169,7 +170,7 @@ target-version = [
 ]
 
 [tool.bumpversion]
-current_version = "0.18.3-dev.0"
+current_version = "0.18.3-dev.1"
 commit = true
 commit_args = "--no-verify"
 tag = false

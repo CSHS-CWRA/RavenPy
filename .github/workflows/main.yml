@@ -112,7 +112,7 @@ jobs:
       - name: Set GDAL_VERSION (macOS)
         if: matrix.os == 'macos-latest'
         run: |
-          echo "GDAL_VERSION=$(gdalinfo --version | awk  '{print $2}' | sed s'/.$//')" >> $GITHUB_ENV
+          echo "GDAL_VERSION=$(gdalinfo --version | sed -E 's/^GDAL //; s/[^0-9.].*$//')" >> $GITHUB_ENV
 
       - name: Install CI libraries
         run: |
