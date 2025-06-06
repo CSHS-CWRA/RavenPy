@@ -59,11 +59,12 @@ def test_run(numeric_config, tmp_path):
     assert isinstance(out.storage, xr.Dataset)
 
 
-def test_run_overwrite(numeric_config, tmp_path):
+def test_run_overwrite(gr4jcn_config, tmp_path):
     """Test that the emulator actually runs and returns the expected NSE."""
-    name, conf = numeric_config
+    gr4jcn, params = gr4jcn_config
+    gr4jcn = gr4jcn.set_params(params)
 
-    e = Emulator(config=conf, workdir=tmp_path)
+    e = Emulator(config=gr4jcn, workdir=tmp_path)
     e.run()
 
     with pytest.raises(FileExistsError):
