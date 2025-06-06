@@ -10,6 +10,26 @@ from ..config import commands as rc
 from .conventions import RAVEN_OUTPUT_FMT
 
 
+def parse_rv(rv: str, command: str) -> str:
+    """Parse an RV file to find the value of a Command (one liner).
+
+    Parameters
+    ----------
+    rv : str
+        The Raven command string, e.g. "RunName".
+    command : str
+        Valid Raven command.
+
+    Returns
+    -------
+    str:
+        Command value. None if not found.
+    """
+    pat = re.compile(rf":{command}\s+(.+)")
+    if match := re.search(pat, rv):
+        return match.groups()[0]
+
+
 def parse_diagnostics(fn: Path):
     """Return dictionary of performance metrics."""
     import csv
