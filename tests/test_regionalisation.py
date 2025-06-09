@@ -11,7 +11,7 @@ from ravenpy.utilities.regionalization import (
 
 
 class TestRegionalization:
-    def test_full_example(self, symbolic_config, get_local_testdata):
+    def test_full_example(self, symbolic_config):
         name, config = symbolic_config
         method = "SP_IDW"
 

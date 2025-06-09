@@ -3,8 +3,8 @@ import pytest
 from ravenpy.config.utils import nc_specs
 
 
-def test_nc_specs(get_local_testdata):
-    f = get_local_testdata(
+def test_nc_specs(yangtze):
+    f = yangtze.fetch(
         "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
     )
     attrs = nc_specs(f, "PRECIP", station_idx=1, alt_names=("rain",))

@@ -9,8 +9,8 @@ from ravenpy.utilities import graphs
 
 
 class TestGraph:
-    def test_ts_fit_graph(self, get_local_testdata, tmp_path):
-        raven_hydrograph = get_local_testdata(
+    def test_ts_fit_graph(self, tmp_path, yangtze):
+        raven_hydrograph = yangtze.fetch(
             "hydro_simulations/raven-gr4j-cemaneige-sim_hmets-0_Hydrographs.nc",
         )
         file = tmp_path / "raven-gr4j-cemaneige-sim_hmets-0_Hydrographs.nc"

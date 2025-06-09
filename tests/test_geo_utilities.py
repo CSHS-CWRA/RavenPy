@@ -28,33 +28,31 @@ class TestOperations:
             self.analysis.circular_mean_aspect(southwest_angles), 191.88055987
         )
 
-    def test_address_append(self, get_local_testdata):
+    def test_address_append(self, yangtze):
         non_existing_tarred_file = "polygons.tar"
 
-        assert "zip://" in self.io.address_append(
-            get_local_testdata(zipped_geojson_file)
-        )
+        assert "zip://" in self.io.address_append(yangtze.fetch(zipped_geojson_file))
         assert "tar://" in self.io.address_append(non_existing_tarred_file)
-        assert not self.io.address_append(get_local_testdata(geojson_file)).startswith(
+        assert not self.io.address_append(yangtze.fetch(geojson_file)).startswith(
             ("zip://", "tar://")
         )
 
-    def test_archive_sniffer(self, tmp_path, get_local_testdata):
-        probable_shp = self.io.archive_sniffer(get_local_testdata(zipped_geojson_file))
+    def test_archive_sniffer(self, tmp_path, yangtze):
+        probable_shp = self.io.archive_sniffer(yangtze.fetch(zipped_geojson_file))
         assert Path(probable_shp[0]).name == "mars.shp"
 
         probable_shp = self.io.archive_sniffer(
-            get_local_testdata(zipped_geojson_file),
+            yangtze.fetch(zipped_geojson_file),
             working_dir=tmp_path,
         )
         assert Path(probable_shp[0]).name == "mars.shp"
 
-    def test_archive_extract(self, tmp_path, get_local_testdata):
-        zipped_file = get_local_testdata(zipped_geojson_file)
+    def test_archive_extract(self, tmp_path, yangtze):
+        zipped_file = yangtze.fetch(zipped_geojson_file)
 
-        assert zipped_file.exists()
+        assert Path(zipped_file).exists()
 
-        files = list()
+        files = []
         with tempfile.TemporaryDirectory(dir=tmp_path) as tdir:
             files.extend(self.io.generic_extract_archive(zipped_file, output_dir=tdir))
             assert len(files) == 5
@@ -72,16 +70,16 @@ class TestFileInfoFuncs:
 
     non_existing_file = "unreal.zip"
 
-    def test_raster_datatype_sniffer(self, get_local_testdata):
-        datatype = self.io.raster_datatype_sniffer(get_local_testdata(raster_file))
+    def test_raster_datatype_sniffer(self, yangtze):
+        datatype = self.io.raster_datatype_sniffer(yangtze.fetch(raster_file))
         assert datatype.lower() == "uint8"
 
-    def test_crs_sniffer(self, get_local_testdata):
-        assert self.io.crs_sniffer(get_local_testdata(zipped_geojson_file)) == 4326
+    def test_crs_sniffer(self, yangtze):
+        assert self.io.crs_sniffer(yangtze.fetch(zipped_geojson_file)) == 4326
         assert set(
             self.io.crs_sniffer(
-                get_local_testdata(geojson_file),
-                get_local_testdata(raster_file),
+                yangtze.fetch(geojson_file),
+                yangtze.fetch(raster_file),
             )
         ) == {4326}
 
@@ -98,10 +96,10 @@ class TestFileInfoFuncs:
         with pytest.raises(NotImplementedError):
             self.checks.single_file_check(three)
 
-    def test_boundary_check(self, recwarn, get_local_testdata):
+    def test_boundary_check(self, recwarn, yangtze):
         # NOTE: does not presently accept zipped files.
-        geojson = get_local_testdata(geojson_file)
-        raster = get_local_testdata(raster_file)
+        geojson = yangtze.fetch(geojson_file)
+        raster = yangtze.fetch(raster_file)
 
         self.checks.boundary_check(raster, max_y=85.5)
         assert len(recwarn) == 0
@@ -122,10 +120,8 @@ class TestGdalOgrFunctions:
     fiona = pytest.importorskip("fiona")
     sgeo = pytest.importorskip("shapely.geometry")
 
-    def test_gdal_aspect_not_projected(self, tmp_path, get_local_testdata):
-        aspect_grid = self.analysis.gdal_aspect_analysis(
-            get_local_testdata(raster_file)
-        )
+    def test_gdal_aspect_not_projected(self, tmp_path, yangtze):
+        aspect_grid = self.analysis.gdal_aspect_analysis(yangtze.fetch(raster_file))
         np.testing.assert_almost_equal(
             self.analysis.circular_mean_aspect(aspect_grid), 10.91190, decimal=5
         )
@@ -135,7 +131,7 @@ class TestGdalOgrFunctions:
             prefix="aspect_", suffix=".tiff", delete=False, dir=tmp_path
         ).name
         aspect_grid = self.analysis.gdal_aspect_analysis(
-            get_local_testdata(raster_file),
+            yangtze.fetch(raster_file),
             set_output=aspect_tempfile,
         )
         np.testing.assert_almost_equal(
@@ -147,8 +143,8 @@ class TestGdalOgrFunctions:
     @pytest.mark.xfail(
         reason="Console commands have been modified in GDAL 3.11+", strict=False
     )
-    def test_gdal_slope_not_projected(self, tmp_path, get_local_testdata):
-        slope_grid = self.analysis.gdal_slope_analysis(get_local_testdata(raster_file))
+    def test_gdal_slope_not_projected(self, tmp_path, yangtze):
+        slope_grid = self.analysis.gdal_slope_analysis(yangtze.fetch(raster_file))
         np.testing.assert_almost_equal(slope_grid.min(), 0.0)
         np.testing.assert_almost_equal(slope_grid.mean(), 64.43654, decimal=5)
         np.testing.assert_almost_equal(slope_grid.max(), 89.71747, decimal=5)
@@ -157,7 +153,7 @@ class TestGdalOgrFunctions:
             prefix="slope_", suffix=".tiff", delete=False, dir=tmp_path
         ).name
         slope_grid = self.analysis.gdal_slope_analysis(
-            get_local_testdata(raster_file),
+            yangtze.fetch(raster_file),
             set_output=slope_tempfile,
         )
         np.testing.assert_almost_equal(slope_grid.mean(), 64.4365427)
@@ -167,18 +163,18 @@ class TestGdalOgrFunctions:
     @pytest.mark.xfail(
         reason="Console commands have been modified in GDAL 3.11+", strict=False
     )
-    def test_dem_properties(self, get_local_testdata):
-        dem_properties = self.analysis.dem_prop(get_local_testdata(raster_file))
+    def test_dem_properties(self, yangtze):
+        dem_properties = self.analysis.dem_prop(yangtze.fetch(raster_file))
         np.testing.assert_almost_equal(dem_properties["aspect"], 10.91190, decimal=5)
         np.testing.assert_almost_equal(dem_properties["elevation"], 79.0341, decimal=4)
         np.testing.assert_almost_equal(dem_properties["slope"], 64.43654, decimal=5)
 
-        with self.fiona.open(get_local_testdata(geojson_file)) as gj:
+        with self.fiona.open(yangtze.fetch(geojson_file)) as gj:
             feature = next(iter(gj))
             geom = self.sgeo.shape(feature["geometry"])
 
         region_dem_properties = self.analysis.dem_prop(
-            get_local_testdata(raster_file), geom=geom
+            yangtze.fetch(raster_file), geom=geom
         )
         np.testing.assert_almost_equal(
             region_dem_properties["aspect"], 280.681, decimal=3
@@ -191,8 +187,8 @@ class TestGdalOgrFunctions:
         )
 
     # Slope values are high due to data values using Geographic CRS
-    def test_geom_properties(self, get_local_testdata):
-        with self.fiona.open(get_local_testdata(geojson_file)) as gj:
+    def test_geom_properties(self, yangtze):
+        with self.fiona.open(yangtze.fetch(geojson_file)) as gj:
             iterable = iter(gj)
             feature_1 = next(iterable)
             feature_2 = next(iterable)
@@ -224,13 +220,13 @@ class TestGenericGeoOperations:
     rasterio = pytest.importorskip("rasterio")
     sgeo = pytest.importorskip("shapely.geometry")
 
-    def test_vector_reprojection(self, tmp_path, get_local_testdata):
+    def test_vector_reprojection(self, tmp_path, yangtze):
         # TODO: It would be awesome if this returned a temporary filepath if no file given.
         reproj_file = tempfile.NamedTemporaryFile(
             prefix="reproj_", suffix=".geojson", delete=False, dir=tmp_path
         ).name
         self.geo.generic_vector_reproject(
-            get_local_testdata(geojson_file),
+            yangtze.fetch(geojson_file),
             projected=reproj_file,
             target_crs="EPSG:3348",
         )
@@ -250,14 +246,14 @@ class TestGenericGeoOperations:
         np.testing.assert_almost_equal(geom_properties["perimeter"], 9194343.1759303)
         np.testing.assert_almost_equal(geom_properties["gravelius"], 1.0212589)
 
-    def test_raster_warp(self, tmp_path, get_local_testdata):
+    def test_raster_warp(self, tmp_path, yangtze):
         # TODO: It would be awesome if this returned a temporary filepath if no file given.
         # TODO: either use `output` or `reprojected/warped` for these functions.
         reproj_file = tempfile.NamedTemporaryFile(
             prefix="reproj_", suffix=".tiff", delete=False, dir=tmp_path
         ).name
         self.geo.generic_raster_warp(
-            get_local_testdata(raster_file),
+            yangtze.fetch(raster_file),
             output=reproj_file,
             target_crs="EPSG:3348",
         )
@@ -275,12 +271,12 @@ class TestGenericGeoOperations:
             assert data.max() == 255
             np.testing.assert_almost_equal(data.mean(), 60.747, 3)
 
-    def test_warped_raster_slope(self, tmp_path, get_local_testdata):
+    def test_warped_raster_slope(self, tmp_path, yangtze):
         reproj_file = tempfile.NamedTemporaryFile(
             prefix="reproj_", suffix=".tiff", delete=False, dir=tmp_path
         ).name
         self.geo.generic_raster_warp(
-            get_local_testdata(raster_file),
+            yangtze.fetch(raster_file),
             output=reproj_file,
             target_crs="EPSG:3348",
         )
@@ -290,12 +286,12 @@ class TestGenericGeoOperations:
         np.testing.assert_almost_equal(slope_grid.mean(), 0.0035, 2)
         np.testing.assert_almost_equal(slope_grid.max(), 0.35, 2)
 
-    def test_warped_raster_aspect(self, tmp_path, get_local_testdata):
+    def test_warped_raster_aspect(self, tmp_path, yangtze):
         reproj_file = tempfile.NamedTemporaryFile(
             prefix="reproj_", suffix=".tiff", delete=False, dir=tmp_path
         ).name
         self.geo.generic_raster_warp(
-            get_local_testdata(raster_file),
+            yangtze.fetch(raster_file),
             output=reproj_file,
             target_crs="EPSG:3348",
         )
@@ -305,8 +301,8 @@ class TestGenericGeoOperations:
             self.analysis.circular_mean_aspect(aspect_grid), 7.7397, decimal=3
         )
 
-    def test_raster_clip(self, tmp_path, get_local_testdata):
-        with self.fiona.open(get_local_testdata(geojson_file)) as gj:
+    def test_raster_clip(self, tmp_path, yangtze):
+        with self.fiona.open(yangtze.fetch(geojson_file)) as gj:
             feature = next(iter(gj))
             geom = self.sgeo.shape(feature["geometry"])
 
@@ -314,7 +310,7 @@ class TestGenericGeoOperations:
             prefix="reproj_", suffix=".tiff", delete=False, dir=tmp_path
         ).name
         self.geo.generic_raster_clip(
-            get_local_testdata(raster_file),
+            yangtze.fetch(raster_file),
             clipped_file,
             geometry=geom,
         )
@@ -327,8 +323,8 @@ class TestGenericGeoOperations:
             assert data.max() == 255
             np.testing.assert_almost_equal(data.mean(), 102.8222965)
 
-    def test_shapely_pyproj_transform(self, get_local_testdata):
-        with self.fiona.open(get_local_testdata(geojson_file)) as gj:
+    def test_shapely_pyproj_transform(self, yangtze):
+        with self.fiona.open(yangtze.fetch(geojson_file)) as gj:
             feature = next(iter(gj))
             geom = self.sgeo.shape(feature["geometry"])
 
@@ -347,8 +343,8 @@ class TestGIS:
     io = pytest.importorskip("ravenpy.utilities.io")
     sgeo = pytest.importorskip("shapely.geometry")
 
-    def test_get_bbox_single(self, get_local_testdata):
-        vector = get_local_testdata(geojson_file)
+    def test_get_bbox_single(self, yangtze):
+        vector = yangtze.fetch(geojson_file)
 
         w, s, n, e = self.io.get_bbox(vector, all_features=False)
         np.testing.assert_almost_equal(w, -139.8514262)
@@ -356,8 +352,8 @@ class TestGIS:
         np.testing.assert_almost_equal(n, -117.4753973)
         np.testing.assert_almost_equal(e, 29.6327068)
 
-    def test_get_bbox_all(self, get_local_testdata):
-        vector = get_local_testdata(geojson_file)
+    def test_get_bbox_all(self, yangtze):
+        vector = yangtze.fetch(geojson_file)
 
         w, s, n, e = self.io.get_bbox(vector)
         np.testing.assert_almost_equal(w, -139.8514262)
@@ -365,8 +361,8 @@ class TestGIS:
         np.testing.assert_almost_equal(n, -38.7397456)
         np.testing.assert_almost_equal(e, 64.1757015)
 
-    def test_feature_contains(self, get_local_testdata):
-        vector = get_local_testdata(geojson_file)
+    def test_feature_contains(self, yangtze):
+        vector = yangtze.fetch(geojson_file)
 
         point = -69.0, 45
         assert isinstance(self.checks.feature_contains(point, vector), dict)
