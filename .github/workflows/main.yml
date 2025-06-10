@@ -117,12 +117,20 @@ jobs:
       - name: Install CI libraries
         run: |
           python3 -m pip install --require-hashes -r CI/requirements_ci.txt
-      - name: Testing data caching
+
+      - name: Cache test data (macOS)
+        if: matrix.os == 'macos-latest'
         uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         with:
-          path: |
-            ${{ matrix.os == 'macos-latest' && 'Library/Caches/raven-testdata' || '~/.cache/raven-testdata' }}
-          key: ${{ hashFiles('src/ravenpy/testing/registry.txt') }}-${{ env.RAVEN_TESTDATA_BRANCH }}-pip-${{ matrix.os }}
+          path: ~/Library/Caches/raven-testdata
+          key: ${{ hashFiles('src/ravenpy/testing/registry.txt') }}-${{ env.RAVEN_TESTDATA_BRANCH }}-${{ matrix.os }}
+      - name: Cache test data (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: ~/.cache/raven-testdata
+          key: ${{ hashFiles('src/ravenpy/testing/registry.txt') }}-${{ env.RAVEN_TESTDATA_BRANCH }}-${{ matrix.os }}
+
       - name: Test with tox and report coverage
         run: |
           if [ "${{ matrix.tox-env }}" != "false" ]; then
@@ -193,12 +201,20 @@ jobs:
         run: |
           micromamba list
           python -m pip check || true
-      - name: Testing data caching
+
+      - name: Cache test data (macOS)
+        if: matrix.os == 'macos-latest'
         uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         with:
-          path: |
-            ${{ matrix.os == 'macos-latest' && 'Library/Caches/raven-testdata' || '~/.cache/raven-testdata' }}
+          path: ~/Library/Caches/raven-testdata
           key: ${{ hashFiles('src/ravenpy/testing/registry.txt') }}-${{ env.RAVEN_TESTDATA_BRANCH }}-conda-${{ matrix.os }}
+      - name: Cache test data (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: ~/.cache/raven-testdata
+          key: ${{ hashFiles('src/ravenpy/testing/registry.txt') }}-${{ env.RAVEN_TESTDATA_BRANCH }}-conda-${{ matrix.os }}
+
       - name: Test RavenPy
         run: |
           python -m pytest --numprocesses=logical --cov=src/ravenpy --cov-report=lcov
