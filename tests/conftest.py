@@ -177,7 +177,7 @@ def dummy_config():
     class TestConfig(Config):
         params: P = P()
         calendar: o.Calendar = Field("JULIAN", alias="Calendar")
-        air_snow_coeff: Sym | None = Field(1 - P.X1, alias="AirSnowCoeff")
+        air_snow_coeff: Optional[Sym] = Field(1 - P.X1, alias="AirSnowCoeff")
 
     return TestConfig, P
 

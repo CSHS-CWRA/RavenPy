@@ -7,7 +7,7 @@ on:
   pull_request:
 
 env:
-  RAVEN_TESTING_DATA_BRANCH: master
+  RAVEN_TESTDATA_BRANCH: new-system
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

@@ -363,25 +363,3 @@ def config_rv(tmp_path_factory, numeric_config):
     out = tmp_path_factory.mktemp(name) / "config"
     conf.write_rv(out)
     yield name, out
-
-
-@pytest.fixture
-def dummy_config():
-    """Return an almost empty config class and the parameter dataclass."""
-    from pydantic import Field
-    from pydantic.dataclasses import dataclass
-
-    from ravenpy.config import options as o
-    from ravenpy.config.base import Sym, SymConfig, Variable
-    from ravenpy.config.rvs import Config
-
-    @dataclass(config=SymConfig)
-    class P:
-        X1: Sym = Variable("X1")
-
-    class TestConfig(Config):
-        params: P = P()
-        calendar: o.Calendar = Field("JULIAN", alias="Calendar")
-        air_snow_coeff: Sym = Field(1 - P.X1, alias="AirSnowCoeff")
-
-    return TestConfig, P
