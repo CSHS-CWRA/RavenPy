@@ -469,7 +469,7 @@ def test_redirect_to_file(yangtze):
         )
 
     t = Test(gw=f)
-    assert t.gw.root == f
+    assert t.gw.root == pathlib.Path(f)
 
 
 def test_subbasin_properties():

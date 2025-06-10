@@ -47,6 +47,11 @@ class TestRemoteFileAccess:
             header = f.read()
             assert ":FileType          rvi ASCII Raven 2.8.2" in header
 
+    @pytest.mark.xfail(
+        raises=urllib.error.HTTPError,
+        reason="Transitory failures expected",
+        strict=False,
+    )
     def test_open_dataset(self):
         ds = open_dataset(
             name="raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
