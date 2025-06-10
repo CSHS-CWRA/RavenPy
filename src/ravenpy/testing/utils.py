@@ -404,6 +404,7 @@ def populate_testing_data(
     temp_folder: Path | None = None,
     repo: str = TESTDATA_REPO_URL,
     branch: str = TESTDATA_BRANCH,
+    retry: int = 3,
     local_cache: Path = TESTDATA_CACHE_DIR,
 ) -> None:
     """
@@ -417,6 +418,8 @@ def populate_testing_data(
         URL of the repository to use when fetching testing datasets.
     branch : str, optional
         Branch of ravenpy-testdata to use when fetching testing datasets.
+    retry : int
+        Number of times to retry downloading the files in case of failure. Defaults to 3.
     local_cache : Path
         The path to the local cache. Defaults to the location set by the platformdirs library.
         The testing data will be downloaded to this local cache.
@@ -427,14 +430,21 @@ def populate_testing_data(
     # Download the files
     errored_files = []
     for file in load_registry():
-        try:
-            n.fetch(file)
-        except HTTPError:  # noqa: PERF203
-            msg = f"File `{file}` not accessible in remote repository."
+        msg = f"Downloading file `{file}` from remote repository..."
+        logging.info(msg)
+        for attempt in range(retry):
+            try:
+                n.fetch(file)
+            except HTTPError:  # noqa: PERF203
+                msg = f"Failed to download file `{file}` on attempt {attempt + 1}."
+                logging.info(msg)
+            else:
+                logging.info("File was downloaded successfully.")
+                break
+        else:
+            msg = f"Failed to download file `{file}` after {retry} attempts."
             logging.error(msg)
             errored_files.append(file)
-        else:
-            logging.info("Files were downloaded successfully.")
 
     if errored_files:
         logging.error(
