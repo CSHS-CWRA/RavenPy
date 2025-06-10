@@ -64,10 +64,6 @@ class Emulator:
         overwrite : bool
             If True, overwrite existing files.
         """
-        if not (self.workdir / f"{self.modelname}.rvi").exists():
-            # FIXME: No attribute 'write_rv' on Emulator [attribute-error]
-            self.write_rv(overwrite=overwrite)
-
         self._output_path = run(
             self.modelname, self.workdir, "output", overwrite=overwrite
         )
@@ -296,11 +292,25 @@ def run(
     if not outputdir.is_absolute():
         outputdir = (configdir / outputdir).absolute()
 
-    if overwrite and outputdir.exists():
-        shutil.rmtree(str(outputdir))
-
     if not outputdir.exists():
         Path(str(outputdir)).mkdir(parents=True)
+
+    # Parse RunName
+    rvi = (configdir / f"{modelname}.rvi").read_text()
+    run_name = parsers.parse_rv(rvi, "RunName") or ""
+
+    # Existing output files with the same :RunName - they would be overwritten
+    files = outputdir.glob(f"{run_name}*.*")
+
+    # Remove existing output files if overwrite is True
+    for f in files:
+        if f.is_file():
+            if overwrite:
+                f.unlink()
+            else:
+                raise FileExistsError(
+                    "Output files using this `modelname` already exist. Use `overwrite=True` to remove them."
+                )
 
     # Launch executable, wait for completion.
     cmd = [RAVEN_EXEC_PATH, modelname, "-o", str(outputdir)]

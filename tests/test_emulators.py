@@ -59,6 +59,21 @@ def test_run(numeric_config, tmp_path):
     assert isinstance(out.storage, xr.Dataset)
 
 
+def test_run_overwrite(gr4jcn_config, tmp_path):
+    """Test that the emulator actually runs and returns the expected NSE."""
+    gr4jcn, params = gr4jcn_config
+    gr4jcn = gr4jcn.set_params(params)
+
+    e = Emulator(config=gr4jcn, workdir=tmp_path)
+    e.run()
+
+    with pytest.raises(FileExistsError):
+        e.run(overwrite=False)
+
+    # Test that the emulator actually runs
+    e.run(overwrite=True)
+
+
 @pytest.mark.skip("Need to find a clean way to freeze emulator config instance.")
 def test_emulator_config_is_read_only(dummy_config, tmp_path):
     cls, _ = dummy_config
