@@ -164,7 +164,7 @@ def input3d(salmon, threadsafe_data_dir):
 def dummy_config():
     """Return an almost empty config class and the parameter dataclass."""
     from pydantic import Field
-    from pydantic.dataclasses import dataclass
+    from pydantic.dataclasses import dataclass, rebuild_dataclass
 
     from ravenpy.config import options as o
     from ravenpy.config.base import Params, Sym, SymConfig, Variable
@@ -174,10 +174,12 @@ def dummy_config():
     class P(Params):
         X1: Sym = Variable("X1")
 
+    rebuild_dataclass(P)
+
     class TestConfig(Config):
         params: P = P()
         calendar: o.Calendar = Field("JULIAN", alias="Calendar")
-        air_snow_coeff: Optional[Sym] = Field(1 - P.X1, alias="AirSnowCoeff")
+        air_snow_coeff: Sym = Field(1 - P.X1, alias="AirSnowCoeff")
 
     return TestConfig, P
 
