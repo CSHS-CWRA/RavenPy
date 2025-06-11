@@ -136,11 +136,11 @@ jobs:
       - name: Test with tox and report coverage
         run: |
           if [ "${{ matrix.tox-env }}" != "false" ]; then
-            python3 -m tox -e ${{ matrix.tox-env }}
+            python3 -m tox -e ${{ matrix.tox-env }}-prefetch
           elif [ "${{ matrix.python-version }}" != "3.13" ]; then
-            python3 -m tox -e py${{ matrix.python-version }}-coverage
+            python3 -m tox -e py${{ matrix.python-version }}-prefetch-coverage
           else
-            python3 -m tox -e py${{ matrix.python-version }}
+            python3 -m tox -e py${{ matrix.python-version }}-prefetch
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
