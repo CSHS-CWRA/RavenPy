@@ -133,10 +133,6 @@ jobs:
             ~/.cache/raven-testdata
           key: ${{ hashFiles('src/ravenpy/testing/registry.txt') }}-${{ env.RAVEN_TESTDATA_BRANCH }}-${{ matrix.os }}
 
-      - name: Prefetch RavenPy test data
-        run: |
-          python -c "import ravenpy.testing.utils as rtu; rtu.populate_testing_data()"
-
       - name: Test with tox and report coverage
         run: |
           if [ "${{ matrix.tox-env }}" != "false" ]; then
