@@ -55,7 +55,7 @@ class TestRemoteFileAccess:
     def test_open_dataset(self):
         ds = open_dataset(
             name="raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
-            yangtze_kwargs={"branch": self.branch},
+            yangtze_kwargs={"branch": self.branch, "force_download": True},
         )
 
         assert (

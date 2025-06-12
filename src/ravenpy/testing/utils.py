@@ -250,14 +250,15 @@ def load_registry(
     if repo != default_testdata_repo_url:
         external_repo_name = urlparse(repo).path.split("/")[-2]
         external_branch_name = branch.split("/")[-1]
-        registry_file = Path(
-            str(
-                ilr.files("ravenpy").joinpath(
-                    f"testing/registry.{external_repo_name}.{external_branch_name}.txt"
-                )
-            )
+        testing_folder = Path(str(ilr.files("ravenpy").joinpath("testing")))
+        registry_file = testing_folder.joinpath(
+            f"registry.{external_repo_name}.{external_branch_name}.txt"
         )
-        urlretrieve(remote_registry, registry_file)  # noqa: S310
+        lockfile = testing_folder.joinpath(".lock")
+        with FileLock(lockfile):
+            if not registry_file.exists():
+                urlretrieve(remote_registry, registry_file)  # noqa: S310
+        lockfile.unlink(missing_ok=True)
 
     elif branch != default_testdata_version:
         if force_download:
@@ -295,6 +296,7 @@ def yangtze(
     branch: str = TESTDATA_BRANCH,
     cache_dir: str | Path = TESTDATA_CACHE_DIR,
     allow_updates: bool = True,
+    force_download: bool = False,
 ):
     """
     Pooch registry instance for RavenPy test data.
@@ -309,6 +311,8 @@ def yangtze(
         The path to the directory where the data files are stored.
     allow_updates : bool
         If True, allow updates to the data files. Default is True.
+    force_download : bool
+        If True, force the download of the registry file even if it already exists.
 
     Returns
     -------
@@ -320,7 +324,7 @@ def yangtze(
     There are three environment variables that can be used to control the behaviour of this registry:
         - ``RAVENPY_TESTDATA_CACHE_DIR``: If this environment variable is set, it will be used as the
           base directory to store the data files.
-          The directory should be an absolute path (i.e., it should start with ``/``).
+          The directory should be an absolute path (i.e. it should start with ``/``).
           Otherwise, the default location will be used (based on ``platformdirs``, see :py:func:`pooch.os_cache`).
         - ``RAVENPY_TESTDATA_REPO_URL``: If this environment variable is set, it will be used as the URL of
           the repository to use when fetching datasets. Otherwise, the default repository will be used.
@@ -356,7 +360,7 @@ def yangtze(
         version=default_testdata_version,
         version_dev=branch,
         allow_updates=allow_updates,
-        registry=load_registry(branch=branch, repo=repo),
+        registry=load_registry(branch=branch, repo=repo, force_download=force_download),
     )
 
     # Add a custom fetch method to the Pooch instance
