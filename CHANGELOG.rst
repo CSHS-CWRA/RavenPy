@@ -25,7 +25,7 @@ Bug fixes
 Internal changes
 ^^^^^^^^^^^^^^^^
 * `ravenpy` now requires `xclim>=0.57.0` and `xsdba` (v0.4.0+). (PR #511)
-* The `tests` folder no longer contains and `__init__.py` file. As such, it is no longer treated as a package. `pytest` fixtures from `emulators.py` are now directly imported into `conftest.py` for use in tests and existing fixtures have been modified to use the new `yangtze()` class for fetching testing data. (PR #513)
+* The `tests` folder no longer contains an `__init__.py` file and is no longer treated as a package. `pytest` fixtures from `emulators.py` are now directly imported into `conftest.py` for use in tests, and existing `pytest` fixtures have been modified to use the new `yangtze()` class for fetching testing data. (PR #513)
 
 v0.18.2 (2025-05-05)
 --------------------

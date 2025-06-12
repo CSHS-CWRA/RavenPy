@@ -243,6 +243,7 @@ include = [
   "src/ravenpy/**/*.py",
   "src/ravenpy/data/**/*.csv",
   "src/ravenpy/data/**/*.zip",
+  "src/ravenpy/testing/registry.txt",
   "setup.cfg",
   "tests/*.py",
   "tests/test.cfg",

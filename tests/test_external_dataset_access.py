@@ -7,7 +7,12 @@ import pytest
 import xarray
 
 from ravenpy.extractors.forecasts import get_CASPAR_dataset, get_ECCC_dataset
-from ravenpy.testing.utils import default_testdata_cache, open_dataset, yangtze
+from ravenpy.testing.utils import (
+    default_testdata_cache,
+    default_testdata_version,
+    open_dataset,
+    yangtze,
+)
 
 
 @pytest.mark.online
@@ -47,21 +52,24 @@ class TestRemoteFileAccess:
             header = f.read()
             assert ":FileType          rvi ASCII Raven 2.8.2" in header
 
-    @pytest.mark.xfail(
-        raises=urllib.error.HTTPError,
-        reason="Transitory failures expected",
-        strict=False,
-    )
-    def test_open_dataset(self):
+    def test_open_dataset(
+        self,
+        tmp_path,
+    ):
+        cache_dir = tmp_path / "yangtze_cache"
         ds = open_dataset(
             name="raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
-            yangtze_kwargs={"branch": self.branch, "force_download": True},
+            yangtze_kwargs={
+                "branch": self.branch,
+                "cache_dir": cache_dir,
+                "force_download": True,
+            },
         )
 
         assert (
-            Path(default_testdata_cache)
+            Path(cache_dir)
             .joinpath(
-                self.branch,
+                default_testdata_version,
                 "raven-gr4j-cemaneige",
                 "Salmon-River-Near-Prince-George_meteo_daily.nc",
             )

@@ -55,7 +55,7 @@ __all__ = [
     "yangtze",
 ]
 
-default_testdata_version = "v2025.5.16"
+default_testdata_version = "v2025.6.12"
 """Default version of the testing data to use when fetching datasets."""
 
 default_testdata_repo_url = (
@@ -261,8 +261,8 @@ def load_registry(
         lockfile.unlink(missing_ok=True)
 
     elif branch != default_testdata_version:
+        # If force_download is True, download to a transient directory for testing purposes
         if force_download:
-            # If the registry file does not exist, download it, or if force_download is True, download it again
             with tempfile.TemporaryDirectory() as tmp_dir:
                 custom_registry_folder = Path(tmp_dir).joinpath("testing", branch)
                 custom_registry_folder.mkdir(parents=True, exist_ok=True)
