@@ -7,6 +7,7 @@ import importlib.resources as ilr
 import logging
 import os
 import re
+import tempfile
 import time
 import warnings
 from collections.abc import Callable
@@ -208,7 +209,9 @@ def testing_setup_warnings():
 
 
 def load_registry(
-    branch: str = TESTDATA_BRANCH, repo: str = TESTDATA_REPO_URL
+    branch: str = TESTDATA_BRANCH,
+    repo: str = TESTDATA_REPO_URL,
+    force_download: bool = False,
 ) -> dict[str, str]:
     """
     Load the registry file for the test data.
@@ -219,12 +222,22 @@ def load_registry(
         Branch of the repository to use when fetching testing datasets.
     repo : str
         URL of the repository to use when fetching testing datasets.
+    force_download : bool
+        If True, force the download of the registry file even if it already exists.
 
     Returns
     -------
     dict
         Dictionary of filenames and hashes.
     """
+
+    def load_registry_from_file(
+        _registry_file: str | Path,
+    ) -> dict[str, str]:
+        """Load the registry from a file."""
+        with Path(_registry_file).open(encoding="utf-8") as f:
+            return {line.split()[0]: line.split()[1] for line in f}
+
     if not repo.endswith("/"):
         repo = f"{repo}/"
     remote_registry = audit_url(
@@ -247,23 +260,34 @@ def load_registry(
         urlretrieve(remote_registry, registry_file)  # noqa: S310
 
     elif branch != default_testdata_version:
-        custom_registry_folder = Path(
-            str(ilr.files("ravenpy").joinpath(f"testing/{branch}"))
-        )
-        custom_registry_folder.mkdir(parents=True, exist_ok=True)
-        registry_file = custom_registry_folder.joinpath("registry.txt")
-        urlretrieve(remote_registry, registry_file)  # noqa: S310
+        if force_download:
+            # If the registry file does not exist, download it, or if force_download is True, download it again
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                custom_registry_folder = Path(tmp_dir).joinpath("testing", branch)
+                custom_registry_folder.mkdir(parents=True, exist_ok=True)
+                registry_file = custom_registry_folder.joinpath("registry.txt")
+                urlretrieve(remote_registry, registry_file)  # noqa: S310
+                return load_registry_from_file(registry_file)
+        else:
+            # If the branch is not the default version, check if the registry file exists
+            custom_registry_folder = Path(
+                str(ilr.files("ravenpy").joinpath("testing", branch))
+            )
+            custom_registry_folder.mkdir(parents=True, exist_ok=True)
+            registry_file = custom_registry_folder.joinpath("registry.txt")
+            with FileLock(custom_registry_folder.joinpath(".lock")):
+                if not registry_file.exists():
+                    urlretrieve(remote_registry, registry_file)  # noqa: S310
+            return load_registry_from_file(registry_file)
 
     else:
         registry_file = Path(str(ilr.files("ravenpy").joinpath("testing/registry.txt")))
 
     if not registry_file.exists():
-        raise FileNotFoundError(f"Registry file not found: {registry_file}")
+        msg = f"Registry file not found: {registry_file}"
+        raise FileNotFoundError(msg)
 
-    # Load the registry file
-    with registry_file.open(encoding="utf-8") as f:
-        registry = {line.split()[0]: line.split()[1] for line in f}
-    return registry
+    return load_registry_from_file(registry_file)
 
 
 def yangtze(
@@ -419,7 +443,7 @@ def populate_testing_data(
     branch : str, optional
         Branch of ravenpy-testdata to use when fetching testing datasets.
     retry : int
-        Number of times to retry downloading the files in case of failure. Defaults to 3.
+        Number of times to retry downloading the files in case of failure. Default: 3.
     local_cache : Path
         The path to the local cache. Defaults to the location set by the platformdirs library.
         The testing data will be downloaded to this local cache.
