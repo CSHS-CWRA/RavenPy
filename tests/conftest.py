@@ -51,7 +51,7 @@ def yangtze(threadsafe_data_dir, worker_id):
 @pytest.fixture(scope="session")
 def open_dataset(threadsafe_data_dir, worker_id):
     def _open_session_scoped_file(file: str | os.PathLike, **xr_kwargs):
-        yangtze_kwargs = {
+        _yangtze_kwargs = {
             "branch": TESTDATA_BRANCH,
             "repo": TESTDATA_REPO_URL,
             "cache_dir": (
@@ -62,7 +62,7 @@ def open_dataset(threadsafe_data_dir, worker_id):
         xr_kwargs.setdefault("engine", "h5netcdf")
         return _open_dataset(
             file,
-            yangtze_kwargs=yangtze_kwargs,
+            _yangtze_kwargs=_yangtze_kwargs,
             **xr_kwargs,
         )
 

@@ -33,7 +33,8 @@ try:
     import pooch
 except ImportError:
     warnings.warn(
-        "The `pooch` library is not installed. The default cache directory for testing data will not be set."
+        "The `pooch` library is not installed. "
+        "The default cache directory for testing data will not be set."
     )
     pooch = None
 
@@ -153,14 +154,9 @@ def show_versions(
         ravenpy_metadata = ilm.metadata("ravenpy")
         requires = ravenpy_metadata.get_all("Requires-Dist")
         requires = [
-            req.split("[")[0]
-            .split(";")[0]
-            .split(">")[0]
-            .split("<")[0]
-            .split("=")[0]
-            .split("!")[0]
-            .strip()
+            re.match(r"^[A-Za-z0-9_.\-]+", req).group(0)
             for req in requires
+            if re.match(r"^[A-Za-z0-9_.\-]+", req)
         ]
         sorted_deps = sorted(list(set(requires) - {"ravenpy"}))
 
@@ -322,13 +318,13 @@ def yangtze(
     Notes
     -----
     There are three environment variables that can be used to control the behaviour of this registry:
-        - ``RAVENPY_TESTDATA_CACHE_DIR``: If this environment variable is set, it will be used as the
+        - ``RAVEN_TESTDATA_CACHE_DIR``: If this environment variable is set, it will be used as the
           base directory to store the data files.
           The directory should be an absolute path (i.e. it should start with ``/``).
           Otherwise, the default location will be used (based on ``platformdirs``, see :py:func:`pooch.os_cache`).
-        - ``RAVENPY_TESTDATA_REPO_URL``: If this environment variable is set, it will be used as the URL of
+        - ``RAVEN_TESTDATA_REPO_URL``: If this environment variable is set, it will be used as the URL of
           the repository to use when fetching datasets. Otherwise, the default repository will be used.
-        - ``RAVENPY_TESTDATA_BRANCH``: If this environment variable is set, it will be used as the branch of
+        - ``RAVEN_TESTDATA_BRANCH``: If this environment variable is set, it will be used as the branch of
           the repository to use when fetching datasets. Otherwise, the default branch will be used.
 
     Examples
@@ -396,7 +392,7 @@ def yangtze(
 
 def open_dataset(
     name: str,
-    yangtze_kwargs: dict[str, Path | str | bool] | None = None,
+    _yangtze_kwargs: dict[str, Path | str | bool] | None = None,
     **xr_kwargs: Any,
 ) -> Dataset:
     r"""
@@ -408,7 +404,7 @@ def open_dataset(
     ----------
     name : str
         Name of the file containing the dataset.
-    yangtze_kwargs : dict
+    _yangtze_kwargs : dict
         Keyword arguments passed to the yangtze function.
     **xr_kwargs : Any
         Keyword arguments passed to xarray.open_dataset.
@@ -423,9 +419,9 @@ def open_dataset(
     xarray.open_dataset : Open and read a dataset from a file or file-like object.
     yangtze : Pooch wrapper for accessing the RavenPy testing data.
     """
-    if yangtze_kwargs is None:
+    if _yangtze_kwargs is None:
         yangtze_kwargs = {}
-    return _open_dataset(yangtze(**yangtze_kwargs).fetch(name), **xr_kwargs)
+    return _open_dataset(yangtze(**_yangtze_kwargs).fetch(name), **xr_kwargs)
 
 
 def populate_testing_data(
@@ -445,7 +441,7 @@ def populate_testing_data(
     repo : str, optional
         URL of the repository to use when fetching testing datasets.
     branch : str, optional
-        Branch of ravenpy-testdata to use when fetching testing datasets.
+        Branch of raven-testdata to use when fetching testing datasets.
     retry : int
         Number of times to retry downloading the files in case of failure. Default: 3.
     local_cache : Path
@@ -475,10 +471,8 @@ def populate_testing_data(
             errored_files.append(file)
 
     if errored_files:
-        logging.error(
-            "The following files were unable to be downloaded: %s",
-            errored_files,
-        )
+        msg = f"The following files were unable to be downloaded: {errored_files}"
+        logging.error(msg)
 
 
 def gather_testing_data(
@@ -508,7 +502,7 @@ def gather_testing_data(
     if _cache_dir is None:
         raise ValueError(
             "The cache directory must be set. "
-            "Please set the `cache_dir` parameter or the `RAVENPY_DATA_DIR` environment variable."
+            "Please set the `cache_dir` parameter or the `RAVEN_TESTDATA_CACHE_DIR` environment variable."
         )
     cache_dir = Path(_cache_dir)
 
