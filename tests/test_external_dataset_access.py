@@ -59,7 +59,7 @@ class TestRemoteFileAccess:
         cache_dir = tmp_path / "yangtze_cache"
         ds = open_dataset(
             name="raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
-            yangtze_kwargs={
+            _yangtze_kwargs={
                 "branch": self.branch,
                 "cache_dir": cache_dir,
                 "force_download": True,

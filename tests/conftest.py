@@ -17,7 +17,6 @@ from emulators import (  # noqa: F401
 )
 from xclim.indicators.generic import fit, stats
 
-from ravenpy.testing.helpers import convert_2d, convert_3d
 from ravenpy.testing.utils import (
     TESTDATA_BRANCH,
     TESTDATA_CACHE_DIR,
@@ -30,6 +29,79 @@ from ravenpy.testing.utils import (
     testing_setup_warnings,
 )
 from ravenpy.testing.utils import yangtze as _yangtze
+
+
+def convert_2d(fn):
+    """Take the 1D Salmon time series and convert it to a 2D time series.
+
+    Example
+    -------
+    >>> fn = "./testdata/raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
+    >>> fn2 = "./testdata/raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_2d.nc"
+    >>> _convert_2d(fn).to_netcdf(fn2, "w")
+    """
+    features = {
+        "name": "Salmon",
+        "area": 4250.6,
+        "elevation": 843.0,
+        "latitude": 54.4848,
+        "longitude": -123.3659,
+    }
+    ds = xr.open_dataset(fn, decode_times=False).rename({"nstations": "region"})
+
+    out = xr.Dataset(
+        coords={
+            "lon": ds.lon.expand_dims("lon").squeeze("region"),
+            "lat": ds.lat.expand_dims("lat").squeeze("region"),
+            "time": ds.time,
+        }
+    )
+
+    for v in ds.data_vars:
+        if v not in ["lon", "lat"]:
+            out[v] = ds[v].expand_dims("region", axis=1)
+
+    # Add geometry feature variables
+    for key, val in features.items():
+        out[key] = xr.DataArray(name=key, data=[val], dims="region")
+
+    return out
+
+
+def convert_3d(fn):
+    """Take the 1D Salmon time series and convert it to a 3D time series.
+
+    Example
+    -------
+    >>> fn = "./testdata/raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
+    >>> fn3 = "./testdata/raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_3d.nc"
+    >>> _convert_3d(fn).to_netcdf(fn3, "w")
+    """
+    elevation = [[843.0]]
+    ds = xr.open_dataset(fn, decode_times=False)
+
+    out = xr.Dataset(
+        coords={
+            "lon": ds.lon.expand_dims("lon").squeeze("nstations"),
+            "lat": ds.lat.expand_dims("lat").squeeze("nstations"),
+            "time": ds.time,
+        }
+    )
+
+    for v in ds.data_vars:
+        if v not in ["lon", "lat", "time"]:
+            out[v] = ds[v]
+            out[v] = out[v].expand_dims(
+                ["lon", "lat"]
+            )  # Needs to be in other step to keep attributes
+
+    out["elevation"] = xr.DataArray(
+        data=elevation,
+        dims=["lon", "lat"],
+        attrs={"units": "m", "standard_name": "altitude"},
+    )
+
+    return out
 
 
 @pytest.fixture(scope="session")
