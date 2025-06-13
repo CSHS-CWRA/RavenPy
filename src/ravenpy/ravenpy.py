@@ -2,7 +2,6 @@
 
 import collections
 import os
-import shutil
 import subprocess  # noqa: S404
 import tempfile
 import warnings
@@ -86,6 +85,7 @@ class Emulator:
         if self._output_path is not None:
             return self._output_path
         warnings.warn("`output_path` not set. Model must be run first.")
+        return None
 
     @property
     def modelname(self) -> str:
@@ -146,6 +146,7 @@ class OutputReader:
         solution = self.files.get("solution")
         if solution:
             return parsers.parse_solution(solution)
+        return None
 
     @property
     def diagnostics(self) -> Optional[dict]:
@@ -153,6 +154,7 @@ class OutputReader:
         diag = self.files.get("diagnostics")
         if diag:
             return parsers.parse_diagnostics(diag)
+        return None
 
     @property
     def hydrograph(self) -> xr.Dataset:
@@ -179,6 +181,7 @@ class OutputReader:
         msg = self.files.get("messages")
         if msg:
             return msg.read_text()
+        return None
 
     @property
     def path(self) -> Path:
