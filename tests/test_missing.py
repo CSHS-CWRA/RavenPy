@@ -1,3 +1,4 @@
+import logging
 import os
 import shutil
 import sys
@@ -53,7 +54,13 @@ class TestMissing:
         del sys.modules["ravenpy.config.defaults"]
 
         # Now the tool should be "missing"
-        assert shutil.which("raven") is None
+        # if running from tox in a conda environment, the raven binary is likely to be present
+        if os.environ.get("CONDA_PREFIX") and os.environ.get("TOX"):
+            logging.info(
+                "Running in a development conda environment with tox. Raven is expected to be present."
+            )
+        else:
+            assert shutil.which("raven") is None
 
         # Loading the module should raise a RuntimeError
         with pytest.raises(RuntimeError):

@@ -1,7 +1,5 @@
 from ravenpy.config import commands as rc
 
-# def test_parse_symbolic()
-
 
 def test_line_command():
     c = rc.SBGroupPropertyMultiplier(

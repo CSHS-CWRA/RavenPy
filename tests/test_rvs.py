@@ -1,5 +1,5 @@
 import datetime as dt
-from collections.abc import Sequence
+import pathlib
 from typing import Union
 
 import cftime
@@ -83,8 +83,8 @@ def test_set_params():
     assert num.rain_snow_transition.temp == 0.5
 
 
-def test_solution(get_local_testdata):
-    sol = get_local_testdata("gr4j_cemaneige/solution.rvc")
+def test_solution(yangtze):
+    sol = pathlib.Path(yangtze.fetch("gr4j_cemaneige/solution.rvc"))
     conf = Config().set_solution(sol)
     assert len(conf.hru_state_variable_table) == 1
     assert conf.hru_state_variable_table[0].data["ATMOSPHERE"] == 821.98274
@@ -97,12 +97,10 @@ def test_solution(get_local_testdata):
     assert ":BasinIndex 1 watershed" in conf.rvc
 
 
-def test_rvh_from_extractor(get_local_testdata):
+def test_rvh_from_extractor(yangtze):
     from ravenpy.extractors import BasinMakerExtractor, open_shapefile
 
-    shp = get_local_testdata(
-        "basinmaker/drainage_region_0175_v2-1/finalcat_info_v2-1.zip"
-    )
+    shp = yangtze.fetch("basinmaker/drainage_region_0175_v2-1/finalcat_info_v2-1.zip")
     bm = BasinMakerExtractor(open_shapefile(shp))
 
     # Smoke test

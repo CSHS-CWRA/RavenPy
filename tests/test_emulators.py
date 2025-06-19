@@ -206,16 +206,16 @@ def test_run_with_dap_link(minimal_emulator, tmp_path):
     Emulator(conf, workdir=tmp_path).run()
 
 
-def test_routing(get_local_testdata):
-    """We need at least 2 subbasins to activate routing."""
+def test_routing(yangtze):
+    """We need at least two subbasins to activate routing."""
     from ravenpy.config.emulators.gr4jcn import P
 
     # Salmon catchment is now split into land- and lake-part.
     # The areas do not sum up to overall area of 4250.6 [km2].
     # This is the reason the "test_routing" will give different
     # results compared to "test_run". The "salmon_land_hru"
-    # however is kept at the overall area of 4250.6 [km2] such
-    # that other tests still obtain same results as before.
+    # however, is kept in the overall area of 4250.6 [km2] such
+    # that other tests still get the same results as before.
 
     salmon_land_hru_1 = dict(
         area=4250.6,
@@ -235,10 +235,10 @@ def test_routing(get_local_testdata):
         hru_type="land",
     )
 
-    salmon_river = get_local_testdata(
+    salmon_river = yangtze.fetch(
         "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
     )
-    ts_2d = get_local_testdata(
+    ts_2d = yangtze.fetch(
         "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_2d.nc"
     )
 
@@ -438,7 +438,7 @@ def test_routing(get_local_testdata):
 
     hds = out.hydrograph.q_sim
 
-    assert len(hds.nbasins) == 1  # number of "gauged" basins is 1
+    assert len(hds.nbasins) == 1  # the number of "gauged" basins is 1
 
     # We only have one SB with gauged=True, so the output has a single column.
     # The number of time steps simulated between (2000, 1, 1) and
@@ -480,7 +480,7 @@ def test_routing(get_local_testdata):
 
 @pytest.mark.slow
 @pytest.mark.xfail
-def test_routing_lievre_tutorial(get_local_testdata, tmp_path):
+def test_routing_lievre_tutorial(tmp_path, yangtze):
     from ravenpy.extractors.routing_product import (
         BasinMakerExtractor,
         GridWeightExtractor,
@@ -491,18 +491,12 @@ def test_routing_lievre_tutorial(get_local_testdata, tmp_path):
     # Input files #
     ###############
 
-    routing_product_shp_path = get_local_testdata(
-        "raven-routing-sample/lievre_hrus_v21.zip"
-    )
+    routing_product_shp_path = yangtze.fetch("raven-routing-sample/lievre_hrus_v21.zip")
 
-    vic_streaminputs_nc_path = get_local_testdata(
-        "raven-routing-sample/VIC_streaminputs.nc"
-    )
-    vic_temperatures_nc_path = get_local_testdata(
-        "raven-routing-sample/VIC_temperatures.nc"
-    )
+    vic_streaminputs_nc_path = yangtze.fetch("raven-routing-sample/VIC_streaminputs.nc")
+    vic_temperatures_nc_path = yangtze.fetch("raven-routing-sample/VIC_temperatures.nc")
 
-    observation_data_nc_path = get_local_testdata("raven-routing-sample/WSC02LE024.nc")
+    observation_data_nc_path = yangtze.fetch("raven-routing-sample/WSC02LE024.nc")
 
     streaminputs = xr.open_dataset(vic_streaminputs_nc_path)
 

@@ -7,6 +7,7 @@ repos:
     hooks:
       - id: pyupgrade
         args: [ '--py39-plus' ]
+        exclude: ^tests/conftest\.py$
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
@@ -50,9 +51,9 @@ repos:
     hooks:
       - id: isort
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.12
+    rev: v0.11.13
     hooks:
-      - id: ruff
+      - id: ruff-check
         args: [ '--fix' ]
       # - id: ruff-format
   - repo: https://github.com/pycqa/flake8
@@ -74,11 +75,11 @@ repos:
     hooks:
       - id: nbqa-pyupgrade
         args: [ '--py39-plus' ]
-        additional_dependencies: [ 'pyupgrade==3.19.1' ]
+        additional_dependencies: [ 'pyupgrade==3.20.0' ]
       - id: nbqa-black
         additional_dependencies: [ 'black==25.1.0' ]
       - id: nbqa-isort
-        additional_dependencies: [ 'isort==6.0.0' ]
+        additional_dependencies: [ 'isort==6.0.1' ]
   - repo: https://github.com/kynan/nbstripout
     rev: 0.8.1
     hooks:
@@ -86,7 +87,7 @@ repos:
         files: ".ipynb"
         args: [ '--extra-keys=metadata.kernelspec' ]
   - repo: https://github.com/keewis/blackdoc
-    rev: v0.3.9
+    rev: v0.3.10
     hooks:
       - id: blackdoc
         additional_dependencies: [ 'black==25.1.0' ]
@@ -113,7 +114,7 @@ repos:
       - id: zizmor
         args: [ '--config=.zizmor.yml' ]
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.27.0
+    rev: v8.27.2
     hooks:
       - id: gitleaks
   - repo: meta
