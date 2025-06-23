@@ -49,6 +49,7 @@ __all__ = [
     "default_testdata_repo_url",
     "default_testdata_version",
     "gather_testing_data",
+    "get_file",
     "open_dataset",
     "populate_testing_data",
     "show_versions",
@@ -390,6 +391,32 @@ def yangtze(
     return _yangtze
 
 
+def get_file(
+    name: str,
+    _yangtze_kwargs: dict[str, Path | str | bool] | None = None,
+):
+    r"""
+    Convenience function to get a file from the RavenPy testing data using the `yangtze` class.
+
+    This is a thin wrapper around the `yangtze` class to make it easier to access RavenPy testing datasets.
+
+    Parameters
+    ----------
+    name : str
+        Name of the file containing the dataset.
+    _yangtze_kwargs : dict
+        Keyword arguments passed to the yangtze function.
+
+    Returns
+    -------
+    str
+        The path to the file.
+    """
+    if _yangtze_kwargs is None:
+        _yangtze_kwargs = {}
+    return yangtze(**_yangtze_kwargs).fetch(name)
+
+
 def open_dataset(
     name: str,
     _yangtze_kwargs: dict[str, Path | str | bool] | None = None,
@@ -420,7 +447,7 @@ def open_dataset(
     yangtze : Pooch wrapper for accessing the RavenPy testing data.
     """
     if _yangtze_kwargs is None:
-        yangtze_kwargs = {}
+        _yangtze_kwargs = {}
     return _open_dataset(yangtze(**_yangtze_kwargs).fetch(name), **xr_kwargs)
 
 
