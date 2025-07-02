@@ -178,7 +178,7 @@ class TestWCS:
 
     saskatoon = "polygons/Saskatoon.geojson"
 
-    def test_get_raster_wcs(self, tmp_path, get_local_testdata):
+    def test_get_raster_wcs(self, tmp_path, yangtze):
         # TODO: This CRS needs to be redefined using modern pyproj-compatible strings.
         nalcms_crs = "+proj=laea +lat_0=45 +lon_0=-100 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs=True"
 
@@ -186,7 +186,7 @@ class TestWCS:
             prefix="reprojected_", suffix=".json", dir=tmp_path
         ) as projected:
             self.geo.generic_vector_reproject(
-                get_local_testdata(self.saskatoon),
+                yangtze.fetch(self.saskatoon),
                 projected.name,
                 target_crs=nalcms_crs,
             )

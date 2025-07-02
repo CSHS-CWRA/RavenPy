@@ -9,18 +9,16 @@ from ravenpy.config.commands import GridWeights
 
 
 class TestGenerateGridWeights:
-    def test_generate_grid_weights_with_nc_input_and_2d_coords(
-        self, tmp_path, get_local_testdata
-    ):
+    def test_generate_grid_weights_with_nc_input_and_2d_coords(self, tmp_path, yangtze):
         runner = CliRunner()
         output_path = tmp_path / "bla.rvt"
 
         copyfile(
-            get_local_testdata("raven-routing-sample/VIC_streaminputs.nc"),
+            yangtze.fetch("raven-routing-sample/VIC_streaminputs.nc"),
             tmp_path / "VIC_streaminputs.nc",
         )
         copyfile(
-            get_local_testdata("raven-routing-sample/finalcat_hru_info.zip"),
+            yangtze.fetch("raven-routing-sample/finalcat_hru_info.zip"),
             tmp_path / "finalcat_hru_info.zip",
         )
 
@@ -52,20 +50,18 @@ class TestGenerateGridWeights:
         weight = float(re.search("1 52 (.+)", output).group(1))
         assert abs(weight - 0.2610203097218425) < 1e-04
 
-    def test_generate_grid_weights_with_multiple_subids(
-        self, tmp_path, get_local_testdata
-    ):
+    def test_generate_grid_weights_with_multiple_subids(self, tmp_path, yangtze):
         # currently exactly same output as "test_generate_grid_weights_with_nc_input_and_2d_coords"
         # needs a "routing-file-path" with multiple gauges
         runner = CliRunner()
         output_path = tmp_path / "bla.rvt"
 
         copyfile(
-            get_local_testdata("raven-routing-sample/VIC_streaminputs.nc"),
+            yangtze.fetch("raven-routing-sample/VIC_streaminputs.nc"),
             tmp_path / "VIC_streaminputs.nc",
         )
         copyfile(
-            get_local_testdata("raven-routing-sample/finalcat_hru_info.zip"),
+            yangtze.fetch("raven-routing-sample/finalcat_hru_info.zip"),
             tmp_path / "finalcat_hru_info.zip",
         )
 
@@ -101,18 +97,16 @@ class TestGenerateGridWeights:
         weight = float(re.search("1 52 (.+)", output).group(1))
         assert abs(weight - 0.2610203097218425) < 1e-04
 
-    def test_generate_grid_weights_with_nc_input_and_1d_coords(
-        self, tmp_path, get_local_testdata
-    ):
+    def test_generate_grid_weights_with_nc_input_and_1d_coords(self, tmp_path, yangtze):
         runner = CliRunner()
         output_path = tmp_path / "bla.rvt"
 
         copyfile(
-            get_local_testdata("raven-routing-sample/era5-test-dataset-crop.nc"),
+            yangtze.fetch("raven-routing-sample/era5-test-dataset-crop.nc"),
             tmp_path / "era5-test-dataset-crop.nc",
         )
         copyfile(
-            get_local_testdata("raven-routing-sample/finalcat_hru_info.zip"),
+            yangtze.fetch("raven-routing-sample/finalcat_hru_info.zip"),
             tmp_path / "finalcat_hru_info.zip",
         )
 
@@ -144,16 +138,16 @@ class TestGenerateGridWeights:
         weight = float(re.search("4 3731 (.+)", output).group(1))
         assert abs(weight - 0.0034512752779023515) < 1e-04
 
-    def test_generate_grid_weights_with_shp_input(self, tmp_path, get_local_testdata):
+    def test_generate_grid_weights_with_shp_input(self, tmp_path, yangtze):
         runner = CliRunner()
         output_path = tmp_path / "bla.rvt"
 
         copyfile(
-            get_local_testdata("raven-routing-sample/OTT_sub.zip"),
+            yangtze.fetch("raven-routing-sample/OTT_sub.zip"),
             tmp_path / "OTT_sub.zip",
         )
         copyfile(
-            get_local_testdata("raven-routing-sample/finalcat_hru_info.zip"),
+            yangtze.fetch("raven-routing-sample/finalcat_hru_info.zip"),
             tmp_path / "finalcat_hru_info.zip",
         )
 
@@ -182,18 +176,16 @@ class TestGenerateGridWeights:
         weight = float(re.search("13 238 (.+)", output).group(1))
         assert abs(weight - 0.5761414847779369) < 1e-04
 
-    def test_generate_grid_weights_with_weight_rescaling(
-        self, tmp_path, get_local_testdata
-    ):
+    def test_generate_grid_weights_with_weight_rescaling(self, tmp_path, yangtze):
         runner = CliRunner()
         output_path = tmp_path / "bla.rvt"
 
         copyfile(
-            get_local_testdata("raven-routing-sample/OTT_sub.zip"),
+            yangtze.fetch("raven-routing-sample/OTT_sub.zip"),
             tmp_path / "OTT_sub.zip",
         )
         copyfile(
-            get_local_testdata("raven-routing-sample/finalcat_hru_info.zip"),
+            yangtze.fetch("raven-routing-sample/finalcat_hru_info.zip"),
             tmp_path / "finalcat_hru_info.zip",
         )
 
@@ -226,19 +218,19 @@ class TestGenerateGridWeights:
 
 
 class TestAggregateForcingsToHRUs:
-    def test_aggregate_forcings_to_hrus(self, tmp_path, get_local_testdata):
+    def test_aggregate_forcings_to_hrus(self, tmp_path, yangtze):
         runner = CliRunner()
         output_nc_file_path = tmp_path / "aggreg.nc"
         output_weight_file_path = tmp_path / "weight_aggreg.rvt"
 
         copyfile(
-            get_local_testdata(
+            yangtze.fetch(
                 "raven-routing-sample/VIC_streaminputs.nc",
             ),
             tmp_path / "VIC_streaminputs.nc",
         )
         copyfile(
-            get_local_testdata(
+            yangtze.fetch(
                 "raven-routing-sample/VIC_streaminputs_weights.rvt",
             ),
             tmp_path / "VIC_streaminputs_weights.rvt",
@@ -280,7 +272,7 @@ class TestAggregateForcingsToHRUs:
         assert new_weights[2][2] == 1.0  # All new_weights[:][2] need to be 1.0
         assert new_weights[3][2] == 1.0  # All new_weights[:][2] need to be 1.0
 
-        # check aggregated NetCDF file
+        # check the aggregated NetCDF file
         nc_in = nc4.Dataset(output_nc_file_path, "r")
         val = nc_in.variables["Streaminputs"][:]
         nc_in.close()
@@ -290,17 +282,17 @@ class TestAggregateForcingsToHRUs:
         assert abs(val[0, 50] - 0.010276) < 1e-04
         assert abs(val[16071, 50] - 0.516639) < 1e-04
 
-    def test_aggregate_forcings_to_hrus_with_nodata(self, tmp_path, get_local_testdata):
+    def test_aggregate_forcings_to_hrus_with_nodata(self, tmp_path, yangtze):
         runner = CliRunner()
         output_nc_file_path = tmp_path / "aggreg.nc"
         output_weight_file_path = tmp_path / "weight_aggreg.rvt"
 
         copyfile(
-            get_local_testdata("raven-routing-sample/VIC_test_nodata.nc"),
+            yangtze.fetch("raven-routing-sample/VIC_test_nodata.nc"),
             tmp_path / "VIC_test_nodata.nc",
         )
         copyfile(
-            get_local_testdata("raven-routing-sample/VIC_test_nodata_weights.rvt"),
+            yangtze.fetch("raven-routing-sample/VIC_test_nodata_weights.rvt"),
             tmp_path / "VIC_test_nodata_weights.rvt",
         )
 
