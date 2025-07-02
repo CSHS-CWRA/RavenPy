@@ -13,6 +13,7 @@ Bug fixes
 ^^^^^^^^^
 * Fixed bug affecting `GriddedForcing`, where `station_idx` in the call to ``nc_specs`` was set to ``1`` instead of ``None``. (PR #501)
 * Fixed bug in the `run` method, where `overwrite=False` was not being respected. (PR #503)
+* Pin `scipy` below v1.16.0 due to a breaking change that affects `statsmodels` below v0.14.4.
 
 Internal changes
 ^^^^^^^^^^^^^^^^
