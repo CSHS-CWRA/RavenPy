@@ -15,13 +15,13 @@ alt_names = {
 
 
 # @pytest.mark.xfail()
-def test_enkf(get_local_testdata, salmon_hru, tmp_path):
+def test_enkf(salmon_hru, tmp_path, yangtze):
     """Test one run of Ensemble Kalman Filter data assimilation."""
     cls = GR4JCN
     # name = "GR4JCN"
     data_type = ["RAINFALL", "TEMP_MIN", "TEMP_MAX", "SNOWFALL"]
 
-    salmon_file = get_local_testdata(
+    salmon_file = yangtze.fetch(
         "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
     )
 

@@ -26,7 +26,7 @@ def test_ensemble_reader(gr4jcn_config, tmp_path):
     ens = EnsembleReader(runs=runs, dim="parameters")
     assert len(ens.hydrograph.parameters) == 2
 
-    # Create list of output paths using glob
+    # Create a list of output paths using glob
     paths = p.glob("**/output")
 
     ens = EnsembleReader(paths=paths, dim="parameters")
@@ -39,6 +39,7 @@ def test_package_metadata():
 
     assert project is not None
     assert project.submodule_search_locations is not None
+
     location = project.submodule_search_locations[0]
 
     metadata = pathlib.Path(location).resolve().joinpath("__init__.py")

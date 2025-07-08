@@ -48,7 +48,6 @@ dependencies = [
   "owslib >=0.29.1",
   "pandas >=2.2.0",
   "pint >=0.24.4",
-  "platformdirs >=4.3.6",
   "pydantic >=2.11",
   "pydap >=3.4.0,<3.5.5", # pydap 3.5.5 is not currently supported by `xarray` (v2025.3.1)
   "pymbolic >=2024.2",
@@ -80,6 +79,7 @@ dev = [
   "nbval",
   "numpydoc >=1.8.0",
   "pip >=25.0",
+  "pooch >=1.8.0",
   "pre-commit >=3.5.0",
   "pylint >=3.3.0",
   "pytest >=8.3.2",
@@ -242,6 +242,7 @@ include = [
   "src/ravenpy/**/*.py",
   "src/ravenpy/data/**/*.csv",
   "src/ravenpy/data/**/*.zip",
+  "src/ravenpy/testing/registry.txt",
   "setup.cfg",
   "tests/*.py",
   "tests/test.cfg",

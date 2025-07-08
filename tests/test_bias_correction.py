@@ -7,22 +7,18 @@ from xarray.coding.calendar_ops import convert_calendar
 # FIXME: This doesn't test Raven functionality; Should we move it to xclim?
 @pytest.mark.skip(reason="This test is not testing Raven functionality")
 class TestBiasCorrect:
-    def test_bias_correction(self, get_local_testdata):
-        ds_fut_sub = xr.open_dataset(
-            get_local_testdata(
-                "cmip5/nasa_nex-gddp-1.0_day_inmcm4_historical+rcp85_nex-gddp_2070-2071_subset.nc"
-            )
+    def test_bias_correction(self, open_dataset):
+        ds_fut_sub = open_dataset(
+            "cmip5/nasa_nex-gddp-1.0_day_inmcm4_historical+rcp85_nex-gddp_2070-2071_subset.nc"
         )
-        ds_ref_sub = xr.open_dataset(
-            get_local_testdata(
-                "cmip5/nasa_nex-gddp-1.0_day_inmcm4_historical+rcp45_nex-gddp_1971-1972_subset.nc"
-            )
+
+        ds_ref_sub = open_dataset(
+            "cmip5/nasa_nex-gddp-1.0_day_inmcm4_historical+rcp45_nex-gddp_1971-1972_subset.nc"
         )
         ds_ref_sub = convert_calendar(ds_ref_sub, "noleap")
 
-        ds_his_sub = xr.open_dataset(
-            get_local_testdata("nrcan/NRCAN_1971-1972_subset.nc")
-        )
+        ds_his_sub = open_dataset("nrcan/NRCAN_1971-1972_subset.nc")
+
         ds_his_sub = convert_calendar(ds_his_sub, "noleap")
         group = xsdba.Grouper("time.month")
         # Train the model to find the correction factors
