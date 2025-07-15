@@ -2,7 +2,7 @@
 Changelog
 =========
 
-v0.18.3 (unreleased)
+v0.19.0 (2025-07-16)
 --------------------
 
 New features
