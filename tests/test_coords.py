@@ -1,8 +1,7 @@
 from ravenpy.utilities.coords import infer_scale_and_offset
-from ravenpy.utilities.testdata import open_dataset
 
 
-def test_infer_scale_and_offset():
+def test_infer_scale_and_offset(open_dataset):
     # ERA5 precip and tas
     ts = "era5/tas_pr_20180101-20180108.nc"
 

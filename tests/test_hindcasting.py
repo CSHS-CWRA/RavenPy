@@ -1,4 +1,5 @@
 import datetime as dt
+import pathlib
 import sys
 
 import pytest
@@ -22,8 +23,8 @@ but this is a good proof of concept.
 
 
 class TestHindcasting:
-    def test_hindcasting_GEPS(self, get_local_testdata, salmon_hru, tmp_path):
-        ts20 = get_local_testdata("caspar_eccc_hindcasts/geps_watershed.nc")
+    def test_hindcasting_GEPS(self, salmon_hru, tmp_path, yangtze):
+        ts20 = yangtze.fetch("caspar_eccc_hindcasts/geps_watershed.nc")
 
         hru = salmon_hru["land"]
         data_kwds = {
@@ -91,9 +92,11 @@ class TestHindcasting:
         (3, 11) > sys.version_info >= (3, 10),
         reason="climpred is unstable in Python 3.10",
     )
-    def test_climpred_hindcast_verif(self, get_local_testdata, salmon_hru, tmp_path):
-        ts = get_local_testdata(
-            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
+    def test_climpred_hindcast_verif(self, salmon_hru, tmp_path, yangtze):
+        ts = pathlib.Path(
+            yangtze.fetch(
+                "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
+            )
         )
         # Make a local copy to evade double-ownership of file - first file
         ts_tmp1 = tmp_path / "salmon_river_near_prince_george-tmp1.nc"

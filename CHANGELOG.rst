@@ -7,7 +7,15 @@ v0.18.3 (unreleased)
 
 New features
 ^^^^^^^^^^^^
-* Added `parsers.parse_rv` to extract a Command value from an RV file.
+* Added `parsers.parse_rv` to extract a Command value from an RV file. (PR #503)
+* New module `ravenpy.testing` has been added to provide utility functions and support for testing and testing data management. (PR #513)
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* `ravenpy` now requires `pooch>=1.8.0` for downloading and caching remote testing data. (PR #513)
+* `ravenpy.utilities.testdata` has been refactored to new module `ravenpy.testing`. The `publish_release_notes` function is now located in `ravenpy.utilities.publishing`. (PR #513)
+* The `ravenpy.testing.utils` module now provides a `yangtze()` class for fetching and caching the `raven-testdata` testing data. A convenience function (`get_file`) replaces the previous `get_local_testdata`. (PR #513)
+* The `ravenpy.testing.utils.open_dataset` function no longer supports OPeNDAP URLs or local file paths. Instead, it uses the `yangtze()` class to fetch datasets from the testing data repository or the local cache. Users should now use `xarray.open_dataset()` directly for OPeNDAP URLs or local files. (PR #513)
 
 Bug fixes
 ^^^^^^^^^
@@ -18,6 +26,7 @@ Bug fixes
 Internal changes
 ^^^^^^^^^^^^^^^^
 * `ravenpy` now requires `xclim>=0.57.0` and `xsdba` (v0.4.0+). (PR #511)
+* The `tests` folder no longer contains an `__init__.py` file and is no longer treated as a package. `pytest` fixtures from `emulators.py` are now directly imported into `conftest.py` for use in tests, and existing `pytest` fixtures have been modified to use the new `yangtze()` class for fetching testing data. (PR #513)
 
 v0.18.2 (2025-05-05)
 --------------------

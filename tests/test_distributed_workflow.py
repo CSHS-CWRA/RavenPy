@@ -13,8 +13,8 @@ from ravenpy.extractors.routing_product import (
 )
 
 
-def test_simple_workflow(get_local_testdata, tmp_path):
-    shp_path = get_local_testdata(
+def test_simple_workflow(tmp_path, yangtze):
+    shp_path = yangtze.fetch(
         "basinmaker/drainage_region_0175_v2-1/finalcat_info_v2-1.zip"
     )
 
@@ -38,7 +38,7 @@ def test_simple_workflow(get_local_testdata, tmp_path):
     rvh = bm.extract(hru_from_sb=True)
 
     # Streamflow obs
-    qobs_fn = get_local_testdata("matapedia/Qobs_Matapedia_01BD009.nc")
+    qobs_fn = yangtze.fetch("matapedia/Qobs_Matapedia_01BD009.nc")
 
     qobs = rc.ObservationData.from_nc(
         qobs_fn,
@@ -47,7 +47,7 @@ def test_simple_workflow(get_local_testdata, tmp_path):
     )
 
     # Meteo obs for GriddedForcing - does not work because subbasins do not overlap 100% with the ERA data
-    meteo_grid_fn = get_local_testdata("matapedia/Matapedia_meteo_data_2D.nc")
+    meteo_grid_fn = yangtze.fetch("matapedia/Matapedia_meteo_data_2D.nc")
 
     # Dict of GW attributes
     gw = GridWeightExtractor(
@@ -77,7 +77,7 @@ def test_simple_workflow(get_local_testdata, tmp_path):
     # Weights for some HRUs do not sum to one.
 
     # Meteo forcing per station (virtual stations, since this is ERA5 data)
-    meteo_station = get_local_testdata("matapedia/Matapedia_meteo_data_stations.nc")
+    meteo_station = yangtze.fetch("matapedia/Matapedia_meteo_data_stations.nc")
 
     [
         rc.StationForcing.from_nc(meteo_station, dtyp, alt_names=(alias,))
