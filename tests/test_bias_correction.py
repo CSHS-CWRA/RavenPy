@@ -1,5 +1,4 @@
 import pytest
-import xarray as xr
 import xsdba
 from xarray.coding.calendar_ops import convert_calendar
 
