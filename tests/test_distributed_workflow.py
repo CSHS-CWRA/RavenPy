@@ -14,9 +14,7 @@ from ravenpy.extractors.routing_product import (
 
 
 def test_simple_workflow(tmp_path, yangtze):
-    shp_path = yangtze.fetch(
-        "basinmaker/drainage_region_0175_v2-1/finalcat_info_v2-1.zip"
-    )
+    shp_path = yangtze.fetch("basinmaker/drainage_region_0175_v2-1/finalcat_info_v2-1.zip")
 
     # Note that for this to work, the coordinates must be in the small
     # BasinMaker example (drainage_region_0175)
@@ -68,21 +66,13 @@ def test_simple_workflow(tmp_path, yangtze):
 
     forcing = {"TEMP_MIN": "tmin", "TEMP_MAX": "tmax", "PRECIP": "pr"}
 
-    [
-        rc.GriddedForcing.from_nc(
-            meteo_grid_fn, dtyp, alt_names=(alias,), grid_weights=gw_fn
-        )
-        for (dtyp, alias) in forcing.items()
-    ]
+    [rc.GriddedForcing.from_nc(meteo_grid_fn, dtyp, alt_names=(alias,), grid_weights=gw_fn) for (dtyp, alias) in forcing.items()]
     # Weights for some HRUs do not sum to one.
 
     # Meteo forcing per station (virtual stations, since this is ERA5 data)
     meteo_station = yangtze.fetch("matapedia/Matapedia_meteo_data_stations.nc")
 
-    [
-        rc.StationForcing.from_nc(meteo_station, dtyp, alt_names=(alias,))
-        for (dtyp, alias) in forcing.items()
-    ]
+    [rc.StationForcing.from_nc(meteo_station, dtyp, alt_names=(alias,)) for (dtyp, alias) in forcing.items()]
     # TODO: Complete with weights calculations
 
     # Virtual Gauges

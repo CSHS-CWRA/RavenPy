@@ -56,6 +56,4 @@ class TestGreatCircle:
 
         great_circle_vectors = distance(df, algiers)
 
-        np.testing.assert_array_almost_equal(
-            great_circle_vectors, [2750.249, 5478.388, 2709.166], 3
-        )
+        np.testing.assert_array_almost_equal(great_circle_vectors, [2750.249, 5478.388, 2709.166], 3)

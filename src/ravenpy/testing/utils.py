@@ -1,7 +1,6 @@
 """Tools for searching for and acquiring test data."""
 
 from __future__ import annotations
-
 import importlib.metadata as ilm
 import importlib.resources as ilr
 import logging
@@ -29,13 +28,11 @@ from xclim.testing.utils import show_versions as _show_versions
 
 import ravenpy
 
+
 try:
     import pooch
 except ImportError:
-    warnings.warn(
-        "The `pooch` library is not installed. "
-        "The default cache directory for testing data will not be set."
-    )
+    warnings.warn("The `pooch` library is not installed. The default cache directory for testing data will not be set.", stacklevel=2)
     pooch = None
 
 LOGGER = logging.getLogger("ravenpy.testing.utils")
@@ -60,9 +57,7 @@ __all__ = [
 default_testdata_version = "v2025.6.12"
 """Default version of the testing data to use when fetching datasets."""
 
-default_testdata_repo_url = (
-    "https://raw.githubusercontent.com/Ouranosinc/raven-testdata/"
-)
+default_testdata_repo_url = "https://raw.githubusercontent.com/Ouranosinc/raven-testdata/"
 """Default URL of the testing data repository to use when fetching datasets."""
 
 try:
@@ -154,11 +149,7 @@ def show_versions(
     def _get_ravenpy_dependencies():
         ravenpy_metadata = ilm.metadata("ravenpy")
         requires = ravenpy_metadata.get_all("Requires-Dist")
-        requires = [
-            re.match(r"^[A-Za-z0-9_.\-]+", req).group(0)
-            for req in requires
-            if re.match(r"^[A-Za-z0-9_.\-]+", req)
-        ]
+        requires = [re.match(r"^[A-Za-z0-9_.\-]+", req).group(0) for req in requires if re.match(r"^[A-Za-z0-9_.\-]+", req)]
         sorted_deps = sorted(list(set(requires) - {"ravenpy"}))
 
         return ["ravenpy"] + sorted_deps
@@ -174,10 +165,7 @@ def show_versions(
 
 def testing_setup_warnings():
     """Warn users about potential incompatibilities between RavenPy and raven-testdata versions."""
-    if (
-        re.match(r"^\d+\.\d+\.\d+$", ravenpy.__version__)
-        and TESTDATA_BRANCH != default_testdata_version
-    ):
+    if re.match(r"^\d+\.\d+\.\d+$", ravenpy.__version__) and TESTDATA_BRANCH != default_testdata_version:
         # This does not need to be emitted on GitHub Workflows and ReadTheDocs
         if not os.getenv("CI") and not os.getenv("READTHEDOCS"):
             warnings.warn(
@@ -185,6 +173,7 @@ def testing_setup_warnings():
                 f"branch of the testing data. It is possible that changes to the testing data may "
                 f"be incompatible with some assertions in this version. "
                 f"Please be sure to check {TESTDATA_REPO_URL} for more information.",
+                stacklevel=2,
             )
 
     if re.match(r"^v\d+\.\d+\.\d+", TESTDATA_BRANCH):
@@ -193,15 +182,14 @@ def testing_setup_warnings():
             time.ctime(Path(ravenpy.__file__).stat().st_mtime),
             "%a %b %d %H:%M:%S %Y",
         )
-        install_calendar_version = (
-            f"{install_date.year}.{install_date.month}.{install_date.day}"
-        )
+        install_calendar_version = f"{install_date.year}.{install_date.month}.{install_date.day}"
 
         if Version(TESTDATA_BRANCH) > Version(install_calendar_version):
             warnings.warn(
                 f"The installation date of `RavenPy` ({install_date.ctime()}) "
                 f"predates the last release of testing data ({TESTDATA_BRANCH}). "
                 "It is very likely that the testing data is incompatible with this build of `RavenPy`.",
+                stacklevel=2,
             )
 
 
@@ -248,9 +236,7 @@ def load_registry(
         external_repo_name = urlparse(repo).path.split("/")[-2]
         external_branch_name = branch.split("/")[-1]
         testing_folder = Path(str(ilr.files("ravenpy").joinpath("testing")))
-        registry_file = testing_folder.joinpath(
-            f"registry.{external_repo_name}.{external_branch_name}.txt"
-        )
+        registry_file = testing_folder.joinpath(f"registry.{external_repo_name}.{external_branch_name}.txt")
         lockfile = testing_folder.joinpath(".lock")
         with FileLock(lockfile):
             if not registry_file.exists():
@@ -268,9 +254,7 @@ def load_registry(
                 return load_registry_from_file(registry_file)
         else:
             # If the branch is not the default version, check if the registry file exists
-            custom_registry_folder = Path(
-                str(ilr.files("ravenpy").joinpath("testing", branch))
-            )
+            custom_registry_folder = Path(str(ilr.files("ravenpy").joinpath("testing", branch)))
             custom_registry_folder.mkdir(parents=True, exist_ok=True)
             registry_file = custom_registry_folder.joinpath("registry.txt")
             with FileLock(custom_registry_folder.joinpath(".lock")):
@@ -347,9 +331,7 @@ def yangtze(
         )
     if not repo.endswith("/"):
         repo = f"{repo}/"
-    remote = audit_url(
-        urljoin(urljoin(repo, branch if branch.endswith("/") else f"{branch}/"), "data")
-    )
+    remote = audit_url(urljoin(urljoin(repo, branch if branch.endswith("/") else f"{branch}/"), "data"))
 
     _yangtze = pooch.create(
         path=cache_dir,
@@ -367,9 +349,7 @@ def yangtze(
 
     # Overload the fetch method to add user-agent headers
     @wraps(_yangtze.fetch_diversion)
-    def _fetch(
-        *args, **kwargs: bool | Callable
-    ) -> str:  # numpydoc ignore=GL08  # *args: str
+    def _fetch(*args, **kwargs: bool | Callable) -> str:  # numpydoc ignore=GL08  # *args: str
         def _downloader(
             url: str,
             output_file: str | IO,
@@ -528,8 +508,7 @@ def gather_testing_data(
     """
     if _cache_dir is None:
         raise ValueError(
-            "The cache directory must be set. "
-            "Please set the `cache_dir` parameter or the `RAVEN_TESTDATA_CACHE_DIR` environment variable."
+            "The cache directory must be set. Please set the `cache_dir` parameter or the `RAVEN_TESTDATA_CACHE_DIR` environment variable."
         )
     cache_dir = Path(_cache_dir)
 

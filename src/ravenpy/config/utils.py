@@ -20,7 +20,8 @@ def nc_specs(
     mon_ave: bool = False,
     engine: str = "h5netcdf",
 ):
-    """Extract specifications from netCDF file.
+    """
+    Extract specifications from netCDF file.
 
     Parameters
     ----------
@@ -71,9 +72,7 @@ def nc_specs(
     with xr.open_dataset(fn, engine=engine) as ds:
         var_names = CF_RAVEN.get(data_type, ()) + tuple(alt_names)
         if len(var_names) == 0:
-            raise ValueError(
-                f"Provide alternative variable name with `alt_names` for {data_type}"
-            )
+            raise ValueError(f"Provide alternative variable name with `alt_names` for {data_type}")
 
         for v in var_names:
             if v in ds.data_vars:
@@ -131,7 +130,8 @@ def nc_specs(
 
 
 def filter_for(kls, attrs, **kwds):
-    """Return attributes that are fields of dataclass.
+    """
+    Return attributes that are fields of dataclass.
 
     Notes
     -----
@@ -144,9 +144,7 @@ def filter_for(kls, attrs, **kwds):
     attrs.update(kwds)
 
     if hasattr(kls, "__dataclass_fields__"):
-        return {
-            k: v for (k, v) in attrs.items() if k in kls.__dataclass_fields__.keys()
-        }
+        return {k: v for (k, v) in attrs.items() if k in kls.__dataclass_fields__.keys()}
     else:
         out = {}
         for key, field in kls.model_fields.items():
@@ -154,9 +152,7 @@ def filter_for(kls, attrs, **kwds):
                 out[field.alias] = attrs[field.alias]
             elif key in attrs:
                 out[key] = attrs[key]
-            elif isinstance(field.annotation, ModelMetaclass) and issubclass(
-                field.annotation, Command
-            ):
+            elif isinstance(field.annotation, ModelMetaclass) and issubclass(field.annotation, Command):
                 out[key] = filter_for(field.annotation, attrs)
         return out
         # return {k: v for (k, v) in attrs.items() if k in kls.__fields__.keys()}

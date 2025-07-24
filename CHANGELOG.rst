@@ -2,8 +2,25 @@
 Changelog
 =========
 
-v0.19.0 (2025-07-16)
---------------------
+..
+    `Unreleased <https://github.com/CSHS-CWRA/RavenPy>`_ (latest)
+    -------------------------------------------------------------
+
+    Contributors:
+
+    Changes
+    ^^^^^^^
+    * No change.
+
+    Fixes
+    ^^^^^
+    * No change.
+
+
+.. _changes_0.19.0:
+
+`v0.19.0 <https://github.com/CSHS-CWRA/ravenpy/tree/v0.19.0>`_ (2025-07-16)
+--------------------------------------------------------------------------
 
 New features
 ^^^^^^^^^^^^

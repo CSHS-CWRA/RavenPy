@@ -27,6 +27,7 @@
 from ._raven import RAVEN_EXEC_PATH, __raven_version__  # noqa: F401
 from .ravenpy import Emulator, EnsembleReader, OutputReader, RavenWarning, run
 
+
 __author__ = """David Huard"""
 __email__ = "huard.david@ouranos.ca"
 __version__ = "0.19.0"

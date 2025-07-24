@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import logging
 import os
 from pathlib import Path
@@ -23,16 +22,15 @@ from ravenpy.testing.utils import (
     TESTDATA_REPO_URL,
     default_testdata_cache,
     gather_testing_data,
-)
-from ravenpy.testing.utils import open_dataset as _open_dataset
-from ravenpy.testing.utils import (
     testing_setup_warnings,
 )
+from ravenpy.testing.utils import open_dataset as _open_dataset
 from ravenpy.testing.utils import yangtze as _yangtze
 
 
 def convert_2d(fn):
-    """Take the 1D Salmon time series and convert it to a 2D time series.
+    """
+    Take the 1D Salmon time series and convert it to a 2D time series.
 
     Example
     -------
@@ -69,7 +67,8 @@ def convert_2d(fn):
 
 
 def convert_3d(fn):
-    """Take the 1D Salmon time series and convert it to a 3D time series.
+    """
+    Take the 1D Salmon time series and convert it to a 3D time series.
 
     Example
     -------
@@ -91,9 +90,7 @@ def convert_3d(fn):
     for v in ds.data_vars:
         if v not in ["lon", "lat", "time"]:
             out[v] = ds[v]
-            out[v] = out[v].expand_dims(
-                ["lon", "lat"]
-            )  # Needs to be in other step to keep attributes
+            out[v] = out[v].expand_dims(["lon", "lat"])  # Needs to be in other step to keep attributes
 
     out["elevation"] = xr.DataArray(
         data=elevation,
@@ -114,9 +111,7 @@ def yangtze(threadsafe_data_dir, worker_id):
     return _yangtze(
         repo=TESTDATA_REPO_URL,
         branch=TESTDATA_BRANCH,
-        cache_dir=(
-            TESTDATA_CACHE_DIR if worker_id == "master" else threadsafe_data_dir
-        ),
+        cache_dir=(TESTDATA_CACHE_DIR if worker_id == "master" else threadsafe_data_dir),
     )
 
 
@@ -126,9 +121,7 @@ def open_dataset(threadsafe_data_dir, worker_id):
         _yangtze_kwargs = {
             "branch": TESTDATA_BRANCH,
             "repo": TESTDATA_REPO_URL,
-            "cache_dir": (
-                TESTDATA_CACHE_DIR if worker_id == "master" else threadsafe_data_dir
-            ),
+            "cache_dir": (TESTDATA_CACHE_DIR if worker_id == "master" else threadsafe_data_dir),
         }
         xr_kwargs.setdefault("cache", True)
         xr_kwargs.setdefault("engine", "h5netcdf")
@@ -178,9 +171,7 @@ def fit_params(ts_stats, threadsafe_data_dir):
 def bad_netcdf(yangtze, tmp_path):
     fn = tmp_path / "bad_netcdf.nc"
 
-    salmon_file = yangtze.fetch(
-        "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
-    )
+    salmon_file = yangtze.fetch("raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc")
 
     # Test with scalar elevation. Should normally have a station dimension, but not always the case.
     with xr.open_dataset(salmon_file) as ds:
@@ -273,9 +264,7 @@ def gather_session_data(request, yangtze, worker_id):
             try:
                 flag.unlink()
             except FileNotFoundError:
-                logging.info(
-                    "Teardown race condition occurred: .data_written flag already removed. Lucky!"
-                )
+                logging.info("Teardown race condition occurred: .data_written flag already removed. Lucky!")
                 pass
 
     request.addfinalizer(remove_data_written_flag)
