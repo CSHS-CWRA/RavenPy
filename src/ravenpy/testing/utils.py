@@ -32,7 +32,10 @@ import ravenpy
 try:
     import pooch
 except ImportError:
-    warnings.warn("The `pooch` library is not installed. The default cache directory for testing data will not be set.", stacklevel=2)
+    warnings.warn(
+        "The `pooch` library is not installed. The default cache directory for testing data will not be set.",
+        stacklevel=2,
+    )
     pooch = None
 
 LOGGER = logging.getLogger("ravenpy.testing.utils")
