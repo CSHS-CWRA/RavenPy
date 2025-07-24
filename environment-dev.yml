@@ -29,7 +29,7 @@ dependencies:
   - pyproj >=3.3.0
   - rasterio
   - rioxarray
-  - scipy >=1.11.0,<1.16.0 # See: https://github.com/statsmodels/statsmodels/issues/9584
+  - scipy >=1.11.0
   - shapely >=2.0.0
   - spotpy >=1.6.1
   - statsmodels >=0.14.2
