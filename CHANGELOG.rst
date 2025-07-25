@@ -2,25 +2,29 @@
 Changelog
 =========
 
-..
-    `Unreleased <https://github.com/CSHS-CWRA/RavenPy>`_ (latest)
-    -------------------------------------------------------------
+`Unreleased <https://github.com/CSHS-CWRA/RavenPy>`_ (latest)
+-------------------------------------------------------------
 
-    Contributors:
+Contributors: Trevor James Smith (:user:`Zeitsperre`).
 
-    Changes
-    ^^^^^^^
-    * No change.
+Changes
+^^^^^^^
+* `scipy` is no longer pinned below v1.16.0, as it is now compatible with modern `statsmodels` versions. (PR #525).
+* `black` and `isort` have been replaced with `ruff` for code formatting and linting. This change simplifies the development workflow and improves code consistency. (PR #525).
 
-    Fixes
-    ^^^^^
-    * No change.
+Fixes
+^^^^^
+* No change.
 
+Internal changes
+^^^^^^^^^^^^^^^^
+* Obsolete support code for handling older`owslib` versions has been removed from `ravenpy.utilities.geoserver`. (PR #525).
+* Code formatting and linting rules have been modified to use the newer `ruff` configurations. The formatting changes have been effected in the entire codebase. (PR #525).
 
 .. _changes_0.19.0:
 
-`v0.19.0 <https://github.com/CSHS-CWRA/ravenpy/tree/v0.19.0>`_ (2025-07-16)
---------------------------------------------------------------------------
+`v0.19.0 <https://github.com/CSHS-CWRA/RavenPy/tree/v0.19.0>`_ (2025-07-16)
+---------------------------------------------------------------------------
 
 New features
 ^^^^^^^^^^^^
