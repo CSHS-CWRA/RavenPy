@@ -7,17 +7,16 @@ Changelog
 
 Contributors: Trevor James Smith (:user:`Zeitsperre`).
 
-Changes
-^^^^^^^
-* `scipy` is no longer pinned below v1.16.0, as it is now compatible with modern `statsmodels` versions. (PR #525).
+Breaking changes
+^^^^^^^^^^^^^^^^
+* `scipy` is no longer pinned below v1.16.0, as newer `statsmodels` is now compatible with modern `scipy` versions. (PR #524)
 * `black` and `isort` have been replaced with `ruff` for code formatting and linting. This change simplifies the development workflow and improves code consistency. (PR #525).
-
-Fixes
-^^^^^
-* No change.
 
 Internal changes
 ^^^^^^^^^^^^^^^^
+* Updates the notebooks and re-runs all of them to ensure they are working with latest libraries. (PR #524)
+* Adds a few missing testing data files to the `pooch` ``registry.txt`` file that are necessary for running the notebooks. (PR #524)
+* Slightly adjusted CI workflows for security and behaviour improvements. (PR #524)
 * Obsolete support code for handling older`owslib` versions has been removed from `ravenpy.utilities.geoserver`. (PR #525).
 * Code formatting and linting rules have been modified to use the newer `ruff` configurations. The formatting changes have been effected in the entire codebase. (PR #525).
 
