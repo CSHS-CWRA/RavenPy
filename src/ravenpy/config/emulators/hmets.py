@@ -80,12 +80,8 @@ class HMETS(Config):
         {"SOIL[0]": P.TOPSOIL / 2, "SOIL[1]": P.PHREATIC / 2},
         alias="UniformInitialConditions",
     )
-    potential_melt_method: o.PotentialMeltMethod = Field(
-        "POTMELT_HMETS", alias="PotentialMeltMethod"
-    )
-    rain_snow_fraction: o.RainSnowFraction = Field(
-        "RAINSNOW_DATA", alias="RainSnowFraction"
-    )
+    potential_melt_method: o.PotentialMeltMethod = Field("POTMELT_HMETS", alias="PotentialMeltMethod")
+    rain_snow_fraction: o.RainSnowFraction = Field("RAINSNOW_DATA", alias="RainSnowFraction")
     evaporation: o.Evaporation = Field("PET_OUDIN", alias="Evaporation")
     catchment_route: o.CatchmentRoute = Field("ROUTE_DUMP", alias="CatchmentRoute")
     routing: o.Routing = Field("ROUTE_NONE", alias="Routing")
@@ -101,22 +97,14 @@ class HMETS(Config):
             p.Percolation(algo="PERC_LINEAR", source="SOIL[0]", to="SOIL[1]"),
             p.Overflow(algo="OVERFLOW_RAVEN", source="SOIL[1]", to="CONVOLUTION[1]"),
             p.SoilEvaporation(algo="SOILEVAP_ALL", source="SOIL[0]", to="ATMOSPHERE"),
-            p.Convolve(
-                algo="CONVOL_GAMMA", source="CONVOLUTION[0]", to="SURFACE_WATER"
-            ),
-            p.Convolve(
-                algo="CONVOL_GAMMA_2", source="CONVOLUTION[1]", to="SURFACE_WATER"
-            ),
+            p.Convolve(algo="CONVOL_GAMMA", source="CONVOLUTION[0]", to="SURFACE_WATER"),
+            p.Convolve(algo="CONVOL_GAMMA_2", source="CONVOLUTION[1]", to="SURFACE_WATER"),
             p.Baseflow(algo="BASE_LINEAR", source="SOIL[1]", to="SURFACE_WATER"),
         ]
     )
 
-    soil_classes: rc.SoilClasses = Field(
-        [{"name": "TOPSOIL"}, {"name": "PHREATIC"}], alias="SoilClasses"
-    )
-    land_use_classes: rc.LandUseClasses = Field(
-        [{"name": "FOREST", "forest_coverage": 1}], alias="LandUseClasses"
-    )
+    soil_classes: rc.SoilClasses = Field([{"name": "TOPSOIL"}, {"name": "PHREATIC"}], alias="SoilClasses")
+    land_use_classes: rc.LandUseClasses = Field([{"name": "FOREST", "forest_coverage": 1}], alias="LandUseClasses")
     vegetation_classes: rc.VegetationClasses = Field(
         [{"name": "FOREST", "max_ht": 4, "max_lai": 5, "max_leaf_cond": 5}],
         alias="VegetationClasses",

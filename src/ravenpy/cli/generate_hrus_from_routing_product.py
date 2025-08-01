@@ -5,6 +5,7 @@ import numpy as np
 
 from ravenpy.utilities import gis_import_error_message
 
+
 try:
     import geopandas as gpd
 except (ImportError, ModuleNotFoundError) as e:
@@ -100,9 +101,7 @@ def generate_hrus_from_routing_product(input_file, output):
                 # add a  new row in hruinfo
                 hru_info.loc[i_hru, sub_col] = np.nan
                 # copy geometry to hru
-                hru_info.loc[[i_hru], sub_col] = subbasin_info.loc[
-                    [subid], sub_col
-                ].values
+                hru_info.loc[[i_hru], sub_col] = subbasin_info.loc[[subid], sub_col].values
             else:
                 hru_info.loc[i_hru, sub_col] = subbasin_info[sub_col].values[i_sub]
 
@@ -131,10 +130,7 @@ def generate_hrus_from_routing_product(input_file, output):
             hru_info.loc[i_hru, "O_ID_1"] = 1
             hru_info.loc[i_hru, "O_ID_2"] = 1
             hru_info.loc[i_hru, "Landuse_ID"] = 1
-            hru_info.loc[i_hru, "HRU_Area"] = (
-                subbasin_info["BasArea"].values[i_sub]
-                - subbasin_info["LakeArea"].values[i_sub]
-            )
+            hru_info.loc[i_hru, "HRU_Area"] = subbasin_info["BasArea"].values[i_sub] - subbasin_info["LakeArea"].values[i_sub]
             hru_info.loc[i_hru, "LAND_USE_C"] = LAND_USE_C_LAND
             hru_info.loc[i_hru, "SOIL_PROF"] = SOIL_PROF_LAND
             hru_info.loc[i_hru, "VEG_C"] = VEG_C_LAND

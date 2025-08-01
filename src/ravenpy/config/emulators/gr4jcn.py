@@ -96,30 +96,20 @@ class GR4JCN(Config):
         alias="UniformInitialConditions",
     )
     evaporation: o.Evaporation = Field("PET_OUDIN", alias="Evaporation")
-    rain_snow_fraction: o.RainSnowFraction = Field(
-        "RAINSNOW_DINGMAN", alias="RainSnowFraction"
-    )
+    rain_snow_fraction: o.RainSnowFraction = Field("RAINSNOW_DINGMAN", alias="RainSnowFraction")
     soil_model: Union[int, SoilModel] = Field(4, alias="SoilModel")
     routing: o.Routing = Field("ROUTE_NONE", alias="Routing")
     catchment_route: o.CatchmentRoute = Field("ROUTE_DUMP", alias="CatchmentRoute")
-    potential_melt: o.PotentialMeltMethod = Field(
-        "POTMELT_DEGREE_DAY", alias="PotentialMeltMethod"
-    )
-    oro_temp_correct: o.OroTempCorrect = Field(
-        o.OroTempCorrect.SIMPLELAPSE, alias="OroTempCorrect"
-    )
-    oro_precip_correct: o.OroPrecipCorrect = Field(
-        o.OroPrecipCorrect.SIMPLELAPSE, alias="OroPrecipCorrect"
-    )
+    potential_melt: o.PotentialMeltMethod = Field("POTMELT_DEGREE_DAY", alias="PotentialMeltMethod")
+    oro_temp_correct: o.OroTempCorrect = Field(o.OroTempCorrect.SIMPLELAPSE, alias="OroTempCorrect")
+    oro_precip_correct: o.OroPrecipCorrect = Field(o.OroPrecipCorrect.SIMPLELAPSE, alias="OroPrecipCorrect")
 
     hydrologic_processes: Sequence[Union[Process, p.Conditional]] = Field(
         [
             p.Precipitation(algo="PRECIP_RAVEN", source="ATMOS_PRECIP", to="MULTIPLE"),
             p.SnowTempEvolve(algo="SNOTEMP_NEWTONS", source="SNOW_TEMP"),
             p.SnowBalance(algo="SNOBAL_CEMA_NIEGE", source="SNOW", to="PONDED_WATER"),
-            p.OpenWaterEvaporation(
-                algo="OPEN_WATER_EVAP", source="PONDED_WATER", to="ATMOSPHERE"
-            ),
+            p.OpenWaterEvaporation(algo="OPEN_WATER_EVAP", source="PONDED_WATER", to="ATMOSPHERE"),
             p.Infiltration(algo="INF_GR4J", source="PONDED_WATER", to="MULTIPLE"),
             p.SoilEvaporation(algo="SOILEVAP_GR4J", source="SOIL[0]", to="ATMOSPHERE"),
             p.Percolation(algo="PERC_GR4J", source="SOIL[0]", to="SOIL[2]"),
@@ -144,9 +134,7 @@ class GR4JCN(Config):
         alias="HydrologicProcesses",
     )
 
-    rain_snow_transition: RainSnowTransition = Field(
-        {"temp": 0, "delta": 1}, alias="RainSnowTransition"
-    )
+    rain_snow_transition: RainSnowTransition = Field({"temp": 0, "delta": 1}, alias="RainSnowTransition")
     global_parameter: dict[str, Sym] = Field(
         {
             "PRECIP_LAPSE": 0.0004,

@@ -47,9 +47,7 @@ def test_hindcast_climatology_esp(minimal_emulator, tmp_path, yangtze):
     }
 
     # Construct climpred HindcastEnsemble
-    salmon_file = yangtze.fetch(
-        "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
-    )
+    salmon_file = yangtze.fetch("raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc")
     qobs = xr.open_dataset(salmon_file).qobs
 
     qobs.name = "q_sim"

@@ -6,5 +6,5 @@ def test_defaults():
 
     ureg = pint.UnitRegistry()
 
-    for name, u in defaults.units.items():
+    for u in defaults.units.values():
         ureg(u)

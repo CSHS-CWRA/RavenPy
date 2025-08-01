@@ -8,9 +8,10 @@ import numpy as np
 
 from . import gis_import_error_message
 
+
 try:
     import rasterio
-    from osgeo.gdal import Dataset, DEMProcessing, UseExceptions
+    from osgeo.gdal import DEMProcessing, Dataset, UseExceptions
     from shapely.geometry import GeometryCollection, MultiPolygon, Polygon, shape
 
     UseExceptions()
@@ -20,6 +21,7 @@ except (ImportError, ModuleNotFoundError) as e:
 
 from ravenpy.utilities.geo import generic_raster_clip
 
+
 # See: https://kokoalberti.com/articles/geotiff-compression-optimization-guide/
 # or 'compress=deflate' or 'compress=zstd' or 'compress=lerc' or others
 GDAL_TIFF_COMPRESSION_OPTION = "compress=lzw"
@@ -28,7 +30,8 @@ LOGGER = logging.getLogger("RavenPy")
 
 
 def geom_prop(geom: Union[Polygon, MultiPolygon, GeometryCollection]) -> dict:
-    """Return a dictionary of geometry properties.
+    """
+    Return a dictionary of geometry properties.
 
     Parameters
     ----------
@@ -65,7 +68,8 @@ def dem_prop(
     geom: Union[Polygon, MultiPolygon, list[Union[Polygon, MultiPolygon]]] = None,
     directory: Optional[Union[str, Path]] = None,
 ) -> dict:
-    """Return raster properties for each geometry.
+    """
+    Return raster properties for each geometry.
 
     This
 
@@ -84,17 +88,9 @@ def dem_prop(
         Dictionary storing mean elevation [m], slope [deg] and aspect [deg].
     """
     fns = dict()
-    fns["dem"] = (
-        tempfile.NamedTemporaryFile(
-            prefix="dem", suffix=".tiff", dir=directory, delete=False
-        ).name
-        if geom is not None
-        else dem
-    )
+    fns["dem"] = tempfile.NamedTemporaryFile(prefix="dem", suffix=".tiff", dir=directory, delete=False).name if geom is not None else dem
     for key in ["slope", "aspect"]:
-        fns[key] = tempfile.NamedTemporaryFile(
-            prefix=key, suffix=".tiff", dir=directory, delete=False
-        ).name
+        fns[key] = tempfile.NamedTemporaryFile(prefix=key, suffix=".tiff", dir=directory, delete=False).name
 
     # Clip to relevant area or read original raster
     if geom is None:
@@ -120,7 +116,8 @@ def gdal_slope_analysis(
     set_output: Optional[Union[str, Path]] = None,
     units: str = "degree",
 ) -> np.ndarray:
-    """Return the slope of the terrain from the DEM.
+    """
+    Return the slope of the terrain from the DEM.
 
     The slope is the magnitude of the gradient of the elevation.
 
@@ -178,7 +175,8 @@ def gdal_aspect_analysis(
     set_output: Union[str, Path, bool] = False,
     flat_values_are_zero: bool = False,
 ) -> Union[np.ndarray, Dataset]:
-    """Return the aspect of the terrain from the DEM.
+    """
+    Return the aspect of the terrain from the DEM.
 
     The aspect is the compass direction of the steepest slope (0: North, 90: East, 180: South, 270: West).
 
@@ -233,7 +231,8 @@ def gdal_aspect_analysis(
 
 
 def circular_mean_aspect(angles: np.ndarray) -> np.ndarray:
-    """Return the mean angular aspect based on circular arithmetic approach.
+    """
+    Return the mean angular aspect based on circular arithmetic approach.
 
     Parameters
     ----------

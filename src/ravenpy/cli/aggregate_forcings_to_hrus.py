@@ -92,18 +92,14 @@ def aggregate_forcings_to_hrus(
         cell_id = iweights_data[1]
         ilon = cell_id % nlon
         ilat = cell_id // nlon
-        weights_data_lon_lat_ids.append(
-            tuple([iweights_data[0], ilon, ilat, iweights_data[2]])
-        )
+        weights_data_lon_lat_ids.append(tuple([iweights_data[0], ilon, ilat, iweights_data[2]]))
     weights_data_lon_lat_ids = np.asarray(weights_data_lon_lat_ids)
 
     # create new NetCDF that will contain aggregated data of listed variables
 
     if not output_nc_file:
         input_nc_file_path = Path(input_nc_file)
-        output_nc_file_path = (
-            input_nc_file_path.parent / f"{input_nc_file_path.stem}_aggregated.nc"
-        )
+        output_nc_file_path = input_nc_file_path.parent / f"{input_nc_file_path.stem}_aggregated.nc"
     else:
         output_nc_file_path = Path(output_nc_file)
 
@@ -170,9 +166,7 @@ def aggregate_forcings_to_hrus(
 
         if len(hrus) != nHRU:
             # should really never happen
-            raise ValueError(
-                "Number of weights found in grid weights list is not matching the number indicated there by nHRUs"
-            )
+            raise ValueError("Number of weights found in grid weights list is not matching the number indicated there by nHRUs")
 
         # do actual aggregation
         agg_var = np.zeros([ntime, nHRU])
@@ -187,9 +181,7 @@ def aggregate_forcings_to_hrus(
             # --> weights need to be rescaled if NODATA values appear
             # --> transpose such that we can broadcast during rescaling later
             # --> shape = (ncells,ntime) with ncells = len(idx)
-            weights_nodata = np.transpose(
-                np.tile(weights_data_lon_lat_ids[idx, 3], (ntime, 1))
-            )
+            weights_nodata = np.transpose(np.tile(weights_data_lon_lat_ids[idx, 3], (ntime, 1)))
 
             # go through all time steps and zero out weights where grid cell is NODATA
             for iii, ii in enumerate(idx):
@@ -198,9 +190,7 @@ def aggregate_forcings_to_hrus(
                 idx_input[idx_lon_dim] = int(weights_data_lon_lat_ids[ii, 1]) - min_lon
                 idx_input[idx_lat_dim] = int(weights_data_lon_lat_ids[ii, 2]) - min_lat
 
-                weights_nodata[iii] = np.where(
-                    input_var_bb[tuple(idx_input)].mask, 0.0, weights_nodata[iii]
-                )
+                weights_nodata[iii] = np.where(input_var_bb[tuple(idx_input)].mask, 0.0, weights_nodata[iii])
 
             # rescale
             # --> columns where all grid cells are nan might cause a warning:
@@ -208,9 +198,7 @@ def aggregate_forcings_to_hrus(
             old_settings = np.seterr()
             np.seterr(invalid="ignore")
             # "nan_to_num" automatically converts NaN's to 0
-            weights_nodata = np.nan_to_num(
-                weights_nodata / np.sum(weights_nodata, axis=0)
-            )
+            weights_nodata = np.nan_to_num(weights_nodata / np.sum(weights_nodata, axis=0))
             np.seterr(**old_settings)  # reset to default
 
             # derive aggregate
@@ -226,14 +214,10 @@ def aggregate_forcings_to_hrus(
                 # )
 
                 # this makes sure to handle NODATA cells properly
-                agg_var[:, ihru] += (
-                    input_var_bb[tuple(idx_input)].data * weights_nodata[iii]
-                )
+                agg_var[:, ihru] += input_var_bb[tuple(idx_input)].data * weights_nodata[iii]
 
             # if all grid cells have weight 0.0 (i.e., all invalid) set value to NODATA
-            idx_t_all_cells_nodata = np.where(
-                np.sum(weights_nodata[:, :], axis=0) == 0.0
-            )
+            idx_t_all_cells_nodata = np.where(np.sum(weights_nodata[:, :], axis=0) == 0.0)
             if len(idx_t_all_cells_nodata[0]) > 0:
                 # only if such cells are found
                 # otherwise "input_var.missing_value" might not even exist
@@ -258,10 +242,7 @@ def aggregate_forcings_to_hrus(
 
     if not output_weight_file:
         input_weight_file_path = Path(input_weight_file)
-        output_weight_file_path = (
-            input_weight_file_path.parent
-            / f"{input_weight_file_path.stem}_aggregated.rvt"
-        )
+        output_weight_file_path = input_weight_file_path.parent / f"{input_weight_file_path.stem}_aggregated.rvt"
     else:
         output_weight_file_path = Path(output_weight_file)
 

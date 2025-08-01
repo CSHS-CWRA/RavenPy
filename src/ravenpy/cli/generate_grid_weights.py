@@ -128,9 +128,7 @@ def generate_grid_weights(
 
     if not output:
         input_file_path = Path(input_file)
-        output_file_path = (
-            input_file_path.parent / f"{input_file_path.stem}_weights.rvt"
-        )
+        output_file_path = input_file_path.parent / f"{input_file_path.stem}_weights.rvt"
     else:
         output_file_path = Path(output)
 

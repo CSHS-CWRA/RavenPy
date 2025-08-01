@@ -23,6 +23,7 @@ from ravenpy.config.commands import (
 from ravenpy.config.defaults import nc_attrs
 from ravenpy.config.rvs import Config
 
+
 P = dataclass(
     make_dataclass(
         "Params",
@@ -43,7 +44,8 @@ class LandHRU(HRU):
 
 
 class HRUs(rc.HRUs):
-    """HRUs command for GR4J.
+    """
+    HRUs command for GR4J.
 
     Pydantic is able to automatically detect if an HRU is Land or Lake if `hru_type` is provided.
     """
@@ -52,7 +54,8 @@ class HRUs(rc.HRUs):
 
 
 class SACSMA(Config):
-    """Sacramento - Soil Moisture Accounting model
+    """
+    Sacramento - Soil Moisture Accounting model
 
     References
     ----------
@@ -69,29 +72,19 @@ class SACSMA(Config):
     time_step: Union[float, str] = Field(1.0, alias="TimeStep")
     calendar: o.Calendar = Field("PROLEPTIC_GREGORIAN", alias="Calendar")
     routing: o.Routing = Field("ROUTE_NONE", alias="Routing")
-    catchment_route: o.CatchmentRoute = Field(
-        "ROUTE_GAMMA_CONVOLUTION", alias="CatchmentRouting"
-    )
+    catchment_route: o.CatchmentRoute = Field("ROUTE_GAMMA_CONVOLUTION", alias="CatchmentRouting")
     evaporation: o.Evaporation = Field(o.Evaporation.OUDIN, alias="Evaporation")
-    rain_snow_fraction: o.RainSnowFraction = Field(
-        o.RainSnowFraction.DATA, alias="RainSnowFraction"
-    )
-    potential_melt_method: o.PotentialMeltMethod = Field(
-        o.PotentialMeltMethod.DEGREE_DAY, alias="PotentialMeltMethod"
-    )
+    rain_snow_fraction: o.RainSnowFraction = Field(o.RainSnowFraction.DATA, alias="RainSnowFraction")
+    potential_melt_method: o.PotentialMeltMethod = Field(o.PotentialMeltMethod.DEGREE_DAY, alias="PotentialMeltMethod")
     soil_model: rc.SoilModel = Field(7, alias="SoilModel")
 
     hydrologic_processes: Sequence[Union[rc.Process, p.Conditional]] = Field(
         [
             p.SnowBalance(algo="SNOBAL_SIMPLE_MELT", source="SNOW", to="PONDED_WATER"),
             p.Precipitation(algo="RAVEN_DEFAULT", source="ATMOS_PRECIP", to="MULTIPLE"),
-            p.SoilEvaporation(
-                algo="SOILEVAP_SACSMA", source="MULTIPLE", to="ATMOSPHERE"
-            ),
+            p.SoilEvaporation(algo="SOILEVAP_SACSMA", source="MULTIPLE", to="ATMOSPHERE"),
             p.SoilBalance(algo="SOILBAL_SACSMA", source="MULTIPLE", to="MULTIPLE"),
-            p.OpenWaterEvaporation(
-                algo="OPEN_WATER_RIPARIAN", source="SURFACE_WATER", to="ATMOSPHERE"
-            ),
+            p.OpenWaterEvaporation(algo="OPEN_WATER_RIPARIAN", source="SURFACE_WATER", to="ATMOSPHERE"),
         ],
         alias="HydrologicProcesses",
     )

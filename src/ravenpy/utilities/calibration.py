@@ -21,7 +21,8 @@ class SpotSetup:
         high: Union[Params, Sequence],
         workdir: Optional[Union[Path, str]] = None,
     ):
-        """Class to configure spotpy with Raven emulators.
+        """
+        Class to configure spotpy with Raven emulators.
 
         Parameters
         ----------
@@ -35,19 +36,14 @@ class SpotSetup:
             Work directory. If None, a temporary directory will be created.
         """
         if not config.is_symbolic:
-            raise ValueError(
-                "config should be a symbolic configuration, where params are not set to their numerical "
-                "values."
-            )
+            raise ValueError("config should be a symbolic configuration, where params are not set to their numerical values.")
 
         self.config = config
         self.path = Path(workdir or tempfile.mkdtemp())
         self.diagnostics = None
 
         if config.suppress_output is not True:
-            warnings.warn(
-                "Add the `SuppressOutput` command to the configuration to reduce IO."
-            )
+            warnings.warn("Add the `SuppressOutput` command to the configuration to reduce IO.", stacklevel=2)
 
         if config.evaluation_metrics is None:
             raise AttributeError(":EvaluationMetrics is undefined.")
@@ -87,7 +83,8 @@ class SpotSetup:
 
     @staticmethod
     def evaluation():
-        """Return the observation.
+        """
+        Return the observation.
 
         Since Raven computes the objective function itself, we simply return a placeholder.
         """
@@ -114,14 +111,12 @@ class SpotSetup:
 
     # FIXME: Verify that this function is correct
     def objectivefunction(self, evaluation, simulation):  # noqa: F841
-        """Return the objective function.
+        """
+        Return the objective function.
 
         Note that we short-circuit the evaluation and simulation entries, since the objective function has already
         been computed by Raven.
         """
-        out = [
-            self.diagnostics[f"DIAG_{m}"][0] * self._multipliers[m]
-            for m in self.metrics
-        ]
+        out = [self.diagnostics[f"DIAG_{m}"][0] * self._multipliers[m] for m in self.metrics]
 
         return out

@@ -204,7 +204,7 @@ jobs:
       - name: Report Coverage
         uses: coverallsapp/github-action@648a8eb78e6d50909eff900e4ec85cab4524a45b # v2.3.6
         with:
-          flag-name: run-conda_${{ matrix.python-version }}_${{ matrix.os }}
+          flag-name: run-${{ matrix.python-version }}-${{ matrix.os }}-conda
           parallel: true
 
   finish:

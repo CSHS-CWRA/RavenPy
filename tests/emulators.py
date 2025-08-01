@@ -15,6 +15,7 @@ from ravenpy.config.emulators import (
     Mohyse,
 )
 
+
 # Alternative names for variables in meteo forcing file
 alt_names = {
     "RAINFALL": "rain",
@@ -243,26 +244,26 @@ params = {
 @pytest.fixture(scope="session")
 def gr4jcn_config(yangtze, salmon_hru) -> (GR4JCN, params):
     """Return symbolic config and params for basic gr4jcn."""
+    salmon_file = yangtze.fetch("raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc")
 
-    salmon_file = yangtze.fetch(
-        "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
+    yield (
+        GR4JCN(
+            Gauge=[
+                rc.Gauge.from_nc(
+                    salmon_file,
+                    data_type=["RAINFALL", "TEMP_MIN", "TEMP_MAX", "SNOWFALL"],
+                    alt_names=alt_names,
+                    data_kwds={"ALL": {"elevation": salmon_hru["land"]["elevation"]}},
+                ),
+            ],
+            ObservationData=[rc.ObservationData.from_nc(salmon_file, alt_names="qobs")],
+            HRUs=[salmon_hru["land"]],
+            StartDate=dt.datetime(2000, 1, 1),
+            Duration=15,
+            EvaluationMetrics=("NASH_SUTCLIFFE",),
+        ),
+        params["GR4JCN"],
     )
-
-    yield GR4JCN(
-        Gauge=[
-            rc.Gauge.from_nc(
-                salmon_file,
-                data_type=["RAINFALL", "TEMP_MIN", "TEMP_MAX", "SNOWFALL"],
-                alt_names=alt_names,
-                data_kwds={"ALL": {"elevation": salmon_hru["land"]["elevation"]}},
-            ),
-        ],
-        ObservationData=[rc.ObservationData.from_nc(salmon_file, alt_names="qobs")],
-        HRUs=[salmon_hru["land"]],
-        StartDate=dt.datetime(2000, 1, 1),
-        Duration=15,
-        EvaluationMetrics=("NASH_SUTCLIFFE",),
-    ), params["GR4JCN"]
 
 
 @pytest.fixture(scope="session", params=names)
@@ -275,18 +276,12 @@ def symbolic_config(yangtze, salmon_hru, request):
     # Extra attributes for gauges
     gextras = {"ALL": {"elevation": salmon_hru["land"]["elevation"]}}
 
-    salmon_file = yangtze.fetch(
-        "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
-    )
+    salmon_file = yangtze.fetch("raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc")
 
     if name in ["HBVEC", "HYPR"]:
         with xr.open_dataset(salmon_file) as ds:
-            gextras["ALL"]["monthly_ave_temperature"] = (
-                ((ds.tmin + ds.tmax) / 2).groupby("time.month").mean().values.tolist()
-            )
-            gextras["ALL"]["monthly_ave_evaporation"] = (
-                ds.pet.groupby("time.month").mean().values.tolist()
-            )
+            gextras["ALL"]["monthly_ave_temperature"] = ((ds.tmin + ds.tmax) / 2).groupby("time.month").mean().values.tolist()
+            gextras["ALL"]["monthly_ave_evaporation"] = ds.pet.groupby("time.month").mean().values.tolist()
 
     # Extra attributes for emulator
     if name in ["CanadianShield", "HYPR", "SACSMA", "Blended"]:
@@ -304,22 +299,25 @@ def symbolic_config(yangtze, salmon_hru, request):
         hrus = [salmon_hru["land"], salmon_hru["land"]]
         extras["SuppressOutput"] = True
 
-    yield name, cls(
-        Gauge=[
-            rc.Gauge.from_nc(
-                salmon_file,
-                data_type=data_type,
-                alt_names=alt_names,
-                data_kwds=gextras,
-            ),
-        ],
-        ObservationData=[rc.ObservationData.from_nc(salmon_file, alt_names="qobs")],
-        HRUs=hrus,
-        StartDate=dt.datetime(2000, 1, 1),
-        EndDate=dt.datetime(2002, 1, 1),
-        RunName="test",
-        EvaluationMetrics=("NASH_SUTCLIFFE",),
-        **extras,
+    yield (
+        name,
+        cls(
+            Gauge=[
+                rc.Gauge.from_nc(
+                    salmon_file,
+                    data_type=data_type,
+                    alt_names=alt_names,
+                    data_kwds=gextras,
+                ),
+            ],
+            ObservationData=[rc.ObservationData.from_nc(salmon_file, alt_names="qobs")],
+            HRUs=hrus,
+            StartDate=dt.datetime(2000, 1, 1),
+            EndDate=dt.datetime(2002, 1, 1),
+            RunName="test",
+            EvaluationMetrics=("NASH_SUTCLIFFE",),
+            **extras,
+        ),
     )
 
 
@@ -336,9 +334,7 @@ def minimal_emulator(yangtze, salmon_hru):
     cls = configs["HMETS"]
     data_type = ["RAINFALL", "TEMP_MIN", "TEMP_MAX", "SNOWFALL", "PET"]
 
-    salmon_file = yangtze.fetch(
-        "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
-    )
+    salmon_file = yangtze.fetch("raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc")
 
     yield cls(
         params=params["HMETS"],

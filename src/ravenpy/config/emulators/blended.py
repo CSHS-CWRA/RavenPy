@@ -23,6 +23,7 @@ from ravenpy.config.commands import (
 from ravenpy.config.defaults import nc_attrs
 from ravenpy.config.rvs import Config
 
+
 P = dataclass(
     make_dataclass(
         "Params",
@@ -44,7 +45,8 @@ class LandHRU(HRU):
 
 
 class HRUs(rc.HRUs):
-    """HRUs command for GR4J.
+    """
+    HRUs command for GR4J.
 
     Pydantic is able to automatically detect if an HRU is Land or Lake if `hru_type` is provided.
     """
@@ -53,7 +55,8 @@ class HRUs(rc.HRUs):
 
 
 class Blended(Config):
-    """Blended hydrological model for blending outputs from different submodules.
+    """
+    Blended hydrological model for blending outputs from different submodules.
 
     References
     ----------
@@ -82,12 +85,8 @@ class Blended(Config):
     routing: o.Routing = Field("ROUTE_NONE", alias="Routing")
     catchment_route: o.CatchmentRoute = Field("ROUTE_DUMP", alias="CatchmentRouting")
     evaporation: o.Evaporation = Field(o.Evaporation.OUDIN, alias="Evaporation")
-    rain_snow_fraction: o.RainSnowFraction = Field(
-        o.RainSnowFraction.HBV, alias="RainSnowFraction"
-    )
-    potential_melt_method: o.PotentialMeltMethod = Field(
-        o.PotentialMeltMethod.HMETS, alias="PotentialMeltMethod"
-    )
+    rain_snow_fraction: o.RainSnowFraction = Field(o.RainSnowFraction.HBV, alias="RainSnowFraction")
+    potential_melt_method: o.PotentialMeltMethod = Field(o.PotentialMeltMethod.HMETS, alias="PotentialMeltMethod")
     soil_model: rc.SoilModel = Field(3, alias="SoilModel")
 
     hydrologic_processes: Sequence[Union[rc.Process, p.ProcessGroup]] = Field(
@@ -95,15 +94,9 @@ class Blended(Config):
             p.Precipitation(algo="RAVEN_DEFAULT", source="ATMOS_PRECIP", to="MULTIPLE"),
             p.ProcessGroup(
                 p=[
-                    p.Infiltration(
-                        algo="INF_HMETS", source="PONDED_WATER", to="MULTIPLE"
-                    ),
-                    p.Infiltration(
-                        algo="INF_VIC_ARNO", source="PONDED_WATER", to="MULTIPLE"
-                    ),
-                    p.Infiltration(
-                        algo="INF_HBV", source="PONDED_WATER", to="MULTIPLE"
-                    ),
+                    p.Infiltration(algo="INF_HMETS", source="PONDED_WATER", to="MULTIPLE"),
+                    p.Infiltration(algo="INF_VIC_ARNO", source="PONDED_WATER", to="MULTIPLE"),
+                    p.Infiltration(algo="INF_HBV", source="PONDED_WATER", to="MULTIPLE"),
                 ],
                 params=[P.R01, P.R02],
             ),
@@ -116,9 +109,7 @@ class Blended(Config):
                         to="SURFACE_WATER",
                     ),
                     p.Baseflow(algo="BASE_VIC", source="SOIL[0]", to="SURFACE_WATER"),
-                    p.Baseflow(
-                        algo="BASE_TOPMODEL", source="SOIL[0]", to="SURFACE_WATER"
-                    ),
+                    p.Baseflow(algo="BASE_TOPMODEL", source="SOIL[0]", to="SURFACE_WATER"),
                 ],
                 params=(P.R03, P.R04),
             ),
@@ -127,21 +118,13 @@ class Blended(Config):
             p.Percolation(algo="PERC_LINEAR", source="SOIL[1]", to="SOIL[2]"),
             p.ProcessGroup(
                 p=[
-                    p.SoilEvaporation(
-                        algo="SOILEVAP_ALL", source="SOIL[0]", to="ATMOSPHERE"
-                    ),
-                    p.SoilEvaporation(
-                        algo="SOILEVAP_TOPMODEL", source="SOIL[0]", to="ATMOSPHERE"
-                    ),
+                    p.SoilEvaporation(algo="SOILEVAP_ALL", source="SOIL[0]", to="ATMOSPHERE"),
+                    p.SoilEvaporation(algo="SOILEVAP_TOPMODEL", source="SOIL[0]", to="ATMOSPHERE"),
                 ],
                 params=(P.R05,),
             ),
-            p.Convolve(
-                algo="CONVOL_GAMMA", source="CONVOLUTION[0]", to="SURFACE_WATER"
-            ),
-            p.Convolve(
-                algo="CONVOL_GAMMA_2", source="CONVOLUTION[1]", to="SURFACE_WATER"
-            ),
+            p.Convolve(algo="CONVOL_GAMMA", source="CONVOLUTION[0]", to="SURFACE_WATER"),
+            p.Convolve(algo="CONVOL_GAMMA_2", source="CONVOLUTION[1]", to="SURFACE_WATER"),
             p.ProcessGroup(
                 p=[
                     p.Baseflow(
@@ -149,9 +132,7 @@ class Blended(Config):
                         source="SOIL[1]",
                         to="SURFACE_WATER",
                     ),
-                    p.Baseflow(
-                        algo="BASE_POWER_LAW", source="SOIL[1]", to="SURFACE_WATER"
-                    ),
+                    p.Baseflow(algo="BASE_POWER_LAW", source="SOIL[1]", to="SURFACE_WATER"),
                 ],
                 params=[
                     P.R06,
@@ -159,12 +140,8 @@ class Blended(Config):
             ),
             p.ProcessGroup(
                 p=[
-                    p.SnowBalance(
-                        algo="SNOBAL_HMETS", source="MULTIPLE", to="MULTIPLE"
-                    ),
-                    p.SnowBalance(
-                        algo="SNOBAL_SIMPLE_MELT", source="SNOW", to="PONDED_WATER"
-                    ),
+                    p.SnowBalance(algo="SNOBAL_HMETS", source="MULTIPLE", to="MULTIPLE"),
+                    p.SnowBalance(algo="SNOBAL_SIMPLE_MELT", source="SNOW", to="PONDED_WATER"),
                     p.SnowBalance(algo="SNOBAL_HBV", source="MULTIPLE", to="MULTIPLE"),
                 ],
                 params=(P.R07, P.R08),
@@ -314,12 +291,8 @@ class Blended(Config):
         },
         alias="VegetationParameterList",
     )
-    seasonal_relative_lai: rc.SeasonalRelativeLAI = Field(
-        rc.SeasonalRelativeLAI(), alias="SeasonalRelativeLAI"
-    )
-    seasonal_relative_height: rc.SeasonalRelativeHeight = Field(
-        rc.SeasonalRelativeHeight(), alias="SeasonalRelativeHeight"
-    )
+    seasonal_relative_lai: rc.SeasonalRelativeLAI = Field(rc.SeasonalRelativeLAI(), alias="SeasonalRelativeLAI")
+    seasonal_relative_height: rc.SeasonalRelativeHeight = Field(rc.SeasonalRelativeHeight(), alias="SeasonalRelativeHeight")
 
     hru_state_variable_table: rc.HRUStateVariableTable = Field(
         [

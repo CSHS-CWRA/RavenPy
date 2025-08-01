@@ -42,9 +42,7 @@ class TestRemoteFileAccess:
         strict=False,
     )
     def test_get_file_default_cache(self):
-        file = yangtze(branch=self.branch).fetch(
-            fname="ostrich-hbvec/raven-hbvec-salmon.rvi"
-        )
+        file = yangtze(branch=self.branch).fetch(fname="ostrich-hbvec/raven-hbvec-salmon.rvi")
 
         assert Path(default_testdata_cache).exists()
         assert Path(file).is_file()

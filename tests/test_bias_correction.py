@@ -7,13 +7,9 @@ from xarray.coding.calendar_ops import convert_calendar
 @pytest.mark.skip(reason="This test is not testing Raven functionality")
 class TestBiasCorrect:
     def test_bias_correction(self, open_dataset):
-        ds_fut_sub = open_dataset(
-            "cmip5/nasa_nex-gddp-1.0_day_inmcm4_historical+rcp85_nex-gddp_2070-2071_subset.nc"
-        )
+        ds_fut_sub = open_dataset("cmip5/nasa_nex-gddp-1.0_day_inmcm4_historical+rcp85_nex-gddp_2070-2071_subset.nc")
 
-        ds_ref_sub = open_dataset(
-            "cmip5/nasa_nex-gddp-1.0_day_inmcm4_historical+rcp45_nex-gddp_1971-1972_subset.nc"
-        )
+        ds_ref_sub = open_dataset("cmip5/nasa_nex-gddp-1.0_day_inmcm4_historical+rcp45_nex-gddp_1971-1972_subset.nc")
         ds_ref_sub = convert_calendar(ds_ref_sub, "noleap")
 
         ds_his_sub = open_dataset("nrcan/NRCAN_1971-1972_subset.nc")

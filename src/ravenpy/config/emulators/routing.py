@@ -30,7 +30,8 @@ class LakeHRU(HRU):
 
 
 class HRUs(rc.HRUs):
-    """HRUs command for GR4J.
+    """
+    HRUs command for GR4J.
 
     Pydantic is able to automatically detect if an HRU is Land or Lake if `hru_type` is provided.
     """
@@ -50,14 +51,12 @@ class BasicRoute(Config):
     catchment_route: o.CatchmentRoute = Field(
         "ROUTE_DUMP",
         alias="CatchmentRoute",
-        description="Catchment routing method, "
-        "used to convey water from the catchment tributaries and rivulets to the subbasin outlets.",
+        description="Catchment routing method, used to convey water from the catchment tributaries and rivulets to the subbasin outlets.",
     )
     routing: o.Routing = Field(
         "ROUTE_DIFFUSIVE_WAVE",
         alias="Routing",
-        description="Channel routing method which is used to "
-        "transport water from upstream to downstream within the main subbasin channels.",
+        description="Channel routing method which is used to transport water from upstream to downstream within the main subbasin channels.",
     )
     precip_icept_frac: o.PrecipIceptFract = Field(
         "PRECIP_ICEPT_NONE",
@@ -72,14 +71,10 @@ class BasicRoute(Config):
         description="Estimation of the potential snow melt. In this routing model, snow melt processes are not "
         "relevant, thus using DEFAULT POTMELT_NONE method.",
     )
-    soil_model: SoilModel = Field(
-        1, alias="SoilModel", description="Single soil layer structure"
-    )
+    soil_model: SoilModel = Field(1, alias="SoilModel", description="Single soil layer structure")
     hydrologic_processes: Sequence[Process] = Field(
         [
-            p.Precipitation(
-                algo="PRECIP_RAVEN", source="ATMOS_PRECIP", to="PONDED_WATER"
-            ),
+            p.Precipitation(algo="PRECIP_RAVEN", source="ATMOS_PRECIP", to="PONDED_WATER"),
             p.Flush(source="PONDED_WATER", to="SURFACE_WATER"),
         ],
         alias="HydrologicProcesses",

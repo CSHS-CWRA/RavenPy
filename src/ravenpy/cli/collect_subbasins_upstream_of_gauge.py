@@ -5,6 +5,7 @@ import click
 
 from ravenpy.utilities import gis_import_error_message
 
+
 try:
     import geopandas as gpd
 except (ImportError, ModuleNotFoundError) as e:
@@ -68,6 +69,4 @@ def collect_subbasins_upstream_of_gauge(
 
     gpd.GeoDataFrame(gdf_upstream).to_file(output_file)
 
-    click.echo(
-        f"Found {len(gdf_upstream)} upstream subbasins, saved them in {output_file}"
-    )
+    click.echo(f"Found {len(gdf_upstream)} upstream subbasins, saved them in {output_file}")

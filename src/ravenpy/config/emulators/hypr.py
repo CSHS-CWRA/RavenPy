@@ -23,6 +23,7 @@ from ravenpy.config.commands import (
 from ravenpy.config.defaults import nc_attrs
 from ravenpy.config.rvs import Config
 
+
 P = dataclass(
     make_dataclass(
         "Params",
@@ -43,7 +44,8 @@ class LandHRU(HRU):
 
 
 class HRUs(rc.HRUs):
-    """HRUs command for GR4J.
+    """
+    HRUs command for GR4J.
 
     Pydantic is able to automatically detect if an HRU is Land or Lake if `hru_type` is provided.
     """
@@ -106,37 +108,17 @@ class HYPR(Config):
     time_step: Union[float, str] = Field(1.0, alias="TimeStep")
     calendar: o.Calendar = Field("PROLEPTIC_GREGORIAN", alias="Calendar")
     routing: o.Routing = Field("ROUTE_NONE", alias="Routing")
-    catchment_route: o.CatchmentRoute = Field(
-        "ROUTE_TRI_CONVOLUTION", alias="CatchmentRouting"
-    )
+    catchment_route: o.CatchmentRoute = Field("ROUTE_TRI_CONVOLUTION", alias="CatchmentRouting")
     evaporation: o.Evaporation = Field(o.Evaporation.FROMMONTHLY, alias="Evaporation")
-    ow_evaporation: o.Evaporation = Field(
-        o.Evaporation.FROMMONTHLY, alias="OW_Evaporation"
-    )
-    rain_snow_fraction: o.RainSnowFraction = Field(
-        o.RainSnowFraction.HBV, alias="RainSnowFraction"
-    )
-    sw_radiation_method: o.SWRadiationMethod = Field(
-        o.SWRadiationMethod.DEFAULT, alias="SWRadiationMethod"
-    )
-    sw_cloud_correct: o.SWCloudCorrect = Field(
-        o.SWCloudCorrect.NONE, alias="SWCloudCorrect"
-    )
-    sw_canopy_correct: o.SWCanopyCorrect = Field(
-        o.SWCanopyCorrect.NONE, alias="SWCanopyCorrect"
-    )
-    lw_radiation_method: o.LWRadiationMethod = Field(
-        o.LWRadiationMethod.DEFAULT, alias="LWRadiationMethod"
-    )
-    potential_melt_method: o.PotentialMeltMethod = Field(
-        o.PotentialMeltMethod.HBV, alias="PotentialMeltMethod"
-    )
-    cloud_cover_method: o.CloudCoverMethod = Field(
-        o.CloudCoverMethod.NONE, alias="CloudCoverMethod"
-    )
-    precip_icept_frac: o.PrecipIceptFract = Field(
-        o.PrecipIceptFract.USER, alias="PrecipIceptFrac"
-    )
+    ow_evaporation: o.Evaporation = Field(o.Evaporation.FROMMONTHLY, alias="OW_Evaporation")
+    rain_snow_fraction: o.RainSnowFraction = Field(o.RainSnowFraction.HBV, alias="RainSnowFraction")
+    sw_radiation_method: o.SWRadiationMethod = Field(o.SWRadiationMethod.DEFAULT, alias="SWRadiationMethod")
+    sw_cloud_correct: o.SWCloudCorrect = Field(o.SWCloudCorrect.NONE, alias="SWCloudCorrect")
+    sw_canopy_correct: o.SWCanopyCorrect = Field(o.SWCanopyCorrect.NONE, alias="SWCanopyCorrect")
+    lw_radiation_method: o.LWRadiationMethod = Field(o.LWRadiationMethod.DEFAULT, alias="LWRadiationMethod")
+    potential_melt_method: o.PotentialMeltMethod = Field(o.PotentialMeltMethod.HBV, alias="PotentialMeltMethod")
+    cloud_cover_method: o.CloudCoverMethod = Field(o.CloudCoverMethod.NONE, alias="CloudCoverMethod")
+    precip_icept_frac: o.PrecipIceptFract = Field(o.PrecipIceptFract.USER, alias="PrecipIceptFrac")
     soil_model: rc.SoilModel = Field(3, alias="SoilModel")
 
     hydrologic_processes: Sequence[Union[rc.Process, p.Conditional]] = Field(
@@ -144,9 +126,7 @@ class HYPR(Config):
             p.SnowRefreeze(algo="FREEZE_DEGREE_DAY", source="SNOW_LIQ", to="SNOW"),
             p.Precipitation(algo="PRECIP_RAVEN", source="ATMOS_PRECIP", to="MULTIPLE"),
             p.CanopyEvaporation(algo="CANEVP_ALL", source="CANOPY", to="ATMOSPHERE"),
-            p.CanopySublimation(
-                algo="CANEVP_ALL", source="CANOPY_SNOW", to="ATMOSPHERE"
-            ),
+            p.CanopySublimation(algo="CANEVP_ALL", source="CANOPY_SNOW", to="ATMOSPHERE"),
             p.SnowBalance(algo="SNOBAL_SIMPLE_MELT", source="SNOW", to="PONDED_WATER"),
             p.Infiltration(algo="INF_HBV", source="PONDED_WATER", to="MULTIPLE"),
             p.Flush(algo="RAVEN_DEFAULT", source="SURFACE_WATER", to="PONDED_WATER"),

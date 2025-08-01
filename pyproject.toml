@@ -1,5 +1,5 @@
 [build-system]
-requires = ["flit_core >=3.10.1,<4"]
+requires = ["flit_core >=3.11.0,<4"]
 build-backend = "flit_core.buildapi"
 
 [project]
@@ -31,14 +31,15 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: CPython",
   "Topic :: Scientific/Engineering :: Atmospheric Science",
   "Topic :: Scientific/Engineering :: GIS",
-  "Topic :: Scientific/Engineering :: Hydrology"
+  "Topic :: Scientific/Engineering :: Hydrology",
+  "Typing :: Typed"
 ]
 dynamic = ["description", "version"]
 dependencies = [
   "cftime >=1.4.1",
   # cf-xarray is differently named on conda-forge
   "cf-xarray >=0.9.3",
-  "click >=8.0.0",
+  "click >=8.2.0",
   "climpred >=2.4.0",
   "dask >=2024.8.1",
   "h5netcdf >=1.3.0",
@@ -66,15 +67,14 @@ dev = [
   # Dev tools and testing
   "black ==25.1.0",
   "blackdoc ==0.4.1",
-  "bump-my-version >=0.32.1",
+  "bump-my-version >=1.2.0",
   "coverage >=7.5.0",
   "filelock >=3.14.0",
-  "flake8 >=7.1.1",
+  "flake8 >=7.2.0",
   "flake8-rst-docstrings >=0.3.0",
-  "flit >=3.10.1,<4.0",
+  "flit >=3.11.0,<4.0",
   "holoviews",
   "hvplot",
-  "isort ==6.0.1",
   "mypy >=1.14.1",
   "nbval",
   "numpydoc >=1.8.0",
@@ -85,8 +85,8 @@ dev = [
   "pytest >=8.3.2",
   "pytest-cov >=5.0.0",
   "pytest-xdist >=3.2.0",
-  "ruff >=0.9.0",
-  "tox >=4.24.1",
+  "ruff >=0.12.0",
+  "tox >=4.26.0",
   "watchdog >=4.0.0"
 ]
 docs = [
@@ -161,14 +161,6 @@ ravenpy = "ravenpy.cli:main"
 
 [tool]
 
-[tool.black]
-target-version = [
-  "py310",
-  "py311",
-  "py312",
-  "py313"
-]
-
 [tool.bumpversion]
 current_version = "0.19.1-dev.0"
 commit = true
@@ -181,6 +173,34 @@ serialize = [
   "{major}.{minor}.{patch}-{release}.{build}",
   "{major}.{minor}.{patch}"
 ]
+
+[[tool.bumpversion.files]]
+filename = "CHANGELOG.rst"
+include_bumps = ["release"]
+search = """\
+`Unreleased <https://github.com/CSHS-CWRA/RavenPy>`_ (latest)
+-------------------------------------------------------------
+"""
+replace = """\
+..
+    `Unreleased <https://github.com/CSHS-CWRA/RavenPy>`_ (latest)
+    -------------------------------------------------------------
+
+    Contributors:
+
+    Changes
+    ^^^^^^^
+    * No change.
+
+    Fixes
+    ^^^^^
+    * No change.
+
+.. _changes_{new_version}:
+
+`v{new_version} <https://github.com/CSHS-CWRA/RavenPy/tree/v{new_version}>`_ ({now:%Y-%m-%d})
+-------------------------------------------------------------------------
+"""
 
 [[tool.bumpversion.files]]
 filename = "src/ravenpy/__init__.py"
@@ -258,10 +278,6 @@ exclude = [
   "docs/apidoc/ravenpy*.rst"
 ]
 
-[tool.isort]
-profile = "black"
-py_version = "310"
-
 [tool.mypy]
 plugins = [
   "pydantic.mypy"
@@ -331,8 +347,9 @@ warn_untyped_fields = true
 [tool.pytest.ini_options]
 minversion = "7.0"
 addopts = [
-  "--verbose",
+  "-ra",
   "--color=yes",
+  "--verbose",
   "--strict-config",
   "--strict-markers",
   "--tb=native",
@@ -363,18 +380,20 @@ exclude = [
   ".eggs",
   ".git",
   "build",
-  "docs",
-  "tests"
+  "docs"
 ]
 
 [tool.ruff.format]
-quote-style = "double"
+docstring-code-format = true
+docstring-code-line-length = "dynamic"
 indent-style = "space"
+quote-style = "double"
 skip-magic-trailing-comma = false
 line-ending = "auto"
 
 [tool.ruff.lint]
 extend-select = [
+  "D213", # multi-line-summary-second-line
   "RUF022" # unsorted-dunder-all
 ]
 ignore = [
@@ -392,11 +411,14 @@ ignore = [
 ]
 preview = true
 select = [
+  "B", # bugbear
   "BLE", # blind-except
   "D", # docstrings
   "E", # pycodestyle errors
+  "F", # pyflakes
   "FLY002", # static-join-to-fstring
   "G", # logging-format
+  "I", # imports
   "N", # naming conventions
   "PERF", # iterator performance
   "PTH", # pathlib
@@ -423,7 +445,7 @@ max-complexity = 15
 [tool.ruff.lint.per-file-ignores]
 "docs/**" = ["E402"]
 "src/ravenpy/**/__init__.py" = ["F401", "F403"]
-"tests/**" = ["D100", "D101", "D102", "D103", "S101"]
+"tests/**" = ["D100", "D101", "D102", "D103", "S101", "N"]
 
 [tool.ruff.lint.pycodestyle]
 max-doc-length = 180

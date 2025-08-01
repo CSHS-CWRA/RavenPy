@@ -1,5 +1,6 @@
 import logging
 import os
+import pathlib
 import shutil
 import sys
 
@@ -12,15 +13,11 @@ def filter_raven():
     assert real_tool is not None, "raven must be installed for this test"
 
     # Get the directory the conda tool is in
-    conda_tool_dir = os.path.dirname(real_tool)
+    conda_tool_dir = pathlib.Path(real_tool).parent
 
     # Create a new PATH that includes everything *except* the conda env's tool directory
     filtered_path = os.pathsep.join(
-        [
-            p
-            for p in os.environ["PATH"].split(os.pathsep)
-            if os.path.abspath(p) != os.path.abspath(conda_tool_dir)
-        ]
+        [p for p in os.environ["PATH"].split(os.pathsep) if pathlib.Path(p).resolve() != pathlib.Path(conda_tool_dir).resolve()]
     )
 
     return filtered_path
@@ -35,10 +32,8 @@ def hide_module(monkeypatch):
 
 
 class TestMissing:
-
     def test_missing_raven_binary(self, monkeypatch, tmpdir, hide_module):
         """Test for behaviour when binary is missing from the system path."""
-
         # Set up a temporary directory to simulate the absence of the raven binary
         filtered_path = filter_raven()
         monkeypatch.setenv("PATH", f"{tmpdir}{os.pathsep}{filtered_path}")
@@ -56,9 +51,7 @@ class TestMissing:
         # Now the tool should be "missing"
         # if running from tox in a conda environment, the raven binary is likely to be present
         if os.environ.get("CONDA_PREFIX") and os.environ.get("TOX"):
-            logging.info(
-                "Running in a development conda environment with tox. Raven is expected to be present."
-            )
+            logging.info("Running in a development conda environment with tox. Raven is expected to be present.")
         else:
             assert shutil.which("raven") is None
 
@@ -67,7 +60,7 @@ class TestMissing:
             import ravenpy  # noqa: F401
 
         # Check that setting the RAVENPY_RAVEN_BINARY_PATH environment variable works
-        monkeypatch.setenv("RAVENPY_RAVEN_BINARY_PATH", f"some/path/to/raven")
+        monkeypatch.setenv("RAVENPY_RAVEN_BINARY_PATH", "some/path/to/raven")
         import ravenpy
 
         assert ravenpy.RAVEN_EXEC_PATH == "some/path/to/raven"

@@ -18,10 +18,7 @@ def test_ensemble_reader(gr4jcn_config, tmp_path):
     # space_agg="ENTIRE_WATERSHED")]
 
     # Run the model for each parameter set in `params`
-    runs = [
-        Emulator(conf.set_params(param), workdir=p / f"m{i}").run()
-        for i, param in enumerate(params)
-    ]
+    runs = [Emulator(conf.set_params(param), workdir=p / f"m{i}").run() for i, param in enumerate(params)]
 
     ens = EnsembleReader(runs=runs, dim="parameters")
     assert len(ens.hydrograph.parameters) == 2

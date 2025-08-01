@@ -14,6 +14,7 @@ from xarray import Dataset
 
 from ravenpy.utilities import gis_import_error_message
 
+
 try:
     import fiona
 except (ImportError, ModuleNotFoundError) as e:
@@ -23,9 +24,7 @@ except (ImportError, ModuleNotFoundError) as e:
 LOGGER = logging.getLogger("PYWPS")
 
 # Can be set at runtime with `$ env RAVENPY_THREDDS_URL=https://xx.yy.zz/geoserver/ ...`.
-THREDDS_URL = os.environ.get(
-    "RAVENPY_THREDDS_URL", "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/"
-)
+THREDDS_URL = os.environ.get("RAVENPY_THREDDS_URL", "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/")
 if not THREDDS_URL.endswith("/"):
     THREDDS_URL = f"{THREDDS_URL}/"
 
@@ -39,7 +38,8 @@ __all__ = [
 
 
 def get_hindcast_day(region_coll: fiona.Collection, date, climate_model="GEPS"):
-    """Generate a forecast dataset that can be used to run raven.
+    """
+    Generate a forecast dataset that can be used to run raven.
 
     Data comes from the CASPAR archive and must be aggregated such that each file
     contains forecast data for a single day, but for all forecast timesteps and
@@ -59,9 +59,7 @@ def get_CASPAR_dataset(  # noqa: N802
     date: dt.datetime,
     thredds: str = THREDDS_URL,
     directory: str = "dodsC/birdhouse/disk2/caspar/daily/",
-) -> tuple[
-    xr.Dataset, list[Union[Union[DatetimeIndex, Series, Timestamp, Timestamp], Any]]
-]:
+) -> tuple[xr.Dataset, list[Union[Union[DatetimeIndex, Series, Timestamp, Timestamp], Any]]]:
     """
     Return CASPAR dataset.
 
@@ -82,9 +80,7 @@ def get_CASPAR_dataset(  # noqa: N802
         The forecast dataset.
     """
     if thredds[-1] != "/":
-        warnings.warn(
-            "The thredds url should end with a slash. Appending it to the url."
-        )
+        warnings.warn("The thredds url should end with a slash. Appending it to the url.", stacklevel=2)
         thredds = f"{thredds}/"
 
     if climate_model == "GEPS":
@@ -112,9 +108,7 @@ def get_ECCC_dataset(  # noqa: N802
     climate_model: str,
     thredds: str = THREDDS_URL,
     directory: str = "dodsC/datasets/forecasts/eccc_geps/",
-) -> tuple[
-    Dataset, list[Union[Union[DatetimeIndex, Series, Timestamp, Timestamp], Any]]
-]:
+) -> tuple[Dataset, list[Union[Union[DatetimeIndex, Series, Timestamp, Timestamp], Any]]]:
     """
     Return latest GEPS forecast dataset.
 
@@ -133,9 +127,7 @@ def get_ECCC_dataset(  # noqa: N802
         The forecast dataset.
     """
     if thredds[-1] != "/":
-        warnings.warn(
-            "The thredds url should end with a slash. Appending it to the url."
-        )
+        warnings.warn("The thredds url should end with a slash. Appending it to the url.", stacklevel=2)
         thredds = f"{thredds}/"
 
     if climate_model == "GEPS":
@@ -162,7 +154,8 @@ def get_ECCC_dataset(  # noqa: N802
 def get_recent_ECCC_forecast(  # noqa: N802
     region_coll: fiona.Collection, climate_model: str = "GEPS"
 ) -> xr.Dataset:
-    """Generate a forecast dataset that can be used to run raven.
+    """
+    Generate a forecast dataset that can be used to run raven.
 
     Data comes from the ECCC datamart and collected daily. It is aggregated
     such that each file contains forecast data for a single day, but for all
@@ -197,7 +190,8 @@ def get_subsetted_forecast(
     times: Union[dt.datetime, xr.DataArray],
     is_caspar: bool,
 ) -> xr.Dataset:
-    """Get Subsetted Forecast.
+    """
+    Get Subsetted Forecast.
 
     This function takes a dataset, a region and the time sampling array and returns
     the subsetted values for the given region and times.
@@ -232,10 +226,7 @@ def get_subsetted_forecast(
 
     # Subset the data to the desired location (bounding box) and times
     ds = ds.where(
-        (ds.lon <= lon_max)
-        & (ds.lon >= lon_min)
-        & (ds.lat <= lat_max)
-        & (ds.lat >= lat_min),
+        (ds.lon <= lon_max) & (ds.lon >= lon_min) & (ds.lat <= lat_max) & (ds.lat >= lat_min),
         drop=True,
     ).sel(time=times)
 

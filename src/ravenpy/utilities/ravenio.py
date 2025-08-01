@@ -2,11 +2,12 @@
 
 import re
 from collections import OrderedDict
+from pathlib import Path
 from typing import Any
 
 
 # TODO: Implement section parser
-def parse_configuration(fn) -> dict[str, Any]:
+def parse_configuration(fn: str | Path) -> dict[str, Any]:
     """
     Parse Raven configuration file.
 

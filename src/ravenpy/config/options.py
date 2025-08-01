@@ -1,6 +1,7 @@
 from enum import Enum
 from typing import Literal
 
+
 Forcings = Literal[
     "AIR_DENS",
     "AIR_PRES",

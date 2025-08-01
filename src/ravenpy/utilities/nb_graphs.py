@@ -11,12 +11,11 @@ import xarray as xr
 from matplotlib import pyplot as plt
 from xclim.indices.stats import get_dist
 
+
 try:
     import holoviews as hv
-    import hvplot.xarray
+    import hvplot.xarray  # noqa: F401
 
-    # from holoviews.streams import Buffer
-    # from bokeh.models import Range1d, LinearAxis
 except (ImportError, ModuleNotFoundError) as e:
     raise ImportError("Install holoviews and hvplot.") from e
 
@@ -44,9 +43,7 @@ def hydrographs(ds: xr.Dataset):
 
     # Plot the observed streamflows if available
     if hasattr(ds, "q_obs"):
-        g *= ds.q_obs.hvplot.line(
-            x="time", line_width=1.5, color="k", label="Observations"
-        )
+        g *= ds.q_obs.hvplot.line(x="time", line_width=1.5, color="k", label="Observations")
 
     return g
 
@@ -75,9 +72,7 @@ def mean_annual_hydrograph(ds: xr.Dataset):
     # Plot the observed streamflows if available
     if hasattr(ds, "q_obs"):
         mq_obs = ds.q_obs.groupby("time.dayofyear").mean()
-        g *= mq_obs.hvplot.line(
-            x="dayofyear", line_width=2, color="k", label="Mean observations"
-        )
+        g *= mq_obs.hvplot.line(x="dayofyear", line_width=2, color="k", label="Mean observations")
 
     return g
 
@@ -106,9 +101,7 @@ def spaghetti_annual_hydrograph(ds: xr.Dataset):
     # Plot the observed streamflows if available
     if hasattr(ds, "q_obs"):
         mq_obs = ds.q_obs.groupby("time.dayofyear").mean()
-        g2 = mq_obs.hvplot.line(
-            x="dayofyear", line_width=2, color="k", label="Mean observations"
-        )
+        g2 = mq_obs.hvplot.line(x="dayofyear", line_width=2, color="k", label="Mean observations")
 
         g2 *= ds.q_obs.hvplot.line(
             x="time.dayofyear",
@@ -123,7 +116,8 @@ def spaghetti_annual_hydrograph(ds: xr.Dataset):
 
 
 def ts_fit_graph(ts: xr.DataArray, params: xr.DataArray) -> matplotlib.pyplot.Figure:
-    """Create graphic showing a histogram of the data and the distribution fitted to it.
+    """
+    Create graphic showing a histogram of the data and the distribution fitted to it.
 
     The graphic contains one panel per watershed.
 
@@ -171,9 +165,7 @@ def ts_fit_graph(ts: xr.DataArray, params: xr.DataArray) -> matplotlib.pyplot.Fi
     )
 
     # PDF line label
-    ps = ", ".join(
-        [f"{key}={x:.1f}" for key, x in zip(params.dparams.data, params.values)]
-    )
+    ps = ", ".join([f"{key}={x:.1f}" for key, x in zip(params.dparams.data, params.values)])
     label = f"{dist}({ps})"
 
     # PDF graphic object

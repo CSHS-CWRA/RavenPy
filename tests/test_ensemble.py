@@ -5,6 +5,7 @@ from ravenpy.config import commands as rc
 from ravenpy.config import options as o
 from ravenpy.config.emulators import GR4JCN
 
+
 # Alternative names for variables in meteo forcing file
 alt_names = {
     "RAINFALL": "rain",
@@ -21,9 +22,7 @@ def test_enkf(salmon_hru, tmp_path, yangtze):
     # name = "GR4JCN"
     data_type = ["RAINFALL", "TEMP_MIN", "TEMP_MAX", "SNOWFALL"]
 
-    salmon_file = yangtze.fetch(
-        "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
-    )
+    salmon_file = yangtze.fetch("raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc")
 
     conf = cls(
         params=(0.14, -0.005, 576, 7.0, 1.1, 0.92),
@@ -88,9 +87,7 @@ def test_enkf(salmon_hru, tmp_path, yangtze):
     Emulator(config=conf_loop, workdir=tmp_path).run()
 
     # Forecast
-    conf_cast = conf_loop.duplicate(
-        EnKFMode=o.EnKFMode.FORECAST, RunName="forecast", SolutionRunName="loop"
-    )
+    conf_cast = conf_loop.duplicate(EnKFMode=o.EnKFMode.FORECAST, RunName="forecast", SolutionRunName="loop")
 
     # Cast
     Emulator(config=conf_cast, workdir=tmp_path).run()

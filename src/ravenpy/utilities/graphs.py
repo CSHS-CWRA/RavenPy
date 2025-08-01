@@ -21,11 +21,13 @@ from xclim.core.units import units2pint
 
 from ravenpy.utilities.mk_test import mk_test_calc
 
+
 # TODO: Review docstrings, ensure numpydoc convention compliance
 
 
 def hydrograph(file_list: Sequence[Union[str, Path]]):
-    """Create a graphic of the hydrograph for each model simulation.
+    """
+    Create a graphic of the hydrograph for each model simulation.
 
     Parameters
     ----------
@@ -57,9 +59,7 @@ def hydrograph(file_list: Sequence[Union[str, Path]]):
     plt.ylim(bottom=0, top=None)
     ax.set_xlabel("Time")
     ax.set_ylabel(r"$Streamflow [m^3s^{{-1}}]$")
-    ax.set_title(
-        f"Hydrograph between {first_date} and {last_date}\nSelected basin: {basin_name} basin."
-    )
+    ax.set_title(f"Hydrograph between {first_date} and {last_date}\nSelected basin: {basin_name} basin.")
     ax.legend()
     ax.grid()
 
@@ -128,9 +128,7 @@ def mean_annual_hydrograph(file_list: Sequence[Union[str, Path]]):
     plt.ylim(bottom=0, top=None)
     ax.set_xlabel("Time")
     ax.set_ylabel(r"$Streamflow [m^3s^{{-1}}]$")
-    ax.set_title(
-        f"Hydrograph between {first_date} and {last_date}\nSelected basin: {basin_name} basin."
-    )
+    ax.set_title(f"Hydrograph between {first_date} and {last_date}\nSelected basin: {basin_name} basin.")
     ax.legend()
     ax.grid()
 
@@ -140,7 +138,8 @@ def mean_annual_hydrograph(file_list: Sequence[Union[str, Path]]):
 
 
 def spaghetti_annual_hydrograph(file: Union[str, Path]):
-    """Create a spaghetti plot of the mean hydrological cycle for one model simulations.
+    """
+    Create a spaghetti plot of the mean hydrological cycle for one model simulations.
 
     The mean simulation is also displayed.
 
@@ -175,9 +174,7 @@ def spaghetti_annual_hydrograph(file: Union[str, Path]):
                 color="C0",
             )
 
-        plt.plot(
-            mah_obs_mean.dayofyear, mah_obs_mean, linewidth=2, color="C0", label="obs"
-        )
+        plt.plot(mah_obs_mean.dayofyear, mah_obs_mean, linewidth=2, color="C0", label="obs")
 
     # Plot the simulated streamflows for each hydrological model
     q_sim = ds.q_sim
@@ -222,10 +219,7 @@ def spaghetti_annual_hydrograph(file: Union[str, Path]):
     plt.ylim(bottom=0, top=None)
     ax.set_xlabel("Time")
     ax.set_ylabel(r"$Streamflow [m^3s^{{-1}}]$")
-    ax.set_title(
-        f"Spaghetti annual hydrograph between {first_date} and {last_date}"
-        f"\n Selected basin: {basin_name} basin."
-    )
+    ax.set_title(f"Spaghetti annual hydrograph between {first_date} and {last_date}\n Selected basin: {basin_name} basin.")
     ax.legend()
     ax.grid()
 
@@ -235,7 +229,8 @@ def spaghetti_annual_hydrograph(file: Union[str, Path]):
 
 
 def ts_graphs(file, trend: bool = True, alpha: float = 0.05):
-    """Create a figure with the statistics so one can see a trend in the data.
+    """
+    Create a figure with the statistics so one can see a trend in the data.
 
     Graphs for time series statistics.
 
@@ -273,13 +268,7 @@ def ts_graphs(file, trend: bool = True, alpha: float = 0.05):
     if trend:
         res = stats.theilslopes(values, dates)
         trd, h, p, z = mk_test_calc(values, alpha=alpha)
-        titlename = (
-            titlename
-            + ", Mann-Kendall h="
-            + str(h)
-            + ", p-value="
-            + str(np.round(p, 4))
-        )
+        titlename = titlename + ", Mann-Kendall h=" + str(h) + ", p-value=" + str(np.round(p, 4))
 
     fig, ax = plt.subplots()
     ax.plot(dates, values, label="time-series index")
@@ -309,7 +298,8 @@ def ts_graphs(file, trend: bool = True, alpha: float = 0.05):
 
 
 def ts_fit_graph(ts: xr.DataArray, params: xr.DataArray) -> matplotlib.pyplot.Figure:
-    """Create graphic showing a histogram of the data and the distribution fitted to it.
+    """
+    Create graphic showing a histogram of the data and the distribution fitted to it.
 
     The graphic contains one panel per watershed.
 
@@ -377,10 +367,9 @@ def ts_fit_graph(ts: xr.DataArray, params: xr.DataArray) -> matplotlib.pyplot.Fi
     return fig
 
 
-def forecast(
-    file: Union[str, Path], fcst_var: str = "q_sim"
-) -> matplotlib.pyplot.Figure:
-    """Create a graphic of the hydrograph for each forecast member.
+def forecast(file: Union[str, Path], fcst_var: str = "q_sim") -> matplotlib.pyplot.Figure:
+    """
+    Create a graphic of the hydrograph for each forecast member.
 
     Parameters
     ----------
@@ -417,10 +406,9 @@ def forecast(
     return fig
 
 
-def hindcast(
-    file: Union[str, Path], fcst_var: str, qobs: Union[str, Path], qobs_var: str
-) -> matplotlib.pyplot.Figure:
-    """Create a graphic of the hydrograph for each hindcast member.
+def hindcast(file: Union[str, Path], fcst_var: str, qobs: Union[str, Path], qobs_var: str) -> matplotlib.pyplot.Figure:
+    """
+    Create a graphic of the hydrograph for each hindcast member.
 
     Parameters
     ----------

@@ -19,12 +19,11 @@ from ravenpy import Emulator, EnsembleReader
 from ravenpy.config import commands as rc
 from ravenpy.config.rvs import Config
 
+
 LOGGER = logging.getLogger("PYWPS")
 
 # Can be set at runtime with `$ env RAVENPY_THREDDS_URL=https://xx.yy.zz/thredds/ ...`.
-THREDDS_URL = os.environ.get(
-    "RAVENPY_THREDDS_URL", "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/"
-)
+THREDDS_URL = os.environ.get("RAVENPY_THREDDS_URL", "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/")
 if not THREDDS_URL.endswith("/"):
     THREDDS_URL = f"{THREDDS_URL}/"
 
@@ -35,7 +34,8 @@ def climatology_esp(
     workdir: Optional[Union[str, Path]] = None,
     overwrite: bool = False,
 ) -> EnsembleReader:
-    """Ensemble Streamflow Prediction based on historical variability.
+    """
+    Ensemble Streamflow Prediction based on historical variability.
 
     Run the model using forcing for different years.
     No model warm-up is performed by this function, make sure the initial states are
@@ -100,27 +100,19 @@ def climatology_esp(
         if len(time.sel(time=slice(str(s), str(end.replace(year=year))))) < duration:
             continue
 
-        out = Emulator(config=config, workdir=workdir / f"Y{year}").run(
-            overwrite=overwrite
-        )
+        out = Emulator(config=config, workdir=workdir / f"Y{year}").run(overwrite=overwrite)
 
         # Format output so that `time` is set to the forecast time, not the forcing time.
         if "hydrograph" in out.files:
-            out.files["hydrograph"] = _shift_esp_time(
-                out.files["hydrograph"], startdate_fixed.year
-            )
+            out.files["hydrograph"] = _shift_esp_time(out.files["hydrograph"], startdate_fixed.year)
         if "storage" in out.files:
-            out.files["storage"] = _shift_esp_time(
-                out.files["storage"], startdate_fixed.year
-            )
+            out.files["storage"] = _shift_esp_time(out.files["storage"], startdate_fixed.year)
         ensemble.append(out)
 
     return EnsembleReader(run_name=config.run_name, runs=ensemble)
 
 
-def to_climpred_hindcast_ensemble(
-    hindcast: xr.Dataset, observations: xr.Dataset
-) -> climpred.HindcastEnsemble:
+def to_climpred_hindcast_ensemble(hindcast: xr.Dataset, observations: xr.Dataset) -> climpred.HindcastEnsemble:
     """
     Create a hindcasting object that can be used by the `climpred` toolbox for hindcast verification.
 
@@ -137,13 +129,9 @@ def to_climpred_hindcast_ensemble(
         The hindcast ensemble formatted to be used in climpred.
     """
     # Make sure the variable names are the same.
-    var_names = set(hindcast.data_vars.keys()).intersection(
-        observations.data_vars.keys()
-    )
+    var_names = set(hindcast.data_vars.keys()).intersection(observations.data_vars.keys())
     if len(var_names) == 0:
-        raise ValueError(
-            "`hindcast` and `observations` should have a variable with the same name."
-        )
+        raise ValueError("`hindcast` and `observations` should have a variable with the same name.")
 
     # Todo: Add verification of sizes, catch and return message.
 
@@ -162,7 +150,8 @@ def warm_up(
     workdir: Optional[Union[str, Path]] = None,
     overwrite: bool = False,
 ) -> Config:
-    """Run the model on a time series preceding the start date.
+    """
+    Run the model on a time series preceding the start date.
 
     Parameters
     ----------
@@ -197,7 +186,8 @@ def hindcast_climatology_esp(
     workdir: Optional[Union[str, Path]] = None,
     overwrite: bool = False,
 ) -> xr.Dataset:
-    """Hindcast of Ensemble Prediction Streamflow.
+    """
+    Hindcast of Ensemble Prediction Streamflow.
 
     This function runs an emulator initialized for each year in `hindcast_years`,
     using the forcing time series for each year in `years`. This allows an assessment
@@ -239,9 +229,7 @@ def hindcast_climatology_esp(
     time = _get_time(config)
     if hindcast_years is None:
         # Create list of years
-        hindcast_years = list(
-            range(time[0].dt.year.values, time[-1].dt.year.values + 1)
-        )
+        hindcast_years = list(range(time[0].dt.year.values, time[-1].dt.year.values + 1))
 
     # Define start date
     start = config.start_date
@@ -267,9 +255,7 @@ def hindcast_climatology_esp(
         )
 
         # Run climatology ESP
-        esp = climatology_esp(
-            conf, years=years, workdir=workdir / "esp" / f"Y{year}", overwrite=overwrite
-        )
+        esp = climatology_esp(conf, years=years, workdir=workdir / "esp" / f"Y{year}", overwrite=overwrite)
 
         # Format results for climpred
         q_sim = esp.hydrograph.q_sim.expand_dims(
@@ -293,7 +279,8 @@ def hindcast_climatology_esp(
 
 
 def _shift_esp_time(nc, year, dim="member"):
-    """Modify netCDF time to facilitate ensemble analysis out of ESP forecasts.
+    """
+    Modify netCDF time to facilitate ensemble analysis out of ESP forecasts.
 
     Modify time such that it starts on the given year, and add member dimension with original year as value.
     """
@@ -345,7 +332,8 @@ def ensemble_prediction(
     overwrite=True,
     **kwds,
 ) -> EnsembleReader:
-    r"""Ensemble Streamflow Prediction based on historical weather forecasts (CASPAR or other).
+    r"""
+    Ensemble Streamflow Prediction based on historical weather forecasts (CASPAR or other).
 
     Run the model using forcing for different years.
     No model warm-up is performed by this function, make sure the initial states are consistent with the start date.
@@ -406,10 +394,9 @@ def ensemble_prediction(
 hindcast_from_meteo_forecast = ensemble_prediction
 
 
-def compute_forecast_flood_risk(
-    forecast: xr.Dataset, flood_level: float, thredds: str = THREDDS_URL
-) -> xr.Dataset:
-    """Return the empirical exceedance probability for each forecast day based on a flood level threshold.
+def compute_forecast_flood_risk(forecast: xr.Dataset, flood_level: float, thredds: str = THREDDS_URL) -> xr.Dataset:
+    """
+    Return the empirical exceedance probability for each forecast day based on a flood level threshold.
 
     Parameters
     ----------
@@ -427,9 +414,7 @@ def compute_forecast_flood_risk(
         Time series of probabilities of flood level exceedance.
     """
     if thredds[-1] != "/":
-        warnings.warn(
-            "The thredds url should end with a slash. Appending it to the url."
-        )
+        warnings.warn("The thredds url should end with a slash. Appending it to the url.", stacklevel=2)
         thredds = f"{thredds}/"
 
     # ---- Calculations ---- #
@@ -439,29 +424,19 @@ def compute_forecast_flood_risk(
         number_members = len(forecast.member)
 
         # now compute the ratio of cases that are above the threshold
-        pct = (
-            forecast.where(forecast > flood_level)
-            .notnull()
-            .sum(dim="member", keep_attrs=True)
-            / number_members
-        )
+        pct = forecast.where(forecast > flood_level).notnull().sum(dim="member", keep_attrs=True) / number_members
 
     # it's deterministic:
     else:
-        pct = (
-            forecast.where(forecast > flood_level).notnull() / 1.0
-        )  # This is needed to return values instead of floats
+        pct = forecast.where(forecast > flood_level).notnull() / 1.0  # This is needed to return values instead of floats
 
     domain = urlparse(thredds).netloc
 
     out = pct.to_dataset(name="exceedance_probability")
     out.attrs["source"] = f"PAVICS-Hydro flood risk forecasting tool, {domain}"
     out.attrs["history"] = (
-        f"File created on {dt.datetime.now(dt.UTC).strftime('%Y-%m-%d %H:%M:%S')} "
-        f"UTC on the PAVICS-Hydro service available at {domain}."
+        f"File created on {dt.datetime.now(dt.UTC).strftime('%Y-%m-%d %H:%M:%S')} UTC on the PAVICS-Hydro service available at {domain}."
     )
-    out.attrs["title"] = (
-        "Identification of ensemble members that exceed a certain flow threshold."
-    )
+    out.attrs["title"] = "Identification of ensemble members that exceed a certain flow threshold."
 
     return out

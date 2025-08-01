@@ -59,12 +59,7 @@ lint/flake8: ## check style with flake8
 	python -m flake8 --config=.flake8 src/ravenpy tests
 	python -m numpydoc lint src/ravenpy/**.py
 
-lint/black: ## check style with black
-	python -m black --check src/ravenpy tests
-	python -m blackdoc --check src/ravenpy docs
-	python -m isort --check src/ravenpy tests
-
-lint: lint/black ## check style
+lint: lint/flake8 ## check style
 
 test: ## run tests quickly with the default Python
 	python -m pytest
@@ -78,7 +73,7 @@ coverage: ## check code coverage quickly with the default Python
 	python -m coverage html
 	$(BROWSER) htmlcov/index.html
 
-														autodoc: clean-docs ## create sphinx-apidoc files:
+autodoc: clean-docs ## create sphinx-apidoc files:
 	sphinx-apidoc -o docs/apidoc --private --module-first src/ravenpy
 
 autodoc-custom-index: clean-docs ## create sphinx-apidoc files but with special index handling for indices and indicators

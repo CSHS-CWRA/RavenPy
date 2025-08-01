@@ -16,6 +16,7 @@ from ravenpy.ravenpy import Emulator, EnsembleReader
 
 from . import coords
 
+
 # from statsmodels.regression.linear_model import RegressionResults
 
 
@@ -36,7 +37,8 @@ def regionalize(
     workdir: Optional[Union[str, Path]] = None,
     overwrite: bool = False,
 ) -> tuple[xr.DataArray, xr.Dataset]:
-    r"""Perform regionalization for catchment whose outlet is defined by coordinates.
+    r"""
+    Perform regionalization for catchment whose outlet is defined by coordinates.
 
     Parameters
     ----------
@@ -127,9 +129,7 @@ def regionalize(
     sprop = filtered_prop.loc[sdist.index]
 
     # Get the list of parameters to run
-    reg_params = regionalization_params(
-        method, sparams, sprop, ungauged_properties, filtered_params, filtered_prop
-    )
+    reg_params = regionalization_params(method, sparams, sprop, ungauged_properties, filtered_params, filtered_prop)
 
     # Run the model over all parameters and create ensemble DataArray
 
@@ -137,9 +137,7 @@ def regionalize(
     for i, rparams in enumerate(reg_params):
         model_config_tmp = config.set_params(rparams)
 
-        out = Emulator(model_config_tmp, workdir=workdir / f"donor_{i}").run(
-            overwrite=overwrite
-        )
+        out = Emulator(model_config_tmp, workdir=workdir / f"donor_{i}").run(overwrite=overwrite)
 
         # Append to the ensemble.
         ensemble.append(out)
@@ -154,9 +152,7 @@ def regionalize(
         "PS",
     ]:  # Average (one realization for MLR, so no effect).
         qsim = qsims.mean(dim="members", keep_attrs=True)
-    elif (
-        "IDW" in method
-    ):  # Here we are replacing the mean by the IDW average, keeping attributes and dimensions.
+    elif "IDW" in method:  # Here we are replacing the mean by the IDW average, keeping attributes and dimensions.
         qsim = IDW(qsims, sdist)
     else:
         raise ValueError(f"No matching algorithm for {method}")
@@ -189,7 +185,8 @@ def regionalize(
 
 
 def read_gauged_properties(properties) -> pd.DataFrame:
-    """Return table of gauged catchments properties over North America.
+    """
+    Return table of gauged catchments properties over North America.
 
     Returns
     -------
@@ -203,7 +200,8 @@ def read_gauged_properties(properties) -> pd.DataFrame:
 
 
 def read_gauged_params(model):
-    """Return table of NASH-Sutcliffe Efficiency values and model parameters for North American catchments.
+    """
+    Return table of NASH-Sutcliffe Efficiency values and model parameters for North American catchments.
 
     Returns
     -------
@@ -219,7 +217,8 @@ def read_gauged_params(model):
 
 
 def distance(gauged: pd.DataFrame, ungauged: pd.Series) -> pd.Series:
-    """Return geographic distance [km] between ungauged and database of gauged catchments.
+    """
+    Return geographic distance [km] between ungauged and database of gauged catchments.
 
     Parameters
     ----------
@@ -235,17 +234,14 @@ def distance(gauged: pd.DataFrame, ungauged: pd.Series) -> pd.Series:
     gauged_array = np.array(list(zip(gauged.latitude.values, gauged.longitude.values)))
 
     return pd.Series(
-        data=haversine_vector(
-            gauged_array, np.array([ungauged.latitude, ungauged.longitude]), comb=True
-        )[0],
+        data=haversine_vector(gauged_array, np.array([ungauged.latitude, ungauged.longitude]), comb=True)[0],
         index=gauged.index,
     )
 
 
-def similarity(
-    gauged: pd.DataFrame, ungauged: pd.DataFrame, kind: str = "ptp"
-) -> pd.Series:
-    """Return similarity measure between gauged and ungauged catchments.
+def similarity(gauged: pd.DataFrame, ungauged: pd.DataFrame, kind: str = "ptp") -> pd.Series:
+    """
+    Return similarity measure between gauged and ungauged catchments.
 
     Parameters
     ----------
@@ -307,9 +303,7 @@ def regionalization_params(
         A list of model parameters to be used for the regionalization.
     """
     if method == "MLR" or "RA" in method:
-        mlr_params, r2 = multiple_linear_regression(
-            filtered_prop, filtered_params, ungauged_properties.to_frame().T
-        )
+        mlr_params, r2 = multiple_linear_regression(filtered_prop, filtered_params, ungauged_properties.to_frame().T)
 
         if method == "MLR":  # Return the multiple linear regression parameters.
             out = [
@@ -334,7 +328,8 @@ def regionalization_params(
 
 
 def IDW(qsims: xr.DataArray, dist: pd.Series) -> xr.DataArray:  # noqa: N802
-    """Inverse distance weighting.
+    """
+    Inverse distance weighting.
 
     Parameters
     ----------
@@ -349,9 +344,7 @@ def IDW(qsims: xr.DataArray, dist: pd.Series) -> xr.DataArray:  # noqa: N802
         Inverse distance weighted average of ensemble.
     """
     # In IDW, weights are 1 / distance
-    weights = xr.DataArray(
-        1.0 / dist, dims="members", coords={"members": qsims.members}
-    )
+    weights = xr.DataArray(1.0 / dist, dims="members", coords={"members": qsims.members})
 
     # Make weights sum to one
     weights /= weights.sum(axis=0)
@@ -363,10 +356,9 @@ def IDW(qsims: xr.DataArray, dist: pd.Series) -> xr.DataArray:  # noqa: N802
     return out
 
 
-def multiple_linear_regression(
-    source: pd.DataFrame, params: pd.DataFrame, target: pd.DataFrame
-) -> tuple[list[Any], list[Callable[[], Any]]]:
-    """Multiple Linear Regression for model parameters over catchment properties.
+def multiple_linear_regression(source: pd.DataFrame, params: pd.DataFrame, target: pd.DataFrame) -> tuple[list[Any], list[Callable[[], Any]]]:
+    """
+    Multiple Linear Regression for model parameters over catchment properties.
 
     Uses known catchment properties and model parameters to estimate model parameter over an
     ungauged catchment using its properties.
