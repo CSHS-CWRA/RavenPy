@@ -2,6 +2,19 @@
 Changelog
 =========
 
+v0.19.1 (unreleased)
+--------------------
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* `scipy` is no longer pinned below v1.16.0, as newer `statsmodels` is now compatible with modern `scipy` versions. (PR #524)
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Updates the notebooks and re-runs all of them to ensure they are working with latest libraries. (PR #524)
+* Adds a few missing testing data files to the `pooch` ``registry.txt`` file that are necessary for running the notebooks. (PR #524)
+* Slightly adjusted CI workflows for security and behaviour improvements. (PR #524)
+
 v0.19.0 (2025-07-16)
 --------------------
 

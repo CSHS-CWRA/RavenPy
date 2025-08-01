@@ -19,15 +19,15 @@ on:
       - .zenodo.json
       - AUTHORS.rst
       - CHANGELOG.rst
-      - CI/**/*.in
-      - CI/**/*.py
-      - CI/**/*.txt
+      - CI/**.in
+      - CI/**.txt
       - CODE_OF_CONDUCT.md
       - CONTRIBUTING.rst
       - Makefile
       - .readthedocs.yml
       - docs/*.py
-      - docs/*.rst
+      - docs/**.rst
+      - docs/notebooks/**.ipynb
       - environment-docs.yml
       - environment-dev.yml
       - pyproject.toml
