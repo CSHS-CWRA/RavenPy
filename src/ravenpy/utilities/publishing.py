@@ -1,7 +1,6 @@
 """Publishing utilities for RavenPy."""
 
 from __future__ import annotations
-
 import os
 import re
 from io import StringIO
@@ -73,9 +72,7 @@ def publish_release_notes(
         for title_expression, level in titles.items():
             found = re.findall(title_expression, changes)
             for grouping in found:
-                fixed_grouping = (
-                    str(grouping[0]).replace("(", r"\(").replace(")", r"\)")
-                )
+                fixed_grouping = str(grouping[0]).replace("(", r"\(").replace(")", r"\)")
                 search = rf"({fixed_grouping})\n([\{level}]{'{' + str(len(grouping[1])) + '}'})"
                 replacement = f"{'##' if level == '-' else '###'} {grouping[0]}"
                 changes = re.sub(search, replacement, changes)

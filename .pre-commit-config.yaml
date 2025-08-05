@@ -11,16 +11,23 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
-      - id: trailing-whitespace
-      - id: end-of-file-fixer
       - id: check-json
       - id: pretty-format-json
         args: [ '--autofix', '--no-ensure-ascii', '--no-sort-keys' ]
         exclude: .ipynb
+      - id: check-merge-conflict
       - id: check-toml
       - id: check-yaml
         args: [ '--allow-multiple-documents' ]
       - id: debug-statements
+      - id: end-of-file-fixer
+      - id: fix-byte-order-marker
+      - id: name-tests-test
+        args: [ '--pytest-test-first' ]
+        exclude: tests/emulators.py
+      - id: no-commit-to-branch
+        args: [ '--branch', 'main' ]
+      - id: trailing-whitespace
   - repo: https://github.com/pappasam/toml-sort
     rev: v0.24.2
     hooks:
@@ -41,21 +48,12 @@ repos:
       - id: rst-directive-colons
       - id: rst-inline-touching-normal
       - id: text-unicode-replacement-char
-  - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 25.1.0
-    hooks:
-      - id: black
-        exclude: ^docs/
-  - repo: https://github.com/PyCQA/isort
-    rev: 6.0.1
-    hooks:
-      - id: isort
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.12.7
     hooks:
       - id: ruff-check
-        args: [ '--fix' ]
-      # - id: ruff-format
+        args: [ '--fix', '--show-fixes' ]
+      - id: ruff-format
   - repo: https://github.com/pycqa/flake8
     rev: 7.3.0
     hooks:
@@ -76,22 +74,12 @@ repos:
       - id: nbqa-pyupgrade
         args: [ '--py39-plus' ]
         additional_dependencies: [ 'pyupgrade==3.20.0' ]
-      - id: nbqa-black
-        additional_dependencies: [ 'black==25.1.0' ]
-      - id: nbqa-isort
-        additional_dependencies: [ 'isort==6.0.1' ]
   - repo: https://github.com/kynan/nbstripout
     rev: 0.8.1
     hooks:
       - id: nbstripout
         files: ".ipynb"
         args: [ '--extra-keys=metadata.kernelspec' ]
-  - repo: https://github.com/keewis/blackdoc
-    rev: v0.4.1
-    hooks:
-      - id: blackdoc
-        additional_dependencies: [ 'black==25.1.0' ]
-      - id: blackdoc-autoupdate-black
   - repo: https://github.com/codespell-project/codespell
     rev: v2.4.1
     hooks:

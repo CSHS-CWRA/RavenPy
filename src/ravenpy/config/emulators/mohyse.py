@@ -38,7 +38,8 @@ class LandHRU(HRU):
 
 
 class HRUs(rc.HRUs):
-    """HRUs command for GR4J.
+    """
+    HRUs command for GR4J.
 
     Pydantic is able to automatically detect if an HRU is Land or Lake if `hru_type` is provided.
     """
@@ -47,7 +48,8 @@ class HRUs(rc.HRUs):
 
 
 class Mohyse(Config):
-    """Modèle Hydrologique Simplifié à l'Extrême (MOHYSE)
+    """
+    Modèle Hydrologique Simplifié à l'Extrême (MOHYSE)
 
     References
     ----------
@@ -66,16 +68,12 @@ class Mohyse(Config):
     write_netcdf_format: bool = Field(True, alias="WriteNetcdfFormat")
     time_step: Union[float, str] = Field(1.0, alias="TimeStep")
     calendar: o.Calendar = Field("PROLEPTIC_GREGORIAN", alias="Calendar")
-    soil_classes: rc.SoilClasses = Field(
-        [{"name": "TOPSOIL"}, {"name": "GWSOIL"}], alias="SoilClasses"
-    )
+    soil_classes: rc.SoilClasses = Field([{"name": "TOPSOIL"}, {"name": "GWSOIL"}], alias="SoilClasses")
     land_use_classes: rc.LandUseClasses = Field(
         [{"name": "LU_ALL", "impermeable_frac": 0, "forest_coverage": 1}],
         alias="LandUseClasses",
     )
-    vegetation_classes: rc.VegetationClasses = Field(
-        [{"name": "VEG_ALL"}], alias="VegetationClasses"
-    )
+    vegetation_classes: rc.VegetationClasses = Field([{"name": "VEG_ALL"}], alias="VegetationClasses")
     soil_profiles: rc.SoilProfiles = Field(
         [
             {"name": "LAKE"},
@@ -128,23 +126,15 @@ class Mohyse(Config):
         alias="VegetationParameterList",
     )
     soil_model: rc.SoilModel = Field(2, alias="SoilModel")
-    potential_melt_method: o.PotentialMeltMethod = Field(
-        "POTMELT_DEGREE_DAY", alias="PotentialMeltMethod"
-    )
+    potential_melt_method: o.PotentialMeltMethod = Field("POTMELT_DEGREE_DAY", alias="PotentialMeltMethod")
     routing: o.Routing = Field("ROUTE_NONE", alias="Routing")
-    catchment_route: o.CatchmentRoute = Field(
-        "ROUTE_GAMMA_CONVOLUTION", alias="CatchmentRoute"
-    )
+    catchment_route: o.CatchmentRoute = Field("ROUTE_GAMMA_CONVOLUTION", alias="CatchmentRoute")
     evaporation: o.Evaporation = Field("PET_MOHYSE", alias="Evaporation")
     direct_evaporation: bool = Field(True, alias="DirectEvaporation")
-    rain_snow_fraction: o.RainSnowFraction = Field(
-        "RAINSNOW_DATA", alias="RainSnowFraction"
-    )
+    rain_snow_fraction: o.RainSnowFraction = Field("RAINSNOW_DATA", alias="RainSnowFraction")
     hydrologic_processes: Sequence[Process] = Field(
         [
-            p.SoilEvaporation(
-                algo="SOILEVAP_LINEAR", source="SOIL[0]", to="ATMOSPHERE"
-            ),
+            p.SoilEvaporation(algo="SOILEVAP_LINEAR", source="SOIL[0]", to="ATMOSPHERE"),
             p.SnowBalance(algo="SNOBAL_SIMPLE_MELT", source="SNOW", to="PONDED_WATER"),
             p.Precipitation(algo="RAVEN_DEFAULT", source="ATMOS_PRECIP", to="MULTIPLE"),
             p.Infiltration(algo="INF_HBV", source="PONDED_WATER", to="MULTIPLE"),

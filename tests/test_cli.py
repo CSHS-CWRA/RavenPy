@@ -343,21 +343,13 @@ class TestAggregateForcingsToHRUs:
         # aggregated time series for HRU #1
         # HRU #1 = [ 10% cell 0 ; 20% cell 1 ; 30% cell 3 ; 40% cell 4 ]
         # (cell 4 is NODATA for each time step; cell 3 is NODATA at 3rd time step)
-        assert (
-            abs(val[0, 0] - 2.8333333) < 1e-04
-        )  # = 0.1*1 + 0.2*2 + 0.3*4 + 0.4*NODATA
+        assert abs(val[0, 0] - 2.8333333) < 1e-04  # = 0.1*1 + 0.2*2 + 0.3*4 + 0.4*NODATA
         #                                           # = 0.1/0.6*1 + 0.2/0.6*2 + 0.3/0.6*4
-        assert (
-            abs(val[1, 0] - 3.0000000) < 1e-04
-        )  # = 0.1*3 + 0.2*3 + 0.3*3 + 0.4*NODATA
+        assert abs(val[1, 0] - 3.0000000) < 1e-04  # = 0.1*3 + 0.2*3 + 0.3*3 + 0.4*NODATA
         #                                           # = 0.1/0.6*3 + 0.2/0.6*3 + 0.3/0.6*3
-        assert (
-            abs(val[2, 0] - 7.3333333) < 1e-04
-        )  # = 0.1*4 + 0.2*9 + 0.3*NODATA + 0.4*NODATA
+        assert abs(val[2, 0] - 7.3333333) < 1e-04  # = 0.1*4 + 0.2*9 + 0.3*NODATA + 0.4*NODATA
         #                                           # = 0.1/0.3*4 + 0.2/0.3*9
-        assert (
-            abs(val[3, 0] - 2.8333333) < 1e-04
-        )  # = 0.1*1 + 0.2*2 + 0.3*4 + 0.4*NODATA
+        assert abs(val[3, 0] - 2.8333333) < 1e-04  # = 0.1*1 + 0.2*2 + 0.3*4 + 0.4*NODATA
         #                                           # = 0.1/0.6*1 + 0.2/0.6*2 + 0.3/0.6*4
 
         # aggregated time series for HRU #2

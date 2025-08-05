@@ -9,6 +9,7 @@ from typing import Any, Union
 
 from . import gis_import_error_message
 
+
 try:
     import fiona
     import rasterio
@@ -20,6 +21,7 @@ except (ImportError, ModuleNotFoundError) as err:
     raise ImportError(msg) from err
 
 import ravenpy.utilities.io as io
+
 
 LOGGER = logging.getLogger("RavenPy")
 
@@ -88,16 +90,13 @@ def boundary_check(
                 geographic = True
             src_min_y, src_max_y = src.bounds[1], src.bounds[3]
             if geographic and (src_max_y > max_y or src_min_y < min_y):
-                msg = (
-                    f"Vector {file} contains geometries in high latitudes."
-                    " Verify choice of projected CRS is appropriate for analysis."
-                )
+                msg = f"Vector {file} contains geometries in high latitudes. Verify choice of projected CRS is appropriate for analysis."
                 LOGGER.warning(msg)
-                warnings.warn(msg, UserWarning)
+                warnings.warn(msg, UserWarning, stacklevel=2)
             if not geographic:
                 msg = f"Vector {file} is not in a geographic coordinate system."
                 LOGGER.warning(msg)
-                warnings.warn(msg, UserWarning)
+                warnings.warn(msg, UserWarning, stacklevel=2)
             src.close()
 
         except FileNotFoundError:
@@ -136,7 +135,8 @@ def feature_contains(
     point: Union[tuple[Union[int, float, str], Union[str, float, int]], Point],
     shp: Union[str, Path, list[Union[str, Path]]],
 ) -> Union[dict, bool]:
-    """Return the first feature containing a location.
+    """
+    Return the first feature containing a location.
 
     Parameters
     ----------
@@ -162,16 +162,14 @@ def feature_contains(
     elif isinstance(point, Point):
         pass
     else:
-        raise ValueError(
-            f"point should be shapely.Point or tuple of coordinates, got : {point} of type({type(point)})"
-        )
+        raise ValueError(f"point should be shapely.Point or tuple of coordinates, got : {point} of type({type(point)})")
 
     shape_crs = io.crs_sniffer(single_file_check(shp))
 
     if isinstance(shp, list):
         shp = shp[0]
 
-    for i, layer_name in enumerate(fiona.listlayers(str(shp))):
+    for i, _ in enumerate(fiona.listlayers(str(shp))):
         with fiona.open(shp, "r", crs=shape_crs, layer=i) as vector:
             for f in vector.filter(bbox=(point.x, point.y, point.x, point.y)):
                 return dict(f)

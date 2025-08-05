@@ -228,7 +228,8 @@ class LateralFlush(Process):
 
 
 class LateralEquilibrate(Process):
-    """Lateral equilibrate.
+    """
+    Lateral equilibrate.
 
     Instantaneously equilibrates groundwater storage in basin HRUs.
     """

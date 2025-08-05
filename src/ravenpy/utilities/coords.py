@@ -9,7 +9,8 @@ from ravenpy.config.emulators import get_model
 
 
 def realization(n):
-    """Return a realization coordinate.
+    """
+    Return a realization coordinate.
 
     Parameters
     ----------
@@ -29,7 +30,8 @@ def realization(n):
 
 
 def param(model):
-    """Return a parameter coordinate.
+    """
+    Return a parameter coordinate.
 
     Parameters
     ----------
@@ -50,7 +52,9 @@ def param(model):
 
 # FIXME: cumulative is not used
 def infer_scale_and_offset(
-    da: xr.DataArray, data_type: str, cumulative: bool = False  # noqa: F841
+    da: xr.DataArray,
+    data_type: str,
+    cumulative: bool = False,  # noqa: F841
 ) -> tuple[float, float]:
     """
     Return scale and offset parameters from data.
@@ -90,26 +94,27 @@ def infer_scale_and_offset(
     # Linear transform parameters
     try:
         scale, offset = units_transform(source, target)
-    except pint.errors.DimensionalityError:
+    except pint.errors.DimensionalityError as err:
         if data_type in ["PRECIP", "PRECIP_DAILY_AVE", "RAINFALL", "SNOWFALL"]:
             # Source units are in total precipitation instead of rate. We need to infer the accumulation time
             # in order to find the transform.
             freq = xr.infer_freq(da.time)
             if freq is None:
-                raise ValueError(f"Cannot infer time frequency of input data {da}")
+                raise ValueError(f"Cannot infer time frequency of input data {da}") from err
             multi, base, start_anchor, _ = parse_offset(freq)
             if base in ["M", "Q", "A"]:
-                raise ValueError(f"Irregular time frequency for input data {da}")
+                raise ValueError(f"Irregular time frequency for input data {da}") from err
             real_source = source / multi / units(FREQ_UNITS.get(base, base))
             scale, offset = units_transform(real_source, target)
         else:
-            raise NotImplementedError(f"data_type: {data_type}")
+            raise NotImplementedError(f"data_type: {data_type}") from err
 
     return scale, offset
 
 
 def units_transform(source: Union[str, pint.Unit], target: str, context: str = "hydro"):
-    """Return linear transform parameters to convert one unit to another.
+    """
+    Return linear transform parameters to convert one unit to another.
 
     If the target unit is given by `y = ax + b`, where `x` is the value of the source unit, then this function
     returns a, b.

@@ -47,14 +47,13 @@ class Emulator:
         self._output_path = None
 
         # Write model config files
-        self._rv = self._config.write_rv(
-            workdir=self.workdir, modelname=self.modelname, overwrite=overwrite
-        )
+        self._rv = self._config.write_rv(workdir=self.workdir, modelname=self.modelname, overwrite=overwrite)
         # Grab modelname in case it was set by config.write_rv
         self._modelname = self._rv["rvi"].stem
 
     def run(self, overwrite: bool = False) -> "OutputReader":
-        """Run the model.
+        """
+        Run the model.
 
         This will write RV files if not already done.
 
@@ -63,9 +62,7 @@ class Emulator:
         overwrite : bool
             If True, overwrite existing files.
         """
-        self._output_path = run(
-            self.modelname, self.workdir, "output", overwrite=overwrite
-        )
+        self._output_path = run(self.modelname, self.workdir, "output", overwrite=overwrite)
         self._output = OutputReader(self.config.run_name, path=self._output_path)
         return self._output
 
@@ -84,7 +81,7 @@ class Emulator:
         """Path to model outputs."""
         if self._output_path is not None:
             return self._output_path
-        warnings.warn("`output_path` not set. Model must be run first.")
+        warnings.warn("`output_path` not set. Model must be run first.", stacklevel=2)
         return None
 
     @property
@@ -107,15 +104,11 @@ class Emulator:
             If False, ignore time stamp information in the solution.
             If True, the solution will set StartDate to the solution's timestamp.
         """
-        return self.config.set_solution(
-            self.output.files["solution"], timestamp=timestamp
-        )
+        return self.config.set_solution(self.output.files["solution"], timestamp=timestamp)
 
 
 class OutputReader:
-    def __init__(
-        self, run_name: Optional[str] = None, path: Optional[Union[str, Path]] = None
-    ):
+    def __init__(self, run_name: Optional[str] = None, path: Optional[Union[str, Path]] = None):
         """
         Class facilitating access to Raven model output.
 
@@ -234,20 +227,14 @@ class EnsembleReader:
     @property
     def storage(self):
         if len(self.files["storage"]) == 0:
-            raise ValueError(
-                "No file found, make sure you have the right `run_name` and output `paths`."
-            )
+            raise ValueError("No file found, make sure you have the right `run_name` and output `paths`.")
 
-        return xr.concat(
-            [xr.open_dataset(f) for f in self.files["storage"]], dim=self._dim
-        )
+        return xr.concat([xr.open_dataset(f) for f in self.files["storage"]], dim=self._dim)
 
     @property
     def hydrograph(self):
         if len(self.files["hydrograph"]) == 0:
-            raise ValueError(
-                "No file found, make sure you have the right `run_name` and output `paths`."
-            )
+            raise ValueError("No file found, make sure you have the right `run_name` and output `paths`.")
         return xr.concat(
             [xr.open_dataset(f) for f in self.files["hydrograph"]],
             dim=self._dim,
@@ -311,9 +298,7 @@ def run(
             if overwrite:
                 f.unlink()
             else:
-                raise FileExistsError(
-                    "Output files using this `modelname` already exist. Use `overwrite=True` to remove them."
-                )
+                raise FileExistsError("Output files using this `modelname` already exist. Use `overwrite=True` to remove them.")
 
     # Launch executable, wait for completion.
     cmd = [RAVEN_EXEC_PATH, modelname, "-o", str(outputdir)]
@@ -334,12 +319,10 @@ def run(
 
     if messages["ERROR"] or verbose:
         for msg in messages["WARNING"] + messages["ADVISORY"]:
-            warn(msg, category=RavenWarning)
+            warn(msg, category=RavenWarning, stacklevel=2)
 
     if messages["ERROR"]:
-        raise RavenError(
-            "\n".join([f"Config directory: {configdir}"] + messages["ERROR"])
-        )
+        raise RavenError("\n".join([f"Config directory: {configdir}"] + messages["ERROR"]))
 
     if return_code != 0:
         raise OSError(f"Raven Error (code: {return_code}): \n{stdout}\n{stderr}")
