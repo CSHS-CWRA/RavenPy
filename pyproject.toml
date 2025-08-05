@@ -162,7 +162,7 @@ ravenpy = "ravenpy.cli:main"
 [tool]
 
 [tool.bumpversion]
-current_version = "0.19.1-dev.1"
+current_version = "0.19.1"
 commit = true
 commit_args = "--no-verify"
 tag = false
@@ -199,7 +199,7 @@ replace = """\
 .. _changes_{new_version}:
 
 `v{new_version} <https://github.com/CSHS-CWRA/RavenPy/tree/v{new_version}>`_ ({now:%Y-%m-%d})
--------------------------------------------------------------------------
+---------------------------------------------------------------------------
 """
 
 [[tool.bumpversion.files]]
