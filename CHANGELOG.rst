@@ -17,7 +17,7 @@ Internal changes
 * Updates the notebooks and re-runs all of them to ensure they are working with latest libraries. (PR #524)
 * Adds a few missing testing data files to the `pooch` ``registry.txt`` file that are necessary for running the notebooks. (PR #524)
 * Slightly adjusted CI workflows for security and behaviour improvements. (PR #524)
-* Obsolete support code for handling older`owslib` versions has been removed from `ravenpy.utilities.geoserver`. (PR #525).
+* Obsolete support code for handling older `owslib` versions has been removed from `ravenpy.utilities.geoserver`. (PR #525).
 * Code formatting and linting rules have been modified to use the newer `ruff` configurations. The formatting changes have been effected in the entire codebase. (PR #525).
 
 .. _changes_0.19.0:
