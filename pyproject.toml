@@ -65,8 +65,6 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   # Dev tools and testing
-  "black ==25.1.0",
-  "blackdoc ==0.4.1",
   "bump-my-version >=1.2.0",
   "coverage >=7.5.0",
   "filelock >=3.14.0",
@@ -92,7 +90,7 @@ dev = [
 docs = [
   # Requires python >=3.11
   "autodoc-pydantic >=2.1.0",
-  "birdhouse-birdy",
+  "birdhouse-birdy >=0.9.1",
   "cairosvg >=2.6.0",
   "cartopy >=0.23.0",
   "clisops >=0.16.1",
@@ -105,15 +103,15 @@ docs = [
   "intake-xarray <2.0",
   "ipykernel",
   "ipyleaflet",
-  "ipython >=8.5.0",
+  "ipython >=8.7.0",
   "ipywidgets",
   "jupyter-cache",
   "jupyter_client",
   "jupytext",
-  "matplotlib >=3.6.0",
+  "matplotlib >=3.7.0",
   "myst_nb",
   "nbsphinx >=0.9.5",
-  "pymetalink >=6.5.2",
+  "pymetalink >=6.5.3",
   "s3fs",
   "salib",
   "sphinx >=7.1.0",
