@@ -79,7 +79,7 @@ def nc_specs(
             if v in ds.data_vars:
                 nc_var = ds[v]
                 attrs["var_name_nc"] = v
-                attrs["dim_names_nc"] = nc_var.dims
+                attrs["dim_names_nc"] = infer_dim_names(nc_var)
                 attrs["_time_dim_name_nc"] = ds.cf["time"].name
                 attrs["_dim_size_nc"] = dict(zip(nc_var.dims, nc_var.shape))
                 attrs["units"] = nc_var.attrs.get("units")
@@ -189,3 +189,33 @@ def get_annotations(a):
             yield from get_annotations(arg)
         else:
             yield arg
+
+
+def infer_dim_names(da: xr.DataArray) -> tuple:
+    """Return names of dimensions in dataset in order expected by Raven.
+
+    If 3D, return X, Y, T axes names if they can be inferred from CF conventions.
+    If 2D, return STATION, T
+    """
+    try:
+        if da.ndim == 1:
+            dims = da.cf.axes["T"]
+            if len(dims) != 1:
+                raise ValueError("Should have exactly 1 dimension.")
+
+        elif da.ndim == 2:
+            dims = list(da.dims)
+            tdim = da.cf.axes["T"][0]
+            dims.remove(tdim)
+            dims.append(tdim)
+
+        elif da.ndim == 3:
+            dims = da.cf.axes["X"] + da.cf.axes["Y"] + da.cf.axes["T"]
+            if len(dims) != 3:
+                raise ValueError("Should have exactly 3 dimensions.")
+
+    except:
+        # In case CF inference fails, return the original dims.
+        return da.dims
+
+    return tuple(dims)
