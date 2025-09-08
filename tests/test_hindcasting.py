@@ -1,4 +1,5 @@
 import datetime as dt
+import pathlib
 import sys
 
 import pytest
@@ -13,6 +14,7 @@ from ravenpy.utilities.forecasting import (
     warm_up,
 )
 
+
 """
 Test to perform a hindcast using Caspar data on THREDDS.
 Currently only runs GEPS, eventually will run GEPS, GDPS, REPS and RDPS.
@@ -22,8 +24,8 @@ but this is a good proof of concept.
 
 
 class TestHindcasting:
-    def test_hindcasting_GEPS(self, get_local_testdata, salmon_hru, tmp_path):
-        ts20 = get_local_testdata("caspar_eccc_hindcasts/geps_watershed.nc")
+    def test_hindcasting_GEPS(self, salmon_hru, tmp_path, yangtze):
+        ts20 = yangtze.fetch("caspar_eccc_hindcasts/geps_watershed.nc")
 
         hru = salmon_hru["land"]
         data_kwds = {
@@ -44,9 +46,7 @@ class TestHindcasting:
             params=(0.529, -3.396, 407.29, 1.072, 16.9, 0.947),
             GlobalParameter={"AVG_ANNUAL_RUNOFF": 208.480},
             Gauge=[
-                rc.Gauge.from_nc(
-                    ts20, data_type=["PRECIP", "TEMP_AVE"], data_kwds=data_kwds
-                ),
+                rc.Gauge.from_nc(ts20, data_type=["PRECIP", "TEMP_AVE"], data_kwds=data_kwds),
             ],
         )
 
@@ -91,10 +91,8 @@ class TestHindcasting:
         (3, 11) > sys.version_info >= (3, 10),
         reason="climpred is unstable in Python 3.10",
     )
-    def test_climpred_hindcast_verif(self, get_local_testdata, salmon_hru, tmp_path):
-        ts = get_local_testdata(
-            "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
-        )
+    def test_climpred_hindcast_verif(self, salmon_hru, tmp_path, yangtze):
+        ts = pathlib.Path(yangtze.fetch("raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"))
         # Make a local copy to evade double-ownership of file - first file
         ts_tmp1 = tmp_path / "salmon_river_near_prince_george-tmp1.nc"
         ts_tmp1.write_bytes(ts.read_bytes())
@@ -123,9 +121,7 @@ class TestHindcasting:
         data_type = ["TEMP_MAX", "TEMP_MIN", "RAINFALL", "SNOWFALL"]
         data_kwds = {
             "ALL": {
-                "elevation": hru[
-                    "elevation"
-                ],  # No need for lat/lon as they are included in the netcdf file already
+                "elevation": hru["elevation"],  # No need for lat/lon as they are included in the netcdf file already
             }
         }
 

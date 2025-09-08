@@ -15,6 +15,7 @@ from ravenpy.config.emulators import (
     Mohyse,
 )
 
+
 # Alternative names for variables in meteo forcing file
 alt_names = {
     "RAINFALL": "rain",
@@ -241,32 +242,32 @@ params = {
 
 
 @pytest.fixture(scope="session")
-def gr4jcn_config(get_local_testdata, salmon_hru) -> (GR4JCN, params):
+def gr4jcn_config(yangtze, salmon_hru) -> (GR4JCN, params):
     """Return symbolic config and params for basic gr4jcn."""
+    salmon_file = yangtze.fetch("raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc")
 
-    salmon_file = get_local_testdata(
-        "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
+    yield (
+        GR4JCN(
+            Gauge=[
+                rc.Gauge.from_nc(
+                    salmon_file,
+                    data_type=["RAINFALL", "TEMP_MIN", "TEMP_MAX", "SNOWFALL"],
+                    alt_names=alt_names,
+                    data_kwds={"ALL": {"elevation": salmon_hru["land"]["elevation"]}},
+                ),
+            ],
+            ObservationData=[rc.ObservationData.from_nc(salmon_file, alt_names="qobs")],
+            HRUs=[salmon_hru["land"]],
+            StartDate=dt.datetime(2000, 1, 1),
+            Duration=15,
+            EvaluationMetrics=("NASH_SUTCLIFFE",),
+        ),
+        params["GR4JCN"],
     )
-
-    yield GR4JCN(
-        Gauge=[
-            rc.Gauge.from_nc(
-                salmon_file,
-                data_type=["RAINFALL", "TEMP_MIN", "TEMP_MAX", "SNOWFALL"],
-                alt_names=alt_names,
-                data_kwds={"ALL": {"elevation": salmon_hru["land"]["elevation"]}},
-            ),
-        ],
-        ObservationData=[rc.ObservationData.from_nc(salmon_file, alt_names="qobs")],
-        HRUs=[salmon_hru["land"]],
-        StartDate=dt.datetime(2000, 1, 1),
-        Duration=15,
-        EvaluationMetrics=("NASH_SUTCLIFFE",),
-    ), params["GR4JCN"]
 
 
 @pytest.fixture(scope="session", params=names)
-def symbolic_config(get_local_testdata, salmon_hru, request):
+def symbolic_config(yangtze, salmon_hru, request):
     """Emulator configuration instantiated with symbolic parameters."""
     name = request.param
     cls = configs[name]
@@ -275,18 +276,12 @@ def symbolic_config(get_local_testdata, salmon_hru, request):
     # Extra attributes for gauges
     gextras = {"ALL": {"elevation": salmon_hru["land"]["elevation"]}}
 
-    salmon_file = get_local_testdata(
-        "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
-    )
+    salmon_file = yangtze.fetch("raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc")
 
     if name in ["HBVEC", "HYPR"]:
         with xr.open_dataset(salmon_file) as ds:
-            gextras["ALL"]["monthly_ave_temperature"] = (
-                ((ds.tmin + ds.tmax) / 2).groupby("time.month").mean().values.tolist()
-            )
-            gextras["ALL"]["monthly_ave_evaporation"] = (
-                ds.pet.groupby("time.month").mean().values.tolist()
-            )
+            gextras["ALL"]["monthly_ave_temperature"] = ((ds.tmin + ds.tmax) / 2).groupby("time.month").mean().values.tolist()
+            gextras["ALL"]["monthly_ave_evaporation"] = ds.pet.groupby("time.month").mean().values.tolist()
 
     # Extra attributes for emulator
     if name in ["CanadianShield", "HYPR", "SACSMA", "Blended"]:
@@ -304,22 +299,25 @@ def symbolic_config(get_local_testdata, salmon_hru, request):
         hrus = [salmon_hru["land"], salmon_hru["land"]]
         extras["SuppressOutput"] = True
 
-    yield name, cls(
-        Gauge=[
-            rc.Gauge.from_nc(
-                salmon_file,
-                data_type=data_type,
-                alt_names=alt_names,
-                data_kwds=gextras,
-            ),
-        ],
-        ObservationData=[rc.ObservationData.from_nc(salmon_file, alt_names="qobs")],
-        HRUs=hrus,
-        StartDate=dt.datetime(2000, 1, 1),
-        EndDate=dt.datetime(2002, 1, 1),
-        RunName="test",
-        EvaluationMetrics=("NASH_SUTCLIFFE",),
-        **extras,
+    yield (
+        name,
+        cls(
+            Gauge=[
+                rc.Gauge.from_nc(
+                    salmon_file,
+                    data_type=data_type,
+                    alt_names=alt_names,
+                    data_kwds=gextras,
+                ),
+            ],
+            ObservationData=[rc.ObservationData.from_nc(salmon_file, alt_names="qobs")],
+            HRUs=hrus,
+            StartDate=dt.datetime(2000, 1, 1),
+            EndDate=dt.datetime(2002, 1, 1),
+            RunName="test",
+            EvaluationMetrics=("NASH_SUTCLIFFE",),
+            **extras,
+        ),
     )
 
 
@@ -331,14 +329,12 @@ def numeric_config(symbolic_config):
 
 
 @pytest.fixture(scope="session")
-def minimal_emulator(get_local_testdata, salmon_hru):
+def minimal_emulator(yangtze, salmon_hru):
     """Return the config for a single emulator."""
     cls = configs["HMETS"]
     data_type = ["RAINFALL", "TEMP_MIN", "TEMP_MAX", "SNOWFALL", "PET"]
 
-    salmon_file = get_local_testdata(
-        "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
-    )
+    salmon_file = yangtze.fetch("raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc")
 
     yield cls(
         params=params["HMETS"],
@@ -363,25 +359,3 @@ def config_rv(tmp_path_factory, numeric_config):
     out = tmp_path_factory.mktemp(name) / "config"
     conf.write_rv(out)
     yield name, out
-
-
-@pytest.fixture
-def dummy_config():
-    """Return an almost empty config class and the parameter dataclass."""
-    from pydantic import Field
-    from pydantic.dataclasses import dataclass
-
-    from ravenpy.config import options as o
-    from ravenpy.config.base import Sym, SymConfig, Variable
-    from ravenpy.config.rvs import Config
-
-    @dataclass(config=SymConfig)
-    class P:
-        X1: Sym = Variable("X1")
-
-    class TestConfig(Config):
-        params: P = P()
-        calendar: o.Calendar = Field("JULIAN", alias="Calendar")
-        air_snow_coeff: Sym = Field(1 - P.X1, alias="AirSnowCoeff")
-
-    return TestConfig, P

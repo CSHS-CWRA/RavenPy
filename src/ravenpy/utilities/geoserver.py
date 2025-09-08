@@ -1,4 +1,5 @@
-"""GeoServer interaction operations.
+"""
+GeoServer interaction operations.
 
 Working assumptions for this module:
 * Point coordinates are passed as shapely.geometry.Point instances.
@@ -13,7 +14,6 @@ For example, many function's logic essentially consists in creating the layer na
 We could have a function that returns the layer name, and then other functions expect the layer name.
 """
 
-import inspect
 import json
 import os
 import warnings
@@ -26,34 +26,27 @@ import urllib3
 
 from . import gis_import_error_message
 
+
 try:
     import fiona
     import geopandas as gpd
     import pandas as pd
     from lxml import etree
     from owslib.fes import PropertyIsLike
+    from owslib.fes2 import Intersects
+    from owslib.gml import Point
     from owslib.wcs import WebCoverageService
     from owslib.wfs import WebFeatureService
-    from shapely.geometry import Point, shape
-except (ImportError, ModuleNotFoundError) as e:
+except (ImportError, ModuleNotFoundError) as err:
     msg = gis_import_error_message.format(Path(__file__).stem)
-    raise ImportError(msg) from e
-
-try:
-    from owslib.fes2 import Intersects
-    from owslib.gml import Point as wfs_Point
-except (ImportError, ModuleNotFoundError):
-    warnings.warn("WFS point spatial filtering requires OWSLib>0.24.1.")
-    Intersects = None
-    wfs_Point = None  # noqa: N816
+    raise ImportError(msg) from err
 
 from .geo import determine_upstream_ids
 
+
 # Can be set at runtime with `$ env RAVENPY_GEOSERVER_URL=https://xx.yy.zz/geoserver/ ...`.
 # For legacy reasons, we also accept the `GEO_URL` environment variable.
-HOST_URL = os.getenv(
-    "RAVENPY_HOST_URL", os.getenv("HOST_URL", "https://pavics.ouranos.ca/")
-)
+HOST_URL = os.getenv("RAVENPY_HOST_URL", os.getenv("HOST_URL", "https://pavics.ouranos.ca/"))
 GEOSERVER_URL = os.getenv(
     "RAVENPY_GEOSERVER_URL",
     os.getenv("GEO_URL", f"{HOST_URL}/geoserver/"),
@@ -72,7 +65,7 @@ hybas_domains = {dom: hybas_dir / hybas_pat.format(domain=dom) for dom in hybas_
 
 def _fix_server_url(server_url: str) -> str:
     if not server_url.endswith("/"):
-        warnings.warn("The url should end with a slash. Appending it to the url.")
+        warnings.warn("The url should end with a slash. Appending it to the url.", stacklevel=2)
         return f"{server_url}/"
     return server_url
 
@@ -96,7 +89,8 @@ def _get_location_wfs(
     layer: str,
     geoserver: str = GEOSERVER_URL,
 ) -> dict:
-    """Return leveled features from a hosted data set using bounding box coordinates and WFS 1.1.0 protocol.
+    """
+    Return leveled features from a hosted data set using bounding box coordinates and WFS 1.1.0 protocol.
 
     For geographic rasters, subsetting is based on WGS84 (Long, Lat) boundaries. If not geographic, subsetting based
     on projected coordinate system (Easting, Northing) boundaries.
@@ -126,13 +120,7 @@ def _get_location_wfs(
     if bbox:
         kwargs = dict(bbox=bbox)
     elif point:
-        # FIXME: Remove this once OWSlib > 0.24.1 is released.
-        if not Intersects and not wfs_Point:
-            raise NotImplementedError(
-                f"{inspect.stack()[1][3]} with point filtering requires OWSLib>0.24.1.",
-            )
-
-        p = wfs_Point(
+        p = Point(
             id="feature",
             srsName="http://www.opengis.net/gml/srs/epsg.xml#4326",
             pos=point,
@@ -141,11 +129,9 @@ def _get_location_wfs(
         intersects = f.toXML()
         kwargs = dict(filter=intersects)
     else:
-        raise ValueError()
+        raise ValueError("Either 'bbox' or 'point' must be provided.")
 
-    resp = wfs.getfeature(
-        typename=layer, outputFormat="application/json", method="POST", **kwargs
-    )
+    resp = wfs.getfeature(typename=layer, outputFormat="application/json", method="POST", **kwargs)
 
     data = json.loads(resp.read())
     return data
@@ -156,7 +142,8 @@ def _get_feature_attributes_wfs(
     layer: str,
     geoserver: str = GEOSERVER_URL,
 ) -> str:
-    """Return WFS GetFeature URL request for attribute values.
+    """
+    Return WFS GetFeature URL request for attribute values.
 
     Making this request will return a JSON response.
 
@@ -203,7 +190,8 @@ def _filter_feature_attributes_wfs(
     layer: str,
     geoserver: str = GEOSERVER_URL,
 ) -> str:
-    """Return WFS GetFeature URL request filtering geographic features based on a property's value.
+    """
+    Return WFS GetFeature URL request filtering geographic features based on a property's value.
 
     Parameters
     ----------
@@ -229,8 +217,8 @@ def _filter_feature_attributes_wfs(
         attribute = str(attribute)
         value = str(value)
 
-    except ValueError:
-        raise Exception("Unable to cast attribute/filter to string.")
+    except ValueError as e:
+        raise ValueError("Unable to cast attribute/filter to string.") from e
 
     filter_request = PropertyIsLike(propertyname=attribute, literal=value, wildCard="*")
     filterxml = etree.tostring(filter_request.toXML()).decode("utf-8")
@@ -257,7 +245,8 @@ def get_raster_wcs(
     layer: str,
     geoserver: str = GEOSERVER_URL,
 ) -> bytes:
-    """Return a subset of a raster image from the local GeoServer via WCS 2.0.1 protocol.
+    """
+    Return a subset of a raster image from the local GeoServer via WCS 2.0.1 protocol.
 
     For geographic raster grids, subsetting is based on WGS84 (Long, Lat) boundaries.
     If not geographic, subsetting based on projected coordinate system (Easting, Northing) boundaries.
@@ -317,7 +306,8 @@ def get_raster_wcs(
 
 
 def hydrobasins_upstream(feature: dict, domain: str) -> pd.DataFrame:
-    """Return a list of HydroBASINS features located upstream.
+    """
+    Return a list of HydroBASINS features located upstream.
 
     Parameters
     ----------
@@ -341,9 +331,7 @@ def hydrobasins_upstream(feature: dict, domain: str) -> pd.DataFrame:
     # filter = PropertyIsEqualTo(propertyname=basin_family, literal=feature[basin_family])
 
     # Fetch all features in the same basin
-    request_url = filter_hydrobasins_attributes_wfs(
-        attribute=basin_family, value=feature[basin_family], domain=domain
-    )
+    request_url = filter_hydrobasins_attributes_wfs(attribute=basin_family, value=feature[basin_family], domain=domain)
     df = gpd.read_file(filename=request_url, engine="pyogrio")
 
     # Filter upstream watersheds
@@ -386,11 +374,7 @@ def hydrobasins_aggregate(gdf: pd.DataFrame) -> pd.DataFrame:
 
 
 def select_hybas_domain(
-    bbox: Optional[
-        tuple[
-            Union[int, float], Union[int, float], Union[int, float], Union[int, float]
-        ]
-    ] = None,
+    bbox: Optional[tuple[Union[int, float], Union[int, float], Union[int, float], Union[int, float]]] = None,
     point: Optional[tuple[Union[int, float], Union[int, float]]] = None,
 ) -> str:
     """
@@ -458,9 +442,7 @@ def filter_hydrobasins_attributes_wfs(
     level = 12
 
     layer = f"public:USGS_HydroBASINS_{'lake_' if lakes else ''}{domain}_lev{str(level).zfill(2)}"
-    q = _filter_feature_attributes_wfs(
-        attribute=attribute, value=value, layer=layer, geoserver=geoserver
-    )
+    q = _filter_feature_attributes_wfs(attribute=attribute, value=value, layer=layer, geoserver=geoserver)
 
     return q
 
@@ -498,7 +480,7 @@ def get_hydrobasins_location_wfs(
     lakes = True
     level = 12
     layer = f"public:USGS_HydroBASINS_{'lake_' if lakes else ''}{domain}_lev{str(level).zfill(2)}"
-    if not wfs_Point and not Intersects:
+    if not Point and not Intersects:
         data = _get_location_wfs(bbox=coordinates * 2, layer=layer, geoserver=geoserver)
     else:
         data = _get_location_wfs(point=coordinates, layer=layer, geoserver=geoserver)
@@ -598,9 +580,7 @@ def get_hydro_routing_attributes_wfs(
     geoserver = _fix_server_url(geoserver)
 
     layer = f"public:routing_{lakes}Lakes_{str(level).zfill(2)}"
-    return _get_feature_attributes_wfs(
-        attribute=attribute, layer=layer, geoserver=geoserver
-    )
+    return _get_feature_attributes_wfs(attribute=attribute, layer=layer, geoserver=geoserver)
 
 
 def filter_hydro_routing_attributes_wfs(
@@ -638,9 +618,7 @@ def filter_hydro_routing_attributes_wfs(
     geoserver = _fix_server_url(geoserver)
 
     layer = f"public:routing_{lakes}Lakes_{str(level).zfill(2)}"
-    return _filter_feature_attributes_wfs(
-        attribute=attribute, value=value, layer=layer, geoserver=geoserver
-    )
+    return _filter_feature_attributes_wfs(attribute=attribute, value=value, layer=layer, geoserver=geoserver)
 
 
 def get_hydro_routing_location_wfs(
@@ -679,7 +657,7 @@ def get_hydro_routing_location_wfs(
 
     layer = f"public:routing_{lakes}Lakes_{str(level).zfill(2)}"
 
-    if not wfs_Point and not Intersects:
+    if not Point and not Intersects:
         data = _get_location_wfs(bbox=coordinates * 2, layer=layer, geoserver=geoserver)
     else:
         data = _get_location_wfs(point=coordinates, layer=layer, geoserver=geoserver)

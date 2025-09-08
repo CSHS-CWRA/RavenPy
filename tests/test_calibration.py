@@ -3,6 +3,7 @@ import spotpy
 
 from ravenpy.utilities.calibration import SpotSetup
 
+
 # Low and high bounds for parameter distribution
 bounds = {
     "GR4JCN": dict(
@@ -407,9 +408,7 @@ def test_spotpy_calibration(symbolic_config):
         high=bounds[name]["high"],
     )
 
-    sampler = spotpy.algorithms.dds(
-        spot_setup, dbname="RAVEN_model_run", dbformat="ram", save_sim=False
-    )
+    sampler = spotpy.algorithms.dds(spot_setup, dbname="RAVEN_model_run", dbformat="ram", save_sim=False)
 
     # Removing this that is too subject to stochasticity. If it works, it will converge
     # sampler.sample(8, trials=1)
@@ -422,6 +421,4 @@ def test_spotpy_calibration(symbolic_config):
     assert spot_setup.diagnostics is not None
 
     results = sampler.getdata()
-    assert len(spotpy.analyser.get_best_parameterset(results)[0]) == len(
-        bounds[name]["high"]
-    )
+    assert len(spotpy.analyser.get_best_parameterset(results)[0]) == len(bounds[name]["high"])

@@ -10,6 +10,7 @@ import pandas as pd
 
 from . import gis_import_error_message
 
+
 try:
     import fiona
     import rasterio
@@ -79,7 +80,7 @@ def geom_transform(
     except Exception as err:  # noqa: BLE001
         msg = f"{err}: Failed to reproject geometry"
         LOGGER.error(msg)
-        raise Exception(msg)
+        raise Exception(msg) from err
 
 
 def generic_raster_clip(
@@ -171,9 +172,7 @@ def generic_raster_warp(
         # Reproject raster using WarpedVRT class
         with rasterio.vrt.WarpedVRT(src, crs=target_crs) as vrt:
             # Calculate grid properties based on projection
-            affine, width, height = rasterio.warp.calculate_default_transform(
-                src.crs, target_crs, src.width, src.height, *src.bounds
-            )
+            affine, width, height = rasterio.warp.calculate_default_transform(src.crs, target_crs, src.width, src.height, *src.bounds)
 
             # Copy relevant metadata from parent raster
             metadata = src.meta.copy()
@@ -225,20 +224,16 @@ def generic_vector_reproject(
     if isinstance(vector, Path):
         vector = vector.as_posix()
 
-    for i, layer_name in enumerate(fiona.listlayers(vector)):
+    for i, _ in enumerate(fiona.listlayers(vector)):
         with fiona.open(vector, "r", layer=i) as src:
-            with fiona.open(
-                projected, "w", driver="GeoJSON", schema=src.schema, crs=target_crs
-            ) as sink:
+            with fiona.open(projected, "w", driver="GeoJSON", schema=src.schema, crs=target_crs) as sink:
                 for feature in src:
                     # Perform vector reprojection using Shapely on each feature
                     try:
                         geom = shape(feature["geometry"])
                         transformed = geom_transform(geom, source_crs, target_crs)
                         transformed_feature = {
-                            "geometry": fiona.Geometry().from_dict(
-                                mapping(transformed)
-                            ),
+                            "geometry": fiona.Geometry().from_dict(mapping(transformed)),
                             "properties": feature.__geo_interface__["properties"],
                             "id": feature.__geo_interface__["id"],
                             "type": feature.__geo_interface__["type"],
@@ -302,18 +297,12 @@ def determine_upstream_ids(
     for b in up:
         tmp = upstream_ids(sub if sub is not None else df, b)
         if len(tmp):
-            up.extend(tmp)
+            up.extend(tmp)  # noqa: B909
 
-    return (
-        sub[sub[basin_field].isin(up)]
-        if sub is not None
-        else df[df[basin_field].isin(up)]
-    )
+    return sub[sub[basin_field].isin(up)] if sub is not None else df[df[basin_field].isin(up)]
 
 
-def find_geometry_from_coord(
-    lon: float, lat: float, df: geopandas.GeoDataFrame
-) -> geopandas.GeoDataFrame:
+def find_geometry_from_coord(lon: float, lat: float, df: geopandas.GeoDataFrame) -> geopandas.GeoDataFrame:
     """
     Return the geometry containing the given coordinates.
 

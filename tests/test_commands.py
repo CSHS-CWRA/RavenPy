@@ -1,3 +1,4 @@
+import pathlib
 import re
 from collections.abc import Sequence
 from textwrap import dedent
@@ -11,9 +12,8 @@ from ravenpy.config import commands as rc
 from ravenpy.config import options as o
 from ravenpy.config.base import RV, optfield
 
-salmon_land_hru_1 = dict(
-    area=4250.6, elevation=843.0, latitude=54.4848, longitude=-123.3659, hru_type="land"
-)
+
+salmon_land_hru_1 = dict(area=4250.6, elevation=843.0, latitude=54.4848, longitude=-123.3659, hru_type="land")
 
 
 def test_custom_output():
@@ -26,17 +26,13 @@ def test_custom_output():
         variable="PRECIP",
         space_agg="ENTIRE_WATERSHED",
     )
-    assert (
-        Test(co=[co]).to_rv().strip()
-        == ":CustomOutput         YEARLY AVERAGE PRECIP ENTIRE_WATERSHED"
-    )
+    assert Test(co=[co]).to_rv().strip() == ":CustomOutput         YEARLY AVERAGE PRECIP ENTIRE_WATERSHED"
 
     new = rc.CustomOutput.parse(str(co))
     assert new == co
 
 
 def test_evaluation_metrics():
-
     evaluation_metrics = [
         "ABSERR",
         "ABSERR_RUN",
@@ -56,14 +52,9 @@ def test_evaluation_metrics():
     ]
 
     class Test(RV):
-        em: Sequence[o.EvaluationMetrics] = Field(
-            evaluation_metrics, alias="EvaluationMetrics"
-        )
+        em: Sequence[o.EvaluationMetrics] = Field(evaluation_metrics, alias="EvaluationMetrics")
 
-    assert (
-        Test().to_rv().strip()
-        == f":EvaluationMetrics    {' '.join(evaluation_metrics)}"
-    )
+    assert Test().to_rv().strip() == f":EvaluationMetrics    {' '.join(evaluation_metrics)}"
 
 
 def test_hrus():
@@ -72,9 +63,9 @@ def test_hrus():
     assert hrus[0].subbasin_id == 1
 
 
-def test_hrus_parse(get_local_testdata):
-    f = get_local_testdata("clrh/mattawin/06FB002.rvh")
-    hrus = rc.HRUs.parse(f.read_text())
+def test_hrus_parse(yangtze):
+    f = yangtze.fetch("clrh/mattawin/06FB002.rvh")
+    hrus = rc.HRUs.parse(pathlib.Path(f).read_text())
     assert len(hrus) == 40
     hru = hrus[0]
 
@@ -225,9 +216,7 @@ def test_hydrologic_processes():
     ]
 
     class Test(RV):
-        hydrologic_processes: Sequence[rc.Process] = Field(
-            hp, alias="HydrologicProcesses"
-        )
+        hydrologic_processes: Sequence[rc.Process] = Field(hp, alias="HydrologicProcesses")
 
     out = dedent(Test().to_rv().strip())
     assert (
@@ -363,12 +352,10 @@ class TestHRUStateVariableTable:
         assert sv[0].data["ATMOS_PRECIP"] == -0.16005
 
 
-def test_read_from_netcdf(get_local_testdata):
+def test_read_from_netcdf(yangtze):
     from ravenpy.config.commands import ReadFromNetCDF
 
-    f = get_local_testdata(
-        "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
-    )
+    f = yangtze.fetch("raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc")
     c = ReadFromNetCDF.from_nc(f, "PRECIP", station_idx=1, alt_names=("rain",))
     s = dedent(c.to_rv())
 
@@ -389,37 +376,31 @@ def test_read_from_netcdf(get_local_testdata):
     assert isinstance(c.da, xr.DataArray)
 
 
-def test_station_forcing(get_local_testdata):
-    f = get_local_testdata(
-        "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_2d.nc"
-    )
+def test_station_forcing(yangtze):
+    f = yangtze.fetch("raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_2d.nc")
     c = rc.StationForcing.from_nc(f, "PRECIP", station_idx=1, alt_names="rain")
     dedent(c.to_rv())
 
 
-def test_gridded_forcing(get_local_testdata):
-    """TODO: Make sure dimensions are in the order x, y, t."""
-    fn = get_local_testdata("raven-routing-sample/VIC_temperatures.nc")
+def test_gridded_forcing(yangtze):
+    # TODO: Make sure dimensions are in the order x, y, t.
+    fn = yangtze.fetch("raven-routing-sample/VIC_temperatures.nc")
     rc.GriddedForcing.from_nc(fn, data_type="TEMP_AVE", alt_names=("Avg_temp",))
     # assert gf.dim_names_nc == ("lon_dim", "lat_dim", "time")
 
-    fn = get_local_testdata("raven-routing-sample/VIC_streaminputs.nc")
+    fn = yangtze.fetch("raven-routing-sample/VIC_streaminputs.nc")
     rc.GriddedForcing.from_nc(fn, data_type="PRECIP", alt_names=("Streaminputs",))
     # assert gf.dim_names_nc == ("lon_dim", "lat_dim", "time")
 
-    fn = get_local_testdata(
-        "cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200601-210012_subset.nc"
-    )
+    fn = yangtze.fetch("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200601-210012_subset.nc")
     gf = rc.GriddedForcing.from_nc(fn, data_type="TEMP_AVE", engine="netcdf4")
     assert gf.latitude_var_name_nc is None
 
 
-def test_gauge(get_local_testdata, tmp_path):
-    salmon_file = get_local_testdata(
-        "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
-    )
+def test_gauge(yangtze, tmp_path):
+    salmon_file = yangtze.fetch("raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc")
     salmon_file_tmp = tmp_path / "salmon_river_near_prince_george-tmp.nc"
-    salmon_file_tmp.write_bytes(salmon_file.read_bytes())
+    salmon_file_tmp.write_bytes(pathlib.Path(salmon_file).read_bytes())
 
     g = rc.Gauge.from_nc(
         salmon_file_tmp,
@@ -433,10 +414,8 @@ def test_gauge(get_local_testdata, tmp_path):
     assert g.data[0].read_from_netcdf.deaccumulate
 
 
-def test_gauge_raises(get_local_testdata):
-    f = get_local_testdata(
-        "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
-    )
+def test_gauge_raises(yangtze):
+    f = yangtze.fetch("raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc")
 
     with pytest.raises(ValueError):
         rc.Gauge.from_nc(
@@ -459,18 +438,16 @@ def test_grid_weights():
     assert parsed.data == gw.data
 
 
-def test_redirect_to_file(get_local_testdata):
-    f = get_local_testdata("raven-routing-sample/VIC_test_nodata_weights.rvt")
+def test_redirect_to_file(yangtze):
+    f = yangtze.fetch("raven-routing-sample/VIC_test_nodata_weights.rvt")
     r = rc.RedirectToFile(f)
     assert re.match(r"^:RedirectToFile\s+(\S+)$", r.to_rv())
 
     class Test(RV):
-        gw: Union[rc.GridWeights, rc.RedirectToFile] = Field(
-            None, alias="RedirectToFile"
-        )
+        gw: Union[rc.GridWeights, rc.RedirectToFile] = Field(None, alias="RedirectToFile")
 
     t = Test(gw=f)
-    assert t.gw.root == f
+    assert t.gw.root == pathlib.Path(f)
 
 
 def test_subbasin_properties():
@@ -493,15 +470,15 @@ def test_subbasins():
     Test().to_rv()
 
 
-def test_subbasins_parse(get_local_testdata):
-    f = get_local_testdata("clrh/mattawin/06FB002.rvh")
-    sb = rc.SubBasins.parse(f.read_text())
+def test_subbasins_parse(yangtze):
+    f = yangtze.fetch("clrh/mattawin/06FB002.rvh")
+    sb = rc.SubBasins.parse(pathlib.Path(f).read_text())
     assert len(sb) == 35
 
 
-def test_reservoir_parse(get_local_testdata):
-    f = get_local_testdata("clrh/mattawin/Lakes.rvh")
-    rs = rc.Reservoir.parse(f.read_text())
+def test_reservoir_parse(yangtze):
+    f = yangtze.fetch("clrh/mattawin/Lakes.rvh")
+    rs = rc.Reservoir.parse(pathlib.Path(f).read_text())
     assert len(rs) == 5
     r = rs[0]
 
@@ -524,25 +501,15 @@ def test_ensemble_mode():
 
 
 def test_observation_error_model():
-    c = rc.ObservationErrorModel(
-        state="STREAMFLOW", dist="DIST_UNIFORM", p1=1, p2=2, adj="ADDITIVE"
-    )
+    c = rc.ObservationErrorModel(state="STREAMFLOW", dist="DIST_UNIFORM", p1=1, p2=2, adj="ADDITIVE")
 
-    assert (
-        c.to_rv().strip()
-        == ":ObservationErrorModel STREAMFLOW DIST_UNIFORM 1.0 2.0 ADDITIVE"
-    )
+    assert c.to_rv().strip() == ":ObservationErrorModel STREAMFLOW DIST_UNIFORM 1.0 2.0 ADDITIVE"
 
 
 def test_forcing_perturbation():
-    c = rc.ForcingPerturbation(
-        forcing="TEMP_AVE", dist="DIST_UNIFORM", p1=1, p2=2, adj="ADDITIVE"
-    )
+    c = rc.ForcingPerturbation(forcing="TEMP_AVE", dist="DIST_UNIFORM", p1=1, p2=2, adj="ADDITIVE")
 
-    assert (
-        c.to_rv().strip()
-        == ":ForcingPerturbation  TEMP_AVE DIST_UNIFORM 1.0 2.0 ADDITIVE"
-    )
+    assert c.to_rv().strip() == ":ForcingPerturbation  TEMP_AVE DIST_UNIFORM 1.0 2.0 ADDITIVE"
 
 
 def test_hru_group():
@@ -560,19 +527,19 @@ def test_hru_group():
     )
 
 
-def test_subbasin_group_parse(get_local_testdata):
-    f = get_local_testdata("clrh/mattawin/06FB002.rvh")
-    sbgs = rc.SubBasinGroup.parse(f.read_text())
+def test_subbasin_group_parse(yangtze):
+    f = yangtze.fetch("clrh/mattawin/06FB002.rvh")
+    sbgs = rc.SubBasinGroup.parse(pathlib.Path(f).read_text())
     assert len(sbgs) == 2
     sbg = sbgs[0]
     assert sbg.name == "Allsubbasins"
     assert len(sbg.sb_ids) == 35
-    sbg.sb_ids[0] == 23007946
+    assert sbg.sb_ids[0] == 23007946
 
 
-def test_channel_profile_parse(get_local_testdata):
-    f = get_local_testdata("clrh/mattawin/channel_properties.rvp")
-    cps = rc.ChannelProfile.parse(f.read_text())
+def test_channel_profile_parse(yangtze):
+    f = yangtze.fetch("clrh/mattawin/channel_properties.rvp")
+    cps = rc.ChannelProfile.parse(pathlib.Path(f).read_text())
     assert len(cps) == 20
 
     cp = cps[0]

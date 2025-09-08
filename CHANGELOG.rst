@@ -2,16 +2,67 @@
 Changelog
 =========
 
-v0.18.3 (unreleased)
---------------------
+..
+    `Unreleased <https://github.com/CSHS-CWRA/RavenPy>`_ (latest)
+    -------------------------------------------------------------
+
+    Contributors:
+
+    Changes
+    ^^^^^^^
+    * No change.
+
+    Fixes
+    ^^^^^
+    * No change.
+
+.. _changes_0.19.1:
+
+`v0.19.1 <https://github.com/CSHS-CWRA/RavenPy/tree/v0.19.1>`_ (2025-08-05)
+---------------------------------------------------------------------------
+
+Contributors: Trevor James Smith (:user:`Zeitsperre`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* `scipy` is no longer pinned below v1.16.0, as newer `statsmodels` is now compatible with modern `scipy` versions. (PR #524)
+* `black` and `isort` have been replaced with `ruff` for code formatting and linting. This change simplifies the development workflow and improves code consistency. (PR #525).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Updates the notebooks and re-runs all of them to ensure they are working with latest libraries. (PR #524)
+* Adds a few missing testing data files to the `pooch` ``registry.txt`` file that are necessary for running the notebooks. (PR #524)
+* Slightly adjusted CI workflows for security and behaviour improvements. (PR #524)
+* Obsolete support code for handling older `owslib` versions has been removed from `ravenpy.utilities.geoserver`. (PR #525).
+* Code formatting and linting rules have been modified to use the newer `ruff` configurations. The formatting changes have been effected in the entire codebase. (PR #525).
+
+.. _changes_0.19.0:
+
+`v0.19.0 <https://github.com/CSHS-CWRA/RavenPy/tree/v0.19.0>`_ (2025-07-16)
+---------------------------------------------------------------------------
+
+New features
+^^^^^^^^^^^^
+* Added `parsers.parse_rv` to extract a Command value from an RV file. (PR #503)
+* New module `ravenpy.testing` has been added to provide utility functions and support for testing and testing data management. (PR #513)
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* `ravenpy` now requires `pooch>=1.8.0` for downloading and caching remote testing data. (PR #513)
+* `ravenpy.utilities.testdata` has been refactored to new module `ravenpy.testing`. The `publish_release_notes` function is now located in `ravenpy.utilities.publishing`. (PR #513)
+* The `ravenpy.testing.utils` module now provides a `yangtze()` class for fetching and caching the `raven-testdata` testing data. A convenience function (`get_file`) replaces the previous `get_local_testdata`. (PR #513)
+* The `ravenpy.testing.utils.open_dataset` function no longer supports OPeNDAP URLs or local file paths. Instead, it uses the `yangtze()` class to fetch datasets from the testing data repository or the local cache. Users should now use `xarray.open_dataset()` directly for OPeNDAP URLs or local files. (PR #513)
 
 Bug fixes
 ^^^^^^^^^
 * Fixed bug affecting `GriddedForcing`, where `station_idx` in the call to ``nc_specs`` was set to ``1`` instead of ``None``. (PR #501)
+* Fixed bug in the `run` method, where `overwrite=False` was not being respected. (PR #503)
+* Pin `scipy` below v1.16.0 due to a breaking change that affects `statsmodels` below v0.14.4. (PR #521)
 
 Internal changes
 ^^^^^^^^^^^^^^^^
 * `ravenpy` now requires `xclim>=0.57.0` and `xsdba` (v0.4.0+). (PR #511)
+* The `tests` folder no longer contains an `__init__.py` file and is no longer treated as a package. `pytest` fixtures from `emulators.py` are now directly imported into `conftest.py` for use in tests, and existing `pytest` fixtures have been modified to use the new `yangtze()` class for fetching testing data. (PR #513)
 
 v0.18.2 (2025-05-05)
 --------------------

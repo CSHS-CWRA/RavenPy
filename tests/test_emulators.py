@@ -9,6 +9,7 @@ from ravenpy.config import commands as rc
 from ravenpy.config.emulators import GR4JCN, BasicRoute
 from ravenpy.config.utils import get_average_annual_runoff
 
+
 # Expected NSE for emulator configuration from the `config_rv` test fixture.
 NSE = {
     "GR4JCN": -0.117301,
@@ -57,6 +58,21 @@ def test_run(numeric_config, tmp_path):
     assert e2.modelname == "raven"
     assert isinstance(out.hydrograph, xr.Dataset)
     assert isinstance(out.storage, xr.Dataset)
+
+
+def test_run_overwrite(gr4jcn_config, tmp_path):
+    """Test that the emulator actually runs and returns the expected NSE."""
+    gr4jcn, params = gr4jcn_config
+    gr4jcn = gr4jcn.set_params(params)
+
+    e = Emulator(config=gr4jcn, workdir=tmp_path)
+    e.run()
+
+    with pytest.raises(FileExistsError):
+        e.run(overwrite=False)
+
+    # Test that the emulator actually runs
+    e.run(overwrite=True)
 
 
 @pytest.mark.skip("Need to find a clean way to freeze emulator config instance.")
@@ -127,9 +143,7 @@ def test_resume(gr4jcn_config, tmp_path):
     out_ab = ab.run()
 
     for key in ["Soil Water[0]", "Soil Water[1]"]:
-        np.testing.assert_array_almost_equal(
-            out_b.storage[key] - out_ab.storage[key], 0, 5
-        )
+        np.testing.assert_array_almost_equal(out_b.storage[key] - out_ab.storage[key], 0, 5)
 
     # Confirm that the start_date is not changed when timestamp is False
     conf_c = a.resume(timestamp=False)
@@ -171,9 +185,7 @@ def test_run_with_dap_link(minimal_emulator, tmp_path):
     """Test Raven with DAP link instead of local netCDF file."""
     # Link to THREDDS Data Server netCDF testdata
     thredds = "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/birdhouse/testdata/raven"
-    dap_link = (
-        f"{thredds}/raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
-    )
+    dap_link = f"{thredds}/raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
 
     alt_names = {
         "RAINFALL": "rain",
@@ -191,16 +203,16 @@ def test_run_with_dap_link(minimal_emulator, tmp_path):
     Emulator(conf, workdir=tmp_path).run()
 
 
-def test_routing(get_local_testdata):
-    """We need at least 2 subbasins to activate routing."""
+def test_routing(yangtze):
+    """We need at least two subbasins to activate routing."""
     from ravenpy.config.emulators.gr4jcn import P
 
     # Salmon catchment is now split into land- and lake-part.
     # The areas do not sum up to overall area of 4250.6 [km2].
     # This is the reason the "test_routing" will give different
     # results compared to "test_run". The "salmon_land_hru"
-    # however is kept at the overall area of 4250.6 [km2] such
-    # that other tests still obtain same results as before.
+    # however, is kept in the overall area of 4250.6 [km2] such
+    # that other tests still get the same results as before.
 
     salmon_land_hru_1 = dict(
         area=4250.6,
@@ -209,9 +221,7 @@ def test_routing(get_local_testdata):
         longitude=-123.3659,
         hru_type="land",
     )
-    salmon_lake_hru_1 = dict(
-        area=100.0, elevation=839.0, latitude=54.0, longitude=-123.4, hru_type="lake"
-    )
+    salmon_lake_hru_1 = dict(area=100.0, elevation=839.0, latitude=54.0, longitude=-123.4, hru_type="lake")
     salmon_land_hru_2 = dict(
         area=2000.0,
         elevation=835.0,
@@ -220,12 +230,8 @@ def test_routing(get_local_testdata):
         hru_type="land",
     )
 
-    salmon_river = get_local_testdata(
-        "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
-    )
-    ts_2d = get_local_testdata(
-        "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_2d.nc"
-    )
+    salmon_river = yangtze.fetch("raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc")
+    ts_2d = yangtze.fetch("raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_2d.nc")
 
     #########
     # R V P #
@@ -293,12 +299,8 @@ def test_routing(get_local_testdata):
         rc.SubBasinGroup(name="Lakes", sb_ids=[20]),
     ]
     SBP = [
-        rc.SBGroupPropertyMultiplier(
-            group_name="Land", parameter_name="MANNINGS_N", mult=1.0
-        ),
-        rc.SBGroupPropertyMultiplier(
-            group_name="Lakes", parameter_name="RESERVOIR_CREST_WIDTH", mult=1.0
-        ),
+        rc.SBGroupPropertyMultiplier(group_name="Land", parameter_name="MANNINGS_N", mult=1.0),
+        rc.SBGroupPropertyMultiplier(group_name="Lakes", parameter_name="RESERVOIR_CREST_WIDTH", mult=1.0),
     ]
 
     total_area_in_m2 = sum(hru["area"] for hru in hrus) * 1000 * 1000
@@ -379,10 +381,7 @@ def test_routing(get_local_testdata):
         data=((1, 0, 1.0), (2, 0, 1.0), (3, 0, 1.0)),
     )
 
-    sf = [
-        rc.StationForcing.from_nc(ts_2d, typ, alt_names=alt_names[typ], GridWeights=gw)
-        for typ in data_type
-    ]
+    sf = [rc.StationForcing.from_nc(ts_2d, typ, alt_names=alt_names[typ], GridWeights=gw) for typ in data_type]
 
     obs = [rc.ObservationData.from_nc(salmon_river, alt_names="qobs", uid=20)]
 
@@ -423,7 +422,7 @@ def test_routing(get_local_testdata):
 
     hds = out.hydrograph.q_sim
 
-    assert len(hds.nbasins) == 1  # number of "gauged" basins is 1
+    assert len(hds.nbasins) == 1  # the number of "gauged" basins is 1
 
     # We only have one SB with gauged=True, so the output has a single column.
     # The number of time steps simulated between (2000, 1, 1) and
@@ -444,9 +443,7 @@ def test_routing(get_local_testdata):
     target_q_sim = [0.0, 0.304073, 0.980807, 17.54049, 17.409493, 17.437954]
 
     for t in range(6):
-        np.testing.assert_almost_equal(
-            hds.sel(nbasins=0, time=dates[t]), target_q_sim[t], 4
-        )
+        np.testing.assert_almost_equal(hds.sel(nbasins=0, time=dates[t]), target_q_sim[t], 4)
 
     # For lumped GR4J model we have 1 subbasin and 1 HRU as well as no routing, no
     # channel profiles, and the area of the entire basin is 4250.6 [km2]. Comparison
@@ -465,7 +462,7 @@ def test_routing(get_local_testdata):
 
 @pytest.mark.slow
 @pytest.mark.xfail
-def test_routing_lievre_tutorial(get_local_testdata, tmp_path):
+def test_routing_lievre_tutorial(tmp_path, yangtze):
     from ravenpy.extractors.routing_product import (
         BasinMakerExtractor,
         GridWeightExtractor,
@@ -476,18 +473,12 @@ def test_routing_lievre_tutorial(get_local_testdata, tmp_path):
     # Input files #
     ###############
 
-    routing_product_shp_path = get_local_testdata(
-        "raven-routing-sample/lievre_hrus_v21.zip"
-    )
+    routing_product_shp_path = yangtze.fetch("raven-routing-sample/lievre_hrus_v21.zip")
 
-    vic_streaminputs_nc_path = get_local_testdata(
-        "raven-routing-sample/VIC_streaminputs.nc"
-    )
-    vic_temperatures_nc_path = get_local_testdata(
-        "raven-routing-sample/VIC_temperatures.nc"
-    )
+    vic_streaminputs_nc_path = yangtze.fetch("raven-routing-sample/VIC_streaminputs.nc")
+    vic_temperatures_nc_path = yangtze.fetch("raven-routing-sample/VIC_temperatures.nc")
 
-    observation_data_nc_path = get_local_testdata("raven-routing-sample/WSC02LE024.nc")
+    observation_data_nc_path = yangtze.fetch("raven-routing-sample/WSC02LE024.nc")
 
     streaminputs = xr.open_dataset(vic_streaminputs_nc_path)
 
@@ -588,9 +579,7 @@ def test_routing_lievre_tutorial(get_local_testdata, tmp_path):
         dim_names_nc=("lon_dim", "lat_dim", "time"),
     )
 
-    obs = rc.ObservationData.from_nc(
-        observation_data_nc_path, uid=gauged_sb["subbasin_id"], alt_names=("Q",)
-    )
+    obs = rc.ObservationData.from_nc(observation_data_nc_path, uid=gauged_sb["subbasin_id"], alt_names=("Q",))
 
     conf = BasicRoute(**attrs, GriddedForcing=[gf_tas, gf_pr], ObservationData=[obs])
 
@@ -624,10 +613,7 @@ def test_routing_lievre_tutorial(get_local_testdata, tmp_path):
 
 @pytest.mark.online
 def test_canopex():
-    CANOPEX_DAP = (
-        "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/birdhouse/ets"
-        "/Watersheds_5797_cfcompliant.nc"
-    )
+    CANOPEX_DAP = "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/birdhouse/ets/Watersheds_5797_cfcompliant.nc"
 
     # Set HRU
     hru = dict(
@@ -655,11 +641,7 @@ def test_canopex():
 
     basin = 5600
 
-    qobs = [
-        rc.ObservationData.from_nc(
-            CANOPEX_DAP, alt_names="discharge", station_idx=basin, engine="netcdf4"
-        )
-    ]
+    qobs = [rc.ObservationData.from_nc(CANOPEX_DAP, alt_names="discharge", station_idx=basin, engine="netcdf4")]
 
     gauge_data = [
         rc.Gauge.from_nc(
@@ -693,9 +675,7 @@ def test_canopex():
 
     if var in ["TEMP_MIN", "TEMP_MAX"]:
         assert model.gauge[0].data[0].read_from_netcdf.linear_transform.scale == 1.0
-        assert (
-            model.gauge[0].data[0].read_from_netcdf.linear_transform.offset == -273.15
-        )
+        assert model.gauge[0].data[0].read_from_netcdf.linear_transform.offset == -273.15
     else:
         assert model.gauge[0].data[0].read_from_netcdf.linear_transform.scale == 86400.0
         assert model.gauge[0].data[0].read_from_netcdf.linear_transform.offset == 0.0

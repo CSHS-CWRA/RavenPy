@@ -2,11 +2,12 @@ import os
 import warnings
 from collections import defaultdict
 from pathlib import Path
-from typing import Optional, Union
+from typing import Union
 
 import pandas
 
 from ravenpy.utilities import gis_import_error_message
+
 
 try:
     import geopandas
@@ -37,7 +38,8 @@ def open_shapefile(path: Union[str, os.PathLike]):
 
 
 class BasinMakerExtractor:
-    """Encapsulate the logic of converting the Routing Product into the required data structures to generate the RVH file format.
+    """
+    Encapsulate the logic of converting the Routing Product into the required data structures to generate the RVH file format.
 
     Parameters
     ----------
@@ -146,9 +148,7 @@ class BasinMakerExtractor:
     def _extract_subbasin(self, row, is_lake, subbasin_ids) -> dict:
         subbasin_id = int(row["SubId"])
         # is_lake = row["HRU_IsLake"] >= 0
-        riv_length_field = (
-            "Rivlen" if self.routing_product_version == "1.0" else "RivLength"
-        )
+        riv_length_field = "Rivlen" if self.routing_product_version == "1.0" else "RivLength"
         # Correctly setting the river length to zero for sub-basins with no channel routing, such as sub-basins with lakes or headwater basins
         if is_lake or row[riv_length_field] <= 1.0:
             river_length_in_kms = 0
@@ -163,12 +163,8 @@ class BasinMakerExtractor:
             downstream_id = -1
         elif downstream_id not in subbasin_ids:
             downstream_id = -1
-        has_gauge_field = (
-            "IsObs" if self.routing_product_version == "1.0" else "Has_Gauge"
-        )
-        gauged = row[has_gauge_field] > 0 or (
-            is_lake and BasinMakerExtractor.USE_LAKE_AS_GAUGE
-        )
+        has_gauge_field = "IsObs" if self.routing_product_version == "1.0" else "Has_Gauge"
+        gauged = row[has_gauge_field] > 0 or (is_lake and BasinMakerExtractor.USE_LAKE_AS_GAUGE)
         gauge_id = row["Obs_NM"] if gauged else ""
         return dict(
             subbasin_id=subbasin_id,
@@ -327,7 +323,8 @@ class BasinMakerExtractor:
 
 
 class GridWeightExtractor:
-    """Class to extract grid weights.
+    """
+    Class to extract grid weights.
 
     Notes
     -----
@@ -357,7 +354,8 @@ class GridWeightExtractor:
         sub_ids=None,
         area_error_threshold=AREA_ERROR_THRESHOLD,
     ):
-        """Initialization.
+        """
+        Initialization.
 
         Parameters
         ----------
@@ -392,9 +390,7 @@ class GridWeightExtractor:
             self._input_data = open_shapefile(input_file_path)
             self._input_is_netcdf = False
         else:
-            raise ValueError(
-                "The input file must be a shapefile (.shp or .zip) or NetCDF"
-            )
+            raise ValueError("The input file must be a shapefile (.shp or .zip) or NetCDF")
 
         self._routing_data = open_shapefile(routing_file_path)
 
@@ -409,12 +405,11 @@ class GridWeightExtractor:
         # Read routing data
 
         # WGS 84 / North Pole LAEA Canada
-        self._routing_data = self._routing_data.to_crs(
-            epsg=GridWeightExtractor.CRS_CAEA
-        )
+        self._routing_data = self._routing_data.to_crs(epsg=GridWeightExtractor.CRS_CAEA)
 
         def keep_only_valid_downsubid_and_obs_nm(g):
-            """Find only the valid DownSubId and Obs_NM values in a group of rows.
+            """
+            Find only the valid DownSubId and Obs_NM values in a group of rows.
 
             Notes
             -----
@@ -431,16 +426,12 @@ class GridWeightExtractor:
             row = g[g["DowSubId"] != -1].copy()
             if len(row) > 1:
                 row = row[:1].copy()
-                warnings.warn(
-                    f"More than one row with ID={row[rid]} having DowSubId = -1"
-                )
+                warnings.warn(f"More than one row with ID={row[rid]} having DowSubId = -1", stacklevel=2)
             obs_nm = g[g["Obs_NM"] != -9999]
             if not obs_nm.empty:
                 row["Obs_NM"] = obs_nm["Obs_NM"].iloc[0]
             else:
-                warnings.warn(
-                    f"All values of Obs_NM are -9999 for rows with ID={row[rid]}"
-                )
+                warnings.warn(f"All values of Obs_NM are -9999 for rows with ID={row[rid]}", stacklevel=2)
 
             return row
 
@@ -449,9 +440,9 @@ class GridWeightExtractor:
         #  This behavior is deprecated, and in a future version of pandas the grouping columns will be
         #  excluded from the operation. Either pass `include_groups=False` to exclude the groupings or
         #  explicitly select the grouping columns after groupby to silence this warning.
-        self._routing_data = self._routing_data.groupby(
-            self._routing_id_field, group_keys=False
-        ).apply(keep_only_valid_downsubid_and_obs_nm, include_groups=True)
+        self._routing_data = self._routing_data.groupby(self._routing_id_field, group_keys=False).apply(
+            keep_only_valid_downsubid_and_obs_nm, include_groups=True
+        )
 
         # Make sure those are ints
         self._routing_data.SubId = self._routing_data.SubId.astype(int)
@@ -459,15 +450,9 @@ class GridWeightExtractor:
 
         if self._gauge_ids:
             # Extract the SubIDs of the gauges that were specified at input
-            self._sub_ids = (
-                self._routing_data.loc[self._routing_data.Obs_NM.isin(self._gauge_ids)]
-                .SubId.unique()
-                .tolist()
-            )
+            self._sub_ids = self._routing_data.loc[self._routing_data.Obs_NM.isin(self._gauge_ids)].SubId.unique().tolist()
             if not self._sub_ids:
-                raise ValueError(
-                    f"No shapes were found with gauge ID (Obs_NM) in {self._gauge_ids}"
-                )
+                raise ValueError(f"No shapes were found with gauge ID (Obs_NM) in {self._gauge_ids}")
 
         if self._sub_ids:
             # Here we want to extract the network of connected subbasins by going upstream via their DowSubId,
@@ -493,9 +478,7 @@ class GridWeightExtractor:
 
         # Reduce the initial dataset with the target Sub IDs
         if self._sub_ids:
-            self._routing_data = self._routing_data[
-                self._routing_data.SubId.isin(self._sub_ids)
-            ]
+            self._routing_data = self._routing_data[self._routing_data.SubId.isin(self._sub_ids)]
 
         # -------------------------------
         # construct all grid cell polygons
@@ -526,9 +509,7 @@ class GridWeightExtractor:
                     # bounding box around grid-cell (for easy check of proximity)
                     enve_gridcell = grid_cell_geom_gpd_wkt[ilat][ilon].GetEnvelope()
 
-                    grid_is_close = self._check_proximity_of_envelops(
-                        enve_gridcell, enve_basin
-                    )
+                    grid_is_close = self._check_proximity_of_envelops(enve_gridcell, enve_basin)
 
                     # this check decreases runtime DRASTICALLY (from ~6h to ~1min)
                     if not grid_is_close:
@@ -537,9 +518,7 @@ class GridWeightExtractor:
                     # grid_cell_area = grid_cell_geom_gpd_wkt[ilat][ilon].Area()
 
                     # "fake" buffer to avoid invalid polygons and weirdos dumped by ArcGIS
-                    inter = grid_cell_geom_gpd_wkt[ilat][ilon].Intersection(
-                        poly.Buffer(0.0)
-                    )
+                    inter = grid_cell_geom_gpd_wkt[ilat][ilon].Intersection(poly.Buffer(0.0))
 
                     area_intersect = inter.Area()
 
@@ -612,13 +591,9 @@ class GridWeightExtractor:
                 assert lon_var.shape == lat_var.shape  # noqa: S101
 
             else:
-                raise ValueError(
-                    "The coord variables of the input data must have the same number of dimensions (either 1 or 2)"
-                )
+                raise ValueError("The coord variables of the input data must have the same number of dimensions (either 1 or 2)")
 
-            self._lath, self._lonh = self._create_gridcells_from_centers(
-                lat_var, lon_var
-            )
+            self._lath, self._lonh = self._create_gridcells_from_centers(lat_var, lon_var)
 
             self._nlon = np.shape(lon_var)[1]
             self._nlat = np.shape(lat_var)[0]
@@ -626,9 +601,7 @@ class GridWeightExtractor:
         else:
             # input data is a shapefile
 
-            self._input_data = self._input_data.to_crs(
-                epsg=GridWeightExtractor.CRS_CAEA
-            )
+            self._input_data = self._input_data.to_crs(epsg=GridWeightExtractor.CRS_CAEA)
 
             self._nlon = 1  # only for consistency
 
@@ -636,9 +609,7 @@ class GridWeightExtractor:
             self._nlat = self._input_data.geometry.count()  # only for consistency
 
     def _compute_grid_cell_polygons(self):
-        grid_cell_geom_gpd_wkt: list[list[list[ogr.Geometry]]] = [
-            [[] for _ilon in range(self._nlon)] for _ilat in range(self._nlat)
-        ]
+        grid_cell_geom_gpd_wkt: list[list[list[ogr.Geometry]]] = [[[] for _ilon in range(self._nlon)] for _ilat in range(self._nlat)]
 
         if self._input_is_netcdf:
             lath = self._lath
@@ -689,9 +660,7 @@ class GridWeightExtractor:
                             [lath[ilat, ilon + 1], lonh[ilat, ilon + 1]],
                         ]
 
-                    tmp = self._shape_to_geometry(
-                        gridcell_edges, epsg=GridWeightExtractor.CRS_CAEA
-                    )
+                    tmp = self._shape_to_geometry(gridcell_edges, epsg=GridWeightExtractor.CRS_CAEA)
                     grid_cell_geom_gpd_wkt[ilat][ilon] = tmp
 
         else:
@@ -714,9 +683,7 @@ class GridWeightExtractor:
                     raise ValueError("Polygon ID not unique.")
                 idx = idx[0]
                 poly = self._input_data.loc[idx].geometry
-                grid_cell_geom_gpd_wkt[ishape][0] = ogr.CreateGeometryFromWkt(
-                    wkt.dumps(poly)
-                ).Buffer(
+                grid_cell_geom_gpd_wkt[ishape][0] = ogr.CreateGeometryFromWkt(wkt.dumps(poly)).Buffer(
                     0.0
                 )  # We add an empty buffer here to fix problems with bad polygon topology (actually caused by ESRI's historical incompetence)
 
@@ -730,13 +697,11 @@ class GridWeightExtractor:
         lonh = np.empty((nlat + 1, nlon + 1), dtype=np.float64)
         lath = np.empty((nlat + 1, nlon + 1), dtype=np.float64)
         tmp1 = [
-            [(lat[ii + 1, jj + 1] - lat[ii, jj]) / 2 for jj in range(nlon - 1)]
-            + [(lat[ii + 1, nlon - 1] - lat[ii, nlon - 2]) / 2]
+            [(lat[ii + 1, jj + 1] - lat[ii, jj]) / 2 for jj in range(nlon - 1)] + [(lat[ii + 1, nlon - 1] - lat[ii, nlon - 2]) / 2]
             for ii in range(nlat - 1)
         ]
         tmp2 = [
-            [(lon[ii + 1, jj + 1] - lon[ii, jj]) / 2 for jj in range(nlon - 1)]
-            + [(lon[ii + 1, nlon - 1] - lon[ii, nlon - 2]) / 2]
+            [(lon[ii + 1, jj + 1] - lon[ii, jj]) / 2 for jj in range(nlon - 1)] + [(lon[ii + 1, nlon - 1] - lon[ii, nlon - 2]) / 2]
             for ii in range(nlat - 1)
         ]
         dlat = np.array(tmp1 + [tmp1[-1]])
@@ -745,24 +710,12 @@ class GridWeightExtractor:
         lath[0:nlat, 0:nlon] = lat - dlat
 
         # make lat and lon one column and row wider such that all
-        lonh[nlat, 0:nlon] = lonh[nlat - 1, 0:nlon] + (
-            lonh[nlat - 1, 0:nlon] - lonh[nlat - 2, 0:nlon]
-        )
-        lath[nlat, 0:nlon] = lath[nlat - 1, 0:nlon] + (
-            lath[nlat - 1, 0:nlon] - lath[nlat - 2, 0:nlon]
-        )
-        lonh[0:nlat, nlon] = lonh[0:nlat, nlon - 1] + (
-            lonh[0:nlat, nlon - 1] - lonh[0:nlat, nlon - 2]
-        )
-        lath[0:nlat, nlon] = lath[0:nlat, nlon - 1] + (
-            lath[0:nlat, nlon - 1] - lath[0:nlat, nlon - 2]
-        )
-        lonh[nlat, nlon] = lonh[nlat - 1, nlon - 1] + (
-            lonh[nlat - 1, nlon - 1] - lonh[nlat - 2, nlon - 2]
-        )
-        lath[nlat, nlon] = lath[nlat - 1, nlon - 1] + (
-            lath[nlat - 1, nlon - 1] - lath[nlat - 2, nlon - 2]
-        )
+        lonh[nlat, 0:nlon] = lonh[nlat - 1, 0:nlon] + (lonh[nlat - 1, 0:nlon] - lonh[nlat - 2, 0:nlon])
+        lath[nlat, 0:nlon] = lath[nlat - 1, 0:nlon] + (lath[nlat - 1, 0:nlon] - lath[nlat - 2, 0:nlon])
+        lonh[0:nlat, nlon] = lonh[0:nlat, nlon - 1] + (lonh[0:nlat, nlon - 1] - lonh[0:nlat, nlon - 2])
+        lath[0:nlat, nlon] = lath[0:nlat, nlon - 1] + (lath[0:nlat, nlon - 1] - lath[0:nlat, nlon - 2])
+        lonh[nlat, nlon] = lonh[nlat - 1, nlon - 1] + (lonh[nlat - 1, nlon - 1] - lonh[nlat - 2, nlon - 2])
+        lath[nlat, nlon] = lath[nlat - 1, nlon - 1] + (lath[nlat - 1, nlon - 1] - lath[nlat - 2, nlon - 2])
 
         return [lath, lonh]
 
@@ -824,30 +777,22 @@ class GridWeightExtractor:
         min_lon_cell = np.min([ii[0] for ii in gridcell_edges])
         max_lon_cell = np.max([ii[0] for ii in gridcell_edges])
 
-        lat_shape = np.array(
-            [icoord[1] for icoord in shape_from_jsonfile]
-        )  # is it lat???
-        lon_shape = np.array(
-            [icoord[0] for icoord in shape_from_jsonfile]
-        )  # is it lon???
+        lat_shape = np.array([icoord[1] for icoord in shape_from_jsonfile])  # is it lat???
+        lon_shape = np.array([icoord[0] for icoord in shape_from_jsonfile])  # is it lon???
 
         min_lat_shape = np.min(lat_shape)
         max_lat_shape = np.max(lat_shape)
         min_lon_shape = np.min(lon_shape)
         max_lon_shape = np.max(lon_shape)
 
-        return (
-            min_lat_cell <= max_lat_shape
-            and max_lat_cell >= min_lat_shape
-            and min_lon_cell <= max_lon_shape
-            and max_lon_cell >= min_lon_shape
-        )
+        return min_lat_cell <= max_lat_shape and max_lat_cell >= min_lat_shape and min_lon_cell <= max_lon_shape and max_lon_cell >= min_lon_shape
 
 
 def upstream_from_id(
     fid: Union[str, int, float], df: Union[pandas.DataFrame, geopandas.GeoDataFrame]
 ) -> Union[pandas.DataFrame, geopandas.GeoDataFrame]:
-    """Return upstream sub-basins by evaluating the downstream networks.
+    """
+    Return upstream sub-basins by evaluating the downstream networks.
 
     Parameters
     ----------
@@ -863,15 +808,14 @@ def upstream_from_id(
     """
     from ravenpy.utilities.geo import determine_upstream_ids
 
-    return determine_upstream_ids(
-        fid, df, basin_field="SubId", downstream_field="DowSubId"
-    )
+    return determine_upstream_ids(fid, df, basin_field="SubId", downstream_field="DowSubId")
 
 
 def upstream_from_coords(
     lon: float, lat: float, df: Union[pandas.DataFrame, geopandas.GeoDataFrame]
 ) -> Union[pandas.DataFrame, geopandas.GeoDataFrame]:
-    """Return the sub-basins located upstream from outlet.
+    """
+    Return the sub-basins located upstream from outlet.
 
     Parameters
     ----------

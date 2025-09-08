@@ -10,6 +10,27 @@ from ..config import commands as rc
 from .conventions import RAVEN_OUTPUT_FMT
 
 
+def parse_rv(rv: str, command: str) -> str:
+    """
+    Parse an RV file to find the value of a Command (one liner).
+
+    Parameters
+    ----------
+    rv : str
+        The Raven command string, e.g. "RunName".
+    command : str
+        Valid Raven command.
+
+    Returns
+    -------
+    str:
+        Command value. None if not found.
+    """
+    pat = re.compile(rf":{command}\s+(.+)")
+    if match := re.search(pat, rv):
+        return match.groups()[0]
+
+
 def parse_diagnostics(fn: Path):
     """Return dictionary of performance metrics."""
     import csv
@@ -100,7 +121,8 @@ def output_files(run_name: str, path: Path):
 
 
 def parse_outputs(run_name: str, outputdir: Optional[Union[str, Path]] = None):
-    """Parse outputs from model execution.
+    """
+    Parse outputs from model execution.
 
     Parameters
     ----------
@@ -142,9 +164,7 @@ def parse_outputs(run_name: str, outputdir: Optional[Union[str, Path]] = None):
     return out
 
 
-def _time_stamp_from_solution(
-    solution: str, calendar: str
-) -> Optional[cftime.datetime]:
+def _time_stamp_from_solution(solution: str, calendar: str) -> Optional[cftime.datetime]:
     """Return datetime from solution TimeStamp."""
     match = re.search(r":TimeStamp (\S+ \S+)", solution)
     if match:

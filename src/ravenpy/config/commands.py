@@ -46,6 +46,7 @@ from .base import (
 )
 from .utils import filter_for, get_annotations, nc_specs
 
+
 LOGGER = logging.getLogger("RavenPy")
 
 
@@ -150,7 +151,8 @@ class LinearTransform(Command):
 
 
 class RainSnowTransition(Command):
-    """Specify the range of temperatures over which there will be a rain/snow mix when partitioning total precipitation into rain/snow components.
+    """
+    Specify the range of temperatures over which there will be a rain/snow mix when partitioning total precipitation into rain/snow components.
 
     :RainSnowTransition [temp] [delta]
 
@@ -178,7 +180,8 @@ class EvaluationPeriod(LineCommand):
 
 
 class CustomOutput(LineCommand):
-    """Create custom output file to track a single variable, parameter, or forcing function over time at a number of basins, HRUs, or across watershed.
+    """
+    Create custom output file to track a single variable, parameter, or forcing function over time at a number of basins, HRUs, or across watershed.
 
     :CustomOutput DAILY AVERAGE AET BY_HRU
     """  # noqa: E501
@@ -193,9 +196,7 @@ class CustomOutput(LineCommand):
 
     Consult the Raven documentation for the list of allowed names.
     """
-    space_agg: Literal[
-        "BY_BASIN", "BY_HRU", "BY_HRU_GROUP", "BY_SB_GROUP", "ENTIRE_WATERSHED"
-    ]
+    space_agg: Literal["BY_BASIN", "BY_HRU", "BY_HRU_GROUP", "BY_SB_GROUP", "ENTIRE_WATERSHED"]
     """Spatial evaluation domain."""
     filename: str = ""
     """
@@ -219,7 +220,8 @@ class SoilProfile(Record):
 
 
 class SoilProfiles(ListCommand):
-    """SoilProfiles command.
+    """
+    SoilProfiles command.
 
     Example::
 
@@ -263,7 +265,8 @@ class SubBasin(Record):
 
 
 class SubBasins(ListCommand):
-    """SubBasins command (RVH)
+    """
+    SubBasins command (RVH)
 
     Example::
 
@@ -276,9 +279,7 @@ class SubBasins(ListCommand):
     """
 
     root: Sequence[SubBasin]
-    _Attributes: Sequence[str] = PrivateAttr(
-        ["ID", "NAME", "DOWNSTREAM_ID", "PROFILE", "REACH_LENGTH", "GAUGED"]
-    )
+    _Attributes: Sequence[str] = PrivateAttr(["ID", "NAME", "DOWNSTREAM_ID", "PROFILE", "REACH_LENGTH", "GAUGED"])
     _Units: Sequence[str] = PrivateAttr(["none", "none", "none", "none", "km", "none"])
 
     @classmethod
@@ -340,9 +341,7 @@ class HRU(Record):
 
         # In Py3.10 zip(strict=True) can be used instead.
         if len(d) != len(attrs):
-            raise ValueError(
-                f"HRU record has {len(d)} attributes, but {len(attrs)} are expected."
-            )
+            raise ValueError(f"HRU record has {len(d)} attributes, but {len(attrs)} are expected.")
         return " ".join(f"{v:<{n}}" for v, n in zip(d.values(), ns))
 
 
@@ -386,7 +385,8 @@ class HRUs(ListCommand):
     @field_validator("root", mode="before")
     @classmethod
     def ignore_unrecognized_hrus(cls, values):
-        """Ignore HRUs with unrecognized hru_type.
+        """
+        Ignore HRUs with unrecognized hru_type.
 
         HRUs are ignored only if all allowed HRU classes define `hru_type`, and if the values passed include it.
         """
@@ -410,9 +410,7 @@ class HRUs(ListCommand):
 
         out = [value for value in values if getattr(value, "hru_type", None) in allowed]
         if len(out) != len(values):
-            warnings.warn(
-                "HRUs with an unrecognized `hru_type` attribute were ignored."
-            )
+            warnings.warn("HRUs with an unrecognized `hru_type` attribute were ignored.", stacklevel=2)
         return out
 
     @classmethod
@@ -448,7 +446,8 @@ class HRUs(ListCommand):
         return cls(root=out)
 
     def rename(self, mapping):
-        """Rename HRU attributes.
+        """
+        Rename HRU attributes.
 
         Parameters
         ----------
@@ -495,12 +494,8 @@ class Reservoir(FlatCommand):
     crest_width: float = Field(0, alias="CrestWidth")
     max_depth: float = Field(0, alias="MaxDepth", description="Max depth (m)")
     lake_area: float = Field(0, alias="LakeArea", description="Lake area (m2)")
-    absolute_crest_height: Optional[float] = Field(
-        None, alias="AbsoluteCrestHeight", description="Absolute crest height (m)"
-    )
-    max_capacity: Optional[float] = Field(
-        None, alias="MaxCapacity", description="Maximum capacity in m3"
-    )
+    absolute_crest_height: Optional[float] = Field(None, alias="AbsoluteCrestHeight", description="Absolute crest height (m)")
+    max_capacity: Optional[float] = Field(None, alias="MaxCapacity", description="Maximum capacity in m3")
 
     class SeepageParameters(LineCommand):
         """:SeepageParameters [K_seep] [href]"""
@@ -508,23 +503,19 @@ class Reservoir(FlatCommand):
         k_seep: float
         h_ref: float
 
-    seepage_parameters: Optional[SeepageParameters] = Field(
-        None, alias="SeepageParameters"
-    )
+    seepage_parameters: Optional[SeepageParameters] = Field(None, alias="SeepageParameters")
 
     class StageRelations(RootCommand):
         """Stage relations for the reservoir."""
 
         class StageRelation(RootRecord):
-            """Stage relation record.
+            """
+            Stage relation record.
 
             h, q, v, a, [u]
             """
 
-            root: (
-                tuple[float, float, float, float]
-                | tuple[float, float, float, float, float]
-            ) = None
+            root: tuple[float, float, float, float] | tuple[float, float, float, float, float] = None
 
             def __str__(self):
                 return ", ".join([f"{x:>12}" for x in self.root])
@@ -537,12 +528,11 @@ class Reservoir(FlatCommand):
         """Outflow control structure for the reservoir."""
 
         target_subbasin_id: Optional[int] = Field(None, alias="TargetSubBasin")
-        downstream_reference_elevation: Optional[float] = Field(
-            None, alias="DownstreamReferenceElevation"
-        )
+        downstream_reference_elevation: Optional[float] = Field(None, alias="DownstreamReferenceElevation")
 
         class StageDischargeTable(RootCommand):
-            """Stage discharge table for the outflow control structure.
+            """
+            Stage discharge table for the outflow control structure.
 
             Example::
 
@@ -577,12 +567,11 @@ class Reservoir(FlatCommand):
                 :EndStageDischargeTable
                 """
 
-        stage_discharge_table: Optional[Sequence[StageDischargeTable]] = Field(
-            None, alias="StageDischargeTable"
-        )
+        stage_discharge_table: Optional[Sequence[StageDischargeTable]] = Field(None, alias="StageDischargeTable")
 
         class BasicWeir(LineCommand):
-            """Basic weir for the outflow control structure.
+            """
+            Basic weir for the outflow control structure.
 
             :BasicWeir [curve_name3] [elev] [crestwidth] [coeff]
             """
@@ -595,7 +584,8 @@ class Reservoir(FlatCommand):
         basic_weir: BasicWeir = Field(None, alias="BasicWeir")
 
         class OperatingRegime(Command):
-            """Operating regime for the outflow control structure.
+            """
+            Operating regime for the outflow control structure.
 
             :OperatingRegime [curve_name] [elev] [coeff]
             """
@@ -628,15 +618,11 @@ class Reservoir(FlatCommand):
             subbasin_id = re.search(r":SubBasinID\s+(\d+)", content).group(1)
             hru_id = re.search(r":HRUID\s+(\d+)", content).group(1)
             type_ = re.search(r":Type\s+(\w+)", content).group(1)
-            weir_coefficient = re.search(
-                r":WeirCoefficient\s+([\d.-]+)", content
-            ).group(1)
+            weir_coefficient = re.search(r":WeirCoefficient\s+([\d.-]+)", content).group(1)
             crest_width = re.search(r":CrestWidth\s+([\d.-]+)", content).group(1)
             max_depth = re.search(r":MaxDepth\s+([\d.-]+)", content).group(1)
             lake_area = re.search(r":LakeArea\s+([\d.-]+)", content).group(1)
-            seepage_parameters = re.search(
-                r":SeepageParameters\s+([\d.-]+)\s+([\d.-]+)", content
-            ).groups()
+            seepage_parameters = re.search(r":SeepageParameters\s+([\d.-]+)\s+([\d.-]+)", content).groups()
 
             # Convert to Reservoir record
             out.append(
@@ -673,10 +659,7 @@ class SubBasinGroup(FlatCommand):
         d = self.model_dump()
         n_per_line = 10
         sbids = sorted(self.sb_ids)
-        sbids_lines = [
-            map(str, sbids[i : i + n_per_line])
-            for i in range(0, len(sbids), n_per_line)
-        ]
+        sbids_lines = [map(str, sbids[i : i + n_per_line]) for i in range(0, len(sbids), n_per_line)]
         d["sb_ids"] = "\n  ".join([", ".join(sbids) for sbids in sbids_lines])
         return dedent(template).format(**d)
 
@@ -689,7 +672,6 @@ class SubBasinGroup(FlatCommand):
         out = []
 
         for name, content in re.findall(pat, s.strip(), re.DOTALL):
-
             sb_ids = re.split(r"\s+", content.strip())
 
             # Convert to SubBasinGroup record
@@ -712,7 +694,8 @@ class ChannelProfile(FlatCommand):
     bed_slope: float = Field(0, alias="Bedslope")
 
     class SurveyPoints(ListCommand):
-        """SurveyPoints
+        """
+        SurveyPoints
 
         [x, bed_elevation] x number of survey points.
         """
@@ -727,7 +710,8 @@ class ChannelProfile(FlatCommand):
     survey_points: SurveyPoints = Field(SurveyPoints(), alias="SurveyPoints")
 
     class RoughnessZones(ListCommand):
-        """RoughnessZones record.
+        """
+        RoughnessZones record.
 
         [x_zone, mannings_n] x number of roughness zones.
         """
@@ -760,18 +744,10 @@ class ChannelProfile(FlatCommand):
 
         for name, content in re.findall(pat, s.strip(), re.DOTALL):
             bed_slope = re.search(r":Bedslope\s+([\d.-]+)", content).group(1)
-            survey_points = re.search(
-                r":SurveyPoints(.+):EndSurveyPoints", content, re.DOTALL
-            ).group(1)
-            sp = [
-                line.strip().split()
-                for line in survey_points.splitlines()
-                if line.strip()
-            ]
+            survey_points = re.search(r":SurveyPoints(.+):EndSurveyPoints", content, re.DOTALL).group(1)
+            sp = [line.strip().split() for line in survey_points.splitlines() if line.strip()]
 
-            roughness_zones = re.search(
-                r":RoughnessZones(.+):EndRoughnessZones", content, re.DOTALL
-            ).group(1)
+            roughness_zones = re.search(r":RoughnessZones(.+):EndRoughnessZones", content, re.DOTALL).group(1)
             rz = [line.split() for line in roughness_zones.splitlines() if line.strip()]
             # rz = re.split(r"\s+", roughness_zones.strip())
 
@@ -788,7 +764,8 @@ class ChannelProfile(FlatCommand):
 
 
 class GridWeights(Command):
-    """GridWeights command.
+    """
+    GridWeights command.
 
     Notes
     -----
@@ -833,13 +810,12 @@ class GridWeights(Command):
         n_hrus, n_grid_cells, data = m.groups()
         data = [d.strip().split() for d in data.split("\n")]
         data = tuple((int(h), int(c), float(w)) for h, c, w in data)
-        return cls(
-            number_hrus=int(n_hrus), number_grid_cells=int(n_grid_cells), data=data
-        )
+        return cls(number_hrus=int(n_hrus), number_grid_cells=int(n_grid_cells), data=data)
 
 
 class RedirectToFile(RootCommand):
-    """RedirectToFile command (RVT).
+    """
+    RedirectToFile command (RVT).
 
     Notes
     -----
@@ -858,21 +834,15 @@ class RedirectToFile(RootCommand):
 class ReadFromNetCDF(FlatCommand):
     # TODO: When encoding Path, return only path.name
     # Order of HttpUrl, Path is important to avoid casting strings to Path.
-    file_name_nc: Union[HttpUrl, Path] = Field(
-        ..., alias="FileNameNC", description="NetCDF file name."
-    )
-    var_name_nc: str = Field(
-        ..., alias="VarNameNC", description="NetCDF variable name."
-    )
+    file_name_nc: Union[HttpUrl, Path] = Field(..., alias="FileNameNC", description="NetCDF file name.")
+    var_name_nc: str = Field(..., alias="VarNameNC", description="NetCDF variable name.")
     dim_names_nc: Sequence[str] = Field(..., alias="DimNamesNC")
     station_idx: int = Field(
         1,
         alias="StationIdx",
         description="NetCDF index along station dimension. Starts at 1.",
     )
-    time_shift: Optional[float] = Field(
-        None, alias="TimeShift", description="Time stamp shift in days."
-    )
+    time_shift: Optional[float] = Field(None, alias="TimeShift", description="Time stamp shift in days.")
     linear_transform: Optional[LinearTransform] = Field(None, alias="LinearTransform")
     deaccumulate: Optional[bool] = Field(None, alias="Deaccumulate")
 
@@ -900,9 +870,7 @@ class ReadFromNetCDF(FlatCommand):
         return tuple(dims)
 
     @classmethod
-    def from_nc(
-        cls, fn, data_type, station_idx=None, alt_names=(), engine="h5netcdf", **kwds
-    ):
+    def from_nc(cls, fn, data_type, station_idx=None, alt_names=(), engine="h5netcdf", **kwds):
         """Instantiate class from netCDF dataset."""
         specs = nc_specs(
             fn,
@@ -933,9 +901,7 @@ class GriddedForcing(ReadFromNetCDF):
 
     name: str = ""
     forcing_type: Optional[options.Forcings] = Field(None, alias="ForcingType")
-    grid_weights: Union[GridWeights, RedirectToFile] = Field(
-        GridWeights(), alias="GridWeights"
-    )
+    grid_weights: Union[GridWeights, RedirectToFile] = Field(GridWeights(), alias="GridWeights")
     # StationIdx is not relevant to GriddedForcing
     station_idx: Optional[int] = None
 
@@ -952,9 +918,7 @@ class GriddedForcing(ReadFromNetCDF):
     @classmethod
     def check_dims(cls, v):
         if len(v) != 3:
-            raise ValueError(
-                "GriddedForcing netCDF datasets should have  three dimensions (lon, lat, time)."
-            )
+            raise ValueError("GriddedForcing netCDF datasets should have  three dimensions (lon, lat, time).")
         return v
 
 
@@ -965,9 +929,7 @@ class StationForcing(GriddedForcing):
     @classmethod
     def check_dims(cls, v):
         if len(v) != 2:
-            raise ValueError(
-                "StationForcing netCDF datasets should have two dimensions (station, time)."
-            )
+            raise ValueError("StationForcing netCDF datasets should have two dimensions (station, time).")
         return v
 
     @classmethod
@@ -984,9 +946,7 @@ class StationForcing(GriddedForcing):
             size.pop(specs["_time_dim_name_nc"])
             nstations = list(size.values())[0]
             data = [[i + 1, i + 1, 1] for i in range(nstations)]
-            gw = GridWeights(
-                number_hrus=nstations, number_grid_cells=nstations, data=data
-            )
+            gw = GridWeights(number_hrus=nstations, number_grid_cells=nstations, data=data)
             attrs["grid_weights"] = gw
 
         return cls(**attrs)
@@ -1021,25 +981,13 @@ class Gauge(FlatCommand):
     longitude: float = Field(..., alias="Longitude")
     elevation: Optional[float] = Field(None, alias="Elevation")
 
-    rain_correction: Optional[Sym] = Field(
-        None, alias="RainCorrection", description="Rain correction"
-    )
-    snow_correction: Optional[Sym] = Field(
-        None, alias="SnowCorrection", description="Snow correction"
-    )
+    rain_correction: Optional[Sym] = Field(None, alias="RainCorrection", description="Rain correction")
+    snow_correction: Optional[Sym] = Field(None, alias="SnowCorrection", description="Snow correction")
 
-    monthly_ave_evaporation: Optional[Sequence] = Field(
-        None, alias="MonthlyAveEvaporation"
-    )
-    monthly_ave_temperature: Optional[Sequence] = Field(
-        None, alias="MonthlyAveTemperature"
-    )
-    monthly_min_temperature: Optional[Sequence] = Field(
-        None, alias="MonthlyMinTemperature"
-    )
-    monthly_max_temperature: Optional[Sequence] = Field(
-        None, alias="MonthlyMaxTemperature"
-    )
+    monthly_ave_evaporation: Optional[Sequence] = Field(None, alias="MonthlyAveEvaporation")
+    monthly_ave_temperature: Optional[Sequence] = Field(None, alias="MonthlyAveTemperature")
+    monthly_min_temperature: Optional[Sequence] = Field(None, alias="MonthlyMinTemperature")
+    monthly_max_temperature: Optional[Sequence] = Field(None, alias="MonthlyMaxTemperature")
 
     data: Optional[Sequence[Data]] = Field(None, alias="Data")
 
@@ -1072,7 +1020,8 @@ class Gauge(FlatCommand):
         engine: str = "h5netcdf",
         **kwds,
     ) -> "Gauge":
-        r"""Return Gauge instance with configuration options inferred from the netCDF itself.
+        r"""
+        Return Gauge instance with configuration options inferred from the netCDF itself.
 
         Parameters
         ----------
@@ -1204,7 +1153,8 @@ class HRUState(Record):
 
 
 class HRUStateVariableTable(ListCommand):
-    """Table of HRU state variables.
+    """
+    Table of HRU state variables.
 
     If the HRUState include different attributes, the states will be modified to include all attributes.
     """
@@ -1217,14 +1167,9 @@ class HRUStateVariableTable(ListCommand):
         from itertools import chain
 
         # Get all attribute names from HRUStates
-        names = (
-            sorted(list(set(chain(*[tuple(s.data.keys()) for s in self.root])))) or None
-        )
+        names = sorted(list(set(chain(*[tuple(s.data.keys()) for s in self.root])))) or None
 
-        self.root = [
-            HRUState(hru_id=s.hru_id, data={n: s.data.get(n, 0.0) for n in names})
-            for s in self.root
-        ]
+        self.root = [HRUState(hru_id=s.hru_id, data={n: s.data.get(n, 0.0) for n in names}) for s in self.root]
 
         # Store names in private class attribute
         self._Attributes = names
@@ -1317,7 +1262,8 @@ class BasinStateVariables(ListCommand):
 
 
 class SoilClasses(ListCommand):
-    """SoilClasses command.
+    """
+    SoilClasses command.
 
     Example::
 
@@ -1424,9 +1370,7 @@ class TerrainClass(Record):
 
 class TerrainClasses(ListCommand):
     root: Sequence[TerrainClass]
-    _Attributes: Sequence[str] = PrivateAttr(
-        ["HILLSLOPE_LENGTH", "DRAINAGE_DENSITY", "TOPMODEL_LAMBDA"]
-    )
+    _Attributes: Sequence[str] = PrivateAttr(["HILLSLOPE_LENGTH", "DRAINAGE_DENSITY", "TOPMODEL_LAMBDA"])
     _Units: Sequence[str] = PrivateAttr(["m", "km/km2"])
 
 
@@ -1465,28 +1409,20 @@ class SubBasinProperty(Record):
 
 
 class SubBasinProperties(Command):
-    parameters: Optional[Sequence[options.SubBasinProperties]] = Field(
-        None, alias="Parameters"
-    )
+    parameters: Optional[Sequence[options.SubBasinProperties]] = Field(None, alias="Parameters")
     records: Optional[Sequence[SubBasinProperty]] = Field(None)
 
 
 class SoilParameterList(GenericParameterList):
-    parameters: Optional[Sequence[options.SoilParameters]] = Field(
-        None, alias="Parameters"
-    )
+    parameters: Optional[Sequence[options.SoilParameters]] = Field(None, alias="Parameters")
 
 
 class VegetationParameterList(GenericParameterList):
-    parameters: Optional[Sequence[options.VegetationParameters]] = Field(
-        None, alias="Parameters"
-    )
+    parameters: Optional[Sequence[options.VegetationParameters]] = Field(None, alias="Parameters")
 
 
 class LandUseParameterList(GenericParameterList):
-    parameters: Optional[Sequence[options.LandUseParameters]] = Field(
-        None, alias="Parameters"
-    )
+    parameters: Optional[Sequence[options.LandUseParameters]] = Field(None, alias="Parameters")
 
 
 class EnsembleMode(LineCommand):

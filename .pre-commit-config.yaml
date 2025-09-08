@@ -7,19 +7,27 @@ repos:
     hooks:
       - id: pyupgrade
         args: [ '--py39-plus' ]
+        exclude: ^tests/conftest\.py$
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
-      - id: trailing-whitespace
-      - id: end-of-file-fixer
       - id: check-json
       - id: pretty-format-json
         args: [ '--autofix', '--no-ensure-ascii', '--no-sort-keys' ]
         exclude: .ipynb
+      - id: check-merge-conflict
       - id: check-toml
       - id: check-yaml
         args: [ '--allow-multiple-documents' ]
       - id: debug-statements
+      - id: end-of-file-fixer
+      - id: fix-byte-order-marker
+      - id: name-tests-test
+        args: [ '--pytest-test-first' ]
+        exclude: tests/emulators.py
+      - id: no-commit-to-branch
+        args: [ '--branch', 'main' ]
+      - id: trailing-whitespace
   - repo: https://github.com/pappasam/toml-sort
     rev: v0.24.2
     hooks:
@@ -40,23 +48,14 @@ repos:
       - id: rst-directive-colons
       - id: rst-inline-touching-normal
       - id: text-unicode-replacement-char
-  - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 25.1.0
-    hooks:
-      - id: black
-        exclude: ^docs/
-  - repo: https://github.com/PyCQA/isort
-    rev: 6.0.1
-    hooks:
-      - id: isort
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.12
+    rev: v0.12.11
     hooks:
-      - id: ruff
-        args: [ '--fix' ]
-      # - id: ruff-format
+      - id: ruff-check
+        args: [ '--fix', '--show-fixes' ]
+      - id: ruff-format
   - repo: https://github.com/pycqa/flake8
-    rev: 7.2.0
+    rev: 7.3.0
     hooks:
       - id: flake8
         additional_dependencies: [ 'flake8-rst-docstrings' ]
@@ -74,23 +73,13 @@ repos:
     hooks:
       - id: nbqa-pyupgrade
         args: [ '--py39-plus' ]
-        additional_dependencies: [ 'pyupgrade==3.19.1' ]
-      - id: nbqa-black
-        additional_dependencies: [ 'black==25.1.0' ]
-      - id: nbqa-isort
-        additional_dependencies: [ 'isort==6.0.0' ]
+        additional_dependencies: [ 'pyupgrade==3.20.0' ]
   - repo: https://github.com/kynan/nbstripout
     rev: 0.8.1
     hooks:
       - id: nbstripout
         files: ".ipynb"
         args: [ '--extra-keys=metadata.kernelspec' ]
-  - repo: https://github.com/keewis/blackdoc
-    rev: v0.3.9
-    hooks:
-      - id: blackdoc
-        additional_dependencies: [ 'black==25.1.0' ]
-      - id: blackdoc-autoupdate-black
   - repo: https://github.com/codespell-project/codespell
     rev: v2.4.1
     hooks:
@@ -98,22 +87,22 @@ repos:
         additional_dependencies: [ 'tomli' ]
         args: [ '--toml=pyproject.toml' ]
   - repo: https://github.com/numpy/numpydoc
-    rev: v1.8.0
+    rev: v1.9.0
     hooks:
       - id: numpydoc-validation
         exclude: "^docs/|^tests/"
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.33.0
+    rev: 0.33.3
     hooks:
       - id: check-github-workflows
       - id: check-readthedocs
   - repo: https://github.com/woodruffw/zizmor-pre-commit
-    rev: v1.9.0
+    rev: v1.12.1
     hooks:
       - id: zizmor
         args: [ '--config=.zizmor.yml' ]
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.27.0
+    rev: v8.28.0
     hooks:
       - id: gitleaks
   - repo: meta
