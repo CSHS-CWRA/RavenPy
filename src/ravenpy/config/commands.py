@@ -853,7 +853,8 @@ class ReadFromNetCDF(FlatCommand):
     @field_validator("dim_names_nc")
     @classmethod
     def reorder_time(cls, v):
-        """Return dimensions as x, y, t.
+        """
+        Return dimensions as x, y, t.
 
         This is a fail safe because if input files are CF-compliant, dimensions should already
         have been ordered by `nc_specs`.

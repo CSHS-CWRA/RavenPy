@@ -188,7 +188,8 @@ def get_annotations(a):
 
 
 def infer_dim_names(da: xr.DataArray) -> tuple:
-    """Return names of dimensions in dataset in order expected by Raven.
+    """
+    Return names of dimensions in dataset in order expected by Raven.
 
     If 3D, return X, Y, T axes names if they can be inferred from CF conventions.
     If 2D, return STATION, T

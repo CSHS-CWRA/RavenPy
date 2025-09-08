@@ -17,9 +17,7 @@ def test_nc_specs(yangtze):
     assert attrs["dim_names_nc"] == ("time",)
 
     # 2D with station dimension
-    f = get_local_testdata(
-        "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_2d.nc"
-    )
+    f = get_local_testdata("raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_2d.nc")
     attrs = nc_specs(f, "PRECIP", station_idx=1, alt_names=("rain",))
     assert attrs["dim_names_nc"] == (
         "region",
@@ -27,15 +25,11 @@ def test_nc_specs(yangtze):
     )
 
     # 3D - Since this file is not CF compliant, nc_specs cannot infer the correct dimension order
-    f = get_local_testdata(
-        "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_3d.nc"
-    )
+    f = get_local_testdata("raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily_3d.nc")
     attrs = nc_specs(f, "PRECIP", station_idx=1, alt_names=("rain",))
     assert attrs["dim_names_nc"] == ("time", "lon", "lat")
 
-    f = get_local_testdata(
-        "cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200601-210012_subset.nc"
-    )
+    f = get_local_testdata("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200601-210012_subset.nc")
     attrs = nc_specs(f, "TEMP_AVE", station_idx=1, engine="netcdf4")
     assert attrs["dim_names_nc"] == ("lon", "lat", "time")
 
