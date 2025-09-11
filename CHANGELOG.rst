@@ -8,6 +8,7 @@ v0.18.3 (unreleased)
 Bug fixes
 ^^^^^^^^^
 * Fixed bug affecting `GriddedForcing`, where `station_idx` in the call to ``nc_specs`` was set to ``1`` instead of ``None``. (PR #501)
+* In `nc_specs`, set `dim_names_nc` in the order expected by Raven (x, y, t). Previously, we only made sure that `time` was the last dimension, but did not ensure x and y were in the right order. (PR #533)
 
 Internal changes
 ^^^^^^^^^^^^^^^^
