@@ -30,7 +30,7 @@ def test_climatology_esp(minimal_emulator, tmp_path):
     assert len(esp.hydrograph.time) == minimal_emulator.duration + 1
 
 
-def test_hindcast_climatology_esp(minimal_emulator, tmp_path, get_local_testdata):
+def test_hindcast_climatology_esp(minimal_emulator, tmp_path, yangtze):
     config = minimal_emulator.model_copy(deep=True)
     hc = hindcast_climatology_esp(
         config,
@@ -47,9 +47,7 @@ def test_hindcast_climatology_esp(minimal_emulator, tmp_path, get_local_testdata
     }
 
     # Construct climpred HindcastEnsemble
-    salmon_file = get_local_testdata(
-        "raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc"
-    )
+    salmon_file = yangtze.fetch("raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc")
     qobs = xr.open_dataset(salmon_file).qobs
 
     qobs.name = "q_sim"
@@ -64,13 +62,13 @@ def test_hindcast_climatology_esp(minimal_emulator, tmp_path, get_local_testdata
     assert rank_histo_verif.q_sim.shape[0] == config.duration + 1
 
 
-def test_forecasting_GEPS(numeric_config, get_local_testdata):
+def test_forecasting_GEPS(numeric_config, yangtze):
     """Test to perform a forecast using auto-queried ECCC data aggregated on THREDDS."""
     name, wup = numeric_config
     if name != "GR4JCN":
         pytest.skip("Test only for GR4JCN model.")
 
-    geps = get_local_testdata("eccc_forecasts/geps_watershed.nc")
+    geps = yangtze.fetch("eccc_forecasts/geps_watershed.nc")
 
     # Prepare a RAVEN model run using historical data, GR4JCN in this case.
     # This is a dummy run to get initial states. In a real forecast situation,

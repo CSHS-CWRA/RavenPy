@@ -13,6 +13,7 @@ from typing import Optional, Union
 
 from . import gis_import_error_message
 
+
 try:
     import fiona
     import rasterio
@@ -27,9 +28,7 @@ WGS84 = 4326
 
 
 # Function addressing exploit CVE-2007-4559
-def is_within_directory(
-    directory: Union[str, os.PathLike], target: Union[str, os.PathLike]
-) -> bool:
+def is_within_directory(directory: Union[str, os.PathLike], target: Union[str, os.PathLike]) -> bool:
     abs_directory = Path(directory).resolve()
     abs_target = Path(target).resolve()
 
@@ -39,9 +38,7 @@ def is_within_directory(
 
 
 # Function addressing exploit CVE-2007-4559
-def safe_extract(
-    tar: tarfile.TarFile, path: str = ".", members=None, *, numeric_owner=False
-) -> None:
+def safe_extract(tar: tarfile.TarFile, path: str = ".", members=None, *, numeric_owner=False) -> None:
     for member in tar.getmembers():
         member_path = Path(path).joinpath(member.name)
         if not is_within_directory(path, member_path):
@@ -118,22 +115,16 @@ def generic_extract_archive(
                     files.append(Path(output_dir.join(arch)))
                 elif file.endswith(".tar"):
                     with tarfile.open(arch, mode="r") as tar:
-                        safe_extract(
-                            tar, path=output_dir
-                        )  # Function addressing exploit CVE-2007-4559
-                        files.extend(
-                            [str(Path(output_dir).joinpath(f)) for f in tar.getnames()]
-                        )
+                        safe_extract(tar, path=output_dir)  # Function addressing exploit CVE-2007-4559
+                        files.extend([str(Path(output_dir).joinpath(f)) for f in tar.getnames()])
                 elif file.endswith(".zip"):
                     with zipfile.ZipFile(arch, mode="r") as zf:
                         zf.extractall(path=output_dir)  # noqa: S202
-                        files.extend(
-                            [str(Path(output_dir).joinpath(f)) for f in zf.namelist()]
-                        )
+                        files.extend([str(Path(output_dir).joinpath(f)) for f in zf.namelist()])
                 elif file.endswith(".7z"):
                     msg = "7z file extraction is not supported at this time."
                     LOGGER.warning(msg)
-                    warnings.warn(msg, UserWarning)
+                    warnings.warn(msg, UserWarning, stacklevel=2)
                 else:
                     msg = f'File extension "{file}" unknown'
                     LOGGER.debug(msg)
@@ -181,9 +172,7 @@ def archive_sniffer(
     return potential_files
 
 
-def crs_sniffer(
-    *args: Union[str, Path, Sequence[Union[str, Path]]]
-) -> Union[list[Union[str, int]], str, int]:
+def crs_sniffer(*args: Union[str, Path, Sequence[Union[str, Path]]]) -> Union[list[Union[str, int]], str, int]:
     r"""
     Return the list of CRS found in files.
 
@@ -224,11 +213,11 @@ def crs_sniffer(
         except FileNotFoundError as e:
             msg = f"{e}: Unable to open file {args}"
             LOGGER.warning(msg)
-            raise Exception(msg)
+            raise Exception(msg) from e
         except NotImplementedError as e:
             msg = f"{e}: Multilayer GeoPackages are currently unsupported"
             LOGGER.error(msg)
-            raise Exception(msg)
+            raise Exception(msg) from e
         except RuntimeError as e:
             LOGGER.error(e)
             pass
@@ -243,7 +232,7 @@ def crs_sniffer(
         if not crs_list[0]:
             msg = f"No CRS definitions found in {args}. Assuming {WGS84}."
             LOGGER.warning(msg)
-            warnings.warn(msg, UserWarning)
+            warnings.warn(msg, UserWarning, stacklevel=2)
             return WGS84
         return crs_list[0]
     return crs_list
@@ -267,16 +256,15 @@ def raster_datatype_sniffer(file: Union[str, Path]) -> str:
         with rasterio.open(file, "r") as src:
             dtype = src.dtypes[0]
         return dtype
-    except rasterio.errors.RasterioError:
-        msg = f"Unable to read data type from {file}."
+    except rasterio.errors.RasterioError as e:
+        msg = f"Unable to read data type from file: {file}."
         LOGGER.exception(msg)
-        raise ValueError(msg)
+        raise ValueError(msg) from e
 
 
-def get_bbox(
-    vector: Union[str, Path], all_features: bool = True
-) -> tuple[float, float, float, float]:
-    """Return bounding box of all features or the first feature in file.
+def get_bbox(vector: Union[str, Path], all_features: bool = True) -> tuple[float, float, float, float]:
+    """
+    Return bounding box of all features or the first feature in file.
 
     Parameters
     ----------

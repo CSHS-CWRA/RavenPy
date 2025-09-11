@@ -6,13 +6,13 @@ from typing import Optional, Union
 import numpy as np
 from scipy.stats import norm
 
+
 # TODO: This utility is written in python2 and will fail in python3 (e.g. no xrange)
 
 
-def mk_test_calc(
-    x: np.ndarray, alpha: float = 0.05
-) -> Optional[tuple[str, float, float, float]]:
-    """Make test calculation.
+def mk_test_calc(x: np.ndarray, alpha: float = 0.05) -> Optional[tuple[str, float, float, float]]:
+    """
+    Make test calculation.
 
     This function is derived from code originally posted by Sat Kumar Tomer (satkumartomer@gmail.com).
 
@@ -109,7 +109,8 @@ def check_num_samples(
     num_cycles: int = 10000,
     m: int = 5,
 ) -> Optional[Union[int]]:
-    """Check number of samples.
+    """
+    Check number of samples.
 
     This function is an implementation of the "Calculation of Number of Samples
     Required to Detect a Trend" section written by Sat Kumar Tomer
@@ -182,7 +183,7 @@ def check_num_samples(
         count_of_trend_detections = 0
 
         # Perform MK test for random sample.
-        for i in range(num_iter):
+        for _ in range(num_iter):
             r = np.random.normal(loc=0.0, scale=std_dev, size=n)
             x = r + delta * np.arange(n)
             trend, h, p, z = mk_test_calc(x, alpha)
@@ -212,12 +213,7 @@ def check_num_samples(
 
         # In case the tolerance is too small we'll stop the cycling when the
         # number of cycles, n, is cycling between the same values.
-        elif (
-            abs(max_n - n) == 0
-            and cycle_num - max_n_cycle >= m
-            or abs(min_n - n) == 0
-            and cycle_num - min_n_cycle >= m
-        ):
+        elif abs(max_n - n) == 0 and cycle_num - max_n_cycle >= m or abs(min_n - n) == 0 and cycle_num - min_n_cycle >= m:
             print("Number of samples required has converged.")
             print(f"P_d: {p_d}")
             print(f"Approximately {n} samples are required")

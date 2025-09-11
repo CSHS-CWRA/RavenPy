@@ -7,6 +7,7 @@ from typing import Any, Optional, Union
 from pydantic import BaseModel, ConfigDict, Field, RootModel, model_validator
 from pymbolic.primitives import ExpressionNode, Variable
 
+
 """
 Notes
 -----
@@ -57,8 +58,6 @@ def encoder(v: dict) -> dict:
         - Sequence: complicated
         - Any other: ':{cmd} {obj}'
     """
-    import warnings
-
     for cmd, obj in v.items():
         if obj is None:
             continue
@@ -67,10 +66,7 @@ def encoder(v: dict) -> dict:
             out = f":{cmd}\n" if obj else ""
         elif isinstance(obj, dict):
             # :Command key value\n
-            out = (
-                "\n".join([f":{cmd} {key} {value}" for (key, value) in obj.items()])
-                + "\n\n"
-            )
+            out = "\n".join([f":{cmd} {key} {value}" for (key, value) in obj.items()]) + "\n\n"
         elif isinstance(obj, Enum):
             # :Command value\n
             out = f":{cmd:<20} {obj.value}\n"
@@ -89,7 +85,7 @@ def encoder(v: dict) -> dict:
             #     out = f":{cmd}," + ",".join(s) + "\n"
             elif cmd in ["Parameters", "Attributes", "Units"]:
                 fmt = ":{cmd:<15}" + len(obj) * ",{:>18}" + "\n"
-                out = fmt.format(cmd=cmd, *obj)
+                out = fmt.format(*obj, cmd=cmd)
             elif issubclass(o0.__class__, (_Command, _Record)):
                 rec = indent("\n".join(s), o0._indent)
                 out = f":{cmd}\n{rec}\n:End{cmd}\n"
@@ -112,19 +108,19 @@ class _Record(BaseModel):
 
 
 class Record(_Record):
-    """A Record has no nested Command or Record objects. It is typically a list of named
+    """
+    A Record has no nested Command or Record objects. It is typically a list of named
     values on a single line.
 
     For example, SubBasins is a ListCommand, whose root is a list of `SubBasin` Records.
     """
 
-    model_config = ConfigDict(
-        extra="forbid", arbitrary_types_allowed=True, populate_by_name=True
-    )
+    model_config = ConfigDict(extra="forbid", arbitrary_types_allowed=True, populate_by_name=True)
 
 
 class RootRecord(RootModel, _Record):
-    """A Record with a root attribute. This is typically used for an unnamed list of
+    """
+    A Record with a root attribute. This is typically used for an unnamed list of
     values on a single line.
 
     For example, the list of HRUs in an HRUGroup is a RootRecord, and the weights of a GridWeights
@@ -193,7 +189,7 @@ class _Command(BaseModel):
                 # elif field.has_alias or field.alias == "__root__":
                 #     cmds[field.alias] = self.__dict__[key]
 
-        for key, field in self.__private_attributes__.items():
+        for key in self.__private_attributes__.keys():
             cmds[key.strip("_")] = getattr(self, key)
 
         return cmds, recs
@@ -223,9 +219,7 @@ class _Command(BaseModel):
 
 
 class Command(_Command):
-    model_config = ConfigDict(
-        extra="forbid", arbitrary_types_allowed=True, populate_by_name=True
-    )
+    model_config = ConfigDict(extra="forbid", arbitrary_types_allowed=True, populate_by_name=True)
 
 
 class RootCommand(RootModel, _Command):
@@ -236,7 +230,8 @@ class RootCommand(RootModel, _Command):
 
 
 class FlatCommand(Command):
-    """Only used to discriminate Commands that should not be nested.
+    """
+    Only used to discriminate Commands that should not be nested.
 
     HRUGroup, ReadFromNetCDF, Reservoir are examples of FlatCommand.
     """
@@ -305,7 +300,7 @@ class ParameterList(Record):
             ev = "_DEFAULT" if v is None else v
             evals.append(ev)
 
-        return fmt.format(name=self.name, *evals)
+        return fmt.format(*evals, name=self.name)
 
 
 class GenericParameterList(Command):
@@ -345,9 +340,7 @@ class RV(Command):
     def _indent(self):
         return ""
 
-    model_config = ConfigDict(
-        populate_by_name=True, validate_default=True, validate_assignment=True
-    )
+    model_config = ConfigDict(populate_by_name=True, validate_default=True, validate_assignment=True)
 
 
 def parse_symbolic(value, **kwds):

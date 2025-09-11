@@ -3,13 +3,13 @@ RavenPy |logo|
 ==============
 
 +----------------------------+-----------------------------------------------------+
-| Versions                   | |pypi| |versions|                                   |
+| Versions                   | |pypi| |conda|                                      |
 +----------------------------+-----------------------------------------------------+
-| Documentation and Support  | |docs|                                              |
+| Documentation and Support  | |docs| |versions|                                   |
 +----------------------------+-----------------------------------------------------+
 | Open Source                | |license| |ossf-score|                              |
 +----------------------------+-----------------------------------------------------+
-| Coding Standards           | |black| |isort| |ruff| |ossf-bp| |pre-commit|       |
+| Coding Standards           | |ruff| |ossf-bp| |pre-commit|                       |
 +----------------------------+-----------------------------------------------------+
 | Development Status         | |status| |build| |coveralls|                        |
 +----------------------------+-----------------------------------------------------+
@@ -59,13 +59,13 @@ This package was created with Cookiecutter_ and the `Ouranosinc/cookiecutter-pyp
 .. _raven-hydro: https://github.com/Ouranosinc/raven-hydro
 
 
-.. |black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
-        :target: https://github.com/psf/black
-        :alt: Python Black
-
 .. |build| image:: https://github.com/CSHS-CWRA/RavenPy/actions/workflows/main.yml/badge.svg
         :target: https://github.com/CSHS-CWRA/RavenPy/actions
         :alt: Build Status
+
+.. |conda| image:: https://img.shields.io/conda/vn/conda-forge/RavenPy.svg
+        :target: https://anaconda.org/conda-forge/RavenPy
+        :alt: Conda-forge Build Version
 
 .. |coveralls| image:: https://coveralls.io/repos/github/CSHS-CWRA/RavenPy/badge.svg
         :target: https://coveralls.io/github/CSHS-CWRA/RavenPy
@@ -74,10 +74,6 @@ This package was created with Cookiecutter_ and the `Ouranosinc/cookiecutter-pyp
 .. |docs| image:: https://readthedocs.org/projects/ravenpy/badge/?version=latest
         :target: https://ravenpy.readthedocs.io/en/latest
         :alt: Documentation Status
-
-.. |isort| image:: https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat&labelColor=ef8336
-        :target: https://pycqa.github.io/isort/
-        :alt: Isort
 
 .. |license| image:: https://img.shields.io/github/license/CSHS-CWRA/RavenPy.svg
         :target: https://github.com/CSHS-CWRA/RavenPy/blob/master/LICENSE

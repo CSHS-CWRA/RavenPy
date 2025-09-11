@@ -2,10 +2,8 @@ from ravenpy.config.emulators import BasicRoute
 from ravenpy.extractors.routing_product import BasinMakerExtractor, open_shapefile
 
 
-def test_basinmaker_extractor(get_local_testdata, tmp_path):
-    routing_product_shp_path = get_local_testdata(
-        "basinmaker/drainage_region_0175_v2-1/finalcat_info_v2-1.zip"
-    )
+def test_basinmaker_extractor(tmp_path, yangtze):
+    routing_product_shp_path = yangtze.fetch("basinmaker/drainage_region_0175_v2-1/finalcat_info_v2-1.zip")
     df = open_shapefile(
         routing_product_shp_path,
     )
@@ -18,11 +16,7 @@ def test_basinmaker_extractor(get_local_testdata, tmp_path):
 
     # Create lists of values to check
     bedslope_list = [item["bed_slope"] for item in rvh_config["channel_profile"]]
-    mannings_list = [
-        value
-        for d in rvh_config["channel_profile"]
-        for value in [t[1] for t in d["roughness_zones"]]
-    ]
+    mannings_list = [value for d in rvh_config["channel_profile"] for value in [t[1] for t in d["roughness_zones"]]]
     reach_length_list = [item["reach_length"] for item in rvh_config["sub_basins"]]
 
     rvh_config.pop("channel_profile")

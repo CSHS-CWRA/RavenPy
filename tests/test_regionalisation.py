@@ -11,7 +11,7 @@ from ravenpy.utilities.regionalization import (
 
 
 class TestRegionalization:
-    def test_full_example(self, symbolic_config, get_local_testdata):
+    def test_full_example(self, symbolic_config):
         name, config = symbolic_config
         method = "SP_IDW"
 
@@ -56,6 +56,4 @@ class TestGreatCircle:
 
         great_circle_vectors = distance(df, algiers)
 
-        np.testing.assert_array_almost_equal(
-            great_circle_vectors, [2750.249, 5478.388, 2709.166], 3
-        )
+        np.testing.assert_array_almost_equal(great_circle_vectors, [2750.249, 5478.388, 2709.166], 3)

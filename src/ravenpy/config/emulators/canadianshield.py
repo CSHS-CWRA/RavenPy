@@ -23,6 +23,7 @@ from ravenpy.config.commands import (
 from ravenpy.config.defaults import nc_attrs
 from ravenpy.config.rvs import Config
 
+
 P = dataclass(
     make_dataclass(
         "Params",
@@ -59,7 +60,8 @@ class HRUs(rc.HRUs):
 
 
 class CanadianShield(Config):
-    """The Canadian Shield model is a useful configuration of Raven for
+    """
+    The Canadian Shield model is a useful configuration of Raven for
     Canadian shield basins characterized by shallow soils atop rock,
     with ample exposed rock and lakes. It is a custom model for this
     type of region, but there is no reference to it in the literature.
@@ -78,46 +80,24 @@ class CanadianShield(Config):
     )
 
     routing: o.Routing = Field("ROUTE_NONE", alias="Routing")
-    catchment_route: o.CatchmentRoute = Field(
-        "ROUTE_TRI_CONVOLUTION", alias="CatchmentRouting"
-    )
-    evaporation: o.Evaporation = Field(
-        o.Evaporation.HARGREAVES_1985, alias="Evaporation"
-    )
-    ow_evaporation: o.Evaporation = Field(
-        o.Evaporation.HARGREAVES_1985, alias="OW_Evaporation"
-    )
-    sw_canopy_correct: o.SWCanopyCorrect = Field(
-        o.SWCanopyCorrect.STATIC, alias="SWCanopyCorrect"
-    )
-    rain_snow_fraction: o.RainSnowFraction = Field(
-        o.RainSnowFraction.DINGMAN, alias="RainSnowFraction"
-    )
-    potential_melt_method: o.PotentialMeltMethod = Field(
-        o.PotentialMeltMethod.DEGREE_DAY, alias="PotentialMeltMethod"
-    )
-    precip_icept_frac: o.PrecipIceptFract = Field(
-        o.PrecipIceptFract.LAI, alias="PrecipIceptFrac"
-    )
+    catchment_route: o.CatchmentRoute = Field("ROUTE_TRI_CONVOLUTION", alias="CatchmentRouting")
+    evaporation: o.Evaporation = Field(o.Evaporation.HARGREAVES_1985, alias="Evaporation")
+    ow_evaporation: o.Evaporation = Field(o.Evaporation.HARGREAVES_1985, alias="OW_Evaporation")
+    sw_canopy_correct: o.SWCanopyCorrect = Field(o.SWCanopyCorrect.STATIC, alias="SWCanopyCorrect")
+    rain_snow_fraction: o.RainSnowFraction = Field(o.RainSnowFraction.DINGMAN, alias="RainSnowFraction")
+    potential_melt_method: o.PotentialMeltMethod = Field(o.PotentialMeltMethod.DEGREE_DAY, alias="PotentialMeltMethod")
+    precip_icept_frac: o.PrecipIceptFract = Field(o.PrecipIceptFract.LAI, alias="PrecipIceptFrac")
     soil_model: rc.SoilModel = Field(3, alias="SoilModel")
-    monthly_interpolation_method: o.MonthlyInterpolationMethod = Field(
-        o.MonthlyInterpolationMethod.LINEAR_MID, alias="MonthlyInterpolationMethod"
-    )
+    monthly_interpolation_method: o.MonthlyInterpolationMethod = Field(o.MonthlyInterpolationMethod.LINEAR_MID, alias="MonthlyInterpolationMethod")
     hydrologic_processes: Sequence[Union[rc.Process, p.Conditional]] = Field(
         [
             p.SnowRefreeze(algo="FREEZE_DEGREE_DAY", source="SNOW_LIQ", to="SNOW"),
             p.Precipitation(algo="PRECIP_RAVEN", source="ATMOS_PRECIP", to="MULTIPLE"),
-            p.CanopyEvaporation(
-                algo="CANEVP_MAXIMUM", source="CANOPY", to="ATMOSPHERE"
-            ),
-            p.CanopySublimation(
-                algo="CANEVP_MAXIMUM", source="CANOPY_SNOW", to="ATMOSPHERE"
-            ),
+            p.CanopyEvaporation(algo="CANEVP_MAXIMUM", source="CANOPY", to="ATMOSPHERE"),
+            p.CanopySublimation(algo="CANEVP_MAXIMUM", source="CANOPY_SNOW", to="ATMOSPHERE"),
             p.SnowBalance(algo="SNOBAL_TWO_LAYER", source="MULTIPLE", to="MULTIPLE"),
             p.Abstraction(algo="ABST_FILL", source="PONDED_WATER", to="DEPRESSION"),
-            p.OpenWaterEvaporation(
-                algo="OPEN_WATER_EVAP", source="DEPRESSION", to="ATMOSPHERE"
-            ),
+            p.OpenWaterEvaporation(algo="OPEN_WATER_EVAP", source="DEPRESSION", to="ATMOSPHERE"),
             p.Infiltration(algo="INF_HBV", source="PONDED_WATER", to="MULTIPLE"),
             p.Interflow(algo="INTERFLOW_PRMS", source="SOIL[0]", to="SURFACE_WATER"),
             p.Baseflow(algo="BASE_POWER_LAW", source="SOIL[1]", to="SURFACE_WATER"),
@@ -224,12 +204,8 @@ class CanadianShield(Config):
         },
         alias="VegetationParameterList",
     )
-    seasonal_relative_lai: rc.SeasonalRelativeLAI = Field(
-        rc.SeasonalRelativeLAI(), alias="SeasonalRelativeLAI"
-    )
-    seasonal_relative_height: rc.SeasonalRelativeHeight = Field(
-        rc.SeasonalRelativeHeight(), alias="SeasonalRelativeHeight"
-    )
+    seasonal_relative_lai: rc.SeasonalRelativeLAI = Field(rc.SeasonalRelativeLAI(), alias="SeasonalRelativeLAI")
+    seasonal_relative_height: rc.SeasonalRelativeHeight = Field(rc.SeasonalRelativeHeight(), alias="SeasonalRelativeHeight")
 
     hru_state_variable_table: rc.HRUStateVariableTable = Field(
         [
@@ -257,9 +233,7 @@ class CanadianShield(Config):
     @classmethod
     def equal_area(cls, hrus):
         if len(hrus) != 2:
-            raise ValueError(
-                f"CanadianShield must have two HRUs, one organic and one bedrock, has {len(hrus)}."
-            )
+            raise ValueError(f"CanadianShield must have two HRUs, one organic and one bedrock, has {len(hrus)}.")
 
         areas = []
         for hru in hrus:
