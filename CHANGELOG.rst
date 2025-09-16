@@ -6,7 +6,7 @@ Changelog
     `Unreleased <https://github.com/CSHS-CWRA/RavenPy>`_ (latest)
     -------------------------------------------------------------
 
-    Contributors:
+    Contributors: David Huard (:user:`huard`).
 
     Changes
     ^^^^^^^
@@ -14,7 +14,8 @@ Changelog
 
     Fixes
     ^^^^^
-    * No change.
+    * In `nc_specs`, set `dim_names_nc` in the order expected by Raven (x, y, t). Previously, we only made sure that `time` was the last dimension, but did not ensure x and y were in the right order. (PR #533)
+
 
 .. _changes_0.19.1:
 
