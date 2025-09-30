@@ -59,7 +59,7 @@ def get_CASPAR_dataset(  # noqa: N802
     date: dt.datetime,
     thredds: str = THREDDS_URL,
     directory: str = "dodsC/birdhouse/disk2/caspar/daily/",
-    engine: str = "pydap",
+    engine: str = "netcdf4",
 ) -> tuple[xr.Dataset, list[Union[Union[DatetimeIndex, Series, Timestamp, Timestamp], Any]]]:
     """
     Return CASPAR dataset.
@@ -111,7 +111,7 @@ def get_ECCC_dataset(  # noqa: N802
     climate_model: str,
     thredds: str = THREDDS_URL,
     directory: str = "dodsC/datasets/forecasts/eccc_geps/",
-    engine: str = "pydap",
+    engine: str = "netcdf4",
 ) -> tuple[Dataset, list[Union[Union[DatetimeIndex, Series, Timestamp, Timestamp], Any]]]:
     """
     Return latest GEPS forecast dataset.
