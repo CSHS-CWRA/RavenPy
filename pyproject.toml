@@ -65,6 +65,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   # Dev tools and testing
+  "aiohttp", # needed for HTTPFileSystem in fsspec
   "black ==25.1.0",
   "blackdoc ==0.4.1",
   "bump-my-version >=1.2.0",
@@ -73,6 +74,7 @@ dev = [
   "flake8 >=7.2.0",
   "flake8-rst-docstrings >=0.3.0",
   "flit >=3.11.0,<4.0",
+  "fsspec", # needed for HTTPFileSystem in fsspec
   "holoviews",
   "hvplot",
   "mypy >=1.14.1",
