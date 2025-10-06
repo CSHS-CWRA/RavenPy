@@ -59,6 +59,7 @@ def get_CASPAR_dataset(  # noqa: N802
     date: dt.datetime,
     thredds: str = THREDDS_URL,
     directory: str = "dodsC/birdhouse/disk2/caspar/daily/",
+    engine: str = "netcdf4",
 ) -> tuple[xr.Dataset, list[Union[Union[DatetimeIndex, Series, Timestamp, Timestamp], Any]]]:
     """
     Return CASPAR dataset.
@@ -73,6 +74,8 @@ def get_CASPAR_dataset(  # noqa: N802
         The thredds server url. Default: "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/".
     directory : str
         The directory on the thredds server where the data is stored. Default: "dodsC/birdhouse/disk2/caspar/daily/".
+    engine : str
+        The xarray engine to use to open the dataset. Default: "pydap".
 
     Returns
     -------
@@ -87,7 +90,7 @@ def get_CASPAR_dataset(  # noqa: N802
         d = dt.datetime.strftime(date, "%Y%m%d")
         file_location = urljoin(directory, f"GEPS_{d}.nc")
         file_url = urljoin(thredds, file_location)
-        ds = xr.open_dataset(file_url)
+        ds = xr.open_dataset(file_url, engine=engine)
         # Here we also extract the times at 6-hour intervals as Raven must have
         # constant timesteps and GEPS goes to 6 hours
         start = pd.to_datetime(ds.time[0].values)
@@ -108,6 +111,7 @@ def get_ECCC_dataset(  # noqa: N802
     climate_model: str,
     thredds: str = THREDDS_URL,
     directory: str = "dodsC/datasets/forecasts/eccc_geps/",
+    engine: str = "netcdf4",
 ) -> tuple[Dataset, list[Union[Union[DatetimeIndex, Series, Timestamp, Timestamp], Any]]]:
     """
     Return latest GEPS forecast dataset.
@@ -120,6 +124,8 @@ def get_ECCC_dataset(  # noqa: N802
         The thredds server url. Default: "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/".
     directory : str
         The directory on the thredds server where the data is stored. Default: "dodsC/datasets/forecasts/eccc_geps/".
+    engine : str
+        The xarray engine to use to open the dataset. Default: "pydap".
 
     Returns
     -------
@@ -134,7 +140,7 @@ def get_ECCC_dataset(  # noqa: N802
         # Eventually the file will find a permanent home, until then let's use the test folder.
         file_location = urljoin(directory, "GEPS_latest.ncml")
         file_url = urljoin(thredds, file_location)
-        ds = xr.open_dataset(file_url)
+        ds = xr.open_dataset(file_url, engine=engine)
         # Here we also extract the times at 6-hour intervals as Raven must have
         # constant timesteps and GEPS goes to 6 hours
         start = pd.to_datetime(ds.time[0].values)
