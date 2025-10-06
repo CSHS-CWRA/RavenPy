@@ -619,10 +619,10 @@ class Reservoir(FlatCommand):
             a["subbasin_id"] = re.search(r":SubBasinID\s+(\d+)", content).group(1)
             a["hru_id"] = re.search(r":HRUID\s+(\d+)", content).group(1)
             a["type"] = re.search(r":Type\s+(\w+)", content).group(1)
-            
+
             if m := re.search(r":WeirCoefficient\s+([\d.-]+)", content):
                 a["weir_coefficient"] = m.group(1)
-            
+
             if m := re.search(r":CrestWidth\s+([\d.-]+)", content):
                 a["crest_width"] = m.group(1)
 
@@ -631,17 +631,12 @@ class Reservoir(FlatCommand):
 
             if m := re.search(r":LakeArea\s+([\d.-]+)", content):
                 a["lake_area"] = m.group(1)
-            
+
             if m := re.search(r":SeepageParameters\s+([\d.-]+)\s+([\d.-]+)", content):
                 a["seepage_parameters"] = dict(zip(["k_seep", "h_ref"], m.groups()))
 
             # Convert to Reservoir record
-            out.append(
-                cls(
-                    name=name,
-                    **a
-                )
-            )
+            out.append(cls(name=name, **a))
         return out
 
 
