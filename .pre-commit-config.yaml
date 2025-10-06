@@ -9,7 +9,7 @@ repos:
         args: [ '--py39-plus' ]
         exclude: ^tests/conftest\.py$
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: check-json
       - id: pretty-format-json
@@ -49,7 +49,7 @@ repos:
       - id: rst-inline-touching-normal
       - id: text-unicode-replacement-char
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.12.7
+    rev: v0.12.11
     hooks:
       - id: ruff-check
         args: [ '--fix', '--show-fixes' ]
@@ -92,12 +92,12 @@ repos:
       - id: numpydoc-validation
         exclude: "^docs/|^tests/"
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.33.2
+    rev: 0.33.3
     hooks:
       - id: check-github-workflows
       - id: check-readthedocs
   - repo: https://github.com/woodruffw/zizmor-pre-commit
-    rev: v1.11.0
+    rev: v1.12.1
     hooks:
       - id: zizmor
         args: [ '--config=.zizmor.yml' ]
