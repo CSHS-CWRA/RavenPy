@@ -176,6 +176,7 @@ class RVH(RV):
     sub_basin_group: Optional[Sequence[rc.SubBasinGroup]] = optfield(alias="SubBasinGroup")
     sub_basin_properties: Optional[rc.SubBasinProperties] = optfield(alias="SubBasinProperties")
     sb_group_property_multiplier: Optional[Sequence[rc.SBGroupPropertyMultiplier]] = optfield(alias="SBGroupPropertyMultiplier")
+    gauged_sub_basin_group: Optional[str] = optfield(alias="GaugedSubBasinGroup")
     hrus: Optional[rc.HRUs] = optfield(alias="HRUs")
     hru_group: Optional[Sequence[rc.HRUGroup]] = optfield(alias="HRUGroup")
     reservoirs: Optional[Sequence[rc.Reservoir]] = optfield(alias="Reservoirs")
