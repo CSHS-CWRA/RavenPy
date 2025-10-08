@@ -29,7 +29,7 @@ repos:
         args: [ '--branch', 'main' ]
       - id: trailing-whitespace
   - repo: https://github.com/pappasam/toml-sort
-    rev: v0.24.2
+    rev: v0.24.3
     hooks:
       - id: toml-sort-fix
   - repo: https://github.com/adrienverge/yamllint.git
@@ -49,7 +49,7 @@ repos:
       - id: rst-inline-touching-normal
       - id: text-unicode-replacement-char
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.12.11
+    rev: v0.13.3
     hooks:
       - id: ruff-check
         args: [ '--fix', '--show-fixes' ]
@@ -58,14 +58,14 @@ repos:
     rev: 7.3.0
     hooks:
       - id: flake8
-        additional_dependencies: [ 'flake8-rst-docstrings' ]
+        additional_dependencies: [ 'flake8-rst-docstrings==0.3.1' ]
         args: [ '--config=.flake8' ]
   - repo: https://github.com/jendrikseipp/vulture
     rev: v2.14
     hooks:
       - id: vulture
 #  - repo: https://github.com/pre-commit/mirrors-mypy
-#    rev: v1.14.1
+#    rev: v1.18.2
 #    hooks:
 #      - id: mypy
   - repo: https://github.com/nbQA-dev/nbQA
@@ -97,7 +97,7 @@ repos:
       - id: check-github-workflows
       - id: check-readthedocs
   - repo: https://github.com/woodruffw/zizmor-pre-commit
-    rev: v1.12.1
+    rev: v1.14.2
     hooks:
       - id: zizmor
         args: [ '--config=.zizmor.yml' ]

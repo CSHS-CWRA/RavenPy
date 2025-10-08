@@ -36,7 +36,7 @@ dependencies:
   - s3fs
   - salib
   - seaborn
-  - sphinx >=7.1.0
+  - sphinx >=7.1.0,<8.2
   - sphinx-click
   - sphinx-codeautolink
   - sphinx-copybutton
