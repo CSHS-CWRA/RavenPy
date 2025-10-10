@@ -153,6 +153,7 @@ ravenpy = "ravenpy.cli:main"
 [project.urls]
 "Changelog" = "https://ravenpy.readthedocs.io/en/latest/changelog.html"
 "Homepage" = "https://ravenpy.readthedocs.io"
+"Citation" = "https://doi.org/10.5281/zenodo.7972347"
 "Issue tracker" = "https://github.com/CSHS-CWRA/RavenPy/issues"
 "Source" = "https://github.com/CSHS-CWRA/RavenPy"
 "About CSHS-CWRA" = "https://cwra.org/en/"
