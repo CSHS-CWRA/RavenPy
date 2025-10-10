@@ -14,6 +14,15 @@ Fixes
 * Adjusted the `Perform_a_climate_change_impact_study_on_a_watershed.ipynb` notebook to reduce the number of years in the simulation to speed up execution time. (PR #535)
 * Adjusted a broken test that was overlooked in the previous release (from changes in PR #513). (PR #535)
 
+Internal changes
+^^^^^^^^^^^^^^^^
+* Updated the cookiecutter template to the latest version (#548):
+  * Updated the Contributor Covenant Agreement to v3.0.
+  * Added a `CITATION.cff` file.
+  * Removed `black`, `blackdoc`, and `isort`, as well as their configurations.
+  * Updated `pyproject.toml` to be `PEP 639 <https://peps.python.org/pep-0639>`_-compliant.
+* Pinned `pydantic` below v2.12 due to breaking changes in their API. (PR #548)
+
 .. _changes_0.19.1:
 
 `v0.19.1 <https://github.com/CSHS-CWRA/RavenPy/tree/v0.19.1>`_ (2025-08-05)

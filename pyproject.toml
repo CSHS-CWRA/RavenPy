@@ -14,13 +14,13 @@ maintainers = [
 readme = {file = "README.rst", content-type = "text/x-rst"}
 requires-python = ">=3.10.0"
 keywords = ["raven", "raven-hydro", "hydrology", "gis", "analysis", "modelling"]
-license = {file = "LICENSE"}
+license = "MIT"
+license-files = ["LICENSE"]
 classifiers = [
   "Development Status :: 4 - Beta",
   "Intended Audience :: Developers",
   "Intended Audience :: Education",
   "Intended Audience :: Science/Research",
-  "License :: OSI Approved :: MIT License",
   "Natural Language :: English",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3 :: Only",
@@ -49,7 +49,7 @@ dependencies = [
   "owslib >=0.29.1",
   "pandas >=2.2.0",
   "pint >=0.24.4",
-  "pydantic >=2.11",
+  "pydantic >=2.11,<2.12",
   "pydap >=3.4.0,<3.5.5", # pydap 3.5.5 is not currently supported by `xarray` (v2025.3.1)
   "pymbolic >=2024.2",
   "scipy >=1.11.0",
@@ -65,28 +65,27 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   # Dev tools and testing
-  "black ==25.1.0",
-  "blackdoc ==0.4.3",
-  "bump-my-version >=1.2.0",
+  "bump-my-version >=1.2.3",
   "coverage >=7.5.0",
   "filelock >=3.14.0",
-  "flake8 >=7.2.0",
-  "flake8-rst-docstrings >=0.3.0",
+  "flake8 >=7.3.0",
+  "flake8-rst-docstrings >=0.3.1",
   "flit >=3.11.0,<4.0",
   "holoviews",
   "hvplot",
-  "mypy >=1.14.1",
+  "mypy >=1.18.2",
   "nbval",
-  "numpydoc >=1.8.0",
-  "pip >=25.0",
+  "numpydoc >=1.9.0",
+  "pip >=25.2",
   "pooch >=1.8.0",
   "pre-commit >=3.5.0",
   "pylint >=3.3.0",
   "pytest >=8.3.2",
   "pytest-cov >=5.0.0",
   "pytest-xdist >=3.2.0",
-  "ruff >=0.12.0",
-  "tox >=4.26.0",
+  "ruff >=0.13.3",
+  "tox >=4.30.3",
+  "vulture >=2.14",
   "watchdog >=4.0.0"
 ]
 docs = [
@@ -116,7 +115,7 @@ docs = [
   "pymetalink >=6.5.2",
   "s3fs",
   "salib",
-  "sphinx >=7.1.0",
+  "sphinx >=7.1.0,<8.2",
   "sphinx-click",
   "sphinx-codeautolink",
   "sphinx-copybutton",
@@ -154,6 +153,7 @@ ravenpy = "ravenpy.cli:main"
 [project.urls]
 "Changelog" = "https://ravenpy.readthedocs.io/en/latest/changelog.html"
 "Homepage" = "https://ravenpy.readthedocs.io"
+"Citation" = "https://doi.org/10.5281/zenodo.7972347"
 "Issue tracker" = "https://github.com/CSHS-CWRA/RavenPy/issues"
 "Source" = "https://github.com/CSHS-CWRA/RavenPy"
 "About CSHS-CWRA" = "https://cwra.org/en/"
@@ -203,6 +203,13 @@ replace = """\
 """
 
 [[tool.bumpversion.files]]
+filename = "CITATION.cff"
+include_bumps = ["release"]
+search = "version: \"[0-9]+\\.[0-9]+\\.[0-9]\""
+regex = true
+replace = "version: {new_version}"
+
+[[tool.bumpversion.files]]
 filename = "src/ravenpy/__init__.py"
 search = "__version__ = \"{current_version}\""
 replace = "__version__ = \"{new_version}\""
@@ -237,6 +244,10 @@ source = ["src/ravenpy/", "*/site-packages/ravenpy/"]
 relative_files = true
 omit = ["tests/*.py"]
 source = ["ravenpy"]
+
+[tool.deptry]
+extend_exclude = ["docs"]
+pep621_dev_dependency_groups = ["all", "dev", "docs"]
 
 [tool.flit.sdist]
 include = [
@@ -287,7 +298,7 @@ disallow_any_generics = true
 files = "."
 follow_imports = "silent"
 no_implicit_reexport = false
-python_version = 3.10
+python_version = "3.10"
 show_error_codes = true
 warn_no_return = true
 warn_redundant_casts = true

@@ -7,7 +7,7 @@ RavenPy |logo|
 +----------------------------+-----------------------------------------------------+
 | Documentation and Support  | |docs| |versions|                                   |
 +----------------------------+-----------------------------------------------------+
-| Open Source                | |license| |ossf-score|                              |
+| Open Source                | |license| |ossf-score| |zenodo|                     |
 +----------------------------+-----------------------------------------------------+
 | Coding Standards           | |ruff| |ossf-bp| |pre-commit|                       |
 +----------------------------+-----------------------------------------------------+
@@ -110,3 +110,7 @@ This package was created with Cookiecutter_ and the `Ouranosinc/cookiecutter-pyp
 .. |versions| image:: https://img.shields.io/pypi/pyversions/RavenPy.svg
         :target: https://pypi.python.org/pypi/RavenPy
         :alt: Supported Python Versions
+
+.. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.7972347.svg
+        :target: https://doi.org/10.5281/zenodo.7972347
+        :alt: DOI

@@ -218,9 +218,9 @@ To run specific code style checks:
 
     python -m ruff check src/ravenpy tests
     python -m flake8 src/ravenpy tests
-    validate-docstrings src/ravenpy/**.py
+    python -m numpydoc lint src/ravenpy/**.py
 
-To get ``ruff``, ``flake8`` (with the ``flake8-rst-docstrings`` plugin), and ``numpydoc`` (for ``validate-docstrings``), simply install them with ``pip`` (or ``conda``) into your environment.
+To get ``ruff``, ``flake8`` (with the ``flake8-rst-docstrings`` plugin), and ``numpydoc``, simply install them with ``pip`` (or ``conda``) into your environment.
 
 Translations
 ------------
