@@ -9,7 +9,6 @@ Contributors: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre
 
 Fixes
 ^^^^^
-
 * Fix `Reservoir` command parser failing when optional fields were missing. (PR #544)
 * Add `GaugedSubBasinGroup` command to `RVH` class. (Issue #546, PR #547)
 * In `nc_specs`, set `dim_names_nc` in the order expected by Raven (x, y, t). Previously, we only made sure that `time` was the last dimension, but did not ensure x and y were in the right order. (PR #533)
