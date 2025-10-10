@@ -613,34 +613,30 @@ class Reservoir(FlatCommand):
         pat = r":Reservoir\s+(\w+)\s+(.+?):EndReservoir"
         out = []
 
+        a = {}
         for name, content in re.findall(pat, s.strip(), re.DOTALL):
             # Extract parameters
-            subbasin_id = re.search(r":SubBasinID\s+(\d+)", content).group(1)
-            hru_id = re.search(r":HRUID\s+(\d+)", content).group(1)
-            type_ = re.search(r":Type\s+(\w+)", content).group(1)
-            weir_coefficient = re.search(r":WeirCoefficient\s+([\d.-]+)", content).group(1)
-            crest_width = re.search(r":CrestWidth\s+([\d.-]+)", content).group(1)
-            max_depth = re.search(r":MaxDepth\s+([\d.-]+)", content).group(1)
-            lake_area = re.search(r":LakeArea\s+([\d.-]+)", content).group(1)
-            seepage_parameters = re.search(r":SeepageParameters\s+([\d.-]+)\s+([\d.-]+)", content).groups()
+            a["subbasin_id"] = re.search(r":SubBasinID\s+(\d+)", content).group(1)
+            a["hru_id"] = re.search(r":HRUID\s+(\d+)", content).group(1)
+            a["type"] = re.search(r":Type\s+(\w+)", content).group(1)
+
+            if m := re.search(r":WeirCoefficient\s+([\d.-]+)", content):
+                a["weir_coefficient"] = m.group(1)
+
+            if m := re.search(r":CrestWidth\s+([\d.-]+)", content):
+                a["crest_width"] = m.group(1)
+
+            if m := re.search(r":MaxDepth\s+([\d.-]+)", content):
+                a["max_depth"] = m.group(1)
+
+            if m := re.search(r":LakeArea\s+([\d.-]+)", content):
+                a["lake_area"] = m.group(1)
+
+            if m := re.search(r":SeepageParameters\s+([\d.-]+)\s+([\d.-]+)", content):
+                a["seepage_parameters"] = dict(zip(["k_seep", "h_ref"], m.groups()))
 
             # Convert to Reservoir record
-            out.append(
-                cls(
-                    name=name,
-                    subbasin_id=subbasin_id,
-                    hru_id=hru_id,
-                    type=type_,
-                    weir_coefficient=weir_coefficient,
-                    crest_width=crest_width,
-                    max_depth=max_depth,
-                    lake_area=lake_area,
-                    seepage_parameters=cls.SeepageParameters(
-                        k_seep=seepage_parameters[0],
-                        h_ref=seepage_parameters[1],
-                    ),
-                )
-            )
+            out.append(cls(name=name, **a))
         return out
 
 
@@ -672,7 +668,7 @@ class SubBasinGroup(FlatCommand):
         out = []
 
         for name, content in re.findall(pat, s.strip(), re.DOTALL):
-            sb_ids = re.split(r"\s+", content.strip())
+            sb_ids = re.findall(r"\d+", content)
 
             # Convert to SubBasinGroup record
             out.append(SubBasinGroup(name=name, sb_ids=sb_ids))
