@@ -93,7 +93,7 @@ jobs:
         if: matrix.os == 'macos-latest'
         uses: tecolicom/actions-use-homebrew-tools@b9c066b79607fa3d71e0be05d7003bb75fd9ff34 # v1.3
         with:
-          tools: gdal,hdf5
+          tools: gdal hdf5
           cache: "yes"
       - name: Set GDAL_VERSION (macOS)
         if: matrix.os == 'macos-latest'
