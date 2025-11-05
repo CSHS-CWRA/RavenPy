@@ -5,6 +5,7 @@ import tempfile
 
 import numpy as np
 import pytest
+from requests.exceptions import HTTPError
 
 
 @pytest.mark.online
@@ -152,7 +153,9 @@ class TestWFS:
         assert gdf.STATE_NAME.unique() == "Nevada"
 
 
+# FIXME: Something strange is going on with GitHub Actions and PAVICS Geoserver access. Investigate.
 @pytest.mark.online
+@pytest.mark.xfail(HTTPError, reason="Geoserver WCS seems to be inaccessible from GitHub.", strict=False)
 class TestWCS:
     io = pytest.importorskip("ravenpy.utilities.io")
     geoserver = pytest.importorskip("ravenpy.utilities.geoserver")
