@@ -36,7 +36,7 @@ allowlist_externals = ["make"]
 commands_pre = [
   ["python", "-m", "pip", "list"],
   ["python", "-m", "pip", "check"],
-  ["python", "-m", "pip", "install", "--upgrade", "--force-reinstall", "--no-deps", "--no-cache-dir", "git+https://github.com/Ouranosinc/raven-hydro.git@{env:UPSTREAM_BRANCH}"]
+  ["python", "-m", "pip", "install", "--no-user", "--upgrade", "--force-reinstall", "--no-deps", "--no-cache-dir", "git+https://github.com/Ouranosinc/raven-hydro.git@{env:UPSTREAM_BRANCH}"]
 ]
 
 [env_run_base]
@@ -51,7 +51,8 @@ commands_pre = [
   ["python", "-m", "pip", "check"]
 ]
 commands = [
-  ["python", "-m", "pip", "install", "--upgrade", "--force-reinstall", "--no-deps", "--no-cache-dir", "--no-build-isolation", "gdal[numpy]=={env:GDAL_VERSION}.*"],
+  ["python", "-m", "pip", "install", "--no-user", "--upgrade", "--force-reinstall", "--no-deps", "--no-binary", "h5py", "h5py>=3.12.1"],
+  ["python", "-m", "pip", "install", "--no-user", "--upgrade", "--force-reinstall", "--no-deps", "--no-cache-dir", "--no-build-isolation", "gdal[numpy]=={env:GDAL_VERSION}.*"],
   ["python", "-c", "import ravenpy.testing.utils as rtu; rtu.populate_testing_data(branch=\"{env:RAVEN_TESTDATA_BRANCH}\")"]
 ]
 commands_post = [
