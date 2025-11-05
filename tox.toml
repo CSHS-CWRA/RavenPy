@@ -11,14 +11,6 @@ requires = [
 ]
 skip_missing_interpreters = true
 
-[dependency_groups]
-lint = [
-  "flake8 >= 7.3.0",
-  "flake8-rst-docstrings >= 0.4.0",
-  "ruff >= 0.14.3",
-  "numpydoc >= 1.9.0"
-]
-
 [env.docs]
 extras = ["docs"]
 commands = [
@@ -30,8 +22,12 @@ allowlist_externals = ["make"]
 
 [env.lint]
 skip_install = true
-dependency_groups = ["lint"]
-deps = []
+deps = [
+  "flake8 >= 7.3.0",
+  "flake8-rst-docstrings >= 0.4.0",
+  "ruff >= 0.14.3",
+  "numpydoc >= 1.9.0"
+]
 commands = [["make", "lint"]]
 commands_post = []
 allowlist_externals = ["make"]
