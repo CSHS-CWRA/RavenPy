@@ -31,6 +31,7 @@ allowlist_externals = ["make"]
 [env.lint]
 skip_install = true
 dependency_groups = ["lint"]
+deps = []
 commands = [["make", "lint"]]
 commands_post = []
 allowlist_externals = ["make"]
