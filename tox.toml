@@ -1,0 +1,69 @@
+envlist = [
+  "lint",
+  "py3.{10,11,12,13}",
+  "docs"
+]
+requires = [
+  "flit >= 3.11.0,<4.0",
+  "pip >= 25.2",
+  "setuptools >= 71.0",
+  "tox >= 4.30.3"
+]
+skip_missing_interpreters = true
+
+[dependency_groups]
+lint = [
+  "flake8 >= 7.3.0",
+  "flake8-rst-docstrings >= 0.4.0",
+  "ruff >= 0.14.3",
+  "numpydoc >= 1.9.0"
+]
+
+[env.docs]
+extras = ["docs"]
+commands = [
+  ["make", "autodoc"],
+  ["make", "--directory=docs", "clean", "html"]
+]
+commands_post = []
+allowlist_externals = ["make"]
+
+[env.lint]
+skip_install = true
+dependency_groups = ["lint"]
+commands = [["make", "lint"]]
+commands_post = []
+allowlist_externals = ["make"]
+
+[env.upstream]
+commands_pre = [
+  ["python", "-m", "pip", "list"],
+  ["python", "-m", "pip", "check"],
+  ["python", "-m", "pip", "install", "--upgrade", "--force-reinstall", "--no-deps", "--no-cache-dir", "git+https://github.com/Ouranosinc/raven-hydro.git@{env:UPSTREAM_BRANCH}"]
+]
+
+[env_run_base]
+setenv = {PYTEST_ADDOPTS = "--numprocesses=logical --durations=10 --cov=ravenpy", PYTHONPATH = "{toxinidir}", UPSTREAM_BRANCH = "main", TOX = "{envname}"}
+passenv = ["CI", "COVERALLS_*", "GDAL_VERSION", "GITHUB_*", "LD_LIBRARY_PATH", "RAVEN_*", "UPSTREAM_BRANCH"]
+extras = ["dev", "gis", "raven-hydro"]
+download = true
+install_command = ["python", "-m", "pip", "install", "--no-user", "{opts}", "{packages}"]
+deps = ["numpy >= 1.25.0", "gdal == {env:GDAL_VERSION}"]
+commands_pre = [
+  ["python", "-m", "pip", "list"],
+  ["python", "-m", "pip", "check"]
+]
+commands = [
+  ["python", "-m", "pip", "install", "--upgrade", "--force-reinstall", "--no-deps", "--no-cache-dir", "--no-build-isolation", "gdal[numpy]=={env:GDAL_VERSION}.*"],
+  ["python", "-c", "import ravenpy.testing.utils as rtu; rtu.populate_testing_data(branch=\"{env:RAVEN_TESTDATA_BRANCH}\")"]
+]
+commands_post = [
+  ["pytest", "{posargs}"],
+  ["coverage", "report"]
+]
+
+[gh.python]
+"3.10" = ["upstream"]
+"3.11" = ["py3.11"]
+"3.12" = ["py3.12"]
+"3.13" = ["py3.13"]
