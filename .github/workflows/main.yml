@@ -83,17 +83,17 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
 
-      - name: Install GDAL + Set GDAL_VERSION (Ubuntu)
+      - name: Install GDAL/HDF5 + Set GDAL_VERSION (Ubuntu)
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install libgdal-dev
+          sudo apt-get install libgdal-dev libhdf5-dev
           echo "GDAL_VERSION=$(gdal-config --version)" >> $GITHUB_ENV
-      - name: Install GDAL (macOS)
+      - name: Install GDAL/HDF5 (macOS)
         if: matrix.os == 'macos-latest'
         uses: tecolicom/actions-use-homebrew-tools@b9c066b79607fa3d71e0be05d7003bb75fd9ff34 # v1.3
         with:
-          tools: gdal
+          tools: gdal,hdf5
           cache: "yes"
       - name: Set GDAL_VERSION (macOS)
         if: matrix.os == 'macos-latest'
@@ -125,7 +125,7 @@ jobs:
         run: |
             python3 -m tox
         env:
-          TOX_GH_MAJOR_MINOR: ${{ matrix.python-version }}}
+          TOX_GH_MAJOR_MINOR: ${{ matrix.python-version }}
           UPSTREAM_BRANCH: ${{ matrix.upstream-branch }}
 
       - name: Report Coverage
