@@ -19,6 +19,7 @@ jobs:
     if: |
      (github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name)
     permissions:
+      # Needed in order to leave comments on pull requests
       pull-requests: write
     steps:
       - name: Harden Runner
