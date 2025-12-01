@@ -3,12 +3,6 @@ envlist = [
   "py3.{10,11,12,13}",
   "docs"
 ]
-requires = [
-  "flit >= 3.11.0,<4.0",
-  "pip >= 25.2",
-  "setuptools >= 71.0",
-  "tox >= 4.30.3"
-]
 skip_missing_interpreters = true
 
 [env.docs]
@@ -45,7 +39,7 @@ passenv = ["CI", "COVERALLS_*", "GDAL_VERSION", "GITHUB_*", "LD_LIBRARY_PATH", "
 extras = ["dev", "gis", "raven-hydro"]
 download = true
 install_command = ["python", "-m", "pip", "install", "--no-user", "{opts}", "{packages}"]
-deps = ["numpy >= 1.25.0", "gdal == {env:GDAL_VERSION}"]
+deps = ["numpy >= 1.25.0", "gdal == {env:GDAL_VERSION}.*"]
 commands_pre = [
   ["python", "-m", "pip", "list"],
   ["python", "-m", "pip", "check"]
