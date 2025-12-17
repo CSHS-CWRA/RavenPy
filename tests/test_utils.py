@@ -41,7 +41,6 @@ def test_nc_specs_bad(bad_netcdf):
 
 
 @pytest.mark.online
-@pytest.mark.skipif(older_pydap, reason="pydap version 3.5.5 is required for this test", strict=False)
 def test_dap_specs():
     # Link to THREDDS Data Server netCDF testdata
     tds = "https://pavics.ouranos.ca/twitcher/ows/proxy/thredds/dodsC/birdhouse/testdata/raven"
