@@ -84,7 +84,7 @@ def nc_specs(
                 attrs["units"] = nc_var.attrs.get("units")
                 if attrs["units"] is not None:
                     s, o = infer_scale_and_offset(nc_var, data_type)
-                    attrs["linear_transform"] = dict(scale=s, offset=o)
+                    attrs["linear_transform"] = {"scale": s, "offset": o}
                 if mon_ave:
                     ma = MonthlyAverages.get(data_type)
                     if ma:
