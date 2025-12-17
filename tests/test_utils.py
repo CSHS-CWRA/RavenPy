@@ -1,13 +1,6 @@
 import pytest
-from packaging.version import Version
-from pydap import __version__ as __pydap_version__
 
 from ravenpy.config.utils import nc_specs
-
-
-older_pydap = False
-if Version(__pydap_version__) < Version("3.5.5"):
-    older_pydap = True
 
 
 def test_nc_specs(yangtze):
