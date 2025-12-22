@@ -140,7 +140,7 @@ gis = [
   "shapely >=2.0"
 ]
 raven-hydro = [
-  "raven-hydro >=0.4.0,<1.0"
+  "raven-hydro >=0.5.0,<1.0"
 ]
 all = [
   "ravenpy[dev]",
