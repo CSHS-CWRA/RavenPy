@@ -9,7 +9,7 @@ Contributors: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre
 
 New features
 ^^^^^^^^^^^^
-* Updated `raven-hydro` to v0.5.0 (`RavenHydroFramework` v4.1.0).
+* Updated `raven-hydro` to v0.5.0 (`RavenHydroFramework` v4.1.0). (PR #560)
 
 Fixes
 ^^^^^
