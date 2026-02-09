@@ -20,7 +20,8 @@ NSE = {
     # "CanadianShield": 0.3968, <- This is the value for CanadianShield with RavenHydroFramework v3.7
     "CanadianShield": 0.4001,  # <- This is the new value for CanadianShield with RavenHydroFramework v3.8 and v3.8.1
     "HYPR": 0.685188,
-    "SACSMA": -0.0382907,
+    # "SACSMA": -0.0383, # <- This is the original value for SACSMA with RavenHydroFramework v3.8.1 and v4.0.0
+    "SACSMA": -0.2666,
     # "Blended": -0.913785, <- This is the original value for Blended with RavenHydroFramework v3.8.1
     "Blended": -1.1507,  # <- This is the new value for Blended with RavenHydroFramework v4.0.1
 }
@@ -42,7 +43,7 @@ def test_run(numeric_config, tmp_path):
     out = e.run()
     d = out.diagnostics
 
-    np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], NSE[name], 4)
+    np.testing.assert_almost_equal(d["DIAG_NASH_SUTCLIFFE"], [NSE[name]], 4)
 
     if name == "CanadianShield":
         pytest.skip("Missing solution due to SuppressOutput.")

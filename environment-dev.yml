@@ -3,7 +3,7 @@ channels:
   - conda-forge
 dependencies:
   - python >=3.10,<3.14
-  - raven-hydro >=0.4.0,<1.0
+  - raven-hydro >=0.5.0,<1.0
   # - libgcc  # for mixing raven-hydro from PyPI with conda environments
   - affine >=2.4.0
   - cftime >=1.4.1
@@ -20,7 +20,7 @@ dependencies:
   - netcdf4 >=1.7.2
   - numpy >=1.25.0
   - owslib >=0.29.1
-  - pandas >=2.2.0
+  - pandas >=2.2.0,<3.0
   - pint >=0.24.4
   - pydantic >=2.11
   - pydap >=3.5.6
