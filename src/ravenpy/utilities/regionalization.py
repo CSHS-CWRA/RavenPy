@@ -29,9 +29,9 @@ def regionalize(
     config: Config,
     method: str,
     nash: pd.Series,
-    params: pd.DataFrame = None,
-    props: pd.DataFrame = None,
-    target_props: Union[pd.Series, dict] = None,
+    params: Optional[pd.DataFrame] = None,
+    props: Optional[pd.DataFrame] = None,
+    target_props: Optional[Union[pd.Series, dict]] = None,
     size: int = 5,
     min_NSE: float = 0.6,  # noqa: N803
     workdir: Optional[Union[str, Path]] = None,
@@ -199,13 +199,13 @@ def read_gauged_properties(properties) -> pd.DataFrame:
     return proptable[properties]
 
 
-def read_gauged_params(model):
+def read_gauged_params(model) -> tuple[pd.Series, pd.DataFrame]:
     """
     Return table of NASH-Sutcliffe Efficiency values and model parameters for North American catchments.
 
     Returns
     -------
-    pd.DataFrame
+    pd.Series
         Nash-Sutcliffe Efficiency keyed by catchment ID.
     pd.DataFrame
         Model parameters keyed by catchment ID.
@@ -264,6 +264,8 @@ def similarity(gauged: pd.DataFrame, ungauged: pd.DataFrame, kind: str = "ptp") 
         spread = stats.loc["std"]
     elif kind == "iqr":
         spread = stats.loc["75%"] - stats.loc["25%"]
+    else:
+        raise NotImplementedError("'kind' not in ['ptp', 'std', 'iqr']")
 
     d = ungauged.values - gauged.values
     n = np.abs(d) / spread.values
