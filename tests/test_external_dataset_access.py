@@ -56,7 +56,7 @@ class TestRemoteFileAccess:
         reason="Get file is API rate limited",
         strict=False,
     )
-    def test_get_file_default_cache(self, remote_access_teardown):
+    def test_get_file_default_cache(self, remote_access_teardown):  # noqa: F841
         file = yangtze(branch=self.branch).fetch(fname="ostrich-hbvec/raven-hbvec-salmon.rvi")
 
         assert Path(default_testdata_cache).exists()
@@ -65,7 +65,7 @@ class TestRemoteFileAccess:
             header = f.read()
             assert ":FileType          rvi ASCII Raven 2.8.2" in header
 
-    def test_open_dataset(self, tmp_path, remote_access_teardown):
+    def test_open_dataset(self, tmp_path, remote_access_teardown):  # noqa: F841
         cache_dir = tmp_path / "yangtze_cache"
         ds = open_dataset(
             name="raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
