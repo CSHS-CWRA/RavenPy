@@ -347,10 +347,10 @@ def IDW(qsims: xr.DataArray, dist: pd.Series) -> xr.DataArray:  # noqa: N802
     weights = xr.DataArray(1.0 / dist, dims="members", coords={"members": qsims.members})
 
     # Make weights sum to one
-    weights /= weights.sum(axis=0)
+    one_sum_weights = weights / weights.sum(axis=0)
 
     # Calculate weighted average.
-    out = qsims.dot(weights)
+    out = qsims.dot(one_sum_weights)
     out.name = qsims.name
     out.attrs = qsims.attrs
     return out
