@@ -34,7 +34,7 @@ commands_pre = [
 ]
 
 [env_run_base]
-setenv = {PYTEST_ADDOPTS = "--numprocesses=logical --durations=10 --cov=ravenpy --cov-report=lcov", PYTHONPATH = "{toxinidir}", TOX = "{envname}", UPSTREAM_BRANCH = "main"}
+setenv = {PYTEST_ADDOPTS = "--color=yes --numprocesses=logical --durations=10 --cov=ravenpy --cov-report=lcov", PYTHONPATH = "{toxinidir}", TOX = "{envname}", UPSTREAM_BRANCH = "main"}
 passenv = ["CI", "COVERALLS_*", "GDAL_VERSION", "GITHUB_*", "LD_LIBRARY_PATH", "RAVEN_*", "UPSTREAM_BRANCH"]
 extras = ["dev", "gis", "raven-hydro"]
 download = true

@@ -29,6 +29,8 @@ Internal changes
 * Pinned `pydantic` below v2.12 due to breaking changes in their API. (PR #548)
   * Unpinned `pydantic` as newer 2.12 patch releases appear to have addressed regressions. (PR #559).
 * Pinned `pydap` >=3.5.6 and `h5netcdf` >=1.5.0 to ensure modern versions with better `xarray` support are installed by default. (PR #559).
+* Updated the cookiecutter template to the latest version (#569):
+  * Added a workflow for automatically accepting and merging periodic updates from Dependabot affecting CI dependencies.
 
 .. _changes_0.19.1:
 
