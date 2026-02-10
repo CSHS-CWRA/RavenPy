@@ -235,11 +235,7 @@ class EnsembleReader:
     def hydrograph(self):
         if len(self.files["hydrograph"]) == 0:
             raise ValueError("No file found, make sure you have the right `run_name` and output `paths`.")
-        return xr.concat(
-            [xr.open_dataset(f) for f in self.files["hydrograph"]],
-            dim=self._dim,
-            coords="different",
-        )
+        return xr.concat([xr.open_dataset(f) for f in self.files["hydrograph"]], dim=self._dim, coords="different", compat="equals")
 
 
 def run(
