@@ -1,5 +1,7 @@
+import datetime as dt
 import os
 import typing
+import warnings
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Optional, Union
@@ -125,6 +127,13 @@ def nc_specs(
             if "station_id" in ds:
                 if ds["station_id"].shape and len(ds["station_id"]) > i:
                     attrs["name"] = ds["station_id"].values[i]
+
+        # Extract start and end datetime as private attributes
+        try:
+            attrs["_start_date"] = np.datetime64(ds.cf["time"][0].values, "us").astype(dt.datetime)
+            attrs["_end_date"] = np.datetime64(ds.cf["time"][-1].values, "us").astype(dt.datetime)
+        except:
+            warnings.info("Could not extract start and end dates from dataset.")
 
     return attrs
 
