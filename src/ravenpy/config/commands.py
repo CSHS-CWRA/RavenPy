@@ -249,7 +249,7 @@ class SubBasin(Record):
     gauge_id: Optional[str] = ""  # This attribute is not rendered to RVH
 
     @field_validator("reach_length", mode="before")
-    def check_reach_length(cls, v):
+    def check_reach_length(cls, v):  # noqa: N805
         if v == "ZERO-":
             return 0
         return v
