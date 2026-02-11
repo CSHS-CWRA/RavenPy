@@ -1,4 +1,5 @@
 import datetime as dt
+import importlib.util
 import urllib.error
 from pathlib import Path
 
@@ -30,6 +31,20 @@ class TestGet:
         assert n_hours <= 36
 
 
+@pytest.fixture(scope="function")
+def remote_access_teardown(request):
+    def _teardown():
+        ravenpy_location = Path(importlib.util.find_spec("ravenpy").origin).parent
+        testing = ravenpy_location / "testing"
+
+        if testing.joinpath("main").is_dir():
+            for f in testing.joinpath("main").iterdir():
+                f.unlink()
+            testing.joinpath("main").rmdir()
+
+    request.addfinalizer(_teardown)
+
+
 @pytest.mark.online
 class TestRemoteFileAccess:
     dap_url = "http://test.opendap.org:80/opendap/data/nc/"
@@ -41,7 +56,7 @@ class TestRemoteFileAccess:
         reason="Get file is API rate limited",
         strict=False,
     )
-    def test_get_file_default_cache(self):
+    def test_get_file_default_cache(self, remote_access_teardown):  # noqa: F841
         file = yangtze(branch=self.branch).fetch(fname="ostrich-hbvec/raven-hbvec-salmon.rvi")
 
         assert Path(default_testdata_cache).exists()
@@ -50,10 +65,7 @@ class TestRemoteFileAccess:
             header = f.read()
             assert ":FileType          rvi ASCII Raven 2.8.2" in header
 
-    def test_open_dataset(
-        self,
-        tmp_path,
-    ):
+    def test_open_dataset(self, tmp_path, remote_access_teardown):  # noqa: F841
         cache_dir = tmp_path / "yangtze_cache"
         ds = open_dataset(
             name="raven-gr4j-cemaneige/Salmon-River-Near-Prince-George_meteo_daily.nc",
