@@ -10,6 +10,7 @@ Contributors: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre
 New features
 ^^^^^^^^^^^^
 * Updated `raven-hydro` to v0.5.0 (`RavenHydroFramework` v4.1.0). (PR #560)
+* `ravenpy` now officially supports Python 3.14. (PR #577)
 
 Fixes
 ^^^^^
@@ -19,6 +20,7 @@ Fixes
 * Adjusted the `Perform_a_climate_change_impact_study_on_a_watershed.ipynb` notebook to reduce the number of years in the simulation to speed up execution time. (PR #535)
 * Adjusted a broken test that was overlooked in the previous release (from changes in PR #513). (PR #535)
 * Adapted code base to the `pandas` v3.0 API. (Issue #570, PR #572)
+* Addressed a small `pydantic` v2.12 deprecation. (PR #577)
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -28,11 +30,11 @@ Internal changes
   * Removed `black`, `blackdoc`, and `isort`, as well as their configurations.
   * Updated `pyproject.toml` to be `PEP 639 <https://peps.python.org/pep-0639>`_-compliant.
 * Pinned `pydantic` below v2.12 due to breaking changes in their API. (PR #548)
-  * Unpinned `pydantic` as newer 2.12 patch releases appear to have addressed regressions. (PR #559).
-* Pinned `pydap` >=3.5.6 and `h5netcdf` >=1.5.0 to ensure modern versions with better `xarray` support are installed by default. (PR #559).
+  * Unpinned `pydantic` as newer 2.12 patch releases appear to have addressed regressions. (PR #559)
+* Pinned `pydap` >=3.5.6 and `h5netcdf` >=1.5.0 to ensure modern versions with better `xarray` support are installed by default. (PR #559)
 * Updated the cookiecutter template to the latest version (PR #569):
   * Added a workflow for automatically accepting and merging periodic updates from Dependabot affecting CI dependencies.
-* Added a `pytest` fixture to perform a teardown of changes performed within the installed `ravenpy` source location. (PR #572).
+* Added a `pytest` fixture to perform a teardown of changes performed within the installed `ravenpy` source location. (PR #572)
 
 .. _changes_0.19.1:
 
