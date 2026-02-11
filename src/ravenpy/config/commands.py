@@ -248,7 +248,6 @@ class SubBasin(Record):
     gauged: bool = True
     gauge_id: Optional[str] = ""  # This attribute is not rendered to RVH
 
-
     @field_validator("reach_length", mode="before")
     def check_reach_length(cls, v):
         if v == "ZERO-":
