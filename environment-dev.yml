@@ -2,7 +2,7 @@ name: ravenpy-dev
 channels:
   - conda-forge
 dependencies:
-  - python >=3.10,<3.14
+  - python >=3.10,<3.15
   - raven-hydro >=0.5.0,<1.0
   # - libgcc  # for mixing raven-hydro from PyPI with conda environments
   - affine >=2.4.0

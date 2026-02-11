@@ -2,7 +2,7 @@ name: ravenpy-docs
 channels:
   - conda-forge
 dependencies:
-  - python >=3.12,<3.13
+  - python >=3.13,<3.14
   - raven-hydro >=0.5.0,<1.0
   - autodoc-pydantic >=2.1.0
   - birdy

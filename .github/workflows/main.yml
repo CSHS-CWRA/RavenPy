@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ "3.13" ]
+        python-version: [ "3.14" ]
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
@@ -143,7 +143,7 @@ jobs:
       matrix:
         os: [ "ubuntu-latest", "macos-latest" ]
           # - windows-latest  # disabled until xesmf is available
-        python-version: [ "3.10", "3.13" ]
+        python-version: [ "3.10", "3.14" ]
     defaults:
       run:
         shell: bash -l {0}
