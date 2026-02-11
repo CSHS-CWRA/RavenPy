@@ -20,7 +20,7 @@ dependencies:
   - netcdf4 >=1.7.2
   - numpy >=1.25.0
   - owslib >=0.29.1
-  - pandas >=2.2.0,<3.0
+  - pandas >=2.2.0
   - pint >=0.24.4
   - pydantic >=2.11
   - pydap >=3.5.6
