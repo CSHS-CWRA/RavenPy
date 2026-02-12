@@ -43,6 +43,19 @@ def test_rvi_datetime():
         rvi = RVI(start_date=(dt.datetime(1990, 1, 1),))
 
 
+def test_rvi_update_ncattrs():
+    """Check that NetCDF attributes are updated when the user provides new ones."""
+
+    class Parent(Config):
+        netcdf_attribute: dict[str, str] = Field({"model_id": "Emulator"}, alias="NetCDFAttribute")
+
+    class Child(Parent):
+        netcdf_attribute: dict[str, str] = Field({"key1": "value1"}, alias="NetCDFAttribute")
+
+    e = Child(NetCDFAttribute={"new_attr": "value"})
+    assert e.netcdf_attribute == {"key1": "value1", "new_attr": "value"}
+
+
 def test_duplicate_simple():
     conf = Config(start_date="1990-01-01")
 

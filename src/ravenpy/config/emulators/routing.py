@@ -43,7 +43,7 @@ class BasicRoute(Config):
     """Raven configuration performing routing only."""
 
     hrus: HRUs = Field([LandHRU()], alias="HRUs")
-    netcdf_attribute: dict[str, str] = {"model_id": "BasicRoute"}
+    netcdf_attribute: dict[str, str] = Field({"model_id": "BasicRoute"}, alias="NetCDFAttribute")
     sub_basins: rc.SubBasins = Field([rc.SubBasin()], alias="SubBasins")
     write_netcdf_format: bool = Field(True, alias="WriteNetcdfFormat")
     time_step: Union[float, str] = Field(1.0, alias="TimeStep")

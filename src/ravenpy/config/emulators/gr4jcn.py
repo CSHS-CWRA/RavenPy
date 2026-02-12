@@ -86,7 +86,7 @@ class GR4JCN(Config):
 
     params: P = P()
     hrus: HRUs = Field([LandHRU()], alias="HRUs")
-    netcdf_attribute: dict[str, str] = {"model_id": "GR4JCN"}
+    netcdf_attribute: dict[str, str] = Field({"model_id": "GR4JCN"}, alias="NetCDFAttribute")
     sub_basins: rc.SubBasins = Field([rc.SubBasin()], alias="SubBasins")
     write_netcdf_format: bool = Field(True, alias="WriteNetcdfFormat")
     time_step: Union[float, str] = Field(1.0, alias="TimeStep")
