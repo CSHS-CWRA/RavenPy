@@ -128,8 +128,8 @@ def test_nc_attrs(gr4jcn_config, tmp_path):
     gr4jcn, params = gr4jcn_config
     gr4jcn = gr4jcn.set_params(params)
 
-    # model_id is class default, 
-    # history and references are set by _nc_attrs field_validator, 
+    # model_id is class default,
+    # history and references are set by _nc_attrs field_validator,
     # and key1 at class instantiation
     assert set(gr4jcn.netcdf_attribute.keys()) == {"model_id", "history", "references", "key1"}
 

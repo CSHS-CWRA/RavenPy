@@ -45,6 +45,7 @@ def test_rvi_datetime():
 
 def test_rvi_update_ncattrs():
     """Check that NetCDF attributes are updated when the user provides new ones."""
+
     class Parent(Config):
         netcdf_attribute: dict[str, str] = Field({"model_id": "Emulator"}, alias="NetCDFAttribute")
 

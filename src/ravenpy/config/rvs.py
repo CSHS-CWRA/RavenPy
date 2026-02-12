@@ -230,7 +230,7 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
                 return cls.model_fields["params"].annotation(**data)
 
             return cls.model_fields["params"].annotation(*data)
-    
+
     @field_validator("global_parameter", "netcdf_attribute", mode="before")
     @classmethod
     def _update_defaults(cls, v, info: ValidationInfo):
