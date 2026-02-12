@@ -21,6 +21,7 @@ Fixes
 * Adjusted a broken test that was overlooked in the previous release (from changes in PR #513). (PR #535)
 * Adapted code base to the `pandas` v3.0 API. (Issue #570, PR #572)
 * Addressed a small `pydantic` v2.12 deprecation. (PR #577)
+* Include NetCDFAttribute alias in emulated models. Include dict update logic higher up in the chain rather than only through the emulators `field_validator`. (PR #580)
 
 Internal changes
 ^^^^^^^^^^^^^^^^

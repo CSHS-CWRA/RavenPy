@@ -102,7 +102,7 @@ class HYPR(Config):
         ],
         alias="HRUs",
     )
-    netcdf_attribute: dict[str, str] = {"model_id": "HYPR"}
+    netcdf_attribute: dict[str, str] = Field({"model_id": "HYPR"}, alias="NetCDFAttribute")
     sub_basins: rc.SubBasins = Field([rc.SubBasin()], alias="SubBasins")
     write_netcdf_format: bool = Field(True, alias="WriteNetcdfFormat")
     time_step: Union[float, str] = Field(1.0, alias="TimeStep")

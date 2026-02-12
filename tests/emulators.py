@@ -261,6 +261,7 @@ def gr4jcn_config(yangtze, salmon_hru) -> (GR4JCN, params):
             StartDate=dt.datetime(2000, 1, 1),
             Duration=15,
             EvaluationMetrics=("NASH_SUTCLIFFE",),
+            NetCDFAttribute={"key1": "value1"},
         ),
         params["GR4JCN"],
     )
