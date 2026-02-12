@@ -50,7 +50,6 @@ def nc_attrs(cls, val):
     """Ensure default netCDF attributes are present."""
     if "model_id" not in val:
         raise ValueError("The key 'model_id' must be present in the input dictionary.")
-
     out = default_nc_attrs()
     out.update(val)
     return out

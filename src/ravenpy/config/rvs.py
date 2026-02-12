@@ -81,7 +81,7 @@ class RVI(RV):
 
     # Options
     write_netcdf_format: Optional[bool] = optfield(alias="WriteNetcdfFormat")
-    netcdf_attribute: Optional[dict[str, str]] = optfield(alias="NetCDFAttribute")
+    netcdf_attribute: Optional[dict[str, str]] = Field({}, alias="NetCDFAttribute")
 
     custom_output: Optional[Sequence[rc.CustomOutput]] = optfield(alias="CustomOutput")
     direct_evaporation: Optional[bool] = optfield(
@@ -231,7 +231,7 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
 
             return cls.model_fields["params"].annotation(*data)
 
-    @field_validator("global_parameter", mode="before")
+    @field_validator("global_parameter", "netcdf_attribute", mode="before")
     @classmethod
     def _update_defaults(cls, v, info: ValidationInfo):
         """Some configuration parameters should be updated with user given arguments, not overwritten."""
