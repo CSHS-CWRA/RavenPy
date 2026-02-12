@@ -65,4 +65,4 @@ repository-code: "https://github.com/CSHS-CWRA/RavenPy"
 doi: "10.5281/zenodo.7972347"
 abstract: "A Python wrapper to setup and run the hydrologic modelling framework Raven."
 license: "MIT"
-version: "0.19.1"
+version: 0.20.0
