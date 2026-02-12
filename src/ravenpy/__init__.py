@@ -30,4 +30,4 @@ from .ravenpy import Emulator, EnsembleReader, OutputReader, RavenWarning, run
 
 __author__ = """David Huard"""
 __email__ = "huard.david@ouranos.ca"
-__version__ = "0.19.1"
+__version__ = "0.20.0"

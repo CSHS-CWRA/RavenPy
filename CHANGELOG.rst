@@ -2,8 +2,24 @@
 Changelog
 =========
 
-`Unreleased <https://github.com/CSHS-CWRA/RavenPy>`_ (latest)
--------------------------------------------------------------
+..
+    `Unreleased <https://github.com/CSHS-CWRA/RavenPy>`_ (latest)
+    -------------------------------------------------------------
+
+    Contributors:
+
+    Changes
+    ^^^^^^^
+    * No change.
+
+    Fixes
+    ^^^^^
+    * No change.
+
+.. _changes_0.20.0:
+
+`v0.20.0 <https://github.com/CSHS-CWRA/RavenPy/tree/v0.20.0>`_ (2026-02-12)
+---------------------------------------------------------------------------
 
 Contributors: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`).
 

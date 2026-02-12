@@ -165,7 +165,7 @@ ravenpy = "ravenpy.cli:main"
 [tool]
 
 [tool.bumpversion]
-current_version = "0.19.1"
+current_version = "0.20.0"
 commit = true
 commit_args = "--no-verify"
 tag = false
@@ -208,7 +208,7 @@ replace = """\
 [[tool.bumpversion.files]]
 filename = "CITATION.cff"
 include_bumps = ["release"]
-search = "version: \"[0-9]+\\.[0-9]+\\.[0-9]\""
+search = "^version: \"[0-9]+\\.[0-9]+\\.[0-9]\""
 regex = true
 replace = "version: {new_version}"
 
