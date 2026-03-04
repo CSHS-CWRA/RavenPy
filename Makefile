@@ -1,6 +1,8 @@
 .PHONY: clean clean-build clean-pyc clean-test coverage dist docs help install lint lint/flake8
 .DEFAULT_GOAL := help
 
+SANITIZE_FILE := https://github.com/Ouranosinc/PAVICS-e2e-workflow-tests/raw/master/notebooks/output-sanitize.cfg
+
 define BROWSER_PYSCRIPT
 import os, webbrowser, sys
 
@@ -54,6 +56,8 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr htmlcov/
 	rm -fr .pytest_cache
 
+## Testing targets:
+
 lint/flake8: ## check style with flake8
 	python -m ruff check src/ravenpy tests
 	python -m flake8 --config=.flake8 src/ravenpy tests
@@ -73,7 +77,15 @@ coverage: ## check code coverage quickly with the default Python
 	python -m coverage html
 	$(BROWSER) htmlcov/index.html
 
-autodoc: clean-docs ## create sphinx-apidoc files:
+notebook-sanitizer: ## sanitize notebooks with configuration file
+	@-bash -c "curl -L $(SANITIZE_FILE) -o $(CURDIR)/docs/output-sanitize.cfg --silent"
+
+test-notebooks: notebook-sanitizer ## test all notebook  under docs/notebooks
+	python -m pytest --nbval $(CURDIR)/docs/notebooks/*.ipynb --nbval-sanitize-with  $(CURDIR)/docs/output-sanitize.cfg
+
+## Sphinx targets:
+
+autodoc: clean-docs ## create sphinx-apidoc files
 	sphinx-apidoc -o docs/apidoc --private --module-first src/ravenpy
 
 autodoc-custom-index: clean-docs ## create sphinx-apidoc files but with special index handling for indices and indicators
@@ -99,6 +111,8 @@ endif
 
 servedocs: docs ## compile the docs watching for changes
 	watchmedo shell-command -p '*.rst' -c '$(MAKE) -C docs html' -R -D .
+
+## Development targets:
 
 dist: clean ## builds source and wheel package
 	python -m flit build
