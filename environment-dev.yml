@@ -9,7 +9,7 @@ dependencies:
   - cftime >=1.4.1
   - cf_xarray >=0.9.3
   - click >=8.2.0
-  - climpred >=2.4.0
+  - climpred >=2.6.0
   - dask >=2024.8.1
   - fiona >=1.9.0
   - gdal >=3.1
@@ -38,7 +38,7 @@ dependencies:
   - xclim >=0.57.0
   - xesmf
   - xsdba >=0.4.0
-  - xskillscore
+  - xskillscore >=0.0.29
   - zarr >=2.13,<3.0 # FIXME: zarr v3 does not support FSMap like before: https://github.com/zarr-developers/zarr-python/issues/2706
   # Dev tools and testing
   - pip >=25.2

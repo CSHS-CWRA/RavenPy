@@ -41,7 +41,7 @@ dependencies = [
   # cf-xarray is differently named on conda-forge
   "cf-xarray >=0.9.3",
   "click >=8.2.0",
-  "climpred >=2.4.0",
+  "climpred >=2.6.0",
   "dask >=2024.8.1",
   "h5netcdf >=1.5.0",
   "haversine >=2.8.0",
@@ -60,7 +60,7 @@ dependencies = [
   "xarray >=2023.11.0,!=2024.10.0",
   "xclim >=0.57.0",
   "xsdba >=0.4.0",
-  "xskillscore"
+  "xskillscore >=0.0.29"
 ]
 
 [project.optional-dependencies]
@@ -102,9 +102,9 @@ docs = [
   # Needed for notebooks/HydroShare_integration.ipynb
   # See: https://github.com/CSHS-CWRA/RavenPy/pull/326
   # "hsclient",
-  "intake <2.0",
+  "intake >=2.0",
   "intake-esm >=2023.07.07",
-  "intake-xarray <2.0",
+  "intake-xarray >=2.0",
   "ipykernel",
   "ipyleaflet",
   "ipython >=8.7.0",
