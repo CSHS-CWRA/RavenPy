@@ -40,3 +40,5 @@ dependencies:
   - sphinx-copybutton
   - sphinx-rtd-theme >=1.0
   - sphinxcontrib-svg2pdfconverter >=1.2.3
+# Needed for notebooks/Managing_Jupyter_Environments.ipynb
+  - seaborn

@@ -29,7 +29,7 @@ dependencies:
   - xesmf
   - xsdba >=0.4.0
   - xskillscore >=0.0.29
-  - zarr >=3.0
+  - zarr
   # Dev tools and testing
   - pip >=25.2
   - bump-my-version >=1.2.3
