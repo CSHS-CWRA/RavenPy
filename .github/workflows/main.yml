@@ -1,4 +1,4 @@
-name: RavenPy
+name: Testing
 
 on:
   push:
