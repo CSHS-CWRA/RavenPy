@@ -30,6 +30,7 @@ dependencies:
 # Needed for notebooks/HydroShare_integration.ipynb
 # See: https://github.com/CSHS-CWRA/RavenPy/pull/326
 #  - "hsclient",
+  # Docs support
   - autodoc-pydantic >=2.1.0
   - matplotlib-base >=3.7.0
   - myst-nb
@@ -40,5 +41,3 @@ dependencies:
   - sphinx-copybutton
   - sphinx-rtd-theme >=1.0
   - sphinxcontrib-svg2pdfconverter >=1.2.3
-# Needed for notebooks/Managing_Jupyter_Environments.ipynb
-  - seaborn

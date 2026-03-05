@@ -79,3 +79,5 @@ dependencies:
   - pymetalink >=6.5.3
   - s3fs
   - salib
+# Needed for notebooks/Managing_Jupyter_Environments.ipynb
+  - seaborn
