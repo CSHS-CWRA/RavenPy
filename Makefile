@@ -77,11 +77,10 @@ coverage: ## check code coverage quickly with the default Python
 	python -m coverage html
 	$(BROWSER) htmlcov/index.html
 
-notebook-sanitizer: ## sanitize notebooks with configuration file
-	@-bash -c "curl -L $(SANITIZE_FILE) -o $(CURDIR)/docs/output-sanitize.cfg --silent"
+NOTEBOOKS := $(shell find $(CURDIR)/docs/notebooks -name '*.ipynb')
 
-test-notebooks: notebook-sanitizer ## test all notebook  under docs/notebooks
-	python -m pytest --nbval $(CURDIR)/docs/notebooks/*.ipynb --nbval-sanitize-with  $(CURDIR)/docs/output-sanitize.cfg
+test-notebooks: ## test all notebooks under docs/notebooks
+	python -m pytest --nbval --numprocesses=logical --maxprocesses=8 --dist=loadscope $(NOTEBOOKS)
 
 ## Sphinx targets:
 
