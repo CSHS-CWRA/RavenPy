@@ -26,7 +26,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ "ubuntu-latest", "macos-latest" ]
-        python-version: [ "3.14" ]
+        python-version: [ "3.13" ]  # pymetalink not yet supported in Python 3.14
     defaults:
       run:
         shell: bash -l {0}
