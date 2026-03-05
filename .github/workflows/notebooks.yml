@@ -54,7 +54,7 @@ jobs:
 
       - name: Install RavenPy
         run: |
-          python -m pip install --editable --no-deps .
+          python -m pip install --no-deps --editable .
 
       - name: List installed packages
         run: |
