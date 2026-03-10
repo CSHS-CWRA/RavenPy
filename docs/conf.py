@@ -42,7 +42,8 @@ def rebuild_readme():
 
     # Remove the badge table
     readme = readme.replace(
-        "=======\nRavenPy\n=======", "=======\nRavenPy\n=======\n\n.. only:: not latex"
+        "==============\nRavenPy |logo|\n==============",
+        "==============\nRavenPy |logo|\n==============\n\n.. only:: not latex"
     )
     readme = readme.replace("\n+-", "\n    +-")
     readme = readme.replace("\n|", "\n    |")

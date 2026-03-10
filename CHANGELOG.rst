@@ -17,11 +17,13 @@ Changes
 Fixes
 ^^^^^
 * Updated notebooks to address several deprecation warnings stemming from `dask`, `numpy`, and `xarray`. (PR #584)
+* Adjusted notebook execution with `nbval` to reduce the computational load from remote data download calls. (PR #584)
 
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Added a Makefile recipe and a GitHub Workflow to run tests against the notebooks using ``pytest --nbval`` on changes as well as on a weekly schedule. (PR #584)
 * Fixed a bug in several workflows that was impeding triggers when Pull Requests are merged to `main`.  (PR #584)
+* The conda configurations (``environment-dev.yml`` and ``environment-docs.yml``) now specify the exact dependencies needed to run the development and documentation builds. (PR #584)
 
 .. _changes_0.20.0:
 
