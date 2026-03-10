@@ -6,7 +6,7 @@ import os, webbrowser, sys
 
 from urllib.request import pathname2url
 
-webbrowser.open("file://" + pathname2url(os.path.abspath(sys.argv[1])))
+webbrowser.open(sys.argv[1])
 endef
 export BROWSER_PYSCRIPT
 
@@ -54,6 +54,8 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr htmlcov/
 	rm -fr .pytest_cache
 
+## Testing targets:
+
 lint/flake8: ## check style with flake8
 	python -m ruff check src/ravenpy tests
 	python -m flake8 --config=.flake8 src/ravenpy tests
@@ -73,7 +75,14 @@ coverage: ## check code coverage quickly with the default Python
 	python -m coverage html
 	$(BROWSER) htmlcov/index.html
 
-autodoc: clean-docs ## create sphinx-apidoc files:
+NOTEBOOKS := $(shell find $(CURDIR)/docs/notebooks -name '*.ipynb')
+
+test-notebooks: ## test all notebooks under docs/notebooks
+	python -m pytest --nbval --numprocesses=logical --maxprocesses=8 --dist=loadscope $(NOTEBOOKS)
+
+## Sphinx targets:
+
+autodoc: clean-docs ## create sphinx-apidoc files
 	sphinx-apidoc -o docs/apidoc --private --module-first src/ravenpy
 
 autodoc-custom-index: clean-docs ## create sphinx-apidoc files but with special index handling for indices and indicators
@@ -99,6 +108,8 @@ endif
 
 servedocs: docs ## compile the docs watching for changes
 	watchmedo shell-command -p '*.rst' -c '$(MAKE) -C docs html' -R -D .
+
+## Development targets:
 
 dist: clean ## builds source and wheel package
 	python -m flit build

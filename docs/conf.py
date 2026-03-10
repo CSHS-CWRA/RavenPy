@@ -42,7 +42,8 @@ def rebuild_readme():
 
     # Remove the badge table
     readme = readme.replace(
-        "=======\nRavenPy\n=======", "=======\nRavenPy\n=======\n\n.. only:: not latex"
+        "==============\nRavenPy |logo|\n==============",
+        "==============\nRavenPy |logo|\n==============\n\n.. only:: not latex"
     )
     readme = readme.replace("\n+-", "\n    +-")
     readme = readme.replace("\n|", "\n    |")
@@ -101,10 +102,6 @@ nb_execution_excludepatterns = [
     "notebooks/paper/*.ipynb",
 ]
 
-# nbsphinx_execute = "auto"
-# nbsphinx_timeout = 1
-# nbsphinx_allow_errors = True
-
 extlinks = {
     "issue": ("https://github.com/CSHS-CWRA/RavenPy/issues/%s", "GH/%s"),
     "pull": ("https://github.com/CSHS-CWRA/RavenPy/pull/%s", "PR/%s"),
@@ -121,33 +118,18 @@ autodoc_default_options = {
 
 # To avoid having to install these and burst memory limit on ReadTheDocs.
 autodoc_mock_imports = [
-    "affine",
-    "cftime",
-    "cf_xarray",
-    "click",
-    "climpred",
-    "clisops",
-    "fiona",
-    "gdal",
-    "h5netcdf",
-    "netCDF4",
-    "osgeo",
-    "geopandas",
-    "haversine",
-    "holoviews",
-    "hvplot",
-    "lxml",
-    "owslib",
-    "pandas",
-    "pyproj",
-    "rasterio",
-    "rioxarray",
-    "scipy",
-    "shapely",
-    "spotpy",
-    "statsmodels",
-    "xarray",
-    "xclim",
+  "affine",
+  "fiona",
+  "geopandas",
+  "holoviews",
+  "hvplot",
+  "lxml",
+  "osgeo",
+  "netCDF4",
+  "pyproj",
+  "rasterio",
+  "rioxarray",
+  "shapely"
 ]
 
 # Add any paths that contain templates here, relative to this directory.

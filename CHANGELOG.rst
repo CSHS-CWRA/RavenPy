@@ -2,19 +2,28 @@
 Changelog
 =========
 
-..
-    `Unreleased <https://github.com/CSHS-CWRA/RavenPy>`_ (latest)
-    -------------------------------------------------------------
+`Unreleased <https://github.com/CSHS-CWRA/RavenPy>`_ (latest)
+-------------------------------------------------------------
 
-    Contributors:
+Contributors: Trevor James Smith (:user:`Zeitsperre`).
 
-    Changes
-    ^^^^^^^
-    * No change.
+Changes
+^^^^^^^
+* Dependency updates. (PR #584):
+    * Updated required `xskillscore` (``>= 0.0.29``) and `climpred` (``>= 2.6.0``).
+    * Removed version pins on `intake` and `intake-xarray`.
+    * Minimum required `birdy` is now ``>= 0.9.1``.
 
-    Fixes
-    ^^^^^
-    * No change.
+Fixes
+^^^^^
+* Updated notebooks to address several deprecation warnings stemming from `dask`, `numpy`, and `xarray`. (PR #584)
+* Adjusted notebook execution with `nbval` to reduce the computational load from remote data download calls. (PR #584)
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Added a Makefile recipe and a GitHub Workflow to run tests against the notebooks using ``pytest --nbval`` on changes as well as on a weekly schedule. (PR #584)
+* Fixed a bug in several workflows that was impeding triggers when Pull Requests are merged to `main`.  (PR #584)
+* The conda configurations (``environment-dev.yml`` and ``environment-docs.yml``) now specify the exact dependencies needed to run the development and documentation builds. (PR #584)
 
 .. _changes_0.20.0:
 
@@ -42,15 +51,15 @@ Fixes
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Updated the cookiecutter template to the latest version (PR #548):
-  * Updated the Contributor Covenant Agreement to v3.0.
-  * Added a `CITATION.cff` file.
-  * Removed `black`, `blackdoc`, and `isort`, as well as their configurations.
-  * Updated `pyproject.toml` to be `PEP 639 <https://peps.python.org/pep-0639>`_-compliant.
+    * Updated the Contributor Covenant Agreement to v3.0.
+    * Added a `CITATION.cff` file.
+    * Removed `black`, `blackdoc`, and `isort`, as well as their configurations.
+    * Updated `pyproject.toml` to be `PEP 639 <https://peps.python.org/pep-0639>`_-compliant.
 * Pinned `pydantic` below v2.12 due to breaking changes in their API. (PR #548)
-  * Unpinned `pydantic` as newer 2.12 patch releases appear to have addressed regressions. (PR #559)
+    * Unpinned `pydantic` as newer 2.12 patch releases appear to have addressed regressions. (PR #559)
 * Pinned `pydap` >=3.5.6 and `h5netcdf` >=1.5.0 to ensure modern versions with better `xarray` support are installed by default. (PR #559)
 * Updated the cookiecutter template to the latest version (PR #569):
-  * Added a workflow for automatically accepting and merging periodic updates from Dependabot affecting CI dependencies.
+    * Added a workflow for automatically accepting and merging periodic updates from Dependabot affecting CI dependencies.
 * Added a `pytest` fixture to perform a teardown of changes performed within the installed `ravenpy` source location. (PR #572)
 
 .. _changes_0.19.1:

@@ -1,9 +1,9 @@
-name: RavenPy
+name: Testing
 
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
 
 env:
@@ -192,7 +192,7 @@ jobs:
             ~/.cache/raven-testdata
           key: ${{ hashFiles('src/ravenpy/testing/registry.txt') }}-${{ env.RAVEN_TESTDATA_BRANCH }}-conda-${{ matrix.os }}
 
-      - name: Prefetch RavenPy test data
+      - name: Prefetch RavenPy testing data
         run: |
           python -c "import ravenpy.testing.utils as rtu; rtu.populate_testing_data()"
 
