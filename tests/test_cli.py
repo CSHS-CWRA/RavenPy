@@ -1,7 +1,6 @@
 import re
 from shutil import copyfile
 
-import netCDF4 as nc4
 import pytest
 from click.testing import CliRunner
 
@@ -222,6 +221,7 @@ class TestGenerateGridWeights:
 class TestAggregateForcingsToHRUs:
     cli = pytest.importorskip("ravenpy.cli")
     commands = pytest.importorskip("ravenpy.config.commands")
+    nc4 = pytest.importorskip("netCDF4")
 
     def test_aggregate_forcings_to_hrus(self, tmp_path, yangtze):
         runner = CliRunner()
@@ -278,7 +278,7 @@ class TestAggregateForcingsToHRUs:
         assert new_weights[3][2] == 1.0  # All new_weights[:][2] need to be 1.0
 
         # check the aggregated NetCDF file
-        nc_in = nc4.Dataset(output_nc_file_path, "r")
+        nc_in = self.nc4.Dataset(output_nc_file_path, "r")
         val = nc_in.variables["Streaminputs"][:]
         nc_in.close()
 
@@ -341,7 +341,7 @@ class TestAggregateForcingsToHRUs:
         assert new_weights[2][2] == 1.0  # All new_weights[:][2] need to be 1.0
 
         # check aggregated NetCDF file
-        nc_in = nc4.Dataset(output_nc_file_path, "r")
+        nc_in = self.nc4.Dataset(output_nc_file_path, "r")
         val = nc_in.variables["et"][:]
         nc_in.close()
 
