@@ -96,9 +96,9 @@ Ready to contribute? Here's how to set up `ravenpy` for local development.
 
         .. code-block:: console
 
-        python -m pip install --group dev
-        python -m pip install --editable .
-        prek install
+            python -m pip install --group dev
+            python -m pip install --editable .
+            prek install
 
     This installs ``ravenpy`` in an "editable" state, meaning that changes to the code are immediately seen by the environment. To ensure a consistent coding style, `make dev` also installs the ``pre-commit`` hooks to your local clone.
 
