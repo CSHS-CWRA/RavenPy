@@ -19,22 +19,22 @@ lint = [
 test = [
   # Base testing support
   "coverage[toml] >=7.13.4",
-  "filelock >=3.14.0",
   "holoviews",
   "hvplot",
   "pooch >=1.8.0",
   "nbval",
-  "netCDF4 >=1.7.2",
+  "netcdf4 >=1.7.2",
+  "pydap >=3.5.6",
   "pytest >=9.0.2",
   "pytest-cov >=7.0.0",
-  "pytest-xdist >=3.2.0",
-  "requests >=2.32.2"
+  "pytest-xdist >=3.2.0"
 ]
 notebooks = [
   "birdhouse-birdy >=0.9.1",
   "cairosvg >=2.6.0",
   "cartopy >=0.23.0",
   "clisops >=0.16.1",
+  "dask >=2024.8.1",
   "gcsfs",
   # Needed for notebooks/HydroShare_integration.ipynb
   # See: https://github.com/CSHS-CWRA/RavenPy/pull/326
@@ -53,6 +53,8 @@ notebooks = [
   "s3fs",
   "salib",
   "xesmf",
+  "xsdba >=0.4.0",
+  "xskillscore >=0.0.29",
   "zarr"
 ]
 docs = [
@@ -128,30 +130,26 @@ dependencies = [
   "cf-xarray >=0.9.3",
   "click >=8.3.1",
   "climpred >=2.6.0",
-  "dask >=2024.8.1",
+  "filelock >=3.14.0",
   "h5netcdf >=1.5.0",
   "haversine >=2.8.0",
   "matplotlib >=3.6.0",
   "numpy >=1.25.0",
   "owslib >=0.29.1",
+  "packaging",
   "pandas >=2.2.0",
   "pint >=0.24.4",
   "pydantic >=2.11",
-  "pydap >=3.5.6",
   "pymbolic >=2024.2",
   "scipy >=1.11.0",
   "spotpy >=1.6.1",
   "statsmodels >=0.14.2",
-  "typing-extensions",
   "xarray >=2023.11.0,!=2024.10.0",
-  "xclim >=0.57.0",
-  "xsdba >=0.4.0",
-  "xskillscore >=0.0.29"
+  "xclim >=0.57.0"
 ]
 
 [project.optional-dependencies]
 gis = [
-  "affine >=2.4.0",
   "fiona >=1.9",
   "geopandas >=1.0",
   "gdal >=3.1",
@@ -160,15 +158,11 @@ gis = [
   "pyproj >=3.3.0",
   "rasterio",
   "rioxarray",
-  "setuptools >=71.0",
+  "requests >=2.32.2",
   "shapely >=2.0"
 ]
 raven-hydro = [
   "raven-hydro >=4.12.1,<5.0"
-]
-all = [
-  "ravenpy[gis]",
-  "ravenpy[raven-hydro]"
 ]
 
 [project.scripts]
@@ -260,7 +254,7 @@ values = [
 
 [tool.codespell]
 ignore-words-list = "astroid,documen,socio-economic,third-party"
-skip = "docs/_build"
+skip = "docs/_build,docs/notebooks/paper/*.pdf"
 
 [tool.coverage.paths]
 source = ["src/ravenpy/", "*/site-packages/ravenpy/"]
@@ -271,6 +265,15 @@ omit = ["tests/*.py"]
 source = ["ravenpy"]
 
 [tool.deptry]
+
+[tool.deptry.package_module_name_map]
+gdal = "osgeo"
+netcdf4 = "netCDF4"
+tox-gh = "tox_gh"
+
+[tool.deptry.per_rule_ignores]
+DEP002 = ["h5netcdf"]
+DEP004 = ["holoviews", "hvplot", "pooch"]
 
 [tool.flit.sdist]
 include = [

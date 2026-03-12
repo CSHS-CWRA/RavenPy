@@ -56,7 +56,6 @@ dependencies:
   - vulture >=2.14
   - watchdog >=6.0.0
   # GIS support
-  - affine >=2.4.0
   - fiona >=1.9.0
   - gdal >=3.1
   - geopandas >=1.0
@@ -65,7 +64,6 @@ dependencies:
   - pyproj >=3.3.0
   - rasterio
   - rioxarray
-  - setuptools >=71.0
   - shapely >=2.0.0
   # Notebook support
   - birdy >=0.9.1
