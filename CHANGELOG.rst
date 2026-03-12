@@ -9,7 +9,7 @@ Contributors: Trevor James Smith (:user:`Zeitsperre`).
 
 Changes
 ^^^^^^^
-* `raven-hydro` minimum version updated from v0.5.0 to v4.12.1 (for more information, see: https://github.com/Ouranosinc/raven-hydro/pull/93).
+* `raven-hydro` minimum version updated from v0.5.0 to v4.12.1 (for more information, see: https://github.com/Ouranosinc/raven-hydro/pull/93). (PR #587)
 * Dependency updates. (PR #584):
     * Updated required `xskillscore` (``>= 0.0.29``) and `climpred` (``>= 2.6.0``).
     * Removed version pins on `intake` and `intake-xarray`.
