@@ -18,7 +18,7 @@ allowlist_externals = ["make"]
 [env.gis]
 description = "Run tests with extras under {basepython}"
 deps = ["numpy >= 1.25.0", "gdal == {env:GDAL_VERSION}.*", "setuptools >= 71.0"]
-extras = ["gis"]
+extras = ["gis", "raven-hydro"]
 commands = [
   ["python", "-m", "pip", "install", "--no-user", "--upgrade", "--force-reinstall", "--no-deps", "--no-binary", "gdal", "gdal[numpy]=={env:GDAL_VERSION}.*"],
   ["python", "-m", "pip", "install", "--no-user", "--upgrade", "--force-reinstall", "--no-deps", "--no-binary", "h5py", "h5py>=3.12.1"],
@@ -52,6 +52,7 @@ passenv = ["CI", "COVERALLS_*", "GDAL_VERSION", "GITHUB_*", "LD_LIBRARY_PATH", "
 download = true
 install_command = ["python", "-m", "pip", "install", "--no-user", "{opts}", "{packages}"]
 dependency_groups = ["test"]
+extras = ["raven-hydro"]
 commands_pre = [
   ["python", "-m", "pip", "list"],
   ["python", "-m", "pip", "check"]
