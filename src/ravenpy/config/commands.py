@@ -1038,7 +1038,7 @@ class Gauge(FlatCommand):
             Use keyword "ALL" to pass parameters to all variables.
         engine : {"h5netcdf", "netcdf4", "pydap"}
             The engine used to open the dataset. Default is 'h5netcdf'.
-        \*\*kwds : dict
+        **kwds : dict
             Additional arguments for Gauge.
 
         Returns
