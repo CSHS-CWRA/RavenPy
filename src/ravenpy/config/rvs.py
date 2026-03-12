@@ -4,7 +4,7 @@ from collections.abc import Sequence
 from dataclasses import asdict, fields, is_dataclass
 from pathlib import Path
 from textwrap import dedent
-from typing import Any, Optional, Union
+from typing import Any, Optional, Union, cast
 
 import cftime
 from pydantic import ConfigDict, Field, ValidationInfo, field_validator
@@ -448,6 +448,8 @@ def is_symbolic(params: Union[dict, Any]) -> bool:
     from pymbolic.primitives import Variable
 
     if is_dataclass(params) and not isinstance(params, type):
-        params = {field.name: getattr(params, field.name) for field in fields(params)}
+        param_dict: dict = {field.name: getattr(params, field.name) for field in fields(params)}
+    else:
+        param_dict = cast(dict, params)
 
-    return any([isinstance(v, Variable) for v in params.values()])
+    return any([isinstance(v, Variable) for v in param_dict.values()])
