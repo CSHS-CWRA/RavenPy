@@ -2,13 +2,14 @@ import re
 from shutil import copyfile
 
 import netCDF4 as nc4
+import pytest
 from click.testing import CliRunner
 
-from ravenpy.cli import aggregate_forcings_to_hrus, generate_grid_weights
-from ravenpy.config.commands import GridWeights
 
-
+@pytest.mark.gis
 class TestGenerateGridWeights:
+    cli = pytest.importorskip("ravenpy.cli")
+
     def test_generate_grid_weights_with_nc_input_and_2d_coords(self, tmp_path, yangtze):
         runner = CliRunner()
         output_path = tmp_path / "bla.rvt"
@@ -35,7 +36,7 @@ class TestGenerateGridWeights:
         ]
         params = list(map(str, params))
 
-        result = runner.invoke(generate_grid_weights, params)
+        result = runner.invoke(self.cli.generate_grid_weights, params)
 
         assert not result.exception
         assert result.exit_code == 0
@@ -82,7 +83,7 @@ class TestGenerateGridWeights:
         ]
         params = map(str, params)
 
-        result = runner.invoke(generate_grid_weights, params)
+        result = runner.invoke(self.cli.generate_grid_weights, params)
 
         assert result.exit_code == 0
         assert not result.exception
@@ -123,7 +124,7 @@ class TestGenerateGridWeights:
         ]
         params = map(str, params)
 
-        result = runner.invoke(generate_grid_weights, params)
+        result = runner.invoke(self.cli.generate_grid_weights, params)
 
         assert result.exit_code == 0
         assert not result.exception
@@ -161,7 +162,7 @@ class TestGenerateGridWeights:
         ]
         params = map(str, params)
 
-        result = runner.invoke(generate_grid_weights, params)
+        result = runner.invoke(self.cli.generate_grid_weights, params)
 
         assert result.exit_code == 0
         assert not result.exception
@@ -201,7 +202,7 @@ class TestGenerateGridWeights:
         ]
         params = map(str, params)
 
-        result = runner.invoke(generate_grid_weights, params)
+        result = runner.invoke(self.cli.generate_grid_weights, params)
 
         assert result.exit_code == 0
         assert not result.exception
@@ -217,7 +218,11 @@ class TestGenerateGridWeights:
         assert abs(weight - 0.9851111335377887) < 1e-04
 
 
+@pytest.mark.gis
 class TestAggregateForcingsToHRUs:
+    cli = pytest.importorskip("ravenpy.cli")
+    commands = pytest.importorskip("ravenpy.config.commands")
+
     def test_aggregate_forcings_to_hrus(self, tmp_path, yangtze):
         runner = CliRunner()
         output_nc_file_path = tmp_path / "aggreg.nc"
@@ -248,14 +253,14 @@ class TestAggregateForcingsToHRUs:
         ]
         params = map(str, params)
 
-        result = runner.invoke(aggregate_forcings_to_hrus, params)
+        result = runner.invoke(self.cli.aggregate_forcings_to_hrus, params)
 
         assert result.exit_code == 0
         assert not result.exception
 
         output_rvt = output_weight_file_path.read_text()
 
-        gws = GridWeights.parse(output_rvt)
+        gws = self.commands.GridWeights.parse(output_rvt)
 
         new_weights = gws.data
 
@@ -311,14 +316,14 @@ class TestAggregateForcingsToHRUs:
         ]
         params = map(str, params)
 
-        result = runner.invoke(aggregate_forcings_to_hrus, params)
+        result = runner.invoke(self.cli.aggregate_forcings_to_hrus, params)
 
         assert result.exit_code == 0
         assert not result.exception
 
         output_rvt = output_weight_file_path.read_text()
 
-        gws = GridWeights.parse(output_rvt)
+        gws = self.commands.GridWeights.parse(output_rvt)
 
         new_weights = gws.data
 

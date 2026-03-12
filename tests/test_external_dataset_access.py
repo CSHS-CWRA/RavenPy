@@ -7,7 +7,6 @@ import numpy as np
 import pytest
 import xarray
 
-from ravenpy.extractors.forecasts import get_CASPAR_dataset, get_ECCC_dataset
 from ravenpy.testing.utils import (
     default_testdata_cache,
     default_testdata_version,
@@ -16,14 +15,17 @@ from ravenpy.testing.utils import (
 )
 
 
+@pytest.mark.gis
 @pytest.mark.online
-class TestGet:
-    def test_get_CASPAR_dataset(self):
-        ds, _ = get_CASPAR_dataset("GEPS", dt.datetime(2018, 8, 31))
+class TestGetGIS:
+    forecasts = pytest.importorskip("ravenpy.extractors.forecasts")
 
-    @pytest.mark.xfail(error=OSError, reason="Network may be unreliable", strict=False)
+    def test_get_CASPAR_dataset(self):
+        ds, _ = self.forecasts.get_CASPAR_dataset("GEPS", dt.datetime(2018, 8, 31))
+
+    @pytest.mark.xfail(error=OSError, reason="Network may be unreliable.", strict=False)
     def test_get_ECCC_dataset(self):
-        ds, _ = get_ECCC_dataset("GEPS")
+        ds, _ = self.forecasts.get_ECCC_dataset("GEPS")
 
         ns = np.datetime64("now") - ds.time.isel(time=0).values
         n_hours = ns / np.timedelta64(1, "h")
@@ -34,13 +36,17 @@ class TestGet:
 @pytest.fixture(scope="function")
 def remote_access_teardown(request):
     def _teardown():
-        ravenpy_location = Path(importlib.util.find_spec("ravenpy").origin).parent
-        testing = ravenpy_location / "testing"
+        ravenpy = importlib.util.find_spec("ravenpy")
+        if ravenpy is not None:
+            ravenpy_location = Path(ravenpy.origin).parent
+            testing = ravenpy_location / "testing"
 
-        if testing.joinpath("main").is_dir():
-            for f in testing.joinpath("main").iterdir():
-                f.unlink()
-            testing.joinpath("main").rmdir()
+            if testing.joinpath("main").is_dir():
+                for f in testing.joinpath("main").iterdir():
+                    f.unlink()
+                testing.joinpath("main").rmdir()
+        else:
+            raise FileNotFoundError("Library ravenpy was not found. Check environment.")
 
     request.addfinalizer(_teardown)
 
@@ -53,7 +59,7 @@ class TestRemoteFileAccess:
 
     @pytest.mark.xfail(
         raises=urllib.error.URLError,
-        reason="Get file is API rate limited",
+        reason="Get file is API rate limited.",
         strict=False,
     )
     def test_get_file_default_cache(self, remote_access_teardown):  # noqa: F841

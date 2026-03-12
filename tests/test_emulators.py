@@ -87,7 +87,7 @@ def test_emulator_config_is_read_only(dummy_config, tmp_path):
         e.config.run_name = "Renamed"
 
 
-def test_duplicate(gr4jcn_config, salmon_hru, tmp_path):
+def test_duplicate(salmon_hru):
     hru = salmon_hru["land"]
     conf1 = GR4JCN(hrus=[hru], Duration=10)
     conf2 = conf1.duplicate(hrus=[hru])
@@ -124,7 +124,7 @@ def test_set_params(gr4jcn_config):
     assert conf.params.GR4J_X1 == 0.529
 
 
-def test_nc_attrs(gr4jcn_config, tmp_path):
+def test_nc_attrs(gr4jcn_config):
     gr4jcn, params = gr4jcn_config
     gr4jcn = gr4jcn.set_params(params)
 
@@ -191,7 +191,7 @@ def test_evaluation_periods(gr4jcn_config, tmp_path):
 
 @pytest.mark.slow
 @pytest.mark.online
-@pytest.mark.xfail(error=OSError, reason="Network may be unreliable")
+@pytest.mark.xfail(error=OSError, reason="Network may be unreliable.")
 def test_run_with_dap_link(minimal_emulator, tmp_path):
     """Test Raven with DAP link instead of local netCDF file."""
     # Link to THREDDS Data Server netCDF testdata
@@ -471,14 +471,10 @@ def test_routing(yangtze):
     assert len(list(out.path.glob("*ForcingFunctions.nc"))) == 1
 
 
+@pytest.mark.gis
 @pytest.mark.slow
-@pytest.mark.xfail
 def test_routing_lievre_tutorial(tmp_path, yangtze):
-    from ravenpy.extractors.routing_product import (
-        BasinMakerExtractor,
-        GridWeightExtractor,
-        open_shapefile,
-    )
+    routing_product = pytest.importorskip("ravenpy.extractors.routing_product")
 
     ###############
     # Input files #
@@ -508,8 +504,8 @@ def test_routing_lievre_tutorial(tmp_path, yangtze):
     # RVH #
     #######
 
-    rvh_extractor = BasinMakerExtractor(
-        open_shapefile(routing_product_shp_path),
+    rvh_extractor = routing_product.BasinMakerExtractor(
+        routing_product.open_shapefile(routing_product_shp_path),
         hru_aspect_convention="ArcGIS",
     )
     rvh_config = rvh_extractor.extract()
@@ -553,7 +549,7 @@ def test_routing_lievre_tutorial(tmp_path, yangtze):
         ),
     ]
 
-    gw_pr = GridWeightExtractor(
+    gw_pr = routing_product.GridWeightExtractor(
         vic_streaminputs_nc_path,
         routing_product_shp_path,
         var_names=["lon", "lat"],
@@ -573,7 +569,7 @@ def test_routing_lievre_tutorial(tmp_path, yangtze):
     assert gf_pr.linear_transform.scale == 4
     assert gf_pr.linear_transform.offset == 0
 
-    gw_tas = GridWeightExtractor(
+    gw_tas = routing_product.GridWeightExtractor(
         vic_temperatures_nc_path,
         routing_product_shp_path,
         var_names=["lon", "lat"],
@@ -600,24 +596,25 @@ def test_routing_lievre_tutorial(tmp_path, yangtze):
     # Verify #
     ##########
 
-    assert out.hydrograph.basin_name.item() == gauged_sb["name"]
+    assert f"sub_{out.hydrograph.basin_name.item()}" == gauged_sb["name"]
 
     csv_lines = out.files["diagnostics"].read_text().split("\n")
 
     assert csv_lines[1].split(",")[:-1] == [
         "HYDROGRAPH_ALL[3077541]",
         str(observation_data_nc_path),
-        "0.253959",  # NASH_SUTCLIFFE "0.253959",
-        "-17.0904",  # PCT_BIAS "-17.0904"
-        "0.443212",  # KLING_GUPTA "0.443212"
+        "0.227657",  # NASH_SUTCLIFFE "0.253959",  # FIXME: RHF v4.12 new value: "0.227657"
+        "-17.5132",  # PCT_BIAS "-17.0904",  # FIXME: RHF v4.12 new value: "-17.5132"
+        "0.405353",  # KLING_GUPTA "0.443212",  # FIXME: RHF v4.12 new value: 0.405353
     ]
 
+    # FIXME: RHF 4.12: Many of these values are no longer valid
     for d, q_sim in [
         (0, 85.92355875229545),
-        (1000, 74.05569855818379),
-        (2000, 62.675159400333115),
-        (3000, 42.73584909530037),
-        (4000, 128.70284018326998),
+        (1000, 70.7391269200262),  # FIXME: Previously: 74.05569855818379
+        (2000, 65.24225415070816),  # FIXME: Previously: 62.675159400333115
+        (3000, 45.2727362517773),  # FIXME: Previously: 42.73584909530037
+        (4000, 127.63921091228055),  # FIXME: Previously: 128.70284018326998
     ]:
         assert out.hydrograph.q_sim[d].item() == pytest.approx(q_sim)
 
