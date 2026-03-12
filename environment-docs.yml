@@ -1,12 +1,13 @@
 name: ravenpy-docs
 channels:
   - conda-forge
+  - nodefaults
 dependencies:
   - python >=3.13,<3.14
   - raven-hydro >=4.12.1,<5.0
   - cftime >=1.4.1
   - cf-xarray >=0.9.3
-  - click >=8.2.0
+  - click >=8.3.1
   - climpred >=2.6.0
   - dask >=2024.8.1
   - h5netcdf >=1.5.0
@@ -38,6 +39,6 @@ dependencies:
   - sphinx >=8.2.0
   - sphinx-click
   - sphinx-codeautolink >=0.16.2
-  - sphinx-copybutton
+  - sphinx-copybutton >=0.5.2
   - sphinx-rtd-theme >=1.0
   - sphinxcontrib-svg2pdfconverter >=1.2.3

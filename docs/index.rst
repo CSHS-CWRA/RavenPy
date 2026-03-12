@@ -35,6 +35,11 @@ Welcome to RavenPy's documentation!
 
    apidoc/modules
 
+.. toctree::
+   :caption: GitHub Repository
+
+   CSHS-CWRA/RavenPy <https://github.com/CSHS-CWRA/RavenPy>
+
 Indices and tables
 ==================
 * :ref:`genindex`

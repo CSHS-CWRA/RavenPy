@@ -1,6 +1,92 @@
 [build-system]
-requires = ["flit_core >=3.11.0,<4"]
+requires = ["flit_core >=3.12.0,<4"]
 build-backend = "flit_core.buildapi"
+
+[dependency-groups]
+lint = [
+  # Linting tools
+  "codespell >=2.4.1",
+  "deptry >=0.24.0",
+  "flake8 >=7.3.0",
+  "flake8-rst-docstrings >=0.4.0",
+  "mypy >=1.19.1",
+  "numpydoc >=1.10.0",
+  "pylint >=4.0.4",
+  "ruff >=0.15.0",
+  "vulture >=2.14",
+  "yamllint >=1.38.0"
+]
+test = [
+  # Base testing support
+  "coverage[toml] >=7.13.4",
+  "filelock >=3.14.0",
+  "holoviews",
+  "hvplot",
+  "pooch >=1.8.0",
+  "nbval",
+  "netCDF4 >=1.7.2",
+  "pytest >=9.0.2",
+  "pytest-cov >=7.0.0",
+  "pytest-xdist >=3.2.0",
+  "requests >=2.32.2"
+]
+notebooks = [
+  "birdhouse-birdy >=0.9.1",
+  "cairosvg >=2.6.0",
+  "cartopy >=0.23.0",
+  "clisops >=0.16.1",
+  "gcsfs",
+  # Needed for notebooks/HydroShare_integration.ipynb
+  # See: https://github.com/CSHS-CWRA/RavenPy/pull/326
+  # "hsclient",
+  "intake >=2.0",
+  "intake-esm >=2023.07.07",
+  "intake-xarray >=2.0",
+  "ipykernel",
+  "ipyleaflet",
+  "ipython >=8.7.0",
+  "ipywidgets",
+  "jupyter-cache",
+  "jupyter_client",
+  "jupytext",
+  "pymetalink >=6.5.3",
+  "s3fs",
+  "salib",
+  "xesmf",
+  "zarr"
+]
+docs = [
+  # Documentation and example support
+  "autodoc-pydantic >=2.1.0",
+  "ipykernel",
+  "ipython >=8.10.0",
+  "jupyter_client",
+  "matplotlib >=3.7.0",
+  "myst_nb",
+  "nbsphinx >=0.9.8",
+  "sphinx >=8.0.0",
+  "sphinx-click",
+  "sphinx-codeautolink >=0.16.2",
+  "sphinx-copybutton >=0.5.2",
+  "sphinx-rtd-theme >=1.0",
+  "sphinxcontrib-svg2pdfconverter >=1.2.3"
+]
+tox = [
+  "tox >=4.41.0",
+  "tox-gh >=1.6.1"
+]
+dev = [
+  # Development and testing tools
+  "bump-my-version >=1.2.6",
+  "pip >=26.0.1",
+  "prek >=0.3.0",
+  "watchdog >=6.0.0",
+  {include-group = "docs"},
+  {include-group = "lint"},
+  {include-group = "notebooks"},
+  {include-group = "test"},
+  {include-group = "tox"}
+]
 
 [project]
 name = "ravenpy"
@@ -40,7 +126,7 @@ dependencies = [
   "cftime >=1.4.1",
   # cf-xarray is differently named on conda-forge
   "cf-xarray >=0.9.3",
-  "click >=8.2.0",
+  "click >=8.3.1",
   "climpred >=2.6.0",
   "dask >=2024.8.1",
   "h5netcdf >=1.5.0",
@@ -64,69 +150,6 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = [
-  # Dev tools and testing
-  "bump-my-version >=1.2.3",
-  "coverage >=7.5.0",
-  "filelock >=3.14.0",
-  "flake8 >=7.3.0",
-  "flake8-rst-docstrings >=0.4.0",
-  "flit >=3.11.0,<4.0",
-  "holoviews",
-  "hvplot",
-  "mypy >=1.18.2",
-  "nbval",
-  "numpydoc >=1.9.0",
-  "pip >=25.2",
-  "pooch >=1.8.0",
-  "pre-commit >=3.5.0",
-  "pylint >=3.3.0",
-  "pytest >=8.3.2",
-  "pytest-cov >=5.0.0",
-  "pytest-xdist >=3.2.0",
-  "requests >=2.32.2",
-  "ruff >=0.14.3",
-  "setuptools >=71.0.0",
-  "tox >=4.30.3",
-  "vulture >=2.14",
-  "watchdog >=4.0.0"
-]
-docs = [
-  # Requires python >=3.11
-  "autodoc-pydantic >=2.1.0",
-  "birdhouse-birdy >=0.9.1",
-  "cairosvg >=2.6.0",
-  "cartopy >=0.23.0",
-  "clisops >=0.16.1",
-  "gcsfs",
-  # Needed for notebooks/HydroShare_integration.ipynb
-  # See: https://github.com/CSHS-CWRA/RavenPy/pull/326
-  # "hsclient",
-  "intake >=2.0",
-  "intake-esm >=2023.07.07",
-  "intake-xarray >=2.0",
-  "ipykernel",
-  "ipyleaflet",
-  "ipython >=8.7.0",
-  "ipywidgets",
-  "jupyter-cache",
-  "jupyter_client",
-  "jupytext",
-  "matplotlib >=3.7.0",
-  "myst_nb",
-  "nbsphinx >=0.9.5",
-  "pymetalink >=6.5.3",
-  "s3fs",
-  "salib",
-  "sphinx >=8.2.0",
-  "sphinx-click",
-  "sphinx-codeautolink >=0.16.2",
-  "sphinx-copybutton",
-  "sphinx-rtd-theme >=1.0",
-  "sphinxcontrib-svg2pdfconverter >=1.2.3",
-  "xesmf",
-  "zarr"
-]
 gis = [
   "affine >=2.4.0",
   "fiona >=1.9",
@@ -144,8 +167,6 @@ raven-hydro = [
   "raven-hydro >=4.12.1,<5.0"
 ]
 all = [
-  "ravenpy[dev]",
-  "ravenpy[docs]",
   "ravenpy[gis]",
   "ravenpy[raven-hydro]"
 ]
@@ -238,7 +259,8 @@ values = [
 ]
 
 [tool.codespell]
-ignore-words-list = "astroid,documen,socio-economic"
+ignore-words-list = "astroid,documen,socio-economic,third-party"
+skip = "docs/_build"
 
 [tool.coverage.paths]
 source = ["src/ravenpy/", "*/site-packages/ravenpy/"]
@@ -249,8 +271,6 @@ omit = ["tests/*.py"]
 source = ["ravenpy"]
 
 [tool.deptry]
-extend_exclude = ["docs"]
-pep621_dev_dependency_groups = ["all", "dev", "docs"]
 
 [tool.flit.sdist]
 include = [
@@ -358,8 +378,8 @@ init_typed = true
 warn_required_dynamic_aliases = true
 warn_untyped_fields = true
 
-[tool.pytest.ini_options]
-minversion = "7.0"
+[tool.pytest]
+minversion = "9.0"
 addopts = [
   "-ra",
   "--color=yes",
@@ -371,7 +391,7 @@ addopts = [
   "--maxprocesses=8",
   "--dist=worksteal"
 ]
-python_files = "test_*.py"
+python_files = ["test_*.py"]
 norecursedirs = ["docs/notebooks"]
 filterwarnings = ["ignore::UserWarning"]
 testpaths = [
@@ -381,8 +401,9 @@ pythonpath = [
   "src"
 ]
 markers = [
-  "slow: marks tests as slow (deselect with '-m \"not slow\"')",
-  "online: mark tests that require external services (deselect with '-m \"not online\"')"
+  "gis: mark tests that require GIS libraries (deselect with '-m \"not gis\"')",
+  "online: mark tests that require external services (deselect with '-m \"not online\"')",
+  "slow: marks tests as slow (deselect with '-m \"not slow\"')"
 ]
 xfail_strict = true
 
