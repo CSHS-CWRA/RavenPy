@@ -9,6 +9,7 @@ skip_missing_interpreters = true
 description = "Build the documentation with makefile under {basepython}"
 labels = ["docs"]
 dependency_groups = ["docs"]
+extras = []
 commands = [
   ["make", "build-docs"]
 ]
@@ -31,6 +32,7 @@ description = "Run code quality compliance tests under {basepython}"
 labels = ["lint"]
 skip_install = true
 dependency_groups = ["lint"]
+extras = []
 commands = [
   ["make", "lint"]
 ]
