@@ -278,7 +278,7 @@ def load_registry(
 def yangtze(
     repo: str = TESTDATA_REPO_URL,
     branch: str = TESTDATA_BRANCH,
-    cache_dir: str | Path = TESTDATA_CACHE_DIR,
+    cache_dir: str | Path | None = TESTDATA_CACHE_DIR,
     allow_updates: bool = True,
     force_download: bool = False,
 ):
@@ -291,8 +291,9 @@ def yangtze(
         URL of the repository to use when fetching testing datasets.
     branch : str
         Branch of repository to use when fetching testing datasets.
-    cache_dir : str or Path
+    cache_dir : str or Path or None
         The path to the directory where the data files are stored.
+        A valid cache_dir path is required.
     allow_updates : bool
         If True, allow updates to the data files. Default is True.
     force_download : bool
@@ -327,6 +328,9 @@ def yangtze(
         example_file = yangtze().fetch("example.nc")
         data = xr.open_dataset(example_file)
     """
+    if cache_dir is None:
+        raise NotImplementedError("A valid cache_dir path is required.")
+
     if pooch is None:
         raise ImportError(
             "The `pooch` package is required to fetch the RavenPy testing data. "
@@ -358,7 +362,7 @@ def yangtze(
             output_file: str | IO,
             poocher: pooch.Pooch,
             check_only: bool | None = False,
-        ) -> None:
+        ) -> bool | None:
             """Download the file from the URL and save it to the save_path."""
             headers = {"User-Agent": f"RavenPy ({ravenpy.__version__})"}
             downloader = pooch.HTTPDownloader(headers=headers)
@@ -395,8 +399,7 @@ def get_file(
     str
         The path to the file.
     """
-    if _yangtze_kwargs is None:
-        _yangtze_kwargs = {}
+    _yangtze_kwargs = _yangtze_kwargs or {}
     return yangtze(**_yangtze_kwargs).fetch(name)
 
 
