@@ -9,7 +9,7 @@ RavenPy |logo|
 +----------------------------+-----------------------------------------------------+
 | Open Source                | |license| |ossf-score| |zenodo|                     |
 +----------------------------+-----------------------------------------------------+
-| Coding Standards           | |ruff| |ossf-bp| |pre-commit|                       |
+| Coding Standards           | |ruff| |ossf-bp| |prek| |pre-commit-ci|             |
 +----------------------------+-----------------------------------------------------+
 | Development Status         | |status| |build| |coveralls|                        |
 +----------------------------+-----------------------------------------------------+
@@ -91,9 +91,13 @@ This package was created with Cookiecutter_ and the `Ouranosinc/cookiecutter-pyp
         :target: https://securityscorecards.dev/viewer/?uri=github.com/CSHS-CWRA/RavenPy
         :alt: OpenSSF Scorecard
 
-.. |pre-commit| image:: https://results.pre-commit.ci/badge/github/CSHS-CWRA/RavenPy/master.svg
+.. |pre-commit-ci| image:: https://results.pre-commit.ci/badge/github/CSHS-CWRA/RavenPy/master.svg
         :target: https://results.pre-commit.ci/latest/github/CSHS-CWRA/RavenPy/master
         :alt: pre-commit.ci status
+
+.. |prek| image:: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/j178/prek/master/docs/assets/badge-v0.json
+        :target: https://github.com/j178/prek
+        :alt: prek
 
 .. |pypi| image:: https://img.shields.io/pypi/v/RavenPy.svg
         :target: https://pypi.python.org/pypi/RavenPy

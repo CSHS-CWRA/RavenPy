@@ -7,13 +7,25 @@ Changelog
 
 Contributors: Trevor James Smith (:user:`Zeitsperre`).
 
-Changes
-^^^^^^^
+New features
+^^^^^^^^^^^^
 * `raven-hydro` minimum version updated from v0.5.0 to v4.12.1 (for more information, see: https://github.com/Ouranosinc/raven-hydro/pull/93). (PR #587)
-* Dependency updates. (PR #584):
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* Dependency updates. (PR #584, PR #589):
     * Updated required `xskillscore` (``>= 0.0.29``) and `climpred` (``>= 2.6.0``).
     * Removed version pins on `intake` and `intake-xarray`.
     * Minimum required `birdy` is now ``>= 0.9.1``.
+    * Minimum required `pytest` is now ``>=9.0``.
+* The development dependency recipes have been migrated to `dependency-groups` (PEP 735). Optional dsependency lists are now separated by features. (PR #589):
+    * `ravenpy[gis]`: GIS functionality.
+    * `ravenpy[plotting]`: Notebook interactivity.
+    * `ravenpy[raven-hydro]`: To compile and install the `raven-hydro` binary.
+* Many unnecessary/optional dependencies have been removed from the base library requirements. (PR #589):
+    * `dask`, `pydap`, `typing-extensions`, `xsdba`, `xskillscore` have been removed from install requirements.
+    * `affine` and `setuptools` are no longer listed in `gis` recipe requirements.
+    * `requests` is now explicitly listed in `gis` recipe requirements.
 
 Fixes
 ^^^^^
@@ -25,6 +37,12 @@ Internal changes
 * Added a Makefile recipe and a GitHub Workflow to run tests against the notebooks using ``pytest --nbval`` on changes as well as on a weekly schedule. (PR #584)
 * Fixed a bug in several workflows that was impeding triggers when Pull Requests are merged to `main`.  (PR #584)
 * The conda configurations (``environment-dev.yml`` and ``environment-docs.yml``) now specify the exact dependencies needed to run the development and documentation builds. (PR #584)
+* Tests reliant on GIS libraries can now be disabled using `pytest -m "not gis"`. Many tests that were previously skipped have been re-enabled with modified assertions reflecting changes to the model expected output. (PR #589)
+* The cookiecutter template has been updated. (PR #589):
+    * Enabled PEP 735 (`dependency-groups`) for development dependency management.
+    * Replaced `pre-commit` with `prek`.
+    * The Makefile now performs installation calls for recipes.
+    * `tox.toml` now uses `dependency-groups` and the new `optional-dependencies` lists for environment setup.
 
 .. _changes_0.20.0:
 

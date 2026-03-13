@@ -4,6 +4,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Union
 
+import numpy as np
 import pandas
 
 from ravenpy.utilities import gis_import_error_message
@@ -11,6 +12,7 @@ from ravenpy.utilities import gis_import_error_message
 
 try:
     import geopandas
+    import netCDF4
     from osgeo import __version__ as osgeo_version
     from osgeo import ogr, osr
     from shapely import wkt
@@ -19,9 +21,6 @@ try:
 except (ImportError, ModuleNotFoundError) as e:
     msg = gis_import_error_message.format(Path(__file__).stem)
     raise ImportError(msg) from e
-
-import netCDF4
-import numpy as np
 
 
 def open_shapefile(path: Union[str, os.PathLike]):

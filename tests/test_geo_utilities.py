@@ -105,7 +105,7 @@ class TestFileInfoFuncs:
         with pytest.raises(FileNotFoundError):
             self.checks.boundary_check(self.non_existing_file)
 
-    @pytest.mark.skip(reason="Not presently testable")
+    @pytest.mark.skip(reason="Not presently testable.")
     def test_multipolygon_check(self):
         pass
 
@@ -129,7 +129,7 @@ class TestGdalOgrFunctions:
         assert Path(aspect_tempfile).stat().st_size > 0
 
     # Slope values are high due to data values using Geographic CRS
-    @pytest.mark.xfail(reason="Console commands have been modified in GDAL 3.11+", strict=False)
+    @pytest.mark.xfail(reason="Console commands have been modified in GDAL 3.11+.", strict=False)
     def test_gdal_slope_not_projected(self, tmp_path, yangtze):
         slope_grid = self.analysis.gdal_slope_analysis(yangtze.fetch(raster_file))
         np.testing.assert_almost_equal(slope_grid.min(), 0.0)
@@ -145,7 +145,7 @@ class TestGdalOgrFunctions:
         assert Path(slope_tempfile).stat().st_size > 0
 
     # Slope values are high due to data values using Geographic CRS
-    @pytest.mark.xfail(reason="Console commands have been modified in GDAL 3.11+", strict=False)
+    @pytest.mark.xfail(reason="Console commands have been modified in GDAL 3.11+.", strict=False)
     def test_dem_properties(self, yangtze):
         dem_properties = self.analysis.dem_prop(yangtze.fetch(raster_file))
         np.testing.assert_almost_equal(dem_properties["aspect"], 10.91190, decimal=5)

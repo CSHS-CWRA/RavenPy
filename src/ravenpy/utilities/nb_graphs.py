@@ -136,7 +136,7 @@ def ts_fit_graph(ts: xr.DataArray, params: xr.DataArray) -> matplotlib.pyplot.Fi
     # Note: The hover tool could be customized to show the histogram count in addition to the frequency.
     n = ts.nbasins.size
     if n > 1:
-        raise NotImplementedError
+        raise NotImplementedError("More than one basin provided.")
 
     ts = ts.isel(nbasins=0)
     params = params.isel(nbasins=0)

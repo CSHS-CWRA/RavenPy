@@ -110,11 +110,12 @@ def test_solution(yangtze):
     assert ":BasinIndex 1 watershed" in conf.rvc
 
 
+@pytest.mark.gis
 def test_rvh_from_extractor(yangtze):
-    from ravenpy.extractors import BasinMakerExtractor, open_shapefile
+    extractors = pytest.importorskip("ravenpy.extractors")
 
     shp = yangtze.fetch("basinmaker/drainage_region_0175_v2-1/finalcat_info_v2-1.zip")
-    bm = BasinMakerExtractor(open_shapefile(shp))
+    bm = extractors.BasinMakerExtractor(extractors.open_shapefile(shp))
 
     # Smoke test
     Config(**bm.extract(hru_from_sb=True))

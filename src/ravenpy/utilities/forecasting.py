@@ -350,7 +350,7 @@ def ensemble_prediction(
         The path to rv files and model outputs. If None, create temporary directory.
     overwrite : bool
         Overwrite files when writing to disk.
-    \*\*kwds : dict
+    **kwds : dict
         Keywords for the `Gauge.from_nc` function.
 
     Returns

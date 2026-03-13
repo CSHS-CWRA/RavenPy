@@ -8,6 +8,7 @@ from typing import Any, Union
 from urllib.parse import urljoin
 
 import pandas as pd
+import rioxarray  # noqa: F401
 import xarray as xr
 from pandas import DatetimeIndex, Series, Timestamp
 from xarray import Dataset
@@ -75,7 +76,7 @@ def get_CASPAR_dataset(  # noqa: N802
     directory : str
         The directory on the thredds server where the data is stored. Default: "dodsC/birdhouse/disk2/caspar/daily/".
     engine : str
-        The xarray engine to use to open the dataset. Default: "pydap".
+        The xarray engine to use to open the dataset. Default: "netcdf4".
 
     Returns
     -------
@@ -125,7 +126,7 @@ def get_ECCC_dataset(  # noqa: N802
     directory : str
         The directory on the thredds server where the data is stored. Default: "dodsC/datasets/forecasts/eccc_geps/".
     engine : str
-        The xarray engine to use to open the dataset. Default: "pydap".
+        The xarray engine to use to open the dataset. Default: "netcdf4".
 
     Returns
     -------
