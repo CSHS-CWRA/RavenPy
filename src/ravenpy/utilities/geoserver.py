@@ -22,8 +22,6 @@ from pathlib import Path
 from typing import Optional, Union
 from urllib.parse import urlencode, urljoin
 
-import urllib3
-
 from . import gis_import_error_message
 
 
@@ -31,6 +29,7 @@ try:
     import fiona
     import geopandas as gpd
     import pandas as pd
+    import requests
     from lxml import etree
     from owslib.fes import PropertyIsLike
     from owslib.fes2 import Intersects
@@ -178,8 +177,9 @@ def _get_feature_attributes_wfs(
         propertyName=",".join(attribute),
     )
     url = urljoin(geoserver, "wfs") + "?" + urlencode(params)
-    http = urllib3.PoolManager()
-    response = http.request("GET", url)
+
+    response = requests.get(url, params=params, timeout=15)
+    response.raise_for_status()
 
     return urljoin(host, response.url)
 
@@ -232,8 +232,9 @@ def _filter_feature_attributes_wfs(
     )
 
     url = urljoin(geoserver, "wfs") + "?" + urlencode(params)
-    http = urllib3.PoolManager()
-    response = http.request("GET", url)
+
+    response = requests.get(url, params=params, timeout=15)
+    response.raise_for_status()
 
     return urljoin(host, response.url)
 
@@ -496,7 +497,7 @@ def hydro_routing_upstream(
     level: int = 12,
     lakes: str = "1km",
     geoserver: str = GEOSERVER_URL,
-) -> pd.Series:
+) -> "gpd.GeoDataFrame":
     """
     Return a list of hydro routing features located upstream.
 
@@ -514,7 +515,7 @@ def hydro_routing_upstream(
 
     Returns
     -------
-    pd.Series
+    gpd.GeoDataFrame
         Basins ids including `fid` and its upstream contributors.
     """
     geoserver = _fix_server_url(geoserver)

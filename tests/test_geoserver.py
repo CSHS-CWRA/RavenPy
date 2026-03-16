@@ -10,11 +10,11 @@ from requests.exceptions import HTTPError
 
 @pytest.mark.online
 class TestHydroBASINS:
-    geoserver = pytest.importorskip("ravenpy.utilities.geoserver")
-
     fiona = pytest.importorskip("fiona")
     gpd = pytest.importorskip("geopandas")
     sgeo = pytest.importorskip("shapely.geometry")
+
+    geoserver = pytest.importorskip("ravenpy.utilities.geoserver")
 
     def test_select_hybas_na_domain_bbox(self):
         bbox = (-68.0, 50.0) * 2
@@ -79,11 +79,11 @@ class TestHydroBASINS:
 
 @pytest.mark.online
 class TestHydroRouting:
-    geoserver = pytest.importorskip("ravenpy.utilities.geoserver")
-
     fiona = pytest.importorskip("fiona")
     gpd = pytest.importorskip("geopandas")
     sgeo = pytest.importorskip("shapely.geometry")
+
+    geoserver = pytest.importorskip("ravenpy.utilities.geoserver")
 
     def test_hydro_routing_locations(self, tmp_path):
         lake_winnipeg = (
@@ -117,11 +117,11 @@ class TestHydroRouting:
 
 @pytest.mark.online
 class TestWFS:
-    geoserver = pytest.importorskip("ravenpy.utilities.geoserver")
-
     fiona = pytest.importorskip("fiona")
     gpd = pytest.importorskip("geopandas")
     sgeo = pytest.importorskip("shapely.geometry")
+
+    geoserver = pytest.importorskip("ravenpy.utilities.geoserver")
 
     def test_get_location_wfs_point(self, tmp_path):
         las_vegas = (-115.136389, 36.175)
@@ -154,13 +154,15 @@ class TestWFS:
 
 
 # FIXME: Something strange is going on with GitHub Actions and PAVICS Geoserver access. Investigate.
+@pytest.mark.gis
 @pytest.mark.online
 @pytest.mark.xfail(HTTPError, reason="Geoserver WCS seems to be inaccessible from GitHub.", strict=False)
 class TestWCS:
+    rasterio = pytest.importorskip("rasterio")
+
     io = pytest.importorskip("ravenpy.utilities.io")
     geoserver = pytest.importorskip("ravenpy.utilities.geoserver")
     geo = pytest.importorskip("ravenpy.utilities.geo")
-    rasterio = pytest.importorskip("rasterio")
 
     saskatoon = "polygons/Saskatoon.geojson"
 

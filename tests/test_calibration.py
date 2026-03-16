@@ -376,7 +376,7 @@ bounds = {
 
 
 @pytest.mark.xfail(
-    reason="Some platform and Python versions combinations raise errors for certain models",
+    reason="Some platform and Python versions combinations raise errors for certain models.",
     strict=False,
 )
 def test_spotpy_calibration(symbolic_config):

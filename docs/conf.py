@@ -118,7 +118,6 @@ autodoc_default_options = {
 
 # To avoid having to install these and burst memory limit on ReadTheDocs.
 autodoc_mock_imports = [
-  "affine",
   "fiona",
   "geopandas",
   "holoviews",
