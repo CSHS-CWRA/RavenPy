@@ -496,9 +496,9 @@ tox==4.34.1 \
     # via
     #   -r requirements_ci.in
     #   tox-gh
-tox-gh==1.6.1 \
-    --hash=sha256:070b69bf50821393e1ff0237006bb61b33347e2060eaec415fbfdefa48131aa7 \
-    --hash=sha256:b43240f689430b33a1877ab8794afe922e3b57a61b56c1f47daf1925367ea289
+tox-gh==1.7.1 \
+    --hash=sha256:4f4871ee4091b41464f2df9ab1fcedb14a48accdecbb60d53297301a9d8984c6 \
+    --hash=sha256:a82285b16a597516f9a24f20326b124ddc7924a8b70cb05a9192e1c53d7f701d
     # via -r requirements_ci.in
 types-setuptools==75.8.0.20250110 \
     --hash=sha256:96f7ec8bbd6e0a54ea180d66ad68ad7a1d7954e7281a710ea2de75e355545271 \
