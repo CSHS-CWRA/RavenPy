@@ -2,8 +2,9 @@
 # - Contents: Read and Write
 # - Metadata: Read-Only
 # - Pull Requests: Read and Write
+# This workflow also requires a dedicated environment to ensure that credentials are safely accessed ("automation").
 
-name: "Bump Patch Version"
+name: "Bump Version"
 
 on:
   push:
@@ -42,7 +43,9 @@ permissions:
 
 jobs:
   bump_patch_version:
+    name: Bump build/patch version
     runs-on: ubuntu-latest
+    environment: automation
     permissions:
       actions: read
       contents: write

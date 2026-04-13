@@ -1,6 +1,6 @@
 envlist = [
   "lint",
-  "py3.{10,11,12,13,14}",
+  {product = [{prefix = "py3.", start = 10, stop = 14}]},
   "docs"
 ]
 skip_missing_interpreters = true
@@ -22,7 +22,6 @@ deps = ["numpy >= 1.25.0", "gdal == {env:GDAL_VERSION}.*", "setuptools >= 71.0"]
 extras = ["gis", "raven-hydro"]
 commands = [
   ["python", "-m", "pip", "install", "--no-user", "--upgrade", "--force-reinstall", "--no-deps", "--no-binary", "gdal", "gdal[numpy]=={env:GDAL_VERSION}.*"],
-  ["python", "-m", "pip", "install", "--no-user", "--upgrade", "--force-reinstall", "--no-deps", "--no-binary", "h5py", "h5py>=3.12.1"],
   ["python", "-c", "import ravenpy.testing.utils as rtu; rtu.populate_testing_data(branch=\"{env:RAVEN_TESTDATA_BRANCH}\")"],
   ["pytest", "{posargs}"]
 ]
@@ -60,7 +59,6 @@ commands_pre = [
   ["python", "-m", "pip", "check"]
 ]
 commands = [
-  ["python", "-m", "pip", "install", "--no-user", "--upgrade", "--force-reinstall", "--no-deps", "--no-binary", "h5py", "h5py>=3.12.1"],
   ["python", "-c", "import ravenpy.testing.utils as rtu; rtu.populate_testing_data(branch=\"{env:RAVEN_TESTDATA_BRANCH}\")"],
   ["pytest", "{posargs}"]
 ]

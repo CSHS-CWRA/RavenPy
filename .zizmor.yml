@@ -4,3 +4,7 @@ rules:
       - label.yml:9
       - first-pull-request.yml:3
       - workflow-warning.yml:3
+  superfluous-actions:
+    ignore:
+      - testdata-version.yml:69
+      - testdata-version.yml:85
