@@ -283,7 +283,7 @@ prek = "prek"
 tox-gh = "tox_gh"
 
 [tool.deptry.per_rule_ignores]
-DEP002 = ["h5netcdf"]
+DEP002 = ["h5netcdf", "h5py"]
 DEP004 = ["holoviews", "hvplot", "pooch"]
 
 [tool.flit.sdist]
