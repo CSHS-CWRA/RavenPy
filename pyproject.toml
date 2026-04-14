@@ -5,16 +5,22 @@ build-backend = "flit_core.buildapi"
 [dependency-groups]
 lint = [
   # Linting tools
-  "codespell >=2.4.1",
-  "deptry >=0.24.0",
+  "codespell >=2.4.2",
+  "deptry >=0.25.1",
   "flake8 >=7.3.0",
   "flake8-rst-docstrings >=0.4.0",
-  "mypy >=1.19.1",
+  "mypy >=1.20.0",
   "numpydoc >=1.10.0",
   "pylint >=4.0.4",
-  "ruff >=0.15.0",
+  "ruff >=0.15.9",
   "vulture >=2.14",
   "yamllint >=1.38.0"
+]
+io = [
+  "h5netcdf",
+  "h5py",
+  "pooch >=1.8.0",
+  "zarr"
 ]
 test = [
   # Base testing support
@@ -25,7 +31,8 @@ test = [
   "pydap >=3.5.6",
   "pytest >=9.0.2",
   "pytest-cov >=7.0.0",
-  "pytest-xdist >=3.2.0"
+  "pytest-xdist >=3.2.0",
+  {include-group = "io"}
 ]
 notebooks = [
   "birdhouse-birdy >=0.9.1",
@@ -53,7 +60,7 @@ notebooks = [
   "xesmf",
   "xsdba >=0.4.0",
   "xskillscore >=0.0.29",
-  "zarr"
+  {include-group = "io"}
 ]
 docs = [
   # Documentation and example support
@@ -64,7 +71,7 @@ docs = [
   "matplotlib >=3.7.0",
   "myst_nb",
   "nbsphinx >=0.9.8",
-  "sphinx >=8.0.0",
+  "sphinx >=8.2.0",
   "sphinx-click",
   "sphinx-codeautolink >=0.16.2",
   "sphinx-copybutton >=0.5.2",
@@ -72,12 +79,12 @@ docs = [
   "sphinxcontrib-svg2pdfconverter >=1.2.3"
 ]
 tox = [
-  "tox >=4.41.0",
-  "tox-gh >=1.6.1"
+  "tox >=4.52.0",
+  "tox-gh >=1.7.1"
 ]
 dev = [
   # Development and testing tools
-  "bump-my-version >=1.2.6",
+  "bump-my-version >=1.3.0",
   "pip >=26.0.1",
   "prek >=0.3.0",
   "watchdog >=6.0.0",
@@ -129,7 +136,8 @@ dependencies = [
   "click >=8.3.1",
   "climpred >=2.6.0",
   "filelock >=3.14.0",
-  "h5netcdf >=1.5.0",
+  "h5netcdf",
+  "h5py",
   "haversine >=2.8.0",
   "matplotlib >=3.6.0",
   "numpy >=1.25.0",
@@ -275,7 +283,7 @@ prek = "prek"
 tox-gh = "tox_gh"
 
 [tool.deptry.per_rule_ignores]
-DEP002 = ["h5netcdf"]
+DEP002 = ["h5netcdf", "h5py"]
 DEP004 = ["holoviews", "hvplot", "pooch"]
 
 [tool.flit.sdist]
