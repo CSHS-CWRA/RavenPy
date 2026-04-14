@@ -18,7 +18,12 @@ allowlist_externals = ["make"]
 
 [env.gis]
 description = "Run tests with extras under {basepython}"
-deps = ["numpy >= 1.25.0", "gdal == {env:GDAL_VERSION}.*", "setuptools >= 71.0"]
+deps = [
+  "numpy >= 1.25.0",
+  "gdal == {env:GDAL_VERSION}.*",
+  {replace = "if", condition = "env.RAVEN_HYDRO_UPSTREAM_BRANCH", then = ["git+https://github.com/Ouranosinc/raven-hydro.git@{env:RAVEN_HYDRO_UPSTREAM_BRANCH}"], extend = true},
+  "setuptools >= 71.0"
+]
 extras = ["gis", "raven-hydro"]
 commands = [
   ["python", "-m", "pip", "install", "--no-user", "--upgrade", "--force-reinstall", "--no-deps", "--no-binary", "gdal", "gdal[numpy]=={env:GDAL_VERSION}.*"],
@@ -32,6 +37,7 @@ labels = ["lint"]
 skip_install = true
 dependency_groups = ["lint"]
 extras = []
+deps = []
 commands = [
   ["make", "lint"]
 ]
