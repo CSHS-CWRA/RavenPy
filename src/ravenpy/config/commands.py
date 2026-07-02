@@ -881,7 +881,7 @@ class ReadFromNetCDF(FlatCommand):
 
     @property
     def da(self) -> xr.DataArray:
-        """Return DataArray from configuration."""
+        """Create a DataArray from configuration."""
         # TODO: Apply linear transform and time shift
         da = xr.open_dataset(self.file_name_nc)[self.var_name_nc]
         if len(self.dim_names_nc) == 1:
@@ -1101,7 +1101,7 @@ class Gauge(FlatCommand):
 
     @property
     def ds(self) -> xr.Dataset:
-        """Return xarray Dataset with forcing variables keyed by Raven forcing names."""
+        """Create a Dataset with forcing variables keyed by Raven forcing names."""
         ds = {}
         for data in self.data:
             ds[data.data_type] = data.read_from_netcdf.da

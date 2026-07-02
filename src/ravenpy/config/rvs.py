@@ -324,7 +324,7 @@ class Config(RVI, RVC, RVH, RVT, RVP, RVE):
 
     @property
     def is_symbolic(self):
-        """Return True if configuration contains symbolic expressions."""
+        """If configuration contains symbolic expressions, returns True."""
         if self.params is not None:
             p = {field.name: getattr(self.params, field.name) for field in fields(self.params)}
             return is_symbolic(p)
