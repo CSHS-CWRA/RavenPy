@@ -129,6 +129,11 @@ jobs:
           TOX_GH_MAJOR_MINOR: ${{ matrix.python-version }}
           RAVEN_HYDRO_UPSTREAM_BRANCH: ${{ matrix.raven-hydro-upstream-branch }}
 
+      - name: Trust Coveralls Homebrew tap # Homebrew v6.0 requirement; Remove when coverallsapp/github-action >2.3.7
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew trust coverallsapp/coveralls
+
       - name: Report Coverage
         uses: coverallsapp/github-action@5cbfd81b66ca5d10c19b062c04de0199c215fb6e # v2.3.7
         with:
@@ -171,6 +176,7 @@ jobs:
           environment-file: environment-dev.yml
           create-args: >-
             python=${{ matrix.python-version }}
+
       - name: Install RavenPy
         run: |
           python -m pip install -e ".[dev,gis]"
@@ -200,6 +206,12 @@ jobs:
       - name: Test RavenPy
         run: |
           python -m pytest --numprocesses=logical --cov=src/ravenpy --cov-report=lcov
+
+      - name: Trust Coveralls Homebrew tap # Homebrew v6.0 requirement; Remove when coverallsapp/github-action >2.3.7
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew trust coverallsapp/coveralls
+
       - name: Report Coverage
         uses: coverallsapp/github-action@5cbfd81b66ca5d10c19b062c04de0199c215fb6e # v2.3.7
         with:
