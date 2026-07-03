@@ -345,8 +345,7 @@ def find_geometry_from_coord(
             p = geom_transform(p, source_crs=source, target_crs=target)
     else:
         LOGGER.warning(
-            "The GeoDataFrame has no CRS defined; assuming its coordinates are "
-            "expressed in the same CRS as the provided point (%s).",
+            "The GeoDataFrame has no CRS defined; assuming its coordinates are expressed in the same CRS as the provided point (%s).",
             point_crs,
         )
 
