@@ -322,3 +322,67 @@ class TestGIS:
         point = -69.0, 45
         assert isinstance(self.checks.feature_contains(point, vector), dict)
         assert isinstance(self.checks.feature_contains(self.sgeo.Point(point), vector), dict)
+
+
+class TestCrsAlignment:
+    """Regression tests ensuring CRS-aware behavior of geospatial helpers."""
+
+    geo = pytest.importorskip("ravenpy.utilities.geo")
+    analysis = pytest.importorskip("ravenpy.utilities.analysis")
+    gpd = pytest.importorskip("geopandas")
+    sgeo = pytest.importorskip("shapely.geometry")
+
+    # A gauge location (lon/lat, WGS84) inside the basin box below (Matapedia region).
+    LON, LAT = -67.12542, 48.10417
+    SUB_ID = 175000128
+
+    def _basin_gdf(self, crs):
+        """Return a one-feature GeoDataFrame in the requested CRS."""
+        poly = self.sgeo.box(-67.30, 48.00, -66.90, 48.20)  # lon/lat box
+        gdf = self.gpd.GeoDataFrame({"SubId": [self.SUB_ID]}, geometry=[poly], crs="EPSG:4326")
+        return gdf.to_crs(crs)
+
+    def test_find_geometry_from_coord_projected_crs(self):
+        # With a projected GeoDataFrame (metres), a raw geographic point would not
+        # match without reprojection. The helper must align CRSs and find the basin.
+        gdf = self._basin_gdf("EPSG:3348")
+        found = self.geo.find_geometry_from_coord(self.LON, self.LAT, gdf)
+        assert found["SubId"].iloc[0] == self.SUB_ID
+
+    def test_find_geometry_from_coord_geographic_crs(self):
+        # Backward-compatible behavior when the GeoDataFrame is already in WGS84.
+        gdf = self._basin_gdf("EPSG:4326")
+        found = self.geo.find_geometry_from_coord(self.LON, self.LAT, gdf)
+        assert found["SubId"].iloc[0] == self.SUB_ID
+
+    def test_find_geometry_from_coord_custom_point_crs(self):
+        # The point may be supplied in a projected CRS via `point_crs`.
+        gdf = self._basin_gdf("EPSG:4326")
+        pt = self.gpd.GeoSeries([self.sgeo.Point(self.LON, self.LAT)], crs="EPSG:4326").to_crs("EPSG:3348").iloc[0]
+        found = self.geo.find_geometry_from_coord(pt.x, pt.y, gdf, point_crs="EPSG:3348")
+        assert found["SubId"].iloc[0] == self.SUB_ID
+
+    def test_find_geometry_from_coord_point_outside(self):
+        gdf = self._basin_gdf("EPSG:3348")
+        with pytest.raises(ValueError, match="not in any geometry"):
+            self.geo.find_geometry_from_coord(0.0, 0.0, gdf)
+
+    def test_geom_prop_geographic_warning(self, caplog):
+        import logging
+
+        poly = self.sgeo.box(-67.30, 48.00, -66.90, 48.20)
+        with caplog.at_level(logging.WARNING, logger="RavenPy"):
+            props = self.analysis.geom_prop(poly, crs="EPSG:4326")
+        assert any("geographic CRS" in record.message for record in caplog.records)
+        # Numeric outputs are unchanged (still computed in the geometry's own units).
+        assert props["area"] == pytest.approx(poly.area)
+        assert props["perimeter"] == pytest.approx(poly.length)
+
+    def test_geom_prop_projected_no_warning(self, caplog):
+        import logging
+
+        poly = self.sgeo.box(-67.30, 48.00, -66.90, 48.20)
+        projected = self.gpd.GeoSeries([poly], crs="EPSG:4326").to_crs("EPSG:3348").iloc[0]
+        with caplog.at_level(logging.WARNING, logger="RavenPy"):
+            self.analysis.geom_prop(projected, crs="EPSG:3348")
+        assert not any("geographic CRS" in record.message for record in caplog.records)

@@ -29,7 +29,10 @@ GDAL_TIFF_COMPRESSION_OPTION = "compress=lzw"
 LOGGER = logging.getLogger("RavenPy")
 
 
-def geom_prop(geom: Union[Polygon, MultiPolygon, GeometryCollection]) -> dict:
+def geom_prop(
+    geom: Union[Polygon, MultiPolygon, GeometryCollection],
+    crs: Optional[Union[str, int]] = None,
+) -> dict:
     """
     Return a dictionary of geometry properties.
 
@@ -37,6 +40,10 @@ def geom_prop(geom: Union[Polygon, MultiPolygon, GeometryCollection]) -> dict:
     ----------
     geom : Polygon or MultiPolygon or GeometryCollection
         Geometry to analyze.
+    crs : str or int, optional
+        Coordinate reference system of `geom`. When provided, it is used to determine
+        whether the geometry lies in a geographic (angular) CRS. When omitted, a
+        heuristic based on the centroid coordinates is used instead.
 
     Returns
     -------
@@ -45,12 +52,32 @@ def geom_prop(geom: Union[Polygon, MultiPolygon, GeometryCollection]) -> dict:
 
     Notes
     -----
-    Some of the properties should be computed using an equal-area projection.
+    Area, perimeter and the Gravelius shape index are only physically meaningful when
+    computed from a projected, equal-area CRS. When `geom` is detected to be in a
+    geographic CRS, these values are returned in angular units (e.g. square degrees)
+    and a warning is emitted; reproject the geometry to an equal-area CRS beforehand
+    for reliable results.
     """
     geom = shape(geom)
     lon, lat = geom.centroid.x, geom.centroid.y
-    if (lon > 180) or (lon < -180) or (lat > 90) or (lat < -90):
-        LOGGER.warning("Shape centroid is not in decimal degrees.")
+
+    if crs is not None:
+        from pyproj import CRS
+
+        is_geographic = CRS.from_user_input(crs).is_geographic
+    else:
+        # Heuristic: coordinates that fall within valid longitude/latitude bounds are
+        # most likely decimal degrees (a geographic CRS). Projected coordinates are
+        # typically expressed in metres and fall well outside this range.
+        is_geographic = (-180 <= lon <= 180) and (-90 <= lat <= 90)
+
+    if is_geographic:
+        LOGGER.warning(
+            "Geometry appears to be in a geographic CRS; 'area', 'perimeter' and "
+            "'gravelius' are computed in angular units and are not physically "
+            "meaningful. Reproject to an equal-area CRS for reliable results."
+        )
+
     area = geom.area
     length = geom.length
     gravelius = length / 2 / math.sqrt(math.pi * area)
