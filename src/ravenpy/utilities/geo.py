@@ -27,9 +27,9 @@ try:
         shape,
     )
     from shapely.ops import transform
-except (ImportError, ModuleNotFoundError) as e:
+except ModuleNotFoundError as err:
     msg = gis_import_error_message.format(Path(__file__).stem)
-    raise ImportError(msg) from e
+    raise ModuleNotFoundError(msg) from err
 
 RASTERIO_TIFF_COMPRESSION = "lzw"
 LOGGER = logging.getLogger("RavenPy")

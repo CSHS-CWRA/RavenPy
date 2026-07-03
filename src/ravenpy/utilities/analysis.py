@@ -15,9 +15,9 @@ try:
     from shapely.geometry import GeometryCollection, MultiPolygon, Polygon, shape
 
     UseExceptions()
-except (ImportError, ModuleNotFoundError) as e:
+except ModuleNotFoundError as err:
     msg = gis_import_error_message.format(Path(__file__).stem)
-    raise ImportError(msg) from e
+    raise ModuleNotFoundError(msg) from err
 
 from ravenpy.utilities.geo import generic_raster_clip
 

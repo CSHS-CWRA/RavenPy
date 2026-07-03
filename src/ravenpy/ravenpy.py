@@ -91,7 +91,7 @@ class Emulator:
 
     @property
     def output(self) -> "OutputReader":
-        """Return simulation output object."""
+        """Simulation output object."""
         return self._output
 
     def resume(self, timestamp: bool = True) -> Config:
@@ -130,12 +130,12 @@ class OutputReader:
 
     @property
     def files(self) -> dict:
-        """Return paths to output files."""
+        """Report paths to output files."""
         return self._files
 
     @property
     def solution(self) -> Optional[dict]:
-        """Return solution file content."""
+        """Solution file content."""
         solution = self.files.get("solution")
         if solution:
             return parsers.parse_solution(solution)
@@ -143,7 +143,7 @@ class OutputReader:
 
     @property
     def diagnostics(self) -> Optional[dict]:
-        """Return model diagnostics."""
+        """Model diagnostics."""
         diag = self.files.get("diagnostics")
         if diag:
             return parsers.parse_diagnostics(diag)
@@ -151,7 +151,7 @@ class OutputReader:
 
     @property
     def hydrograph(self) -> xr.Dataset:
-        """Return the hydrograph."""
+        """Generate the hydrograph."""
         if self._nc_hydrograph is None:
             h = self.files.get("hydrograph")
             if h:
@@ -161,7 +161,7 @@ class OutputReader:
 
     @property
     def storage(self) -> xr.Dataset:
-        """Return the storage variables."""
+        """Storage variables."""
         if self._nc_storage is None:
             s = self.files.get("storage")
             if s:

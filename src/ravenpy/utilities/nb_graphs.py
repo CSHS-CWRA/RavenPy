@@ -16,8 +16,8 @@ try:
     import holoviews as hv
     import hvplot.xarray  # noqa: F401
 
-except (ImportError, ModuleNotFoundError) as e:
-    raise ImportError("Install holoviews and hvplot.") from e
+except ModuleNotFoundError as err:
+    raise ModuleNotFoundError("Install holoviews and hvplot.") from err
 
 hv.extension("bokeh")
 
