@@ -21,3 +21,4 @@ Contributors
 * Louise Arnal <arnal.louise@ouranos.ca> `@lou-a <https://github.com/lou-a>`_
 * Pascal Bourgault <bourgault.pascal@ouranos.ca> `@aulemahal <https://github.com/aulemahal>`_
 * Gabriel Rondeau-Genesse <rondeau-genesse.gabriel@ouranos.ca> `@RondeauG <https://github.com/RondeauG>`_
+* Martin Guthrie <martinguku37@gmail.com> `@martinguthrie93 <https://github.com/martinguthrie93>`_

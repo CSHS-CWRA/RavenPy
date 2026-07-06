@@ -302,23 +302,52 @@ def determine_upstream_ids(
     return sub[sub[basin_field].isin(up)] if sub is not None else df[df[basin_field].isin(up)]
 
 
-def find_geometry_from_coord(lon: float, lat: float, df: geopandas.GeoDataFrame) -> geopandas.GeoDataFrame:
+def find_geometry_from_coord(
+    lon: float,
+    lat: float,
+    df: geopandas.GeoDataFrame,
+    point_crs: Union[str, int, CRS] = WGS84,
+) -> geopandas.GeoDataFrame:
     """
     Return the geometry containing the given coordinates.
 
+    Parameters
+    ----------
     lon : float
-        Longitude.
+        Longitude of the point, expressed in `point_crs`.
     lat : float
-        Latitude.
+        Latitude of the point, expressed in `point_crs`.
     df : GeoDataFrame
         Data.
+    point_crs : str or int or pyproj.CRS
+        Coordinate reference system of the (`lon`, `lat`) point. Default: 4326 (WGS84).
 
     Returns
     -------
     GeoDataFrame
         Record whose geometry contains the point.
+
+    Notes
+    -----
+    The point is reprojected to the CRS of `df` before the point-in-polygon test.
+    `GeoDataFrame.contains` performs a purely Cartesian comparison and does not
+    reconcile mismatched coordinate reference systems, so without this alignment a
+    point given in geographic coordinates would silently fail to match (or match the
+    wrong feature) when `df` is stored in a projected CRS.
     """
     p = Point(lon, lat)
+
+    # Align the point's CRS with that of the GeoDataFrame before testing containment.
+    if df.crs is not None:
+        source = CRS.from_user_input(point_crs)
+        target = CRS.from_user_input(df.crs)
+        if not source.equals(target):
+            p = geom_transform(p, source_crs=source, target_crs=target)
+    else:
+        LOGGER.warning(
+            "The GeoDataFrame has no CRS defined; assuming its coordinates are expressed in the same CRS as the provided point (%s).",
+            point_crs,
+        )
 
     c = df.contains(p)
     n = c.sum()

@@ -5,7 +5,7 @@ Changelog
 `Unreleased <https://github.com/CSHS-CWRA/RavenPy>`_ (latest)
 -------------------------------------------------------------
 
-Contributors: Trevor James Smith (:user:`Zeitsperre`).
+Contributors: Trevor James Smith (:user:`Zeitsperre`), Martin Guthrie (:user:`martinguthrie93`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -18,6 +18,8 @@ Internal changes
 Fixes
 ^^^^^
 * `tox-gh` now fully supports Python3.14. (PR #600)
+* `find_geometry_from_coord` now reprojects the query point into the CRS of the target ``GeoDataFrame`` before the point-in-polygon test, and accepts an optional `point_crs` argument. This prevents silent lookup failures (or wrong matches) when the routing product is stored in a projected CRS. (issue #614, PR #615)
+* `geom_prop` now accepts an optional `crs` argument and emits a warning when the geometry lies in a geographic CRS, since ``area``, ``perimeter`` and ``gravelius`` are only physically meaningful in an equal-area projection. The previous guard was inverted and stayed silent for the risky (decimal-degree) case. (issue #614, PR #615)
 
 .. _changes_0.21.0:
 
