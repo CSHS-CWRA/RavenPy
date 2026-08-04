@@ -7,6 +7,10 @@ Changelog
 
 Contributors: Trevor James Smith (:user:`Zeitsperre`).
 
+Breaking changes
+^^^^^^^^^^^^^^^^
+* `ravenpy` now explicitly requires `libjxl` in order to perform raster operations. This library was previously bundled with other existing dependencies. (PR #617)
+
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Updates the cookiecutter template. (PR #600):

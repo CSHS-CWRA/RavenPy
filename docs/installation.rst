@@ -39,7 +39,7 @@ Python Installation (pip)
 
 .. warning::
 
-   In order to compile the Raven model (provided by the `raven-hydro` package, a C++ compiler (`GCC`, `Clang`, `MSVC`, etc.) and either `GNU Make` (Linux/macOS) or `Ninja` (Windows) must be exposed on the `$PATH`.
+   In order to compile the Raven model (provided by the `raven-hydro` PyPI package), a C++ compiler (`GCC`, `Clang`, `MSVC`, etc.) and either `GNU Make` (Linux/macOS) or `Ninja` (Windows) must be exposed on the `$PATH`.
 
 .. warning::
 
@@ -51,7 +51,7 @@ In order to perform this from Ubuntu/Debian:
 
     .. code-block:: console
 
-        sudo apt-get install gcc libnetcdf-dev gdal proj geos
+        sudo apt-get install gcc gdal geos libjxl-tools libnetcdf-dev proj
 
 Then, from your python environment, run:
 
