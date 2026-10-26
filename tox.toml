@@ -1,6 +1,6 @@
 envlist = [
   "lint",
-  {product = [{prefix = "py3.", start = 10, stop = 14}]},
+  { product = [{ prefix = "py3.", start = 10, stop = 14 }] },
   "docs"
 ]
 skip_missing_interpreters = true
@@ -21,7 +21,7 @@ description = "Run tests with extras under {basepython}"
 deps = [
   "numpy >= 1.25.0",
   "gdal == {env:GDAL_VERSION}.*",
-  {replace = "if", condition = "env.RAVEN_HYDRO_UPSTREAM_BRANCH", then = ["git+https://github.com/Ouranosinc/raven-hydro.git@{env:RAVEN_HYDRO_UPSTREAM_BRANCH}"], extend = true},
+  { replace = "if", condition = "env.RAVEN_HYDRO_UPSTREAM_BRANCH", then = ["git+https://github.com/Ouranosinc/raven-hydro.git@{env:RAVEN_HYDRO_UPSTREAM_BRANCH}"], extend = true },
   "setuptools >= 71.0"
 ]
 extras = ["gis", "raven-hydro"]
@@ -46,14 +46,14 @@ allowlist_externals = ["make"]
 
 [env_run_base]
 description = "Run tests with pytest under {basepython}"
-setenv = {PYTEST_ADDOPTS = "--color=yes --numprocesses=logical --durations=10 --cov=ravenpy --cov-report=lcov", PYTHONPATH = "{toxinidir}", TOX = "{envname}"}
+setenv = { PYTEST_ADDOPTS = "--color=yes --numprocesses=logical --durations=10 --cov=ravenpy --cov-report=lcov", PYTHONPATH = "{toxinidir}", TOX = "{envname}" }
 passenv = ["CI", "COVERALLS_*", "GDAL_VERSION", "GITHUB_*", "LD_LIBRARY_PATH", "RAVEN_*"]
 download = true
 install_command = ["python", "-m", "pip", "install", "--no-user", "{opts}", "{packages}"]
 dependency_groups = ["test"]
 extras = ["raven-hydro"]
 deps = [
-  {replace = "if", condition = "env.RAVEN_HYDRO_UPSTREAM_BRANCH", then = ["git+https://github.com/Ouranosinc/raven-hydro.git@{env:RAVEN_HYDRO_UPSTREAM_BRANCH}"], extend = true}
+  { replace = "if", condition = "env.RAVEN_HYDRO_UPSTREAM_BRANCH", then = ["git+https://github.com/Ouranosinc/raven-hydro.git@{env:RAVEN_HYDRO_UPSTREAM_BRANCH}"], extend = true }
 ]
 commands_pre = [
   ["python", "-m", "pip", "list"],

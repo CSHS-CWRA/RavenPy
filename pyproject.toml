@@ -32,7 +32,7 @@ test = [
   "pytest >=9.0.2",
   "pytest-cov >=7.0.0",
   "pytest-xdist >=3.2.0",
-  {include-group = "io"}
+  { include-group = "io" }
 ]
 notebooks = [
   "birdhouse-birdy >=0.9.1",
@@ -60,7 +60,7 @@ notebooks = [
   "xesmf",
   "xsdba >=0.4.0",
   "xskillscore >=0.0.29",
-  {include-group = "io"}
+  { include-group = "io" }
 ]
 docs = [
   # Documentation and example support
@@ -88,23 +88,23 @@ dev = [
   "pip >=26.0.1",
   "prek >=0.3.0",
   "watchdog >=6.0.0",
-  {include-group = "docs"},
-  {include-group = "lint"},
-  {include-group = "notebooks"},
-  {include-group = "test"},
-  {include-group = "tox"}
+  { include-group = "docs" },
+  { include-group = "lint" },
+  { include-group = "notebooks" },
+  { include-group = "test" },
+  { include-group = "tox" }
 ]
 
 [project]
 name = "ravenpy"
 authors = [
-  {name = "David Huard", email = "huard.david@ouranos.ca"},
-  {name = "Richard Arsenault", email = "Richard.Arsenault@etsmtl.ca"}
+  { name = "David Huard", email = "huard.david@ouranos.ca" },
+  { name = "Richard Arsenault", email = "Richard.Arsenault@etsmtl.ca" }
 ]
 maintainers = [
-  {name = "Trevor James Smith", email = "smith.trevorj@ouranos.ca"}
+  { name = "Trevor James Smith", email = "smith.trevorj@ouranos.ca" }
 ]
-readme = {file = "README.rst", content-type = "text/x-rst"}
+readme = { file = "README.rst", content-type = "text/x-rst" }
 requires-python = ">=3.10.0"
 keywords = ["raven", "raven-hydro", "hydrology", "gis", "analysis", "modelling"]
 license = "MIT"
