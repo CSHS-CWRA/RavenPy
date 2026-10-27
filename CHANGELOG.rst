@@ -30,7 +30,7 @@ Breaking changes
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Updates the cookiecutter template. (PR #600):
-    * Dependencies have been updated and synchronized,
+    * Dependencies have been updated and synchronized.
     * `h5py` is no longer explitily reinstalled when running tests via `tox`.
     * New `io` dependency-group for managing common file read/write libraries.
 * Upstream `raven-hydro` versions are now installed in `tox` via the `RAVEN_HYDRO_UPSTREAM_BRANCH` environment variable. (PR #600)
