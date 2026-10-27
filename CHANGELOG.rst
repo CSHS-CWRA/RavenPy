@@ -2,8 +2,24 @@
 Changelog
 =========
 
-`Unreleased <https://github.com/CSHS-CWRA/RavenPy>`_ (latest)
--------------------------------------------------------------
+..
+    `Unreleased <https://github.com/CSHS-CWRA/RavenPy>`_ (latest)
+    -------------------------------------------------------------
+
+    Contributors:
+
+    Changes
+    ^^^^^^^
+    * No change.
+
+    Fixes
+    ^^^^^
+    * No change.
+
+.. _changes_0.21.1:
+
+`v0.21.1 <https://github.com/CSHS-CWRA/RavenPy/tree/v0.21.1>`_ (2026-10-27)
+---------------------------------------------------------------------------
 
 Contributors: Trevor James Smith (:user:`Zeitsperre`).
 
@@ -14,8 +30,8 @@ Breaking changes
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Updates the cookiecutter template. (PR #600):
-    * Dependencies have been updated and synchronized,
-    * `h5py` is no longer explitily reinstalled when running tests via `tox`.
+    * Dependencies have been updated and synchronized.
+    * `h5py` is no longer explicitly reinstalled when running tests via `tox`.
     * New `io` dependency-group for managing common file read/write libraries.
 * Upstream `raven-hydro` versions are now installed in `tox` via the `RAVEN_HYDRO_UPSTREAM_BRANCH` environment variable. (PR #600)
 
