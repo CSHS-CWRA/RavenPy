@@ -80,7 +80,7 @@ class TestDistributedWorkflow:
         gauges = [
             rc.Gauge.from_nc(
                 meteo_station,
-                data_type=[s for s in forcing.keys()],
+                data_type=[*forcing.keys()],
                 station_idx=i + 1,
                 alt_names=forcing,
             )
